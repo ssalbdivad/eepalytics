@@ -1,0 +1,44 @@
+# coachskaffur — League coaching daemon (systemd --user unit template)
+#
+# Installed to ~/.config/systemd/user/coachskaffur.service by scripts/install-service.sh,
+# which rewrites %h and CSK_DATA_DIR for this machine.
+#
+#   systemctl --user enable --now coachskaffur
+#   journalctl --user -u coachskaffur -f
+#
+# NOTE (verified): user lingering is already enabled on this machine, so the unit starts
+# without an interactive login. Lingering cannot make WSL2 itself boot on Windows login,
+# though — if you want the daemon up from Windows startup, add a shortcut in `shell:startup`
+# running `wsl.exe -d Ubuntu -u ssalb --exec /bin/true`.
+
+[Unit]
+Description=coachskaffur — League of Legends coaching daemon
+Documentation=file://%h/coachskaffur/AGENTS.md
+After=default.target
+# Do not spin forever if it is crash-looping on a real bug. (These live in [Unit] on
+# systemd >= 229; putting them in [Service] is silently ignored.)
+StartLimitIntervalSec=120
+StartLimitBurst=6
+
+[Service]
+Type=simple
+WorkingDirectory=%h/coachskaffur
+# Never hardcode the nvm path here: it breaks on the next `nvm install`.
+# run-daemon.sh resolves node through nvm (or PATH) at start time.
+ExecStart=%h/coachskaffur/scripts/run-daemon.sh
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+Environment=CSK_LOG_LEVEL=info
+# Data lives on ext4. /mnt/c is 26x slower for SQLite writes and is read-only territory.
+Environment=CSK_DATA_DIR=%h/coachskaffur/data
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=coachskaffur
+# The daemon shuts down cleanly on SIGTERM: it stops claiming, lets in-flight jobs unwind and
+# hands their leases straight back so a restart picks them up immediately.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+[Install]
+WantedBy=default.target

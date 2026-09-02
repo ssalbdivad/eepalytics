@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000" role="img" aria-label="Summoner's Rift">
+  <title>Summoner's Rift</title>
+  <desc>Generated from the measured turret, pit and lane-polyline constants in src/shared/map.ts,
+projected through toMinimapPct — the same transform the app plots moments with, so this drawing
+cannot drift out of register with the data. Game +y points north; screen top points down, so the
+projection flips y. Blue nexus (1962,2038) lands bottom-left.</desc>
+  <defs>
+    <clipPath id="rift-clip"><rect x="0" y="0" width="1000" height="1000" rx="10"/></clipPath>
+    <radialGradient id="base-blue" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#2d6ba8" stop-opacity="0.36"/>
+      <stop offset="100%" stop-color="#2d6ba8" stop-opacity="0.03"/>
+    </radialGradient>
+    <radialGradient id="base-red" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#b4444f" stop-opacity="0.36"/>
+      <stop offset="100%" stop-color="#b4444f" stop-opacity="0.03"/>
+    </radialGradient>
+  </defs>
+  <g clip-path="url(#rift-clip)">
+    <rect x="0" y="0" width="1000" height="1000" fill="#0b1410"/>
+    <rect x="0" y="0" width="1000" height="1000" fill="#0a0f14" opacity="0.55"/>
+    <polygon points="0,88.7 917.9,1000 1000,912.6 88.1,0" fill="#123a4d" opacity="0.7"/>
+    <polygon points="0,88.7 917.9,1000 1000,912.6 88.1,0" fill="none" stroke="#1d5c73" stroke-width="1" opacity="0.5"/>
+    <polyline points="108.1,872.8 86,708.1 108.9,548.4 73.4,300.6 114.7,137.7 296.1,73.2 537.9,103.9 707.2,88.1 861.9,137.7" fill="none" stroke="#2b3644" stroke-width="70" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="138.9,857.1 251.6,747.3 344.8,673.4 398,568.5 605.4,428.5 659.6,322.3 750.8,249.9 864.8,142" fill="none" stroke="#2b3644" stroke-width="70" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="128.1,892.7 293.6,909.1 469.6,893.8 708.7,923.9 868.6,886.1 933,693.7 897.1,447.3 916.9,291.9 868.6,144.4" fill="none" stroke="#2b3644" stroke-width="70" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="108.1,872.8 86,708.1 108.9,548.4 73.4,300.6 114.7,137.7 296.1,73.2 537.9,103.9 707.2,88.1 861.9,137.7" fill="none" stroke="#39485a" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+    <polyline points="138.9,857.1 251.6,747.3 344.8,673.4 398,568.5 605.4,428.5 659.6,322.3 750.8,249.9 864.8,142" fill="none" stroke="#39485a" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+    <polyline points="128.1,892.7 293.6,909.1 469.6,893.8 708.7,923.9 868.6,886.1 933,693.7 897.1,447.3 916.9,291.9 868.6,144.4" fill="none" stroke="#39485a" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+    <circle cx="138.9" cy="857.1" r="173.4" fill="url(#base-blue)" stroke="#2d6ba8" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="864.8" cy="142" r="173.4" fill="url(#base-red)" stroke="#b4444f" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="342.4" cy="298.7" r="73.4" fill="#a98bfa" fill-opacity="0.13" stroke="#a98bfa" stroke-opacity="0.55" stroke-width="1.5"/>
+    <text x="342.4" y="303.2" text-anchor="middle" font-size="13" font-family="ui-monospace, monospace" font-weight="700" fill="#a98bfa" fill-opacity="0.75">B</text>
+    <circle cx="673.3" cy="688.9" r="73.4" fill="#ff8c42" fill-opacity="0.13" stroke="#ff8c42" stroke-opacity="0.55" stroke-width="1.5"/>
+    <text x="673.3" y="693.4" text-anchor="middle" font-size="13" font-family="ui-monospace, monospace" font-weight="700" fill="#ff8c42" fill-opacity="0.75">D</text>
+    <rect x="135.9" y="854.1" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="248.6" y="744.3" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="341.8" y="670.4" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="395.0" y="565.5" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="219.1" y="776.0" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="83.0" y="705.1" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="105.9" y="545.4" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="70.4" y="297.6" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="83.2" y="751.8" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="290.6" y="906.1" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="466.6" y="890.8" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="705.7" y="920.9" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="236.4" y="907.6" width="6" height="6" rx="1.4" fill="#5b9bd5" fill-opacity="0.62"/>
+    <rect x="861.8" y="139.0" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="747.8" y="246.9" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="656.6" y="319.3" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="602.4" y="425.5" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="778.4" y="216.3" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="704.2" y="85.1" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="534.9" y="100.9" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="293.1" y="70.2" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="757.2" y="84.6" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="913.9" y="288.9" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="894.1" y="444.3" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="930.0" y="690.7" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+    <rect x="912.2" y="239.5" width="6" height="6" rx="1.4" fill="#d97078" fill-opacity="0.62"/>
+  </g>
+  <rect x="0.5" y="0.5" width="999" height="999" rx="10" fill="none" stroke="#23323f"/>
+</svg>
