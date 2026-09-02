@@ -1,0 +1,35 @@
+{
+  "name": "coachskaffur",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=25" },
+  "scripts": {
+    "dev": "concurrently -n web,daemon -c cyan,magenta \"pnpm dev:web\" \"pnpm dev:daemon\"",
+    "dev:web": "vite",
+    "dev:daemon": "node --experimental-strip-types --no-warnings=ExperimentalWarning --watch-path=src/daemon --watch-path=src/lcu src/daemon/main.ts",
+    "daemon": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/daemon/main.ts",
+    "build": "vite build",
+    "start": "NODE_ENV=production pnpm daemon",
+    "doctor": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/doctor.ts",
+    "service:install": "bash scripts/install-service.sh",
+    "service:logs": "journalctl --user -u coachskaffur -f",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.258",
+    "@hono/node-server": "^2.1.1",
+    "arktype": "^2.2.3",
+    "hono": "^4.13.5",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^9",
+    "typescript": "^5.9",
+    "vite": "^8.2.2"
+  }
+}
