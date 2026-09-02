@@ -87,6 +87,29 @@ button.csk-chip {
 	transition: border-color 0.12s, color 0.12s, background 0.12s;
 }
 
+/*
+ * The hedge marker on a cited moment. A moment inferred between 1-minute frames must not read
+ * as a measurement, so it carries a visible chip, not just a tooltip.
+ */
+.csk-chip__conf {
+	font-style: normal;
+	font-size: 9px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	padding: 0 4px;
+	border-radius: 3px;
+	border: 1px dashed currentColor;
+	opacity: 0.85;
+}
+
+.csk-chip__conf--medium {
+	color: var(--csk-dim);
+}
+
+.csk-chip__conf--low {
+	color: var(--csk-warn, #d8a24a);
+}
+
 button.csk-chip:hover {
 	border-color: var(--csk-gold);
 	color: var(--csk-gold-lit);

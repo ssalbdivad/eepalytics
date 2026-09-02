@@ -14,6 +14,7 @@
 import type { FeedbackItem, Media, Metric, Moment } from "../../shared/schema/domain.ts"
 import { API } from "../../shared/schema/api.ts"
 import { fmtClock } from "../../shared/time.ts"
+import { CONFIDENCE_LABEL, confidenceChip } from "../lib/format.ts"
 import { MOMENT_KIND_LABEL, momentColor } from "./MiniMap.tsx"
 import "./components.css"
 
@@ -113,7 +114,7 @@ export const FeedbackCard = ({
 							className="csk-chip"
 							style={{ borderColor: momentColor(m.kind) }}
 							onClick={() => onSeek(Math.round(m.tSec))}
-							title={`${MOMENT_KIND_LABEL[m.kind]} — ${m.title}\n${m.evidence}`}
+							title={`${MOMENT_KIND_LABEL[m.kind]} — ${m.title}\n${CONFIDENCE_LABEL[m.confidence]}\n\n${m.evidence}`}
 						>
 							<i
 								style={{
@@ -125,6 +126,17 @@ export const FeedbackCard = ({
 								}}
 							/>
 							{fmtClock(m.tSec)} {MOMENT_KIND_LABEL[m.kind].toLowerCase()}
+							{/*
+							 * A chip for a moment the app only INFERRED between one-minute frames must
+							 * not look identical to one read straight off an event. The hedge was
+							 * previously buried in a hover tooltip; `confidenceChip` exists for exactly
+							 * this and was going unused.
+							 */}
+							{confidenceChip(m.confidence) && (
+								<em className={`csk-chip__conf csk-chip__conf--${m.confidence}`}>
+									{confidenceChip(m.confidence)}
+								</em>
+							)}
 						</button>
 					))}
 

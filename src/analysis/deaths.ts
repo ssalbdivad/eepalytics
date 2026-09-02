@@ -307,7 +307,7 @@ export const analyzeDeaths = (
 				`${provenList.length} teammate${provenList.length === 1 ? " was" : "s were"} provably in the fight — they scored or took a kill within 10 seconds and ${PROOF_RADIUS} units of this spot.`
 			: verdict === "SOLO" ?
 				nearestAlly !== null && nearestAlly > UNAMBIGUOUS_ISOLATION ?
-					`Likely alone: nearest teammate an estimated ${round(nearestAlly)} units away. Positions are sampled once a minute, but a gap this large cannot be explained away by the sampling error (median ~1450 units).`
+					`Likely alone: nearest teammate an estimated ${round(nearestAlly)} units away. Positions are sampled once a minute; the measured interpolation error on ONE player is median ~1450 and p90 ~4215 units, and this is a distance between TWO independently interpolated positions, so the errors add. A gap this large is unlikely to be sampling error alone — but "unlikely" is the strongest word the data supports, not "impossible".`
 				:	`Likely alone (low confidence): nearest teammate an estimated ${round(nearestAlly ?? 0)} units away, from positions sampled once per minute. Presence detection built on those is only about ${Math.round(PRESENCE_SENSITIVITY * 100)}% sensitive, so treat this as a hint, not a fact.`
 			:	`Unclear who was nearby. No teammate is provably in the fight, and the interpolated nearest-ally distance (${nearestAlly === null ? "unknown" : `about ${round(nearestAlly)} units`}) is inside the sampling error.`
 

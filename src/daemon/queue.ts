@@ -2,8 +2,8 @@
  * The durable job queue.
  *
  * All state lives in SQLite (`src/db/queries.ts` owns the SQL), so a client restart, a bridge
- * crash or a `kill -9` on the daemon loses nothing: on boot we reclaim every lease that has
- * expired and carry on. This module is the daemon-facing *policy* layer on top of that —
+ * crash or a `kill -9` on the daemon loses nothing: on boot `adoptOrphanedLeases()` hands back
+ * everything the dead process was holding, and `sweep()` keeps doing so on a timer thereafter. This module is the daemon-facing *policy* layer on top of that —
  * deadlines, dedup, state transitions and the SSE events that go with them.
  *
  * Two facts drive every scheduling decision here:
@@ -33,7 +33,10 @@ import {
 	getJob,
 	listJobs,
 	pruneJobs,
+	kvGet,
+	kvSet,
 	queueDepth,
+	reclaimAllLeases,
 	reclaimExpiredLeases,
 	retryJob
 } from "../db/queries.ts"
@@ -174,14 +177,46 @@ export const abandon = (job: Job, error: string): void => {
 }
 
 /**
+ * How far out to push the next wake-up of a job that keeps saying "not yet".
+ *
+ * Handlers pick their own retry cadence for the case they expect ("the client is still
+ * assembling this match" — 30 s, because it usually resolves in one or two minutes). Some
+ * conditions never resolve. Measured live on this machine: `match-ingest` for a PRACTICETOOL
+ * game the LCU only ever returns one participant for deferred 103 times in 52 minutes, one
+ * LCU round-trip and two log lines each, held `queueDepth` at 1 forever, and would have kept
+ * going for the life of the daemon. This app is meant to sit in the background while the user
+ * plays, so a stuck job has to get quieter rather than louder.
+ *
+ * The handler's own cadence is honoured for the first five minutes — long enough for every
+ * condition that does resolve on its own. After that the floor grows. Jobs carrying a
+ * deadline (only `replay-download`, which loses the .rofl 30 minutes after the game ends) are
+ * exempt: there the tight cadence is the whole point, and `expire` ends the loop anyway.
+ */
+const stuckFloorMs = (job: Job, now: number): number => {
+	if (job.deadlineMs !== null) return 0
+	const stuckFor = now - job.createdMs
+	if (stuckFor < 5 * 60_000) return 0
+	if (stuckFor < 30 * 60_000) return 2 * 60_000
+	return 10 * 60_000
+}
+
+/**
  * Put a job back to sleep because the world is not ready — the client is closed, a sibling
  * unit is not installed, the gate said no. Does NOT consume an attempt: "not now" is not a
  * failure, and a job that has been waiting three days for the capture gate should not be
  * indistinguishable from one that crashed.
  */
 export const defer = (job: Job, reason: string, untilMs?: number): void => {
-	deferJob(job.id, reason, untilMs)
-	log.debug("job deferred", { job: job.id, kind: job.kind, reason })
+	const now = Date.now()
+	const asked = untilMs ?? now + 60_000
+	const until = Math.max(asked, now + stuckFloorMs(job, now))
+	deferJob(job.id, reason, until)
+	log.debug("job deferred", {
+		job: job.id,
+		kind: job.kind,
+		reason,
+		forMs: until - now
+	})
 	announce(job, "deferred", reason)
 }
 
@@ -229,6 +264,59 @@ export const sweep = (nowMs = Date.now()): SweepResult => {
 	if (reclaimed > 0) log.info("reclaimed abandoned leases", { count: reclaimed })
 	if (reclaimed > 0) wake()
 	return { expired, reclaimed }
+}
+
+/**
+ * Boot-time lease recovery.
+ *
+ * `sweep()` only reclaims leases that have EXPIRED, which is correct while the daemon runs but
+ * wrong the moment it starts: a daemon that has just booted holds nothing, so every `leased`
+ * row is residue from a process that died. Left to `sweep()`, that work sat untouched for the
+ * remainder of its lease — up to `JOB_LEASE_MS` (10 minutes) — while the Queue screen showed it
+ * as running. A `kill -9` mid-review therefore stalled the whole pipeline for ten minutes.
+ *
+ * The one thing a blanket reclaim must not do is steal leases from a SECOND daemon sharing this
+ * database, so the owning pid is recorded in `kv` and the sweep is skipped when that pid is
+ * still alive. When it is (or when the pid has been recycled by an unrelated process) we simply
+ * fall back to the old lease-timeout behaviour, which is safe — never wrong, only slower.
+ */
+const KV_OWNER_PID = "daemonOwnerPid"
+
+const processAlive = (pid: number): boolean => {
+	if (!Number.isInteger(pid) || pid <= 0) return false
+	try {
+		// Signal 0 checks for existence without delivering anything.
+		process.kill(pid, 0)
+		return true
+	} catch (err) {
+		// EPERM means it exists but belongs to someone else — still alive.
+		return (err as NodeJS.ErrnoException).code === "EPERM"
+	}
+}
+
+export const adoptOrphanedLeases = (): number => {
+	const prior = kvGet<number | null>(KV_OWNER_PID, null)
+
+	if (prior !== null && prior !== process.pid && processAlive(prior)) {
+		// Ownership deliberately stays with the daemon that is actually running: if we claimed
+		// it here and then died, a third daemon would see OUR dead pid and blanket-reclaim the
+		// live one's leases.
+		log.info("another daemon holds this database; leaving its leases to time out", {
+			pid: prior
+		})
+		return 0
+	}
+	kvSet(KV_OWNER_PID, process.pid)
+
+	const reclaimed = reclaimAllLeases()
+	if (reclaimed > 0) {
+		log.warn("reclaimed jobs a previous daemon was holding when it died", {
+			count: reclaimed,
+			previousPid: prior
+		})
+		wake()
+	}
+	return reclaimed
 }
 
 /** Drop terminal jobs older than `days` so the queue screen stays readable. */

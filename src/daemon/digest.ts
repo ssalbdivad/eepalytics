@@ -312,6 +312,8 @@ export const buildTrendDigest = (input: BuildTrendDigestInput): TrendDigest => {
 			mean: s.mean,
 			ci95: s.ci95,
 			trendable: s.trendable,
+			slopeSignificant: s.slopeSignificant ?? null,
+			slopePerGame: s.slopePerGame ?? null,
 			note: s.note
 		})),
 		dataGaps: [...TREND_DATA_GAPS],

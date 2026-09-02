@@ -142,7 +142,18 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 		}
 	}
 
-	let bound: Lockfile | null = readLockfileSync()
+	/**
+	 * Deliberately `null`, NOT `readLockfileSync()`.
+	 *
+	 * `watchLockfile` fires once immediately, and `onLockfileChanged` short-circuits on
+	 * `sameLockfile(bound, next)`. Seeding `bound` with the lockfile that is already on disk
+	 * therefore made that first callback a no-op, and the whole boot path below it — the
+	 * `isPidAlive` staleness probe in particular — never ran for the case it exists to catch:
+	 * a lockfile left behind by a client that crashed BEFORE the daemon started. The daemon
+	 * then did exactly what the comment there warns about, retrying a dead port on a widening
+	 * backoff, and `staleLockfile` stayed false so the UI never got to say why.
+	 */
+	let bound: Lockfile | null = null
 
 	const onLockfileChanged = (next: Lockfile | null): void => {
 		if (sameLockfile(bound, next)) return

@@ -397,7 +397,21 @@ ${
 
 Players are given as champions on purpose. You do not know your teammates' names and you must not roast a teammate as a person — cite their champion and their line only as context for what you could have done.`)
 
+	/*
+	 * The bolded figure is this game. The figure after it is a DELTA, not a baseline — and
+	 * that distinction is where reviews have actually gone wrong. Measured on a real review of
+	 * game 5633952046: the coach reported "your usual 3150g" (digest: 2874), "your normal
+	 * -438g" (digest: -407) and "your usual 8.2%" (digest: 9.4), each apparently by inverting
+	 * the delta in its head rather than reading the average sitting one line below. Wrong
+	 * baselines are indistinguishable from right ones in the finished prose, so the header
+	 * says out loud where the baseline lives and that subtracting is not how you get it.
+	 */
 	sections.push(`## METRICS — cite these by "key"
+
+Each line is: **this game's value** · the DELTA against your own recent average · band · confidence.
+The average ITSELF is never on that line — it is the number after "Your N-game average is" in the
+sentence underneath. To say "your usual X", COPY that number. Do not subtract the delta from this
+game's value to reconstruct it, do not round it off, and do not call it a median: it is a mean.
 
 ${
 	d.metrics.length === 0 ?
@@ -406,7 +420,7 @@ ${
 			.map(
 				m =>
 					`- key: \`${m.key}\` — ${m.label}: **${n(m.value, Number.isInteger(m.value) ? 0 : 1)}${m.unit}**` +
-					` · vs your own baseline: ${m.vsBaseline === null ? "no baseline yet" : signed(m.vsBaseline, Number.isInteger(m.vsBaseline) ? 0 : 1)}` +
+					` · vs your own average: ${m.vsBaseline === null ? "no baseline yet" : signed(m.vsBaseline, Number.isInteger(m.vsBaseline) ? 0 : 1)}` +
 					` · band ${m.band} · confidence ${m.confidence}\n  ${m.explain}`
 			)
 			.join("\n")
@@ -479,7 +493,7 @@ const renderTrend = (d: TrendDigest): string => {
 
 You are looking across recent games, not at one game. ${wins}W-${d.games.length - wins}L in the window shown below.
 
-**Honesty rule for this pass:** a pattern needs at least 2 games behind it. With fewer, say "one game" and do not call it a trend. Where a series is marked \`trendable: false\`, the spread swamps the slope — describe the level, never the direction.`)
+**Honesty rule for this pass:** a pattern needs at least 2 games behind it. With fewer, say "one game" and do not call it a trend. \`trendable: true\` means only that the LEVEL is stable enough to quote — it is NOT permission to say "improving" or "declining". You may claim a direction for exactly one reason: the series line says its slope's own 95% CI excludes zero. Everywhere else, describe the level with its interval and stop.`)
 
 	sections.push(`## WHAT THIS DATA CANNOT TELL YOU
 
@@ -506,7 +520,12 @@ ${
 				s =>
 					`- key: \`${s.key}\` — ${s.label}: mean **${n(s.mean, 1)}**` +
 					`${s.ci95 === null ? " (sample too small for a confidence interval)" : ` ±${n(s.ci95, 1)} (95% CI)`}` +
-					` · n=${s.points.length} · ${s.trendable ? "a direction is defensible here" : "NOT trendable"}\n` +
+					` · n=${s.points.length} · ${
+						!s.trendable ? "NOT trendable — quote the level if you must, never a direction"
+						: s.slopeSignificant ?
+							"the level is quotable AND the slope's own 95% CI excludes zero, so a direction may be claimed"
+						:	"the LEVEL is quotable, but NO direction may be claimed — the slope's own 95% CI contains zero"
+					}\n` +
 					`  ${s.note}\n` +
 					`  values: ${s.points.map(p => n(p.value, Number.isInteger(p.value) ? 0 : 1)).join(", ")}`
 			)

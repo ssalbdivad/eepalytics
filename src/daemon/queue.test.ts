@@ -14,9 +14,10 @@ import { strict as assert } from "node:assert"
 import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, it } from "node:test"
 import { closeDb, migrate, useDb } from "../db/index.ts"
-import { getJob, listJobs } from "../db/queries.ts"
+import { getJob, kvGet, kvSet, listJobs } from "../db/queries.ts"
 import {
 	abandon,
+	adoptOrphanedLeases,
 	claim,
 	defer,
 	depth,
@@ -161,6 +162,52 @@ describe("outcomes", () => {
 		assert.match(after.lastError ?? "", /G6/)
 	})
 
+	it("honours the handler's own cadence while a job is young", () => {
+		enqueueJob({ kind: "match-ingest", gameId: 16 })
+		const job = claim()!
+		const asked = Date.now() + 30_000
+		defer(job, "only 1 participant(s) returned", asked)
+		const after = getJob(job.id)!
+		assert.ok(
+			Math.abs(after.notBeforeMs - asked) < 2_000,
+			`a fresh job must retry when the handler said to, got ${after.notBeforeMs - Date.now()}ms`
+		)
+	})
+
+	it("backs a stuck job off instead of re-running it every 30s forever", () => {
+		// Measured live: match-ingest for a PRACTICETOOL game the LCU never fills in deferred
+		// 103 times in 52 minutes at a flat 30s, and would have done so for the life of the
+		// daemon. An old job asking for 30s must be pushed out; the reason must not change.
+		enqueueJob({ kind: "match-ingest", gameId: 17 })
+		const job = claim()!
+		const old = { ...job, createdMs: Date.now() - 45 * 60_000 }
+		defer(old, "only 1 participant(s) returned", Date.now() + 30_000)
+		const after = getJob(job.id)!
+		assert.ok(
+			after.notBeforeMs - Date.now() > 9 * 60_000,
+			`a job stuck 45 minutes must sleep for minutes, not 30s (got ${
+				(after.notBeforeMs - Date.now()) / 1000
+			}s)`
+		)
+		assert.match(after.lastError ?? "", /participant/)
+		assert.equal(after.attempts, 0, "backing off is still not a failure")
+	})
+
+	it("never delays a deadline-bearing replay download", () => {
+		// The .rofl is gone 30 minutes after the game ends. A download that has been retrying
+		// for an hour is already doomed; slowing it down would only make it doomed quieter.
+		enqueueJob({ kind: "replay-download", gameId: 18, deadlineMs: Date.now() + 60_000 })
+		const job = claim()!
+		const old = { ...job, createdMs: Date.now() - 45 * 60_000 }
+		const asked = Date.now() + 10_000
+		defer(old, "the client has not written the file yet", asked)
+		const after = getJob(job.id)!
+		assert.ok(
+			Math.abs(after.notBeforeMs - asked) < 2_000,
+			"a deadline-bearing job keeps the handler's cadence no matter how long it has been stuck"
+		)
+	})
+
 	it("expire is terminal and keeps its reason", () => {
 		enqueueJob({ kind: "replay-download", gameId: 6 })
 		const job = claim()!
@@ -196,5 +243,46 @@ describe("sweep", () => {
 				["replay-download", "expired"]
 			].sort()
 		)
+	})
+})
+
+describe("boot-time lease recovery", () => {
+	it("hands back a lease the dead daemon still had time left on", () => {
+		const id = enqueueJob({ kind: "analysis-run", gameId: 77 })
+		const job = claim({ leaseMs: 10 * 60 * 1000 })!
+		assert.equal(job.id, id)
+		assert.equal(getJob(id)!.state, "leased")
+
+		// `sweep()` is the running-daemon rule and correctly refuses: the lease has not expired.
+		assert.equal(sweep().reclaimed, 0)
+		assert.equal(getJob(id)!.state, "leased", "an unexpired lease survives a normal sweep")
+
+		// Boot is different — this process holds nothing, so the row is residue from a crash.
+		assert.equal(adoptOrphanedLeases(), 1)
+		const after = getJob(id)!
+		assert.equal(after.state, "queued")
+		assert.equal(after.leaseUntilMs, null)
+		assert.equal(after.attempts, 1, "a crash costs one attempt, not the job")
+	})
+
+	it("leaves the leases alone when another daemon is still alive on this database", () => {
+		const id = enqueueJob({ kind: "analysis-run", gameId: 78 })
+		claim({ leaseMs: 10 * 60 * 1000 })
+
+		// Pretend a DIFFERENT, still-running daemon owns this database. pid 1 is always alive,
+		// which is exactly the condition the guard tests for.
+		kvSet("daemonOwnerPid", 1)
+
+		assert.equal(adoptOrphanedLeases(), 0, "must not steal a live daemon's work")
+		assert.equal(getJob(id)!.state, "leased")
+		assert.equal(
+			kvGet<number | null>("daemonOwnerPid", null),
+			1,
+			"ownership stays with the daemon that is actually running"
+		)
+	})
+
+	it("is a no-op on an empty queue", () => {
+		assert.equal(adoptOrphanedLeases(), 0)
 	})
 })

@@ -25,7 +25,12 @@ pnpm seed            # pull your recent games out of the running client
 pnpm dev             # daemon on :7700, UI on :7701
 ```
 
-Then open <http://127.0.0.1:7701>.
+Then open <http://127.0.0.1:7701> — **including from Windows**, in the browser you alt-tab
+to while playing. Both the daemon and the dev server bind `0.0.0.0` when they detect WSL,
+because a WSL loopback bind is not reachable from the host at all (`curl.exe` to
+`127.0.0.1:7700` answers `000`); WSL2 then maps Windows' own localhost into the VM. WSL2's
+adapter is host-only NAT, so this means "this PC", not your LAN. Set `CSK_HOST=127.0.0.1`
+to force loopback-only.
 
 `pnpm seed` is optional but nice on day one: the client only offers a ~20-game window, and
 seeding grabs all of it immediately instead of waiting for the daemon to notice your next

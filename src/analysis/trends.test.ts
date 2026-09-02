@@ -12,6 +12,7 @@ import {
 	mdd10v10,
 	pearson,
 	perGameMetrics,
+	tCrit975,
 	trendDetailsFromRows,
 	winCorrelationsFromRows,
 	type TrendDetail
@@ -46,6 +47,32 @@ describe("statistical helpers", () => {
 		const rising = linearSlope([1, 2, 3, 4, 5, 6, 7, 8])!
 		assert.ok(rising.perGame > 0.9)
 		assert.equal(rising.significant, true)
+	})
+
+	test("a perfectly flat series is never a claimable direction", () => {
+		// Zero residual variance used to short-circuit to `significant: true`, which handed a
+		// claimable direction to a line with a slope of exactly zero.
+		const flat = linearSlope([5, 5, 5, 5, 5, 5])!
+		assert.equal(flat.perGame, 0)
+		assert.equal(flat.significant, false)
+		assert.deepEqual(flat.ci95, [0, 0])
+	})
+
+	test("the slope CI uses Student's t, not z, at the sample sizes this app sees", () => {
+		// The SE is estimated from the same residuals it tests, so the sampling distribution is
+		// t with n-2 df. At n = 20 that is 2.101 against 1.960 — a z-based interval is 7% too
+		// narrow, and this interval is the switch that licenses the words "rising"/"falling".
+		assert.ok(Math.abs(tCrit975(18) - 2.1009) < 0.002)
+		assert.ok(Math.abs(tCrit975(10) - 2.2281) < 0.002)
+		assert.ok(Math.abs(tCrit975(30) - 2.0423) < 0.002)
+		assert.ok(tCrit975(18) > 1.96)
+
+		const values = [1, 4, 2, 6, 3, 8, 4, 9, 6, 11, 7, 12, 9, 14, 10, 16, 12, 17, 13, 19]
+		const s = linearSlope(values)!
+		const se = (s.ci95[1] - s.ci95[0]) / 2 / tCrit975(values.length - 2)
+		// The half-width really is t*se, not 1.96*se.
+		assert.ok(Math.abs(s.ci95[1] - (s.perGame + tCrit975(18) * se)) < 1e-9)
+		assert.ok(s.ci95[1] - s.ci95[0] > 2 * 1.96 * se)
 	})
 
 	test("pearson matches hand-computable cases", () => {

@@ -30,14 +30,14 @@ import { refreshChampionNames } from "./champions.ts"
 import { ensureBoundToCurrentClient, fetchLcuAsset } from "./lcu.ts"
 import runRetentionPrune from "./jobs/retention-prune.ts"
 import { log, setLogLevel } from "./log.ts"
-import { sweep } from "./queue.ts"
+import { adoptOrphanedLeases, sweep } from "./queue.ts"
 import * as queue from "./queue.ts"
 import { reconcile, reconcileFinishedGame } from "./reconcile.ts"
 import { startSupervisor } from "./supervisor.ts"
 import type { Supervisor } from "./supervisor.ts"
 import { startWorkers } from "./workers.ts"
 import type { WorkerPool } from "./workers.ts"
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 
 export const DAEMON_VERSION = "0.1.0"
 
@@ -47,6 +47,32 @@ const SWEEP_MS = 15_000
 const RECONCILE_MS = 5 * 60_000
 const RETENTION_MS = 6 * 60 * 60_000
 const KV_LAST_SYNC = "lastSyncMs"
+
+/**
+ * Which address to listen on.
+ *
+ * VERIFIED on this machine: a server bound to WSL's 127.0.0.1 is NOT reachable from Windows —
+ * `curl.exe http://127.0.0.1:7700/api/health` returns 000. Bound to 0.0.0.0, the same request
+ * returns 200, because WSL2 forwards the host's localhost into the VM. League, and therefore
+ * the browser the user alt-tabs to while playing, live on Windows. A loopback-only default
+ * would mean the app simply does not open on the machine it is for.
+ *
+ * WSL2's virtual adapter is host-only NAT, so 0.0.0.0 here means "this Windows box", not the
+ * LAN. `CSK_HOST` still overrides, and off WSL the default stays loopback.
+ *
+ * `WSL_DISTRO_NAME` is NOT set under `systemd --user`, which is exactly how this daemon is
+ * meant to run, so the kernel release string is the detection that actually works there.
+ */
+const serverHost = (): string => {
+	if (process.env.CSK_HOST) return process.env.CSK_HOST
+	let osRelease = ""
+	try {
+		osRelease = readFileSync("/proc/sys/kernel/osrelease", "utf8")
+	} catch {
+		/* not Linux, or /proc unavailable — fall through to loopback */
+	}
+	return /microsoft|wsl/i.test(osRelease) ? "0.0.0.0" : SERVER_HOST
+}
 
 /**
  * What the HTTP layer is handed. `src/server/app.ts` receives this from `createApp(ctx)`, so
@@ -83,6 +109,10 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 
 	ensureDataDirs()
 	getDb() // opens + migrates; throws loudly if the schema is from a newer build
+	// A `leased` row at boot is residue from a process that died — this daemon holds nothing
+	// yet. Reclaim it now rather than letting it sit out the rest of its 10-minute lease while
+	// the Queue screen claims it is running. Skipped when another daemon is alive on this DB.
+	adoptOrphanedLeases()
 	sweep()
 
 	let ready = false
@@ -235,8 +265,12 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 		fetchLcuAsset
 	}
 
-	const started = startServer(deps, SERVER_PORT, SERVER_HOST)
-	log.info(`listening on http://${started.host}:${started.port}`)
+	const started = startServer(deps, SERVER_PORT, serverHost())
+	log.info(`listening on http://127.0.0.1:${started.port} (bound ${started.host})`)
+	if (started.host === "0.0.0.0")
+		log.info(
+			`open it from Windows at http://127.0.0.1:${started.port} — a WSL loopback bind is not reachable from the host, which is where League and your browser are`
+		)
 
 	const originalShutdown = ctx.shutdown
 	ctx.shutdown = async () => {

@@ -83,9 +83,48 @@ const normalCdf = (z: number): number => {
 	return z > 0 ? 1 - p : p
 }
 
+/**
+ * Two-sided 97.5% quantile of Student's t with `df` degrees of freedom, Cornish-Fisher
+ * expansion around z = 1.95996 (Abramowitz & Stegun 26.7.5).
+ *
+ * The slope's standard error is ESTIMATED from the same residuals it is testing, so the
+ * sampling distribution is t with n-2 df, not normal. At the sample sizes this app actually
+ * sees that is not a rounding detail: with 20 games, df = 18, t = 2.101 against z = 1.960 —
+ * a 95% interval built on z is 7% too narrow, and this number is the switch that decides
+ * whether the app is allowed to say "rising" or "falling" at all. Erring narrow here means
+ * claiming a direction that the data does not support, which is the one mistake §7.3 says
+ * never to make.
+ *
+ * Accuracy against the published table: df=5 -> 2.5703 (exact 2.5706), df=10 -> 2.2281 (2.2281),
+ * df=18 -> 2.1009 (2.1009), df=30 -> 2.0423 (2.0423). Worst case in the range this app uses is
+ * df=3, 3.1786 vs 3.1824 — 0.1% narrow, far below the effect of the independence assumption.
+ */
+export const tCrit975 = (df: number): number => {
+	if (df <= 0) return Infinity
+	if (df === 1) return 12.7062
+	if (df === 2) return 4.30265
+	const z = 1.959963985
+	const z2 = z * z
+	const z3 = z2 * z
+	const z5 = z3 * z2
+	const z7 = z5 * z2
+	const z9 = z7 * z2
+	return (
+		z +
+		(z3 + z) / (4 * df) +
+		(5 * z5 + 16 * z3 + 3 * z) / (96 * df * df) +
+		(3 * z7 + 19 * z5 + 17 * z3 - 15 * z) / (384 * df ** 3) +
+		(79 * z9 + 776 * z7 + 1482 * z5 - 1920 * z3 - 945 * z) / (92160 * df ** 4)
+	)
+}
+
 export interface Slope {
 	perGame: number
 	ci95: [number, number]
+	/**
+	 * Two-sided p, from the normal approximation to the t statistic. Reported for context
+	 * only — `significant` is decided by the t-based CI above, never by this.
+	 */
 	pValue: number
 	/** True only when the CI excludes zero — the only case where direction may be claimed. */
 	significant: boolean
@@ -110,9 +149,16 @@ export const linearSlope = (values: number[]): Slope | null => {
 	for (let i = 0; i < n; i++) sse += (values[i]! - (my + b * (xs[i]! - mx))) ** 2
 	const se = Math.sqrt(sse / (n - 2) / sxx)
 	if (!Number.isFinite(se) || se === 0)
-		return { perGame: b, ci95: [b, b], pValue: 0, significant: true }
-	const lo = b - 1.96 * se
-	const hi = b + 1.96 * se
+		/*
+		 * Zero residual variance. A noiseless rising line does genuinely exclude zero, but a
+		 * PERFECTLY FLAT series also lands here with b = 0 — and the old code called that
+		 * `significant: true`, i.e. reported a claimable direction on a line that does not
+		 * move at all. Significance here is exactly "the slope is not zero".
+		 */
+		return { perGame: b, ci95: [b, b], pValue: b === 0 ? 1 : 0, significant: b !== 0 }
+	const t = tCrit975(n - 2)
+	const lo = b - t * se
+	const hi = b + t * se
 	return {
 		perGame: b,
 		ci95: [lo, hi],

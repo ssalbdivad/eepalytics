@@ -60,6 +60,9 @@ export const runTrendReviewJob = async (ctx: JobContext): Promise<JobOutcome> =>
 		mean: d.mean,
 		ci95: d.ci95,
 		trendable: d.trendable,
+		// `trendable` licenses the LEVEL; only this licenses a direction (§7.3).
+		slopeSignificant: d.slope === null ? null : d.slope.significant,
+		slopePerGame: d.slope === null ? null : d.slope.perGame,
 		note: d.note
 	}))
 

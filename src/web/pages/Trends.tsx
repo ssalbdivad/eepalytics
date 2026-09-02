@@ -176,8 +176,24 @@ export const Trends = ({ eventTick }: TrendsProps) => {
 										{fmtNum(s.mean, 2)}
 										{s.ci95 !== null ? ` ± ${fmtNum(s.ci95, 2)}` : ""}
 									</span>
-									<span className={cls("chip", s.trendable ? "gold" : "muted")}>
-										{s.trendable ? "trend" : "noise"}
+									<span
+										className={cls(
+											"chip",
+											!s.trendable ? "muted"
+											: s.slopeSignificant ? "gold"
+											: "muted"
+										)}
+										title={
+											!s.trendable ?
+												"The spread swamps the level — points only."
+											: s.slopeSignificant ?
+												"The level is stable AND the slope's own 95% CI excludes zero."
+											:	"The level is stable enough to quote, but the slope's 95% CI contains zero — no direction can be claimed."
+										}
+									>
+										{!s.trendable ? "noise"
+										: s.slopeSignificant ? "trend"
+										: "level"}
 									</span>
 								</div>
 							))}
@@ -187,7 +203,11 @@ export const Trends = ({ eventTick }: TrendsProps) => {
 					{trendable.length > 0 ?
 						<>
 							<div className="section-title">
-								Movement worth reading <span className="rule" />
+								Stable enough to read <span className="rule" />
+								<span className="faint" style={{ textTransform: "none", letterSpacing: 0 }}>
+									the level is quotable — a line is drawn only where the slope's own 95% CI
+									excludes zero
+								</span>
 							</div>
 							<div className="trend-grid" style={{ marginBottom: 20 }}>
 								{trendable.map(s => (

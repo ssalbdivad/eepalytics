@@ -176,9 +176,16 @@ export interface GameUpsert {
 /**
  * Insert or update a game.
  *
- * Deliberately does NOT clobber `analysisVersion` / `reviewVersion` / blob paths when the
- * caller omits them — re-ingesting a game must not silently invalidate work already done on
- * it. Pass the field explicitly to change it.
+ * Deliberately does NOT clobber `analysisVersion` / `reviewVersion` / blob paths / the replay
+ * state when the caller omits them — re-ingesting a game must not silently invalidate work
+ * already done on it. Pass the field explicitly to change it.
+ *
+ * `replayState` in particular: NO caller passes it (the download path owns it, through
+ * `setGameReplayState`). Binding it as a plain `excluded.replayState` therefore reset every
+ * re-ingested game to `'absent'` while `replayPath` — which IS coalesced — survived, leaving a
+ * self-contradictory row that claimed no replay existed while naming the `.rofl` on disk. That
+ * defeated `needsReplay()` (re-queuing a download every 30 s for a game already downloaded) and
+ * hid the replay from `gamesForRetentionPrune`, which only ever sees `'available'` rows.
  */
 export const upsertGame = (g: GameUpsert): void => {
 	const now = Date.now()
@@ -228,7 +235,7 @@ export const upsertGame = (g: GameUpsert): void => {
 		timelineBlob = coalesce(excluded.timelineBlob, game.timelineBlob),
 		liveBlob = coalesce(excluded.liveBlob, game.liveBlob),
 		replayPath = coalesce(excluded.replayPath, game.replayPath),
-		replayState = excluded.replayState,
+		replayState = coalesce(@replayStatePatch, game.replayState),
 		contentHash = excluded.contentHash,
 		updatedMs = excluded.updatedMs`).run({
 		gameId: g.gameId,
@@ -263,6 +270,8 @@ export const upsertGame = (g: GameUpsert): void => {
 		liveBlob: g.liveBlob ?? null,
 		replayPath: g.replayPath ?? null,
 		replayState: g.replayState ?? "absent",
+		// NULL on an update means "leave whatever the download/prune path last wrote".
+		replayStatePatch: g.replayState ?? null,
 		contentHash: g.contentHash ?? "",
 		analysisVersion: g.analysisVersion ?? 0,
 		reviewVersion: g.reviewVersion ?? 0,
@@ -1189,6 +1198,26 @@ export const reclaimExpiredLeases = (nowMs: number = Date.now()): number =>
 		`UPDATE job SET state = 'queued', leaseUntilMs = NULL,
 			lastError = coalesce(lastError, 'lease expired; worker vanished'), updatedMs = @now
 		 WHERE state = 'leased' AND leaseUntilMs IS NOT NULL AND leaseUntilMs <= @now`
+	).run({ now: nowMs }).changes as number
+
+/**
+ * Return EVERY leased job, regardless of how much lease is left.
+ *
+ * `reclaimExpiredLeases` is the right rule while the daemon is running — a lease is what stops
+ * two live workers from taking the same job. It is the wrong rule at boot: a daemon that has
+ * just started demonstrably holds nothing, so a `leased` row is by definition the residue of a
+ * process that died, and waiting out the remaining lease (up to `JOB_LEASE_MS`, 10 minutes)
+ * strands real work while the queue screen shows it as running.
+ *
+ * Only `queue.adoptOrphanedLeases()` should call this, and only once it has established that
+ * no other daemon is alive on this database.
+ */
+export const reclaimAllLeases = (nowMs: number = Date.now()): number =>
+	prep(
+		`UPDATE job SET state = 'queued', leaseUntilMs = NULL,
+			lastError = coalesce(lastError, 'daemon crashed while holding this job'),
+			updatedMs = @now
+		 WHERE state = 'leased'`
 	).run({ now: nowMs }).changes as number
 
 /**

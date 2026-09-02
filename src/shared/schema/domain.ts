@@ -413,6 +413,13 @@ export const APP_EVENT_KINDS = [
  * slope to mean anything; when `trendable` is false the UI must render the points WITHOUT a
  * trend line and `note` explains why ("n=8, spread swamps the slope"). `ci95` is null when
  * the sample is too small to compute one.
+ *
+ * `trendable` alone is NOT permission to draw a direction. It says the LEVEL is stable enough
+ * to quote. `slopeSignificant` is the separate, stricter switch: it is true only when the
+ * least-squares slope's own 95% CI excludes zero, which `.research/analytics.md` §7.3 makes
+ * the precondition for ever saying "improving" or "declining" — and a drawn trend line is
+ * exactly that claim in picture form. `null`/absent means "not computed", which the UI must
+ * treat as "do not draw a line".
  */
 export const TrendSeries = type({
 	key: "string",
@@ -421,6 +428,8 @@ export const TrendSeries = type({
 	mean: "number",
 	ci95: "number|null",
 	trendable: "boolean",
+	"slopeSignificant?": "boolean|null",
+	"slopePerGame?": "number|null",
 	note: "string"
 })
 export type TrendSeries = typeof TrendSeries.infer

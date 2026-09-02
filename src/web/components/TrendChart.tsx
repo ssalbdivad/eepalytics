@@ -3,14 +3,23 @@
  *
  * `analytics.md` §7 is blunt about this: at n≈20 most per-game metrics are too noisy for a
  * slope to mean anything (gold-diff@10 has a 95% CI of ±285g around a mean of −224g). So the
- * series itself carries `trendable`, and this component obeys it:
+ * series carries TWO switches and this component obeys both:
  *
- *   trendable === true   → scatter + mean line + 95% CI band + a least-squares fit line
- *   trendable === false  → scatter + mean line + 95% CI band, NO fit line, whole card
- *                          de-emphasised, and `note` printed inline saying why
+ *   trendable === true          → the LEVEL is stable enough to quote: mean line + 95% CI band
+ *   slopeSignificant === true   → and only then, the least-squares fit line
+ *   either one false            → scatter + mean + CI band, NO fit line, card de-emphasised,
+ *                                 and `note` printed inline saying why
  *
- * There is no prop to override that. Drawing a confident line through noise is the specific
- * failure this component exists to prevent.
+ * The second switch is the one that used to be missing, and it was the app's biggest overclaim:
+ * §7.3 says never claim "improving"/"declining" unless the slope's own 95% CI excludes zero,
+ * and a bold green line through the points IS that claim. Measured on the user's real 20-game
+ * window: 19 series came back trendable and got a fit line, and exactly 2 of them
+ * (`medianCentroidDist`, `p90OverExtension`) have a slope CI that excludes zero. The other 17
+ * were confident green directions drawn through noise.
+ *
+ * A missing/`null` `slopeSignificant` means "not computed", and is treated as "do not draw".
+ * There is no prop to override any of this. Drawing a confident line through noise is the
+ * specific failure this component exists to prevent.
  */
 
 import type { TrendSeries } from "../../shared/schema/domain.ts"
@@ -39,7 +48,7 @@ const fmtNum = (v: number): string => {
 	return Math.round(v).toLocaleString()
 }
 
-/** Ordinary least squares over the point index. Only ever drawn when `trendable`. */
+/** Ordinary least squares over the point index. Only ever drawn when the slope CI excludes zero. */
 const ols = (ys: number[]): { a: number; b: number } => {
 	const n = ys.length
 	let sx = 0
@@ -104,7 +113,12 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 	const yAt = (v: number): number => PAD_T + (1 - (v - lo) / (hi - lo)) * (H - PAD_T - PAD_B)
 
 	const meanY = yAt(series.mean)
-	const fit = series.trendable && points.length >= 3 ? ols(ys) : null
+	/*
+	 * `trendable` is permission to quote the LEVEL. Drawing the line needs the stricter
+	 * `slopeSignificant`, which is true only when the slope's own 95% CI excludes zero.
+	 */
+	const directionClaimable = series.trendable && series.slopeSignificant === true
+	const fit = directionClaimable && points.length >= 3 ? ols(ys) : null
 
 	return (
 		<div className={`csk-trend${series.trendable ? "" : " csk-trend--untrendable"}`}>
@@ -123,7 +137,9 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 				className="csk-trend__svg"
 				viewBox={`0 0 ${W} ${H}`}
 				role="img"
-				aria-label={`${series.label}: ${points.length} games, mean ${fmtNum(series.mean)}${series.trendable ? "" : ", not trendable"}`}
+				aria-label={`${series.label}: ${points.length} games, mean ${fmtNum(series.mean)}${
+					series.trendable ? "" : ", not trendable"
+				}${series.trendable && !directionClaimable ? ", level only — no direction can be claimed" : ""}`}
 			>
 				{/* y axis ticks: just the domain ends and the mean, no invented gridlines */}
 				{[hi - padY, lo + padY].map((v, i) => (
@@ -215,9 +231,24 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 			</svg>
 
 			{series.note && (
-				<div className={`csk-trend__note${series.trendable ? "" : " csk-trend__note--warn"}`}>
-					<b>{series.trendable ? "note" : "not trendable"}</b>
+				<div
+					className={`csk-trend__note${directionClaimable ? "" : " csk-trend__note--warn"}`}
+				>
+					<b>
+						{!series.trendable ? "not trendable"
+						: directionClaimable ? "direction"
+						: "level only"}
+					</b>
 					<span>{series.note}</span>
+				</div>
+			)}
+			{series.trendable && !directionClaimable && !series.note && (
+				<div className="csk-trend__note csk-trend__note--warn">
+					<b>level only</b>
+					<span>
+						The mean over these {points.length} games is worth quoting, but the slope's own 95%
+						CI contains zero — no direction can be claimed, so no trend line is drawn.
+					</span>
 				</div>
 			)}
 			{!series.note && !series.trendable && (
