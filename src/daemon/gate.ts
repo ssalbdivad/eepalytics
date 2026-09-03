@@ -40,12 +40,30 @@ let lastPhase: string | null = null
  * Fed by the supervisor on every phase observation. G5 needs *continuous* idleness, which
  * cannot be read from a single sample — a user who dodges a queue is briefly back in `Lobby`
  * and must not have their client hijacked in that gap.
+ *
+ * THE CLOCK RESTARTS ON LEAVING IDLE, NOT ON EVERY CHANGE. `IDLE_PHASES` has two members,
+ * `None` and `Lobby`, and a client sitting untouched moves between them — creating a lobby,
+ * backing out of one. Both are idle; neither is the user starting something. Worse, two callers
+ * feed this (the supervisor on its poll, and `readGateState` on every gate evaluation) and they
+ * do not always sample the same instant, so the pair alternated `None`/`Lobby` and reset each
+ * other forever.
+ *
+ * The effect was total: G5 reported "only idle for 0s of the required 120s" indefinitely, so the
+ * capture gate could never open and replay capture had never once run. Continuity is about
+ * whether the client left idle — not about which idle phase it is in.
  */
 export const notePhase = (phase: string | null, nowMs = Date.now()): void => {
 	if (phase === lastPhase) return
 	lastPhase = phase
-	idleSinceMs = isIdlePhase(phase) ? nowMs : null
-	log.debug("phase observed", { phase, idle: idleSinceMs !== null })
+	if (!isIdlePhase(phase)) {
+		// Any non-idle phase — champ select, a game, an unreadable client — voids the streak.
+		idleSinceMs = null
+	} else if (idleSinceMs === null) {
+		// Entering idle from anywhere else starts the clock.
+		idleSinceMs = nowMs
+	}
+	// Already idle and still idle: keep the existing start time. This is the fix.
+	log.debug("phase observed", { phase, idleForMs: idleForMs(nowMs) })
 }
 
 export const currentPhase = (): string | null => lastPhase
@@ -167,7 +185,8 @@ export const evaluateGate = (s: GateState): GateVerdict => {
  */
 export const readGateState = async (
 	settings: Settings,
-	roflPath: string | null
+	roflPath: string | null,
+	exceptJobId?: number
 ): Promise<GateState> => {
 	let snapshot = {
 		phase: null as string | null,
@@ -193,7 +212,7 @@ export const readGateState = async (
 			captureEnabled: settings.captureEnabled,
 			idleGraceMs: settings.idleGraceMs
 		},
-		otherIntrusiveRunning: intrusiveJobRunning(),
+		otherIntrusiveRunning: intrusiveJobRunning(exceptJobId),
 		roflOnDisk: roflExistsOnDisk(roflPath),
 		reachable: snapshot.reachable
 	}
@@ -206,10 +225,15 @@ export const readGateState = async (
  * `null` for a generic "could we capture anything right now" check — G9 will fail, which is
  * the honest answer when we do not yet know which game we are asking about.
  */
+/**
+ * `exceptJobId` excludes the caller's own lease from G8. A job re-checking the gate while it
+ * runs must not count itself as the capture that is already holding the client.
+ */
 export const canRunIntrusive = async (
 	settings: Settings,
-	roflPath: string | null
-): Promise<GateVerdict> => evaluateGate(await readGateState(settings, roflPath))
+	roflPath: string | null,
+	exceptJobId?: number
+): Promise<GateVerdict> => evaluateGate(await readGateState(settings, roflPath, exceptJobId))
 
 /* =============================================================== aborts */
 

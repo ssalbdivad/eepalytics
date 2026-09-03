@@ -21,10 +21,30 @@ import {
 	REVIEW_VERSION
 } from "../../shared/constants.ts"
 import { HealthResponse } from "../../shared/schema/api.ts"
+import type { VanguardReport } from "../../shared/schema/api.ts"
+import { probeVanguard } from "../../lcu/vanguard.ts"
 import { APP_VERSION, OFFLINE_STATUS } from "../deps.ts"
 import type { CaptureGate, DaemonStatus, ServerDeps } from "../deps.ts"
 import { subscriberCount } from "../events.ts"
 import { send } from "../respond.ts"
+
+/**
+ * Vanguard state, cached briefly.
+ *
+ * The status banner polls health every few seconds, and each probe is two `sc.exe` round trips
+ * across WSL interop. Service state does not change second to second, and a stale-by-15s answer
+ * is indistinguishable from a fresh one to the person reading it.
+ */
+const VANGUARD_TTL_MS = 15_000
+let vanguardCache: { atMs: number; report: VanguardReport } | null = null
+
+const vanguardReport = async (): Promise<VanguardReport> => {
+	const now = Date.now()
+	if (vanguardCache && now - vanguardCache.atMs < VANGUARD_TTL_MS) return vanguardCache.report
+	const report = await probeVanguard()
+	vanguardCache = { atMs: now, report }
+	return report
+}
 
 /** The extra, undeclared half of the health payload. Declared here so it stays typed. */
 interface HealthExtras {
@@ -101,7 +121,12 @@ export const createHealthRoute = (deps: ServerDeps): Hono => {
 			uptimeMs: status.startedMs === undefined ? null : Date.now() - status.startedMs,
 			pid: process.pid,
 			capture,
-			sseClients: subscriberCount()
+			sseClients: subscriberCount(),
+			// Only when the client is unreachable. "The League client is not running" is true
+			// and useless; on Windows the usual cause is Vanguard, and asking Windows is cheap
+			// exactly when it matters. Probing on every healthy poll would be a Windows round
+			// trip several times a minute for nothing.
+			...(status.lcu === "connected" ? {} : { vanguard: await vanguardReport() })
 		} satisfies HealthResponse & HealthExtras
 
 		return send(c, HealthResponse, body, "GET /api/health")

@@ -47,9 +47,11 @@ const runReplayCapture = async (ctx: JobContext): Promise<JobOutcome> => {
 		gate: {
 			allowIntrusive: async (gameId: number) => {
 				const game = getGame(gameId)
+				// Exclude our own lease: this job IS the intrusive job holding the client.
 				const verdict = await canRunIntrusive(
 					getSettings(),
-					game?.replayPath ?? roflPathFor(gameId, game?.platformId)
+					game?.replayPath ?? roflPathFor(gameId, game?.platformId),
+					ctx.job.id
 				)
 				return { allowed: verdict.ok, reason: verdict.reason }
 			}

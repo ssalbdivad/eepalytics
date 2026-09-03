@@ -10,6 +10,7 @@ import { href, useNow, useResource, useRoute, useScrollReset } from "./lib/hooks
 import { reconnectSse, sseLastEventId, useSse } from "./lib/sse.ts"
 import type { SseStatus } from "./lib/sse.ts"
 import { cls } from "./lib/format.ts"
+import { ClientOffline } from "./components/ClientOffline.tsx"
 import { GameList } from "./pages/GameList.tsx"
 import { GameReview } from "./pages/GameReview.tsx"
 import { Replays } from "./pages/Replays.tsx"
@@ -151,9 +152,10 @@ export const App = () => {
 							<span
 								className={cls("status-pill", h?.lcu === "connected" ? "ok" : "warn")}
 								title={
-									h?.lcu === "connected" ?
-										`League client connected via ${h.bridge}`
-									:	"League client is closed — finished games can't be ingested right now"
+									h?.lcu === "connected" ? `League client connected via ${h.bridge}`
+									: h?.vanguard?.problems.length ?
+										h.vanguard.problems.join("\n")
+									:	"League client is closed — see the note on the Games screen"
 								}
 							>
 								<span className="dot" /> LCU {h?.lcu ?? "…"}
@@ -172,6 +174,16 @@ export const App = () => {
 			</header>
 
 			<ErrorBoundary resetKey={routeKey}>
+				{/*
+				 * Shown once, above whatever page is open. A closed client is the single most
+				 * common "why is nothing happening", and the answer is usually Vanguard rather
+				 * than anything this app did.
+				 */}
+				{h && h.lcu !== "connected" && route.name !== "settings" && (
+					<div className="page" style={{ paddingBottom: 0 }}>
+						<ClientOffline health={h} />
+					</div>
+				)}
 				{route.name === "games" ?
 					<GameList health={h} eventTick={eventTick} />
 				: route.name === "game" ?

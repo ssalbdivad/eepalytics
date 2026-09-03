@@ -46,6 +46,23 @@ export { parseOrThrow, parseOrNull, SchemaError } from "./lcu.ts"
  * bridge may have failed over to curl, the daemon may be mid-restart. Each field has a
  * defined "unavailable" value rather than going missing.
  */
+/**
+ * Vanguard's service state, as Windows reports it.
+ *
+ * "The League client is not running" is true and useless. On Windows the usual cause is Riot's
+ * kernel anti-cheat, which must be up before League will start and whose failures are silent.
+ * `problems` is empty when nothing is provably wrong — which is NOT the same as healthy, since
+ * a pending post-update reboot leaves both services reporting RUNNING.
+ */
+export const VanguardReport = type({
+	vgk: "'running'|'stopped'|'not-installed'|'unknown'",
+	vgc: "'running'|'stopped'|'not-installed'|'unknown'",
+	probed: "boolean",
+	problems: "string[]",
+	advice: "string[]"
+})
+export type VanguardReport = typeof VanguardReport.infer
+
 export const HealthResponse = type({
 	/** `ok` = workers running. `starting` = booting. `degraded` = running without the LCU. */
 	daemon: "'ok'|'starting'|'degraded'|'stopped'",
@@ -62,7 +79,12 @@ export const HealthResponse = type({
 	"gameCount?": "number",
 	"lastSyncMs?": "number|null",
 	/** Non-fatal problems worth surfacing: "replay dir not found", "ffmpeg missing". */
-	"warnings?": "string[]"
+	"warnings?": "string[]",
+	/**
+	 * Why the client is unreachable, when it is. Absent while the LCU is connected — there is
+	 * nothing to diagnose and probing costs a Windows round trip.
+	 */
+	"vanguard?": VanguardReport
 })
 export type HealthResponse = typeof HealthResponse.infer
 

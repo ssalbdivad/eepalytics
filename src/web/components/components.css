@@ -1314,3 +1314,82 @@ button.csk-chip:focus-visible,
 	font-size: 11px;
 	margin: 3px 0;
 }
+
+/* ======================================================== client offline */
+/*
+ * Shown when the LCU is unreachable. Warn-toned, not error-toned: a closed client is a normal
+ * state for an app that runs in the background, and most of the product still works without it.
+ */
+
+.csk-offline {
+	border: 1px solid var(--warn);
+	border-left-width: 3px;
+	border-radius: var(--radius);
+	background: rgba(232, 177, 61, 0.06);
+	padding: 13px 15px;
+	margin-bottom: 14px;
+	font-size: 12.5px;
+	line-height: 1.6;
+	color: var(--text-2);
+}
+.csk-offline--compact {
+	padding: 10px 12px;
+	font-size: 12px;
+}
+.csk-offline__head {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+}
+.csk-offline__head .icon {
+	color: var(--warn);
+	font-size: 15px;
+	line-height: 1.3;
+}
+.csk-offline__head strong {
+	color: var(--text);
+}
+
+.csk-offline__vg {
+	margin-top: 12px;
+	padding-top: 11px;
+	border-top: 1px solid var(--line-soft);
+}
+.csk-offline__services {
+	display: grid;
+	grid-template-columns: auto auto;
+	gap: 4px 10px;
+	justify-content: start;
+	align-items: center;
+	font-size: 11.5px;
+	margin-bottom: 10px;
+}
+.csk-offline__services code {
+	font-family: var(--mono);
+	font-size: 11px;
+	padding: 1px 7px;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	background: var(--panel-2);
+}
+.csk-offline__services code.ok {
+	color: var(--win);
+	border-color: rgba(51, 185, 133, 0.4);
+}
+.csk-offline__services code.bad {
+	color: var(--loss);
+	border-color: rgba(224, 82, 95, 0.5);
+}
+
+.csk-offline__problems {
+	margin: 0 0 10px;
+	padding-left: 18px;
+	color: var(--loss);
+}
+.csk-offline__advice {
+	margin: 0;
+	padding-left: 18px;
+}
+.csk-offline__advice li {
+	margin: 4px 0;
+}

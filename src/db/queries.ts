@@ -1309,11 +1309,20 @@ export const queueDepth = (): number =>
 	)
 
 /** Whether an intrusive job currently holds a lease — gate rule G8. */
-export const intrusiveJobRunning = (): boolean =>
+/**
+ * Is some OTHER intrusive job holding the client?
+ *
+ * `exceptJobId` is load-bearing, not a convenience. The worker leases a capture job before
+ * running it, and the handler then re-checks the gate mid-flight — so without the exclusion the
+ * job sees its own lease, fails G8 with "another capture already holds the client", and settles
+ * having done nothing. There was no other capture; there never is. Replay capture could not
+ * complete a single run until this took an argument.
+ */
+export const intrusiveJobRunning = (exceptJobId?: number): boolean =>
 	plain(
 		prep(
-			"SELECT id FROM job WHERE state = 'leased' AND intrusive = 1 LIMIT 1"
-		).get()
+			"SELECT id FROM job WHERE state = 'leased' AND intrusive = 1 AND id IS NOT ? LIMIT 1"
+		).get(exceptJobId ?? null)
 	) !== null
 
 /** Housekeeping: forget terminal jobs older than `beforeMs`. */
