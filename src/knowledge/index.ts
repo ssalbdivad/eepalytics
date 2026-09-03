@@ -42,7 +42,10 @@ export interface ChampionNote {
  */
 export const championKey = (name: string): string => name.toLowerCase().replace(/[^a-z]/g, "")
 
-const HEADER_KEYS = ["patch", "sourcedAt", "source"] as const
+// `sources` is accepted as an alias for `source`: a research pass that cites three pages
+// naturally reaches for the plural, and rejecting a well-sourced note over an "s" would throw
+// away good work for nothing.
+const HEADER_KEYS = ["patch", "sourcedAt", "source", "sources"] as const
 
 const parseNote = (key: string, raw: string, isDefault: boolean): ChampionNote => {
 	const split = raw.indexOf("\n---")
@@ -57,7 +60,7 @@ const parseNote = (key: string, raw: string, isDefault: boolean): ChampionNote =
 		key,
 		patch: header.patch ?? "durable",
 		sourcedAt: header.sourcedAt ?? "unknown",
-		source: header.source ?? "unknown",
+		source: header.source ?? header.sources ?? "unknown",
 		text,
 		isDefault
 	}

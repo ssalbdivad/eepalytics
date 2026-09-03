@@ -38,6 +38,7 @@ import { gamePrompt } from "../../review/prompt.ts"
 import { runCoach } from "../../review/claude.ts"
 import { publish } from "../bus.ts"
 import { loadCorpus, loadTimeline } from "../corpus.ts"
+import { refreshChampionContextInBackground } from "../../knowledge/research.ts"
 import { buildGameDigest } from "../digest.ts"
 import { allowlistOf } from "../../review/digest-contract.ts"
 import { enqueueMediaGenerate } from "../queue.ts"
@@ -73,6 +74,13 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 				untilMs: Date.now() + 5 * 60_000
 			}
 		}
+
+	/* ---- champion context, at most once per champion per patch ---- */
+	// NOT awaited. Research is web search plus a model call — minutes, not seconds — and a
+	// review must not hold a queue worker on a network round trip, nor fail because a source
+	// site was down. This review reads whatever notes are on disk; the refreshed ones are there
+	// for the next one, so the notes converge within a single review of a patch bump.
+	refreshChampionContextInBackground(game.championName)
 
 	/* ---- the exact bytes the coach will see ---- */
 	const corpus = loadCorpus(settings.gamesForTrends, { excludeGameId: gameId })
