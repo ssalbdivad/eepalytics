@@ -99,7 +99,7 @@ const GAME_COLUMNS = `gameId, platformId, queueId, gameMode, gameType, mapId, ga
 	gameCreationMs, gameDurationSec, endedAtMs, participantId, teamId, championId, championName,
 	role, roleConfidence, win, kills, deaths, assists, cs, jungleCs, gold, visionScore,
 	champLevel, damageToChampions, matchBlob, timelineBlob, liveBlob, replayPath, replayState,
-	ingestedAtMs, contentHash, analysisVersion, reviewVersion, updatedMs`
+	ingestedAtMs, contentHash, analysisVersion, reviewVersion, updatedMs, gradeScore, gradeRank`
 
 const rowToGame = (row: Row): Game => ({
 	gameId: num(row.gameId),
@@ -130,6 +130,8 @@ const rowToGame = (row: Row): Game => ({
 	replayState: str(row.replayState, "absent") as Game["replayState"],
 	replayPath: nullableStr(row.replayPath),
 	hasTimeline: row.timelineBlob !== null && row.timelineBlob !== undefined,
+	gradeScore: nullableNum(row.gradeScore),
+	gradeRank: nullableStr(row.gradeRank),
 	analysisVersion: num(row.analysisVersion),
 	reviewVersion: num(row.reviewVersion),
 	ingestedAtMs: num(row.ingestedAtMs)
@@ -711,6 +713,11 @@ const rowToFeedbackItem = (row: Row): FeedbackItem => ({
 	gameId: nullableNum(row.gameId),
 	title: str(row.title),
 	body: str(row.body),
+	fix: str(row.fix),
+	impact: str(row.impact, "medium") as FeedbackItem["impact"],
+	actionability: str(row.actionability, "medium") as FeedbackItem["actionability"],
+	confidence: str(row.confidence, "medium") as FeedbackItem["confidence"],
+	priority: num(row.priority),
 	severity: str(row.severity, "info") as FeedbackItem["severity"],
 	category: nullableStr(row.category) ?? undefined,
 	momentIds: json<string[]>(row.momentIdsJson, []),
@@ -787,10 +794,12 @@ export const insertReview = (review: ReviewInsert): string => {
 		prep("DELETE FROM feedback_item WHERE reviewId = ?").run(review.id)
 		const insert = prep(`INSERT INTO feedback_item (
 			id, reviewId, gameId, ord, title, body, severity, category, momentIdsJson,
-			mediaIdsJson, metricKeysJson, tSec, warningsJson
+			mediaIdsJson, metricKeysJson, tSec, warningsJson, fix,
+			impact, actionability, confidence, priority
 		) VALUES (
 			@id, @reviewId, @gameId, @ord, @title, @body, @severity, @category,
-			@momentIdsJson, @mediaIdsJson, @metricKeysJson, @tSec, @warningsJson
+			@momentIdsJson, @mediaIdsJson, @metricKeysJson, @tSec, @warningsJson, @fix,
+			@impact, @actionability, @confidence, @priority
 		)`)
 		review.items.forEach((item, ord) =>
 			insert.run({
@@ -806,7 +815,12 @@ export const insertReview = (review: ReviewInsert): string => {
 				mediaIdsJson: JSON.stringify(item.mediaIds ?? []),
 				metricKeysJson: JSON.stringify(item.metricKeys ?? []),
 				tSec: item.tSec ?? null,
-				warningsJson: JSON.stringify(item.warnings ?? [])
+				warningsJson: JSON.stringify(item.warnings ?? []),
+				fix: item.fix ?? "",
+				impact: item.impact ?? "medium",
+				actionability: item.actionability ?? "medium",
+				confidence: item.confidence ?? "medium",
+				priority: item.priority ?? 0
 			})
 		)
 	})
@@ -1324,6 +1338,35 @@ export const intrusiveJobRunning = (exceptJobId?: number): boolean =>
 			"SELECT id FROM job WHERE state = 'leased' AND intrusive = 1 AND id IS NOT ? LIMIT 1"
 		).get(exceptJobId ?? null)
 	) !== null
+
+/**
+ * Store a computed grade. Written by `analysis-run` alongside the metrics it was derived from,
+ * so the two never disagree about which analysis produced which grade.
+ */
+export const setGameGrade = (
+	gameId: number,
+	grade: { score: number; rank: string } | null
+): void => {
+	prep("UPDATE game SET gradeScore = ?, gradeRank = ?, updatedMs = ? WHERE gameId = ?").run(
+		grade?.score ?? null,
+		grade?.rank ?? null,
+		Date.now(),
+		gameId
+	)
+}
+
+/** Recent grades, newest first, for the rolling average and the sparkline. Ungraded games skipped. */
+export const recentGrades = (limit = 20): { gameId: number; score: number; rank: string }[] =>
+	prep(
+		`SELECT gameId, gradeScore, gradeRank FROM game
+		 WHERE gradeScore IS NOT NULL ORDER BY gameCreationMs DESC LIMIT ?`
+	)
+		.all(limit)
+		.map(r => ({
+			gameId: num((r as Row).gameId),
+			score: num((r as Row).gradeScore),
+			rank: str((r as Row).gradeRank)
+		}))
 
 /** Housekeeping: forget terminal jobs older than `beforeMs`. */
 export const pruneJobs = (beforeMs: number): number =>

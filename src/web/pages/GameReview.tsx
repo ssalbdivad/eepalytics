@@ -35,6 +35,7 @@ import {
 	roleLabel
 } from "../lib/format.ts"
 import { ChampIcon } from "../components/ChampIcon.tsx"
+import { GradeBadge } from "../components/GradeBadge.tsx"
 import { CoachChat } from "../components/CoachChat.tsx"
 import { FeedbackCard } from "../components/FeedbackCard.tsx"
 import { GameTimeline } from "../components/GameTimeline.tsx"
@@ -68,8 +69,20 @@ export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 	const media = d?.media ?? []
 	const items = useMemo(
 		() =>
+			/*
+			 * Sort by the priority the daemon computed, not by severity.
+			 *
+			 * `priority` folds impact, actionability and confidence together in one place
+			 * (`src/review/rank.ts`), so the API, this list and anything downstream agree on the
+			 * order. Severity is now a CONSEQUENCE of that ranking — a low-confidence read is
+			 * demoted to info — so sorting by it again here would fight the ranker.
+			 *
+			 * Older reviews have priority 0 across the board; they fall back to the previous
+			 * severity ordering rather than collapsing into arbitrary order.
+			 */
 			[...(d?.review?.items ?? [])].sort(
 				(a, b) =>
+					(b.priority ?? 0) - (a.priority ?? 0) ||
 					SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] ||
 					(a.tSec ?? 0) - (b.tSec ?? 0)
 			),
@@ -218,6 +231,13 @@ export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 				</div>
 
 				<div className="score">
+					{/* First in the row: how the game WENT, before the stats saying what happened. */}
+					<div className="stat">
+						<div className="v">
+							<GradeBadge score={g.gradeScore} rank={g.gradeRank} size="lg" />
+						</div>
+						<div className="k">vs your own form</div>
+					</div>
 					<div className="stat">
 						<div className="v">{fmtKda(g.kills, g.deaths, g.assists)}</div>
 						<div className="k">{fmtKdaRatio(g.kills, g.deaths, g.assists)} kda</div>

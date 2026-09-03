@@ -1393,3 +1393,163 @@ button.csk-chip:focus-visible,
 .csk-offline__advice li {
 	margin: 4px 0;
 }
+
+/* ---- the fix: the one line that has to survive skimming ---- */
+
+.csk-fb__fix {
+	display: flex;
+	gap: 9px;
+	align-items: baseline;
+	margin: 9px 0 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--text);
+}
+.csk-fb__fix-tag {
+	flex: none;
+	font-size: 9.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	font-weight: 700;
+	color: var(--gold);
+	border: 1px solid var(--gold-dim);
+	border-radius: 3px;
+	padding: 2px 5px;
+	position: relative;
+	top: -1px;
+}
+
+/* ---- elaboration, collapsed ---- */
+
+.csk-fb__more {
+	margin-top: 9px;
+}
+.csk-fb__more > summary {
+	cursor: pointer;
+	list-style: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 11px;
+	color: var(--dim);
+	user-select: none;
+	padding: 2px 0;
+}
+.csk-fb__more > summary::-webkit-details-marker {
+	display: none;
+}
+.csk-fb__more > summary::before {
+	content: "▸";
+	font-size: 9px;
+	transition: transform 0.12s ease;
+	display: inline-block;
+}
+.csk-fb__more[open] > summary::before {
+	transform: rotate(90deg);
+}
+.csk-fb__more > summary:hover {
+	color: var(--gold);
+}
+.csk-fb__more .csk-fb__body {
+	margin: 7px 0 0;
+	padding-left: 13px;
+	border-left: 1px solid var(--line);
+	color: var(--text-2);
+	font-size: 12.5px;
+	line-height: 1.62;
+}
+@media (prefers-reduced-motion: reduce) {
+	.csk-fb__more > summary::before { transition: none; }
+}
+
+/* ---- the ranking axes ---- */
+
+.csk-fb__axes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	margin-top: 9px;
+}
+.csk-axis {
+	font-size: 9.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	padding: 2px 7px;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	background: var(--panel-2);
+	color: var(--dim);
+	cursor: help;
+	white-space: nowrap;
+}
+.csk-axis--high {
+	color: var(--text);
+	border-color: var(--gold-dim);
+}
+.csk-axis--medium {
+	color: var(--text-2);
+}
+.csk-axis--low {
+	opacity: 0.72;
+}
+
+/*
+ * "coach's call" prefixes the axes. The screen mixes measurements with judgments, and the
+ * judgments have to be visibly the second kind.
+ */
+.csk-axis-label {
+	font-size: 9.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--faint);
+	align-self: center;
+	padding-right: 2px;
+	cursor: help;
+	font-style: italic;
+	white-space: nowrap;
+}
+
+/* ================================================================ grade */
+/*
+ * S+ through E. Colour carries the tier so it reads at a glance in a list; the score sits
+ * beside it because the letter alone loses the resolution that makes it worth tracking.
+ */
+
+.csk-grade {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 5px;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--line);
+	background: var(--panel-2);
+	padding: 3px 8px;
+	font-family: var(--mono);
+	line-height: 1;
+	cursor: help;
+	white-space: nowrap;
+}
+.csk-grade__rank {
+	font-weight: 700;
+	letter-spacing: -0.01em;
+}
+.csk-grade__score {
+	font-size: 0.78em;
+	color: var(--dim);
+}
+.csk-grade--sm { font-size: 11px; padding: 2px 6px; }
+.csk-grade--md { font-size: 13px; }
+.csk-grade--lg { font-size: 20px; padding: 7px 13px; }
+
+.csk-grade--sp {
+	color: #ffd98a;
+	border-color: #c8aa6e;
+	background: linear-gradient(180deg, rgba(200, 170, 110, 0.22), rgba(200, 170, 110, 0.06));
+	box-shadow: 0 0 14px rgba(200, 170, 110, 0.22);
+}
+.csk-grade--s  { color: #f0e6d2; border-color: var(--gold-dim); background: rgba(200, 170, 110, 0.1); }
+.csk-grade--a  { color: var(--win); border-color: rgba(51, 185, 133, 0.45); }
+.csk-grade--b  { color: var(--blue); border-color: rgba(74, 158, 219, 0.4); }
+.csk-grade--c  { color: var(--text-2); }
+.csk-grade--d  { color: var(--warn); border-color: rgba(232, 177, 61, 0.4); }
+.csk-grade--e  { color: var(--loss); border-color: rgba(224, 82, 95, 0.45); }
+.csk-grade--none { color: var(--faint); }

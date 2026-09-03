@@ -28,6 +28,8 @@ import {
 	roleLabel
 } from "../lib/format.ts"
 import { ChampIcon } from "../components/ChampIcon.tsx"
+import { FormPanel } from "../components/FormPanel.tsx"
+import { GradeBadge } from "../components/GradeBadge.tsx"
 import { JobBadge } from "../components/JobBadge.tsx"
 
 /* ------------------------------------------------- review headline hooks */
@@ -71,6 +73,7 @@ export interface GameListProps {
 
 export const GameList = ({ health, eventTick }: GameListProps) => {
 	const games = useResource(signal => api.games(200, signal), [eventTick])
+	const form = useResource(signal => api.form(undefined, signal), [eventTick])
 	const jobs = useResource(signal => api.jobs(signal), [eventTick])
 	const now = useNow(15_000)
 
@@ -137,6 +140,16 @@ export const GameList = ({ health, eventTick }: GameListProps) => {
 					{sync.pending ? "Syncing…" : "Sync from client"}
 				</button>
 			</div>
+
+			{/*
+			 * Form sits above the list: the standing and the three habits are what he came to
+			 * check, and the individual games are the evidence behind them.
+			 */}
+			{form.data && (form.data.rollingAverage !== null || form.data.focus.length > 0) ?
+				<div className="panel panel-pad" style={{ marginBottom: 14 }}>
+					<FormPanel form={form.data} />
+				</div>
+			:	null}
 
 			{games.error ?
 				<div className="notice warn" style={{ marginBottom: 12 }}>
@@ -268,6 +281,9 @@ const GameRow = ({ game: g, jobs, headline, now }: GameRowProps) => {
 				</div>
 
 				<div className="line2">
+					{/* Leads the stat line: it is the one number that says how the game WENT,
+					    as opposed to what happened in it. */}
+					<GradeBadge score={g.gradeScore} rank={g.gradeRank} size="sm" />
 					<span>
 						<b>{fmtKda(g.kills, g.deaths, g.assists)}</b>{" "}
 						<span className="faint">{fmtKdaRatio(g.kills, g.deaths, g.assists)} KDA</span>

@@ -37,7 +37,8 @@ const ROOT = resolve(HERE, "..")
 /** Must match `SERVER_PORT` in src/shared/constants.ts. */
 const PORT = Number(process.env.CSK_PORT ?? 7700)
 const HOST = "127.0.0.1"
-const DEV_URL = process.env.CSK_DEV_URL ?? "http://127.0.0.1:5173"
+// Must match `server.port` in vite.config.ts.
+const DEV_URL = process.env.CSK_DEV_URL ?? "http://127.0.0.1:7701"
 const isDev = process.env.CSK_DEV === "1"
 
 /** How long to wait for the daemon's own health endpoint before giving up. */

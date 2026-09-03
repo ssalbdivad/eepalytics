@@ -20,6 +20,7 @@ import {
 	enqueue as dbEnqueue,
 	getGame,
 	getReview,
+	getSettings,
 	withMomentMedia
 } from "../../db/queries.ts"
 import { ANALYSIS_VERSION } from "../../shared/constants.ts"
@@ -85,7 +86,26 @@ export const createReviewRoutes = (deps: ServerDeps): Hono => {
 				`Raise "keep replays for" in Settings to hold on to future ones longer.`
 			)
 
-		const jobId = enqueue({ kind: "replay-capture", gameId, intrusive: true })
+		/*
+		 * A capture request EXPIRES.
+		 *
+		 * This is the one job that takes over the user's League client, and it used to sit in
+		 * the queue indefinitely waiting for the gate to open. That meant a capture asked for in
+		 * the afternoon fired hours later, the moment the client next went idle — which is
+		 * exactly when someone sits down to play, and the least welcome moment for the game to
+		 * launch itself. Observed in use, and it is a design mistake rather than a bug: an
+		 * intrusive action has to stay tied to the moment it was asked for.
+		 *
+		 * `claim` already refuses a job past its `deadlineMs`, so the expiry needs no new
+		 * machinery. 0 disables it for anyone who wants the old behaviour.
+		 */
+		const ttlMin = getSettings().captureRequestTtlMin
+		const jobId = enqueue({
+			kind: "replay-capture",
+			gameId,
+			intrusive: true,
+			...(ttlMin > 0 ? { deadlineMs: Date.now() + ttlMin * 60_000 } : {})
+		})
 		publish("job", { id: jobId, kind: "replay-capture", gameId, state: "queued" }, gameId)
 
 		return send(c, JobAccepted, { jobId }, `POST /api/games/${gameId}/capture`, 202)

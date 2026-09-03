@@ -25,6 +25,7 @@ import type { CoachMeta } from "./claude.ts"
 import { extractJson } from "./claude.ts"
 import { baselineToken } from "./digest-contract.ts"
 import type { CitationAllowlist } from "./digest-contract.ts"
+import { rankItems } from "./rank.ts"
 
 /* ============================================================ results */
 
@@ -49,6 +50,9 @@ export type ParseWarningCode =
 	| "empty-item"
 	| "no-number-cited"
 	| "baseline-mismatch"
+	| "no-fix"
+	| "over-budget"
+	| "demoted-low-confidence"
 	| "no-citations"
 	| "no-praise"
 	| "items-truncated"
@@ -71,10 +75,28 @@ export type ParseResult<T> =
 /* ============================================================= schema */
 
 /** Exactly what the model is asked for. `id`/`gameId`/`mediaIds` are assigned by us. */
+/**
+ * Field budgets, enforced as warnings rather than truncation.
+ *
+ * Cutting a sentence in half mid-word is worse than showing a long one; the signal belongs on
+ * the review where it can be seen and the prompt tightened. These are the same numbers the
+ * prompt states, in one place so the two cannot drift.
+ */
+export const TITLE_MAX = 70
+export const FIX_MAX = 140
+export const BODY_MAX = 500
+
 export const CoachItem = type({
 	title: "string",
-	body: "string",
+	/** One imperative sentence. Required in the contract; older reviews predate it. */
+	"fix?": "string",
+	/** Optional elaboration, collapsed in the UI. */
+	"body?": "string",
 	severity: "'info'|'minor'|'major'",
+	/** Judgments the app ranks by. Optional so an older or sloppier response still parses. */
+	"impact?": "'high'|'medium'|'low'",
+	"actionability?": "'high'|'medium'|'low'",
+	"confidence?": "'high'|'medium'|'low'",
 	"category?": "string",
 	tSec: "number|null",
 	momentIds: "string[]",
@@ -164,10 +186,22 @@ const normalize = (raw: Record<string, unknown>, warnings: ParseWarning[]): unkn
 				itemIndex: i,
 				message: `tSec ${JSON.stringify(o.tSec)} could not be read as a game clock; dropped`
 			})
+		// `normalize` rebuilds the item field by field rather than spreading, so anything not
+		// named here is silently dropped before validation ever sees it. Every new field in
+		// `CoachItem` has to be listed, or it vanishes with no error at all.
+		const axis = (v: unknown): "high" | "medium" | "low" | undefined => {
+			const t = asString(v)?.toLowerCase().trim()
+			return t === "high" || t === "medium" || t === "low" ? t : undefined
+		}
 		return {
 			title: (asString(o.title) ?? "").trim(),
+			// `action` and `next` are shapes the model reaches for when it forgets the field name.
+			fix: (asString(o.fix) ?? asString(o.action) ?? asString(o.next) ?? "").trim(),
 			body: (asString(o.body) ?? asString(o.text) ?? "").trim(),
 			severity: SEVERITIES.has(severity) ? severity : "minor",
+			...(axis(o.impact) ? { impact: axis(o.impact) } : {}),
+			...(axis(o.actionability) ? { actionability: axis(o.actionability) } : {}),
+			...(axis(o.confidence) ? { confidence: axis(o.confidence) } : {}),
 			...(asString(o.category) ? { category: asString(o.category)!.toLowerCase().trim() } : {}),
 			tSec: typeof tSecRaw === "number" ? tSecRaw : null,
 			momentIds: asStringArray(o.momentIds),
@@ -324,7 +358,8 @@ const baselineWarnings = (
 	for (const key of citedMetrics)
 		for (const f of allowed.baselineByMetric.get(key) ?? []) allowedHere.push(Number(f))
 
-	const text = stripClocks(item.body)
+	// The fix carries a number as often as the body does now, so both are in scope.
+	const text = stripClocks(`${item.title}\n${item.fix ?? ""}\n${item.body ?? ""}`)
 	const out: ParseWarning[] = []
 	const seen = new Set<string>()
 
@@ -392,10 +427,39 @@ export const buildReview = (args: BuildReviewArgs): ParseResult<Review> => {
 	const kept: FeedbackItem[] = []
 
 	out.items.forEach((item, i) => {
-		if (item.title.trim() === "" || item.body.trim() === "") {
-			warnings.push({ code: "empty-item", itemIndex: i, message: "item had no title or no body; dropped" })
+		const fix = (item.fix ?? "").trim()
+		const body = (item.body ?? "").trim()
+		if (item.title.trim() === "" || (fix === "" && body === "")) {
+			warnings.push({
+				code: "empty-item",
+				itemIndex: i,
+				message: "item had no title, and no fix or body; dropped"
+			})
 			return
 		}
+		// An item with nothing to do is a joke. Hard rule 1 says it gets cut, but cutting it
+		// silently loses a real observation, so it is surfaced instead and rendered without the
+		// action line.
+		if (fix === "")
+			warnings.push({
+				code: "no-fix",
+				itemIndex: i,
+				message: `item "${item.title}" names no concrete change to make next game`
+			})
+
+		// Budgets are the point of the split, so a breach is worth seeing rather than silently
+		// tolerating: the model drifting back to paragraphs is exactly the regression to catch.
+		for (const [field, text, limit] of [
+			["title", item.title.trim(), TITLE_MAX],
+			["fix", fix, FIX_MAX],
+			["body", body, BODY_MAX]
+		] as const)
+			if (text.length > limit)
+				warnings.push({
+					code: "over-budget",
+					itemIndex: i,
+					message: `${field} is ${text.length} chars, over its ${limit} budget — it will be hard to scan`
+				})
 
 		const momentIds = item.momentIds.filter(id => args.allowed.momentIds.has(id))
 		const metricKeys = item.metricKeys.filter(k => args.allowed.metricKeys.has(k))
@@ -444,7 +508,8 @@ export const buildReview = (args: BuildReviewArgs): ParseResult<Review> => {
 			} else tSec = Math.round(tSec)
 		}
 
-		if (!/\d/.test(item.body))
+		// The number is now required in the title or the fix, where it is actually read.
+		if (!/\d/.test(`${item.title}${fix}${body}`))
 			warnings.push({
 				code: "no-number-cited",
 				itemIndex: i,
@@ -455,7 +520,15 @@ export const buildReview = (args: BuildReviewArgs): ParseResult<Review> => {
 			id: makeFeedbackItemId(reviewId, kept.length),
 			gameId: args.gameId,
 			title: item.title.trim(),
-			body: item.body.trim(),
+			fix,
+			body,
+			// Absent axes default to medium rather than to the best case: an item that did not
+			// state its own confidence has not earned a high one.
+			impact: item.impact ?? "medium",
+			actionability: item.actionability ?? "medium",
+			confidence: item.confidence ?? "medium",
+			// Replaced by `rankItems` below; present so the shape is complete.
+			priority: 0,
 			severity: item.severity as FeedbackSeverity,
 			...(item.category ? { category: item.category } : {}),
 			momentIds,
@@ -469,6 +542,21 @@ export const buildReview = (args: BuildReviewArgs): ParseResult<Review> => {
 			:	{})
 		})
 	})
+
+	/*
+	 * Rank, demote and sort before truncation — otherwise `maxItems` would cut whichever items
+	 * the model happened to emit last rather than the ones that matter least.
+	 */
+	const ranked = rankItems(kept)
+	kept.length = 0
+	kept.push(...ranked)
+	for (const [i, item] of ranked.entries())
+		if (item.severity === "info" && item.confidence === "low" && item.category !== "praise")
+			warnings.push({
+				code: "demoted-low-confidence",
+				itemIndex: i,
+				message: `"${item.title}" was demoted to info: the read is not solid enough to state as a correction`
+			})
 
 	if (kept.length > maxItems) {
 		warnings.push({

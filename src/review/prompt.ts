@@ -159,15 +159,44 @@ export const COACH_JSON_SCHEMA: JsonSchema = {
 			items: {
 				type: "object",
 				additionalProperties: false,
-				required: ["title", "body", "severity", "category", "tSec", "momentIds", "metricKeys"],
+				required: ["title", "fix", "severity", "category", "impact", "actionability", "confidence", "tSec", "momentIds", "metricKeys"],
 				properties: {
-					title: { type: "string", description: "Short and punchy; names the thing, e.g. 'Down 41 CS at 16:00'." },
+					title: {
+						type: "string",
+						maxLength: 70,
+						description:
+							"The claim WITH its number, under 70 chars. What he scans, so it carries the wit. 'Down 41 CS at 16:00', not 'Farming issues'."
+					},
+					fix: {
+						type: "string",
+						maxLength: 140,
+						description:
+							"ONE imperative sentence, under 140 chars: the single thing to do differently. No 'next game:' prefix, no second sentence."
+					},
 					body: {
 						type: "string",
+						maxLength: 500,
 						description:
-							"The roast, the real number, then the fix — in that order. The fix goes in its own final sentence."
+							"OPTIONAL elaboration, under 500 chars — the joke, the T1 reference, the reasoning. Collapsed behind a click, so never put the number or the fix here. Omit it entirely when the title and fix say enough."
 					},
 					severity: { type: "string", enum: ["info", "minor", "major"] },
+					impact: {
+						type: "string",
+						enum: ["high", "medium", "low"],
+						description:
+							"What this plausibly cost, anchored to a real figure from the digest. Never a win-rate percentage — this data cannot support one."
+					},
+					actionability: {
+						type: "string",
+						enum: ["high", "medium", "low"],
+						description: "Could he follow this fix mid-game? 'high' is a rule with a trigger."
+					},
+					confidence: {
+						type: "string",
+						enum: ["high", "medium", "low"],
+						description:
+							"Is this solid enough to change behaviour over? 'low' is automatically demoted to info and stops being phrased as a correction."
+					},
 					category: {
 						type: "string",
 						enum: ["pathing", "tempo", "objectives", "vision", "farming", "teamfight", "deaths", "praise", "other"]
@@ -330,17 +359,95 @@ const bullets = (lines: string[]): string => lines.map(l => `- ${l}`).join("\n")
 
 const OUTPUT_RULES = `## HOW TO ANSWER
 
-Return ONE JSON object, no markdown fences, no prose outside it, matching the schema you were given:
+Return ONE JSON object, no markdown fences, no prose outside it:
 
-{ "headline": string, "encouragement": string, "items": [ { "title", "body", "severity", "category", "tSec", "momentIds", "metricKeys" } ], "goals": [string] }
+{ "headline": string, "encouragement": string, "items": [ { "title", "fix", "body", "severity", "category", "impact", "actionability", "confidence", "tSec", "momentIds", "metricKeys" } ], "goals": [string] }
 
-Non-negotiable, and mechanically checked before the user ever sees this:
-- Every entry in "momentIds" must be copied character-for-character from the MOMENTS list below. Every entry in "metricKeys" must be copied character-for-character from the METRICS list below. Anything else is dropped, and an item whose citations are ALL invented is deleted whole.
+### LENGTH IS A HARD CONSTRAINT, NOT A STYLE NOTE
+
+He reads this between games. A wall of text does not get read, and coaching that is not read
+changes nothing — a shorter item that lands beats a better item that does not. Every field has a
+budget and the budgets are enforced:
+
+- **title** — under 70 characters. The claim WITH its number. This is the part he scans, so it
+  carries the wit. "Down 11 camps to Brand at 10:00", not "Pathing issues in the early game".
+- **fix** — ONE sentence, under 140 characters, imperative. The single thing to do differently.
+  No preamble, no "next game:" prefix, no second sentence. If you cannot say it in one sentence,
+  you have not worked out what the fix is.
+- **body** — under 500 characters, and OPTIONAL. Leave it out unless it adds something the title
+  and fix genuinely do not. It is collapsed behind a click, so this is where the joke, the T1
+  reference and the reasoning live — never the number he needs, and never the fix.
+- **headline** — one line, under 100 characters.
+- **encouragement** — one or two sentences. Not a paragraph.
+- **goals** — one line each, under 120 characters.
+
+Write FEWER, BETTER items. Three that matter beats six that pad. An item you are adding for
+completeness is one he will skim past on the way to the ones that count.
+
+### RATE EVERY ITEM ON THREE AXES — the app sorts by them, you do not
+
+Give each item \`impact\`, \`actionability\` and \`confidence\`, each "high" | "medium" | "low".
+The app combines them into a ranking, so be honest rather than emphatic: inflating them all to
+"high" destroys the ordering and buries the item that actually mattered.
+
+**THESE ARE YOUR JUDGMENT, AND THAT IS FINE.** Most coaching calls cannot be computed from this
+data — whether a gank was worth the tempo, whether a fight was winnable, how much a bad recall
+cost. Rate them anyway, using judgment, the way a coach watching over his shoulder would. The UI
+shows them explicitly as your call rather than as measurements, so a subjective rating is honest.
+Refusing to rate because you cannot prove it is not caution, it is just less useful.
+
+There is exactly one thing you may not do: **dress a judgment up as a computed number.** Rating
+\`impact: "high"\` is a judgment and is fine. Writing "this cost you about 3% win rate" is a
+fabricated statistic under rule 2, because nothing here supports computing one. Ordinals are
+judgments; percentages read as measurements. Ground the rating in a real figure WHEN one exists,
+and simply judge it when one does not.
+
+**impact — what did this plausibly cost him?**
+  - high    plausibly decided a phase of the game. A 4,000g swing, two uncontested drakes, dying
+            three times in the enemy jungle before 15:00.
+  - medium  a real cost he can feel but recover from.
+  - low     tidy-up. Correct, but it was never the reason this game went the way it did.
+
+**actionability — could he follow this fix mid-game?**
+  - high    a rule with a trigger. "If you cannot say where the enemy jungler is, take your own
+            raptors instead."
+  - medium  real, but needs judgment in the moment.
+  - low     true and hard to act on. Usually a sign the fix is not worked out yet.
+
+**confidence — is this solid enough that he should change behaviour over it?**
+  - high    read straight off an event or an end-of-game stat, and the conclusion follows from it.
+  - medium  computed at frame boundaries, or one clear instance.
+  - low     depends on interpolation between one-minute frames, on a single ambiguous sequence,
+            or on guessing intent.
+
+**An item you rate \`confidence: "low"\` is automatically demoted to \`info\` and stops being
+phrased as a correction.** That is the intended path, not a failure — use it. Being confidently
+wrong costs more than staying quiet, because it teaches him to discount the whole review.
+
+### TRADE-OFFS ARE NOT MISTAKES
+
+Some plays are a decision with a cost, not an error, and calling them errors is how a coach loses
+credibility. A gank that produced a kill and two plates while a drake went uncontested is a
+TRADE, and the honest read is what it bought against what it cost — not "you missed drake".
+
+When the data cannot tell you whether the trade was good, say that: \`severity: "info"\`,
+\`confidence: "low"\`, and a \`fix\` phrased as the question to ask himself next time rather than
+an instruction. You cannot see his lane states, his cooldowns, or what he could hear. Reserve
+\`major\` for plays where the cost is clear and there was no compensating gain.
+
+### NON-NEGOTIABLE, AND MECHANICALLY CHECKED
+
+- Every entry in "momentIds" must be copied character-for-character from the MOMENTS list. Every
+  entry in "metricKeys" must be copied character-for-character from the METRICS list. Anything
+  else is dropped, and an item whose citations are ALL invented is deleted whole.
 - Every number, timestamp and map zone you cite must appear somewhere in this prompt.
+- The number goes in the **title** or the **fix**, where he will see it — not buried in body.
 - "tSec" is SECONDS of game clock, and must fall inside the game's duration.
-- Every item ends on a concrete thing to do next game.
-- At least one item is positive (severity "info", category "praise") whenever the data supports one.
-- Hedge anything drawn from a low-confidence moment. You may say "you looked alone"; you may not say "you were alone".`
+- Every item has a real "fix". An item you cannot give a fix for is a joke, and it gets cut.
+- At least one item is positive (severity "info", category "praise") whenever the data supports
+  one. Its "fix" is what to keep doing.
+- Hedge anything drawn from a low-confidence moment. You may say "you looked alone"; you may not
+  say "you were alone".`
 
 const SAMPLING_NOTE = `Positions come from timeline frames sampled once per ${Math.round(
 	FRAME_INTERVAL_MS / 1000

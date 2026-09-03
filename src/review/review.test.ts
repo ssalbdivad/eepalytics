@@ -667,7 +667,7 @@ test("a stub response flows all the way through buildReview", async () => {
 	const stub = stubCli(
 		`process.stdout.write(JSON.stringify({is_error:false,total_cost_usd:0.002,usage:{input_tokens:5,output_tokens:6},result:JSON.stringify({
     headline:"H", encouragement:"E", goals:["g"],
-    items:[{title:"T",body:"7 of them",severity:"info",category:"praise",tSec:100,momentIds:["g1-death-100"],metricKeys:["metric_a"]}]
+    items:[{title:"T",fix:"Keep doing that",body:"7 of them",severity:"info",category:"praise",impact:"medium",actionability:"high",confidence:"high",tSec:100,momentIds:["g1-death-100"],metricKeys:["metric_a"]}]
   })}))`
 	)
 	const built = gamePrompt(digest, { model: "test-model" })

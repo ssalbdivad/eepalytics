@@ -1188,3 +1188,105 @@ input[type="checkbox"] {
 	border-left-color: var(--band-unknown);
 	color: var(--dim);
 }
+
+/* ================================================================= form */
+
+.csk-form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+.csk-form__standing {
+	display: flex;
+	gap: 22px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+.csk-form__avg {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+.csk-form__avg-label {
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--dim);
+}
+.csk-form__avg-value {
+	font-family: var(--mono);
+	font-size: 34px;
+	line-height: 1;
+	color: var(--gold-bright);
+	display: flex;
+	align-items: baseline;
+	gap: 9px;
+}
+.csk-form__avg-value em {
+	font-size: 13px;
+	font-style: normal;
+}
+.csk-form__avg-value em.up { color: var(--win); }
+.csk-form__avg-value em.down { color: var(--loss); }
+.csk-form__avg-note {
+	font-size: 11px;
+	color: var(--faint);
+}
+.csk-form__spark {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	font-size: 10px;
+}
+
+.csk-focus-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 13px;
+}
+.csk-focus-list > li {
+	border-left: 2px solid var(--gold-dim);
+	padding-left: 12px;
+}
+.csk-focus__head {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	font-size: 13px;
+}
+.csk-focus__n {
+	font-family: var(--mono);
+	font-size: 11px;
+	color: var(--gold);
+	border: 1px solid var(--gold-dim);
+	border-radius: 50%;
+	width: 19px;
+	height: 19px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+}
+.csk-focus__count {
+	font-size: 10.5px;
+	color: var(--dim);
+	font-family: var(--mono);
+}
+.csk-focus__fixes {
+	margin: 6px 0 0;
+	padding-left: 17px;
+	font-size: 12.5px;
+	line-height: 1.55;
+	color: var(--text-2);
+}
+.csk-focus__fixes li { margin: 3px 0; }
+.csk-focus__link {
+	display: inline-block;
+	margin-top: 5px;
+	font-size: 11px;
+	color: var(--dim);
+}
+.csk-focus__link:hover { color: var(--gold); }

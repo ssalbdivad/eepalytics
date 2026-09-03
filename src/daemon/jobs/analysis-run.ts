@@ -29,9 +29,11 @@ import {
 	replaceMetrics,
 	replaceMoments,
 	setGameAnalysisVersion,
+	setGameGrade,
 	setGameRole
 } from "../../db/queries.ts"
 import { analyzeGame, baselineFromRows, perGameMetrics } from "../../analysis/index.ts"
+import { gradeGame } from "../../analysis/grade.ts"
 import { publish } from "../bus.ts"
 import {
 	championNameMap,
@@ -117,6 +119,11 @@ export const runAnalysisJob = async (ctx: JobContext): Promise<JobOutcome> => {
 
 	replaceMetrics(gameId, metrics)
 	replaceMoments(gameId, capped)
+
+	// Graded here, beside the metrics it is derived from, so a grade can never belong to a
+	// different analysis than the numbers explaining it. `null` when the corpus is too thin —
+	// see `gradeGame`, which would rather show nothing than a grade built on two games.
+	setGameGrade(gameId, gradeGame(metrics, baseline))
 
 	// Role inference belongs to the analysis unit; ingest only ever wrote a Smite placeholder.
 	const role = result.roles.roles[result.userId]

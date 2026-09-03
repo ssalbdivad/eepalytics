@@ -13,6 +13,7 @@ import {
 	API,
 	GameDetailResponse,
 	ChatHistoryResponse,
+	FormResponse,
 	ReplayListResponse,
 	ChatTurnResponse,
 	GameListResponse,
@@ -144,6 +145,10 @@ export const api = {
 		request(API.trends, TrendsResponse, { signal, query: { games } }),
 
 	jobs: (signal?: AbortSignal) => request(API.jobs, JobListResponse, { signal }),
+
+	/** Grades and focus areas. Derived from stored data — no model call, so it is instant. */
+	form: (games?: number, signal?: AbortSignal) =>
+		request(API.form, FormResponse, { signal, query: { games } }),
 
 	replays: (signal?: AbortSignal) => request(API.replays, ReplayListResponse, { signal }),
 

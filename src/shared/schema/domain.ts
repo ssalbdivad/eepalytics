@@ -107,6 +107,13 @@ export const Game = type({
 	"replayPath?": "string|null",
 	/** Whether the raw timeline blob is on disk. Without it there is no positional analysis. */
 	hasTimeline: "boolean",
+	/**
+	 * 0-100 against the player's OWN recent form, or null when the corpus is too thin to grade.
+	 * Not a skill rating and not a comparison to other players — this app has no data about
+	 * anyone else. 50 is an ordinary game for them.
+	 */
+	"gradeScore?": "number|null",
+	"gradeRank?": "string|null",
 	analysisVersion: "number",
 	reviewVersion: "number",
 	ingestedAtMs: "number"
@@ -281,8 +288,35 @@ export const FeedbackItem = type({
 	id: "string",
 	gameId: "number|null",
 	title: "string",
+	/**
+	 * Elaboration: the reasoning, the evidence, the joke. Collapsed by default — the reader
+	 * opens it when the headline made them want the detail, not before.
+	 */
 	body: "string",
 	severity: FeedbackSeverity,
+	/**
+	 * THE ACTIONABLE HALF. One imperative sentence naming what to do differently next game.
+	 *
+	 * Split out of `body` because it was the only part that changes behaviour and it was buried
+	 * mid-paragraph. Always rendered; never collapsed. Empty only on reviews written before the
+	 * split.
+	 */
+	fix: "string",
+	/**
+	 * How much this plausibly cost, as a JUDGMENT grounded in a figure from the digest — a gold
+	 * swing, objectives conceded, the cost of a death.
+	 *
+	 * Deliberately not a win-rate delta. Nothing in this data supports computing one, and a
+	 * percentage that looks derived but is guessed is the exact fabrication the rest of the app
+	 * is built to prevent. Ordinal, comparable, honest.
+	 */
+	impact: Confidence,
+	/** Whether the fix is a rule he can follow mid-game, or a vibe. */
+	actionability: Confidence,
+	/** Whether the read is solid enough to change behaviour over. */
+	confidence: Confidence,
+	/** Derived from the three above by `rankItems()`. Higher sorts first. */
+	priority: "number",
 	/** Optional coaching bucket: "pathing", "vision", "objectives", "teamfight", "farming". */
 	"category?": "string",
 	momentIds: "string[]",

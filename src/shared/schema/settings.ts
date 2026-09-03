@@ -41,6 +41,12 @@ export const Settings = type({
 	 * window match history will admit to. Empty means "use the built-in default".
 	 */
 	replayFolder: "string",
+	/**
+	 * Minutes a requested capture stays valid. Capture takes over the League client, so a
+	 * request has to be tied to the moment it was made: one asked for at 3pm must not fire at
+	 * 9pm because that is when the client next went idle. 0 disables the expiry.
+	 */
+	captureRequestTtlMin: "number",
 
 	/**
 	 * 0 = dry and clinical, 1 = full Faker-invoking meme goblin. Scales the persona section
@@ -81,6 +87,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	gamesForTrends: 20,
 	retentionDays: 14,
 	replayFolder: "",
+	captureRequestTtlMin: 15,
 	coachIntensity: 0.8,
 	transport: "bridge",
 	pollIdleMs: 5_000,
@@ -100,6 +107,7 @@ export const SettingsPatch = type({
 	"gamesForTrends?": "number",
 	"retentionDays?": "number",
 	"replayFolder?": "string",
+	"captureRequestTtlMin?": "number",
 	"coachIntensity?": "0<=number<=1",
 	"transport?": "'bridge'|'curl'",
 	"pollIdleMs?": "number",
@@ -116,6 +124,7 @@ export const clampSettings = (s: Settings): Settings => ({
 	clipSeconds: clamp(s.clipSeconds, 5, 120),
 	gamesForTrends: clamp(s.gamesForTrends, 3, 200),
 	retentionDays: clamp(s.retentionDays, 0, 365),
+	captureRequestTtlMin: clamp(s.captureRequestTtlMin, 0, 240),
 	coachIntensity: clamp(s.coachIntensity, 0, 1),
 	pollIdleMs: clamp(s.pollIdleMs, 1_000, 60_000),
 	pollInGameMs: clamp(s.pollInGameMs, 500, 30_000),

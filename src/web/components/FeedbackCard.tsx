@@ -90,7 +90,54 @@ export const FeedbackCard = ({
 				{item.category && <span className="csk-fb__cat">{item.category}</span>}
 			</header>
 
-			<p className="csk-fb__body">{item.body}</p>
+			{/*
+			 * The fix is the only part that changes what he does next game, so it is the only
+			 * prose that is always visible. Everything else — the joke, the reasoning, the T1
+			 * reference — sits behind a disclosure, because five paragraphs of it is a wall
+			 * nobody reads between games, and coaching that is not read changes nothing.
+			 */}
+			{/*
+			 * The three axes the ranking is built from. Shown so the order is legible rather
+			 * than mysterious — and so an item that reads mild but ranks high (or the reverse)
+			 * can be understood instead of just distrusted.
+			 */}
+			{item.impact ?
+				<div className="csk-fb__axes">
+					{/*
+					 * Labelled "coach's call" out loud, because these are JUDGMENTS and the rest
+					 * of this screen is measurements. Every figure in the title and fix came from
+					 * the digest and is checkable; these three did not and are not. An unlabelled
+					 * "impact: high" sitting next to "down 41 CS at 16:00" would read as equally
+					 * computed, which is the one impression this app must never give.
+					 */}
+					<span className="csk-axis-label" title="The coach's own estimates, not computed from your game data. They set the order these items appear in.">
+						coach's call
+					</span>
+					<span className={`csk-axis csk-axis--${item.impact}`} title="How much the coach reckons this cost — a judgment, not a measurement. This data cannot produce a win-rate estimate, so it does not claim one.">
+						impact {item.impact}
+					</span>
+					<span className={`csk-axis csk-axis--${item.actionability}`} title="How directly you can act on the fix mid-game. High means a rule with a trigger. A judgment.">
+						actionable {item.actionability}
+					</span>
+					<span className={`csk-axis csk-axis--${item.confidence}`} title="How sure the coach is that this read is right. Low-confidence items are demoted to notes and never phrased as corrections.">
+						confidence {item.confidence}
+					</span>
+				</div>
+			:	null}
+
+			{item.fix ?
+				<p className="csk-fb__fix">
+					<span className="csk-fb__fix-tag">Do this</span>
+					{item.fix}
+				</p>
+			:	null}
+
+			{item.body ?
+				<details className="csk-fb__more">
+					<summary>Why</summary>
+					<p className="csk-fb__body">{item.body}</p>
+				</details>
+			:	null}
 
 			{(item.tSec !== null || cited.length > 0 || metricLabels.length > 0) && (
 				<div className="csk-fb__cites">

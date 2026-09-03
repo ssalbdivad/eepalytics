@@ -123,6 +123,39 @@ export const GameDetailResponse = type({
 })
 export type GameDetailResponse = typeof GameDetailResponse.infer
 
+/* ================================================================ form */
+
+/**
+ * Standing at a glance: the grade curve, and the three habits worth working on.
+ *
+ * Both are DERIVED from data already stored — grades computed at analysis time, focus areas
+ * aggregated from reviews already paid for. No model call, so this is instant and identical
+ * every time it is asked.
+ */
+export const FocusArea = type({
+	category: "string",
+	/** Distinct games this appeared in. Shown always: it is what separates a habit from a game. */
+	games: "number",
+	occurrences: "number",
+	weight: "number",
+	exemplar: type({ gameId: "number|null", title: "string", fix: "string" }),
+	fixes: "string[]"
+})
+export type FocusArea = typeof FocusArea.infer
+
+export const FormResponse = type({
+	/** Newest first. 0-100 against the player's own baseline, never against other players. */
+	grades: type({ gameId: "number", score: "number", rank: "string" }).array(),
+	/** Mean of the recent window, or null under three graded games. */
+	rollingAverage: "number|null",
+	/** Same for the window before it, so the UI can show movement rather than a bare number. */
+	previousAverage: "number|null",
+	focus: FocusArea.array(),
+	/** How many games the focus areas were mined from. */
+	windowGames: "number"
+})
+export type FormResponse = typeof FormResponse.infer
+
 /* =============================================================== replays */
 
 /**
@@ -316,6 +349,7 @@ export const API = {
 	events: "/api/events",
 	media: (id: string) => `/api/media/${encodeURIComponent(id)}`,
 	sync: "/api/sync",
+	form: "/api/form",
 	replays: "/api/replays",
 	replayIngest: "/api/replays/ingest"
 } as const
