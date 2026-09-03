@@ -26,6 +26,7 @@
 import { type } from "arktype"
 import {
 	ChatMessage,
+	WatchNote,
 	Game,
 	Job,
 	Media,
@@ -122,6 +123,11 @@ export const GameDetailResponse = type({
 	timelineAvailable: "boolean"
 })
 export type GameDetailResponse = typeof GameDetailResponse.infer
+
+/* =============================================================== watch */
+
+export const WatchListResponse = type({ notes: WatchNote.array() })
+export type WatchListResponse = typeof WatchListResponse.infer
 
 /* ================================================================ form */
 
@@ -350,6 +356,7 @@ export const API = {
 	media: (id: string) => `/api/media/${encodeURIComponent(id)}`,
 	sync: "/api/sync",
 	form: "/api/form",
+	watch: (gameId: number | string) => `/api/games/${gameId}/watch`,
 	replays: "/api/replays",
 	replayIngest: "/api/replays/ingest"
 } as const

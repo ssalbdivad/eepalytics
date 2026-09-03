@@ -36,6 +36,18 @@ import {
 /** Let the engine finish drawing after a seek before we render a frame. */
 export const SETTLE_MS = 900
 
+/**
+ * Frames grabbed around each moment, in seconds relative to it.
+ *
+ * Weighted BEFORE the moment because the decision that caused an outcome happens before the
+ * outcome. A death at 8:12 is explained by where he was and what he had up at 8:06, not by the
+ * grey screen afterwards. The trailing frame exists to show the immediate consequence.
+ *
+ * Five frames costs four extra seeks per moment (~1.5s each). That is the price of being able to
+ * say anything about execution at all.
+ */
+export const DEFAULT_BURST_SEC: readonly number[] = [-6, -3, -1, 0, 2]
+
 /* ============================================================= selection */
 
 /**
@@ -119,6 +131,11 @@ export interface CaptureMomentsOptions {
 	width?: number
 	height?: number
 	fps?: number
+	/**
+	 * Frames per moment, in seconds relative to it. Defaults to `DEFAULT_BURST_SEC`; pass `[0]`
+	 * for a single frame when only a thumbnail is wanted.
+	 */
+	burstOffsetsSec?: readonly number[]
 	/** Preflight already run by the daemon gate. */
 	skipPreflight?: boolean
 }
@@ -193,6 +210,7 @@ export const captureMoments = async (
 							width: opts.width,
 							height: opts.height,
 							fps: opts.fps,
+							burstOffsetsSec: opts.burstOffsetsSec ?? DEFAULT_BURST_SEC,
 							sink: media
 						})
 					} catch (e) {
@@ -262,6 +280,8 @@ interface CaptureOneOptions {
 	width?: number
 	height?: number
 	fps?: number
+	/** Seconds relative to the moment to grab frames at. `[0]` reproduces the old single shot. */
+	burstOffsetsSec: readonly number[]
 	sink: Media[]
 }
 
@@ -285,17 +305,42 @@ const captureOne = async (
 	await session.setRender(frameMoment(moment, { cal: o.cal, selectionName }))
 	await sleep(250, o.signal)
 
-	o.sink.push(
-		await screenshot({
-			session,
-			tSec: moment.tSec,
-			momentId: moment.id,
-			signal: o.signal,
-			width: o.width,
-			height: o.height,
-			fps: o.fps
-		})
-	)
+	/*
+	 * A BURST, not a single frame.
+	 *
+	 * One screenshot shows where everyone stood; it cannot show what happened. Whether an
+	 * ability was used well, whether a camp was kited or tanked, whether a fight was entered
+	 * from the right angle — all of that is a sequence, and no data stream this app reads
+	 * contains it. The timeline has positions and kills; ability casts are only in the replay
+	 * chunk payloads, which need the game engine to decode. Frames either side of the moment
+	 * are the ONLY evidence of execution available, which is what makes the extra seeks worth
+	 * their cost.
+	 *
+	 * Offsets are seconds relative to the moment. Weighted before it, because the decision that
+	 * produced the outcome happened before the outcome did.
+	 */
+	for (const offset of o.burstOffsetsSec) {
+		const at = moment.tSec + offset
+		if (at < 0 || (o.replayLengthSec !== null && at > o.replayLengthSec)) continue
+		if (offset !== 0) {
+			await session.seek(at, o.signal)
+			await sleep(SETTLE_MS, o.signal)
+		}
+		o.sink.push(
+			await screenshot({
+				session,
+				tSec: at,
+				momentId: moment.id,
+				signal: o.signal,
+				width: o.width,
+				height: o.height,
+				fps: o.fps
+			})
+		)
+	}
+	// No seek back to the moment. A rewind costs a full keyframe re-scrub (§6.3), the burst
+	// already ends after the moment, and the next moment is later still — so every seek in a
+	// capture run moves forward. Clips re-seek themselves anyway.
 
 	if (o.clipSeconds > 0) {
 		o.sink.push(

@@ -19,6 +19,13 @@ import { MOMENT_KIND_LABEL, momentColor } from "./MiniMap.tsx"
 import "./components.css"
 
 export interface FeedbackCardProps {
+	/** The visual read for this item's moment, when one exists. */
+	watchedNote?: { text: string; frameCount: number } | null
+	/** Frames available to watch for this item's moment; 0 hides the action. */
+	watchableFrames?: number
+	/** Kick off the visual pass. Absent when the page cannot run one. */
+	onWatch?: () => void
+	watching?: boolean
 	item: FeedbackItem
 	moments: Moment[]
 	media: Media[]
@@ -57,6 +64,10 @@ export const FeedbackCard = ({
 	item,
 	moments,
 	media,
+	watchedNote,
+	watchableFrames = 0,
+	onWatch,
+	watching = false,
 	onSeek,
 	onOpenMedia,
 	metrics,
@@ -130,6 +141,32 @@ export const FeedbackCard = ({
 					<span className="csk-fb__fix-tag">Do this</span>
 					{item.fix}
 				</p>
+			:	null}
+
+			{/*
+			 * The visual read, kept visually distinct from everything above it. The prose above
+			 * is built from figures the parser can check; this came from looking at a picture and
+			 * nothing can check it, so it is marked rather than blended in.
+			 */}
+			{watchedNote ?
+				<div className="csk-fb__watched">
+					<div
+						className="csk-fb__watched-tag"
+						title={`The coach read ${watchedNote.frameCount} real replay frames around this moment. This is the only kind of feedback that can cover ability usage, kiting and fight entry — none of that exists in the game's data. It also cannot be machine-checked the way the numbers above can, so treat it as an informed read of a picture.`}
+					>
+						👁 watched · {watchedNote.frameCount} frames
+					</div>
+					{watchedNote.text}
+				</div>
+			: watchableFrames > 0 && onWatch ?
+				<button
+					className="csk-fb__watch-cta"
+					onClick={onWatch}
+					disabled={watching}
+					title={`Have the coach look at the ${watchableFrames} captured frames around this moment and comment on execution — abilities, kiting, fight entry. Takes about a minute.`}
+				>
+					{watching ? "Watching…" : `👁 Watch this moment (${watchableFrames} frames)`}
+				</button>
 			:	null}
 
 			{item.body ?

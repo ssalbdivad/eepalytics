@@ -191,6 +191,30 @@ export const Metric = type({
 })
 export type Metric = typeof Metric.infer
 
+/* =========================================================== watch note */
+
+/**
+ * What the coach saw in the replay frames for one moment.
+ *
+ * Separate from `FeedbackItem` on purpose. A feedback item's figures came from the digest and
+ * are mechanically checkable; a visual read's evidence is a picture, and nothing can check it.
+ * Keeping them apart keeps that difference visible rather than trusting everyone to remember it.
+ */
+export const WatchNote = type({
+	id: "string",
+	gameId: "number",
+	momentId: "string",
+	text: "string",
+	model: "string|null",
+	costUsd: "number|null",
+	/** How many frames the read was based on. Fewer frames, weaker read. */
+	frameCount: "number",
+	status: "'ok'|'failed'",
+	error: "string|null",
+	createdMs: "number"
+})
+export type WatchNote = typeof WatchNote.infer
+
 /* ============================================================ chat */
 
 /**

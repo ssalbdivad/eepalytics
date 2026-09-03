@@ -14,6 +14,7 @@ import {
 	GameDetailResponse,
 	ChatHistoryResponse,
 	FormResponse,
+	WatchListResponse,
 	ReplayListResponse,
 	ChatTurnResponse,
 	GameListResponse,
@@ -25,6 +26,7 @@ import {
 	SyncResponse,
 	TrendsResponse
 } from "../../shared/schema/api.ts"
+import { WatchNote } from "../../shared/schema/domain.ts"
 import type { SettingsPatch } from "../../shared/schema/settings.ts"
 
 /** Everything the client can fail with, in one shape the pages know how to render. */
@@ -145,6 +147,20 @@ export const api = {
 		request(API.trends, TrendsResponse, { signal, query: { games } }),
 
 	jobs: (signal?: AbortSignal) => request(API.jobs, JobListResponse, { signal }),
+
+	watchNotes: (gameId: number, signal?: AbortSignal) =>
+		request(API.watch(gameId), WatchListResponse, { signal }),
+
+	/**
+	 * Look at the captured frames for one moment. Requires REAL frames to already exist —
+	 * this never triggers a capture, because capture takes over the League client.
+	 */
+	watchMoment: (gameId: number, momentId: string, signal?: AbortSignal) =>
+		request(API.watch(gameId), type({ note: WatchNote }), {
+			method: "POST",
+			body: { momentId },
+			signal
+		}),
 
 	/** Grades and focus areas. Derived from stored data — no model call, so it is instant. */
 	form: (games?: number, signal?: AbortSignal) =>

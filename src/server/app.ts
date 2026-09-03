@@ -33,6 +33,7 @@ import { ContractError, fail } from "./respond.ts"
 import { createAssetRoutes } from "./routes/assets.ts"
 import { createChatRoutes } from "./routes/chat.ts"
 import { createFormRoute } from "./routes/form.ts"
+import { createWatchRoutes } from "./routes/watch.ts"
 import { createReplayRoutes } from "./routes/replays.ts"
 import { createGamesRoutes } from "./routes/games.ts"
 import { createHealthRoute } from "./routes/health.ts"
@@ -65,6 +66,7 @@ export const createApp = (deps: ServerDeps = {}): Hono => {
 	api.route("/", createChatRoutes())
 	api.route("/", createReplayRoutes())
 	api.route("/", createFormRoute())
+	api.route("/", createWatchRoutes())
 	api.route("/", createTrendsRoute())
 	api.route("/", createJobRoutes(deps))
 	api.route("/", createSettingsRoutes(deps))

@@ -24,6 +24,7 @@ import {
 } from "../shared/constants.ts"
 import type {
 	ChatMessage,
+	WatchNote,
 	AppEvent,
 	FeedbackItem,
 	Game,
@@ -1574,4 +1575,54 @@ export const clearChat = (gameId: number): number => {
 	)
 	prep("DELETE FROM chat_message WHERE gameId = ?").run(gameId)
 	return before
+}
+
+/* ============================================================ watch notes */
+
+const rowToWatchNote = (row: Row): WatchNote => ({
+	id: str(row.id),
+	gameId: num(row.gameId),
+	momentId: str(row.momentId),
+	text: str(row.text),
+	model: nullableStr(row.model),
+	costUsd: nullableNum(row.costUsd),
+	frameCount: num(row.frameCount),
+	status: str(row.status, "ok") as WatchNote["status"],
+	error: nullableStr(row.error),
+	createdMs: num(row.createdMs)
+})
+
+export const listWatchNotes = (gameId: number): WatchNote[] =>
+	prep("SELECT * FROM watch_note WHERE gameId = ? ORDER BY createdMs")
+		.all(gameId)
+		.map(r => rowToWatchNote({ ...(r as Row) }))
+
+export const getWatchNote = (gameId: number, momentId: string): WatchNote | null => {
+	const row = plain(
+		prep("SELECT * FROM watch_note WHERE gameId = ? AND momentId = ?").get(gameId, momentId)
+	)
+	return row ? rowToWatchNote(row) : null
+}
+
+/** One note per (game, moment) — re-watching replaces rather than accumulates. */
+export const upsertWatchNote = (n: WatchNote): void => {
+	prep(
+		`INSERT INTO watch_note (id, gameId, momentId, text, model, costUsd, frameCount, status, error, createdMs)
+		 VALUES (@id, @gameId, @momentId, @text, @model, @costUsd, @frameCount, @status, @error, @createdMs)
+		 ON CONFLICT(gameId, momentId) DO UPDATE SET
+			text = excluded.text, model = excluded.model, costUsd = excluded.costUsd,
+			frameCount = excluded.frameCount, status = excluded.status,
+			error = excluded.error, createdMs = excluded.createdMs`
+	).run({
+		id: n.id,
+		gameId: n.gameId,
+		momentId: n.momentId,
+		text: n.text,
+		model: n.model,
+		costUsd: n.costUsd,
+		frameCount: n.frameCount,
+		status: n.status,
+		error: n.error,
+		createdMs: n.createdMs
+	})
 }

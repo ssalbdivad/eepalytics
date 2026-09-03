@@ -36,6 +36,7 @@ import {
 } from "../lib/format.ts"
 import { ChampIcon } from "../components/ChampIcon.tsx"
 import { GradeBadge } from "../components/GradeBadge.tsx"
+import { VisionBadge } from "../components/VisionBadge.tsx"
 import { CoachChat } from "../components/CoachChat.tsx"
 import { FeedbackCard } from "../components/FeedbackCard.tsx"
 import { GameTimeline } from "../components/GameTimeline.tsx"
@@ -55,6 +56,8 @@ export interface GameReviewProps {
 export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 	const detail = useResource(signal => api.game(gameId, signal), [gameId, eventTick])
 	const jobsRes = useResource(signal => api.jobs(signal), [eventTick])
+	const watchRes = useResource(signal => api.watchNotes(gameId, signal), [gameId, eventTick])
+	const [watching, setWatching] = useState<string | null>(null)
 	const now = useNow(15_000)
 
 	const [cursorSec, setCursorSec] = useState(0)
@@ -90,6 +93,32 @@ export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 	)
 
 	const momentById = useMemo(() => new Map(moments.map(m => [m.id, m])), [moments])
+	const watchNotes = watchRes.data?.notes ?? []
+	const noteByMoment = useMemo(
+		() => new Map(watchNotes.filter(n => n.status === "ok").map(n => [n.momentId, n])),
+		[watchNotes]
+	)
+	/** Moments with REAL captured frames — a generated map diagram is not something to watch. */
+	const framesByMoment = useMemo(() => {
+		const out = new Map<string, number>()
+		for (const m of media)
+			if (m.momentId && m.source === "replay" && m.kind === "screenshot")
+				out.set(m.momentId, (out.get(m.momentId) ?? 0) + 1)
+		return out
+	}, [media])
+
+	const watchMoment = useCallback(
+		async (momentId: string) => {
+			setWatching(momentId)
+			try {
+				await api.watchMoment(gameId, momentId)
+				watchRes.reload()
+			} finally {
+				setWatching(null)
+			}
+		},
+		[gameId, watchRes]
+	)
 	const mediaById = useMemo(() => new Map(media.map(m => [m.id, m])), [media])
 
 	const gameJobs = useMemo(
@@ -394,7 +423,32 @@ export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 							<span className="faint" style={{ textTransform: "none", letterSpacing: 0 }}>
 								{items.length} item{items.length === 1 ? "" : "s"}
 							</span>
+							<VisionBadge
+								watched={watchNotes.filter(n => n.status === "ok").length}
+								watchable={framesByMoment.size}
+								size="sm"
+							/>
 						</div>
+
+						{/*
+						 * Said plainly, at the top, when it applies. A data review genuinely cannot
+						 * see ability usage or kiting — presenting it as a finished verdict would be
+						 * the most misleading thing on this screen.
+						 */}
+						{watchNotes.filter(n => n.status === "ok").length === 0 && (
+							<div className="notice info" style={{ marginBottom: 10 }}>
+								<span className="icon">◔</span>
+								<div>
+									<strong>This review hasn't watched the game.</strong> It's built from the
+									timeline — positions once a minute, kills, objectives, end-of-game stats.
+									It says nothing about how you used abilities, how you kited, or how you
+									entered fights, because none of that is in any data the client exposes.
+									{framesByMoment.size > 0 ?
+										" Frames are captured — open a moment below and hit Watch."
+									:	" Capture replay frames on this game to unlock that."}
+								</div>
+							</div>
+						)}
 
 						{items.length > 0 ?
 							<div className="feedback-list">
@@ -412,6 +466,21 @@ export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 											item={item}
 											moments={moments}
 											media={media}
+											watchedNote={
+												item.momentIds
+													.map(id => noteByMoment.get(id))
+													.find(n => n !== undefined) ?? null
+											}
+											watchableFrames={item.momentIds.reduce(
+												(n, id) => n + (framesByMoment.get(id) ?? 0),
+												0
+											)}
+											onWatch={
+												item.momentIds[0] ?
+													() => void watchMoment(item.momentIds[0]!)
+												:	undefined
+											}
+											watching={watching !== null && item.momentIds.includes(watching)}
 											metrics={d.metrics}
 											active={selectedItemId === item.id}
 											onSeek={seek}
