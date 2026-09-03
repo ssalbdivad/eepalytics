@@ -114,3 +114,37 @@ describe("knownChampions", () => {
 		strictEqual(knownChampions().join(","), "belveth,lillia")
 	})
 })
+
+/**
+ * `sourcesAreTrusted` is the only thing standing between an unverified claim and the coaching
+ * prompt, so it has to be strict. It also has to be right: it once rejected a correctly-sourced
+ * 8 KB Lee Sin note because the header mentioned Data Dragon's `LeeSin.json` and a filename
+ * matches any reasonable domain pattern. A validator that discards good work over a file
+ * extension is one you end up switching off.
+ */
+describe("sourcesAreTrusted", () => {
+	const trusted = async () => (await import("./research.ts")).sourcesAreTrusted
+
+	it("accepts a header naming only sanctioned domains", async () => {
+		ok((await trusted())("op.gg jungle-paths (patch 16.17) + leagueoflegends.com patch notes"))
+		ok((await trusted())("www.u.gg and lolalytics.com, both patch 16.17"))
+	})
+
+	it("accepts a data file cited alongside a sanctioned domain", async () => {
+		ok((await trusted())("ddragon.leagueoflegends.com 16.17.1 — LeeSin.json, for ability roles"))
+		ok((await trusted())("op.gg 16.17; ddragon LeeSin.json; notes.md"))
+	})
+
+	it("rejects an unsanctioned domain even beside good ones", async () => {
+		strictEqual((await trusted())("op.gg, u.gg and mobafire.com"), false)
+	})
+
+	it("rejects a header with no provenance at all", async () => {
+		for (const empty of ["", "   ", "unknown", "my own knowledge", "assorted guides"])
+			strictEqual((await trusted())(empty), false, `should reject ${JSON.stringify(empty)}`)
+	})
+
+	it("ignores www. when matching", async () => {
+		strictEqual((await trusted())("www.op.gg"), (await trusted())("op.gg"))
+	})
+})

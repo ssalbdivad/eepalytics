@@ -150,14 +150,32 @@ Write the file and nothing else. No commentary, no other files.`
  * risk of this feature is unverified prose reaching the coaching prompt. A header naming no
  * source at all also fails — provenance is not optional.
  */
+/**
+ * Tokens that look like hostnames but are filenames. A well-sourced note citing Data Dragon's
+ * `LeeSin.json` was rejected because `leesin.json` matches any reasonable domain pattern — 8 KB
+ * of correctly-sourced research thrown away over a file extension. A validator that fails this
+ * way teaches you to switch it off.
+ */
+const FILE_SUFFIXES = new Set([
+	"json", "md", "html", "htm", "txt", "csv", "png", "jpg", "jpeg", "svg", "gif", "webp",
+	"pdf", "ts", "js", "tsx", "jsx", "xml", "yml", "yaml", "gz", "zip"
+])
+
 export const sourcesAreTrusted = (sourceHeader: string): boolean => {
 	const text = sourceHeader.toLowerCase()
 	if (text.trim() === "" || text.trim() === "unknown") return false
-	// Any domain-shaped token in the header has to be one we sanctioned.
-	const domains = text.match(/\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b/g) ?? []
-	if (domains.length === 0) return false
+
 	const allowed = new Set<string>(TRUSTED_DOMAINS.map(d => d.replace(/^www\./, "")))
-	return domains.every(d => allowed.has(d.replace(/^www\./, "")))
+	const tokens = text.match(/\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b/g) ?? []
+	const domains = tokens
+		.map(t => t.replace(/^www\./, ""))
+		.filter(t => !FILE_SUFFIXES.has(t.split(".").pop() ?? ""))
+
+	// Provenance is not optional: a header naming no domain at all is unverifiable.
+	if (domains.length === 0) return false
+	// And every domain it does name has to be sanctioned — one untrusted citation alongside
+	// three good ones still means part of the note cannot be checked.
+	return domains.every(d => allowed.has(d))
 }
 
 export interface ResearchResult {
