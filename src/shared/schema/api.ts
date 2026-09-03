@@ -25,6 +25,7 @@
 
 import { type } from "arktype"
 import {
+	ChatMessage,
 	Game,
 	Job,
 	Media,
@@ -71,7 +72,9 @@ export type HealthResponse = typeof HealthResponse.infer
 export const GameListItem = Game.and({
 	hasReview: "boolean",
 	momentCount: "number",
-	mediaCount: "number"
+	mediaCount: "number",
+	/** The review's headline, so the list renders in one request instead of one per row. */
+	"headline?": "string|null"
 })
 export type GameListItem = typeof GameListItem.infer
 
@@ -97,6 +100,22 @@ export const GameDetailResponse = type({
 	timelineAvailable: "boolean"
 })
 export type GameDetailResponse = typeof GameDetailResponse.infer
+
+/* ================================================================== chat */
+
+export const ChatHistoryResponse = type({ messages: ChatMessage.array() })
+export type ChatHistoryResponse = typeof ChatHistoryResponse.infer
+
+/**
+ * One completed exchange. `media` is the images for the moments the answer cited, so the UI can
+ * show the pictures beside the reply without a second round trip.
+ */
+export const ChatTurnResponse = type({
+	user: ChatMessage,
+	coach: ChatMessage,
+	media: Media.array()
+})
+export type ChatTurnResponse = typeof ChatTurnResponse.infer
 
 /* ================================================================ trends */
 
@@ -192,6 +211,7 @@ export const SSE_EVENT_NAMES = [
 	"job",
 	"game",
 	"review",
+	"chat",
 	"capture",
 	"daemon",
 	"error"
@@ -222,6 +242,7 @@ export const API = {
 	game: (gameId: number | string) => `/api/games/${gameId}`,
 	review: (gameId: number | string) => `/api/games/${gameId}/review`,
 	capture: (gameId: number | string) => `/api/games/${gameId}/capture`,
+	chat: (gameId: number | string) => `/api/games/${gameId}/chat`,
 	trends: "/api/trends",
 	jobs: "/api/jobs",
 	cancelJob: (id: number | string) => `/api/jobs/${id}/cancel`,

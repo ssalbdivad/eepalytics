@@ -35,6 +35,7 @@ import {
 	roleLabel
 } from "../lib/format.ts"
 import { ChampIcon } from "../components/ChampIcon.tsx"
+import { CoachChat } from "../components/CoachChat.tsx"
 import { FeedbackCard } from "../components/FeedbackCard.tsx"
 import { GameTimeline } from "../components/GameTimeline.tsx"
 import { MediaViewer } from "../components/MediaViewer.tsx"
@@ -424,6 +425,29 @@ export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 							</div>
 						}
 					</div>
+
+					{/*
+					  * Chat sits directly under the feedback, above the moment list: the natural
+					  * move after reading a coaching point is to argue with it.
+					  */}
+					{d.metrics.length > 0 ?
+						<div className="panel panel-pad">
+							<div className="section-title">
+								Ask the coach <span className="rule" />
+								<span className="faint" style={{ textTransform: "none", letterSpacing: 0 }}>
+									about this game
+								</span>
+							</div>
+							<CoachChat
+								gameId={gameId}
+								moments={moments}
+								metrics={d.metrics}
+								media={media}
+								onSeek={seek}
+								onSelectMoment={selectMoment}
+							/>
+						</div>
+					:	null}
 
 					{items.length > 0 && moments.length > 0 ?
 						<div className="panel panel-pad">

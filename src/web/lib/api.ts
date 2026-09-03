@@ -12,6 +12,8 @@ import type { Type } from "arktype"
 import {
 	API,
 	GameDetailResponse,
+	ChatHistoryResponse,
+	ChatTurnResponse,
 	GameListResponse,
 	HealthResponse,
 	JobAccepted,
@@ -72,7 +74,7 @@ const httpError = (res: Response, body: unknown): ApiError => {
 
 interface RequestOptions {
 	signal?: AbortSignal
-	method?: "GET" | "POST" | "PUT"
+	method?: "GET" | "POST" | "PUT" | "DELETE"
 	body?: unknown
 	query?: Record<string, string | number | undefined>
 }
@@ -142,6 +144,9 @@ export const api = {
 
 	jobs: (signal?: AbortSignal) => request(API.jobs, JobListResponse, { signal }),
 
+	chatHistory: (gameId: number, signal?: AbortSignal) =>
+		request(API.chat(gameId), ChatHistoryResponse, { signal }),
+
 	settings: (signal?: AbortSignal) => request(API.settings, SettingsResponse, { signal }),
 
 	/* --- mutations. Every one is a deliberate user action; none run on render. --- */
@@ -160,6 +165,22 @@ export const api = {
 		request(API.settings, SettingsResponse, { method: "PUT", body: patch }),
 
 	sync: () => request(API.sync, SyncResponse, { method: "POST" }),
+
+	/**
+	 * Ask the coach a question. Unlike every other mutation here this one WAITS for Claude —
+	 * see `src/server/routes/chat.ts` for why chat is not a queued job. There is no client-side
+	 * timeout: an answer legitimately takes 30-90 s, and the caller passes an AbortSignal so the
+	 * user can cancel rather than having the request pulled out from under a live call.
+	 */
+	askCoach: (gameId: number, message: string, model?: string, signal?: AbortSignal) =>
+		request(API.chat(gameId), ChatTurnResponse, {
+			method: "POST",
+			body: model === undefined || model === "" ? { message } : { message, model },
+			signal
+		}),
+
+	clearChat: (gameId: number) =>
+		request(API.chat(gameId), type({ cleared: "number" }), { method: "DELETE" }),
 
 	/** Media is binary and Range-served; it is referenced by URL, never fetched as JSON. */
 	mediaUrl: (id: string) => API.media(id)

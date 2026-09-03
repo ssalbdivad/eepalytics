@@ -8,14 +8,13 @@
  * silently-missed window is the one failure the user can never recover from.
  */
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import type { GameListItem, HealthResponse } from "../../shared/schema/api.ts"
 import type { Job } from "../../shared/schema/domain.ts"
 import { effectiveCs, csPerMin } from "../../shared/schema/domain.ts"
 import { queueName } from "../../shared/constants.ts"
 import { api } from "../lib/api.ts"
 import { href, navigate, useAction, useLocalState, useNow, useResource } from "../lib/hooks.ts"
-import { useSse } from "../lib/sse.ts"
 import {
 	cls,
 	fmtAgo,
@@ -34,59 +33,14 @@ import { JobBadge } from "../components/JobBadge.tsx"
 /* ------------------------------------------------- review headline hooks */
 
 /**
- * `GameListItem` carries `hasReview` but not the headline, so the one-line hook is fetched
- * lazily for the top rows only. Localhost, a handful of requests, cached for the session,
- * and dropped entirely the moment a new review lands.
+ * Headlines now arrive on `GameListItem` itself.
+ *
+ * This used to fetch `/api/games/:id` once per row to pull out a single string — thirty
+ * sequential round trips to render one screen, growing with the history rather than with what
+ * is on screen, plus a module-level cache that had to be invalidated by hand on every SSE
+ * review event. One extra column on the list query replaced all of it.
  */
-const headlineCache = new Map<number, string | null>()
-const HEADLINE_BUDGET = 14
-
-const useHeadlines = (games: readonly GameListItem[]): Map<number, string | null> => {
-	const [, bump] = useState(0)
-	const key = useMemo(
-		() =>
-			games
-				.filter(g => g.hasReview)
-				.slice(0, HEADLINE_BUDGET)
-				.map(g => g.gameId)
-				.join(","),
-		[games]
-	)
-
-	useSse(m => {
-		if (m.name === "review" && headlineCache.size > 0) {
-			headlineCache.clear()
-			bump(n => n + 1)
-		}
-	})
-
-	useEffect(() => {
-		const ids = key === "" ? [] : key.split(",").map(Number)
-		const todo = ids.filter(id => !headlineCache.has(id))
-		if (todo.length === 0) return
-		const ac = new AbortController()
-		let live = true
-		void (async () => {
-			for (const id of todo) {
-				if (!live) return
-				try {
-					const detail = await api.game(id, ac.signal)
-					headlineCache.set(id, detail.review?.headline ?? null)
-				} catch {
-					// A failed hook fetch is cosmetic. Remember the miss so we don't retry in a loop.
-					if (!ac.signal.aborted) headlineCache.set(id, null)
-				}
-				if (live && !ac.signal.aborted) bump(n => n + 1)
-			}
-		})()
-		return () => {
-			live = false
-			ac.abort()
-		}
-	}, [key])
-
-	return headlineCache
-}
+const headlineOf = (g: GameListItem): string | null => g.headline ?? null
 
 /* ------------------------------------------------------------ filtering */
 
@@ -130,7 +84,6 @@ export const GameList = ({ health, eventTick }: GameListProps) => {
 		() => [...(games.data?.games ?? [])].sort((a, b) => b.gameCreationMs - a.gameCreationMs),
 		[games.data]
 	)
-	const headlines = useHeadlines(all)
 
 	const queues = useMemo(() => {
 		const seen = new Map<number, number>()
@@ -248,7 +201,7 @@ export const GameList = ({ health, eventTick }: GameListProps) => {
 							key={g.gameId}
 							game={g}
 							jobs={jobsByGame.get(g.gameId) ?? []}
-							headline={headlines.get(g.gameId) ?? null}
+							headline={headlineOf(g)}
 							now={now}
 						/>
 					))}

@@ -24,7 +24,7 @@ import { type } from "arktype"
 import { Confidence, Metric, Moment, Role, TrendSeries } from "../shared/schema/domain.ts"
 
 /** Bumped when the digest's shape changes in a way the prompt renders differently. */
-export const DIGEST_SCHEMA_VERSION = 1
+export const DIGEST_SCHEMA_VERSION = 2
 
 /**
  * One player in the game, stripped of identity. `team` is relative to the user, so the
@@ -101,6 +101,22 @@ export type DigestGame = typeof DigestGame.infer
  * (~30k tokens) and sending it produces worse feedback than sending derived facts, on top of
  * costing 20x more.
  */
+/** Champion notes as the prompt receives them. See `src/knowledge/`. */
+export const ChampionContext = type({
+	champion: "string",
+	/** The note's own patch, or "durable" for champion identity that survives tuning. */
+	patch: "string",
+	source: "string",
+	text: "string",
+	/** Set when the note's patch differs from the game's; the prompt tells the coach to hedge. */
+	"staleness?": "string|null",
+	/** True when `_default.md` stood in because no file matched — i.e. we know nothing. */
+	isDefault: "boolean",
+	/** The enemy jungler's note, when one exists. Same fence applies. */
+	"opponent?": type({ champion: "string", text: "string" }).or("null")
+})
+export type ChampionContext = typeof ChampionContext.infer
+
 export const GameDigest = type({
 	kind: "'game'",
 	schemaVersion: "number",
@@ -117,7 +133,14 @@ export const GameDigest = type({
 	"objectives?": DigestObjective.array(),
 	"timeline?": DigestTimelineRow.array(),
 	/** Free-form caveats from analysis ("only 6 frames — game ended at 5:41"). */
-	"notes?": "string[]"
+	"notes?": "string[]",
+	/**
+	 * Editable champion context from `knowledge/`. NOT measured from this game — it is general
+	 * knowledge about how the champion works, and nothing in it can be checked against the
+	 * data. The prompt fences it accordingly: it may justify a fix, it may never become a
+	 * number, and the digest wins any disagreement.
+	 */
+	"championContext?": ChampionContext
 })
 export type GameDigest = typeof GameDigest.infer
 
@@ -174,18 +197,52 @@ export type Digest = typeof Digest.infer
 export interface CitationAllowlist {
 	momentIds: Set<string>
 	metricKeys: Set<string>
+	/**
+	 * Every baseline figure the digest printed, keyed by the metric it belongs to, plus the union.
+	 * A baseline is the easiest number to get wrong invisibly: a review once reported elite
+	 * control as "right around your own 45.9% baseline" when 45.9 was KILL PARTICIPATION's
+	 * average and elite control's was 48.66. Both numbers were real and only one was relevant, so
+	 * a presence check passes and the coaching conclusion is still wrong. Keeping the figures
+	 * per-metric is what lets the parser tell those two cases apart.
+	 */
+	baselineByMetric: Map<string, Set<string>>
+	baselineFigures: Set<string>
 }
 
-export const allowlistOf = (digest: Digest): CitationAllowlist =>
-	digest.kind === "game" ?
-		{
-			momentIds: new Set(digest.moments.map(m => m.id)),
-			metricKeys: new Set(digest.metrics.map(m => m.key))
+/** How a figure is compared: digits only, so "2,874" and "2874.0" collapse to one token. */
+export const baselineToken = (raw: string): string => {
+	const n = Number(raw.replace(/,/g, ""))
+	return Number.isFinite(n) ? String(n) : raw
+}
+
+const figuresOf = (text: string | undefined): string[] =>
+	text ? [...text.matchAll(/-?\d[\d,]*(?:\.\d+)?/g)].map(m => baselineToken(m[0])) : []
+
+export const allowlistOf = (digest: Digest): CitationAllowlist => {
+	const baselineByMetric = new Map<string, Set<string>>()
+	const baselineFigures = new Set<string>()
+	if (digest.kind === "game")
+		for (const m of digest.metrics) {
+			// `baselineText` is the one authored rendering; `explain` restates it. Accept both
+			// spellings of the same measurement so a faithful quote is never flagged.
+			const figures = new Set([...figuresOf(m.baselineText), ...figuresOf(m.explain)])
+			for (const f of figures) baselineFigures.add(f)
+			baselineByMetric.set(m.key, figures)
 		}
-	:	{
-			momentIds: new Set<string>(),
-			metricKeys: new Set([
-				...digest.series.map(s => s.key),
-				...(digest.aggregates ?? []).map(m => m.key)
-			])
-		}
+	return digest.kind === "game" ?
+			{
+				momentIds: new Set(digest.moments.map(m => m.id)),
+				metricKeys: new Set(digest.metrics.map(m => m.key)),
+				baselineByMetric,
+				baselineFigures
+			}
+		:	{
+				momentIds: new Set<string>(),
+				metricKeys: new Set([
+					...digest.series.map(s => s.key),
+					...(digest.aggregates ?? []).map(m => m.key)
+				]),
+				baselineByMetric,
+				baselineFigures
+			}
+}

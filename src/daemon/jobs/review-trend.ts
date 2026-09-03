@@ -137,7 +137,10 @@ export const runTrendReviewJob = async (ctx: JobContext): Promise<JobOutcome> =>
 		// A trend item cites metric SERIES, never a single game's moment ids.
 		allowed: {
 			momentIds: new Set<string>(),
-			metricKeys: new Set(series.map(s => s.key))
+			metricKeys: new Set(series.map(s => s.key)),
+			// Trend series carry no per-metric baseline line, so there is nothing to police here.
+			baselineByMetric: new Map<string, Set<string>>(),
+			baselineFigures: new Set<string>()
 		},
 		analysisVersion: ANALYSIS_VERSION,
 		meta: result.meta

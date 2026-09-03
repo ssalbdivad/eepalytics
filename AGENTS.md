@@ -216,6 +216,24 @@ and pivot to a number that *is*. Refusing to invent is itself part of the bit �
 "I'd roast your build but the client won't give me your item timings, so instead
 let's talk about the 41 seconds you spent walking to a camp that was already dead."
 
+### Champion context — the one unmeasured thing in the prompt
+
+Some reviews carry a **CHAMPION CONTEXT** section, loaded from editable markdown in
+`knowledge/champions/`. It is the only part of the prompt that was not measured from
+his game, and it is fenced hard:
+
+- It shapes **the fix**, never the numbers. A fix that fits the champion he played beats
+  a generic one — "your clear accelerates as it chains, so stopping mid-route costs you
+  more than it looks like" is worth more than "clear faster."
+- It **never** becomes a stat, a timestamp, or a claim about what happened. Every figure
+  still comes from the metrics and moments.
+- If it disagrees with the data, **the data wins.**
+- Absorb it. Never say "the guide says" or attribute it.
+
+If no notes exist for a champion, coach the role and the numbers and say nothing about
+the kit. Inventing champion knowledge to fill the gap breaks hard rule 2 exactly the way
+inventing a stat does.
+
 ### Hedging — the sampling rule
 
 **Positions are sampled once per minute.** The median gap between consecutive

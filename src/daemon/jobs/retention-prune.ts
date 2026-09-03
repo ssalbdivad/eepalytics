@@ -6,9 +6,16 @@
  * runs this on a plain timer (on boot, then every six hours). It is idempotent and cheap.
  *
  * WHAT GOES, AND WHY
- *   * `.rofl` files: 15 MB each and they dominate the footprint. Deleted past the retention
- *     window; the game row survives with `replayState = 'pruned'`, which is a different fact
- *     from `'expired'` (Riot lost it) and the UI can say so.
+ *   * `.rofl` files THIS APP DOWNLOADED, i.e. the ones under `DATA_DIR`: 15 MB each and they
+ *     dominate the footprint. Deleted past the retention window; the game row survives with
+ *     `replayState = 'pruned'`, which is a different fact from `'expired'` (Riot lost it) and
+ *     the UI can say so.
+ *   * A `.rofl` OUTSIDE `DATA_DIR` is never touched. `replayPath` frequently points into the
+ *     user's own `Documents/League of Legends/Replays` folder, because the League client
+ *     downloads there and this app adopts what it finds. Those files predate us, the user may
+ *     be keeping them deliberately, and a coaching tool has no business deleting a game
+ *     recording it did not create. They keep `replayState = 'available'`, which is the truth:
+ *     the replay is still on disk and still playable.
  *   * Captured screenshots and clips (`source: 'replay'`): also large, also re-creatable while
  *     the `.rofl` survives.
  *   * GENERATED map SVGs are KEPT regardless of age. They are a few KB each and they are the
@@ -23,6 +30,8 @@
  */
 
 import { rmSync, statSync } from "node:fs"
+import { resolve, sep } from "node:path"
+import { DATA_DIR } from "../../shared/constants.ts"
 import { resolveDataPath } from "../../db/blobs.ts"
 import {
 	deleteMedia,
@@ -40,11 +49,26 @@ const log = makeLogger("retention")
 
 export interface PruneReport {
 	roflsDeleted: number
+	/** Old enough to prune, but outside `DATA_DIR`, so left alone. See the file header. */
+	roflsKept: number
 	bytesFreed: number
 	mediaDeleted: number
 	jobsPruned: number
 	eventsPruned: number
 	skipped: boolean
+}
+
+/**
+ * Is this a file we put there?
+ *
+ * Only paths under `DATA_DIR` are ours to delete. The comparison is on the resolved path with a
+ * trailing separator, so a sibling directory whose name merely starts with the same characters
+ * (`/data-backup` next to `/data`) is not mistaken for a child.
+ */
+const isOurs = (absPath: string): boolean => {
+	const root = resolve(DATA_DIR)
+	const target = resolve(absPath)
+	return target === root || target.startsWith(root + sep)
 }
 
 const removeFile = (absPath: string): number => {
@@ -65,6 +89,7 @@ export const runRetentionPrune = (nowMs = Date.now()): PruneReport => {
 	const settings = getSettings()
 	const report: PruneReport = {
 		roflsDeleted: 0,
+		roflsKept: 0,
 		bytesFreed: 0,
 		mediaDeleted: 0,
 		jobsPruned: 0,
@@ -79,9 +104,13 @@ export const runRetentionPrune = (nowMs = Date.now()): PruneReport => {
 
 	const cutoffMs = nowMs - settings.retentionDays * 24 * 60 * 60 * 1000
 
-	/* ---- .rofl files ---- */
+	/* ---- .rofl files we downloaded ourselves ---- */
 	for (const game of gamesForRetentionPrune(cutoffMs)) {
 		if (!game.replayPath) continue
+		if (!isOurs(game.replayPath)) {
+			report.roflsKept++
+			continue
+		}
 		try {
 			report.bytesFreed += removeFile(game.replayPath)
 			setGameReplayState(game.gameId, "pruned")
@@ -121,6 +150,7 @@ export const runRetentionPrune = (nowMs = Date.now()): PruneReport => {
 	if (report.roflsDeleted > 0 || report.mediaDeleted > 0 || report.jobsPruned > 0)
 		log.info("retention pass complete", {
 			rofls: report.roflsDeleted,
+			roflsKept: report.roflsKept,
 			mediaFiles: report.mediaDeleted,
 			mb: Math.round(report.bytesFreed / 1e5) / 10,
 			jobs: report.jobsPruned,

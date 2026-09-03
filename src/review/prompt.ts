@@ -36,7 +36,7 @@ import type { JsonSchema } from "./claude.ts"
  * The persona text is hashed separately, so editing `AGENTS.md` already invalidates on its
  * own — this is for changes to the code in this file.
  */
-export const PROMPT_TEMPLATE_VERSION = 1
+export const PROMPT_TEMPLATE_VERSION = 3
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 /** `src/review/prompt.ts` -> repo root. Overridable for tests and for a packaged install. */
@@ -408,10 +408,17 @@ Players are given as champions on purpose. You do not know your teammates' names
 	 */
 	sections.push(`## METRICS — cite these by "key"
 
-Each line is: **this game's value** · the DELTA against your own recent average · band · confidence.
-The average ITSELF is never on that line — it is the number after "Your N-game average is" in the
-sentence underneath. To say "your usual X", COPY that number. Do not subtract the delta from this
-game's value to reconstruct it, do not round it off, and do not call it a median: it is a mean.
+Each line is: **this game's value** · the DELTA against your own recent average · **your average
+itself** · band · confidence.
+
+To say "your usual X", COPY the number after \`your N-game average\`, from THIS metric's own line.
+Do not subtract the delta from this game's value to reconstruct it, do not round it off, do not
+call it a median (it is a mean), and do not take an average off a different metric's line — every
+metric has its own, and they are not interchangeable.
+
+**If you quote a metric's value or its average, put that metric's key in the item's
+\`metricKeys\`.** The app attaches the chart and the evidence to an item through its citations, so
+a number whose metric is not cited renders on screen with nothing behind it.
 
 ${
 	d.metrics.length === 0 ?
@@ -421,6 +428,7 @@ ${
 				m =>
 					`- key: \`${m.key}\` — ${m.label}: **${n(m.value, Number.isInteger(m.value) ? 0 : 1)}${m.unit}**` +
 					` · vs your own average: ${m.vsBaseline === null ? "no baseline yet" : signed(m.vsBaseline, Number.isInteger(m.vsBaseline) ? 0 : 1)}` +
+					`${m.baselineText ? ` · ${m.baselineText}` : ""}` +
 					` · band ${m.band} · confidence ${m.confidence}\n  ${m.explain}`
 			)
 			.join("\n")
@@ -471,7 +479,39 @@ ${d.timeline
 	if (d.baseline && d.baseline.length > 0)
 		sections.push(`## YOUR OWN BASELINE (this is what "behind" means — never a rank average, never an invented number)
 
+These restate the SAME averages printed on the metric lines above, and add the median. Each line
+names its own metric — an average belongs to the metric on its line and to no other.
+
 ${bullets(d.baseline)}`)
+
+	/**
+	 * Champion context sits AFTER every measured section on purpose. By the time the model reads
+	 * it, the numbers it is allowed to cite are already established, and this arrives explicitly
+	 * labelled as the one part of the prompt that was not measured.
+	 */
+	if (d.championContext && !d.championContext.isDefault) {
+		const cc = d.championContext
+		sections.push(`## CHAMPION CONTEXT — ${cc.champion} (NOT measured from this game)
+
+This section is general knowledge about how ${cc.champion} works. **Nothing in it was measured
+from this game and none of it can be checked against the data.** It exists so your FIX can be
+specific to the champion he actually played.
+
+Rules for this section, and they are absolute:
+
+- It may shape **what you tell him to do next game**. A fix that fits the champion beats a
+  generic one.
+- It may **never** become a number, a stat, a timestamp, or a claim about what happened. Every
+  figure you cite still has to come from the metrics and moments above.
+- If anything here disagrees with the data above, **the data wins** and you drop the note.
+- Do not quote it, do not attribute it, and do not tell him "the guide says". Absorb it.
+${cc.staleness ? `- ${cc.staleness}\n` : ""}
+${cc.text}${
+			cc.opponent ?
+				`\n\n### The enemy jungler — ${cc.opponent.champion}\n\nSame rules. This is for understanding what he was racing, not for asserting what that player did.\n\n${cc.opponent.text}`
+			:	""
+		}`)
+	}
 
 	if (d.notes && d.notes.length > 0) sections.push(`## ANALYSIS CAVEATS\n\n${bullets(d.notes)}`)
 
@@ -562,5 +602,15 @@ If the same note keeps appearing, that IS the trend — say so, and say how many
 }
 
 /** Convenience for the daemon: dispatch on `digest.kind`. */
+/**
+ * The digest as the model sees it, with no output instructions attached.
+ *
+ * `gamePrompt`/`trendPrompt` bolt the review's output contract onto this; the chat needs the
+ * same evidence with a different set of instructions, and both must render the digest through
+ * ONE function or they will drift apart and the chat will start quoting a stale shape.
+ */
+export const renderDigest = (digest: Digest): string =>
+	digest.kind === "game" ? renderGame(digest) : renderTrend(digest)
+
 export const buildPrompt = (digest: Digest, opts: PromptOptions = {}): BuiltPrompt =>
 	digest.kind === "game" ? gamePrompt(digest, opts) : trendPrompt(digest, opts)

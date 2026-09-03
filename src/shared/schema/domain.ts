@@ -164,9 +164,53 @@ export const Metric = type({
 	band: Band,
 	vsBaseline: "number|null",
 	confidence: Confidence,
-	explain: "string"
+	explain: "string",
+	/**
+	 * The rolling baseline this metric is judged against, restated at DIGEST time from the live
+	 * corpus. Persisted rows do not carry these — `explain` froze a baseline at analysis time and
+	 * the 20-game window has moved on since. `buildGameDigest` fills them so the prompt can print
+	 * the average on the metric's OWN line, which is what stops the coach attributing one
+	 * metric's average to another. Optional so DB reads stay valid.
+	 */
+	"baselineMean?": "number|null",
+	"baselineSd?": "number|null",
+	"baselineN?": "number|null",
+	/**
+	 * The baseline rendered ONCE, as the exact words every consumer prints. Two call sites
+	 * formatting the same mean at different precision ("0.9" and "0.94") reintroduces the
+	 * ambiguity these fields exist to remove, so the string is authored in one place.
+	 */
+	"baselineText?": "string"
 })
 export type Metric = typeof Metric.infer
+
+/* ============================================================ chat */
+
+/**
+ * One turn of a conversation about a game.
+ *
+ * The coach's replies carry citations for the same reason feedback items do: an answer that
+ * names a moment can show the map image beside it, and an answer that names a metric can show
+ * the number. An uncited reply renders as opinion, which is what the whole app exists to avoid.
+ */
+export const ChatRole = type("'user'|'coach'")
+export type ChatRole = typeof ChatRole.infer
+
+export const ChatMessage = type({
+	id: "string",
+	gameId: "number",
+	role: ChatRole,
+	content: "string",
+	/** Null on a user turn. */
+	model: "string|null",
+	costUsd: "number|null",
+	citedMomentIds: "string[]",
+	citedMetricKeys: "string[]",
+	status: "'ok'|'failed'",
+	error: "string|null",
+	createdMs: "number"
+})
+export type ChatMessage = typeof ChatMessage.infer
 
 /* ================================================================ moment */
 

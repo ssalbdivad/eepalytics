@@ -23,6 +23,7 @@ import { ANALYSIS_VERSION } from "../shared/constants.ts"
 import type { FeedbackItem, FeedbackSeverity, Review, ReviewKind } from "../shared/schema/domain.ts"
 import type { CoachMeta } from "./claude.ts"
 import { extractJson } from "./claude.ts"
+import { baselineToken } from "./digest-contract.ts"
 import type { CitationAllowlist } from "./digest-contract.ts"
 
 /* ============================================================ results */
@@ -47,6 +48,7 @@ export type ParseWarningCode =
 	| "tsec-coerced"
 	| "empty-item"
 	| "no-number-cited"
+	| "baseline-mismatch"
 	| "no-citations"
 	| "no-praise"
 	| "items-truncated"
@@ -245,6 +247,134 @@ export const makeReviewId = (kind: ReviewKind, gameId: number | null, promptHash
 export const makeFeedbackItemId = (reviewId: string, index: number): string => `${reviewId}-i${index}`
 
 /**
+ * Phrases that make a number a claim about the user's HISTORY rather than about this game.
+ *
+ * An earlier version of this looked for a cue word and flagged every number within 48
+ * characters. It caught the real defect and also flagged "10:00" (the clock), "+7" (this game's
+ * value, sitting just before "when your average there is -7.8") and bare small integers — three
+ * false positives per review, which is how a check gets ignored. Matching the whole claim and
+ * capturing the figure inside it is far more precise: the number has to be in a grammatical
+ * position that makes it a baseline.
+ */
+const BASELINE_CLAIMS: readonly RegExp[] = [
+	// "your own 19-game average at 14:00 is 92.1", "your average there is only -283".
+	// Only FILLER may sit between the cue and the figure. An open character gap here matched
+	// "your baseline in a game that went nearly 40 minutes" and reported "40" as a baseline.
+	/\byour (?:own )?(?:\d+-game )?(?:average|mean|median|baseline|norm|usual|typical)\b(?:\s+(?:is|was|of|at|to|sits?|sitting|stands?|there|only|just|around|about|roughly|nearly|a|an|the|TIME))*\s*(?:is|of|at)?\s*(-?\d[\d,]*(?:\.\d+)?)/gi,
+	// "your own 2692g average", "your 5.3 average", "your 132 norm".
+	// The `-game` guard keeps "your own 20-game average" from yielding the WINDOW SIZE, 20.
+	/\byour (?:own )?(-?\d[\d,]*(?:\.\d+)?)(?!\d|-game)\s*[a-z%/]{0,6}\s*(?:average|baseline|norm|median|mean)\b/gi,
+	// "your usual 48.2%", "your normal 3150g"
+	/\byour (?:usual|normal|typical|own) (-?\d[\d,]*(?:\.\d+)?)(?!\d|-game)/gi,
+	// "averages 5.3", "you normally sit at 63"
+	/\byou (?:usually|normally|average)\b[^.\d]{0,24}?(-?\d[\d,]*(?:\.\d+)?)/gi
+]
+
+/**
+ * Clock times are the single biggest source of spurious digits ("10:00" contributes "00"), and
+ * they are never baselines. Blank them before scanning rather than trying to exclude them after.
+ */
+const stripClocks = (text: string): string => text.replace(/\b\d{1,3}:\d{2}\b/g, "TIME")
+
+/**
+ * Does `raw` quote `actual`?
+ *
+ * The coach is allowed to drop precision — the digest prints "2692.1gold" and writing "2692g" in
+ * prose is a faithful quote, not the rounding hard rule 4 bans. What the rule is aimed at is
+ * changing the VALUE ("2874" becoming "about 2900"), so the test is whether the figure survives
+ * rounding `actual` to however many decimals the coach chose to print.
+ */
+const quotes = (raw: string, actual: number): boolean => {
+	const quoted = Number(raw.replace(/,/g, ""))
+	if (!Number.isFinite(quoted) || !Number.isFinite(actual)) return false
+	const dp = (raw.split(".")[1] ?? "").length
+	const f = 10 ** dp
+	return Math.round(actual * f) / f === quoted
+}
+
+const quotesAny = (raw: string, actuals: readonly number[]): boolean =>
+	actuals.some(a => quotes(raw, a))
+
+/** Which metric's baseline a figure belongs to, if any. */
+const ownerOf = (raw: string, allowed: CitationAllowlist): string | null => {
+	for (const [key, figures] of allowed.baselineByMetric)
+		if (quotesAny(raw, [...figures].map(Number))) return key
+	return null
+}
+
+/**
+ * Flag baseline figures that do not belong to the metrics the item cites.
+ *
+ * The failure this catches is specific and was observed in a shipped review: elite control was
+ * reported as "right around your own 45.9% baseline" when 45.9 was kill participation's average.
+ * The number was real, so a presence-only check passed; it was simply the wrong metric's, and
+ * the coaching conclusion drawn from it was wrong too.
+ *
+ * Deliberately a WARNING, not a drop. Prose is not a parser, and eating a good coaching item
+ * over a regex is worse than surfacing a figure for a human to glance at.
+ */
+const baselineWarnings = (
+	item: CoachItem,
+	citedMetrics: readonly string[],
+	allowed: CitationAllowlist,
+	itemIndex: number
+): ParseWarning[] => {
+	if (allowed.baselineByMetric.size === 0) return []
+	const allowedHere: number[] = []
+	for (const key of citedMetrics)
+		for (const f of allowed.baselineByMetric.get(key) ?? []) allowedHere.push(Number(f))
+
+	const text = stripClocks(item.body)
+	const out: ParseWarning[] = []
+	const seen = new Set<string>()
+
+	for (const pattern of BASELINE_CLAIMS)
+		for (const m of text.matchAll(pattern)) {
+			const raw = m[1]
+			if (raw === undefined) continue
+			const token = baselineToken(raw)
+			if (seen.has(token)) continue
+			if (quotesAny(raw, allowedHere)) continue
+			seen.add(token)
+			// Naming the metric the figure actually belongs to turns "this number is suspect"
+			// into "add this citation" — and a missing citation is not cosmetic: the review
+			// screen attaches the chart and the media to an item by its citations, so an
+			// uncited number renders with no evidence beside it.
+			const owner = ownerOf(raw, allowed)
+			out.push({
+				code: "baseline-mismatch",
+				itemIndex,
+				message:
+					owner ?
+						`"${raw}" is ${owner}'s baseline, but this item cites ${
+							citedMetrics.join(", ") || "no metrics"
+						} — cite ${owner} or use the baseline of a metric it does cite`
+					:	`"${raw}" is presented as a baseline but matches no metric's baseline in this digest`
+			})
+		}
+	return out
+}
+
+/**
+ * The same baseline check, for a free-form chat reply.
+ *
+ * A chat answer is prose the user reads and believes exactly like a feedback item, and it is the
+ * EASIER place to get a baseline wrong — a question invites a confident number. It returns
+ * messages rather than `ParseWarning`s because a chat turn has no item index to hang them on.
+ */
+export const chatBaselineWarnings = (
+	reply: string,
+	citedMetrics: readonly string[],
+	allowed: CitationAllowlist
+): string[] =>
+	baselineWarnings(
+		{ title: "", body: reply, severity: "info", category: "", tSec: null, momentIds: [], metricKeys: [] } as unknown as CoachItem,
+		citedMetrics,
+		allowed,
+		0
+	).map(w => w.message)
+
+/**
  * The whole job: parse, enforce citations, assemble a `Review`. On success the returned
  * review is ready for `insertReview()` as-is.
  */
@@ -284,6 +414,8 @@ export const buildReview = (args: BuildReviewArgs): ParseResult<Review> => {
 				itemIndex: i,
 				message: `"${k}" is not a metric in this digest; citation dropped`
 			})
+
+		for (const w of baselineWarnings(item, metricKeys, args.allowed, i)) warnings.push(w)
 
 		const citedSomething = item.momentIds.length + item.metricKeys.length > 0
 		if (citedSomething && momentIds.length + metricKeys.length === 0) {
@@ -421,6 +553,14 @@ export const failedReview = (args: {
 
 /** Warnings the user should actually see, as opposed to bookkeeping. */
 export const seriousWarnings = (warnings: ParseWarning[]): ParseWarning[] =>
-	warnings.filter(w => w.code === "fabricated-citations" || w.code === "unknown-moment-id" || w.code === "unknown-metric-key")
+	warnings.filter(
+		w =>
+			w.code === "fabricated-citations" ||
+			w.code === "unknown-moment-id" ||
+			w.code === "unknown-metric-key" ||
+			// A misattributed baseline is not a dropped citation, it is a wrong number in prose
+			// the user will read and believe. It belongs in the same tier.
+			w.code === "baseline-mismatch"
+	)
 
 const dedupe = (xs: string[]): string[] => [...new Set(xs)]

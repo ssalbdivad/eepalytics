@@ -10,10 +10,10 @@ const env: Record<string, string | undefined> =
 export const ANALYSIS_VERSION = 1
 
 /** Bump to invalidate every Claude review. */
-export const REVIEW_VERSION = 1
+export const REVIEW_VERSION = 2
 
 /** Migration file set currently shipped. openDb() refuses to run against a newer DB. */
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 /** Hono listens here; vite dev proxies /api + /media to it. */
 export const SERVER_PORT = Number(env.CSK_PORT ?? 7700)

@@ -34,7 +34,9 @@ import type { LcuEvent, LcuTimeline } from "../shared/schema/lcu.ts"
 import { zoneOf } from "../shared/map.ts"
 import type { TeamId } from "../shared/map.ts"
 import type { Baseline } from "../analysis/index.ts"
+import { championNote, stalenessWarning } from "../knowledge/index.ts"
 import { DIGEST_SCHEMA_VERSION } from "../review/digest-contract.ts"
+import type { ChampionContext } from "../review/digest-contract.ts"
 import type {
 	DigestGame,
 	DigestObjective,
@@ -202,6 +204,56 @@ const digestObjectives = (
 	return out.sort((a, b) => a.tSec - b.tSec)
 }
 
+/**
+ * Metrics are PERSISTED with the baseline that was live when the game was analysed, frozen into
+ * `explain` and `vsBaseline`. The corpus is a rolling 20-game window, so as new games land the
+ * window slides and those figures go stale — measured across five recent games, 56% of them
+ * disagreed with a freshly computed baseline, e.g. cs@10 stored `average is 64` against a live
+ * mean of 65.42.
+ *
+ * Shipping both numbers in one prompt is worse than shipping either alone: the coach is told to
+ * copy the average verbatim, and there are two different verbatim averages to copy. A review
+ * duly reported elite control as "right around your own 45.9% baseline" — 45.9 was real, but it
+ * was KILL PARTICIPATION's average, grabbed from a neighbouring line. Elite control's own
+ * average was 48.66.
+ *
+ * So the digest restates every baseline from the live corpus before the prompt sees it, and the
+ * prompt prints each average on its own metric's line. One metric, one average, nothing to hunt.
+ */
+const BASELINE_SENTENCE = /\s*Your \d+-game average is [^;]*; this game is [^.]*\./
+
+const restateBaselines = (
+	metrics: readonly Metric[],
+	baseline: Baseline | undefined
+): Metric[] =>
+	metrics.map(metric => {
+		const stat = baseline?.[metric.key]
+		if (!stat || !Number.isFinite(stat.mean))
+			return {
+				...metric,
+				baselineMean: null,
+				baselineSd: null,
+				baselineN: null,
+				baselineText: undefined
+			}
+		const vs = metric.value - stat.mean
+		const baselineText = `your ${stat.n}-game average ${round(stat.mean)}${metric.unit} (sd ${round(stat.sd)})`
+		const fresh = ` Your ${stat.n}-game average is ${round(stat.mean)} (sd ${round(stat.sd)}); this game is ${vs >= 0 ? "+" : ""}${round(vs)}.`
+		return {
+			...metric,
+			vsBaseline: vs,
+			baselineMean: stat.mean,
+			baselineSd: stat.sd,
+			baselineN: stat.n,
+			baselineText,
+			// Replace the frozen sentence in place; if analysis never wrote one, append.
+			explain:
+				BASELINE_SENTENCE.test(metric.explain) ?
+					metric.explain.replace(BASELINE_SENTENCE, fresh)
+				:	`${metric.explain}${fresh}`
+		}
+	})
+
 /** The user's own rolling history, as sentences the coach can quote verbatim. */
 export const baselineProse = (baseline: Baseline, metrics: readonly Metric[]): string[] => {
 	const out: string[] = []
@@ -252,19 +304,43 @@ export const buildGameDigest = (input: BuildDigestInput): GameDigest => {
 			`No enemy ${game.role} was identified, so per-minute diffs are absent rather than zero.`
 		)
 
+	// Restate before anything reads them, so `metrics` and `baseline` below cannot disagree.
+	const restated = restateBaselines(metrics, input.baseline)
+
+	// Champion notes are an enhancement, never a dependency: a missing or unreadable
+	// `knowledge/` leaves `championContext` undefined and the review is unchanged.
+	const note = championNote(game.championName)
+	const oppNote = opponent ? championNote(opponent.championName) : null
+	const championContext: ChampionContext | undefined =
+		note ?
+			{
+				champion: game.championName,
+				patch: note.patch,
+				source: note.source,
+				text: note.text,
+				staleness: stalenessWarning(note, game.patch),
+				isDefault: note.isDefault,
+				opponent:
+					oppNote && !oppNote.isDefault && opponent ?
+						{ champion: opponent.championName, text: oppNote.text }
+					:	null
+			}
+		:	undefined
+
 	return {
 		kind: "game",
 		schemaVersion: DIGEST_SCHEMA_VERSION,
 		game: digestGame(game, participants),
 		players: digestPlayers(game, participants),
-		metrics: [...metrics],
+		metrics: restated,
 		moments: [...moments],
 		dataGaps: [...GAME_DATA_GAPS],
 		generatedMs: Date.now(),
 		analysisVersion: input.analysisVersion,
 		baseline:
-			input.baseline ? baselineProse(input.baseline, metrics)
+			input.baseline ? baselineProse(input.baseline, restated)
 			:	["No baseline yet — this is one of the first games stored, so nothing is banded."],
+		championContext,
 		objectives: digestObjectives(timeline, game.participantId, teamId),
 		timeline: digestTimeline(timeline, game.participantId, opponent?.participantId ?? null, teamId),
 		notes

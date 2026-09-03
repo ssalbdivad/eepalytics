@@ -38,7 +38,8 @@ import { gamePrompt } from "../../review/prompt.ts"
 import { runCoach } from "../../review/claude.ts"
 import { publish } from "../bus.ts"
 import { loadCorpus, loadTimeline } from "../corpus.ts"
-import { allowlistFor, buildGameDigest } from "../digest.ts"
+import { buildGameDigest } from "../digest.ts"
+import { allowlistOf } from "../../review/digest-contract.ts"
 import { enqueueMediaGenerate } from "../queue.ts"
 import type { JobContext, JobOutcome } from "../context.ts"
 
@@ -153,7 +154,10 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 		gameId,
 		model: settings.model,
 		promptHash: prompt.promptHash,
-		allowed: allowlistFor(metrics, moments),
+		// Derived from the DIGEST, not the raw rows: the digest restated every baseline
+		// from the live corpus, and the allowlist has to police the figures the coach was
+		// actually shown.
+		allowed: allowlistOf(digest),
 		durationSec: game.gameDurationSec,
 		analysisVersion: ANALYSIS_VERSION,
 		meta: result.meta

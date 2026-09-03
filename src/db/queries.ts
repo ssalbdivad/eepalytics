@@ -23,6 +23,7 @@ import {
 	JOB_RETRY_MAX_MS
 } from "../shared/constants.ts"
 import type {
+	ChatMessage,
 	AppEvent,
 	FeedbackItem,
 	Game,
@@ -852,6 +853,23 @@ export const gameIdsWithReviews = (): Set<number> =>
 			.map(r => num((r as Row).gameId))
 	)
 
+/**
+ * Every game's review headline, in one query.
+ *
+ * The games list shows the headline under each row. Fetching it per game meant one full
+ * `/api/games/:id` round trip each — thirty sequential requests to render one screen, and it
+ * scaled with the history, not the viewport. The headline is one column; fetch them together.
+ */
+export const reviewHeadlines = (): Map<number, string> =>
+	new Map(
+		prep(
+			`SELECT gameId, headline FROM review
+			 WHERE gameId IS NOT NULL AND kind = 'game' AND status = 'ok'`
+		)
+			.all()
+			.map(r => [num((r as Row).gameId), str((r as Row).headline)] as const)
+	)
+
 /** Whether a review with this exact prompt hash already exists — the reuse check. */
 export const reviewExistsForPrompt = (
 	gameId: number | null,
@@ -1449,4 +1467,57 @@ export const deleteGame = (gameId: number): void => {
 		prep("DELETE FROM live_session WHERE gameId = ?").run(gameId)
 		prep("DELETE FROM game WHERE gameId = ?").run(gameId)
 	})
+}
+
+/* ================================================================== chat */
+
+const rowToChatMessage = (row: Row): ChatMessage => ({
+	id: str(row.id),
+	gameId: num(row.gameId),
+	role: str(row.role, "user") as ChatMessage["role"],
+	content: str(row.content),
+	model: nullableStr(row.model),
+	costUsd: nullableNum(row.costUsd),
+	citedMomentIds: json<string[]>(row.citedMomentIds, []),
+	citedMetricKeys: json<string[]>(row.citedMetricKeys, []),
+	status: str(row.status, "ok") as ChatMessage["status"],
+	error: nullableStr(row.error),
+	createdMs: num(row.createdMs)
+})
+
+/** Oldest first — a conversation reads top to bottom. */
+export const listChatMessages = (gameId: number, limit = 200): ChatMessage[] =>
+	prep(
+		"SELECT * FROM chat_message WHERE gameId = ? ORDER BY createdMs ASC, rowid ASC LIMIT ?"
+	)
+		.all(gameId, limit)
+		.map(r => rowToChatMessage({ ...(r as Row) }))
+
+export const insertChatMessage = (m: ChatMessage): void => {
+	prep(
+		`INSERT OR REPLACE INTO chat_message
+		 (id, gameId, role, content, model, costUsd, citedMomentIds, citedMetricKeys, status, error, createdMs)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	).run(
+		m.id,
+		m.gameId,
+		m.role,
+		m.content,
+		m.model,
+		m.costUsd,
+		JSON.stringify(m.citedMomentIds),
+		JSON.stringify(m.citedMetricKeys),
+		m.status,
+		m.error,
+		m.createdMs
+	)
+}
+
+/** Clear one game's conversation. Returns how many turns were removed. */
+export const clearChat = (gameId: number): number => {
+	const before = num(
+		plain(prep("SELECT count(*) AS c FROM chat_message WHERE gameId = ?").get(gameId))?.c
+	)
+	prep("DELETE FROM chat_message WHERE gameId = ?").run(gameId)
+	return before
 }
