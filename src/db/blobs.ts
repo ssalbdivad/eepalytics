@@ -34,6 +34,15 @@ export const BLOB_MATCH = "match"
 export const BLOB_TIMELINE = "timeline"
 export const BLOB_LIVE = "live"
 export const BLOB_DIGEST = "digest"
+/**
+ * The digest as it was actually SENT to the coach, written by `review-game`.
+ *
+ * Distinct from `BLOB_DIGEST`, which `analysis-run` overwrites whenever a game is re-analysed.
+ * Baselines are a rolling window over recent games, so a digest rebuilt later is not the one the
+ * review was written against — auditing a stored review against a fresh build reports correct
+ * quotes as violations. Keeping the sent bytes is what makes that audit sound.
+ */
+export const BLOB_REVIEW_DIGEST = "review-digest"
 
 /** Absolute path of a blob. */
 export const blobPath = (gameId: number, name: string): string =>

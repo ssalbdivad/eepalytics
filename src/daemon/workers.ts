@@ -201,11 +201,20 @@ export const startWorkers = (opts: { normal?: number } = {}): WorkerPool => {
 					leaseMs: 60_000
 				})
 				// Record the reason ON the job so "why has this not run" is answerable in the UI.
+				//
+				// But only if it is the job we actually asked about. `peekCapture` and `claim`
+				// are two separate reads of the queue, so with more than one capture pending the
+				// claim can return a DIFFERENT job — and G9 ("the .rofl file is not on disk") was
+				// evaluated against the peeked job's replay, not this one's. Stamping it here
+				// would tell the user a specific, checkable, wrong thing about why their capture
+				// is stuck. Defer without the detail instead and let the next pass evaluate it.
 				if (claimed)
 					defer(
 						claimed,
-						`gate ${verdict.failed.join("+")}: ${verdict.reason}`,
-						Date.now() + verdict.retryAfterMs
+						claimed.id === next.id ?
+							`gate ${verdict.failed.join("+")}: ${verdict.reason}`
+						:	"another capture was ahead of this one; re-checking the gate for it next pass",
+						Date.now() + (claimed.id === next.id ? verdict.retryAfterMs : GATE_POLL_MS)
 					)
 				await sleep(GATE_POLL_MS, shutdown.signal)
 				continue
@@ -218,6 +227,13 @@ export const startWorkers = (opts: { normal?: number } = {}): WorkerPool => {
 			})
 			if (!job) {
 				await sleep(GATE_POLL_MS, shutdown.signal)
+				continue
+			}
+			// Same race, and this side is the dangerous one: an OK verdict computed for the
+			// peeked job would otherwise authorise taking over the client for a different job
+			// whose replay was never checked. Put it back and re-evaluate.
+			if (job.id !== next.id) {
+				defer(job, "gate was evaluated for another capture; re-checking", Date.now() + GATE_POLL_MS)
 				continue
 			}
 			log.warn("starting INTRUSIVE job — the League client is about to be taken over", {

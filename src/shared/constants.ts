@@ -10,7 +10,7 @@ const env: Record<string, string | undefined> =
 export const ANALYSIS_VERSION = 1
 
 /** Bump to invalidate every Claude review. */
-export const REVIEW_VERSION = 2
+export const REVIEW_VERSION = 3
 
 /** Migration file set currently shipped. openDb() refuses to run against a newer DB. */
 export const SCHEMA_VERSION = 2

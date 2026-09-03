@@ -18,9 +18,8 @@ import {
 	getReview,
 	listGames
 } from "../src/db/queries.ts"
-import { baselineFromRows, perGameMetrics } from "../src/analysis/index.ts"
-import { loadCorpus, loadTimeline } from "../src/daemon/corpus.ts"
-import { buildGameDigest } from "../src/daemon/digest.ts"
+import { BLOB_REVIEW_DIGEST, readBlob } from "../src/db/blobs.ts"
+import type { GameDigest } from "../src/review/digest-contract.ts"
 import { allowlistOf } from "../src/review/digest-contract.ts"
 import { buildReview, seriousWarnings } from "../src/review/parse.ts"
 import { ANALYSIS_VERSION } from "../src/shared/constants.ts"
@@ -31,15 +30,17 @@ const auditGame = (gameId: number) => {
 	if (!game || !review || review.status !== "ok") return null
 	if (game.analysisVersion < ANALYSIS_VERSION) return null
 
-	const digest = buildGameDigest({
-		game,
-		participants: getParticipants(gameId),
-		metrics: getMetrics(gameId),
-		moments: getMoments(gameId),
-		timeline: loadTimeline(gameId),
-		baseline: baselineFromRows(perGameMetrics(loadCorpus(20, { excludeGameId: gameId }))),
-		analysisVersion: ANALYSIS_VERSION
-	})
+	// The digest AS SENT, not a rebuild.
+	//
+	// Baselines are a rolling window over recent games. Rebuilding one now uses a window that
+	// has moved since the review was written, so a figure the coach copied correctly at the time
+	// reads as a violation today. That flaw made this script's aggregate count meaningless: a
+	// run reporting 39 violations was measuring corpus drift, not the reviews.
+	//
+	// Reviews written before `review-digest` blobs existed have nothing to check against, and are
+	// reported as unauditable rather than being judged against the wrong evidence.
+	const digest = readBlob<GameDigest>(gameId, BLOB_REVIEW_DIGEST)
+	if (digest === null) return { gameId, unauditable: true as const, game }
 
 	// Reshape the stored review back into the coach's own output shape.
 	const rebuilt = buildReview({
@@ -75,9 +76,18 @@ const ids =
 
 let reviewed = 0
 let serious = 0
+let unauditable = 0
 for (const id of ids) {
 	const r = auditGame(id)
 	if (!r) continue
+	if ("unauditable" in r) {
+		unauditable++
+		console.log(
+			`[skip] ${id} ${r.game.championName.padEnd(9)} reviewed before the digest was stored — ` +
+				`re-review it to make it auditable`
+		)
+		continue
+	}
 	reviewed++
 	serious += r.serious.length
 	const flag = r.serious.length ? "FAIL" : " ok "
@@ -88,5 +98,8 @@ for (const id of ids) {
 	)
 	for (const w of r.serious) console.log(`        ${w.code}  item[${w.itemIndex}]  ${w.message}`)
 }
-console.log(`\n${reviewed} review(s) audited, ${serious} serious warning(s).`)
+console.log(
+	`\n${reviewed} review(s) audited, ${serious} serious warning(s)` +
+		`${unauditable > 0 ? `, ${unauditable} skipped for want of a stored digest` : ""}.`
+)
 process.exit(serious ? 1 : 0)

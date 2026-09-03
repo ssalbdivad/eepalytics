@@ -206,8 +206,31 @@ const stuckFloorMs = (job: Job, now: number): number => {
  * failure, and a job that has been waiting three days for the capture gate should not be
  * indistinguishable from one that crashed.
  */
+/**
+ * How long a job may keep saying "not yet" before we accept it never will.
+ *
+ * `stuckFloorMs` makes a stuck job quiet, but nothing made it STOP: the PRACTICETOOL match the
+ * LCU only ever returns one participant for would defer every ten minutes for the life of the
+ * daemon, forever, because the condition it is waiting on cannot occur. A day is far longer than
+ * any real condition here takes — the client being closed, a match still assembling, the capture
+ * gate waiting for the user to stop playing — and the job stays visible as `expired` with its
+ * reason rather than vanishing.
+ */
+const GIVE_UP_AFTER_MS = 24 * 60 * 60_000
+
 export const defer = (job: Job, reason: string, untilMs?: number): void => {
 	const now = Date.now()
+
+	// Jobs with a deadline are exempt: `replay-download` loses the .rofl 30 minutes after the
+	// game ends and `expire` already ends that loop on its own terms.
+	if (job.deadlineMs === null && now - job.createdMs > GIVE_UP_AFTER_MS) {
+		expire(
+			job,
+			`gave up after ${Math.round((now - job.createdMs) / 3_600_000)}h of deferrals — last reason: ${reason}`
+		)
+		return
+	}
+
 	const asked = untilMs ?? now + 60_000
 	const until = Math.max(asked, now + stuckFloorMs(job, now))
 	deferJob(job.id, reason, until)

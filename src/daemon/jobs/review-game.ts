@@ -37,6 +37,7 @@ import { buildReview, failedReview, seriousWarnings } from "../../review/parse.t
 import { gamePrompt } from "../../review/prompt.ts"
 import { runCoach } from "../../review/claude.ts"
 import { publish } from "../bus.ts"
+import { BLOB_REVIEW_DIGEST, writeBlob } from "../../db/blobs.ts"
 import { loadCorpus, loadTimeline } from "../corpus.ts"
 import { refreshChampionContextInBackground } from "../../knowledge/research.ts"
 import { buildGameDigest } from "../digest.ts"
@@ -93,6 +94,11 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 		baseline: baselineFromRows(perGameMetrics(corpus)),
 		analysisVersion: ANALYSIS_VERSION
 	})
+
+	// Keep the exact bytes the coach was given. A digest rebuilt later uses a rolling baseline
+	// window that has since moved, so it is not evidence of what this review was held to.
+	// `scripts/audit-citations.ts` reads this rather than rebuilding.
+	writeBlob(gameId, BLOB_REVIEW_DIGEST, digest)
 
 	const prompt = gamePrompt(digest, {
 		intensity: settings.coachIntensity,
