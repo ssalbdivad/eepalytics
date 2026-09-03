@@ -14,6 +14,7 @@ import { errorDetail, errorMessage } from "./api.ts"
 export type Route =
 	| { name: "games" }
 	| { name: "game"; gameId: number }
+	| { name: "replays" }
 	| { name: "trends" }
 	| { name: "queue" }
 	| { name: "settings" }
@@ -23,6 +24,7 @@ export const parseRoute = (hash: string): Route => {
 	const path = hash.replace(/^#/, "").replace(/^\/+/, "")
 	const [head = "", tail = ""] = path.split("/")
 	if (head === "" || head === "games") return { name: "games" }
+	if (head === "replays") return { name: "replays" }
 	if (head === "trends") return { name: "trends" }
 	if (head === "queue") return { name: "queue" }
 	if (head === "settings") return { name: "settings" }
@@ -35,6 +37,7 @@ export const parseRoute = (hash: string): Route => {
 
 export const href = {
 	games: "#/games",
+	replays: "#/replays",
 	trends: "#/trends",
 	queue: "#/queue",
 	settings: "#/settings",

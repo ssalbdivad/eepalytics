@@ -12,6 +12,7 @@ import type { SseStatus } from "./lib/sse.ts"
 import { cls } from "./lib/format.ts"
 import { GameList } from "./pages/GameList.tsx"
 import { GameReview } from "./pages/GameReview.tsx"
+import { Replays } from "./pages/Replays.tsx"
 import { Trends } from "./pages/Trends.tsx"
 import { Queue } from "./pages/Queue.tsx"
 import { SettingsPage } from "./pages/Settings.tsx"
@@ -113,6 +114,9 @@ export const App = () => {
 					<a className={cls(route.name === "games" && "active")} href={href.games}>
 						Games
 					</a>
+					<a className={cls(route.name === "replays" && "active")} href={href.replays}>
+						Replays
+					</a>
 					<a className={cls(route.name === "trends" && "active")} href={href.trends}>
 						Trends
 					</a>
@@ -172,6 +176,8 @@ export const App = () => {
 					<GameList health={h} eventTick={eventTick} />
 				: route.name === "game" ?
 					<GameReview gameId={route.gameId} eventTick={eventTick} />
+				: route.name === "replays" ?
+					<Replays eventTick={eventTick} />
 				: route.name === "trends" ?
 					<Trends eventTick={eventTick} />
 				: route.name === "queue" ?

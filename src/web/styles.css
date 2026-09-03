@@ -1122,3 +1122,69 @@ input[type="checkbox"] {
 .job-row.selected .kind {
 	color: var(--gold-bright);
 }
+
+/* ============================================================== replays */
+/*
+ * The coverage chip is the important column: it is the difference between a review with
+ * timestamps and map positions, and one that only ever saw end-of-game totals. Colour it like
+ * a band so it reads at a glance rather than needing the tooltip.
+ */
+
+.replay-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 12.5px;
+}
+.replay-table th {
+	text-align: left;
+	font-size: 10.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--dim);
+	font-weight: 600;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--line);
+	white-space: nowrap;
+}
+.replay-table td {
+	padding: 9px 12px;
+	border-bottom: 1px solid var(--line-soft);
+	vertical-align: middle;
+	white-space: nowrap;
+}
+.replay-table tbody tr:last-child td {
+	border-bottom: none;
+}
+.replay-table tbody tr:hover {
+	background: var(--panel-2);
+}
+.replay-table .win {
+	color: var(--win);
+	font-weight: 600;
+}
+.replay-table .loss {
+	color: var(--loss);
+	font-weight: 600;
+}
+
+.cov {
+	display: inline-block;
+	font-size: 10.5px;
+	padding: 3px 9px;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	border-left-width: 3px;
+	background: var(--panel-2);
+	color: var(--text-2);
+	cursor: help;
+}
+.cov--full {
+	border-left-color: var(--band-good);
+}
+.cov--stats {
+	border-left-color: var(--warn);
+}
+.cov--none {
+	border-left-color: var(--band-unknown);
+	color: var(--dim);
+}

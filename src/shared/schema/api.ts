@@ -101,6 +101,49 @@ export const GameDetailResponse = type({
 })
 export type GameDetailResponse = typeof GameDetailResponse.infer
 
+/* =============================================================== replays */
+
+/**
+ * One `.rofl` on disk. `inLibrary` says the game was also harvested from match history, which
+ * is what decides whether a review gets a timeline — the file itself has none.
+ */
+export const ReplayFileInfo = type({
+	fileName: "string",
+	path: "string",
+	gameId: "number|null",
+	platformId: "string|null",
+	bytes: "number",
+	mtimeMs: "number",
+	/** False when the file could not be decoded. It is still listed. */
+	readable: "boolean",
+	/**
+	 * Players in the trailing stat block. Normally 10; **0 on a remake** — a game short enough
+	 * to be remade has no end-of-game stats written at all, so the file is valid and empty.
+	 * Distinguishing that from a decode failure is the difference between "nothing to coach
+	 * here" and "something is wrong".
+	 */
+	playerCount: "number",
+	patch: "string|null",
+	durationSec: "number|null",
+	championName: "string|null",
+	role: "string|null",
+	win: "boolean|null",
+	kills: "number|null",
+	deaths: "number|null",
+	assists: "number|null",
+	cs: "number|null",
+	inLibrary: "boolean",
+	hasTimeline: "boolean"
+})
+export type ReplayFileInfo = typeof ReplayFileInfo.infer
+
+export const ReplayListResponse = type({
+	/** The folder actually scanned, so the UI can show it and say when it is empty. */
+	folder: "string",
+	replays: ReplayFileInfo.array()
+})
+export type ReplayListResponse = typeof ReplayListResponse.infer
+
 /* ================================================================== chat */
 
 export const ChatHistoryResponse = type({ messages: ChatMessage.array() })
@@ -250,5 +293,7 @@ export const API = {
 	settings: "/api/settings",
 	events: "/api/events",
 	media: (id: string) => `/api/media/${encodeURIComponent(id)}`,
-	sync: "/api/sync"
+	sync: "/api/sync",
+	replays: "/api/replays",
+	replayIngest: "/api/replays/ingest"
 } as const

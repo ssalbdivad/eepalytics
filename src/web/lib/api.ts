@@ -13,6 +13,7 @@ import {
 	API,
 	GameDetailResponse,
 	ChatHistoryResponse,
+	ReplayListResponse,
 	ChatTurnResponse,
 	GameListResponse,
 	HealthResponse,
@@ -144,6 +145,8 @@ export const api = {
 
 	jobs: (signal?: AbortSignal) => request(API.jobs, JobListResponse, { signal }),
 
+	replays: (signal?: AbortSignal) => request(API.replays, ReplayListResponse, { signal }),
+
 	chatHistory: (gameId: number, signal?: AbortSignal) =>
 		request(API.chat(gameId), ChatHistoryResponse, { signal }),
 
@@ -177,6 +180,13 @@ export const api = {
 			method: "POST",
 			body: model === undefined || model === "" ? { message } : { message, model },
 			signal
+		}),
+
+	/** Adopt a `.rofl` from the replay folder and queue analysis + review for it. */
+	ingestReplay: (fileName: string) =>
+		request(API.replayIngest, type({ gameId: "number", "championName?": "string", "adopted?": "boolean", "hasTimeline?": "boolean" }), {
+			method: "POST",
+			body: { fileName }
 		}),
 
 	clearChat: (gameId: number) =>

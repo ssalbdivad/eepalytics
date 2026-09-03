@@ -35,6 +35,12 @@ export const Settings = type({
 
 	/** Delete `.rofl` files older than this. They dominate disk (15 MB each). */
 	retentionDays: "number",
+	/**
+	 * Where the League client writes `.rofl` files. Pointing this somewhere else lets the app
+	 * coach replays it never harvested — an archive folder, or games older than the ~20-game
+	 * window match history will admit to. Empty means "use the built-in default".
+	 */
+	replayFolder: "string",
 
 	/**
 	 * 0 = dry and clinical, 1 = full Faker-invoking meme goblin. Scales the persona section
@@ -74,6 +80,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	autoReviewNewGames: true,
 	gamesForTrends: 20,
 	retentionDays: 14,
+	replayFolder: "",
 	coachIntensity: 0.8,
 	transport: "bridge",
 	pollIdleMs: 5_000,
@@ -92,6 +99,7 @@ export const SettingsPatch = type({
 	"autoReviewNewGames?": "boolean",
 	"gamesForTrends?": "number",
 	"retentionDays?": "number",
+	"replayFolder?": "string",
 	"coachIntensity?": "0<=number<=1",
 	"transport?": "'bridge'|'curl'",
 	"pollIdleMs?": "number",

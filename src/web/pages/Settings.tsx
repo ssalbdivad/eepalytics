@@ -285,7 +285,30 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 						</div>
 						<div className="help">
 							Days. <code className="mono">.rofl</code> files are about 15 MB each and dominate
-							disk use. Reviews, metrics and moments are kept forever regardless.
+							disk use. Reviews, metrics and moments are kept forever regardless. Only replays
+							this app downloaded are pruned — files the League client put in your own Replays
+							folder are never touched.
+						</div>
+					</div>
+
+					<div className="field">
+						<div className="label">Replay folder</div>
+						<div className="control">
+							<input
+								type="text"
+								spellCheck={false}
+								placeholder="/mnt/c/Users/<you>/Documents/League of Legends/Replays"
+								value={draft.replayFolder}
+								onChange={e => set("replayFolder", e.target.value)}
+								style={{ width: "100%", fontFamily: "var(--mono)", fontSize: 12 }}
+							/>
+						</div>
+						<div className="help">
+							Where to look for <code className="mono">.rofl</code> files on the{" "}
+							<a href="#/replays">Replays</a> screen. Leave blank for the client's default.
+							Point it at an archive to coach games that have already fallen out of match
+							history — those reviews get end-of-game stats but no timeline, so no moments or
+							map positions.
 						</div>
 					</div>
 				</div>
