@@ -30,7 +30,7 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const MIGRATIONS_DIR = join(HERE, "migrations")
 
 /** Ordered migration filenames. Add to this list; never edit a shipped file. */
-const MIGRATIONS = ["001_init.sql", "002_chat.sql"] as const
+const MIGRATIONS = ["001_init.sql", "002_chat.sql", "003_item_warnings.sql"] as const
 
 /** Create DATA_DIR and its subdirectories. Idempotent, safe to call repeatedly. */
 export const ensureDataDirs = (): void => {

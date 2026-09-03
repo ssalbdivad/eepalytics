@@ -196,6 +196,28 @@ export const FeedbackCard = ({
 					measurement.
 				</div>
 			)}
+
+			{/*
+			 * A figure the parser could not tie back to the digest. The item still shows — the
+			 * rest of it is usually fine, and dropping real coaching over one number is the worse
+			 * trade — but an unverifiable number must not sit on the page looking measured. This
+			 * catches the failure that is otherwise invisible: a wrong baseline reads exactly
+			 * like a right one.
+			 */}
+			{(item.warnings?.length ?? 0) > 0 && (
+				<div className="csk-fb__unverified">
+					<strong>Check this number.</strong>{" "}
+					{item.warnings!.length === 1 ?
+						"One figure in this item could not be matched to the data behind it:"
+					:	`${item.warnings!.length} figures in this item could not be matched to the data behind them:`}
+					<ul>
+						{item.warnings!.map(w => (
+							<li key={w}>{w}</li>
+						))}
+					</ul>
+					The rest of the item still stands on its citations.
+				</div>
+			)}
 		</article>
 	)
 }

@@ -1,0 +1,12 @@
+-- Per-item citation warnings, so a figure the parser could not verify is visible to the reader.
+--
+-- `baseline-mismatch` fires when an item presents a number as the user's own average and that
+-- number is not the baseline of any metric the item cites. It is a WARNING rather than a drop:
+-- prose is not a parser, and eating a good coaching item over a regex is worse than showing the
+-- item with a marker. But logging it to the daemon and showing the user an unmarked figure is
+-- the wrong half of that trade -- the number still reads as measured.
+--
+-- Measured on 14 real reviews (~70 items): one figure. A review said "your own 19-game average
+-- of -423g" where the digest said -325.8. The item's other numbers, and its citation, were
+-- correct.
+ALTER TABLE feedback_item ADD COLUMN warningsJson TEXT NOT NULL DEFAULT '[]';

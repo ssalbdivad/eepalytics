@@ -415,7 +415,8 @@ export const buildReview = (args: BuildReviewArgs): ParseResult<Review> => {
 				message: `"${k}" is not a metric in this digest; citation dropped`
 			})
 
-		for (const w of baselineWarnings(item, metricKeys, args.allowed, i)) warnings.push(w)
+		const baselineIssues = baselineWarnings(item, metricKeys, args.allowed, i)
+		for (const w of baselineIssues) warnings.push(w)
 
 		const citedSomething = item.momentIds.length + item.metricKeys.length > 0
 		if (citedSomething && momentIds.length + metricKeys.length === 0) {
@@ -460,7 +461,12 @@ export const buildReview = (args: BuildReviewArgs): ParseResult<Review> => {
 			momentIds,
 			mediaIds: [],
 			metricKeys,
-			tSec
+			tSec,
+			// Carried onto the item, not just into the parse log: the reader is the one who
+			// needs to know which figure could not be checked.
+			...(baselineIssues.length > 0 ?
+				{ warnings: baselineIssues.map(w => w.message) }
+			:	{})
 		})
 	})
 

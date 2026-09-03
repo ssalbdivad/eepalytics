@@ -289,7 +289,16 @@ export const FeedbackItem = type({
 	mediaIds: "string[]",
 	metricKeys: "string[]",
 	/** Game clock the item points at, or `null` for a whole-game / cross-game point. */
-	tSec: "number|null"
+	tSec: "number|null",
+	/**
+	 * Figures in this item's prose the parser could not tie back to the digest — currently only
+	 * baseline claims ("your own average of X" where X is no cited metric's average).
+	 *
+	 * The item still renders. Dropping good coaching over a regex is the worse trade, but so is
+	 * logging the problem to the daemon and showing the reader an unmarked number: an
+	 * unverifiable figure must not look like a measured one.
+	 */
+	"warnings?": "string[]"
 })
 export type FeedbackItem = typeof FeedbackItem.infer
 

@@ -716,7 +716,8 @@ const rowToFeedbackItem = (row: Row): FeedbackItem => ({
 	momentIds: json<string[]>(row.momentIdsJson, []),
 	mediaIds: json<string[]>(row.mediaIdsJson, []),
 	metricKeys: json<string[]>(row.metricKeysJson, []),
-	tSec: nullableNum(row.tSec)
+	tSec: nullableNum(row.tSec),
+	warnings: json<string[]>(row.warningsJson, [])
 })
 
 const rowToReview = (row: Row, items: FeedbackItem[]): Review => ({
@@ -786,10 +787,10 @@ export const insertReview = (review: ReviewInsert): string => {
 		prep("DELETE FROM feedback_item WHERE reviewId = ?").run(review.id)
 		const insert = prep(`INSERT INTO feedback_item (
 			id, reviewId, gameId, ord, title, body, severity, category, momentIdsJson,
-			mediaIdsJson, metricKeysJson, tSec
+			mediaIdsJson, metricKeysJson, tSec, warningsJson
 		) VALUES (
 			@id, @reviewId, @gameId, @ord, @title, @body, @severity, @category,
-			@momentIdsJson, @mediaIdsJson, @metricKeysJson, @tSec
+			@momentIdsJson, @mediaIdsJson, @metricKeysJson, @tSec, @warningsJson
 		)`)
 		review.items.forEach((item, ord) =>
 			insert.run({
@@ -804,7 +805,8 @@ export const insertReview = (review: ReviewInsert): string => {
 				momentIdsJson: JSON.stringify(item.momentIds ?? []),
 				mediaIdsJson: JSON.stringify(item.mediaIds ?? []),
 				metricKeysJson: JSON.stringify(item.metricKeys ?? []),
-				tSec: item.tSec ?? null
+				tSec: item.tSec ?? null,
+				warningsJson: JSON.stringify(item.warnings ?? [])
 			})
 		)
 	})

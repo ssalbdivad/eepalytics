@@ -211,3 +211,57 @@ describe("baseline-mismatch — the gap between cue and figure", () => {
 		strictEqual(check("Your own average sits at 0.9.").length, 1)
 	})
 })
+
+/**
+ * The warning has to reach the READER, not just the daemon log.
+ *
+ * A wrong baseline reads exactly like a right one, so logging it server-side and rendering the
+ * figure unmarked is the wrong half of the "warn, don't drop" trade. These pin that the message
+ * rides on the item itself.
+ */
+describe("baseline warnings are carried on the item", () => {
+	const build = (body: string, metricKeys: string[]) =>
+		buildReview({
+			raw: {
+				headline: "h",
+				encouragement: "e",
+				items: [{ title: "t", body, severity: "minor", category: "deaths", tSec: 5, momentIds: ["m1"], metricKeys }],
+				goals: ["g"]
+			},
+			kind: "game",
+			gameId: 1,
+			model: "m",
+			promptHash: "p",
+			allowed: {
+				momentIds: new Set(["m1"]),
+				metricKeys: new Set(["goldSwingAfterDeath90s"]),
+				baselineByMetric: new Map([["goldSwingAfterDeath90s", new Set(["-325.8"])]]),
+				baselineFigures: new Set(["-325.8"])
+			}
+		})
+
+	it("attaches the message to the item the reader will see", () => {
+		// The real case: the digest said -325.8 and the review said -423.
+		const r = build("Swings averaged -1101g against your own 19-game average of -423g.", [
+			"goldSwingAfterDeath90s"
+		])
+		ok(r.ok)
+		const item = r.ok ? r.value.items[0]! : null
+		ok(item?.warnings && item.warnings.length === 1, "item should carry exactly one warning")
+		ok(item!.warnings![0]!.includes("-423"))
+	})
+
+	it("leaves the item unmarked when the baseline was copied correctly", () => {
+		const r = build("Swings averaged -1101g against your own 19-game average of -325.8g.", [
+			"goldSwingAfterDeath90s"
+		])
+		ok(r.ok)
+		const item = r.ok ? r.value.items[0]! : null
+		strictEqual(item?.warnings?.length ?? 0, 0)
+	})
+
+	it("keeps the item either way — a marked item is still coaching", () => {
+		const r = build("Your own average of -423g there.", ["goldSwingAfterDeath90s"])
+		strictEqual(r.ok && r.value.items.length, 1)
+	})
+})
