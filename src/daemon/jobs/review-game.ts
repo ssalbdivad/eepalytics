@@ -95,11 +95,6 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 		analysisVersion: ANALYSIS_VERSION
 	})
 
-	// Keep the exact bytes the coach was given. A digest rebuilt later uses a rolling baseline
-	// window that has since moved, so it is not evidence of what this review was held to.
-	// `scripts/audit-citations.ts` reads this rather than rebuilding.
-	writeBlob(gameId, BLOB_REVIEW_DIGEST, digest)
-
 	const prompt = gamePrompt(digest, {
 		intensity: settings.coachIntensity,
 		model: settings.model
@@ -196,6 +191,15 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 	// unit built it: one malformed row would break the review screen for good.
 	const review = parseOrThrow(Review, built.value, `review for game ${gameId}`)
 	insertReview(review)
+	// Store the exact bytes the coach was given, and store them HERE — beside the review they
+	// produced, only when a review was actually written.
+	//
+	// Writing it earlier looked equivalent and was not: the prompt-reuse check above can skip
+	// the Claude call and keep the existing review, so an early write would pair today's digest
+	// with an older review. Baselines move with the rolling window, so the audit would then
+	// report figures the coach copied correctly as fabrications — which it did, six of them in
+	// one review, before this was moved.
+	writeBlob(gameId, BLOB_REVIEW_DIGEST, digest)
 	setGameReviewVersion(gameId, REVIEW_VERSION)
 
 	const loud = seriousWarnings(built.warnings)
