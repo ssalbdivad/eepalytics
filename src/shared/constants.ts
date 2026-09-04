@@ -91,14 +91,19 @@ export const REPLAY_EXPIRY_MS = 30 * 60 * 1000
 /** Start a download job this long before the deadline at the latest; below it, don't bother. */
 export const REPLAY_DOWNLOAD_MIN_SLACK_MS = 60 * 1000
 
-/** Job kinds, in dependency order. Mirrors the JobKind union in schema/domain.ts. */
+/**
+ * Runnable job kinds, in dependency order.
+ *
+ * This is a SUBSET of the `JobKind` union in schema/domain.ts, which additionally carries the
+ * retired `replay-capture` so the job rows it left behind still parse. Nothing here is
+ * intrusive: no kind in this list can open a window or launch the game.
+ */
 export const JOB_KINDS = [
 	"match-ingest",
 	"replay-download",
 	"analysis-run",
 	"review-game",
 	"review-trend",
-	"replay-capture",
 	"media-generate"
 ] as const
 export type JobKindConst = (typeof JOB_KINDS)[number]
@@ -110,22 +115,7 @@ export const JOB_PRIORITY: Record<JobKindConst, number> = {
 	"analysis-run": 30,
 	"review-game": 40,
 	"review-trend": 50,
-	"replay-capture": 90,
 	"media-generate": 95
-}
-
-/**
- * Only `replay-capture` takes over the user's client. `replay-download` is NOT intrusive —
- * it asks the client to fetch the .rofl in the background — and it is the urgent one.
- */
-export const JOB_INTRUSIVE: Record<JobKindConst, boolean> = {
-	"match-ingest": false,
-	"replay-download": false,
-	"analysis-run": false,
-	"review-game": false,
-	"review-trend": false,
-	"replay-capture": true,
-	"media-generate": false
 }
 
 export const JOB_MAX_ATTEMPTS: Record<JobKindConst, number> = {
@@ -134,7 +124,6 @@ export const JOB_MAX_ATTEMPTS: Record<JobKindConst, number> = {
 	"analysis-run": 3,
 	"review-game": 3,
 	"review-trend": 3,
-	"replay-capture": 2,
 	"media-generate": 3
 }
 
@@ -143,10 +132,6 @@ export const JOB_LEASE_MS = 10 * 60 * 1000
 /** Backoff between attempts: attempt n waits BASE * 2^(n-1), capped. */
 export const JOB_RETRY_BASE_MS = 15 * 1000
 export const JOB_RETRY_MAX_MS = 10 * 60 * 1000
-
-/** Gameflow phases in which an intrusive job may start (allowlist — unknown phases fail closed). */
-export const IDLE_PHASES = ["None", "Lobby"] as const
-export const IDLE_GRACE_MS = 120_000
 
 /** Summoner's Rift world bounds. */
 export const MAP = {

@@ -13,20 +13,6 @@ export const Settings = type({
 	 */
 	model: "string",
 
-	/**
-	 * Master switch for INTRUSIVE replay capture, which takes over the League client to
-	 * record screenshots and clips. Defaults to FALSE: hijacking someone's game client is a
-	 * big enough side effect to deserve an explicit opt-in, with a "capture now" button for a
-	 * supervised first try. With it off, every moment still gets a generated SVG map image.
-	 */
-	captureEnabled: "boolean",
-
-	/** Upper bound on screenshots+clips per game, so one bad game cannot eat the disk. */
-	captureMaxPerGame: "number",
-
-	/** Length of each recorded clip, centred on the moment. */
-	clipSeconds: "number",
-
 	/** Queue a review automatically as soon as a new game finishes ingesting. */
 	autoReviewNewGames: "boolean",
 
@@ -41,12 +27,6 @@ export const Settings = type({
 	 * window match history will admit to. Empty means "use the built-in default".
 	 */
 	replayFolder: "string",
-	/**
-	 * Minutes a requested capture stays valid. Capture takes over the League client, so a
-	 * request has to be tied to the moment it was made: one asked for at 3pm must not fire at
-	 * 9pm because that is when the client next went idle. 0 disables the expiry.
-	 */
-	captureRequestTtlMin: "number",
 
 	/**
 	 * 0 = dry and clinical, 1 = full Faker-invoking meme goblin. Scales the persona section
@@ -67,12 +47,6 @@ export const Settings = type({
 	/** Poll the Live Client Data API this often while a game is in progress. */
 	pollInGameMs: "number",
 
-	/**
-	 * Minimum continuous idle time before an intrusive capture may start. Guards against
-	 * grabbing the client in the gap between two queue dodges.
-	 */
-	idleGraceMs: "number",
-
 	/** Never generate more moments than this per game, however bad the game was. */
 	maxMomentsPerGame: "number"
 })
@@ -80,39 +54,36 @@ export type Settings = typeof Settings.infer
 
 export const DEFAULT_SETTINGS: Settings = {
 	model: "claude-sonnet-5",
-	captureEnabled: false,
-	captureMaxPerGame: 6,
-	clipSeconds: 20,
 	autoReviewNewGames: true,
 	gamesForTrends: 20,
 	retentionDays: 14,
 	replayFolder: "",
-	captureRequestTtlMin: 15,
 	coachIntensity: 0.8,
 	transport: "bridge",
 	pollIdleMs: 5_000,
 	pollInGameMs: 2_000,
-	idleGraceMs: 120_000,
 	maxMomentsPerGame: 12
 }
 
-/** A partial update from `PUT /api/settings`. Every key optional; unknown keys are dropped. */
+/**
+ * A partial update from `PUT /api/settings`. Every key optional; unknown keys are dropped.
+ *
+ * `"+": "delete"` is what makes the stale replay-capture keys still sitting in the `settings`
+ * table harmless: a UI round trip cannot write them back, and `getSettings` merges anything
+ * unrecognised straight through. They are left in the database on purpose — the owner keeps
+ * measurements, and a settings row is a record of what the app was configured to do.
+ */
 export const SettingsPatch = type({
 	"+": "delete",
 	"model?": "string",
-	"captureEnabled?": "boolean",
-	"captureMaxPerGame?": "number",
-	"clipSeconds?": "number",
 	"autoReviewNewGames?": "boolean",
 	"gamesForTrends?": "number",
 	"retentionDays?": "number",
 	"replayFolder?": "string",
-	"captureRequestTtlMin?": "number",
 	"coachIntensity?": "0<=number<=1",
 	"transport?": "'bridge'|'curl'",
 	"pollIdleMs?": "number",
 	"pollInGameMs?": "number",
-	"idleGraceMs?": "number",
 	"maxMomentsPerGame?": "number"
 })
 export type SettingsPatch = typeof SettingsPatch.infer
@@ -120,15 +91,11 @@ export type SettingsPatch = typeof SettingsPatch.infer
 /** Clamp a patch into sane ranges so a fat-fingered PUT cannot wedge the daemon. */
 export const clampSettings = (s: Settings): Settings => ({
 	...s,
-	captureMaxPerGame: clamp(s.captureMaxPerGame, 0, 30),
-	clipSeconds: clamp(s.clipSeconds, 5, 120),
 	gamesForTrends: clamp(s.gamesForTrends, 3, 200),
 	retentionDays: clamp(s.retentionDays, 0, 365),
-	captureRequestTtlMin: clamp(s.captureRequestTtlMin, 0, 240),
 	coachIntensity: clamp(s.coachIntensity, 0, 1),
 	pollIdleMs: clamp(s.pollIdleMs, 1_000, 60_000),
 	pollInGameMs: clamp(s.pollInGameMs, 500, 30_000),
-	idleGraceMs: clamp(s.idleGraceMs, 0, 3_600_000),
 	maxMomentsPerGame: clamp(s.maxMomentsPerGame, 1, 50)
 })
 

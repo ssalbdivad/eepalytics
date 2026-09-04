@@ -14,7 +14,7 @@ export interface JobContext {
 	/** Settings snapshot taken when the job was claimed. */
 	settings: Settings
 	log: Logger
-	/** Aborted on SIGINT/SIGTERM, and (for intrusive jobs) when the user stops being idle. */
+	/** Aborted on SIGINT/SIGTERM. */
 	signal: AbortSignal
 	/** Push a human-readable progress line onto the SSE feed. Never throws. */
 	progress: (note: string, extra?: Record<string, unknown>) => void
@@ -27,12 +27,6 @@ export interface JobContext {
  */
 export interface JobOutcome {
 	note?: string
-	/**
-	 * The handler already wrote the job row itself (the capture unit does this, because it
-	 * knows things about a half-finished capture that the worker cannot see). The worker then
-	 * records nothing further — it only logs and emits.
-	 */
-	selfManaged?: boolean
 	defer?: { reason: string; untilMs?: number }
 	/** Terminal, never retried — e.g. the 30-minute replay window closed. */
 	expire?: { reason: string }

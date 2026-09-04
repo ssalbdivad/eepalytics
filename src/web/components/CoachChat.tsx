@@ -86,7 +86,7 @@ const Citations = ({
 							key={p.id}
 							className="csk-chat-shot"
 							onClick={() => onPick(cited.find(c => c.id === p.momentId) ?? cited[0]!)}
-							title={`${fmtClock(p.tSec)} — ${p.source === "replay" ? "captured from your replay" : "drawn from your position data"}`}
+							title={`${fmtClock(p.tSec)} — ${p.source === "replay" ? "a real frame from your replay" : "drawn from your position data"}`}
 						>
 							<img src={API.media(p.id)} alt={`Map at ${fmtClock(p.tSec)}`} loading="lazy" />
 							<span className="csk-chat-shot-tag">

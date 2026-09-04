@@ -72,17 +72,13 @@ export const riotIdOf = (s: {
 /**
  * `GET /lol-gameflow/v1/gameflow-phase` returns a BARE JSON STRING.
  * The enum is the client's own `LolGameflowGameflowPhase`. Only `InProgress` and `EndOfGame`
- * were observed live; the rest come from the type table. Treat any unrecognised value as
- * "not idle" so the intrusive-job gate fails closed.
+ * were observed live; the rest come from the type table. Treat any unrecognised value as "not
+ * a phase we act on" — every predicate over this enum fails closed.
  */
 export const GameflowPhase = type(
 	"'None'|'Lobby'|'Matchmaking'|'CheckedIntoTournament'|'ReadyCheck'|'ChampSelect'|'GameStart'|'FailedToLaunch'|'InProgress'|'Reconnect'|'WaitingForStats'|'PreEndOfGame'|'EndOfGame'|'TerminatedInError'"
 )
 export type GameflowPhase = typeof GameflowPhase.infer
-
-/** Anything we do not recognise is treated as busy. */
-export const isIdlePhase = (phase: string): boolean =>
-	phase === "None" || phase === "Lobby"
 
 /**
  * The phases in which the live coach is allowed to SEND anything.
@@ -102,8 +98,8 @@ export const isIdlePhase = (phase: string): boolean =>
  * about. Pixels alone is the failure mode this whole path was built to end.
  *
  * Everything else is disarmed: `None`, `Lobby`, `Matchmaking`, `ReadyCheck`, the three
- * end-of-game phases, and anything Riot adds later. Unrecognised phases fail closed for the
- * same reason `isIdlePhase` does — an unknown phase is not a licence to upload his desktop.
+ * end-of-game phases, and anything Riot adds later. Unrecognised phases fail closed — an
+ * unknown phase is not a licence to upload his desktop.
  */
 const COACHING_PHASES: ReadonlySet<string> = new Set([
 	"ChampSelect",

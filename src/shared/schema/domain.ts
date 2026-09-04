@@ -248,7 +248,7 @@ export type ChatMessage = typeof ChatMessage.infer
 /**
  * Something worth looking at, anchored to a game-clock second and a map position.
  * Moments are the spine of the review screen: the timeline scrubber, the minimap dots, the
- * capture queue and Claude's citations all key off them.
+ * media generation and Claude's citations all key off them.
  */
 export const MomentKind = type(
 	"'death'|'kill'|'objective'|'objective_missed'|'gold_swing'|'tempo'|'cs_gap'|'positioning'|'vision'|'teamfight'|'recall'|'other'"
@@ -267,7 +267,7 @@ export const Moment = type({
 	tSec: "number",
 	kind: MomentKind,
 	title: "string",
-	/** 0 = trivia, 1 = the thing that lost the game. Drives ordering and capture budget. */
+	/** 0 = trivia, 1 = the thing that lost the game. Drives ordering. */
 	severity: "0<=number<=1",
 	mapX: "number",
 	mapY: "number",
@@ -402,10 +402,10 @@ export type Review = typeof Review.infer
 /**
  * A picture or clip attached to a moment.
  *
- * `kind: "map"` with `source: "generated"` is the ALWAYS-AVAILABLE fallback: an SVG the app
- * renders from timeline positions when real replay capture is impossible — the client is
- * closed, the replay expired, capture was declined, or the user simply has capture disabled.
- * Every moment must be showable; only some can be screenshotted.
+ * `kind: "map"` with `source: "generated"` is what every moment actually gets: an SVG the app
+ * renders from timeline positions. It needs no client, no replay and no network, which is why
+ * it is the floor rather than a fallback. `screenshot` and `clip` are kinds the retired replay
+ * capture wrote; no code writes them any more.
  */
 export const MediaKind = type("'screenshot'|'clip'|'map'")
 export type MediaKind = typeof MediaKind.infer
@@ -415,8 +415,9 @@ export type MediaKind = typeof MediaKind.infer
  *
  * `generated` is a diagram this app drew from the timeline — a map with dots on it. `journal` is a
  * real frame of his own screen, captured while he played, and is the ONLY source that can support
- * a statement about how a fight actually went. `replay` is the retired capture path, kept so
- * historical rows still parse.
+ * a statement about how a fight actually went. `replay` is the retired capture path: it never
+ * wrote a row and nothing writes one now, but it stays in the union so that if a row ever turns
+ * up in a backup it parses instead of taking a review down with it.
  */
 export const MediaSource = type("'replay'|'generated'|'journal'")
 export type MediaSource = typeof MediaSource.infer
@@ -442,7 +443,14 @@ export type Media = typeof Media.infer
 
 /* =================================================================== job */
 
-/** Job kinds, in dependency order. Mirrors `JOB_KINDS` in ../constants.ts. */
+/**
+ * Job kinds, in dependency order.
+ *
+ * WIDER THAN `JOB_KINDS` in ../constants.ts, deliberately: `replay-capture` is retired — no
+ * handler, no enqueue path, nothing that can start one — but the `job` table still holds rows
+ * of that kind from before it was removed, and `JobListResponse` validates what it returns. Drop
+ * the member and the Queue screen 500s on the user's own history.
+ */
 export const JobKind = type(
 	"'match-ingest'|'replay-download'|'analysis-run'|'review-game'|'review-trend'|'replay-capture'|'media-generate'"
 )
@@ -455,7 +463,8 @@ export type JobKind = typeof JobKind.infer
  *  - `deferred` — a gate said no right now (`lastError` carries the reason); re-evaluated each tick.
  *  - `done` / `failed` — terminal. Cancelling from the UI lands in `failed` with
  *    `lastError = "cancelled"`, so "why did this not run" always has one place to look.
- *  - `expired`  — missed `deadlineMs`. Only replay downloads can expire, and they are never retried.
+ *  - `expired`  — missed `deadlineMs`, or gave up after a day of deferrals. A replay download
+ *    that expires is never retried; the .rofl is gone.
  */
 export const JobState = type(
 	"'queued'|'leased'|'done'|'failed'|'deferred'|'expired'"
@@ -467,7 +476,7 @@ export const Job = type({
 	kind: JobKind,
 	gameId: "number|null",
 	state: JobState,
-	/** Only `replay-capture` is intrusive — it takes over the user's client. */
+	/** Always false now. Rows from the retired `replay-capture` kind still carry true. */
 	intrusive: "boolean",
 	attempts: "number",
 	maxAttempts: "number",
@@ -513,7 +522,12 @@ export const AppEvent = type({
 })
 export type AppEvent = typeof AppEvent.infer
 
-/** Event kinds the daemon emits. The UI switches on these; unknown kinds are ignored. */
+/**
+ * Event kinds the daemon emits. The UI switches on these; unknown kinds are ignored.
+ *
+ * `capture` is retired along with the subsystem that published it. It stays listed because the
+ * `app_event` table still holds rows of that kind and the feed replays from an id.
+ */
 export const APP_EVENT_KINDS = [
 	"job",
 	"game",

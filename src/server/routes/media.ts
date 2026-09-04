@@ -5,7 +5,7 @@
  *
  * 1. **Range requests.** A `<video>` element seeks by asking for byte ranges. A naive
  *    200-with-the-whole-body response makes the clip play but makes the scrubber dead, which
- *    is exactly the interaction the whole capture pipeline exists to serve. So: `Accept-Ranges`
+ *    is exactly the interaction a clip exists to serve. So: `Accept-Ranges`
  *    on every response, 206 + `Content-Range` for a satisfiable range, 416 for a nonsense one.
  *
  * 2. **Paths never leave the data directory.** `Media.path` is stored relative to `DATA_DIR`
@@ -13,7 +13,7 @@
  *    poisoned row cannot turn this into a file-read primitive over the whole disk.
  *
  * Generated SVG map images are served inline as `image/svg+xml` — they are the always-available
- * fallback when real capture was impossible, so they must render in an `<img>` like any other.
+ * what every moment gets, so they must render in an `<img>` like any other.
  */
 
 import { Hono } from "hono"

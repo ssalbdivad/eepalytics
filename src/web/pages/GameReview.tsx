@@ -37,7 +37,6 @@ import {
 } from "../lib/format.ts"
 import { ChampIcon } from "../components/ChampIcon.tsx"
 import { GradeBadge } from "../components/GradeBadge.tsx"
-import { CaptureProgress } from "../components/CaptureProgress.tsx"
 import { VisionBadge } from "../components/VisionBadge.tsx"
 import { WatchGamePanel } from "../components/WatchGamePanel.tsx"
 import { CoachChat } from "../components/CoachChat.tsx"
@@ -54,38 +53,13 @@ const CURSOR_WINDOW_SEC = 30
 export interface GameReviewProps {
 	gameId: number
 	eventTick: number
-	/** For the capture gate's own words — see `WatchGamePanel`. */
-	health?: HealthResponse | null
 }
 
-export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps) => {
+export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 	const detail = useResource(signal => api.game(gameId, signal), [gameId, eventTick])
 	const jobsRes = useResource(signal => api.jobs(signal), [eventTick])
 	const watchRes = useResource(signal => api.watchNotes(gameId, signal), [gameId, eventTick])
 	const [watching, setWatching] = useState<string | null>(null)
-	/**
-	 * Live capture progress from the daemon's SSE stream.
-	 *
-	 * Without this the screen showed a gate reason and then nothing for several minutes, so a
-	 * working capture and a hung one were indistinguishable — which is exactly how it read.
-	 */
-	const [captureProgress, setCaptureProgress] = useState<{
-		phase: string
-		note: string | null
-		done: number
-		total: number
-	} | null>(null)
-
-	useSse(m => {
-		if (m.name !== "capture") return
-		const d = m.data as { gameId?: number; phase?: string; note?: string; done?: number; total?: number }
-		if (d.gameId !== gameId || typeof d.phase !== "string") return
-		setCaptureProgress(
-			d.phase === "closed" || d.phase === "failed" ?
-				null
-			:	{ phase: d.phase, note: d.note ?? null, done: d.done ?? 0, total: d.total ?? 0 }
-		)
-	})
 	const now = useNow(15_000)
 
 	const [cursorSec, setCursorSec] = useState(0)
@@ -126,7 +100,13 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 		() => new Map(watchNotes.filter(n => n.status === "ok").map(n => [n.momentId, n])),
 		[watchNotes]
 	)
-	/** Moments with REAL captured frames — a generated map diagram is not something to watch. */
+	/**
+	 * Moments with REAL frames — a generated map diagram is not something to watch.
+	 *
+	 * Always empty today: the only writer of `source: "replay"` media was replay capture, which
+	 * has been removed. Kept because the visual pass it feeds still works and is waiting to be
+	 * pointed at the screen-share journal.
+	 */
 	const framesByMoment = useMemo(() => {
 		const out = new Map<string, number>()
 		for (const m of media)
@@ -154,7 +134,6 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 		[jobsRes.data, gameId]
 	)
 	const reviewJob = useMemo(() => liveJob(gameJobs, "review-game"), [gameJobs])
-	const captureJob = useMemo(() => liveJob(gameJobs, "replay-capture"), [gameJobs])
 
 	/* ------------------------------------------------------- the cursor */
 
@@ -217,7 +196,6 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 	/* ------------------------------------------------------- mutations */
 
 	const review = useAction(() => api.requestReview(gameId))
-	const capture = useAction(() => api.requestCapture(gameId))
 
 	/* ---------------------------------------------------------- render */
 
@@ -315,13 +293,6 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 
 				<div className="actions">
 					{countdown ? <span className="chip warn">⧗ {countdown}</span> : null}
-					<button onClick={capture.run} disabled={capture.pending || captureJob !== null}>
-						{captureJob ?
-							(CAPTURE_LABEL[captureJob.state] ?? "Clips queued")
-						: capture.pending ?
-							"Queuing…"
-						:	"Capture clips"}
-					</button>
 					<button
 						className="btn-primary"
 						onClick={review.run}
@@ -338,14 +309,6 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 					<div>Couldn't queue a review: {review.error}</div>
 				</div>
 			:	null}
-			{capture.error ?
-				<div className="notice bad" style={{ marginBottom: 12 }}>
-					<span className="icon">✗</span>
-					<div>Couldn't queue capture: {capture.error}</div>
-				</div>
-			:	null}
-			{captureJob ? <CaptureBanner job={captureJob} /> : null}
-
 			<CoachBlock detail={d} job={reviewJob} onGenerate={review.run} pending={review.pending} />
 
 			{d.metrics.length > 0 ?
@@ -428,9 +391,9 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 						</div>
 						{media.length === 0 ?
 							<div className="dim" style={{ fontSize: 12.5 }}>
-								No screenshots or clips for this game yet. Capture takes over the League
-								client, so it only runs when you're out of a game — and every coaching point
-								below works without it.
+								No images for this game yet. Every moment gets a rendered map once
+								<code className="mono"> media-generate </code>
+								runs; every coaching point below works without one.
 							</div>
 						:	<div className="media-strip">
 								{media.map(m => (
@@ -469,27 +432,13 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 							/>
 						</div>
 
-						{/*
-						 * Always present, in all three states. The visual pass needs frames, frames
-						 * need a capture, and a capture takes over the client — three steps with
-						 * three failure modes, none of which used to be visible anywhere.
-						 */}
-						{captureProgress !== null && (
-							<CaptureProgress
-								phase={captureProgress.phase}
-								note={captureProgress.note}
-								done={captureProgress.done}
-								total={captureProgress.total}
-							/>
-						)}
-
+						{/* Always present, in all three states, so the absence of a visual pass is
+						 * stated rather than left as a gap the reader has to notice. */}
 						<WatchGamePanel
 							game={g}
-							health={health}
 							frameMoments={framesByMoment.size}
 							watchedMoments={watchNotes.filter(n => n.status === "ok").length}
 							momentCount={moments.length}
-							onChanged={() => watchRes.reload()}
 						/>
 
 						{items.length > 0 ?
@@ -711,18 +660,6 @@ const CoachBlock = ({
 }
 
 /**
- * Plain-language labels for the capture job's queue states.
- *
- * The button used to interpolate the state directly, so it read "Capture leased" — a database
- * word, on a disabled button, which is indistinguishable from broken.
- */
-const CAPTURE_LABEL: Record<string, string> = {
-	leased: "Capturing clips…",
-	deferred: "Waiting for you to leave the client",
-	queued: "Clips queued"
-}
-
-/**
  * Turn a deferral reason into something a person can act on.
  *
  * The banner printed `job.lastError` raw, so a routine wait appeared as an error string. These
@@ -780,20 +717,6 @@ const ReviewProgress = ({ job, now }: { job: Job; now: number }) => {
 		</div>
 	)
 }
-
-const CaptureBanner = ({ job }: { job: Job }) => (
-	<div className={cls("notice", job.state === "deferred" ? "warn" : "info")} style={{ marginBottom: 12 }}>
-		<span className="icon">{job.state === "deferred" ? "⏸" : "◷"}</span>
-		<div>
-			<strong>
-				{job.state === "deferred" ? "Clip capture is waiting." : "Clip capture is queued."}
-			</strong>{" "}
-			{job.lastError ??
-				"It takes over your League client, so it only runs while you're out of a game."}{" "}
-			<a href={href.queue}>See the queue →</a>
-		</div>
-	</div>
-)
 
 /* -------------------------------------------------------- moment list */
 

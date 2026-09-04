@@ -15,13 +15,14 @@
 import type { DatabaseSync, StatementSync } from "node:sqlite"
 import { getDb, transact } from "./index.ts"
 import {
-	JOB_INTRUSIVE,
+	JOB_KINDS,
 	JOB_LEASE_MS,
 	JOB_MAX_ATTEMPTS,
 	JOB_PRIORITY,
 	JOB_RETRY_BASE_MS,
 	JOB_RETRY_MAX_MS
 } from "../shared/constants.ts"
+import type { JobKindConst } from "../shared/constants.ts"
 import type {
 	ChatMessage,
 	WatchNote,
@@ -696,7 +697,7 @@ export const getMoment = (id: string): Moment | null => {
 	return row ? rowToMoment(row) : null
 }
 
-/** The `n` most severe moments in a game — the capture queue's shortlist. */
+/** The `n` most severe moments in a game — the shortlist the coach is asked to prioritise. */
 export const topMoments = (gameId: number, limit: number): Moment[] =>
 	prep("SELECT * FROM moment WHERE gameId = ? ORDER BY severity DESC, tSec LIMIT ?")
 		.all(gameId, limit)
@@ -991,9 +992,8 @@ export const listMediaForMoment = (momentId: string): Media[] =>
 /**
  * Fill in each feedback item's `mediaIds` from the media attached to the moments it cites.
  *
- * `mediaIds` is written by the capture pipeline, which may never run — and `media-generate`
- * can finish long after the coach did, so an item written first would keep an empty list
- * forever. Every moment does get a generated map SVG, and that picture is precisely what the
+ * `mediaIds` is not written when the coach writes the item — `media-generate` can finish long
+ * after the review did, so an item written first would keep an empty list forever. Every moment does get a generated map SVG, and that picture is precisely what the
  * item is talking about, so resolving the join at READ time is what reliably puts an
  * illustration next to the feedback whatever order the jobs finished in. Ids the item already
  * carries win and keep their position; derived ones are appended.
@@ -1014,16 +1014,6 @@ export const withMomentMedia = (review: Review | null): Review | null => {
 
 export const countMedia = (gameId: number): number =>
 	num(plain(prep("SELECT count(*) AS c FROM media WHERE gameId = ?").get(gameId))?.c)
-
-/** How many REAL (non-generated) captures a game already has, against the per-game budget. */
-export const countCapturedMedia = (gameId: number): number =>
-	num(
-		plain(
-			prep(
-				"SELECT count(*) AS c FROM media WHERE gameId = ? AND source = 'replay'"
-			).get(gameId)
-		)?.c
-	)
 
 export const deleteMedia = (id: string): void => {
 	prep("DELETE FROM media WHERE id = ?").run(id)
@@ -1077,8 +1067,14 @@ const rowToJob = (row: Row): Job => ({
  * A partial unique index guarantees at most one `queued`/`deferred`/`leased` job per
  * (kind, gameId), so double-clicking "review this game" cannot spawn two Claude runs.
  * Returns the id of whichever job is now live for that pair.
+ *
+ * Throws on a retired kind. `JobKind` is wider than `JOB_KINDS` because old rows must keep
+ * parsing, so the type alone cannot stop a caller queueing work nothing will ever run — a
+ * job that sits `queued` forever is worse than a loud failure at the call site.
  */
 export const enqueue = (req: JobRequest): number => {
+	if (!(JOB_KINDS as readonly string[]).includes(req.kind))
+		throw new Error(`"${req.kind}" is a retired job kind and cannot be queued`)
 	const now = Date.now()
 	const gameId = req.gameId ?? null
 	const existing = plain(
@@ -1100,9 +1096,11 @@ export const enqueue = (req: JobRequest): number => {
 	)`).run({
 		kind: req.kind,
 		gameId,
-		intrusive: b2i(req.intrusive ?? JOB_INTRUSIVE[req.kind] ?? false),
-		priority: req.priority ?? JOB_PRIORITY[req.kind] ?? 100,
-		maxAttempts: req.maxAttempts ?? JOB_MAX_ATTEMPTS[req.kind] ?? 5,
+		// Kept as a column because rows written by the retired replay-capture kind carry a 1 and
+		// the Queue screen still renders them. Nothing this app can enqueue is intrusive now.
+		intrusive: b2i(req.intrusive ?? false),
+		priority: req.priority ?? JOB_PRIORITY[req.kind as JobKindConst] ?? 100,
+		maxAttempts: req.maxAttempts ?? JOB_MAX_ATTEMPTS[req.kind as JobKindConst] ?? 5,
 		notBeforeMs: req.notBeforeMs ?? 0,
 		deadlineMs: req.deadlineMs ?? null,
 		payload: JSON.stringify(req.payload ?? {}),
@@ -1112,12 +1110,7 @@ export const enqueue = (req: JobRequest): number => {
 }
 
 export interface ClaimOptions {
-	/**
-	 * Whether intrusive jobs (`replay-capture`, which hijacks the League client) may be
-	 * claimed right now. The daemon's gate decides this; the default is NO.
-	 */
-	allowIntrusive?: boolean
-	/** Restrict to specific kinds — how a dedicated worker pool stays in its lane. */
+	/** Restrict to specific kinds. Anything outside the list is left in the queue. */
 	kinds?: readonly JobKind[]
 	leaseMs?: number
 	nowMs?: number
@@ -1137,7 +1130,6 @@ export interface ClaimOptions {
 export const claimNextJob = (opts: ClaimOptions = {}): Job | null => {
 	const now = opts.nowMs ?? Date.now()
 	const leaseUntil = now + (opts.leaseMs ?? JOB_LEASE_MS)
-	const allowIntrusive = opts.allowIntrusive ?? false
 	const kinds = opts.kinds
 
 	const kindFilter =
@@ -1155,15 +1147,13 @@ export const claimNextJob = (opts: ClaimOptions = {}): Job | null => {
 			WHERE state IN ('queued', 'deferred')
 			  AND notBeforeMs <= @now
 			  AND (deadlineMs IS NULL OR deadlineMs > @now)
-			  AND (@allowIntrusive = 1 OR intrusive = 0)
 			  ${kindFilter}
 			ORDER BY priority ASC, id ASC
 			LIMIT 1
 		)
 		RETURNING *`).all({
 		now,
-		leaseUntil,
-		allowIntrusive: b2i(allowIntrusive)
+		leaseUntil
 	})
 
 	const row = rows[0]
@@ -1339,23 +1329,6 @@ export const queueDepth = (): number =>
 		)?.c
 	)
 
-/** Whether an intrusive job currently holds a lease — gate rule G8. */
-/**
- * Is some OTHER intrusive job holding the client?
- *
- * `exceptJobId` is load-bearing, not a convenience. The worker leases a capture job before
- * running it, and the handler then re-checks the gate mid-flight — so without the exclusion the
- * job sees its own lease, fails G8 with "another capture already holds the client", and settles
- * having done nothing. There was no other capture; there never is. Replay capture could not
- * complete a single run until this took an argument.
- */
-export const intrusiveJobRunning = (exceptJobId?: number): boolean =>
-	plain(
-		prep(
-			"SELECT id FROM job WHERE state = 'leased' AND intrusive = 1 AND id IS NOT ? LIMIT 1"
-		).get(exceptJobId ?? null)
-	) !== null
-
 /**
  * Store a computed grade. Written by `analysis-run` alongside the metrics it was derived from,
  * so the two never disagree about which analysis produced which grade.
@@ -1386,11 +1359,12 @@ export const recentGrades = (limit = 20): { gameId: number; score: number; rank:
 		}))
 
 /**
- * Per game: how many moments have real captured frames, and how many have been watched.
+ * Per game: how many moments have real replay frames, and how many have been watched.
  *
- * Two counts rather than a boolean because they are three different states the user has to be
- * able to tell apart — nothing captured, captured but not looked at, and actually watched — and
- * each has a different next action.
+ * Both are ZERO on every game and will stay that way: the only thing that ever wrote
+ * `source = 'replay'` rows was replay capture, which was removed. The query is kept because the
+ * visual pass it feeds (`review/watch.ts`) is still here waiting to be pointed at the
+ * screen-share journal, and because a count that reads 0 is the honest answer either way.
  */
 export const visionCounts = (): Map<number, { frames: number; watched: number }> => {
 	const out = new Map<number, { frames: number; watched: number }>()

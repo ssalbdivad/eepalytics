@@ -99,12 +99,20 @@ describe("claiming", () => {
 		assert.equal(first?.kind, "match-ingest", "ingest (10) outranks review (40)")
 	})
 
-	it("never hands an intrusive job to a worker that was not cleared for one", () => {
-		enqueueJob({ kind: "replay-capture", gameId: 7 })
-		assert.equal(claim({ allowIntrusive: false }), null)
-		const job = claim({ allowIntrusive: true, kinds: ["replay-capture"] })
-		assert.equal(job?.kind, "replay-capture")
-		assert.equal(job?.intrusive, true)
+	it("refuses to queue a retired kind rather than parking work nothing will run", () => {
+		// `JobKind` is deliberately wider than `JOB_KINDS` so that old `replay-capture` rows
+		// still parse. That means the type system cannot stop this call, so `enqueue` does.
+		assert.throws(
+			() => enqueueJob({ kind: "replay-capture", gameId: 7 }),
+			/retired job kind/
+		)
+		assert.equal(depth(), 0)
+	})
+
+	it("only claims the kinds it was asked for", () => {
+		enqueueJob({ kind: "review-game", gameId: 7 })
+		assert.equal(claim({ kinds: ["match-ingest"] }), null)
+		assert.equal(claim({ kinds: ["review-game"] })?.kind, "review-game")
 	})
 
 	it("cannot hand the same job to two workers", () => {
@@ -152,14 +160,14 @@ describe("outcomes", () => {
 	})
 
 	it("defer does NOT consume an attempt — 'not now' is not a failure", () => {
-		enqueueJob({ kind: "replay-capture", gameId: 15 })
-		const job = claim({ allowIntrusive: true })!
+		enqueueJob({ kind: "match-ingest", gameId: 15 })
+		const job = claim()!
 		assert.equal(job.attempts, 1)
-		defer(job, "gate G6: capture is switched off", Date.now() + 60_000)
+		defer(job, "the League client is closed", Date.now() + 60_000)
 		const after = getJob(job.id)!
 		assert.equal(after.state, "deferred")
-		assert.equal(after.attempts, 0, "a job waiting on the gate must not look like a crash")
-		assert.match(after.lastError ?? "", /G6/)
+		assert.equal(after.attempts, 0, "a job waiting on the world must not look like a crash")
+		assert.match(after.lastError ?? "", /client is closed/)
 	})
 
 	it("honours the handler's own cadence while a job is young", () => {

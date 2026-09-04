@@ -103,8 +103,8 @@ export class LcuClient {
 	 * `GET /lol-gameflow/v1/gameflow-phase` returns a BARE JSON STRING like `"InProgress"`.
 	 *
 	 * An unrecognised value (Riot adds a phase) is warned about and returned as-is rather than
-	 * thrown: `isIdlePhase()` fails closed on anything it does not know, so an unknown phase
-	 * makes the intrusive-job gate *more* conservative, which is the safe direction.
+	 * thrown: every predicate over this enum fails closed on what it does not know, so an
+	 * unknown phase makes the callers *more* conservative, which is the safe direction.
 	 */
 	async gameflowPhase(): Promise<GameflowPhaseType> {
 		const res = expectOk(
@@ -312,26 +312,16 @@ export class LcuClient {
 		)
 	}
 
-	/**
-	 * MUTATES, INTRUSIVELY. **Launches the League game client into replay playback**, taking
-	 * over the user's machine for 15-30 s of load plus however long the capture runs.
+	/*
+	 * There is deliberately NO `watchReplay` here.
 	 *
-	 * Written here so the capture unit has one correct implementation. It must only ever be
-	 * called behind the daemon's idle gate (client idle, `isPlayingGame:false`,
-	 * `isPlayingReplay:false`, gameflow `None`/`Lobby`, watch `None`). Nothing in the LCU unit
-	 * calls it, and nothing verified it — the research phase deliberately issued no POSTs.
+	 * `POST /lol-replays/v1/rofls/{id}/watch` launches the game client into replay playback and
+	 * takes over the user's desktop for 15-30 s of load plus however long the caller holds it.
+	 * It existed for replay capture, which was removed after never completing a single job; the
+	 * frames now come from the screen share, which costs the user nothing. If you are tempted to
+	 * put it back, note that nothing in this app has ever verified the call and that the whole
+	 * idle-gate apparatus (nine preconditions, five abort rules) existed only to make it safe.
 	 */
-	async watchReplay(gameId: number, componentType = "eepalytics"): Promise<void> {
-		expectOk(
-			await this.transport.request(
-				"POST",
-				`/lol-replays/v1/rofls/${gameId}/watch`,
-				{ componentType },
-				{ timeoutMs: 30_000 }
-			),
-			`watch replay ${gameId}`
-		)
-	}
 
 	/** MUTATES (client-local). Rescan the replays folder so on-disk files are recognised. */
 	async scanReplays(): Promise<void> {

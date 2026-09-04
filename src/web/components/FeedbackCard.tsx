@@ -51,7 +51,7 @@ const MEDIA_LABEL: Record<Media["kind"], string> = {
 
 const sourceBadge = (m: Media) =>
 	m.source === "replay" ?
-		<span className="csk-src csk-src--replay" title="A real frame captured from your replay.">
+		<span className="csk-src csk-src--replay" title="A real frame of your game, recorded from the replay.">
 			replay
 		</span>
 	:	<span
@@ -175,7 +175,7 @@ export const FeedbackCard = ({
 					className="csk-fb__watch-cta"
 					onClick={onWatch}
 					disabled={watching}
-					title={`Have the coach look at the ${watchableFrames} captured frames around this moment and comment on execution — abilities, kiting, fight entry. Takes about a minute.`}
+					title={`Have the coach look at the ${watchableFrames} frames around this moment and comment on execution — abilities, kiting, fight entry. Takes about a minute.`}
 				>
 					{watching ? "Watching…" : `👁 Watch this moment (${watchableFrames} frames)`}
 				</button>
@@ -257,7 +257,7 @@ export const FeedbackCard = ({
 								onOpenMedia ? onOpenMedia(m.id) : onSeek(Math.round(m.tSec))
 							}
 							title={`${MEDIA_LABEL[m.kind]} at ${fmtClock(m.tSec)} — ${
-								m.source === "replay" ? "captured from the replay" : "drawn from timeline data"
+								m.source === "replay" ? "a real frame from the replay" : "drawn from timeline data"
 							}`}
 						>
 							{m.kind === "clip" ?

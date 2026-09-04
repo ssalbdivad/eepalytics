@@ -192,9 +192,9 @@ export const fetchReplayMetadata = async (
 /* =============================================================== writes */
 
 /**
- * The daemon issues exactly three POSTs, all of them client-local replay bookkeeping:
- * `createReplayMetadata`, `downloadReplay` and (from the capture unit only, behind the gate)
- * `watchReplay`. Nothing else in this app ever mutates the League client.
+ * The daemon issues exactly two POSTs, both of them client-local replay bookkeeping:
+ * `createReplayMetadata` and `downloadReplay`. Neither opens a window or launches anything.
+ * Nothing else in this app ever mutates the League client.
  */
 export const createReplayMetadata = async (args: {
 	gameId: number
@@ -232,42 +232,6 @@ export const startReplayDownload = async (
 		return { ok: true }
 	} catch (err) {
 		return { ok: false, error: errText(err) }
-	}
-}
-
-/* ============================================================ snapshots */
-
-/**
- * Everything the intrusive-job gate needs (G1-G4) in one pass.
- *
- * Reads are issued together so the bridge pipelines them and curl reuses one TLS connection
- * (`--next`: 33 ms for the first request, 2 ms for each after). Evaluating the whole gate
- * costs one round trip, not four.
- */
-export interface IdleSnapshot {
-	phase: string | null
-	config: ReplayConfiguration | null
-	/** Port 2999 only answers while a game or a replay is actually running. */
-	liveApiAnswering: boolean
-	reachable: boolean
-}
-
-export const fetchIdleSnapshot = async (): Promise<IdleSnapshot> => {
-	const h = await lcu()
-	if (!h)
-		return { phase: null, config: null, liveApiAnswering: false, reachable: false }
-
-	const [phase, config, live] = await Promise.all([
-		h.client.gameflowPhase().catch(() => null),
-		h.client.replayConfiguration().catch(() => null),
-		h.live.isAlive().catch(() => false)
-	])
-
-	return {
-		phase,
-		config,
-		liveApiAnswering: live === true,
-		reachable: phase !== null || config !== null
 	}
 }
 

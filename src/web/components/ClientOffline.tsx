@@ -39,7 +39,7 @@ export const ClientOffline = ({ health, compact = false }: ClientOfflineProps) =
 				<span className="icon">⚠</span>
 				<div>
 					<strong>The League client isn't running.</strong> Finished games can't be harvested
-					and replay capture can't run until it is. Everything already stored still works —
+					and replays can't be downloaded until it is. Everything already stored still works —
 					reviews, trends, chat and the Replays screen all read from disk.
 				</div>
 			</div>

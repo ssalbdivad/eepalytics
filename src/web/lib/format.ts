@@ -142,7 +142,9 @@ export const JOB_KIND_LABEL: Record<JobKind, string> = {
 	"analysis-run": "Analyze",
 	"review-game": "Coach review",
 	"review-trend": "Trend review",
-	"replay-capture": "Capture clips",
+	// Retired. Kept because the job table still holds rows of this kind and a row with no
+	// label reads as a bug rather than as history.
+	"replay-capture": "Capture clips (retired)",
 	"media-generate": "Render media"
 }
 
@@ -160,7 +162,7 @@ export const jobKindLabel = (kind: string): string =>
 
 /** What the Queue screen prints under a job that is not moving. Verbatim, never paraphrased. */
 export const jobReason = (job: Job): string | null => {
-	if (job.state === "deferred") return job.lastError ?? "waiting on a gate"
+	if (job.state === "deferred") return job.lastError ?? "waiting on something"
 	if (job.state === "failed" || job.state === "expired") return job.lastError
 	if (job.state === "queued" && job.notBeforeMs > Date.now())
 		return `retrying ${fmtCountdown(job.notBeforeMs).replace(" left", "")} from now`

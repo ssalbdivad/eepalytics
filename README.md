@@ -4,8 +4,8 @@ A local League of Legends coaching app for one jungler.
 
 It watches your League client, pulls each finished game out of the client's own API,
 compresses the match and its timeline into a compact digest, and asks Claude for feedback
-that is **bound to real timestamps** — so every point it makes is something you can jump to,
-see on the map, and (when capture is on) watch as a clip.
+that is **bound to real timestamps** — so every point it makes is something you can jump to
+and see on the map.
 
 The coach is **Coach Lillia**, who has watched every LCK game since 2013, has strong
 opinions about your pathing, and will not shut up about Oner. She roasts you constantly and
@@ -87,7 +87,6 @@ Each row also shows what the app is *doing* about that game, which is the differ
 - `▸ Review ready · 4 items ⚑2 major`
 - `◷ Reviewing…` with a progress bar
 - `⧗ replay 22m left` — a live countdown to the 30-minute replay expiry
-- `⏸ Capture deferred — you're in champ select` with a **Capture now** button
 
 ### 3. Game review — the main screen
 
@@ -98,8 +97,8 @@ or a point on the timeline and all four react together.
   Deaths, kills, objectives, and positioning notes, filterable.
 - **Feedback** — the coaching itself. Each card is a roast, a real number, and a fix, with
   `[Jump to 08:12]` and `[Show on map]`.
-- **Media** — screenshots and clips cut from the replay for the moments that have them.
-  The page is fully useful with zero clips; media is a bonus, never a dependency.
+- **Media** — a rendered Summoner's Rift diagram per moment, drawn from the timeline
+  positions with the interpolation uncertainty visible on it.
 - **Timeline** — a scrubber with markers and a gold-differential sparkline.
 
 Underneath: your metrics with bands relative to **your own** rolling baseline, not a
@@ -110,17 +109,17 @@ stranger's — `CS@14 112 ▲good · GD@15 +340 ▲good · VS/min 0.88 ▼low`.
 Every job the daemon has run, is running, or is refusing to run *and why*:
 
 ```
-DEFERRED
- ⏸ replay.capture   Lillia 18:06
-   Waiting: you're in ChampSelect. Needs None/Lobby for 2 min.   [Capture now]
+WAITING
+ ⏸ Ingest match    Lillia 18:06
+   only 1 participant(s) returned — the client is still assembling this match
 ```
 
 This screen exists so "why is nothing happening" never requires a log dive.
 
 ### 5. Settings
 
-Model choice, auto-review rules, capture gating (off by default — it takes over your client),
-retention, and a live daemon/client/bridge status block with a **Doctor** button.
+Model choice, auto-review rules, replay retention and folder, and a live
+daemon/client/bridge status block with a **Doctor** button.
 
 ---
 
@@ -172,11 +171,17 @@ app writes to disk.
 
 ### What the app writes to the client
 
-Almost nothing. History, timelines, champion data and gameflow state are all `GET`s. The two
-exceptions are the replay download (`POST /lol-replays/v1/rofls/{gameId}/download`) and
-launching a replay for capture — and both go through `src/daemon/gate.ts`, which refuses to
-act while you are in champ select, in a game, or otherwise not idle. `pnpm doctor` and
-`pnpm seed` are `GET`-only by construction and are safe to run mid-match.
+Almost nothing, and **nothing that opens a window**. History, timelines, champion data and
+gameflow state are all `GET`s. The only writes are client-local replay bookkeeping: creating a
+replay metadata record and `POST /lol-replays/v1/rofls/{gameId}/download`, which asks the
+client to fetch a `.rofl` in the background. Neither launches anything, so both are safe to
+run while you are in champ select for your next game. `pnpm doctor` and `pnpm seed` are
+`GET`-only by construction and are safe to run mid-match.
+
+There used to be one intrusive path — replay capture, which `POST`ed `/rofls/{id}/watch` to
+launch the game client into playback and drive its camera — guarded by a nine-rule idle gate.
+It never completed a single job in the app's history, and the frames now come from the live
+coach's screen share instead. Both the capture code and the gate are gone.
 
 ### Where things live
 
@@ -185,11 +190,10 @@ src/shared/   types + pure helpers, browser-safe   (schemas, map math, time)
 src/db/       SQLite: migrations, queries, blobs   (all SQL lives here)
 src/lcu/      Windows-interop transport + clients
 src/rofl/     ROFL2 replay-file decoding
-src/capture/  replay screenshots + clips           (NODE ONLY; drives the game client)
 src/knowledge/champion notes, loaded into reviews  (editable markdown, no code change)
 src/analysis/ metrics, moments, digest             (no LLM, no I/O)
 src/review/   the Claude coaching engine + persona loader
-src/daemon/   job queue, gate, poller              (owns every side effect)
+src/daemon/   job queue, poller, screen-share journal  (owns every side effect)
 src/server/   Hono HTTP + SSE
 src/web/      React UI
 scripts/      doctor, seed, service install
@@ -219,8 +223,8 @@ wsl.exe -d Ubuntu -u <you> --exec /bin/true
 ```
 
 While the daemon is running, ingest is fully automatic — a game ends, it appears in the list,
-and its replay is downloaded before the 30-minute window closes. Nothing interrupts you.
-Capture is the only intrusive step, it is **off by default**, and it waits for you to be idle.
+and its replay is downloaded before the 30-minute window closes. **Nothing interrupts you, and
+nothing in this app can open or drive your game client.**
 
 ---
 
@@ -236,8 +240,8 @@ Worth knowing before you rewrite it:
 - The rules in there are not decoration. "Never fabricate a stat" is also enforced
   mechanically — a feedback item citing a moment or metric that does not exist is rejected
   before it reaches the UI.
-- Every feedback item must carry a timestamp. An item without one cannot be bound to the map,
-  the timeline, or a clip, and the UI has nowhere to put it.
+- Every feedback item must carry a timestamp. An item without one cannot be bound to the map
+  or the timeline, and the UI has nowhere to put it.
 - `coachIntensity` in Settings scales how hard he goes. The floor is still "encouraging".
 
 Keep the markers. Losing them silently degrades every review, which is why `pnpm doctor`
@@ -250,16 +254,13 @@ checks for them.
 | Setting | Default | What it does |
 |---|---|---|
 | `model` | `claude-sonnet-5` | Which model writes the reviews |
-| `captureEnabled` | **false** | Master switch for replay capture. It takes over your client. |
-| `captureMaxPerGame` | 6 | Ceiling on clips/screenshots per game |
-| `clipSeconds` | 20 | Clip length around a moment |
 | `autoReviewNewGames` | true | Review each game as it finishes |
 | `gamesForTrends` | 20 | How many games feed the cross-game goals |
-| `retentionDays` | 14 | When `.rofl` files get pruned |
+| `retentionDays` | 14 | When `.rofl` files this app downloaded get pruned |
+| `replayFolder` | `""` | Where to look for `.rofl` files; blank means the client's default |
 | `coachIntensity` | 0.8 | How hard the roast goes (0–1) |
 | `transport` | `bridge` | `bridge` (fast) or `curl` (no Windows Node needed) |
 | `pollIdleMs` / `pollInGameMs` | 5000 / 2000 | Gameflow poll cadence |
-| `idleGraceMs` | 120000 | How long you must be idle before an intrusive job may start |
 | `maxMomentsPerGame` | 12 | Cap on selected teachable moments |
 
 Environment overrides live in `.env` — see [`.env.example`](.env.example).
@@ -290,17 +291,16 @@ is lost.
 **Replays expire ~30 minutes after a game ends.** The client's own configuration says
 `minutesUntilReplayConsideredLost: 30`. Miss the window and the `.rofl` is gone permanently —
 there is no re-download. This is why the daemon queues the download immediately and why the UI
-shows a countdown. If the daemon was not running when you played, that game will never have
-clips. Its stats, timeline, map and coaching all still work.
+shows a countdown. Missing it costs you the `.rofl` decoder's 371-stat end-of-game block for
+that game; its LCU stats, timeline, map and coaching all still work.
 
-**A `.rofl` from an older patch will not play.** Playback needs a matching game version and a
-matching network-protocol digest, so plan for a hard expiry of roughly one patch cycle (~2
-weeks). Screenshots and clips are only possible for recent games.
-
-**Capture cannot run during a live game.** It launches the replay client and drives the
-camera, so it takes over the machine you are playing on. It waits for you to be idle for
-`idleGraceMs`, it is opt-in, and it aborts the moment you queue up. The Queue screen always
-names the gate that is blocking it.
+**No review of a past game can see your actual play.** The only pictures a past game gets are
+diagrams this app draws from per-minute positions. Ability usage, kiting, spacing and fight
+entry appear in no data the client exposes — they live in the `.rofl`'s chunk payloads, which
+need the game engine to decode. The app used to try to recover them by launching a replay and
+screenshotting it; that never worked once (its camera would not follow the player) and it has
+been removed. **The live voice coach watching your screen share is the only thing in this app
+that sees what you actually did**, and the frames it keeps are stored per game in the journal.
 
 **The timeline is missing data Riot's public API has.** No item purchases, no ward placements,
 no skill-ups, no per-minute damage or champion stats — only kills, elite monsters, buildings,
@@ -349,7 +349,6 @@ Common ones:
 | `HTTP 000` anywhere | Something bypassed the bridge and used Linux `fetch`/`curl` | That path is unfixable by retrying — it must go through interop |
 | `client is running but no transport reached it` | `/mnt/c` not mounted, or a stale port | `ls /mnt/c`, then restart the client |
 | Reviews never start | No `claude` CLI and no `ANTHROPIC_API_KEY` | Install Claude Code and log in |
-| Capture never runs | `captureEnabled` is off, or the gate is refusing | Check the Queue screen — it names the reason |
 | `Cannot find type definition file for 'node'` from `pnpm typecheck` | `@types/node` not installed | `pnpm add -D @types/node` |
 
 ### Reading a replay file directly

@@ -15,8 +15,8 @@
  * ## Why this uses the CLI's Read tool rather than the API
  *
  * There is no `ANTHROPIC_API_KEY` on this machine; the app drives the authenticated `claude`
- * CLI. The CLI's Read tool renders images, so pointing it at the capture directory is how a
- * model gets to see them. Verified against a real generated map SVG before this was written.
+ * CLI. The CLI's Read tool renders images, so pointing it at the directory holding them is how
+ * a model gets to see them. Verified against a real generated map SVG before this was written.
  *
  * ## What it is NOT allowed to do
  *

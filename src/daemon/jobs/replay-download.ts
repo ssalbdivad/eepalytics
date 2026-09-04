@@ -8,8 +8,12 @@
  * produce noise about something that cannot be recovered.
  *
  * It is NOT intrusive. Nothing launches, no window opens; the client downloads a file in the
- * background while the user is in champ select for their next game. (`/rofls/{id}/watch`,
- * which DOES hijack the machine, belongs to `replay-capture` and is gated separately.)
+ * background while the user is in champ select for their next game. This app no longer has any
+ * caller for `/rofls/{id}/watch`, the route that DOES hijack the machine — see `lcu/client.ts`.
+ *
+ * The `.rofl` is still worth having: `src/rofl/` decodes it for the 371-stat end-of-game block,
+ * which is richer than anything the LCU returns and reaches games that have fallen out of match
+ * history entirely.
  *
  * HONEST STATUS: the POST bodies here are UNVERIFIED. The research proved the routes exist
  * (a GET against them returns 405 WRONG_METHOD rather than 404) but deliberately never called

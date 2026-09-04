@@ -418,7 +418,7 @@ test("the assembled review is shaped for insertReview", () => {
 	assert.equal(rv.status, "ok")
 	assert.equal(rv.error, null)
 	assert.equal(typeof rv.createdMs, "number")
-	assert.deepEqual(rv.items[0]?.mediaIds, [], "media is attached later by the capture pipeline")
+	assert.deepEqual(rv.items[0]?.mediaIds, [], "media is joined in at read time from the moment, not written here")
 })
 
 test("failedReview produces a persistable row that carries the error", () => {

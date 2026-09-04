@@ -1,9 +1,8 @@
 /**
  * Settings.
  *
- * Two of these knobs have real consequences and are labelled as such: `captureEnabled`
- * hands your League client to a background process, and `coachIntensity` changes the
- * persona but is explicitly documented as never changing what the numbers say.
+ * One knob is labelled as more than cosmetic: `coachIntensity` changes the persona, and is
+ * explicitly documented as never changing what the numbers say.
  *
  * The save is a PATCH of only the fields you actually touched, clamped client-side with the
  * same `clampSettings` the daemon uses, so the two can never disagree about what "valid"
@@ -293,80 +292,10 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 					</div>
 				</div>
 
-				{/* ------------------------------------------------------ capture */}
+				{/* ------------------------------------------------------ replays */}
 				<div className="panel panel-pad">
 					<div className="section-title">
-						Replay capture <span className="rule" />
-					</div>
-
-					<div className="notice warn" style={{ marginBottom: 8 }}>
-						<span className="icon">⚠</span>
-						<div>
-							Capture <strong>takes over your League client</strong> to launch a replay and
-							record it. It only ever runs while you're out of a game, and it's off by
-							default. With it off, every moment still gets a rendered map image.
-						</div>
-					</div>
-
-					<div className="field">
-						<div className="label">Enable automatic capture</div>
-						<div className="control">
-							<input
-								type="checkbox"
-								checked={draft.captureEnabled}
-								onChange={e => set("captureEnabled", e.target.checked)}
-							/>
-						</div>
-						<div className="help">
-							You can always trigger a supervised one-off from a game's page instead.
-						</div>
-					</div>
-
-					<div className="field">
-						<div className="label">Max clips per game</div>
-						<div className="control">
-							<input
-								type="number"
-								min={0}
-								max={30}
-								value={draft.captureMaxPerGame}
-								onChange={e => set("captureMaxPerGame", Number(e.target.value))}
-							/>
-						</div>
-					</div>
-
-					<div className="field">
-						<div className="label">Clip length</div>
-						<div className="control">
-							<input
-								type="number"
-								min={5}
-								max={120}
-								value={draft.clipSeconds}
-								onChange={e => set("clipSeconds", Number(e.target.value))}
-							/>
-						</div>
-						<div className="help">
-							Seconds, centred on the moment — {Math.round(draft.clipSeconds / 2)}s before and
-							after.
-						</div>
-					</div>
-
-					<div className="field">
-						<div className="label">Quiet time before capturing</div>
-						<div className="control">
-							<input
-								type="number"
-								min={0}
-								max={60}
-								value={Math.round(draft.idleGraceMs / 60_000)}
-								onChange={e => set("idleGraceMs", Number(e.target.value) * 60_000)}
-							/>
-						</div>
-						<div className="help">
-							Minutes the client must sit idle first, so capture can't grab it in the gap
-							between two queue dodges.
-						</div>
+						Replays on disk <span className="rule" />
 					</div>
 
 					<div className="field">

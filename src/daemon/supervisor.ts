@@ -30,7 +30,6 @@
 
 import { getSettings } from "../db/queries.ts"
 import { publish } from "./bus.ts"
-import { notePhase } from "./gate.ts"
 import { isPidAlive, readLockfileSync, sameLockfile, watchLockfile } from "../lcu/index.ts"
 import type { Lockfile } from "../lcu/index.ts"
 import {
@@ -116,7 +115,6 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 		const previous = phase
 		phase = next
 		lastPhaseChangeMs = Date.now()
-		notePhase(next)
 		log.info("gameflow phase", { from: previous ?? "—", to: next ?? "—" })
 		publish("daemon", { gameflowPhase: next, previousPhase: previous })
 		events.onPhase?.(next, previous)

@@ -4,11 +4,9 @@
  * Settings are stored one key per row and read back merged over `DEFAULT_SETTINGS`, so adding
  * a field is backward compatible with an existing database and never needs a migration.
  *
- * The PUT path is deliberately paranoid about one thing: `captureEnabled`. Turning it on gives
- * the app permission to take over the user's League client, so the write goes through
- * `clampSettings` (a fat-fingered `pollInGameMs: 0` cannot wedge the daemon) and the daemon is
- * notified synchronously, so the new poll intervals and the new gate verdict apply without a
- * restart.
+ * The PUT path runs every write through `clampSettings`, so a fat-fingered `pollInGameMs: 0`
+ * cannot wedge the daemon, and notifies the daemon synchronously so new poll intervals apply
+ * without a restart.
  */
 
 import { Hono } from "hono"

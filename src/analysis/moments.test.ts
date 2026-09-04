@@ -13,7 +13,6 @@ import { analyzeDeaths, signatureCounts, type DeathAnalysis } from "./deaths.ts"
 import { allEvents } from "./frames.ts"
 import { computeMetrics } from "./metrics.ts"
 import {
-	captureWindow,
 	fixabilityOf,
 	selectMoments,
 	selectMomentsDetailed,
@@ -60,24 +59,16 @@ describe("selectMoments — shape and contract", () => {
 		assert.ok(detailsFor(SHORT_GAME_ID).length <= 4)
 	})
 
-	test("every moment carries tSec and a camera the capture unit can use", () => {
-		for (const f of all) {
-			const userId = findUser(f.match, USER_PUUID)!
+	test("every moment lands on the game clock with a drawable position", () => {
+		for (const f of all)
 			for (const d of detailsFor(f.gameId)) {
 				const m = d.moment
 				assert.ok(m.tSec >= 0 && m.tSec <= f.match.gameDuration, `${m.id} tSec ${m.tSec}`)
 				assert.ok(Number.isFinite(m.mapX) && Number.isFinite(m.mapY), m.id)
-				const w = captureWindow(m, userId, f.match.gameDuration)
-				assert.ok(w.startSec < w.focusSec, m.id)
-				assert.ok(w.endSec > w.focusSec || w.endSec === f.match.gameDuration, m.id)
-				assert.equal(w.focusSec, m.tSec)
-				if (m.cameraTarget) assert.equal(w.camera.mode, "FIXED_WORLD_POSITION")
-				else assert.equal(w.camera.mode, "FOLLOW_PARTICIPANT")
 			}
-		}
 	})
 
-	test("a death's camera follows the player; a conceded objective points at the objective", () => {
+	test("a death has no camera target; a conceded objective points at the objective", () => {
 		const details = all.flatMap(f => detailsFor(f.gameId))
 		const deathMoments = details.filter(d => d.kind === "death")
 		assert.ok(deathMoments.length > 0)
@@ -276,42 +267,4 @@ describe("selectMoments — the selection rules", () => {
 	})
 })
 
-describe("captureWindow", () => {
-	test("a death gets its approach, not just the death", () => {
-		const d = detailsFor(REFERENCE_GAME_ID).find(x => x.kind === "death")!
-		const w = captureWindow(d.moment, 7, 2310)
-		assert.equal(w.focusSec - w.startSec, 12)
-		assert.equal(w.endSec - w.focusSec, 8)
-	})
 
-	test("an objective gets a longer run-up", () => {
-		const missed = all
-			.flatMap(f => detailsFor(f.gameId))
-			.find(d => d.kind === "objective_missed")!
-		const w = captureWindow(missed.moment, 7)
-		assert.equal(w.focusSec - w.startSec, 20)
-		assert.equal(w.wantMinimap, true)
-	})
-
-	test("clamps to the start of the game", () => {
-		const w = captureWindow(
-			{
-				id: "x",
-				gameId: 1,
-				tSec: 5,
-				kind: "death",
-				title: "",
-				severity: 0.5,
-				mapX: 0,
-				mapY: 0,
-				cameraTarget: null,
-				participantsInvolved: [],
-				costGold: null,
-				confidence: "high",
-				evidence: ""
-			},
-			7
-		)
-		assert.equal(w.startSec, 0)
-	})
-})

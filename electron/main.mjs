@@ -12,10 +12,10 @@
  * ## Why the daemon is a CHILD PROCESS and not part of this file
  *
  * The daemon must run inside WSL. Every League API call crosses Windows interop (WSL2 cannot
- * reach `127.0.0.1:<lcu port>` on the host), and `src/daemon/gate.ts` owns every side effect on
- * the client. Folding that into Electron's main process would either move it out of WSL or
+ * reach `127.0.0.1:<lcu port>` on the host), and `src/daemon/` owns every side effect on the
+ * client. Folding that into Electron's main process would either move it out of WSL or
  * duplicate it. Spawning the existing entry point unchanged keeps one implementation of the
- * gate, one transport, and one set of tests — and `pnpm daemon` still works on its own with no
+ * job queue, one transport, and one set of tests — and `pnpm daemon` still works on its own with no
  * Electron involved.
  *
  * ## Where this runs

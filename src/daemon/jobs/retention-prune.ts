@@ -16,8 +16,10 @@
  *     be keeping them deliberately, and a coaching tool has no business deleting a game
  *     recording it did not create. They keep `replayState = 'available'`, which is the truth:
  *     the replay is still on disk and still playable.
- *   * Captured screenshots and clips (`source: 'replay'`): also large, also re-creatable while
- *     the `.rofl` survives.
+ *   * Media with `source: 'replay'`: large, and re-creatable while the `.rofl` survives. There
+ *     are none — replay capture never wrote a row and has since been removed — so this pass is
+ *     a no-op today. It is kept because it is also the thing that PROTECTS the generated maps:
+ *     delete it and the next person writing a prune has to rediscover that distinction.
  *   * GENERATED map SVGs are KEPT regardless of age. They are a few KB each and they are the
  *     only illustration most moments will ever have — pruning them would silently gut old
  *     reviews to save nothing.
@@ -124,7 +126,7 @@ export const runRetentionPrune = (nowMs = Date.now()): PruneReport => {
 		}
 	}
 
-	/* ---- captured media (generated maps are deliberately kept) ---- */
+	/* ---- replay-sourced media (generated maps and journal frames are deliberately kept) ---- */
 	for (const game of listGames(500)) {
 		if (game.endedAtMs >= cutoffMs) continue
 		for (const media of listMediaForGame(game.gameId)) {

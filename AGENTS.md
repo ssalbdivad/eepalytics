@@ -83,7 +83,6 @@ src/shared/   types + pure helpers, browser-safe    (schemas, map math, time)
 src/db/       SQLite: migrations, queries, blobs    (NODE ONLY; all SQL lives here)
 src/lcu/      the Windows-interop transport + LCU/live-client clients
 src/rofl/     ROFL2 replay-file decoding
-src/capture/  replay screenshots + clips           (NODE ONLY; drives the game client)
 src/knowledge/champion notes, loaded into reviews  (editable markdown, no code change)
 src/analysis/ metrics, moments, digest              (no LLM, no I/O)
 src/review/   Claude coaching engine + persona loader
@@ -159,18 +158,21 @@ in hand-written SVG, which took three attempts and at one point put them on her 
   `node.exe` bridge over stdio (p50 **2.3 ms**), falling back to
   `/mnt/c/WINDOWS/system32/curl.exe -K -` (~88 ms). Do not "fix" this by swapping
   in `fetch`.
-- **The app does write to the LCU — but only through the gate.** This is not a
-  read-only client. It `POST`s `/lol-replays/v1/rofls/{gameId}/download` to grab a
-  replay before it expires, and it launches replays for screenshot/clip capture.
-  Every one of those side effects goes through **`src/daemon/gate.ts`**, which
-  refuses to act while the user is in champ select, in a live game, or otherwise
-  not idle. Nothing outside `src/daemon/` may write to the LCU or spawn the game
-  client. Never dodge a queue, never accept a ready check, never touch a live
-  match.
-- **Replays expire ~30 minutes after the game ends.** Downloading is *urgent and
-  non-intrusive* (queue it immediately, it costs the user nothing). Capture is
-  *deferred and intrusive* (it takes over the client — it waits for idle, and it
-  is opt-in via `captureEnabled`, default off).
+- **The app writes to the LCU, but nothing it writes opens a window.** This is not
+  a read-only client: it creates a replay metadata record and `POST`s
+  `/lol-replays/v1/rofls/{gameId}/download` to grab a `.rofl` before it expires.
+  Both are client-local bookkeeping that run happily mid-champ-select. Nothing
+  outside `src/daemon/` may write to the LCU at all. Never dodge a queue, never
+  accept a ready check, never touch a live match.
+- **Never add a call that launches or drives the game client.** `/rofls/{id}/watch`
+  is the one that does, and there is deliberately no wrapper for it in
+  `src/lcu/client.ts` any more — see the comment where it used to live. The
+  subsystem that used it never completed a job, and the gate that guarded it is
+  gone with it, so a new caller would be unguarded as well as unwanted.
+- **Replays expire ~30 minutes after the game ends.** Downloading is urgent —
+  queue it immediately, it costs the user nothing — and the `.rofl` is worth having
+  for `src/rofl/`, whose 371-stat end-of-game block is richer than the LCU's and
+  reaches games that have fallen out of match history.
 - **Never fabricate a stat.** If a number is not in the digest, it does not go in
   the output. This is enforced mechanically in `src/review/parse.ts` (feedback
   items citing unknown `momentIds`/`metricKeys` are rejected), it is enforced
@@ -185,8 +187,8 @@ in hand-written SVG, which took three attempts and at one point put them on her 
   the UI. Small-sample trends carry their confidence with them or they do not
   ship.
 - **Degrade gracefully.** The League client may be closed, a replay may have
-  expired, capture may fail, Claude may be rate-limited. Nothing crashes; every
-  feature has a defined "unavailable" state.
+  expired, the screen share may drop, Claude may be rate-limited. Nothing crashes;
+  every feature has a defined "unavailable" state.
 - **Known-bad upstream data — do not trust these:**
   `participants[].timeline.lane` / `.role` (4/10 labelled JUNGLE — infer roles
   from frame positions + Smite instead), and
@@ -459,9 +461,11 @@ more than staying quiet, because it teaches him to discount everything else you 
 
 ### Without frames, stay on the numbers
 
-Most reviews have **no replay frames**. You then know end-of-game totals and positions
-sampled once a *minute* — enough for arithmetic about the whole game, and almost nothing
-about single moments.
+**No review of a past game has frames.** Replay capture, the only thing that ever produced
+them, is gone; the live coach's screen share is where real frames now live, and it is a
+different product surface from this one. So assume you know end-of-game totals and positions
+sampled once a *minute* — enough for arithmetic about the whole game, and almost nothing about
+single moments.
 
 **You may claim:** whole-game and checkpoint figures against his own baseline (camps, CS
 at 10/14/20, gold and xp deltas, damage share, vision, KDA, deaths, objective counts), and
@@ -477,9 +481,10 @@ game, not a fault.** A real review once said "Enemy took baron nashor while you 
 elsewhere" about a baron taken seconds after he died — that is exactly the failure this
 rule exists to prevent.
 
-Write **fewer items** without frames. Three is plenty; two is fine. An honest short review
-beats a padded one, and there is genuinely less to say about a game nobody watched. Close
-by telling him that watching the frames is how he gets the rest.
+Write **fewer items**. Three is plenty; two is fine. An honest short review beats a padded
+one, and there is genuinely less to say about a game nobody watched. When it is worth saying,
+close by telling him the live coach is what actually watches him play — do not tell him to
+capture or watch a replay, because there is no longer anything in the app that does that.
 
 ### Trade-offs are not mistakes
 
@@ -509,12 +514,13 @@ schema is supplied with each request. What it holds:
   - `category` — one of `pathing`, `tempo`, `objectives`, `vision`, `farming`,
     `teamfight`, `deaths`, `praise` (free text, but prefer these).
   - `tSec` — the game clock this points at, in **seconds**, or `null` for a
-    whole-game point. An item with a timestamp can be turned into a clip; an item
-    without one cannot. Prefer a timestamp. When the point is genuinely game-wide,
+    whole-game point. An item with a timestamp can be bound to the map and the
+    timeline; an item without one cannot. Prefer a timestamp. When the point is genuinely
+    game-wide,
     anchor it to the most representative moment rather than inventing a time.
   - `momentIds` — ids copied **verbatim** from `digest.moments[].id`. This is how
-    the app attaches the screenshot or clip. Cite the moment you are talking
-    about; an item with no citation renders as opinion.
+    the app attaches the rendered map for that moment. Cite the moment you are
+    talking about; an item with no citation renders as opinion.
   - `metricKeys` — keys copied **verbatim** from `digest.metrics[].key`.
 - `goals[]` — 1–3 concrete things to try in the next games.
 

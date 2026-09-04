@@ -1,15 +1,20 @@
 /**
- * `POST /api/games/:gameId/watch` — look at the captured frames for one moment.
+ * `POST /api/games/:gameId/watch` — look at the real frames stored for one moment.
  *
  *   GET  /api/games/:gameId/watch  -> { notes }
  *
- * ON DEMAND ONLY, and never automatic. The visual pass needs captured frames, capture takes
- * over the League client, and the user was clear that the game launching itself is the worst
- * thing this app can do. So nothing here queues a capture: it works with frames that already
- * exist and says plainly when there are none.
+ * ON DEMAND ONLY, and never automatic. It works with frames that already exist and says plainly
+ * when there are none — it has never had a way to produce any, which was deliberate: the thing
+ * that used to produce them (replay capture) launched the game client, and the user was clear
+ * that the game launching itself is the worst thing this app can do.
+ *
+ * THAT SUBSYSTEM IS NOW GONE, so `source: "replay"` media no longer exists and this route
+ * answers 409 on every game. The pass itself is kept and still works; what it needs is pointing
+ * at the screen-share journal (`daemon/journal.ts`), which already stores real frames of his own
+ * screen stamped with the game clock and costs the user nothing.
  *
  * Runs inline rather than through the queue for the same reason chat does — it touches Claude
- * and SQLite, not the League client, so the gate has nothing to protect here.
+ * and SQLite, not the League client.
  */
 
 import { Hono } from "hono"
@@ -69,9 +74,9 @@ export const createWatchRoutes = (): Hono => {
 			return fail(
 				c,
 				409,
-				"no replay frames captured for this moment yet — run a capture on this game first",
+				"no real frames are stored for this moment",
 				"no-frames",
-				"Capture takes over the League client, so it only runs when you ask for it and the client is idle."
+				"Replay capture, the only thing that ever wrote them, has been removed. The live coach watching your screen share is what sees your actual play now."
 			)
 
 		const metrics = getMetrics(gameId)

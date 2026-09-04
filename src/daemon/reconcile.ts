@@ -142,7 +142,7 @@ export const reconcile = async (): Promise<ReconcileReport> => {
 		}
 
 	/* ---- 4. the always-available visual ---- */
-	// A generated map image is the fallback that makes the product work with capture off, so a
+	// A generated map image is the only illustration most moments will ever have, so a
 	// game with moments and no media is a bug the user would actually notice.
 	const media = mediaCounts()
 	for (const game of listGames(30)) {

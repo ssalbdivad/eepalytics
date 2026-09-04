@@ -1,5 +1,5 @@
 /**
- * Teachable-moment selection — the handoff to the capture pipeline.
+ * Teachable-moment selection.
  *
  * A moment is worth a screenshot when it COST something, is FIXABLE, and REPEATS. That is
  * literally the score (`.research/analytics.md` §8.2):
@@ -20,8 +20,9 @@
  * solo kill on the enemy jungler) compete on their own scale and at least one is guaranteed a
  * slot when one exists, so a review is never a pure list of failures.
  *
- * Every emitted `Moment` carries `tSec` and `cameraTarget` — that pair IS the capture contract.
- * Use `captureWindow()` for the lead-in/lead-out the replay seeker should use.
+ * Every emitted `Moment` carries `tSec` and `cameraTarget`. `cameraTarget` is what
+ * `media-generate` centres the rendered map on when the interesting thing happened somewhere
+ * other than where the player was standing.
  */
 
 import { dist, zoneOf, type Pos, type TeamId } from "../shared/map.ts"
@@ -38,16 +39,6 @@ import { alliesOf, enemiesOf, laneOpponent, type RoleInference } from "./roles.t
 import { PRESENCE_RADIUS, type DeathAnalysis } from "./deaths.ts"
 
 /* ================================================================ tuning */
-
-/** Lead-in / lead-out per moment family. A death needs its APPROACH, not the death itself. */
-export const CAPTURE_WINDOWS = {
-	death: { leadIn: 12, leadOut: 8 },
-	kill: { leadIn: 12, leadOut: 8 },
-	objective: { leadIn: 20, leadOut: 10 },
-	objective_missed: { leadIn: 20, leadOut: 10 },
-	teamfight: { leadIn: 15, leadOut: 12 },
-	default: { leadIn: 15, leadOut: 10 }
-} as const
 
 /**
  * Objective values, in gold. These are FIXED PROXIES, not measurements — the timeline has no
@@ -96,18 +87,6 @@ export interface MomentDetail {
 	/** Measured team gold-lead swing over the 90 s after the moment, when frames allow. */
 	measuredSwing90s: number | null
 	why: string
-}
-
-export interface CaptureWindow {
-	gameId: number
-	startSec: number
-	endSec: number
-	/** The frame worth screenshotting. Same clock as `gameDuration` and the live API. */
-	focusSec: number
-	camera:
-		| { mode: "FOLLOW_PARTICIPANT"; participantId: number }
-		| { mode: "FIXED_WORLD_POSITION"; x: number; y: number }
-	wantMinimap: boolean
 }
 
 /* =============================================================== helpers */
@@ -668,7 +647,7 @@ export const selectMomentsDetailed = (
 
 /**
  * The ranked teachable moments for one game, ready for the DB and the UI.
- * 5-8 per game by default, chronological, each with `tSec` + `cameraTarget` for capture.
+ * 5-8 per game by default, chronological, each with `tSec` + `cameraTarget` for the map render.
  */
 export const selectMoments = (
 	match: LcuGame,
@@ -682,39 +661,6 @@ export const selectMoments = (
 	selectMomentsDetailed(match, timeline, roles, userId, metrics, deaths, options).map(
 		d => d.moment
 	)
-
-/**
- * What the replay seeker should do with a moment.
- *
- * The lead-in matters more than the moment: for a death you need the APPROACH, which is where
- * the mistake was actually made. `FIXED_WORLD_POSITION` is only requested when the moment's
- * camera target genuinely differs from the user's own position — the replay API's camera
- * schema is UNVERIFIED (`.research/replay-capture.md`), and only the follow-participant mode
- * is safe to assume, so the caller must be able to fall back.
- */
-export const captureWindow = (
-	moment: Moment,
-	userId: number,
-	durationSec = Infinity
-): CaptureWindow => {
-	const w =
-		CAPTURE_WINDOWS[moment.kind as keyof typeof CAPTURE_WINDOWS] ??
-		CAPTURE_WINDOWS.default
-	return {
-		gameId: moment.gameId,
-		startSec: Math.max(0, round(moment.tSec - w.leadIn, 1)),
-		endSec: Math.min(durationSec, round(moment.tSec + w.leadOut, 1)),
-		focusSec: moment.tSec,
-		camera:
-			moment.cameraTarget ?
-				{ mode: "FIXED_WORLD_POSITION", x: moment.cameraTarget.x, y: moment.cameraTarget.y }
-			:	{ mode: "FOLLOW_PARTICIPANT", participantId: userId },
-		wantMinimap:
-			moment.kind === "objective_missed" ||
-			moment.kind === "positioning" ||
-			moment.kind === "tempo"
-	}
-}
 
 /** Corpus-wide signature counts a caller can feed back in as `options.recurrence`. */
 export const momentSignatureCounts = (

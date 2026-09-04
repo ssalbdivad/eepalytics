@@ -5,8 +5,8 @@
  *
  * This reads the in-game Live Client Data API on :2999, which serves information already on the
  * player's own screen. Nothing is written, no input is sent, nothing is automated — the same
- * category as the overlays people already run. `src/daemon/gate.ts` guards WRITES to the client
- * and launching it; there is nothing here for it to protect.
+ * category as the overlays people already run. Only `src/daemon/` may write to the client at
+ * all, and nothing left in this app can launch it.
  *
  * ## No model call
  *
@@ -515,10 +515,9 @@ export const createLiveRoute = (): Hono => {
 	 * `/lol-gameflow/v1/session`, which publishes both comps, every declared position and every
 	 * player's summoner spells from champ select onward — verified against the live client.
 	 *
-	 * READ-ONLY, like the rest of this file. `src/daemon/gate.ts` guards writes and launching the
-	 * client; there is nothing here for it to protect. It matters that this stays true: the gate
-	 * exists partly to keep this app out of champ select, and this endpoint is *in* champ select.
-	 * It looks and it does not touch.
+	 * READ-ONLY, like the rest of this file, and it matters that this stays true: this endpoint
+	 * runs *in* champ select, which is precisely where the app must never do anything. It looks
+	 * and it does not touch.
 	 *
 	 * Every state answers 200. Client closed, sitting in the lobby, locked in but the client has
 	 * not published selections yet — all of them are normal, and a poller that sees a 500 while a

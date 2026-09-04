@@ -1,7 +1,7 @@
 /**
  * A self-contained SVG of Summoner's Rift with one moment plotted on it.
  *
- * THIS IS THE FALLBACK THAT MAKES THE PRODUCT WORK. Replay capture needs the League client,
+ * THIS IS WHAT MAKES THE PRODUCT WORK. A real screenshot of a past game needs the League client,
  * an unexpired `.rofl`, an idle machine and the user's opt-in; four things that are often
  * false. A generated map needs nothing but the timeline we already stored, so EVERY moment
  * gets a picture and no piece of feedback is ever unillustrated.

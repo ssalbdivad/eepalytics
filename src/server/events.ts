@@ -78,7 +78,7 @@ export const publish = (
 
 /**
  * Push without persisting — for things that are only meaningful right now (a heartbeat-ish
- * progress tick during a capture). These carry no `id:`, so they never move a client's
+ * progress tick from a running job). These carry no `id:`, so they never move a client's
  * `Last-Event-ID` and cannot create a replay hole.
  */
 export const broadcast = (name: SseEventName | string, data: unknown): void => {

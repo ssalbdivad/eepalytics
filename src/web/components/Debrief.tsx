@@ -249,7 +249,7 @@ export const Debrief = ({
 						</a>
 						{d.media.length > 0 ?
 							<span className="dim">
-								{d.media.length} clip{d.media.length === 1 ? "" : "s"} captured
+								{d.media.length} image{d.media.length === 1 ? "" : "s"}
 							</span>
 						:	null}
 					</div>

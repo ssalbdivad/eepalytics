@@ -1,16 +1,17 @@
 /**
- * The two phase gates, pinned.
+ * The phase gate, pinned.
  *
- * `isIdlePhase` guards the intrusive-job gate — what the daemon is allowed to DO to the client.
- * `isCoachingPhase` guards the live coach — what the browser is allowed to SEND. They are near
- * opposites and they are one line apart in the file, which is exactly why both are tested here:
- * getting them the wrong way round would either take over the client mid-game or upload someone's
- * desktop, and neither failure announces itself.
+ * `isCoachingPhase` decides what the browser is allowed to SEND — a wrong answer here uploads
+ * someone's desktop, and that failure does not announce itself.
+ *
+ * There used to be a second predicate beside it, `isIdlePhase`, which decided what the daemon
+ * was allowed to DO to the client. It guarded replay capture; capture is gone and so is it. The
+ * two were near opposites, one line apart, which is why this file tested both together.
  */
 
 import { strictEqual } from "node:assert/strict"
 import { describe, it } from "node:test"
-import { isCoachingPhase, isIdlePhase } from "./lcu.ts"
+import { isCoachingPhase } from "./lcu.ts"
 
 describe("isCoachingPhase", () => {
 	it("arms from champion select through the game", () => {
@@ -36,22 +37,5 @@ describe("isCoachingPhase", () => {
 		strictEqual(isCoachingPhase("SomePhaseFromAFuturePatch"), false)
 		// Not a case-insensitive match: the client's own casing is the contract.
 		strictEqual(isCoachingPhase("inprogress"), false)
-	})
-})
-
-describe("isIdlePhase", () => {
-	it("is not the inverse of isCoachingPhase", () => {
-		// Both false in queue and at the end-of-game screen: the daemon may not take the client
-		// over there, and the coach may not send there either.
-		strictEqual(isIdlePhase("Matchmaking"), false)
-		strictEqual(isCoachingPhase("Matchmaking"), false)
-		strictEqual(isIdlePhase("EndOfGame"), false)
-		strictEqual(isCoachingPhase("EndOfGame"), false)
-	})
-
-	it("still treats only None and Lobby as idle", () => {
-		strictEqual(isIdlePhase("None"), true)
-		strictEqual(isIdlePhase("Lobby"), true)
-		strictEqual(isIdlePhase("ChampSelect"), false)
 	})
 })

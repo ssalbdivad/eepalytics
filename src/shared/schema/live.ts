@@ -3,7 +3,7 @@
  *
  * A SEPARATE HTTP service run by the GAME process, not the LCU. No authentication,
  * self-signed cert, and it only answers while `gameflow-phase === "InProgress"` (or while a
- * replay is playing — which is also how capture jobs read the replay clock).
+ * replay is playing, though nothing in this app plays one).
  *
  * What it gives us that the post-game timeline cannot: live item builds (diff `items` between
  * polls to reconstruct purchases), ability levels, rune shards, live champion stats, and an

@@ -6,17 +6,16 @@
  * everything the dead process was holding, and `sweep()` keeps doing so on a timer thereafter. This module is the daemon-facing *policy* layer on top of that —
  * deadlines, dedup, state transitions and the SSE events that go with them.
  *
- * Two facts drive every scheduling decision here:
- *   * A `.rofl` is dropped by the client 30 minutes after the game ends, so `replay-download`
- *     carries a HARD deadline and, once missed, is `expired` forever rather than retried.
- *   * Only `replay-capture` is intrusive. Everything else — including the download POST —
- *     runs happily while the user is in champ select for their next game.
+ * One fact drives every scheduling decision here: a `.rofl` is dropped by the client 30 minutes
+ * after the game ends, so `replay-download` carries a HARD deadline and, once missed, is
+ * `expired` forever rather than retried. Nothing else here is time-critical, and since replay
+ * capture was removed nothing is intrusive either — every kind runs happily while the user is in
+ * champ select for their next game.
  *
  * NODE ONLY.
  */
 
 import {
-	JOB_PRIORITY,
 	REPLAY_DOWNLOAD_MIN_SLACK_MS,
 	REPLAY_EXPIRY_MS
 } from "../shared/constants.ts"
@@ -124,10 +123,6 @@ export const enqueueTrendReview = (): number =>
 export const enqueueMediaGenerate = (gameId: number): number =>
 	enqueueJob({ kind: "media-generate", gameId })
 
-/** Intrusive. Queued freely; `gate.ts` decides whether it may ever actually start. */
-export const enqueueReplayCapture = (gameId: number): number =>
-	enqueueJob({ kind: "replay-capture", gameId, priority: JOB_PRIORITY["replay-capture"] })
-
 /* ============================================================== claiming */
 
 export const claim = (opts: ClaimOptions = {}): Job | null => {
@@ -201,10 +196,10 @@ const stuckFloorMs = (job: Job, now: number): number => {
 }
 
 /**
- * Put a job back to sleep because the world is not ready — the client is closed, a sibling
- * unit is not installed, the gate said no. Does NOT consume an attempt: "not now" is not a
- * failure, and a job that has been waiting three days for the capture gate should not be
- * indistinguishable from one that crashed.
+ * Put a job back to sleep because the world is not ready — the client is closed, a match is
+ * still assembling. Does NOT consume an attempt: "not now" is not a failure, and a job that has
+ * been waiting three days for the League client should not be indistinguishable from one that
+ * crashed.
  */
 /**
  * How long a job may keep saying "not yet" before we accept it never will.
@@ -212,9 +207,8 @@ const stuckFloorMs = (job: Job, now: number): number => {
  * `stuckFloorMs` makes a stuck job quiet, but nothing made it STOP: the PRACTICETOOL match the
  * LCU only ever returns one participant for would defer every ten minutes for the life of the
  * daemon, forever, because the condition it is waiting on cannot occur. A day is far longer than
- * any real condition here takes — the client being closed, a match still assembling, the capture
- * gate waiting for the user to stop playing — and the job stays visible as `expired` with its
- * reason rather than vanishing.
+ * any real condition here takes — the client being closed, a match still assembling — and the job
+ * stays visible as `expired` with its reason rather than vanishing.
  */
 const GIVE_UP_AFTER_MS = 24 * 60 * 60_000
 

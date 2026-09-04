@@ -116,8 +116,8 @@ export const runAnalysisJob = async (ctx: JobContext): Promise<JobOutcome> => {
 		// mis-keyed puuid. Normal, not an error, and retrying will not change it.
 		return { note: "the configured user is not a participant in this game; skipped" }
 
-	/* ---- validate before writing: a malformed moment poisons the review screen, the
-	        capture queue and the coaching prompt at once ---- */
+	/* ---- validate before writing: a malformed moment poisons the review screen, the map
+	        renderer and the coaching prompt at once ---- */
 	const metrics = parseOrThrow(MetricList, result.metrics, `metrics for ${gameId}`)
 	const moments = parseOrThrow(MomentList, result.moments, `moments for ${gameId}`)
 	const capped = [...moments]

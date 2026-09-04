@@ -10,8 +10,13 @@
  * replay's chunk payloads, which need the game engine to decode.
  *
  * So a review with no frames is genuinely partial, and presenting it as a finished verdict would
- * be the most misleading thing on the screen. The badge states which kind you are reading, the
- * tooltip explains the difference, and the "no vision" state carries the action to fix it.
+ * be the most misleading thing on the screen. The badge states which kind you are reading and the
+ * tooltip explains the difference.
+ *
+ * EVERY REVIEW IS "data only" TODAY. Replay capture was the only thing that ever produced frames
+ * and it has been removed, so the "no vision" state names that instead of offering an action that
+ * no longer exists. The other two states are kept for when the visual pass is pointed at the
+ * screen-share journal, which stores real frames already.
  */
 
 import "./components.css"
@@ -19,7 +24,7 @@ import "./components.css"
 export interface VisionBadgeProps {
 	/** How many moments have a visual read. */
 	watched: number
-	/** How many moments have real captured frames available to watch. */
+	/** How many moments have real frames available to watch. Zero on every game today. */
 	watchable: number
 	size?: "sm" | "md"
 }
@@ -31,8 +36,8 @@ export const VisionBadge = ({ watched, watchable, size = "md" }: VisionBadgeProp
 		state === "seen" ?
 			`This review includes a visual pass: the coach read real replay frames for ${watched} moment${watched === 1 ? "" : "s"} and commented on execution — ability use, kiting, fight entry. Those notes are marked "watched". Everything else came from the game's data.`
 		: state === "ready" ?
-			"Replay frames have been captured for this game but nothing has been watched yet. The visual pass is the only way to get feedback on ability usage and kiting — none of that is in the game's data."
-		:	"DATA ONLY. This review is built from the timeline: positions once a minute, kills, objectives, end-of-game stats. It contains nothing about how you used abilities, how you kited, or how you entered fights — that information does not exist in any data the client exposes. Capture replay frames to get it."
+			"Frames exist for this game but nothing has been watched yet. The visual pass is the only way to get feedback on ability usage and kiting — none of that is in the game's data."
+		:	"DATA ONLY. This review is built from the timeline: positions once a minute, kills, objectives, end-of-game stats. It contains nothing about how you used abilities, how you kited, or how you entered fights — that information does not exist in any data the client exposes, and nothing produces frames for a past game right now."
 
 	return (
 		<span className={`csk-vision csk-vision--${state} csk-vision--${size}`} title={title}>

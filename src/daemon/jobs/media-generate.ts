@@ -1,11 +1,10 @@
 /**
  * `media-generate` — draw a Summoner's Rift SVG for every moment in a game.
  *
- * THIS JOB MUST NEVER FAIL. It is the reason the product works with `captureEnabled: false`,
- * with the League client shut, with the replay long expired, and on a machine where the
- * in-game Replay API turns out not to exist at all. Every feedback item the coach writes cites
- * a moment, and every moment needs something to look at; a real screenshot is a bonus, a
- * generated map is the floor.
+ * THIS JOB MUST NEVER FAIL. It is the reason the product works with the League client shut and
+ * with the replay long expired. Every feedback item the coach writes cites a moment, and every
+ * moment needs something to look at; since replay capture was removed, a generated map is not
+ * the floor any more — it is the only illustration a past game will ever get.
  *
  * So: one moment failing to render skips that moment and keeps going, and the job reports what
  * it managed rather than throwing. The only thing that fails it is not being able to find the

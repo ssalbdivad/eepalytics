@@ -1,6 +1,6 @@
 /**
- * The generated map image — the fallback that makes the product work when replay capture
- * cannot run — and the interpolation model it draws.
+ * The generated map image — the only illustration a past game gets — and the interpolation
+ * model it draws.
  *
  * The point of these tests is the HONESTY property, not the pixels: a position we read
  * straight off a 1-minute frame must be drawn as a hard fact, and a position we had to

@@ -366,7 +366,7 @@ const checkLeague = (): Lockfile | null => {
 				"not an error if you simply have the client closed",
 				"everything already in the database still works offline"
 			],
-			fix: "Start the League client for live ingest, replay downloads or capture."
+			fix: "Start the League client for live coaching, match ingest or replay downloads."
 		})
 	} else {
 		const alive = lockfilePidAlive(lock)

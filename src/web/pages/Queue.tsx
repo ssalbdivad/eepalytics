@@ -2,16 +2,13 @@
  * The queue exists to make deferral legible.
  *
  * Almost everything this app does happens in the background, and the single most common
- * question is "why is nothing happening". The answer is always a gate reason recorded on a
- * job, so this screen prints those reasons verbatim rather than paraphrasing them into a
- * spinner.
+ * question is "why is nothing happening". The answer is always a reason recorded on a job, so
+ * this screen prints those reasons verbatim rather than paraphrasing them into a spinner.
  */
 
 import { useMemo, useState } from "react"
-import type { HealthResponse } from "../../shared/schema/api.ts"
 import type { Game, Job, JobState } from "../../shared/schema/domain.ts"
 import { isTerminal } from "../../shared/schema/domain.ts"
-import { IDLE_PHASES } from "../../shared/constants.ts"
 import { api } from "../lib/api.ts"
 import { href, useAction, useNow, useResource } from "../lib/hooks.ts"
 import {
@@ -32,46 +29,13 @@ const GROUPS: { state: JobState[]; title: string; blurb: string }[] = [
 	{ state: ["done", "failed", "expired"], title: "Finished", blurb: "" }
 ]
 
-/**
- * Turn the daemon's gate verdict into something a person can act on.
- *
- * The raw string is `gate G1+G2+G4: client is in InProgress, not None/Lobby; a game is in
- * progress; the in-game API on port 2999 is answering` — three restatements of one fact, led by
- * codes that mean nothing outside this repo. The codes stay in the logs where they are useful.
- */
-const humanReason = (reason: string | null): string | null => {
-	if (!reason) return null
-	const body = reason.replace(/^gate\s+G[\d+G]*:\s*/i, "")
-
-	if (/a game is in progress|client is in (InProgress|ChampSelect|Matchmaking|ReadyCheck)/i.test(body))
-		return "You're in a game — this will start once you're back at the lobby."
-	if (/a replay is already playing/i.test(body))
-		return "A replay is already open in League. Close it and this will start."
-	if (/not running|client is not running/i.test(body))
-		return "League isn't open. Start it and this will begin on its own."
-	if (/switched off in Settings/i.test(body))
-		return "Replay capture is switched off in Settings."
-	if (/\.rofl file is not on disk/i.test(body))
-		return "The replay file for this game isn't on disk, so it can't be captured."
-	if (/another capture already holds/i.test(body))
-		return "Another capture is using League right now. This one is next."
-	if (/only idle for/i.test(body))
-		return "Waiting for League to sit idle for a moment first."
-	if (/deadline passed/i.test(body))
-		return "Timed out waiting for a chance to run. Ask for it again when you're at the lobby."
-	// Unknown reasons pass through rather than being swallowed — a mystery is better than a lie.
-	return body
-}
-
 export interface QueueProps {
-	health: HealthResponse | null
 	eventTick: number
 }
 
-export const Queue = ({ health, eventTick }: QueueProps) => {
+export const Queue = ({ eventTick }: QueueProps) => {
 	const jobs = useResource(signal => api.jobs(signal), [eventTick])
 	const games = useResource(signal => api.games(200, signal), [eventTick])
-	const settings = useResource(signal => api.settings(signal), [eventTick])
 	const now = useNow(1000)
 	const [showDone, setShowDone] = useState(false)
 
@@ -85,10 +49,6 @@ export const Queue = ({ health, eventTick }: QueueProps) => {
 
 	const all = jobs.data?.jobs ?? []
 	const active = all.filter(j => !isTerminal(j.state))
-	const phase = health?.gameflowPhase ?? null
-	const idle = phase !== null && (IDLE_PHASES as readonly string[]).includes(phase)
-	const captureEnabled = settings.data?.captureEnabled ?? false
-	const graceMin = Math.round((settings.data?.idleGraceMs ?? 120_000) / 60_000)
 
 	return (
 		<div className="page">
@@ -121,39 +81,6 @@ export const Queue = ({ health, eventTick }: QueueProps) => {
 					</div>
 				</div>
 			:	null}
-
-			{/* Capture is the only intrusive thing this app does, so it gets its own explainer. */}
-			<div className={cls("notice", captureEnabled && !idle ? "warn" : "info")} style={{ marginBottom: 14 }}>
-				<span className="icon">{captureEnabled ? (idle ? "●" : "⏸") : "○"}</span>
-				<div>
-					{!captureEnabled ?
-						<>
-							<strong>Automatic clip capture is off.</strong> Nothing will ever take over your
-							League client unless you turn it on in <a href={href.settings}>Settings</a> or
-							press “Capture clips” on a game yourself. Every moment still gets a rendered map
-							image, so reviews are complete without it.
-						</>
-					: idle ?
-						<>
-							<strong>Capture is allowed right now.</strong> The client is in{" "}
-							<code className="mono">{phase}</code>, which is an idle phase — a replay
-							capture job may start at any time.
-						</>
-					:	<>
-							<strong>Capture is held.</strong>{" "}
-							{phase === null ?
-								"The League client isn't connected, so a replay can't be launched."
-							:	<>
-									The client is in <code className="mono">{phase}</code>. Capture only runs
-									from {IDLE_PHASES.join(" or ")}, after {graceMin} minute
-									{graceMin === 1 ? "" : "s"} of quiet — it takes over your client, and doing
-									that mid-queue would be rude.
-								</>
-							}
-						</>
-					}
-				</div>
-			</div>
 
 			{sync.error ?
 				<div className="notice bad" style={{ marginBottom: 12 }}>
@@ -227,14 +154,15 @@ const JobRow = ({ job, game, now }: { job: Job; game: Game | null; now: number }
 						{subject}
 					</span>
 					{job.intrusive ?
-						// "intrusive" is this codebase's word for it, not the user's. Say what
-						// actually happens: it opens their game and drives it.
+						// Only rows left behind by the retired replay-capture kind carry this. It is
+						// shown rather than hidden because the row is history: this app really did
+						// once queue jobs that would have opened the game client.
 						<span
 							className="chip warn"
 							style={{ marginLeft: 8 }}
-							title="This job opens League and controls it for a few minutes to record your replay. It waits until you are out of a game, and it stops if you start one."
+							title="Left over from replay capture, which was removed. Nothing this app queues today can open your game."
 						>
-							opens your game
+							retired
 						</span>
 					:	null}
 				</div>

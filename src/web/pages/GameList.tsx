@@ -3,7 +3,7 @@
  * decide which game actually hurt.
  *
  * Row state comes from three sources and each is labelled as what it is: the stored game
- * row, the live job queue (so "Reviewing…" and "Capture deferred — <reason>" are real,
+ * row, the live job queue (so "Reviewing…" and "Download expired — <reason>" are real,
  * not guessed), and the 30-minute replay clock, which is shown as a countdown because a
  * silently-missed window is the one failure the user can never recover from.
  */
@@ -140,7 +140,7 @@ export const GameList = ({ health, eventTick }: GameListProps) => {
 				<button
 					onClick={sync.run}
 					disabled={sync.pending}
-					title="Ask the League client for your recent match history and ingest any finished games not already stored. The daemon does this automatically every few minutes; this is the manual version. It does not capture or watch anything."
+					title="Ask the League client for your recent match history and ingest any finished games not already stored. The daemon does this automatically every few minutes; this is the manual version. It never launches or drives your game."
 				>
 					{sync.pending ? "Syncing…" : "Sync from client"}
 				</button>
@@ -330,7 +330,7 @@ const GameRow = ({ game: g, jobs, headline, now }: GameRowProps) => {
 						)}
 						title={
 							(g.watchedMoments ?? 0) > 0 ?
-								`Watched: the coach read replay frames for ${g.watchedMoments} moment(s) and coached execution — abilities, kiting, fight entry.`
+								`Watched: the coach read real frames for ${g.watchedMoments} moment(s) and coached execution — abilities, kiting, fight entry.`
 							: (g.frameMoments ?? 0) > 0 ?
 								`Frames captured for ${g.frameMoments} moment(s), but none watched yet. Open the game and hit Watch.`
 							:	"Data only — no replay frames captured, so nothing about ability usage or kiting. Open the game to capture some."

@@ -22,7 +22,7 @@ import {
 	SERVER_PORT
 } from "../shared/constants.ts"
 import { closeDb, ensureDataDirs, getDb } from "../db/index.ts"
-import { getSettings, kvGet, kvSet } from "../db/queries.ts"
+import { kvGet, kvSet } from "../db/queries.ts"
 import { startServer } from "../server/app.ts"
 import type { DaemonStatus, ServerDeps, SyncResult } from "../server/deps.ts"
 import { bus, publish } from "./bus.ts"
@@ -173,13 +173,12 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 	const workers = startWorkers({ normal: 2 })
 
 	/**
-	 * What the status banner renders. Everything degrades: the client may be closed, the
-	 * bridge may have failed over to curl, a capture may be blocked. Each field has a defined
-	 * "unavailable" value rather than going missing.
+	 * What the status banner renders. Everything degrades: the client may be closed, the bridge
+	 * may have failed over to curl. Each field has a defined "unavailable" value rather than
+	 * going missing.
 	 */
 	const status = (): DaemonStatus => {
 		const s = supervisor.status()
-		const gateReason = workers.status().lastGateReason
 		return {
 			daemon:
 				!ready ? "starting"
@@ -194,17 +193,7 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 				...warnings(),
 				...(s.staleLockfile ? ["lockfile names a process that is not running"] : []),
 				...(s.lastErrorText ? [s.lastErrorText] : [])
-			],
-			captureGate: {
-				// The gate is only evaluated while a capture is actually pending, so "no reason
-				// recorded" means "nothing is waiting", not "it would be allowed".
-				allowed: gateReason === null && getSettings().captureEnabled,
-				reason:
-					gateReason ??
-					(getSettings().captureEnabled ?
-						"nothing waiting to capture"
-					:	"replay capture is switched off in Settings")
-			}
+			]
 		}
 	}
 
@@ -265,10 +254,9 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 		},
 		sync: () => runReconcile("api"),
 		onSettingsChange: next => {
-			// Poll intervals and the capture switch apply without a restart.
+			// Poll intervals apply without a restart.
 			log.info("settings changed", {
 				model: next.model,
-				captureEnabled: next.captureEnabled,
 				transport: next.transport
 			})
 			publish("daemon", { settingsChanged: true })

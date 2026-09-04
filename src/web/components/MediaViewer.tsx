@@ -33,7 +33,7 @@ const KIND_WORD: Record<Media["kind"], string> = {
 }
 
 const SOURCE_WORD: Record<Media["source"], string> = {
-	replay: "Captured from your replay — this is a real frame of your game.",
+	replay: "A real frame of your game, recorded from the replay. Nothing writes these any more.",
 	generated: "Drawn by this app from timeline positions. It is a diagram, NOT a screenshot.",
 	journal: "A real frame of your own screen, saved while you played."
 }
@@ -45,7 +45,7 @@ export const MediaViewer = ({ media, activeId, onClose }: MediaViewerProps) => {
 	// Which item we are showing. Seeded from `activeId` and moved by the arrows. This is
 	// derived DURING RENDER rather than in an effect: an effect would let the first paint show
 	// media[0] and then jump, which reads as a glitch and — worse — briefly labels the wrong
-	// item as a replay capture.
+	// item as a real frame rather than a drawn diagram.
 	const [navId, setNavId] = useState<string | null>(activeId)
 	const [seenActive, setSeenActive] = useState<string | null>(activeId)
 	const [broken, setBroken] = useState<string | null>(null)
@@ -110,8 +110,8 @@ export const MediaViewer = ({ media, activeId, onClose }: MediaViewerProps) => {
 				</div>
 				<div className="csk-lightbox__stage">
 					<div className="csk-empty">
-						No screenshots or clips exist for this yet. Capture is deferred until you are out
-						of a game, and every moment always has a drawn map fallback.
+						Nothing to show for this yet. Every moment gets a drawn map once media
+						generation runs for the game.
 					</div>
 				</div>
 			</div>
@@ -190,7 +190,7 @@ export const MediaViewer = ({ media, activeId, onClose }: MediaViewerProps) => {
 				<span
 					className={`csk-src csk-src--${current.source === "replay" ? "replay" : "generated"}`}
 				>
-					{current.source === "replay" ? "replay capture" : "generated diagram"}
+					{current.source === "replay" ? "replay frame" : "generated diagram"}
 				</span>
 				<span>{SOURCE_WORD[current.source]}</span>
 				<span style={{ color: "var(--csk-ghost)", fontFamily: "var(--csk-mono)", fontSize: 10.5 }}>

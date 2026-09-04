@@ -97,8 +97,10 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 		moments,
 		timeline: loadTimeline(gameId),
 		baseline: baselineFromRows(perGameMetrics(corpus)),
-		// Real captured frames only. A generated map diagram illustrates position, which the
-		// data already covers; it is not evidence of execution and must not unlock claims about it.
+		// Real frames only. A generated map diagram illustrates position, which the data already
+		// covers; it is not evidence of execution and must not unlock claims about it. This is
+		// false on every game since replay capture was removed, which is the honest answer —
+		// the coach then stays on the numbers, exactly as `AGENTS.md` Part 2 requires.
 		hasFrames: listMediaForGame(gameId).some(
 			m => m.source === "replay" && m.kind === "screenshot"
 		),

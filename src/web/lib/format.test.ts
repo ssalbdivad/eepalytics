@@ -174,7 +174,10 @@ describe("response validators", () => {
 		}
 	})
 
-	it("accepts a deferred job carrying its gate reason", () => {
+	// Deliberately a `replay-capture` row: that kind is retired, but six of them are still in
+	// the job table and `JobListResponse` validates what the Queue screen renders. If the member
+	// is ever dropped from `JobKind`, this is the test that catches the 500 it would cause.
+	it("accepts a deferred job of a retired kind, carrying its reason", () => {
 		const out = JobListResponse({
 			jobs: [
 				{
@@ -314,7 +317,7 @@ describe("formatters", () => {
 		assert.equal(replayCountdown(ended, ended + 31 * 60_000), null)
 	})
 
-	it("surfaces a deferred job's reason verbatim", () => {
+	it("surfaces a deferred job's reason verbatim, retired kinds included", () => {
 		const job = {
 			id: 1,
 			kind: "replay-capture",

@@ -3,12 +3,12 @@
  *
  * This is the join that makes "show me exactly what to do differently" work. The coach only
  * ever emits `momentIds` — it is never told media ids, because the media may not exist yet
- * when it runs. `media-generate` draws one map SVG per moment, and `replay-capture` may add
+ * when it runs. `media-generate` draws one map SVG per moment, and a real frame may add
  * real screenshots and clips much later, or never. So the item-to-picture link CANNOT be
  * frozen at review time; it is resolved on read by `withMomentMedia`.
  *
  * The regression this defends: `FeedbackCard` renders only media whose id appears in
- * `item.mediaIds`. That list is written by the capture pipeline and was empty on every real
+ * `item.mediaIds`. That list is written only for explicitly attached media and was empty on every real
  * review, so no feedback item ever showed an illustration even though the SVG for that exact
  * moment was on disk and correctly linked in the `media` table.
  *
@@ -141,9 +141,9 @@ describe("withMomentMedia", () => {
 		assert.deepEqual(got?.items[0]?.mediaIds, ["g-cs_gap-840-map", "g-death-492-map"])
 	})
 
-	it("keeps explicitly attached capture media first and never duplicates it", () => {
-		// A real screenshot the capture pipeline attached, plus the generated map for the
-		// same moment. Both belong on the card, and the capture must not be reordered away.
+	it("keeps explicitly attached media first and never duplicates it", () => {
+		// A real screenshot attached to the item, plus the generated map for the same moment.
+		// Both belong on the card, and the explicit one must not be reordered away.
 		insertMedia(media("shot", "g-death-492", "screenshot"))
 		insertMedia(media("g-death-492-map", "g-death-492", "map"))
 		insertReview(review([item("i0", ["g-death-492"], ["shot"])]))
