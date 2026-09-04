@@ -599,7 +599,7 @@ describe("buildFacts — losing an objective", () => {
 			newFactMemory()
 		)
 		strictEqual(out.length, 1, `the loss must not share a turn with trivia, got: ${out.join(" | ")}`)
-		ok(/Baron/.test(out[0]!), out[0])
+		ok(/Baron/.test(out[0]!), `expected the Baron loss, got: ${out[0]}`)
 	})
 
 	it("goes quiet rather than offering farm in the minute after", () => {
