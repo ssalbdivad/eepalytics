@@ -211,6 +211,14 @@ export interface FactInput {
 	counterpart: { champion: string; cs?: number; level?: number; inferred?: boolean } | null
 	/** His own level, for the gap against the counterpart. */
 	meLevel?: number
+	/**
+	 * The read from `analysis/fights.ts`, already phrased by the module that owns the arithmetic.
+	 *
+	 * `quiet` means kills are still landing and NOTHING may be said this turn, about anything — a
+	 * sentence arriving behind a live teamfight is noise at the moment noise costs most, and any
+	 * count spoken now is revised three seconds later.
+	 */
+	fight?: { quiet: boolean; line: string | null }
 	enemyObjectives: { name: string; atSec: number; dragonType?: string }[]
 	myEvents: {
 		id: number
@@ -313,6 +321,13 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * Offered ALONE and ranked at the very top with the other things that expire, because measured
 	 * repeatedly in this file: put beside a farm number, the model takes the farm number.
 	 */
+	/*
+	 * A fight outranks everything that is not expiring in seconds. It is the moment a jungler's
+	 * decisions actually cash out, and "that fight happened without you" is the single thing a
+	 * player is least able to notice for himself.
+	 */
+	const fight: string[] = input.fight?.line ? [input.fight.line] : []
+
 	const restraint: string[] = []
 	if (input.counterpart && input.counterpart.level !== undefined && input.meLevel !== undefined) {
 		const down = input.counterpart.level - input.meLevel
@@ -592,7 +607,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * So praise still happens, but only when nothing else is on offer. That is most of the time
 	 * it matters anyway — the moment after a fight is usually quiet.
 	 */
-	const nonDeath = [...restraint, ...windows, ...race, ...rest, ...money, ...farm]
+	const nonDeath = [...fight, ...restraint, ...windows, ...race, ...rest, ...money, ...farm]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -609,7 +624,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
 		windows.length > 0 || rest.length > 0 ?
-			[...restraint, ...windows, ...race, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
+			[...fight, ...restraint, ...windows, ...race, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
 		:	[...nonDeath, ...deathsAllowed, ...praise]
 
 	/*
@@ -630,7 +645,10 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * itself and anything that expires in seconds; if neither exists, saying nothing is correct.
 	 */
 	const out =
-		restraint.length > 0 ? restraint.slice(0, 1)
+		// Kills still landing: nothing at all, from any source. The module's own rule.
+		input.fight?.quiet ? []
+		: fight.length > 0 ? fight.slice(0, 1)
+		: restraint.length > 0 ? restraint.slice(0, 1)
 		: lost.length > 0 ? lost.slice(0, 1)
 		: windows.length > 0 ? windows.slice(0, 1)
 		: disaster ? []

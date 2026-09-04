@@ -60,6 +60,7 @@ import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
+import { newFightMemory, readFight, resetFightMemory } from "../../analysis/fights.ts"
 import {
 	appendTranscript,
 	checkGeminiKey,
@@ -108,6 +109,7 @@ const findMe = (data: LiveAllGameData) => {
  * whenever there is no game.
  */
 const factMemory = newFactMemory()
+const fightMemory = newFightMemory()
 
 /** Who last killed this player, by riotId, or "" if nothing in the feed says. */
 const lastKillerOf = (data: LiveAllGameData, victim: string): string => {
@@ -154,6 +156,7 @@ const buildLiveState = (
 		factMemory.announcedDeaths.clear()
 		factMemory.announcedEvents.clear()
 		factMemory.announcedLosses.clear()
+		resetFightMemory(fightMemory)
 		factMemory.lastLedWithDeath = false
 		factMemory.lastGoldMentioned = 0
 		factMemory.lastFarmAtSec = 0
@@ -318,6 +321,52 @@ const buildLiveState = (
 				 */
 				counterpart,
 				meLevel: me.level,
+				/*
+				 * The fight read is computed HERE and handed in already phrased, because the
+				 * arithmetic over kill clusters belongs in its own module and the ranker only needs
+				 * to know whether there is a line and whether it must stay quiet.
+				 */
+				fight: (() => {
+					const champ = (who: string | undefined): string =>
+						championOf(who) === "someone" ? "" : championOf(who)
+					const r = readFight(
+						{
+							nowSec: secs,
+							me: me.championName ?? "",
+							allies: others.filter(p => p.team === mine).map(p => p.championName ?? ""),
+							enemies: others.filter(p => p.team !== mine).map(p => p.championName ?? ""),
+							kills: (data.events?.Events ?? [])
+								.filter(e => e.EventName === "ChampionKill")
+								.map(e => ({
+									atSec: e.EventTime ?? 0,
+									killer: champ(e.KillerName),
+									victim: champ(e.VictimName),
+									assisters: (e.Assisters ?? []).map(champ).filter(n => n !== "")
+								})),
+							objectives: (data.events?.Events ?? [])
+								.filter(e => OBJECTIVE_EVENTS.has(e.EventName))
+								.map(e => ({
+									atSec: e.EventTime ?? 0,
+									name: e.EventName,
+									// KNOWN to be theirs, never assumed. An unresolvable killer arrives
+									// as false, because a lookup miss must not become an accusation.
+									byEnemy: (() => {
+										const k = (data.allPlayers ?? []).find(
+											p => (p.riotId ?? p.summonerName) === e.KillerName
+										)
+										return k ? k.team !== mine : false
+									})()
+								})),
+							meDeadForSec: me.isDead ? (me.respawnTimer ?? 0) : null,
+							hp: data.activePlayer?.championStats?.currentHealth ?? null,
+							maxHp: data.activePlayer?.championStats?.maxHealth ?? null,
+							alliesAlive: others.filter(p => p.team === mine && !p.isDead).length + (me.isDead ? 0 : 1),
+							enemiesAlive: others.filter(p => p.team !== mine && !p.isDead).length
+						},
+						fightMemory
+					)
+					return { quiet: r.quiet, line: r.line }
+				})(),
 				enemyObjectives: (data.events?.Events ?? [])
 					.filter(e => OBJECTIVE_EVENTS.has(e.EventName) && e.KillerName !== myName)
 					.filter(e => {
