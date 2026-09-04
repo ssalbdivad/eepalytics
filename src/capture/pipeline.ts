@@ -36,6 +36,9 @@ import {
 /** Let the engine finish drawing after a seek before we render a frame. */
 export const SETTLE_MS = 900
 
+/** After re-aiming. Shorter than a seek: the camera move is cheap, the scrub is not. */
+export const CAMERA_SETTLE_MS = 260
+
 /**
  * Frames grabbed around each moment, in seconds relative to it.
  *
@@ -126,6 +129,8 @@ export interface CaptureMomentsOptions {
 	cal?: CameraCalibration
 	/** Champion to lock the camera onto for a given moment, when we know one. */
 	championFor?: (moment: Moment) => string | null
+	/** The champion the user played. The camera falls back to him — this is his review. */
+	userChampionName?: string | null
 	onProgress?: (p: CaptureProgress) => void
 	platformId?: string
 	width?: number
@@ -211,6 +216,7 @@ export const captureMoments = async (
 							height: opts.height,
 							fps: opts.fps,
 							burstOffsetsSec: opts.burstOffsetsSec ?? DEFAULT_BURST_SEC,
+							userChampionName: opts.userChampionName ?? null,
 							sink: media
 						})
 					} catch (e) {
@@ -282,10 +288,23 @@ interface CaptureOneOptions {
 	fps?: number
 	/** Seconds relative to the moment to grab frames at. `[0]` reproduces the old single shot. */
 	burstOffsetsSec: readonly number[]
+	/**
+	 * The champion whose game this is. Used when a moment names no champion of its own, and as
+	 * the fallback when the named one cannot be resolved — a review of his game should stay on
+	 * him rather than drifting to whoever else was in the fight.
+	 */
+	userChampionName?: string | null
 	sink: Media[]
 }
 
-/** seek -> settle -> aim -> shoot. In that order, every time. */
+/**
+ * seek -> settle -> AIM -> settle -> shoot. In that order, for EVERY frame.
+ *
+ * The aim step used to run once before the burst. A seek moves the engine's camera, so frames
+ * two through five pointed wherever the scrub left them — the capture visibly hopped around the
+ * map instead of following the player, which makes the frames useless for reviewing what he did.
+ * Re-locking after each seek costs one request per frame and is the whole point of the burst.
+ */
 const captureOne = async (
 	session: ReplaySession,
 	moment: Moment,
@@ -294,16 +313,32 @@ const captureOne = async (
 	await session.seek(moment.tSec, o.signal)
 	await sleep(SETTLE_MS, o.signal)
 
-	// `selectionName` is the robust way to aim: it tracks the subject through a clip and
-	// needs no coordinate math. Fall back to absolute camera position when we cannot resolve
-	// the champion in the running replay.
+	/*
+	 * `selectionName` is the robust way to aim: the engine tracks the champion for us, so the
+	 * camera follows him as he moves and no coordinate math is involved. The fallback is
+	 * absolute camera position, whose calibration is still unverified — so resolving a name
+	 * matters, and resolving the RIGHT name matters more.
+	 *
+	 * `championFor` gives the champion a moment is *about*, which for a death or a fight can be
+	 * someone else. Falling back to the user's own champion is deliberate: this is a review of
+	 * HIS game, and a frame centred on the enemy who killed him answers a question nobody asked.
+	 */
 	let selectionName: string | null = null
-	if (o.championName) {
+	const target = o.championName ?? o.userChampionName
+	if (target) {
 		const objects = await session.objects("hero", true).catch(() => [] as ReplayObject[])
-		selectionName = matchSelectionName(objects, o.championName)
+		selectionName =
+			matchSelectionName(objects, target) ??
+			(o.userChampionName ? matchSelectionName(objects, o.userChampionName) : null)
 	}
-	await session.setRender(frameMoment(moment, { cal: o.cal, selectionName }))
-	await sleep(250, o.signal)
+
+	/** Re-applied after every seek, because a seek moves the camera. */
+	const aim = async (): Promise<void> => {
+		await session.setRender(frameMoment(moment, { cal: o.cal, selectionName }))
+		await sleep(CAMERA_SETTLE_MS, o.signal)
+	}
+
+	await aim()
 
 	/*
 	 * A BURST, not a single frame.
@@ -325,6 +360,8 @@ const captureOne = async (
 		if (offset !== 0) {
 			await session.seek(at, o.signal)
 			await sleep(SETTLE_MS, o.signal)
+			// The seek moved the camera. Put it back on him before the shutter.
+			await aim()
 		}
 		o.sink.push(
 			await screenshot({

@@ -177,13 +177,21 @@ export const runReplayCapture = async (
 			platformId: game?.platformId ?? PLATFORM_ID,
 			skipPreflight: true,
 			onProgress: emit,
-			// Lock onto the user's champion whenever they are in the moment; otherwise the
-			// moment is about a place (an objective they were not at) and absolute camera
-			// coordinates are the honest choice.
-			championFor: moment =>
-				user && moment.participantsInvolved.includes(user.participantId) ?
-					user.championName
-				:	null
+			/*
+			 * ALWAYS the user's champion.
+			 *
+			 * This used to return null when he was not among the moment's participants — for
+			 * an objective the enemy took, say — and fall back to absolute camera coordinates.
+			 * Two problems. Those coordinates are the still-unverified calibration, so the
+			 * camera went somewhere approximate; and even when it worked it framed the baron
+			 * pit rather than the player, which answers a question nobody asked. Watching the
+			 * capture run, it read as the camera hopping around the map.
+			 *
+			 * The whole point of a frame is to see what HE was doing. `selectionName` makes the
+			 * engine track him, needs no coordinate math, and follows him as he moves.
+			 */
+			championFor: () => user?.championName ?? null,
+			userChampionName: user?.championName ?? null
 		})
 
 		const mediaIds: string[] = []
