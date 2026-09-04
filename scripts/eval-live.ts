@@ -252,6 +252,7 @@ const stateAt = (
 			nowSec: atSec,
 			// Stored timelines carry no enemy-objective feed in this reconstruction.
 			enemyObjectives: [],
+			counterpart: null,
 			// His own respawn, from the same reconstruction the enemies' comes from.
 			meDeadForSec: meLeft ?? null,
 			alliesAlive:
