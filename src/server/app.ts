@@ -35,6 +35,7 @@ import { createChatRoutes } from "./routes/chat.ts"
 import { createFormRoute } from "./routes/form.ts"
 import { createWatchRoutes } from "./routes/watch.ts"
 import { createLiveRoute } from "./routes/live.ts"
+import { createShellRoutes } from "./routes/shell.ts"
 import { createReplayRoutes } from "./routes/replays.ts"
 import { createGamesRoutes } from "./routes/games.ts"
 import { createHealthRoute } from "./routes/health.ts"
@@ -69,6 +70,7 @@ export const createApp = (deps: ServerDeps = {}): Hono => {
 	api.route("/", createFormRoute())
 	api.route("/", createWatchRoutes())
 	api.route("/", createLiveRoute())
+	api.route("/", createShellRoutes())
 	api.route("/", createTrendsRoute())
 	api.route("/", createJobRoutes(deps))
 	api.route("/", createSettingsRoutes(deps))
