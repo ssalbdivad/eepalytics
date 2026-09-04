@@ -90,9 +90,9 @@ const DEFAULT_DP: Record<string, number> = {
  */
 export const METRIC_DEFS: Record<string, MetricDef> = Object.fromEntries(
 	[
-		def("cs@10", "Camps + CS @10", "cs", true, "stable"),
-		def("cs@14", "Camps + CS @14", "cs", true, "stable"),
-		def("cs@20", "Camps + CS @20", "cs", true, "stable"),
+		def("cs@10", "CS @10", "cs", true, "stable"),
+		def("cs@14", "CS @14", "cs", true, "stable"),
+		def("cs@20", "CS @20", "cs", true, "stable"),
 		def("csDelta@10", "CS diff vs opponent @10", "cs", true, "not-trendable", {
 			note: "sd 13.5 around a mean of -1.5 over 21 games; the 95% CI contains zero."
 		}),
@@ -109,8 +109,18 @@ export const METRIC_DEFS: Record<string, MetricDef> = Object.fromEntries(
 			note: "60s resolution — the back happened in the minute BEFORE this mark, so the measurement granularity (1.0 min) is coarser than the game-to-game spread. A trend line on a value that can only take whole-minute values would be reading noise off the quantiser."
 		}),
 		def("firstBackDeltaMin", "First back vs opponent", "min", null, "not-trendable"),
-		def("campsPerMin", "Camps per minute", "/min", true, "stable"),
-		def("enemyJungleShare", "Camps taken in enemy jungle", "%", true, "not-trendable", {
+		/*
+		 * CS, not camps, and the distinction cost real credibility.
+		 *
+		 * This was `campsPerMin` measured from `neutralMinionsKilled` alone, while `cs@10/14/20`
+		 * are camps PLUS lane minions. Two numbers, both called "farm", differing by a third:
+		 * 4.74 against 6.28 per minute on a real game. Every other farm figure in the app —
+		 * including the one the live coach compares against — is the total, so this is the total
+		 * now. Where camps SPECIFICALLY matter, that is `enemyJungleShare` and the split below,
+		 * which are about where camps were taken and are still camps.
+		 */
+		def("csPerMin", "CS per minute", "/min", true, "stable"),
+		def("enemyJungleShare", "CS taken in enemy jungle", "%", true, "not-trendable", {
 			note: "CV 0.82 across 22 games — genuinely noisy, and the half attribution is a heuristic."
 		}),
 		def("kda", "KDA", "", true, "noisy"),
@@ -519,11 +529,12 @@ export const computeMetrics = (
 	/* ------------------------------------------------------------- farming */
 
 	const split = jungleFarmSplit(frames, userId, teamId, match.gameDuration)
+	const totalCs = me.neutralMinionsKilled + me.totalMinionsKilled
 	push(
-		"campsPerMin",
-		me.neutralMinionsKilled / durMin,
+		"csPerMin",
+		totalCs / durMin,
 		"high",
-		`${me.neutralMinionsKilled} camps over ${round(durMin, 1)} minutes, from the end-of-game stat block.`
+		`${totalCs} CS over ${round(durMin, 1)} minutes (${me.neutralMinionsKilled} camps plus ${me.totalMinionsKilled} lane minions), from the end-of-game stat block.`
 	)
 	if (split.totalCamps > 0)
 		push(

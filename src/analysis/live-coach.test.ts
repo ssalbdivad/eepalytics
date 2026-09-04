@@ -14,7 +14,7 @@ const stat = (mean: number, n = 20) => ({ mean, sd: mean / 4, n, median: mean, m
 
 const baseline = {
 	"cs@10": stat(66),
-	campsPerMin: stat(5.3),
+	csPerMin: stat(5.3),
 	deaths: stat(5.6)
 } as unknown as Baseline
 

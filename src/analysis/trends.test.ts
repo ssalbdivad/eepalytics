@@ -116,7 +116,7 @@ describe("computeTrends — the honesty rules, enforced", () => {
 	test("the stable metrics from the CV table are trendable at n = 20", () => {
 		for (const key of [
 			"cs@10",
-			"campsPerMin",
+			"csPerMin",
 			"goldPerMin",
 			"medianCentroidDist",
 			"medOverExtension"
@@ -224,14 +224,21 @@ describe("rollingBaseline", () => {
 		assert.ok(Math.abs(cs10.mean - 64.26) < 2, `mean ${cs10.mean}`)
 		assert.ok(cs10.n >= 18 && cs10.n <= 20)
 		assert.ok(cs10.sd > 5 && cs10.sd < 12)
-		// §6.2 measured camps/min mean 5.344.
-		assert.ok(Math.abs(baseline["campsPerMin"]!.mean - 5.344) < 0.1)
+		/*
+		 * §6.2 measured a CAMPS/min mean of 5.344. The shipped metric is now CS/min — camps plus
+		 * lane minions — so it must sit ABOVE that, and the research figure is kept here as the
+		 * floor rather than deleted or quietly restated as if it had measured the new quantity.
+		 */
+		assert.ok(
+			baseline["csPerMin"]!.mean > 5.344,
+			`CS/min ${baseline["csPerMin"]!.mean} should exceed the camps-only 5.344`
+		)
 	})
 
 	test("n is per metric, so a short game does not poison marks it never reached", () => {
 		const baseline = baselineFromRows(rows)
-		assert.ok(baseline["cs@20"]!.n < baseline["campsPerMin"]!.n)
-		assert.equal(baseline["campsPerMin"]!.n, rows.length)
+		assert.ok(baseline["cs@20"]!.n < baseline["csPerMin"]!.n)
+		assert.equal(baseline["csPerMin"]!.n, rows.length)
 	})
 })
 

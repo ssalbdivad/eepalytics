@@ -270,7 +270,7 @@ export const buildGameDigest = (input: GameDigestInput): GameDigest => {
 		}))
 		.sort((a, b) => a.participantId - b.participantId)
 
-	const baselineGames = baseline?.["campsPerMin"]?.n ?? 0
+	const baselineGames = baseline?.["csPerMin"]?.n ?? 0
 
 	const digest: GameDigest = {
 		schema: "csk.game-digest/1",
@@ -575,7 +575,7 @@ export interface TrendDigest {
 
 const HEADLINE_KEYS = [
 	"cs@10",
-	"campsPerMin",
+	"csPerMin",
 	"kda",
 	"deaths",
 	"goldPerMin",

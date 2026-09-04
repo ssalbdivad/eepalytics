@@ -476,7 +476,7 @@ You are reviewing ONE game. The player is **${ROLE_LABELS[g.role]}** on **${g.ch
 
 - Result: **${g.win ? "WIN" : "LOSS"}** in ${fmtDuration(g.durationSec)}
 - KDA: ${g.kills}/${g.deaths}/${g.assists}
-- ${g.role === "JGL" ? "Camps" : "CS"}: ${g.role === "JGL" ? g.jungleCs : g.cs + g.jungleCs}${g.role === "JGL" ? ` (plus ${g.cs} lane minions)` : ""}
+- CS: ${g.cs + g.jungleCs}${g.role === "JGL" ? ` (${g.jungleCs} camps plus ${g.cs} lane minions)` : ""}
 - Gold: ${g.gold} · Damage to champions: ${g.damageToChampions} · Vision score: ${g.visionScore} · Level ${g.champLevel}${
 		typeof g.teamKills === "number" && typeof g.enemyKills === "number" ?
 			`\n- Team kills ${g.teamKills} vs ${g.enemyKills}`

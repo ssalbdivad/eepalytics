@@ -201,7 +201,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
 	tempo: "Keeping busy",
 	objectives: "Dragons & barons",
 	vision: "Seeing the map",
-	farming: "Farming camps",
+	farming: "Farming",
 	teamfight: "Team fights",
 	deaths: "Staying alive",
 	praise: "Doing well"

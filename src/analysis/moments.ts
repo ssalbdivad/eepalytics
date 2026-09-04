@@ -526,7 +526,7 @@ export const selectMomentsDetailed = (
 				gameId,
 				tSec,
 				kind: "cs_gap",
-				title: `${Math.abs(csGap.value)} camps behind your opposite number by 14:00`,
+				title: `${Math.abs(csGap.value)} CS behind your opposite number by 14:00`,
 				severity: severityOf(score),
 				mapX: mePos ? round(mePos.x) : 0,
 				mapY: mePos ? round(mePos.y) : 0,
@@ -545,7 +545,7 @@ export const selectMomentsDetailed = (
 			signature: "CS_GAP|14",
 			zoneLabel: mePos ? zoneOf(mePos, teamId) : "unknown",
 			measuredSwing90s: null,
-			why: `By 14:00 you were ${Math.abs(csGap.value)} camps behind. ${csGap.explain}`
+			why: `By 14:00 you were ${Math.abs(csGap.value)} CS behind. ${csGap.explain}`
 		})
 	}
 

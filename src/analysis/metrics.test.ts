@@ -54,18 +54,48 @@ describe("computeMetrics — reproduces the measured research table", () => {
 			)
 		})
 
-	test("camps per minute matches the §6.2 table", () => {
-		// total / durationMin, from the end-of-game camp count.
+	/*
+	 * The §6.2 table was measured as CAMPS per minute, and the shipped metric is now CS per minute
+	 * — camps PLUS lane minions — because every other farm figure in the app is the total and two
+	 * quantities sharing the word "farm" is what put "27 camps behind" into a real coaching line
+	 * about a number that included lane minions.
+	 *
+	 * The research is NOT rewritten to match the new metric. It is still asserted, against the
+	 * quantity it actually measured, from the same fixtures. What changed is which of the two the
+	 * app ships, and the second test pins that.
+	 */
+	test("the §6.2 camps-per-minute research still reproduces", () => {
 		for (const [id, expected] of [
 			[5633326992, 5.42],
 			[5633183082, 7.06],
 			[5633857616, 6.34],
 			[5633851596, 2.52]
-		] as const)
+		] as const) {
+			const f = loadFixture(id)
+			const uid = findUser(f.match, USER_PUUID)!
+			const me = f.match.participants.find(p => p.participantId === uid)!.stats
+			const durMin = f.match.gameDuration / 60
+			const campsPerMin = me.neutralMinionsKilled / durMin
 			assert.ok(
-				Math.abs(value(metricsFor(id), "campsPerMin")! - expected) < 0.1,
-				`game ${id}: ${value(metricsFor(id), "campsPerMin")} vs ${expected}`
+				Math.abs(campsPerMin - expected) < 0.1,
+				`game ${id}: camps/min ${campsPerMin} vs §6.2 ${expected}`
 			)
+		}
+	})
+
+	test("csPerMin counts lane minions too, so it is at or above the camp count", () => {
+		for (const id of [5633326992, 5633183082, 5633857616, 5633851596]) {
+			const f = loadFixture(id)
+			const uid = findUser(f.match, USER_PUUID)!
+			const me = f.match.participants.find(p => p.participantId === uid)!.stats
+			const durMin = f.match.gameDuration / 60
+			const shipped = value(metricsFor(id), "csPerMin")!
+			assert.ok(
+				Math.abs(shipped - (me.neutralMinionsKilled + me.totalMinionsKilled) / durMin) < 0.01,
+				`game ${id}: csPerMin ${shipped} is not camps+lane over duration`
+			)
+			assert.ok(shipped >= me.neutralMinionsKilled / durMin - 0.01, `game ${id}: below camps alone`)
+		}
 	})
 
 	test("positional shares match the §5.3 table for the reference game", () => {
@@ -87,7 +117,7 @@ describe("computeMetrics — refuses to invent", () => {
 		assert.equal(value(ms, "cs@20"), undefined)
 		assert.equal(value(ms, "goldDelta@10"), undefined)
 		// But end-of-game stats still produce metrics — the game did happen.
-		assert.ok(value(ms, "campsPerMin")! > 0)
+		assert.ok(value(ms, "csPerMin")! > 0)
 		assert.ok(value(ms, "deaths")! >= 0)
 	})
 
