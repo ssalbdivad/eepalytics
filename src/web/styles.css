@@ -1779,3 +1779,14 @@ body.is-live {
 }
 .live--wide .live__nudge--objective .live__icon { font-size: 26px; }
 .live--wide .live__nudge--objective .live__nudge-src { padding-left: 42px; }
+
+/*
+ * The coach block is hidden in compact mode, never unmounted.
+ *
+ * `display: none` rather than a `size === "wide" &&` guard: unmounting stops every MediaStream
+ * track and closes the Gemini WebSocket, so collapsing the overlay — with the button whose
+ * tooltip offers to grow it onto a second monitor — used to end the coaching session outright.
+ */
+.live__coach--hidden {
+	display: none;
+}

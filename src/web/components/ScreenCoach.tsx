@@ -21,7 +21,7 @@
  *     rather than in a doc — a setup step you cannot complete is the same as a broken feature.
  */
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useGeminiLive } from "../lib/geminiLive.ts"
 import { useScreenShare } from "../lib/useScreenShare.ts"
 import "./components.css"
@@ -99,38 +99,24 @@ export const ScreenCoach = () => {
 		}
 	}
 
-	/*
-	 * The ground-truth block, polled so the socket can forward it synchronously on each turn. It
-	 * is computed by the daemon from the League client — the roster, who is dead and for how long,
-	 * the score, farm against his own average — and it is the reason the coach stopped inventing
-	 * things.
-	 */
-	const truthRef = useRef("")
-	useEffect(() => {
-		if (!share.sharing) return
-		let alive = true
-		const pull = async () => {
+	const gem = useGeminiLive({
+		/*
+		 * Fetched per turn rather than polled.
+		 *
+		 * Building this block consumes state in the daemon — each death is announced once — so
+		 * polling it every few seconds threw most of those announcements away unheard. One fetch,
+		 * one turn.
+		 */
+		groundTruth: async () => {
 			try {
 				const r = await fetch("/api/live/ground-truth")
 				const j = (await r.json()) as { text?: string }
-				if (alive) truthRef.current = j.text ?? ""
+				if (j.text) return j.text
 			} catch {
-				/* the client being closed must not break the page */
+				/* the League client being closed is normal, not an error worth surfacing */
 			}
-		}
-		void pull()
-		const id = setInterval(() => void pull(), 5000)
-		return () => {
-			alive = false
-			clearInterval(id)
-		}
-	}, [share.sharing])
-
-	const gem = useGeminiLive({
-		groundTruth: () =>
-			truthRef.current === "" ?
-				"No live game data right now — he is not in a game, or the client is closed. Say nothing (PASS) unless the screen clearly shows something worth saying."
-			:	truthRef.current,
+			return "No live game data right now — he is not in a game, or the client is closed. Say nothing (PASS) unless the screen clearly shows something worth saying."
+		},
 		grabFrame: share.grabFrame
 	})
 
@@ -258,8 +244,9 @@ export const ScreenCoach = () => {
 
 			{!wsl && !share.sharing && !needsKey && (
 				<div className="csk-screen__warn">
-					Your shared screen is sent to Google continuously while this is running, and your
-					microphone is off until you turn it on.
+					Your shared screen is sent to Google about twice a second while this is running,
+					and it is billed per frame — the running total shows while it's on. Your
+					microphone stays off until you turn it on.
 				</div>
 			)}
 
@@ -301,7 +288,20 @@ export const ScreenCoach = () => {
 							{gem.micOn ? "🎙 mic on" : "🎙 mic off"}
 						</button>
 					)}
-					{gem.status === "live" && <span className="csk-screen__meter">listening</span>}
+					{/*
+					 * The running total, while it runs. This streams video continuously and bills
+					 * per image, so finding out afterwards is the wrong time. Tokens rather than
+					 * dollars: the rate is Google's to change, and a price quoted from memory is
+					 * exactly the kind of confident-sounding number this app exists not to make.
+					 */}
+					{gem.status === "live" && (
+						<span className="csk-screen__meter">
+							listening · {gem.usage.turns} check-in{gem.usage.turns === 1 ? "" : "s"}
+							{gem.usage.totalTokens > 0 ?
+								` · ${Math.round(gem.usage.totalTokens / 1000)}k tokens`
+							:	""}
+						</span>
+					)}
 					{/*
 					 * Said plainly, because it is routine: the session credential lasts about
 					 * half an hour and games run longer, so a reconnect mid-game is expected

@@ -34,10 +34,18 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../../shared/live-prompt.ts"
 
 /**
- * Google documents 1 FPS as the ceiling for Live video, and every frame is billed, so this is a
- * cost dial as much as a fidelity one. Frame SIZE is owned by `useScreenShare` — measured there.
+ * How often a frame is streamed, and it is a cost dial as much as a fidelity one.
+ *
+ * Google documents 1 FPS as the ceiling, but every frame is a billed image: a thirty-minute game
+ * at 1 FPS is 1,800 of them. Halving it to one every two seconds is not a halving of what the
+ * model can see — the coach speaks on a heartbeat measured in tens of seconds, and between those
+ * it needs continuity, not a flipbook.
+ *
+ * What it must NOT lose is freshness at the moment it decides, so a frame is always pushed
+ * immediately before each turn regardless of where the interval lands. Frame SIZE is owned by
+ * `useScreenShare`, and is measured there.
  */
-const FRAME_MS = 1000
+const FRAME_MS = 2000
 /** How often the coach is prompted to speak. The interval IS the talkativeness. */
 const DEFAULT_TURN_MS = 20_000
 /** Gemini emits 24kHz mono PCM; the mic is expected at 16kHz. */
@@ -52,6 +60,12 @@ export interface GeminiLine {
 }
 
 export type GeminiStatus = "off" | "connecting" | "live" | "reconnecting" | "error"
+
+export interface GeminiUsage {
+	/** Cumulative billed tokens for the session, straight from Gemini's own usageMetadata. */
+	totalTokens: number
+	turns: number
+}
 
 /**
  * An ephemeral token is good for about thirty minutes, and League games are routinely longer.
@@ -120,8 +134,16 @@ class PcmPlayer {
 }
 
 export interface GeminiLiveOptions {
-	/** Supplies the current ground-truth text. Called on every turn. */
-	groundTruth: () => string
+	/**
+	 * Fetches the current ground-truth block. Called once per turn, and ONLY per turn.
+	 *
+	 * Async, and that matters. It used to be a synchronous read of a value polled every 5s — but
+	 * building the block CONSUMES state: each death is announced once, gold once per step. Polling
+	 * it four times per turn meant most "X JUST died" lines were marked spoken and discarded
+	 * before the coach ever saw one. Computing it at the moment it is used makes those the same
+	 * event.
+	 */
+	groundTruth: () => Promise<string>
 	/** Supplies a JPEG data URL of the shared screen, or null when not sharing. */
 	grabFrame: () => string | null
 }
@@ -132,6 +154,13 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	const [error, setError] = useState<string | null>(null)
 	const [turnMs, setTurnMs] = useState(DEFAULT_TURN_MS)
 	const [micOn, setMicOn] = useState(false)
+	/**
+	 * Reported rather than estimated. This streams video continuously and bills per image, so the
+	 * running total belongs on screen while it runs — the same reason the old glance coach showed
+	 * its spend. A number quoted in dollars would be a guess at Google's rate; tokens are what the
+	 * API actually reports.
+	 */
+	const [usage, setUsage] = useState<GeminiUsage>({ totalTokens: 0, turns: 0 })
 
 	const wsRef = useRef<WebSocket | null>(null)
 	const playerRef = useRef(new PcmPlayer())
@@ -245,6 +274,9 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					return
 				}
 
+				if (m.usageMetadata?.totalTokenCount !== undefined)
+					setUsage(u => ({ totalTokens: m.usageMetadata!.totalTokenCount!, turns: u.turns }))
+
 				if (m.setupComplete) {
 					attemptRef.current = 0
 					setStatus("live")
@@ -267,17 +299,66 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				}
 
 				if (sc.outputTranscription?.text) partialRef.current += sc.outputTranscription.text
+				for (const p of sc.modelTurn?.parts ?? []) if (p.text) partialRef.current += p.text
+
+				/*
+				 * Decide, once per turn, whether this turn is spoken at all.
+				 *
+				 * The coach is told to decline with the literal token PASS, and told to use it
+				 * often — but this is an audio-out model, so that token is also SPOKEN. Without
+				 * this gate she says the word "pass" in her own voice every quiet turn, which is
+				 * both absurd and the most common case by design.
+				 *
+				 * Transcription lags the audio, so `partial` is usually empty when the first
+				 * chunk arrives. Deciding "speak" on an empty string would flush immediately and
+				 * the gate would never fire, so it waits for actual evidence: a leading "pass",
+				 * a first character that cannot begin "pass", or enough text that a leading
+				 * "pass" would already be visible.
+				 */
+				const decide = () => {
+					if (turnDecided.current !== "unknown") return
+					const t = partialRef.current.trimStart()
+					if (t === "") return
+					if (/^pass\b/i.test(t)) {
+						turnDecided.current = "pass"
+						pendingAudio.current = []
+						return
+					}
+					if (t.length >= 5 || /^[^p]/i.test(t)) {
+						turnDecided.current = "speak"
+						for (const chunk of pendingAudio.current) playerRef.current.play(chunk)
+						pendingAudio.current = []
+					}
+				}
+				decide()
 
 				for (const p of sc.modelTurn?.parts ?? []) {
-					if (p.text) partialRef.current += p.text
-					if (p.inlineData?.data) playerRef.current.play(b64ToBytes(p.inlineData.data))
+					if (!p.inlineData?.data) continue
+					const bytes = b64ToBytes(p.inlineData.data)
+					if (turnDecided.current === "speak") playerRef.current.play(bytes)
+					else if (turnDecided.current === "unknown") {
+						pendingAudio.current.push(bytes)
+						decide()
+					}
+					// "pass" — dropped on the floor, which is the entire point.
 				}
 
 				if (sc.turnComplete) {
 					const text = partialRef.current.trim()
+					/*
+					 * A turn that ended while still undecided produced audio but no usable
+					 * transcript. Flush it rather than swallowing it: a malformed reply the player
+					 * can hear is recoverable, silence with no explanation is not.
+					 */
+					if (turnDecided.current === "unknown" && !/^pass\b/i.test(text))
+						for (const chunk of pendingAudio.current) playerRef.current.play(chunk)
+					const declined = turnDecided.current === "pass" || /^pass\b/i.test(text)
 					partialRef.current = ""
-					if (text !== "") {
-						record(text, false)
+					pendingAudio.current = []
+					turnDecided.current = "unknown"
+					setUsage(u => ({ ...u, turns: u.turns + 1 }))
+					if (text !== "" && !declined) {
+						record(text, false, truthInFlight.current)
 						setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
 					}
 				}
@@ -316,18 +397,20 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 
 	const start = useCallback(() => connect(false), [connect])
 
-	/** Stream frames while live. */
+	const pushFrame = useCallback(() => {
+		const frame = optsRef.current.grabFrame()
+		if (frame === null) return
+		send({
+			realtimeInput: { video: { mimeType: "image/jpeg", data: frame.replace(/^data:[^,]+,/, "") } }
+		})
+	}, [send])
+
+	/** Stream frames while live, for continuity between turns. */
 	useEffect(() => {
 		if (status !== "live") return
-		const id = setInterval(() => {
-			const frame = optsRef.current.grabFrame()
-			if (frame === null) return
-			send({
-				realtimeInput: { video: { mimeType: "image/jpeg", data: frame.replace(/^data:[^,]+,/, "") } }
-			})
-		}, FRAME_MS)
+		const id = setInterval(pushFrame, FRAME_MS)
 		return () => clearInterval(id)
-	}, [status, send])
+	}, [status, pushFrame])
 
 	/**
 	 * The heartbeat that makes it speak.
@@ -337,17 +420,19 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 */
 	useEffect(() => {
 		if (status !== "live") return
-		const beat = () => {
-			const truth = optsRef.current.groundTruth()
+		const beat = async () => {
+			// The freshest possible frame at the moment it decides, whatever the interval is doing.
+			pushFrame()
+			const truth = await optsRef.current.groundTruth()
 			truthInFlight.current = truth
 			send({
 				clientContent: { turns: [{ role: "user", parts: [{ text: truth }] }], turnComplete: true }
 			})
 		}
-		const id = setInterval(beat, turnMs)
-		beat()
+		const id = setInterval(() => void beat(), turnMs)
+		void beat()
 		return () => clearInterval(id)
-	}, [status, turnMs, send])
+	}, [status, turnMs, send, pushFrame])
 
 	/** Push-to-talk: hold the mic open and let Gemini's own VAD decide when you stopped. */
 	const setMic = useCallback(
@@ -407,13 +492,14 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 
 	useEffect(() => stop, [stop])
 
-	return { status, lines, error, turnMs, setTurnMs, micOn, setMic, start, stop, ask }
+	return { status, lines, error, turnMs, setTurnMs, micOn, setMic, start, stop, ask, usage }
 }
 
 /* --------------------------------------------------------------- internals */
 
 interface GeminiServerMessage {
 	setupComplete?: unknown
+	usageMetadata?: { totalTokenCount?: number }
 	serverContent?: {
 		interrupted?: boolean
 		turnComplete?: boolean

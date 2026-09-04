@@ -37,9 +37,15 @@ describe("renderState", () => {
 		ok(out.includes("What he is NOT looking at"), "heading does not match the prompt")
 	})
 
-	it("emits no dangling heading when there is nothing unseen", () => {
+	it("names the empty case instead of leaving a gap", () => {
+		/*
+		 * Regression: an omitted section is ambiguous, and at a tick where the list was empty the
+		 * coach announced a death that never happened. The block must say "nothing" out loud.
+		 */
 		const out = renderState(base())
-		strictEqual(out.includes("NOT looking at"), false)
+		strictEqual(out.includes("NOT looking at"), false, "no dangling heading")
+		ok(out.includes("Nothing he is missing right now"), "the empty case must be stated")
+		ok(out.includes("PASS"), "and it must name the correct answer")
 	})
 
 	it("still names the roster and the clock", () => {

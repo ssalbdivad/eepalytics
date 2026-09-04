@@ -101,7 +101,20 @@ Just happened: ${s.recentEvents.join("; ")}` : ""}${
 ### What he is NOT looking at — prefer these
 
 ${s.unseen.map(u => `- ${u}`).join("\n")}`
-		:	""
+		:	/*
+			 * Say "nothing" explicitly rather than omitting the section.
+			 *
+			 * An absent heading is ambiguous, and a model asked to coach from an ambiguous block
+			 * fills the gap. Measured: at a tick where nobody was dead and the list was empty, the
+			 * coach announced a death that had not happened — right roster, invented event. Naming
+			 * the empty case removes the gap to fill.
+			 */
+			`
+
+### Nothing he is missing right now
+
+There is no fact worth interrupting him for at this instant. Unless the video shows something
+plain and urgent, the correct answer is PASS.`
 	}
 
 **The ten champions above are the only champions in this game.** Never name any other. Never

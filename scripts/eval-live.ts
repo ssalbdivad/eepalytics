@@ -41,6 +41,8 @@ import { renderState } from "../src/shared/live-state.ts"
 import type { VisionState, VisionStatePlayer } from "../src/shared/live-state.ts"
 import { geminiKey, GEMINI_LIVE_MODEL } from "../src/review/gemini-live.ts"
 import { baselineFromRows, perGameMetrics } from "../src/analysis/index.ts"
+import { buildFacts, newFactMemory } from "../src/analysis/live-facts.ts"
+import type { FactInput, FactMemory } from "../src/analysis/live-facts.ts"
 import { paceReading } from "../src/analysis/live-coach.ts"
 import { loadCorpus } from "../src/daemon/corpus.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../src/shared/live-prompt.ts"
@@ -48,18 +50,10 @@ import { LIVE_COACH_SYSTEM_PROMPT } from "../src/shared/live-prompt.ts"
 /** Fixture-only. See the header: the timeline records deaths, not respawns. */
 const RESPAWN_SEC = 28
 
-/** Mirrors the daemon's gold stepping; reset between games by `resetSessionState`. */
-let lastGoldMentioned = 0
-const announcedDeaths = new Set<string>()
-const announcedEvents = new Set<string>()
-let lastFarmAtSec = 0
-let lastLedWithDeath = false
+/** The same memory object the daemon keeps, rebuilt per game. */
+let mem: FactMemory = newFactMemory()
 const resetSessionState = () => {
-	lastLedWithDeath = false
-	lastGoldMentioned = 0
-	lastFarmAtSec = 0
-	announcedDeaths.clear()
-	announcedEvents.clear()
+	mem = newFactMemory()
 }
 
 const arg = (name: string, fallback: string): string => {
@@ -161,11 +155,15 @@ const stateAt = (
 	const others = Object.keys(roster).map(Number).filter(p => p !== mePid)
 	const meLeft = deadFor(mePid)
 
-	const unseen: string[] = []
-
-	// Mirrors the pace line the daemon adds, so the eval sees what production sends.
+	/*
+	 * The facts come from the SAME function the daemon calls.
+	 *
+	 * This used to be a hand-copied reimplementation with the tuning constants re-typed as bare
+	 * literals, which meant the eval scored a lookalike of the coach rather than the coach — the
+	 * one thing an eval must never do.
+	 */
 	const csNow = (mf.minionsKilled ?? 0) + (mf.jungleMinionsKilled ?? 0)
-	const pace =
+	const paced =
 		baseline ?
 			paceReading({
 				live: {
@@ -182,33 +180,18 @@ const stateAt = (
 				focus: []
 			})
 		:	null
-	// Mirrors the daemon's farm cooldown.
-	if (
-		pace &&
-		Math.abs(pace.cs - pace.expected) >= 12 &&
-		(lastFarmAtSec === 0 || atSec - lastFarmAtSec >= 180)
-	) {
-		lastFarmAtSec = atSec
-		const behind = pace.expected - pace.cs
-		unseen.push(
-			behind > 0 ?
-				`FARM: ${behind} camps behind his own pace (${pace.cs} vs his usual ${pace.expected})${pace.exact ? "" : " — interpolated, approximate"}`
-			:	`FARM: ${-behind} camps AHEAD of his own pace (${pace.cs} vs his usual ${pace.expected})${pace.exact ? "" : " — interpolated, approximate"}`
-		)
-	}
 
 	/*
-	 * Praise, mirroring the daemon. The stored timeline is a different shape from the live event
-	 * feed — no KillStreak counter — so a multi-kill is reconstructed as "N kills by him inside
-	 * 10 seconds", which is what a multi-kill is.
+	 * The stored timeline has no KillStreak counter, so a multi-kill is reconstructed as "N kills
+	 * by him inside 10 seconds", which is what a multi-kill is. Ids are synthesised from the
+	 * event timestamp so `buildFacts` can still announce each once.
 	 */
+	const myEvents: FactInput["myEvents"] = []
 	for (const f of frames)
 		for (const e of f.events ?? []) {
 			if (e.timestamp > atSec * 1000 || e.timestamp < (atSec - 30) * 1000) continue
-			const id = `${e.type}@${e.timestamp}`
-			if (announcedEvents.has(id)) continue
 			if (e.type === "CHAMPION_KILL" && e.killerId === mePid) {
-				const window = frames
+				const burst = frames
 					.flatMap((fr: { events?: { type: string; killerId?: number; timestamp: number }[] }) => fr.events ?? [])
 					.filter(
 						(x: { type: string; killerId?: number; timestamp: number }) =>
@@ -216,49 +199,33 @@ const stateAt = (
 							x.killerId === mePid &&
 							Math.abs(x.timestamp - e.timestamp) <= 10_000
 					).length
-				if (window >= 2) {
-					announcedEvents.add(id)
-					unseen.unshift(`HE just got a ${window >= 5 ? "PENTAKILL" : `${window}-kill`} — worth saying so`)
-				}
+				if (burst >= 2)
+					myEvents.push({ id: e.timestamp, name: "ChampionKill", killStreak: Math.min(burst, 5) })
 			} else if (e.type === "ELITE_MONSTER_KILL" && e.killerId === mePid) {
-				announcedEvents.add(id)
-				unseen.unshift(`HE secured the ${String(e.monsterType ?? "objective").toLowerCase()} — worth saying so`)
+				const name =
+					e.monsterType === "DRAGON" ? "DragonKill"
+					: e.monsterType === "BARON_NASHOR" ? "BaronKill"
+					: e.monsterType === "RIFTHERALD" ? "HeraldKill"
+					: ""
+				if (name !== "") myEvents.push({ id: e.timestamp, name })
 			}
 		}
 
-	// Mirrors the daemon: each death is announced once, and only while it is still worth saying.
-	for (const pid of others.filter(p => roster[p]!.teamId !== myTeam)) {
-		const left = deadFor(pid)
-		if (left === undefined || left < 12) continue
-		const id = `${roster[pid]!.champion}@${Math.round((atSec + left) / 2)}`
-		if (announcedDeaths.has(id)) continue
-		announcedDeaths.add(id)
-		unseen.push(`${roster[pid]!.champion} JUST died — down for ${left}s`)
-	}
-	/*
-	 * Mirrors the stepping in `buildUnseen` (src/server/routes/live.ts). It has to: without it the
-	 * eval would score a gold line on every single turn and report a nagging problem the shipped
-	 * code no longer has — or hide one it does.
-	 */
-	const g = mf.currentGold ?? 0
-	if (g < 1200) lastGoldMentioned = 0
-	else if (lastGoldMentioned === 0 || g - lastGoldMentioned >= 800) {
-		unseen.push(`${Math.round(g)}g sitting unspent`)
-		lastGoldMentioned = g
-	}
-
-	// Mirrors the daemon's ranking and cap. See buildUnseen in src/server/routes/live.ts.
-	const praise = unseen.filter(t => t.startsWith("HE "))
-	const farm = unseen.filter(t => t.startsWith("FARM:"))
-	const money = unseen.filter(t => t.includes("unspent"))
-	const deaths = unseen.filter(t => t.includes("JUST died"))
-	const nonDeath = [...praise, ...farm, ...money]
-	const ranked =
-		praise.length > 0 ? [...praise, ...farm, ...money, ...deaths.slice(0, 1)]
-		: !lastLedWithDeath && deaths.length > 0 ? [...deaths.slice(0, 1), ...nonDeath]
-		: [...nonDeath, ...deaths.slice(0, 1)]
-	const finalUnseen = ranked.slice(0, 3)
-	if (finalUnseen.length > 0) lastLedWithDeath = finalUnseen[0]!.includes("JUST died")
+	const finalUnseen = buildFacts(
+		{
+			nowSec: atSec,
+			deadEnemies: others
+				.filter(p => roster[p]!.teamId !== myTeam)
+				.map(p => ({ champion: roster[p]!.champion, respawnSec: deadFor(p) ?? 0 }))
+				.filter(d => d.respawnSec > 0),
+			currentGold: mf.currentGold ?? null,
+			pace: paced ? { cs: paced.cs, expected: paced.expected, exact: paced.exact } : null,
+			myEvents,
+			sinceDrakeSec: null,
+			sinceBaronSec: null
+		},
+		mem
+	)
 
 	return {
 		mePid,
@@ -446,10 +413,23 @@ const scoreLine = (s: Said, championNames: Set<string>) => {
 	// Numbers above 3 are specific enough that inventing one is a real claim; 1-3 are counts.
 	const nums = [...s.text.matchAll(/\b(\d{2,})\b/g)].map(m => m[1]!)
 	const unbacked = nums.filter(n => !block.includes(n))
+
+	/*
+	 * A death claim must correspond to a DEAD marker in the block.
+	 *
+	 * Added after the coach announced "Shyvana just died, gone for 1s" at a tick where the facts
+	 * list was empty and nobody was dead. The number check missed it — "1s" is a single digit and
+	 * Shyvana was a real champion in that game — so the two signals that usually catch invention
+	 * both passed a wholly invented event.
+	 */
+	const claimsDeath = /\b(just died|is dead|are dead|down for|gone for|respawn)/i.test(s.text)
+	const anyoneDead = /DEAD/.test(block)
+	const inventedDeath = claimsDeath && !anyoneDead
 	return {
 		invented,
 		forbidden,
 		unbacked,
+		inventedDeath,
 		motif: MOTIFS.test(s.text),
 		hasNumber: /\d/.test(s.text),
 		chars: s.text.length
@@ -544,6 +524,26 @@ const main = async () => {
 
 	const frameB64 = readFileSync(arg("frame", `${DATA_DIR}/eval/frame.jpg`)).toString("base64")
 
+	/*
+	 * `--dump` reconstructs and prints the blocks without opening a socket. Cheap, instant, and
+	 * the right tool for "what was it actually told?" — which is a different question from "what
+	 * did it say", and the one that usually has the answer in it.
+	 */
+	if (flag("dump")) {
+		for (const gameId of games) {
+			resetSessionState()
+			const game = loadGame(db, gameId)
+			console.log(`\n########## game ${gameId} ##########`)
+			for (const atSec of marks) {
+				const built = stateAt(game, atSec, baseline)
+				if (!built) continue
+				console.log(`\n----- ${Math.floor(atSec / 60)}:00 -----`)
+				console.log(renderState(built.state))
+			}
+		}
+		return
+	}
+
 	const all: Said[] = []
 	const failures: string[] = []
 	for (const gameId of games) {
@@ -594,7 +594,8 @@ const main = async () => {
 		const flags = [
 			score.invented.length > 0 ? `INVENTED:${score.invented.join(",")}` : "",
 			score.forbidden.length > 0 ? `UNSUPPORTABLE:${score.forbidden.join("|")}` : "",
-			score.unbacked.length > 0 ? `UNBACKED#:${score.unbacked.join(",")}` : ""
+			score.unbacked.length > 0 ? `UNBACKED#:${score.unbacked.join(",")}` : "",
+			score.inventedDeath ? "INVENTED-DEATH" : ""
 		]
 			.filter(Boolean)
 			.join(" ")
@@ -607,6 +608,7 @@ const main = async () => {
 	console.log(`stayed quiet (PASS) ${pct(passes)}  ${passes}/${n}`)
 	console.log(`invented champion   ${pct(scored.filter(s => s.score.invented.length > 0).length)}`)
 	console.log(`unsupportable claim ${pct(scored.filter(s => s.score.forbidden.length > 0).length)}`)
+	console.log(`invented a death    ${pct(scored.filter(s => s.score.inventedDeath).length)}`)
 	console.log(`number not in block ${pct(scored.filter(s => s.score.unbacked.length > 0).length)}`)
 	const spoke = scored.filter(s => !/^pass\b/i.test(s.said.text))
 	const spokeN = spoke.length || 1

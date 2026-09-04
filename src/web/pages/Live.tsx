@@ -103,16 +103,23 @@ export const Live = () => {
 		}
 	}, [])
 
-	if (!data)
-		return (
-			<div className={`live live--${size}`}>
+	/*
+	 * ONE tree, always the same shape.
+	 *
+	 * There used to be three returns whose children differed structurally, so React reconciled by
+	 * index and unmounted `<ScreenCoach>` on the idle -> in-game flip. That tore down the screen
+	 * share and closed the Gemini socket at the exact moment the game started — the coach died
+	 * the instant it became useful, and re-arming it needed a fresh screen-picker.
+	 *
+	 * The body varies; the coach's position in the tree does not.
+	 */
+	const body =
+		!data ?
+			<div className="live__content">
 				<div className="live__idle">connecting…</div>
 			</div>
-		)
-
-	if (!data.inGame)
-		return (
-			<div className={`live live--${size}`}>
+		: !data.inGame ?
+			<div className="live__content">
 				{/*
 				 * The idle screen used to render the same tiny block at every size, so a second
 				 * monitor showed one paragraph in the top-left corner and 1800px of nothing.
@@ -140,19 +147,9 @@ export const Live = () => {
 						</div>
 					)}
 				</div>
-
-				{size === "wide" && <ScreenCoach />}
-			{/*
-			 * Reviewing what she said is a wide-mode activity: it is an audit, not something you
-			 * do mid-fight in a 380px overlay.
-			 */}
-			{size === "wide" && <LiveTranscript />}
 			</div>
-		)
-
-	return (
-		<div className={`live live--${size}`}>
-			<div className="live__bar">
+		:	<div className="live__content">
+				<div className="live__bar">
 				<img className="live__mark" src="/icons/icon-128.png" alt="" width={20} height={20} />
 				<span className="live__clock">{fmtClock(data.gameTimeSec ?? 0)}</span>
 				<span className="live__champ">{data.championName}</span>
@@ -278,12 +275,23 @@ export const Live = () => {
 				)}
 			</div>
 
+			</div>
+
+	return (
+		<div className={`live live--${size}`}>
+			{body}
 			{/*
-			 * Wide mode only. The controls need room to state what they cost and what they send,
-			 * and burying that in a 380px window would be the wrong place to make that decision.
+			 * HIDDEN in compact, never unmounted.
+			 *
+			 * The old `size === "wide" && <ScreenCoach />` meant pressing the collapse button —
+			 * advertised as "grow onto a second monitor" — ended the coaching session. `display:
+			 * none` keeps the socket open and the audio playing, which is what you want from a
+			 * voice coach in a 380px window.
 			 */}
-			{size === "wide" && <ScreenCoach />}
-			{size === "wide" && <LiveTranscript />}
+			<div className={`live__coach${size === "wide" ? "" : " live__coach--hidden"}`}>
+				<ScreenCoach />
+				<LiveTranscript />
+			</div>
 
 			{err !== null && <div className="live__err">{err}</div>}
 		</div>

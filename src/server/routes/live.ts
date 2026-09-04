@@ -33,6 +33,7 @@ import { LiveResponse } from "../../shared/schema/api.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
+import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
 import {
 	appendTranscript,
 	checkGeminiKey,
@@ -69,226 +70,27 @@ const findMe = (data: LiveAllGameData) => {
  * roster and must not name champions at all, rather than leaving it free to guess.
  */
 /**
- * The facts worth saying, computed here rather than inferred by the model.
+ * The facts, and the memory that keeps them from repeating.
  *
- * This is the same split the rest of the app uses: code derives the numbers, the model may only
- * choose one and phrase it. It exists because forcing a vision model to "be actionable" from a
- * screenshot is how you get confident nonsense — the fix is that it is not being asked to work
- * anything out. Every string below is read straight off `allgamedata`.
+ * Both live in `analysis/live-facts.ts` — pure, tested, and shared with `scripts/eval-live.ts`.
+ * They used to be inlined here and hand-copied into the eval with the tuning constants re-typed
+ * as bare literals, which meant the eval was scoring a lookalike of the coach rather than the
+ * coach. One definition, or the measurement is fiction.
  *
- * Deliberately NOT computed: objective respawn timers. Dragon and Baron respawn windows are
- * patch-tunable, and a timer that is quietly thirty seconds wrong is worse than no timer at all,
- * so the elapsed time since the take is reported as the fact it is and the inference is left
- * alone.
+ * Module-level memory is right for this daemon: one local user, one game at a time. It is reset
+ * whenever there is no game.
  */
-/**
- * A death with less than this left is not worth interrupting for.
- *
- * A judge pass over 27 spoken lines found eleven timers under ten seconds: by the time the
- * sentence is spoken and heard, the enemy is already walking back, so the information is spent
- * before it arrives. Twelve seconds is roughly "long enough to cross a camp and act on it".
- */
-const DEATH_WORTH_SAYING_SEC = 12
+const factMemory = newFactMemory()
 
-/**
- * Deaths already announced this game. Bounded because a 45-minute game has maybe 60 of them.
- *
- * Cleared when a game ends — `buildLiveState` returns null with no game, and the next game's
- * respawn instants start from a fresh clock, so a stale entry could only collide by landing on
- * the same 2-second bucket for the same champion, which is harmless.
- */
-const announcedDeaths = new Set<string>()
-
-/**
- * Did the previous turn's list lead with a death?
- *
- * Deaths are the most frequent fact by a wide margin, so without alternating they dominate
- * everything else. This is the "never two of the same kind running" rule, made structural.
- */
-let lastLedWithDeath = false
-
-/** Praise-worthy events already mentioned, by the feed's own monotonic id. */
-const announcedEvents = new Set<number>()
-
-/** Riot's KillStreak counter, as words. */
-const MULTI: Record<number, string> = {
-	2: "double kill",
-	3: "triple kill",
-	4: "quadra kill",
-	5: "PENTAKILL"
-}
-
-/** Four minutes of game clock between farm-pace mentions. */
-const FARM_COOLDOWN_SEC = 180
-let lastFarmAtSec = 0
-
-/** Below this, unspent gold is not worth a sentence. */
-const GOLD_FLOOR = 1200
-/** How much more must accumulate before it is news again. */
-const GOLD_STEP = 800
-let lastGoldMentioned = 0
-
-const buildUnseen = (
-	data: LiveAllGameData,
-	me: LivePlayer,
-	nowSec: number,
-	pace: { cs: number; expected: number; exact: boolean; source: string } | null
-): string[] => {
-	const out: string[] = []
-
-	/*
-	 * Farm against his own history, which is the one comparison here that is genuinely his and
-	 * not a generic benchmark. Only when it is far enough off to matter: a coach announcing a
-	 * four-camp difference every twenty seconds is noise, and the reading between checkpoints is
-	 * interpolated, so a small gap is inside its own error bar.
-	 */
-	/*
-	 * The farm gap is true for the whole game once it opens, so emitting it every turn made the
-	 * coach recite a widening deficit — "57 camps behind", then 60, then 63, three turns running.
-	 * That is nagging, and when the news is bad it is also just grinding someone down.
-	 *
-	 * Once, then not again for FARM_COOLDOWN_SEC of game clock. The prompt says as much in words;
-	 * this is the part that makes it true.
-	 */
-	if (
-		pace &&
-		Math.abs(pace.cs - pace.expected) >= 12 &&
-		(lastFarmAtSec === 0 || nowSec - lastFarmAtSec >= FARM_COOLDOWN_SEC)
-	) {
-		lastFarmAtSec = nowSec
-		const behind = pace.expected - pace.cs
-		out.push(
-			behind > 0 ?
-				`FARM: ${behind} camps behind his own pace (${pace.cs} vs his usual ${pace.expected})${pace.exact ? "" : " — interpolated, approximate"}`
-			:	`FARM: ${-behind} camps AHEAD of his own pace (${pace.cs} vs his usual ${pace.expected})${pace.exact ? "" : " — interpolated, approximate"}`
-		)
-	}
-
-	/*
-	 * Enemies who are dead right now, longest first. This is the highest-value line the coach can
-	 * say to a jungler: it is exact, it is invisible without opening the scoreboard, and it has a
-	 * shelf life measured in the seconds it takes to walk somewhere.
-	 */
-	const deadEnemies = (data.allPlayers ?? [])
-		.filter(p => p.team !== me.team && p.isDead && (p.respawnTimer ?? 0) >= DEATH_WORTH_SAYING_SEC)
-		.sort((a, b) => (b.respawnTimer ?? 0) - (a.respawnTimer ?? 0))
-	for (const p of deadEnemies) {
-		/*
-		 * Announce each death ONCE.
-		 *
-		 * Without this the same corpse is reported on every poll for its whole respawn, so at a
-		 * 20s heartbeat a 30s death is news twice and a teamfight makes the coach recite a list.
-		 * Measured over 37 turns, nearly every spoken line was "X is DEAD for Ns" — accurate,
-		 * and exhausting.
-		 *
-		 * `respawnTimer` counts down, so nowSec + it is the death's respawn INSTANT, which is
-		 * stable across polls and unique per death. Rounding to 2s absorbs poll jitter without
-		 * merging two separate deaths of the same champion.
-		 */
-		const id = `${p.championName}@${Math.round((nowSec + (p.respawnTimer ?? 0)) / 2)}`
-		if (announcedDeaths.has(id)) continue
-		announcedDeaths.add(id)
-		out.push(`${p.championName ?? "an enemy"} JUST died — down for ${Math.round(p.respawnTimer ?? 0)}s`)
-	}
-
-	/*
-	 * Unspent gold, but only when it has actually changed.
-	 *
-	 * Gold above the threshold stays true for minutes, so emitting it on every glance made the
-	 * coach a nag: measured over nine turns of one game it raised gold five times, and a coach
-	 * repeating itself is one the player stops hearing. It is emitted the first time, and then
-	 * only after a further GOLD_STEP has accumulated — which is roughly "you could buy something
-	 * else now", i.e. the point at which it is news again.
-	 *
-	 * Module-level state is fine here: this is a single-user local daemon with one game at a
-	 * time. It resets when gold drops, which is what a recall looks like.
-	 */
-	const gold = data.activePlayer?.currentGold
-	if (gold !== undefined) {
-		if (gold < GOLD_FLOOR) lastGoldMentioned = 0
-		else if (lastGoldMentioned === 0 || gold - lastGoldMentioned >= GOLD_STEP) {
-			out.push(`${Math.round(gold)}g sitting unspent`)
-			lastGoldMentioned = gold
-		}
-	}
-
+/** Seconds since the most recent event of a kind, or null if it has not happened. */
+const sinceEvent = (data: LiveAllGameData, name: string, nowSec: number): number | null => {
 	const events = data.events?.Events ?? []
-
-	/*
-	 * Things he did well, straight off the event feed.
-	 *
-	 * Without these the coach had nothing warm that was also grounded, so it either stayed silent
-	 * (48% of turns, measured) or reached for a compliment it could not support. A multi-kill, a
-	 * stolen objective and a secured objective are all exact, all his, and all worth interrupting
-	 * for — which is the definition this file uses for everything else.
-	 *
-	 * `EventID` is monotonic and unique, so announcing each once is exact rather than heuristic.
-	 */
-	const myName = me.riotId ?? me.summonerName ?? ""
-	for (const e of events) {
-		if (e.EventID === undefined || announcedEvents.has(e.EventID)) continue
-		const mine = e.KillerName !== undefined && e.KillerName === myName
-		if (!mine) continue
-		let praise = ""
-		if (e.EventName === "ChampionKill" && (e.KillStreak ?? 0) >= 2)
-			praise = `HE just got a ${MULTI[e.KillStreak!] ?? `${e.KillStreak}-kill`}`
-		else if (e.EventName === "DragonKill")
-			praise = e.Stolen === "True" ? `HE STOLE the ${e.DragonType ?? ""} dragon`.trim() : "HE secured the dragon"
-		else if (e.EventName === "BaronKill")
-			praise = e.Stolen === "True" ? "HE STOLE Baron" : "HE secured Baron"
-		else if (e.EventName === "HeraldKill") praise = "HE secured Herald"
-		if (praise === "") continue
-		announcedEvents.add(e.EventID)
-		out.unshift(`${praise} — worth saying so`)
+	for (let i = events.length - 1; i >= 0; i--) {
+		const e = events[i]!
+		if (e.EventName === name && e.EventTime !== undefined)
+			return Math.max(0, Math.round(nowSec - e.EventTime))
 	}
-
-	/*
-	 * Elapsed time since the last objective take, as a fact. Late in a game the event list runs
-	 * long, so scan from the end.
-	 */
-	const lastOf = (name: string) => {
-		for (let i = events.length - 1; i >= 0; i--) if (events[i]!.EventName === name) return events[i]
-		return null
-	}
-	const drake = lastOf("DragonKill")
-	if (drake?.EventTime !== undefined) {
-		const ago = Math.max(0, Math.round(nowSec - drake.EventTime))
-		out.push(`last drake (${drake.DragonType ?? "unknown"}) was taken ${Math.floor(ago / 60)}m${ago % 60}s ago`)
-	}
-	const baron = lastOf("BaronKill")
-	if (baron?.EventTime !== undefined) {
-		const ago = Math.max(0, Math.round(nowSec - baron.EventTime))
-		out.push(`last Baron was taken ${Math.floor(ago / 60)}m${ago % 60}s ago`)
-	}
-
-	/*
-	 * Order and cap, rather than handing over everything and hoping.
-	 *
-	 * A judge pass found 40 of 55 spoken lines were respawn timers — including one that chose a
-	 * fourth Morgana timer over an explicit "1393g sitting unspent" sitting next to it in the same
-	 * list. The model takes the top item most of the time, so the ranking has to be here.
-	 *
-	 * Praise first because it is rare and time-critical; then the comparisons he cannot make
-	 * himself; then ONE death, because deaths are frequent enough to crowd out everything else if
-	 * they are all offered. If the previous turn led with a death, a death is not allowed to lead
-	 * this one — that is the variety rule, enforced rather than requested.
-	 */
-	const praise = out.filter(t => t.startsWith("HE "))
-	const farm = out.filter(t => t.startsWith("FARM:"))
-	const money = out.filter(t => t.includes("unspent"))
-	const deaths = out.filter(t => t.includes("JUST died"))
-	const rest = out.filter(t => !praise.includes(t) && !farm.includes(t) && !money.includes(t) && !deaths.includes(t))
-
-	const nonDeath = [...praise, ...farm, ...money, ...rest]
-	const leadWithDeath = lastLedWithDeath === false && deaths.length > 0
-	const ranked =
-		praise.length > 0 ? [...praise, ...farm, ...money, ...deaths.slice(0, 1)]
-		: leadWithDeath ? [...deaths.slice(0, 1), ...nonDeath]
-		: [...nonDeath, ...deaths.slice(0, 1)]
-
-	const finalList = ranked.slice(0, 3)
-	if (finalList.length > 0) lastLedWithDeath = finalList[0]!.includes("JUST died")
-	return finalList
+	return null
 }
 
 const buildLiveState = (
@@ -299,11 +101,12 @@ const buildLiveState = (
 ): VisionState | null => {
 	if (!data || !me || !me.championName) {
 		// Between games: forget what was announced so the next game starts clean.
-		announcedDeaths.clear()
-		announcedEvents.clear()
-		lastLedWithDeath = false
-		lastGoldMentioned = 0
-		lastFarmAtSec = 0
+		// Between games: forget everything, so the next game starts clean.
+		factMemory.announcedDeaths.clear()
+		factMemory.announcedEvents.clear()
+		factMemory.lastLedWithDeath = false
+		factMemory.lastGoldMentioned = 0
+		factMemory.lastFarmAtSec = 0
 		return null
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
@@ -358,26 +161,46 @@ const buildLiveState = (
 		allies: others.filter(p => p.team === mine).map(asPlayer),
 		enemies: others.filter(p => p.team !== mine).map(asPlayer),
 		recentEvents,
-		unseen: buildUnseen(
-			data,
-			me,
-			secs,
-			baseline ?
-				paceReading({
-					live: {
-						gameTimeSec: secs,
-						championName: me.championName ?? "",
-						cs: me.scores?.creepScore ?? 0,
-						deaths: me.scores?.deaths ?? 0,
-						kills: me.scores?.kills ?? 0,
-						assists: me.scores?.assists ?? 0,
-						level: me.level ?? 0,
-						observed: { dragonSec: null, baronSec: null, heraldSec: null }
-					},
-					baseline,
-					focus: []
-				})
-			:	null
+		unseen: buildFacts(
+			{
+				nowSec: secs,
+				deadEnemies: others
+					.filter(p => p.team !== mine && p.isDead && (p.respawnTimer ?? 0) > 0)
+					.map(p => ({ champion: p.championName ?? "an enemy", respawnSec: p.respawnTimer ?? 0 })),
+				currentGold: data.activePlayer?.currentGold ?? null,
+				pace:
+					baseline ?
+						(() => {
+							const r = paceReading({
+								live: {
+									gameTimeSec: secs,
+									championName: me.championName ?? "",
+									cs: me.scores?.creepScore ?? 0,
+									deaths: me.scores?.deaths ?? 0,
+									kills: me.scores?.kills ?? 0,
+									assists: me.scores?.assists ?? 0,
+									level: me.level ?? 0,
+									observed: { dragonSec: null, baronSec: null, heraldSec: null }
+								},
+								baseline,
+								focus: []
+							})
+							return r ? { cs: r.cs, expected: r.expected, exact: r.exact } : null
+						})()
+					:	null,
+				myEvents: (data.events?.Events ?? [])
+					.filter(e => e.KillerName !== undefined && e.KillerName === (me.riotId ?? me.summonerName ?? ""))
+					.map(e => ({
+						id: e.EventID,
+						name: e.EventName,
+						killStreak: e.KillStreak,
+						dragonType: e.DragonType,
+						stolen: e.Stolen === "True"
+					})),
+				sinceDrakeSec: sinceEvent(data, "DragonKill", secs),
+				sinceBaronSec: sinceEvent(data, "BaronKill", secs)
+			},
+			factMemory
 		)
 	}
 }
