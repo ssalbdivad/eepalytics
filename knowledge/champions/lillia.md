@@ -54,11 +54,11 @@ One clause per situation, said out loud after the number the client proved. **No
 figure here would be a claim about the game, and every figure he hears must come from the client.
 Anything with a number in it is refused at load time, deliberately.
 
-race-behind: your clear accelerates as it chains, so a broken route costs you the speed you already paid for
+race-behind: your clear accelerates as it chains, so a broken route wastes the speed you already paid for
 race-ahead: keep the route moving, being somewhere they are not is the whole plan
-restraint: you lose the even early fight and that is correct play rather than timidity
+restraint: you lose the even fight, and declining it is correct play rather than timidity
 fight-lost: you want the long fight with room to kite, not a short trade
-fight-absent: your case for existing is being somewhere they are not, so get on the map before the next one starts
+fight-absent: you win by being where they are not, so be there before the next one starts
 death: your escape is movement speed, so once you are committed into a corridor nothing gets you out
 build: itemise for the fight you actually win, which is the long one
 farm-behind: low farm on you is almost always an interrupted route rather than a slow one

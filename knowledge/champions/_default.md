@@ -17,7 +17,7 @@ load time.
 
 race-behind: take the camps that are up before you look at a lane
 race-ahead: keep the route full and do not give the lead back
-restraint: a coin-flip you decline costs a camp, one you lose costs the game
+restraint: decline it, a coin-flip you walk away from costs a camp and one you lose costs the game
 fight-lost: reset and come back even rather than forcing the rematch
 fight-absent: be on the map before the fight starts, not after it
 death: the enemy jungle with no vision is where a lead goes to die

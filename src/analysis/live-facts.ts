@@ -541,7 +541,10 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 			mem.saidRestraint = true
 			restraint.push(
 				withAdvice(
-					`you're ${down} levels down on ${input.counterpart.champion}, don't contest this one alone`,
+					// The champion clause supplies the reason not to take it, so the fact stays short.
+					// Both the champion note and the role default carry a restraint clause, so the
+					// "don't" is never lost.
+					`you're ${down} levels down on ${input.counterpart.champion}`,
 					input.advice?.restraint
 				)
 			)
