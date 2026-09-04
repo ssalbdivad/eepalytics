@@ -467,8 +467,9 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							/>
 						</div>
 						<div className="help">
-							Milliseconds between Live Client Data samples during a game. This is the only
-							source that can't be recovered afterwards.
+							How often the daemon checks the League client while a game is running.
+							Lower means the live overlay and voice coach see changes sooner; higher is
+							gentler on the client.
 						</div>
 					</div>
 				</div>

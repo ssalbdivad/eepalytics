@@ -12,7 +12,13 @@ opinions about your pathing, and will not shut up about Oner. He roasts you cons
 never makes you feel bad about playing. His personality lives in [`AGENTS.md`](AGENTS.md) and
 you can edit it without touching a line of code.
 
-Everything runs on your machine. No account, no upload, no telemetry.
+Everything runs on your machine. No account, no telemetry.
+
+**One exception, and it is opt-in: the live voice coach.** If you turn it on, your shared
+screen and — only while you hold the mic — your voice are streamed to Google's Gemini Live
+API for as long as it is running. Nothing else in the app uploads anything, the feature is
+off until you paste an API key, and the app says so on the screen where you start it. If you
+never touch it, the original claim stands unchanged.
 
 ---
 
@@ -38,9 +44,36 @@ game ending.
 
 ---
 
-## The four screens
+## The screens
 
-### 1. Games
+### 1. Live — coach me while I play
+
+Share your screen and she talks to you out loud while you play, about a second behind.
+
+She is not guessing from pixels. The daemon reads your League client and computes a
+**ground-truth block** — the roster, who is dead and for how long, the score, your gold, your
+farm against your own average — and she may only speak from that. The screen tells her *where
+things are*; the block tells her *what is true*. Given pixels alone, an earlier version named a
+champion who was not in the game four times in seven minutes.
+
+The facts are also **ranked and rate-limited in code**, not left to her judgement: each death is
+announced once, gold once per 800g, farm once every three minutes, and a death may not lead two
+turns running. Without that she became a death-timer parrot — measured, 40 of 55 lines.
+
+Silence is a normal answer and she uses it about a quarter of the time. A coach who talks every
+twenty seconds gets muted.
+
+**Setup:** it needs a free [Google AI Studio key](https://aistudio.google.com/apikey). Paste it
+into the panel on the Live screen — the instructions are right there. The key is stored in
+`data/gemini.key` (0600) and never reaches the browser: the daemon swaps it for a token that
+works for one session. There is no "sign in with Google" because the Live API takes a key and a
+Gemini subscription does not include API access.
+
+**On WSL:** screen sharing cannot work in the Electron window — WSLg's compositor contains only
+Linux windows, so it cannot see League at all. Pressing *Share my screen* there opens the page in
+your Windows browser instead, which can.
+
+### 2. Games
 
 Your recent games, newest first. One row per game: champion, role, W/L, duration, queue, and
 the line that matters — `7/4/12 · 187 CS (4.9/m) · VS 34 · DMG 24%`.
@@ -53,7 +86,7 @@ Each row also shows what the app is *doing* about that game, which is the differ
 - `⧗ replay 22m left` — a live countdown to the 30-minute replay expiry
 - `⏸ Capture deferred — you're in champ select` with a **Capture now** button
 
-### 2. Game review — the main screen
+### 3. Game review — the main screen
 
 Four panels sharing **one cursor**: a single timestamp. Click a feedback card, a map marker,
 or a point on the timeline and all four react together.
@@ -69,7 +102,7 @@ or a point on the timeline and all four react together.
 Underneath: your metrics with bands relative to **your own** rolling baseline, not a
 stranger's — `CS@14 112 ▲good · GD@15 +340 ▲good · VS/min 0.88 ▼low`.
 
-### 3. Queue
+### 4. Queue
 
 Every job the daemon has run, is running, or is refusing to run *and why*:
 
@@ -81,7 +114,7 @@ DEFERRED
 
 This screen exists so "why is nothing happening" never requires a log dive.
 
-### 4. Settings
+### 5. Settings
 
 Model choice, auto-review rules, capture gating (off by default — it takes over your client),
 retention, and a live daemon/client/bridge status block with a **Doctor** button.
@@ -149,6 +182,8 @@ src/shared/   types + pure helpers, browser-safe   (schemas, map math, time)
 src/db/       SQLite: migrations, queries, blobs   (all SQL lives here)
 src/lcu/      Windows-interop transport + clients
 src/rofl/     ROFL2 replay-file decoding
+src/capture/  replay screenshots + clips           (NODE ONLY; drives the game client)
+src/knowledge/champion notes, loaded into reviews  (editable markdown, no code change)
 src/analysis/ metrics, moments, digest             (no LLM, no I/O)
 src/review/   the Claude coaching engine + persona loader
 src/daemon/   job queue, gate, poller              (owns every side effect)

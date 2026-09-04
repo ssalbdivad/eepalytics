@@ -15,6 +15,7 @@
  * the user reads is what the coach read.
  */
 
+import { useState } from "react"
 import type { Confidence, Metric } from "../../shared/schema/domain.ts"
 import "./components.css"
 
@@ -22,6 +23,8 @@ export interface MetricGridProps {
 	metrics: Metric[]
 	/** Optional: a metric key to visually pin, e.g. one cited by the feedback item in view. */
 	highlightKey?: string | null
+	/** Keys any feedback item cites. Always visible — they are the evidence for the review. */
+	citedKeys?: string[]
 }
 
 /** Trim to something readable without inventing precision. */
@@ -60,7 +63,34 @@ const CONF_EXPLAIN: Record<Confidence, string> = {
 	low: "Low confidence — depends on interpolating between 1-minute frames, i.e. on a guess about position. Treat as 'likely', not 'was'."
 }
 
-export const MetricGrid = ({ metrics, highlightKey = null }: MetricGridProps) => {
+/**
+ * How many metrics are shown before the fold.
+ *
+ * A real review renders about thirty cards. All at once that is a wall of numbers with no way in
+ * — the stated failure mode for the second audience here, a beginner who "gets overwhelmed and
+ * anxious" — and even for an expert the one that matters is buried among twenty-nine that do
+ * not. Eight is roughly a screen, and the eight are chosen, not the first eight.
+ */
+const SHOWN_BY_DEFAULT = 8
+
+/**
+ * Rank by how far a metric moved against the player's OWN baseline, in units of its own spread.
+ *
+ * A raw delta cannot be compared across metrics — 600 gold and 0.2 deaths/min are both "big" in
+ * their own terms — so this normalises by the value, which is crude but stable, and drops
+ * anything with no baseline to compare against or a confidence too low to lead with.
+ */
+const notability = (m: Metric): number => {
+	if (m.vsBaseline === null || !Number.isFinite(m.vsBaseline)) return -1
+	const scale = Math.abs(m.value) > 0.001 ? Math.abs(m.value) : 1
+	const moved = Math.abs(m.vsBaseline) / scale
+	// A low-confidence reading is interpolated between frames; it should not lead the page.
+	return m.confidence === "low" ? moved * 0.4 : moved
+}
+
+export const MetricGrid = ({ metrics, highlightKey = null, citedKeys = [] }: MetricGridProps) => {
+	const [showAll, setShowAll] = useState(false)
+
 	if (metrics.length === 0)
 		return (
 			<div className="csk-empty csk-panel">
@@ -69,9 +99,38 @@ export const MetricGrid = ({ metrics, highlightKey = null }: MetricGridProps) =>
 			</div>
 		)
 
+	/*
+	 * The highlighted metric is always shown even if it would not otherwise rank — it is there
+	 * because a feedback item cited it, and hiding the evidence for a claim the page is making is
+	 * worse than showing one extra card.
+	 */
+	const ranked = [...metrics].sort((a, b) => notability(b) - notability(a))
+	const visible =
+		showAll ? metrics
+		: (() => {
+				/*
+				 * Anything the coach actually cited is shown, always.
+				 *
+				 * Ranking by movement alone hid the metric the review was ABOUT: a headline reading
+				 * "45 camps at 10:00 against your own 66.1 average" rendered above a grid that did
+				 * not contain camps at 10. Hiding the evidence for a claim the page is making is
+				 * the one thing this fold must never do.
+				 */
+				const top = new Set(citedKeys)
+				for (const m of ranked) {
+					if (top.size >= SHOWN_BY_DEFAULT) break
+					top.add(m.key)
+				}
+				if (highlightKey !== null) top.add(highlightKey)
+				// Keep the original order so the grid does not reshuffle when expanded.
+				return metrics.filter(m => top.has(m.key))
+			})()
+	const hidden = metrics.length - visible.length
+
 	return (
+		<>
 		<div className="csk-metrics">
-			{metrics.map(m => {
+			{visible.map(m => {
 				const low = m.confidence === "low"
 				const hasBaseline = m.vsBaseline !== null && Number.isFinite(m.vsBaseline)
 				const deltaClass =
@@ -121,6 +180,17 @@ export const MetricGrid = ({ metrics, highlightKey = null }: MetricGridProps) =>
 				)
 			})}
 		</div>
+		{hidden > 0 && !showAll && (
+			<button className="csk-metrics__more" onClick={() => setShowAll(true)}>
+				Show {hidden} more {hidden === 1 ? "metric" : "metrics"}
+			</button>
+		)}
+		{showAll && metrics.length > SHOWN_BY_DEFAULT && (
+			<button className="csk-metrics__more" onClick={() => setShowAll(false)}>
+				Show fewer
+			</button>
+		)}
+		</>
 	)
 }
 

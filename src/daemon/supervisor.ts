@@ -239,9 +239,15 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 	const schedule = (): void => {
 		if (stopped) return
 		const settings = getSettings()
+		/*
+		 * The in-game branch used to return `pollIdleMs` as well, so all three arms were the same
+		 * value and `pollInGameMs` drove nothing — while Settings offered it as a control and
+		 * described what it did. A setting that does nothing is worse than one that is absent,
+		 * because the user changes it and concludes the app is broken elsewhere.
+		 */
 		const base =
 			state === "DISCONNECTED" ? Math.max(backoffMs, settings.pollIdleMs)
-			: phase === "InProgress" ? settings.pollIdleMs
+			: phase === "InProgress" ? settings.pollInGameMs
 			: settings.pollIdleMs
 		timer = setTimeout(() => {
 			void tick().finally(schedule)

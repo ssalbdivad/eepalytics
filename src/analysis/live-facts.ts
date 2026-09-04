@@ -108,14 +108,14 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		if (mem.announcedEvents.has(e.id)) continue
 		let line = ""
 		if (e.name === "ChampionKill" && (e.killStreak ?? 0) >= 2)
-			line = `HE just got a ${MULTI[e.killStreak!] ?? `${e.killStreak}-kill`}`
+			line = `you just got a ${MULTI[e.killStreak!] ?? `${e.killStreak}-kill`}`
 		else if (e.name === "DragonKill")
-			line = e.stolen ? `HE STOLE the ${e.dragonType ?? ""} dragon`.trim() : "HE secured the dragon"
-		else if (e.name === "BaronKill") line = e.stolen ? "HE STOLE Baron" : "HE secured Baron"
-		else if (e.name === "HeraldKill") line = "HE secured Herald"
+			line = e.stolen ? `you STOLE the ${e.dragonType ?? ""} dragon`.trim() : "you secured the dragon"
+		else if (e.name === "BaronKill") line = e.stolen ? "you STOLE Baron" : "you secured Baron"
+		else if (e.name === "HeraldKill") line = "you secured Herald"
 		if (line === "") continue
 		mem.announcedEvents.add(e.id)
-		praise.push(`${line} — worth saying so`)
+		praise.push(`PRAISE: ${line} — worth saying so`)
 	}
 
 	if (
@@ -128,8 +128,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		const tail = input.pace.exact ? "" : " — interpolated, approximate"
 		farm.push(
 			behind > 0 ?
-				`FARM: ${behind} camps behind his own pace (${input.pace.cs} vs his usual ${input.pace.expected})${tail}`
-			:	`FARM: ${-behind} camps AHEAD of his own pace (${input.pace.cs} vs his usual ${input.pace.expected})${tail}`
+				`FARM: ${behind} camps behind your own pace (${input.pace.cs} vs your usual ${input.pace.expected})${tail}`
+			:	`FARM: ${-behind} camps AHEAD of your own pace (${input.pace.cs} vs your usual ${input.pace.expected})${tail}`
 		)
 	}
 
@@ -154,20 +154,41 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		const id = `${d.champion}@${Math.round((input.nowSec + d.respawnSec) / 2)}`
 		if (mem.announcedDeaths.has(id)) continue
 		mem.announcedDeaths.add(id)
-		deaths.push(`${d.champion} JUST died — down for ${Math.round(d.respawnSec)}s`)
+		deaths.push(`${d.champion} just died — down for ${Math.round(d.respawnSec)}s`)
 	}
 
 	if (input.sinceDrakeSec !== null) rest.push(`last drake was taken ${mmss(input.sinceDrakeSec)} ago`)
 	if (input.sinceBaronSec !== null) rest.push(`last Baron was taken ${mmss(input.sinceBaronSec)} ago`)
 
 	const nonDeath = [...praise, ...farm, ...money, ...rest]
+
+	/*
+	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
+	 *
+	 * Demoting was tried and measured. With a death anywhere in the list the model reached for it
+	 * regardless of order: 57% of spoken lines were the identical death sentence, including turns
+	 * where "1393g sitting unspent" and "12 camps behind your own pace" sat above it. Ordering is
+	 * a suggestion to a model; the contents of the list are not.
+	 *
+	 * The cost is a missed death every other turn, and that is the right trade — deaths are the
+	 * most frequent fact by a wide margin, another is along shortly, and a coach that says the
+	 * same sentence twenty times is one nobody listens to at all.
+	 */
+	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
-		praise.length > 0 ? [...praise, ...farm, ...money, ...deaths.slice(0, 1)]
-			// Alternate: a death may not lead two turns running.
-		: !mem.lastLedWithDeath && deaths.length > 0 ? [...deaths.slice(0, 1), ...nonDeath]
-		: [...nonDeath, ...deaths.slice(0, 1)]
+		praise.length > 0 ?
+			[...praise, ...farm, ...money, ...deathsAllowed]
+		:	[...nonDeath, ...deathsAllowed]
 
 	const out = ranked.slice(0, MAX_FACTS)
-	if (out.length > 0) mem.lastLedWithDeath = out[0]!.includes("JUST died")
+	/*
+	 * Set unconditionally, including to false on an empty turn.
+	 *
+	 * An empty turn means the coach had nothing and stayed quiet, so no death was spoken and the
+	 * next one is not a repeat. Leaving the flag set through silence was tried and is worse than
+	 * the problem: with nothing else ever on offer, deaths would be suppressed for the rest of the
+	 * game after the first one.
+	 */
+	mem.lastLedWithDeath = out.some(f => f.includes("just died"))
 	return out
 }

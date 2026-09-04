@@ -356,7 +356,14 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 							compared with your own recent games, never with a ladder average
 						</span>
 					</div>
-					<MetricGrid metrics={d.metrics} />
+					{/*
+					 * Everything the coach cited stays above the fold. The grid hides the quiet
+					 * metrics, never the ones a feedback item is standing on.
+					 */}
+					<MetricGrid
+						metrics={d.metrics}
+						citedKeys={(d.review?.items ?? []).flatMap(i => i.metricKeys ?? [])}
+					/>
 				</div>
 			:	null}
 

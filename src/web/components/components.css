@@ -356,6 +356,12 @@ button.csk-chip:focus-visible,
 }
 
 .csk-metric {
+	/*
+	 * Grid items default to `min-width: auto`, so a long unbroken label pushes the cell wider
+	 * than its track and the whole grid gains a horizontal scroll — measured at 45px, which is
+	 * enough to clip the last card's value.
+	 */
+	min-width: 0;
 	position: relative;
 	padding: 9px 10px 10px;
 	background: var(--csk-panel);
@@ -2060,4 +2066,28 @@ button.csk-chip:focus-visible,
 .live__bar--idle {
 	justify-content: flex-end;
 	border-bottom: none;
+}
+
+/*
+ * "Show N more metrics" — the way into the other twenty-odd.
+ *
+ * A real review produces about thirty cards, and rendering them all at once is a wall with no
+ * entry point. The eight shown by default are the ones that moved furthest against the player's
+ * own baseline, plus whatever a feedback item cited, so the fold hides the quiet ones rather
+ * than an arbitrary tail.
+ */
+.csk-metrics__more {
+	margin-top: 10px;
+	padding: 8px 14px;
+	width: 100%;
+	border: 1px dashed var(--line);
+	border-radius: var(--radius);
+	background: transparent;
+	color: var(--dim);
+	font: 500 11.5px/1 inherit;
+	cursor: pointer;
+}
+.csk-metrics__more:hover {
+	color: var(--text);
+	border-color: var(--gold-dim);
 }

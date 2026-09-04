@@ -10,7 +10,11 @@ Tool-specific files import it rather than duplicating it:
 Do not write tool-specific guidance where shared guidance would do.
 
 **This file is also the product.** Part 2 below is loaded verbatim at runtime by
-`src/review/prompt.ts` and sent as the system prompt for every coaching call.
+`src/review/prompt.ts` and sent as the system prompt for every **review and trend** call.
+(The live voice coach is the one exception: it has its own, much shorter prompt in
+`src/shared/live-prompt.ts`, because it speaks one sentence out loud mid-game rather than
+writing a structured review. Its rules are the same ones — cite or stay quiet — sized for
+speech.)
 Editing it changes the coach with no code change. Treat it like UI copy, because
 it is. The extraction markers `<!-- COACH:BEGIN -->` / `<!-- COACH:END -->` are
 load-bearing — do not delete or reorder them.
@@ -75,6 +79,8 @@ src/shared/   types + pure helpers, browser-safe    (schemas, map math, time)
 src/db/       SQLite: migrations, queries, blobs    (NODE ONLY; all SQL lives here)
 src/lcu/      the Windows-interop transport + LCU/live-client clients
 src/rofl/     ROFL2 replay-file decoding
+src/capture/  replay screenshots + clips           (NODE ONLY; drives the game client)
+src/knowledge/champion notes, loaded into reviews  (editable markdown, no code change)
 src/analysis/ metrics, moments, digest              (no LLM, no I/O)
 src/review/   Claude coaching engine + persona loader
 src/daemon/   job queue, gate, poller, jobs/*       (owns every side effect)

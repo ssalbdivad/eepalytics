@@ -45,6 +45,8 @@ describe("buildFacts — deaths", () => {
 	it("treats a second death of the same champion as new", () => {
 		const mem = newFactMemory()
 		buildFacts(input({ nowSec: 600, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }), mem)
+		// A quiet turn in between: deaths alternate, and silence clears the alternation.
+		deepStrictEqual(buildFacts(input({ nowSec: 700 }), mem), [])
 		// Much later, a different death: the respawn instant is far from the first one.
 		const later = buildFacts(
 			input({ nowSec: 900, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }),
@@ -59,13 +61,13 @@ describe("buildFacts — deaths", () => {
 		deepStrictEqual(out, [])
 	})
 
-	it("never leads with a death two turns running", () => {
+	it("drops deaths entirely from the turn after one was offered", () => {
 		const mem = newFactMemory()
 		const first = buildFacts(
 			input({ nowSec: 600, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }),
 			mem
 		)
-		ok(first[0]!.includes("JUST died"), "nothing else was on offer, so the death leads")
+		ok(first[0]!.includes("just died"), "nothing else was on offer, so the death leads")
 
 		const second = buildFacts(
 			input({
@@ -76,10 +78,33 @@ describe("buildFacts — deaths", () => {
 			mem
 		)
 		strictEqual(
-			second[0]!.includes("JUST died"),
+			second.some(f => f.includes("just died")),
 			false,
-			"a death led last turn, so something else must lead this one"
+			"a death was offered last turn, so none may be offered this turn — demoting was not enough"
 		)
+		ok(second.some(f => f.includes("unspent")), "the other fact is still offered")
+
+		// And the turn after that, deaths are available again.
+		const third = buildFacts(
+			input({ nowSec: 700, deadEnemies: [{ champion: "Karma", respawnSec: 30 }] }),
+			mem
+		)
+		ok(third.some(f => f.includes("just died")), "alternation, not suppression")
+	})
+
+	it("does not suppress deaths forever through a quiet stretch", () => {
+		/*
+		 * Regression: the flag was only updated on non-empty turns, so after one death a game with
+		 * nothing else to report would never mention another.
+		 */
+		const mem = newFactMemory()
+		buildFacts(input({ nowSec: 600, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }), mem)
+		deepStrictEqual(buildFacts(input({ nowSec: 640 }), mem), [], "nothing to say")
+		const after = buildFacts(
+			input({ nowSec: 700, deadEnemies: [{ champion: "Jinx", respawnSec: 30 }] }),
+			mem
+		)
+		ok(after.some(f => f.includes("just died")), "silence must clear the alternation")
 	})
 })
 
@@ -138,6 +163,23 @@ describe("buildFacts — rate limiting", () => {
 })
 
 describe("buildFacts — ranking", () => {
+	it("phrases every fact in the second person", () => {
+		/*
+		 * The model reads these strings aloud. When they said "HE secured the dragon" it said
+		 * exactly that, in the third person, about the person it was talking to — four times in
+		 * one session.
+		 */
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				myEvents: [{ id: 1, name: "DragonKill" }],
+				pace: { cs: 100, expected: 130, exact: true }
+			}),
+			mem
+		)
+		for (const f of out) strictEqual(/\bHE\b|\bhis\b/.test(f), false, `third person in: ${f}`)
+	})
+
 	it("puts praise above everything, including a fresh death", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(
@@ -148,13 +190,13 @@ describe("buildFacts — ranking", () => {
 			}),
 			mem
 		)
-		ok(out[0]!.startsWith("HE just got a triple kill"), `praise should lead, got: ${out[0]}`)
+		ok(out[0]!.startsWith("PRAISE: you just got a triple kill"), `praise should lead, got: ${out[0]}`)
 	})
 
 	it("names a steal as a steal", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(input({ myEvents: [{ id: 7, name: "BaronKill", stolen: true }] }), mem)
-		ok(out[0]!.includes("STOLE Baron"))
+		ok(out[0]!.includes("you STOLE Baron"))
 	})
 
 	it("announces each event once", () => {
@@ -177,7 +219,7 @@ describe("buildFacts — ranking", () => {
 			}),
 			mem
 		)
-		strictEqual(out.filter(f => f.includes("JUST died")).length, 1)
+		strictEqual(out.filter(f => f.includes("just died")).length, 1)
 	})
 
 	it("never offers more than the cap", () => {
