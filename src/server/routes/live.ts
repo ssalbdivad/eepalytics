@@ -246,6 +246,30 @@ const buildLiveState = (
 			dead: me.isDead,
 			respawnSec: me.respawnTimer
 		},
+		/*
+		 * The enemy jungler, by declared position, falling back to Smite.
+		 *
+		 * `position` is reliable in the LIVE api (see schema/live.ts) but some queues report none,
+		 * and Smite has been exactly right in every game measured — it is still an inference, so it
+		 * is flagged as one rather than asserted.
+		 */
+		counterpart: (() => {
+			const enemies = others.filter(p => p.team !== mine)
+			const byRole = enemies.find(p => (p.position ?? "").toUpperCase() === "JUNGLE")
+			const bySmite =
+				byRole ??
+				enemies.find(p =>
+					[p.summonerSpells?.summonerSpellOne?.displayName, p.summonerSpells?.summonerSpellTwo?.displayName]
+						.some(n => (n ?? "").toLowerCase() === "smite")
+				)
+			if (!bySmite) return null
+			return {
+				champion: bySmite.championName ?? "their jungler",
+				...(bySmite.scores?.creepScore !== undefined ? { cs: bySmite.scores.creepScore } : {}),
+				...(bySmite.level !== undefined ? { level: bySmite.level } : {}),
+				...(byRole ? {} : { inferred: true })
+			}
+		})(),
 		pace,
 		/*
 		 * Only the champions in THIS game, and only those the model says wrongly. The table has a

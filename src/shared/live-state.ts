@@ -68,6 +68,33 @@ export interface VisionState {
 	 * normal case for a roster it already handles.
 	 */
 	pronounce: Pronunciation[]
+	/**
+	 * The enemy jungler, RIGHT NOW — the man he is actually racing.
+	 *
+	 * This is the single most valuable line in the block and it was sitting unused in
+	 * `allPlayers[].scores`. Every other farm figure compares him to HIS OWN AVERAGE, which encodes
+	 * his own mistakes, so the best it can ever say is that he is being unusually himself. A
+	 * Challenger one-trick compares you to your counterpart, in THIS game, at THIS minute.
+	 *
+	 * Measured on the real socket: "Trundle is 23 CS up on you" was one of only two lines in ten
+	 * that passed all three tests — not visible without holding TAB, not sayable about any other
+	 * game, and a decision follows from it. Both numbers come off the client, so it carries no
+	 * fabrication risk at all.
+	 *
+	 * It says how much he has cleared. It NEVER says where he is; the API has no positions.
+	 */
+	counterpart: {
+		champion: string
+		cs?: number
+		level?: number
+		/*
+		 * Item COUNT is deliberately absent. The only signal the client gives is `price`, so
+		 * "completed items" would be a threshold guess dressed as a fact, and a guess spoken in a
+		 * confident voice is the exact failure this app exists to avoid. CS and level are exact.
+		 */
+		/** True when the role came from Smite rather than a declared position. */
+		inferred?: boolean
+	} | null
 	allies: VisionStatePlayer[]
 	enemies: VisionStatePlayer[]
 	/** Most recent objective/kill events, already phrased. Newest last. */

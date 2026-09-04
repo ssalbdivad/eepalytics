@@ -292,6 +292,7 @@ const stateAt = (
 			// The eval reconstructs states from stored timelines and has no baseline to hand, which
 			// is exactly the case the rendered "NONE" line exists to describe honestly.
 			pace: null,
+			counterpart: null,
 			pronounce: [],
 			me: {
 				champion: roster[mePid]!.champion,
