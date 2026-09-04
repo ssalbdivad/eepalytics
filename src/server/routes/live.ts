@@ -22,7 +22,13 @@
  */
 
 import { Hono } from "hono"
-import { liveNudges, paceReading } from "../../analysis/live-coach.ts"
+import {
+	BARON_RESPAWN_SEC,
+	DRAGON_RESPAWN_SEC,
+	HERALD_RESPAWN_SEC,
+	liveNudges,
+	paceReading
+} from "../../analysis/live-coach.ts"
 import type { LiveState } from "../../analysis/live-coach.ts"
 import { baselineFromRows, perGameMetrics } from "../../analysis/index.ts"
 import { focusAreas } from "../../analysis/focus.ts"
@@ -82,13 +88,24 @@ const findMe = (data: LiveAllGameData) => {
  */
 const factMemory = newFactMemory()
 
-/** Seconds since the most recent event of a kind, or null if it has not happened. */
-const sinceEvent = (data: LiveAllGameData, name: string, nowSec: number): number | null => {
+/**
+ * Seconds until an objective is back, counted from a take we ACTUALLY SAW this session.
+ *
+ * Null when nothing was observed — never assumed from the clock, which is the same rule the
+ * overlay already follows. The respawn constants are shared with `analysis/live-coach.ts` rather
+ * than retyped, so the coach and the overlay cannot drift apart on a patch.
+ */
+const backInSec = (
+	data: LiveAllGameData,
+	name: string,
+	respawnSec: number,
+	nowSec: number
+): number | null => {
 	const events = data.events?.Events ?? []
 	for (let i = events.length - 1; i >= 0; i--) {
 		const e = events[i]!
 		if (e.EventName === name && e.EventTime !== undefined)
-			return Math.max(0, Math.round(nowSec - e.EventTime))
+			return Math.round(e.EventTime + respawnSec - nowSec)
 	}
 	return null
 }
@@ -197,8 +214,9 @@ const buildLiveState = (
 						dragonType: e.DragonType,
 						stolen: e.Stolen === "True"
 					})),
-				sinceDrakeSec: sinceEvent(data, "DragonKill", secs),
-				sinceBaronSec: sinceEvent(data, "BaronKill", secs)
+				drakeBackInSec: backInSec(data, "DragonKill", DRAGON_RESPAWN_SEC, secs),
+				baronBackInSec: backInSec(data, "BaronKill", BARON_RESPAWN_SEC, secs),
+				heraldBackInSec: backInSec(data, "HeraldKill", HERALD_RESPAWN_SEC, secs)
 			},
 			factMemory
 		)

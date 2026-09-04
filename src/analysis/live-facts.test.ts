@@ -25,8 +25,9 @@ const input = (over: Partial<FactInput> = {}): FactInput => ({
 	currentGold: null,
 	pace: null,
 	myEvents: [],
-	sinceDrakeSec: null,
-	sinceBaronSec: null,
+	drakeBackInSec: null,
+	baronBackInSec: null,
+	heraldBackInSec: null,
 	...over
 })
 
@@ -262,6 +263,45 @@ describe("buildFacts — the window", () => {
 	})
 })
 
+describe("buildFacts — objectives", () => {
+	it("calls an objective that is coming back soon", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(input({ baronBackInSec: 40 }), mem)
+		ok(out.some(f => f.includes("Baron is back in 40s")), `got: ${out.join(" | ")}`)
+	})
+
+	it("stays quiet about one that is minutes away", () => {
+		const mem = newFactMemory()
+		deepStrictEqual(buildFacts(input({ drakeBackInSec: 240 }), mem), [])
+	})
+
+	it("says NOW rather than counting down to zero", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(input({ drakeBackInSec: 3 }), mem)
+		ok(out.some(f => f.includes("Drake is up NOW")))
+	})
+
+	it("does not repeat the same objective window every turn", () => {
+		const mem = newFactMemory()
+		ok(buildFacts(input({ nowSec: 600, baronBackInSec: 50 }), mem).length > 0)
+		// Ten seconds later it is the SAME window, forty seconds out.
+		deepStrictEqual(buildFacts(input({ nowSec: 610, baronBackInSec: 40 }), mem), [])
+	})
+
+	it("ranks an objective above farm and gold", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				baronBackInSec: 30,
+				currentGold: 3000,
+				pace: { cs: 100, expected: 140, exact: true }
+			}),
+			mem
+		)
+		ok(out[0]!.includes("Baron"), `got: ${out[0]}`)
+	})
+})
+
 describe("buildFacts — ranking", () => {
 	it("phrases every fact in the second person", () => {
 		/*
@@ -330,8 +370,9 @@ describe("buildFacts — ranking", () => {
 				pace: { cs: 100, expected: 140, exact: true },
 				currentGold: 3000,
 				deadEnemies: [{ champion: "Graves", respawnSec: 30 }],
-				sinceDrakeSec: 200,
-				sinceBaronSec: 400
+				drakeBackInSec: 40,
+				baronBackInSec: 55,
+				heraldBackInSec: null
 			}),
 			mem
 		)

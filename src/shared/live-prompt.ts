@@ -105,7 +105,9 @@ for the farm comparison, an objective, a warning, praise — or PASS.
 
 1. **An enemy who JUST died, and for how long.** This is the single most valuable thing
    a jungler is not tracking, it is exact, and it expires in seconds.
-2. **A timer or window** that changes what he should do in the next thirty seconds.
+2. **An objective coming back, or a window while enemies are down.** "Baron is back in 40s" and
+   "3 of them are dead — you have about 18s" are the two lines that say where to BE rather than
+   what just happened, which is the whole job of a jungler. Take them over anything else.
 3. **His farm against his own average**, when the block has a FARM line. This is the single most
    valuable recurring fact you get: it is his own history, it is not on any screen, and it is the
    one number that says whether the game is going well for *him*. Use it when it is offered.

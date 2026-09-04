@@ -94,13 +94,30 @@ export interface FactInput {
 		dragonType?: string
 		stolen?: boolean
 	}[]
-	/** Seconds since the last objective of each kind, when one has happened. */
-	sinceDrakeSec: number | null
-	sinceBaronSec: number | null
+	/**
+	 * Seconds until each objective is back, counted from a take THIS SESSION ACTUALLY SAW.
+	 *
+	 * Null when no take was observed — never assumed from the clock. This is the same rule and the
+	 * same constants the overlay already displays (`analysis/live-coach.ts`), and the coach was
+	 * refusing to say what the overlay was already asserting, which is not a defensible split.
+	 */
+	drakeBackInSec: number | null
+	baronBackInSec: number | null
+	heraldBackInSec: number | null
 }
 
-const mmss = (sec: number): string =>
-	`${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`
+/**
+ * Only worth mentioning an objective this far out — further ahead and it is not actionable yet,
+ * and it would be repeated every turn until it arrived.
+ */
+export const OBJECTIVE_HORIZON_SEC = 60
+
+/** `announcedEvents` is keyed by number; objective windows need a stable numeric id too. */
+const hash = (s: string): number => {
+	let h = 0
+	for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
+	return h
+}
 
 /**
  * The ranked, rate-limited list. Mutates `mem`, which is the point — it is the memory.
@@ -223,11 +240,24 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		deaths.push(`${d.champion} just died — down for ${Math.round(d.respawnSec)}s`)
 	}
 
-	if (input.sinceDrakeSec !== null) rest.push(`last drake was taken ${mmss(input.sinceDrakeSec)} ago`)
-	if (input.sinceBaronSec !== null) rest.push(`last Baron was taken ${mmss(input.sinceBaronSec)} ago`)
+	/*
+	 * An objective coming back is the most schedulable thing a jungler gets — it is the one fact
+	 * that says where to be in thirty seconds rather than what just happened. Only inside a window
+	 * where saying it changes anything: an objective back in four minutes is not news.
+	 */
+	const soon = (label: string, sec: number | null) => {
+		if (sec === null || sec > OBJECTIVE_HORIZON_SEC || sec < 0) return
+		const key = `${label}@${Math.round((input.nowSec + sec) / 30)}`
+		if (mem.announcedEvents.has(hash(key))) return
+		mem.announcedEvents.add(hash(key))
+		rest.push(sec <= 5 ? `${label} is up NOW` : `${label} is back in ${Math.round(sec)}s`)
+	}
+	soon("Baron", input.baronBackInSec)
+	soon("Drake", input.drakeBackInSec)
+	soon("Herald", input.heraldBackInSec)
 
 	// A window outranks everything but praise: it is the most actionable thing a jungler gets.
-	const nonDeath = [...praise, ...windows, ...farm, ...money, ...rest]
+	const nonDeath = [...praise, ...windows, ...rest, ...farm, ...money]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -244,7 +274,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
 		praise.length > 0 ?
-			[...praise, ...windows, ...farm, ...money, ...deathsAllowed]
+			[...praise, ...windows, ...rest, ...farm, ...money, ...deathsAllowed]
 		:	[...nonDeath, ...deathsAllowed]
 
 	const out = ranked.slice(0, MAX_FACTS)

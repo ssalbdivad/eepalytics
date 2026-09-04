@@ -43,7 +43,12 @@ import { geminiKey, GEMINI_LIVE_MODEL } from "../src/review/gemini-live.ts"
 import { baselineFromRows, perGameMetrics } from "../src/analysis/index.ts"
 import { buildFacts, newFactMemory } from "../src/analysis/live-facts.ts"
 import type { FactInput, FactMemory } from "../src/analysis/live-facts.ts"
-import { paceReading } from "../src/analysis/live-coach.ts"
+import {
+	BARON_RESPAWN_SEC,
+	DRAGON_RESPAWN_SEC,
+	HERALD_RESPAWN_SEC,
+	paceReading
+} from "../src/analysis/live-coach.ts"
 import { loadCorpus } from "../src/daemon/corpus.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../src/shared/live-prompt.ts"
 
@@ -211,6 +216,19 @@ const stateAt = (
 			}
 		}
 
+	const backIn = (monster: string, respawnSec: number): number | null => {
+		let lastAt: number | null = null
+		for (const f of frames)
+			for (const e of f.events ?? [])
+				if (
+					e.type === "ELITE_MONSTER_KILL" &&
+					String(e.monsterType ?? "").startsWith(monster) &&
+					e.timestamp <= atSec * 1000
+				)
+					lastAt = e.timestamp / 1000
+		return lastAt === null ? null : Math.round(lastAt + respawnSec - atSec)
+	}
+
 	const finalUnseen = buildFacts(
 		{
 			nowSec: atSec,
@@ -221,8 +239,15 @@ const stateAt = (
 			currentGold: mf.currentGold ?? null,
 			pace: paced ? { cs: paced.cs, expected: paced.expected, exact: paced.exact } : null,
 			myEvents,
-			sinceDrakeSec: null,
-			sinceBaronSec: null
+			/*
+			 * Objective respawns reconstructed from the timeline's own ELITE_MONSTER_KILL events,
+			 * using the same constants the daemon and the overlay share. Passing null here left
+			 * the newest fact type untested, which is how an eval quietly stops covering the thing
+			 * it was extended for.
+			 */
+			drakeBackInSec: backIn("DRAGON", DRAGON_RESPAWN_SEC),
+			baronBackInSec: backIn("BARON_NASHOR", BARON_RESPAWN_SEC),
+			heraldBackInSec: backIn("RIFTHERALD", HERALD_RESPAWN_SEC)
 		},
 		mem
 	)
