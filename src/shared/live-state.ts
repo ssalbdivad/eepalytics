@@ -71,9 +71,17 @@ export interface VisionStatePlayer {
 	respawnSec?: number
 }
 
+/*
+ * The roster carries WHO and their score, and says DEAD — but never the seconds.
+ *
+ * It used to print `DEAD (14s)`, and the model read timers straight off it, bypassing the vetted
+ * list entirely: a judge found it announcing two respawn timers to a player who was himself dead
+ * for longer than both, a case the curated list had already correctly suppressed. Every timer the
+ * coach is allowed to say now exists in exactly one place, where the rules about it apply.
+ */
 const line = (p: VisionStatePlayer): string =>
 	`${p.champion}${p.level ? ` lv${p.level}` : ""} ${p.k ?? 0}/${p.d ?? 0}/${p.a ?? 0}${
-		p.dead ? ` DEAD${p.respawnSec ? ` (${Math.round(p.respawnSec)}s)` : ""}` : ""
+		p.dead ? " DEAD" : ""
 	}`
 
 /** The authoritative block. Everything in it came from the client, not from the picture. */
@@ -118,7 +126,8 @@ plain and urgent, the correct answer is PASS.`
 	}
 
 **The ten champions above are the only champions in this game.** Never name any other. Never
-give a number that is not in this block — you cannot read health bars, gold or scores off a
+give a number that is not in this block, and take every timer from the list below rather than
+inferring one — you cannot read health bars, gold or scores off a
 downscaled screenshot accurately, and you do not need to, because they are right here.
 
 Use the screenshot for **where things are** — positions, who is grouped, what is happening on

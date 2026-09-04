@@ -244,6 +244,12 @@ const stateAt = (
 			nowSec: atSec,
 			// His own respawn, from the same reconstruction the enemies' comes from.
 			meDeadForSec: meLeft ?? null,
+			alliesAlive:
+				(meLeft === undefined ? 1 : 0) +
+				others.filter(p => roster[p]!.teamId === myTeam && deadFor(p) === undefined).length,
+			enemiesAlive: others.filter(
+				p => roster[p]!.teamId !== myTeam && deadFor(p) === undefined
+			).length,
 			deadEnemies: others
 				.filter(p => roster[p]!.teamId !== myTeam)
 				.map(p => ({

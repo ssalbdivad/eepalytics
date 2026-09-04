@@ -22,6 +22,8 @@ import type { FactInput } from "./live-facts.ts"
 const input = (over: Partial<FactInput> = {}): FactInput => ({
 	nowSec: 600,
 	meDeadForSec: null,
+	alliesAlive: 5,
+	enemiesAlive: 5,
 	deadEnemies: [],
 	currentGold: null,
 	pace: null,
@@ -317,6 +319,46 @@ describe("buildFacts — the window", () => {
 			mem
 		)
 		ok(out[0]!.includes("of them are dead"))
+	})
+})
+
+describe("buildFacts — outnumbered", () => {
+	it("offers no window when his team is dead and theirs is not", () => {
+		/*
+		 * Regression: "Graves just died — down for 21s" while all four teammates were dead against
+		 * four living enemies. Every word true; "here's your window" is how someone walks into a
+		 * 1v4. A window is only a window if he can take it.
+		 */
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				alliesAlive: 1,
+				enemiesAlive: 4,
+				deadEnemies: [{ champion: "Graves", respawnSec: 21 }]
+			}),
+			mem
+		)
+		strictEqual(out.some(f => f.includes("just died")), false)
+	})
+
+	it("still offers a window when the teams are even", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				alliesAlive: 4,
+				enemiesAlive: 4,
+				deadEnemies: [{ champion: "Graves", respawnSec: 21 }]
+			}),
+			mem
+		)
+		ok(out.some(f => f.includes("just died")))
+	})
+
+	it("still says the things he can act on alone", () => {
+		// Being outnumbered does not make his unspent gold less true.
+		const mem = newFactMemory()
+		const out = buildFacts(input({ alliesAlive: 1, enemiesAlive: 4, currentGold: 2000 }), mem)
+		ok(out.some(f => f.includes("unspent")))
 	})
 })
 

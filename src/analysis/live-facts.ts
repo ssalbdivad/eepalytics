@@ -113,6 +113,16 @@ export interface FactInput {
 		stolen?: boolean
 	}[]
 	/**
+	 * How many of his team, and how many of theirs, are alive right now.
+	 *
+	 * Used only to suppress tempo facts when he is outnumbered. A judge found the coach saying
+	 * "Graves just died — down for 21s" while all four of his teammates were dead and four enemies
+	 * were alive: "one of them is down, here's your window" is the exact wrong instinct in a 1v4,
+	 * and the fact was true the whole time. A window is only a window if he can take it.
+	 */
+	alliesAlive: number
+	enemiesAlive: number
+	/**
 	 * Seconds until each objective is back, counted from a take THIS SESSION ACTUALLY SAW.
 	 *
 	 * Null when no take was observed — never assumed from the clock. This is the same rule and the
@@ -245,7 +255,13 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * the thing being reported, not the deaths, and it changes as each of them respawns.
 	 */
 	const dead = input.meDeadForSec ?? 0
-	const windowOpen = input.deadEnemies.filter(d => d.respawnSec >= WINDOW_MIN_SEC)
+	/*
+	 * Outnumbered: any "go take something" fact is worse than silence. He is not getting a free
+	 * objective 1v4, and being told he has a window is how someone walks into four people.
+	 */
+	const outnumbered = input.enemiesAlive > input.alliesAlive + 1
+	const windowOpen =
+		outnumbered ? [] : input.deadEnemies.filter(d => d.respawnSec >= WINDOW_MIN_SEC)
 	if (windowOpen.length >= 2) {
 		const shortest = Math.min(...windowOpen.map(d => d.respawnSec))
 		// What he can actually USE: the window minus however long until he is back on his feet.
@@ -268,7 +284,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * polls and unique per death. Rounding to 2s absorbs poll jitter without merging two separate
 	 * deaths of the same champion.
 	 */
-	for (const d of [...input.deadEnemies].sort((a, b) => b.respawnSec - a.respawnSec)) {
+	for (const d of outnumbered ? [] : [...input.deadEnemies].sort((a, b) => b.respawnSec - a.respawnSec)) {
 		// He was there. Telling him about a kill he just made is a readback, not scouting.
 		if (d.killedByMe) continue
 		// Same rule as the window: a death that ends before he is off the respawn screen is not

@@ -195,6 +195,10 @@ const buildLiveState = (
 				nowSec: secs,
 				// His own respawn — every tempo line has to be reachable by the person hearing it.
 				meDeadForSec: me.isDead ? (me.respawnTimer ?? null) : null,
+				// He counts himself among the living only when he is actually on the map.
+				alliesAlive:
+					(me.isDead ? 0 : 1) + others.filter(p => p.team === mine && !p.isDead).length,
+				enemiesAlive: others.filter(p => p.team !== mine && !p.isDead).length,
 				deadEnemies: others
 					.filter(p => p.team !== mine && p.isDead && (p.respawnTimer ?? 0) > 0)
 					.map(p => ({
