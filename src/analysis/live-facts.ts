@@ -40,6 +40,14 @@ export const DEATH_WORTH_SAYING_SEC = 12
 export const GOLD_FLOOR = 1200
 /** How much more must accumulate before unspent gold is news again. */
 export const GOLD_STEP = 800
+/**
+ * Recognises a death-window fact in a rendered line, for the "never lead twice running" rule.
+ *
+ * A regex rather than a substring because the wording is deliberately varied — matching on the
+ * literal phrase is how the alternation rule silently stopped working the last time it changed.
+ */
+export const DEATH_FACT = /^\d+s without /
+
 /** Game-clock seconds between farm-pace mentions. */
 export const FARM_COOLDOWN_SEC = 180
 /** His CS must have moved at least this much before the farm gap is worth restating. */
@@ -329,7 +337,17 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		const id = `${d.champion}@${Math.round((input.nowSec + d.respawnSec) / 2)}`
 		if (mem.announcedDeaths.has(id)) continue
 		mem.announcedDeaths.add(id)
-		deaths.push(`${d.champion} just died — down for ${Math.round(d.respawnSec)}s`)
+		/*
+		 * Phrased as the WINDOW, never as the news.
+		 *
+		 * "Renekton just died" narrates something he watched happen two seconds ago on his own
+		 * screen — it spends the one sentence she gets per turn telling him what he already knows.
+		 * The part he cannot see without holding TAB is how long it lasts, and the part worth
+		 * saying is what it buys. So the death is the premise of the sentence, not its point.
+		 */
+		deaths.push(
+			`${Math.round(d.respawnSec)}s without ${d.champion} — their side of the map is short one`
+		)
 	}
 
 	/*
@@ -398,6 +416,6 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * the problem: with nothing else ever on offer, deaths would be suppressed for the rest of the
 	 * game after the first one.
 	 */
-	mem.lastLedWithDeath = out.some(f => f.includes("just died"))
+	mem.lastLedWithDeath = out.some(f => DEATH_FACT.test(f))
 	return out
 }

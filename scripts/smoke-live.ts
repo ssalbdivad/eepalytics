@@ -92,7 +92,7 @@ Enemy team: Graves lv12 6/3/3 DEAD (22s)
 
 ### What he is NOT looking at — prefer these
 
-- Graves just died — down for 22s`
+- 22s without Graves — their side of the map is short one`
 		)
 	ok(truth.inGame ? `in a game, ${truth.text.length} chars` : "no game — using a stand-in block")
 

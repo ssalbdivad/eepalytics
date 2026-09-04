@@ -11,6 +11,7 @@ import { deepStrictEqual, ok, strictEqual } from "node:assert/strict"
 import { describe, it } from "node:test"
 import {
 	buildFacts,
+	DEATH_FACT,
 	newFactMemory,
 	FARM_COOLDOWN_SEC,
 	GOLD_NAG_SEC,
@@ -78,7 +79,7 @@ describe("buildFacts — deaths", () => {
 			input({ nowSec: 600, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }),
 			mem
 		)
-		ok(first[0]!.includes("just died"), "nothing else was on offer, so the death leads")
+		ok(DEATH_FACT.test(first[0]!), "nothing else was on offer, so the death leads")
 
 		const second = buildFacts(
 			input({
@@ -89,7 +90,7 @@ describe("buildFacts — deaths", () => {
 			mem
 		)
 		strictEqual(
-			second.some(f => f.includes("just died")),
+			second.some(f => DEATH_FACT.test(f)),
 			false,
 			"a death was offered last turn, so none may be offered this turn — demoting was not enough"
 		)
@@ -100,7 +101,7 @@ describe("buildFacts — deaths", () => {
 			input({ nowSec: 700, deadEnemies: [{ champion: "Karma", respawnSec: 30 }] }),
 			mem
 		)
-		ok(third.some(f => f.includes("just died")), "alternation, not suppression")
+		ok(third.some(f => DEATH_FACT.test(f)), "alternation, not suppression")
 	})
 
 	it("does not suppress deaths forever through a quiet stretch", () => {
@@ -115,7 +116,7 @@ describe("buildFacts — deaths", () => {
 			input({ nowSec: 700, deadEnemies: [{ champion: "Jinx", respawnSec: 30 }] }),
 			mem
 		)
-		ok(after.some(f => f.includes("just died")), "silence must clear the alternation")
+		ok(after.some(f => DEATH_FACT.test(f)), "silence must clear the alternation")
 	})
 })
 
@@ -368,7 +369,7 @@ describe("buildFacts — outnumbered", () => {
 			}),
 			mem
 		)
-		strictEqual(out.some(f => f.includes("just died")), false)
+		strictEqual(out.some(f => DEATH_FACT.test(f)), false)
 	})
 
 	it("still offers a window when the teams are even", () => {
@@ -381,7 +382,7 @@ describe("buildFacts — outnumbered", () => {
 			}),
 			mem
 		)
-		ok(out.some(f => f.includes("just died")))
+		ok(out.some(f => DEATH_FACT.test(f)))
 	})
 
 	it("still says the things he can act on alone", () => {
