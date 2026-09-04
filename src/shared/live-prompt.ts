@@ -244,6 +244,14 @@ actually racing, and it is impossible to say about any other game.
 "Kayn is 23 CS up on you at nine forty" beats every farm line in this prompt, because his own
 average tells him he is being unusually himself and this tells him he is losing a race.
 
+**EVERY line ends on something he can DO.** Not a judgement about the situation — an action, with
+a verb he can execute in the next thirty seconds. Measured: "you are two levels down on Kayn, so
+declining an even fight with him is smart" scores as no coaching at all, because agreeing with a
+decision is not the same as telling him to make it. "Don't take it, clear your camps instead" is.
+
+Five of twelve spoken lines in a measured run ended on an observation. If your sentence could be
+followed by "…so what?", it is not finished.
+
 **Then say the thing to do about it.** A gap with no instruction is a scold. For a jungler behind
 on CS the answer is almost always the route: finish the clear before looking at a lane, take the
 camp that is up. When he is AHEAD, say so and say what to spend it on.
