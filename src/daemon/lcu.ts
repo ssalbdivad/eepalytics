@@ -17,6 +17,7 @@
 import { statSync } from "node:fs"
 import { PLATFORM_ID, REPLAY_DIR_WSL, USER_PUUID } from "../shared/constants.ts"
 import type {
+	GameflowSession,
 	LcuGame,
 	LcuMatchHistory,
 	LcuTimeline,
@@ -161,6 +162,20 @@ export const fetchTimeline = async (gameId: number): Promise<LcuTimeline | null>
 export const fetchChampionSummary = async (): Promise<
 	{ id: number; name?: string; alias?: string }[] | null
 > => tryCall("champion-summary", h => h.client.championSummary())
+
+export const fetchSummonerSpells = async (): Promise<
+	{ id: number; name?: string }[] | null
+> => tryCall("summoner-spells", h => h.client.summonerSpellSummary())
+
+/**
+ * The gameflow session, whole.
+ *
+ * `fetchCurrentGameId()` throws the rest of it away, and the rest of it is where the pre-game
+ * matchup lives: both comps, declared positions, and every player's summoner spells. Read-only,
+ * like every other `fetch*` here.
+ */
+export const fetchGameflowSession = async (): Promise<GameflowSession | null> =>
+	tryCall("gameflow-session", h => h.client.gameflowSession())
 
 /**
  * Replay metadata is LOCAL client state, not a server query.

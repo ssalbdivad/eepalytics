@@ -20,6 +20,25 @@ names, rune pages or numbers. The timeline has no item purchases (see `AGENTS.md
 recommendation could never be checked against what he actually did — it would be advice
 floating free of evidence, which is the exact failure mode this app exists to avoid.
 
+## The same files run the pre-game brief
+
+`GET /api/live/matchup` builds the champ-select / loading-screen brief, and it reads these same
+files — his champion's, and the enemy counterpart's. The fence does not change, but the stakes
+shift: before the game there are no metrics at all, so a note is the *only* unmeasured thing in
+the prompt and there are no numbers standing next to it for contrast.
+
+Two consequences for whoever edits a file:
+
+- **A note used pre-game shapes a plan, never a prediction.** "He wants the even early fight" is
+  a plan. "You lose this matchup" is a forecast dressed as knowledge, and there is nothing behind
+  it.
+- **`_default.md` is treated as no notes at all** on this path. It does not describe a champion;
+  it tells the coach to stop talking about the champion. The brief reports the gap in its
+  `unknowns` list instead, and the coach says the role things it can stand behind.
+
+`src/shared/matchup-prompt.ts` states this to the model, with five allowed lines and five banned
+ones.
+
 ## File format
 
 `champions/<key>.md`, where `<key>` is the champion name lowercased with non-letters stripped

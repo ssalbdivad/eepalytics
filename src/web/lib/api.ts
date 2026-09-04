@@ -15,6 +15,7 @@ import {
 	ChatHistoryResponse,
 	FormResponse,
 	LiveResponse,
+	MatchupResponse,
 	WatchListResponse,
 	ReplayListResponse,
 	ChatTurnResponse,
@@ -168,6 +169,14 @@ export const api = {
 	 * that errors is an overlay that gets closed.
 	 */
 	live: (signal?: AbortSignal) => request(API.live, LiveResponse, { signal }),
+
+	/**
+	 * The champ-select / loading-screen brief: who he is playing, against whom, with what.
+	 *
+	 * Answers 200 in every state, same as `live`. Poll it during champ select — `available` goes
+	 * true the moment the client publishes selections, which is partway through, not at the start.
+	 */
+	matchup: (signal?: AbortSignal) => request(API.matchup, MatchupResponse, { signal }),
 
 	/** Grades and focus areas. Derived from stored data — no model call, so it is instant. */
 	form: (games?: number, signal?: AbortSignal) =>

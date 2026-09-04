@@ -91,8 +91,49 @@ export const GameflowWatchPhase = type(
 export type GameflowWatchPhase = typeof GameflowWatchPhase.infer
 
 /**
+ * One row of `gameData.teamOne` / `gameData.teamTwo`.
+ *
+ * `selectedPosition` is the position the player DECLARED — `"JUNGLE"`, `"TOP"`, `"MIDDLE"`,
+ * `"BOTTOM"`, `"UTILITY"`, and `""` or `"NONE"`/`"FILL"` in blind and quickplay queues. Unlike
+ * `LcuParticipantTimeline.lane` this is not corrupted; it is simply *absent* in the queues that
+ * never asked. Treat `""` as "nobody declared", not as a role.
+ *
+ * These rows do NOT carry summoner spells. Spells come from `playerChampionSelections`, joined
+ * on `puuid`.
+ */
+export const GameflowPlayer = type({
+	"championId?": "number",
+	"puuid?": "string",
+	"selectedPosition?": "string",
+	"summonerId?": "number",
+	"summonerInternalName?": "string",
+	"teamParticipantId?": "number"
+})
+export type GameflowPlayer = typeof GameflowPlayer.infer
+
+/**
+ * One row of `gameData.playerChampionSelections` — the only PRE-GAME source of summoner spells.
+ *
+ * It is empty for most of champ select and fills in as the game is handed to the game client,
+ * so a caller must treat "not there yet" as a state rather than an error.
+ */
+export const PlayerChampionSelection = type({
+	"championId?": "number",
+	"puuid?": "string",
+	"spell1Id?": "number",
+	"spell2Id?": "number",
+	"selectedSkinIndex?": "number",
+	"summonerInternalName?": "string"
+})
+export type PlayerChampionSelection = typeof PlayerChampionSelection.infer
+
+/**
  * `GET /lol-gameflow/v1/session` — the single best "what is happening right now" call.
- * Deliberately shallow: we only need phase, the current gameId and whether the client runs.
+ *
+ * Phase, the current gameId, whether the client runs — and, from champ select onward, **both
+ * comps with their declared positions plus every player's summoner spells**. That is the entire
+ * pre-game matchup picture, available before the loading screen finishes. Enemy RUNES are not
+ * here and are not available anywhere pre-game; do not build anything that needs them.
  */
 export const GameflowSession = type({
 	phase: "string",
@@ -110,8 +151,11 @@ export const GameflowSession = type({
 			"gameMode?": "string",
 			"mapId?": "number"
 		},
-		"teamOne?": "unknown[]",
-		"teamTwo?": "unknown[]"
+		/** Both comps, with declared positions. Present from champ select onward. */
+		"teamOne?": GameflowPlayer.array(),
+		"teamTwo?": GameflowPlayer.array(),
+		/** Champion + both summoner spells per puuid. Populates late in champ select. */
+		"playerChampionSelections?": PlayerChampionSelection.array()
 	},
 	"map?": {
 		"id?": "number",
@@ -493,6 +537,26 @@ export type ChampionSummaryEntry = typeof ChampionSummaryEntry.infer
 
 export const ChampionSummary = ChampionSummaryEntry.array()
 export type ChampionSummary = typeof ChampionSummary.infer
+
+/**
+ * `GET /lol-game-data/assets/v1/summoner-spells.json`.
+ *
+ * The id -> name table for Flash, Smite and the rest. Read from the client rather than
+ * hardcoded for the same reason champion names are: a table typed from memory is a fabrication
+ * that happens to be usually right, and "usually right" is not a standard this app holds.
+ * Everything but `id` is optional so a patch that renames a field cannot break the read.
+ */
+export const SummonerSpellSummaryEntry = type({
+	id: "number",
+	"name?": "string",
+	"description?": "string",
+	"iconPath?": "string",
+	"gameModes?": "unknown[]"
+})
+export type SummonerSpellSummaryEntry = typeof SummonerSpellSummaryEntry.infer
+
+export const SummonerSpellSummary = SummonerSpellSummaryEntry.array()
+export type SummonerSpellSummary = typeof SummonerSpellSummary.infer
 
 /* ============================================================= helpers */
 

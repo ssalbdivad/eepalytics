@@ -32,12 +32,16 @@ import {
 import type { LiveState } from "../../analysis/live-coach.ts"
 import { baselineFromRows, perGameMetrics } from "../../analysis/index.ts"
 import { focusAreas } from "../../analysis/focus.ts"
+import { buildMatchupBrief } from "../../analysis/matchup.ts"
 import { loadCorpus } from "../../daemon/corpus.ts"
+import { championName, refreshChampionNames } from "../../daemon/champions.ts"
+import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
+import { championNote } from "../../knowledge/index.ts"
 import { getSettings, recentFeedbackItems } from "../../db/queries.ts"
-import { LiveResponse } from "../../shared/schema/api.ts"
+import { LiveResponse, MatchupResponse } from "../../shared/schema/api.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
-import { USER_PUUID } from "../../shared/constants.ts"
+import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
@@ -54,6 +58,15 @@ import { fail, send } from "../respond.ts"
 
 /** Event names that mark an objective take we can time a respawn from. */
 const OBJECTIVE_EVENTS = new Set(["DragonKill", "BaronKill", "HeraldKill"])
+
+/**
+ * Phases in which a matchup brief means anything.
+ *
+ * `InProgress` and `Reconnect` are included on purpose: the brief is still the truth about who is
+ * in the game, and a coach asked "who am I playing against" at 12:00 should answer rather than
+ * claim there is no game. `None`/`Lobby`/`Matchmaking` have no rosters to read.
+ */
+const PREGAME_PHASES = new Set(["ChampSelect", "GameStart", "InProgress", "Reconnect"])
 
 /**
  * The user's own row in the live player list.
@@ -391,7 +404,89 @@ export const createLiveRoute = (): Hono => {
 
 	/**
 	 * `POST /api/live/journal/frame` — store one frame of the shared screen.
+	 * `GET /api/live/matchup` — the champ-select / loading-screen brief.
 	 *
+	 * The fourth coach state, and the only one that runs before anything has happened. It reads
+	 * `/lol-gameflow/v1/session`, which publishes both comps, every declared position and every
+	 * player's summoner spells from champ select onward — verified against the live client.
+	 *
+	 * READ-ONLY, like the rest of this file. `src/daemon/gate.ts` guards writes and launching the
+	 * client; there is nothing here for it to protect. It matters that this stays true: the gate
+	 * exists partly to keep this app out of champ select, and this endpoint is *in* champ select.
+	 * It looks and it does not touch.
+	 *
+	 * Every state answers 200. Client closed, sitting in the lobby, locked in but the client has
+	 * not published selections yet — all of them are normal, and a poller that sees a 500 while a
+	 * game is loading is a poller the user turns off.
+	 */
+	app.get("/live/matchup", async c => {
+		const handle = await lcu()
+		if (!handle)
+			return send(
+				c,
+				MatchupResponse,
+				{ available: false, reason: "the League client is not running" },
+				"GET /api/live/matchup"
+			)
+
+		const session = await handle.client.gameflowSession().catch(() => null)
+		if (!session)
+			return send(
+				c,
+				MatchupResponse,
+				{ available: false, reason: "the client is not setting up a game right now" },
+				"GET /api/live/matchup"
+			)
+
+		if (!PREGAME_PHASES.has(session.phase))
+			return send(
+				c,
+				MatchupResponse,
+				{
+					available: false,
+					phase: session.phase,
+					reason: "no game is being set up right now"
+				},
+				"GET /api/live/matchup"
+			)
+
+		// Both tables are hourly-cached and no-op in the common case. Names are the whole point of
+		// this endpoint, so it is worth one round trip the first time after a client restart.
+		await Promise.all([refreshChampionNames(), refreshSummonerSpellNames()])
+
+		const queueId = session.gameData?.queue?.id
+		const { brief, reason } = buildMatchupBrief({
+			session,
+			puuid: USER_PUUID,
+			championName,
+			spellName: summonerSpellName,
+			// `_default.md` is treated as "no notes on file", because it does not describe a
+			// champion — it tells the coach to stop talking about the champion. Passing it through
+			// as context would invite exactly the improvisation it exists to prevent.
+			noteFor: champion => {
+				const note = championNote(champion)
+				return note && !note.isDefault ?
+						{ champion, text: note.text, patch: note.patch, source: note.source }
+					:	null
+			},
+			queue:
+				typeof queueId === "number" ?
+					(QUEUE_NAMES[queueId] ?? `Queue ${queueId}`)
+				:	null
+		})
+
+		return send(
+			c,
+			MatchupResponse,
+			brief ?
+				{ available: true, phase: session.phase, brief }
+			:	{ available: false, phase: session.phase, reason: reason ?? "nothing to brief yet" },
+			"GET /api/live/matchup"
+		)
+	})
+
+	/**
+	 * `POST /api/live/observe` — one screen frame in, at most one sentence out.	 *
 	 * Deliberately independent of the Gemini coach. Sharing the screen is what earns a graded
 	 * review; the live voice is an optional extra on top of it, and costs money, and should not be
 	 * a prerequisite for being coached after the game.

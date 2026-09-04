@@ -24,7 +24,8 @@ import type {
 	LcuMatchHistory as LcuMatchHistoryType,
 	LcuTimeline as LcuTimelineType,
 	ReplayConfiguration as ReplayConfigurationType,
-	ReplayMetadata as ReplayMetadataType
+	ReplayMetadata as ReplayMetadataType,
+	SummonerSpellSummary as SummonerSpellSummaryType
 } from "../shared/schema/lcu.ts"
 import {
 	ChampionSummary,
@@ -37,6 +38,7 @@ import {
 	LcuTimeline,
 	ReplayConfiguration,
 	ReplayMetadata,
+	SummonerSpellSummary,
 	parseOrThrow
 } from "../shared/schema/lcu.ts"
 import type { HttpMethod, LcuResponse, LcuTransport, RequestOptions } from "./transport.ts"
@@ -411,6 +413,20 @@ export class LcuClient {
 
 	async summonerSpells(): Promise<unknown> {
 		return this.assetJson("/lol-game-data/assets/v1/summoner-spells.json")
+	}
+
+	/**
+	 * The same file, validated: `id` -> Flash / Smite / Teleport / … .
+	 *
+	 * Pre-game coaching needs spell NAMES, and the alternative to reading them is a table typed
+	 * from memory — a fabrication that happens to be usually right, which is not a standard this
+	 * app holds anywhere else.
+	 */
+	async summonerSpellSummary(): Promise<SummonerSpellSummaryType> {
+		return (await this.assetJson(
+			"/lol-game-data/assets/v1/summoner-spells.json",
+			SummonerSpellSummary
+		)) as SummonerSpellSummaryType
 	}
 
 	/** `NA1-5631300987.rofl` — the on-disk filename convention. */

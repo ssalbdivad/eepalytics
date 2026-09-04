@@ -34,6 +34,7 @@ import {
 	Moment,
 	ParticipantSummary,
 	Review,
+	Role,
 	TrendSeries
 } from "./domain.ts"
 import { Settings } from "./settings.ts"
@@ -184,6 +185,85 @@ export const LiveResponse = type({
 	"pace?": type({ cs: "number", expected: "number", exact: "boolean", source: "string" }).or("null")
 })
 export type LiveResponse = typeof LiveResponse.infer
+
+/* ============================================================= matchup */
+
+/**
+ * One player in the pre-game brief. **Names, never ids** — an id is not something you can say
+ * out loud, and `champion: ""` is how we admit we could not name it rather than printing 876.
+ *
+ * There is no rune field, no item field and no spell-cooldown field, and that is structural:
+ * enemy runes do not exist in any pre-game endpoint, the timeline has no purchases, and nothing
+ * anywhere knows whether a Flash is up. A shape that cannot carry those cannot leak them.
+ */
+export const MatchupPlayer = type({
+	/** `""` when the champion-name table could not be read. Never a guessed name. */
+	champion: "string",
+	championId: "number",
+	/** From `selectedPosition`, or `"UNKNOWN"` in the queues that never asked. */
+	role: Role,
+	/** Both summoner spells, by name. Unknown ids are dropped, never rendered as numbers. */
+	spells: "string[]",
+	/** True for the one row that is the user. */
+	isYou: "boolean"
+})
+export type MatchupPlayer = typeof MatchupPlayer.infer
+
+/** How the enemy counterpart was identified. Shown, because the two are not equally strong. */
+export const MatchupBasis = type("'declared'|'smite'|'none'")
+export type MatchupBasis = typeof MatchupBasis.infer
+
+/**
+ * The champ-select / loading-screen brief.
+ *
+ * Everything here is read off `/lol-gameflow/v1/session` before the game starts, except
+ * `championNotes` / `opponentNotes`, which come from editable markdown in `knowledge/champions/`
+ * and are fenced the same way the review's CHAMPION CONTEXT is: they may shape the plan, they
+ * may never become a number or a claim about what will happen.
+ */
+export const MatchupBrief = type({
+	/** Gameflow phase this was read at: `"ChampSelect"`, `"GameStart"`, `"InProgress"`, … */
+	phase: "string",
+	"queue?": "string|null",
+	you: MatchupPlayer,
+	/** The enemy in the same position, or `null` when nobody could be matched to it. */
+	opponent: MatchupPlayer.or("null"),
+	/** How `opponent` was picked: a declared position, the lone enemy Smite, or not at all. */
+	opponentBasis: MatchupBasis,
+	/** His four teammates. */
+	allies: MatchupPlayer.array(),
+	/** The five enemies, `opponent` included. */
+	enemies: MatchupPlayer.array(),
+	/** Champion notes for what HE picked. `null` when only `_default.md` matched. */
+	championNotes: type({
+		champion: "string",
+		text: "string",
+		patch: "string",
+		source: "string"
+	}).or("null"),
+	/** Champion notes for the enemy counterpart. `null` when there is no file for them. */
+	opponentNotes: type({ champion: "string", text: "string" }).or("null"),
+	/**
+	 * Everything this brief could not establish, in plain words. Rendered to the user AND to the
+	 * model: an unknown that is only logged is an unknown the coach will fill in with invention.
+	 */
+	unknowns: "string[]"
+})
+export type MatchupBrief = typeof MatchupBrief.infer
+
+/**
+ * `GET /api/live/matchup`. Answers 200 in every state, like `/api/live` — "no game is being set
+ * up" is the normal case and must not read as an error.
+ */
+export const MatchupResponse = type({
+	available: "boolean",
+	/** Why not, when `available` is false. Always a sentence a human can act on. */
+	"reason?": "string",
+	/** The gameflow phase we saw, even when there is no brief to build from it. */
+	"phase?": "string",
+	"brief?": MatchupBrief.or("null")
+})
+export type MatchupResponse = typeof MatchupResponse.infer
 
 /* ================================================================ form */
 
@@ -417,6 +497,7 @@ export const API = {
 	sync: "/api/sync",
 	form: "/api/form",
 	live: "/api/live",
+	matchup: "/api/live/matchup",
 	watch: (gameId: number | string) => `/api/games/${gameId}/watch`,
 	replays: "/api/replays",
 	replayIngest: "/api/replays/ingest"
