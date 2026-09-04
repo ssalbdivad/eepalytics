@@ -145,6 +145,9 @@ export interface FactMemory {
 	/** Said once each per game — a level gap is a state, not an event, and restating it is nagging. */
 	saidRestraint: boolean
 	saidLevelGap: boolean
+	/** Legendary items already announced for the counterpart, and whether a baseline exists yet. */
+	seenCounterpartItems: Set<string>
+	sawCounterpartBuild: boolean
 	/** His CS when farm was last raised; it must actually move before saying it again. */
 	lastFarmCs: number
 	lastLedWithDeath: boolean
@@ -163,6 +166,8 @@ export const newFactMemory = (): FactMemory => ({
 	lastRaceGap: 0,
 	saidRestraint: false,
 	saidLevelGap: false,
+	seenCounterpartItems: new Set(),
+	sawCounterpartBuild: false,
 	lastFarmCs: 0,
 	lastLedWithDeath: false
 })
@@ -208,7 +213,14 @@ export interface FactInput {
 	 * fact that is not ranked is a fact that does not exist, however true it is and however
 	 * prominently the block states it.
 	 */
-	counterpart: { champion: string; cs?: number; level?: number; inferred?: boolean } | null
+	counterpart: {
+		champion: string
+		cs?: number
+		level?: number
+		inferred?: boolean
+		/** Legendary items he has finished, by NAME, newest last. */
+		items?: string[]
+	} | null
 	/** His own level, for the gap against the counterpart. */
 	meLevel?: number
 	/**
@@ -327,6 +339,30 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * player is least able to notice for himself.
 	 */
 	const fight: string[] = input.fight?.line ? [input.fight.line] : []
+
+	/*
+	 * What the counterpart just FINISHED, by name.
+	 *
+	 * This is the build advice he asked for twice, and it is safe in a way a threshold never is:
+	 * the item NAME is a client fact, and what the item MEANS is something the model already knows
+	 * about League. Client supplies the fact, model supplies the judgement — the same split that
+	 * makes the screenshot safe for "where" and the block authoritative for "what".
+	 *
+	 * Only newly completed items, because a static list is a second HUD and he can see his own.
+	 * An item appearing IS an event, which is what makes it punchy rather than a readout.
+	 */
+	const build: string[] = []
+	if (input.counterpart?.items) {
+		for (const item of input.counterpart.items) {
+			if (mem.seenCounterpartItems.has(item)) continue
+			mem.seenCounterpartItems.add(item)
+			// The first poll of a game is not news: everything is "new" then. Only announce once a
+			// baseline exists, which is what the flag records.
+			if (!mem.sawCounterpartBuild) continue
+			build.push(`${input.counterpart.champion} just finished ${item}`)
+		}
+		mem.sawCounterpartBuild = true
+	}
 
 	const restraint: string[] = []
 	if (input.counterpart && input.counterpart.level !== undefined && input.meLevel !== undefined) {
@@ -607,7 +643,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * So praise still happens, but only when nothing else is on offer. That is most of the time
 	 * it matters anyway — the moment after a fight is usually quiet.
 	 */
-	const nonDeath = [...fight, ...restraint, ...windows, ...race, ...rest, ...money, ...farm]
+	const nonDeath = [...fight, ...restraint, ...windows, ...build, ...race, ...rest, ...money, ...farm]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -624,7 +660,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
 		windows.length > 0 || rest.length > 0 ?
-			[...fight, ...restraint, ...windows, ...race, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
+			[...fight, ...restraint, ...windows, ...build, ...race, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
 		:	[...nonDeath, ...deathsAllowed, ...praise]
 
 	/*

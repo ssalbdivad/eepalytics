@@ -74,6 +74,15 @@ import type { VisionState, VisionStatePlayer } from "../../shared/live-state.ts"
 import { fail, send } from "../respond.ts"
 
 /** Event names that mark an objective take we can time a respawn from. */
+/**
+ * What counts as a finished item for the purpose of being worth a sentence.
+ *
+ * The client reports `price` and nothing else about completeness, so this is a threshold and it is
+ * treated as one: it decides whether to MENTION an item, never what to claim about it. The line
+ * names the item, so the number never reaches him.
+ */
+const LEGENDARY_ITEM_GOLD = 2000
+
 const OBJECTIVE_EVENTS = new Set(["DragonKill", "BaronKill", "HeraldKill"])
 
 /**
@@ -248,6 +257,14 @@ const buildLiveState = (
 				champion: bySmite.championName ?? "their jungler",
 				...(bySmite.scores?.creepScore !== undefined ? { cs: bySmite.scores.creepScore } : {}),
 				...(bySmite.level !== undefined ? { level: bySmite.level } : {}),
+				/*
+				 * Legendary items by NAME. `price` is the only completeness signal the client gives,
+				 * so it gates what is worth mentioning — but the line names the item rather than
+				 * counting them, so no threshold is ever spoken as a fact.
+				 */
+				items: (bySmite.items ?? [])
+					.filter(i => !i.consumable && (i.price ?? 0) >= LEGENDARY_ITEM_GOLD && i.displayName)
+					.map(i => i.displayName!),
 				...(byRole ? {} : { inferred: true })
 			}
 	})()
