@@ -84,6 +84,37 @@ export type GameflowPhase = typeof GameflowPhase.infer
 export const isIdlePhase = (phase: string): boolean =>
 	phase === "None" || phase === "Lobby"
 
+/**
+ * The phases in which the live coach is allowed to SEND anything.
+ *
+ * The screen share now persists across games — he shares his whole monitor, not the League
+ * window — so a live `MediaStream` no longer means "a game is happening". This is what means it.
+ * The stream stays; this decides whether frames leave the browser.
+ *
+ * `ChampSelect` is the arm point rather than `InProgress` because opening the socket costs a
+ * token mint and a setup handshake, and spending that during the draft means she is already
+ * connected when the clock starts instead of dialling through his first clear. `GameStart` is
+ * the loading screen; `Reconnect` is his game, which the client dropped out of.
+ *
+ * Being armed is NOT permission to talk. Turns are additionally gated on there being a
+ * ground-truth block to send with the frame — see `beat()` in `web/lib/geminiLive.ts` — so
+ * champion select warms the socket without ever handing the model a picture it has no facts
+ * about. Pixels alone is the failure mode this whole path was built to end.
+ *
+ * Everything else is disarmed: `None`, `Lobby`, `Matchmaking`, `ReadyCheck`, the three
+ * end-of-game phases, and anything Riot adds later. Unrecognised phases fail closed for the
+ * same reason `isIdlePhase` does — an unknown phase is not a licence to upload his desktop.
+ */
+const COACHING_PHASES: ReadonlySet<string> = new Set([
+	"ChampSelect",
+	"GameStart",
+	"InProgress",
+	"Reconnect"
+])
+
+export const isCoachingPhase = (phase: string | null): boolean =>
+	phase !== null && COACHING_PHASES.has(phase)
+
 /** `GET /lol-gameflow/v1/watch` — how you tell a REPLAY apart from a live game. */
 export const GameflowWatchPhase = type(
 	"'None'|'WatchStarted'|'WatchInProgress'|'WatchFailedToLaunch'"

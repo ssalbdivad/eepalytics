@@ -2091,6 +2091,17 @@ button.csk-chip:focus-visible,
 .csk-screen__dot[data-state="error"] {
 	background: var(--loss);
 }
+/*
+ * Sharing, armed for the next game, sending nothing.
+ *
+ * A distinct state from "off", and it needs to look like one: with the share now persisting
+ * across games this is what the strip shows for most of an evening, and the same grey as "you
+ * never pressed share" reads as a feature that quietly died.
+ */
+.csk-screen__dot[data-state="standby"] {
+	background: transparent;
+	box-shadow: inset 0 0 0 2px var(--dim);
+}
 .live__bar--idle {
 	justify-content: flex-end;
 	border-bottom: none;

@@ -40,6 +40,7 @@ import { lcu } from "../../daemon/lcu.ts"
 import { championNote } from "../../knowledge/index.ts"
 import { getSettings, recentFeedbackItems } from "../../db/queries.ts"
 import { LiveResponse, MatchupResponse } from "../../shared/schema/api.ts"
+import { isCoachingPhase } from "../../shared/schema/lcu.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
@@ -401,6 +402,33 @@ export const createLiveRoute = (): Hono => {
 			},
 			"GET /api/live"
 		)
+	})
+
+	/**
+	 * `GET /api/live/phase` — the one thing that decides whether the coach sends anything.
+	 *
+	 * The screen share persists across games now, so "is a stream open" no longer answers "is he
+	 * playing". This does. It is deliberately its own route rather than a field on `/api/live`:
+	 * that one reads the in-game API on :2999, which does not answer until the game process is up
+	 * and therefore cannot see champion select at all — the exact window this gate exists to open.
+	 *
+	 * `GET /api/health` already carries `gameflowPhase`, and it is the wrong source here: it is
+	 * polled every 20 seconds, which would leave the coach dead for a third of a minute after the
+	 * loading screen, and it drags a Vanguard probe and a database read behind it. This is one
+	 * gameflow read (p50 2.3 ms over the bridge) and nothing else.
+	 *
+	 * Null phase means the League client is closed. That is a state, not an error — it answers
+	 * 200 disarmed, and the browser says so rather than showing a broken coach.
+	 */
+	app.get("/live/phase", async c => {
+		const handle = await lcu()
+		const phase = handle ? await handle.client.gameflowPhase().catch(() => null) : null
+		return c.json({
+			phase,
+			armed: isCoachingPhase(phase),
+			/** A game is actually running, as opposed to drafting or loading into one. */
+			inGame: phase === "InProgress" || phase === "Reconnect"
+		})
 	})
 
 	/**

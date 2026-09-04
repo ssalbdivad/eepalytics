@@ -15,14 +15,29 @@
  *
  * ## Three things are stated before it starts, not discovered after
  *
- *   - **Frames leave the machine.** The shared screen goes to Google, continuously.
+ *   - **Frames leave the machine.** The shared screen goes to Google — but only during a game.
  *   - **The microphone is off until pressed**, and says so.
  *   - **It needs a key**, which is free, and the instructions for getting one are right here
  *     rather than in a doc — a setup step you cannot complete is the same as a broken feature.
+ *
+ * ## The share persists; what is SENT is what is gated
+ *
+ * He shares his whole monitor, not the League window, so there is no reason to make him pick a
+ * screen again between two games of the same session. The `MediaStream` therefore outlives the
+ * game — and the thing that starts and stops is everything downstream of it:
+ *
+ *   - the journal loop only POSTs while the client is in champion select or later;
+ *   - the Gemini socket is opened at champion select and closed when the game ends;
+ *   - a turn is only actually sent once there are ground-truth facts to send with the frame.
+ *
+ * The gate is the client's gameflow phase (`lib/gameflow.ts`). Between games this component sits
+ * there sharing and sending nothing, and it says exactly that — an idle coach that looks broken
+ * gets switched off, which costs the graded review too.
  */
 
 import { useEffect, useRef, useState } from "react"
 import { useGeminiLive } from "../lib/geminiLive.ts"
+import { useGameflow, standbyReason } from "../lib/gameflow.ts"
 import { useScreenShare } from "../lib/useScreenShare.ts"
 import "./components.css"
 
@@ -60,6 +75,15 @@ const TURN_CHOICES = [10, 20, 40]
  */
 const JOURNAL_MS = 5000
 
+/**
+ * How long the socket stays open after the game ends, so a line already being spoken can finish.
+ *
+ * Turns are gated on ground truth, which is gone the moment the game is, so nothing new can be
+ * said in this window and it costs nothing. Eight seconds is longer than any line she is allowed
+ * to produce — the prompt asks for one sentence.
+ */
+const POST_GAME_LINGER_MS = 8000
+
 interface KeyStatus {
 	configured: boolean
 	ok: boolean
@@ -83,6 +107,12 @@ export interface ScreenCoachProps {
 
 export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => {
 	const share = useScreenShare()
+	/*
+	 * What the LEAGUE CLIENT is doing, which is no longer the same question as what the browser is
+	 * doing. The two came apart the moment the share stopped being torn down around each game, and
+	 * this is the half that decides whether anything may be sent.
+	 */
+	const gate = useGameflow()
 	const [opening, setOpening] = useState(false)
 	const wsl = isWslElectron()
 
@@ -141,17 +171,22 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 	}
 
 	/*
-	 * The journal: one frame every 5s while the screen is shared.
+	 * The journal: one frame every 5s while the screen is shared AND the client says a game is on.
 	 *
 	 * Deliberately NOT tied to the Gemini coach. Sharing the screen is what earns a graded review
 	 * after the game; the live voice is an optional extra on top. Tying them would mean paying for
 	 * an API to get a review that costs nothing.
 	 *
-	 * The daemon stamps the game clock and refuses anything it cannot place, so this loop needs to
-	 * know nothing about whether a game is running.
+	 * `daemon/journal.ts` still refuses every frame it cannot place on a game clock, and that stays
+	 * the authority — this gate is an optimisation, never a security boundary. It is here because a
+	 * refused frame is not free and, far more to the point, not private: without it a screenshot of
+	 * his WHOLE MONITOR — mail, bank, whatever else is open — was JPEG-encoded on the main thread,
+	 * base64'd, and pushed through the daemon every five seconds around the clock purely to be
+	 * thrown away, each one dragging an `allgamedata` round trip to the League client behind it.
+	 * Not taking the picture is strictly better than taking it and deleting it.
 	 */
 	useEffect(() => {
-		if (!share.sharing) return
+		if (!share.sharing || !gate.armed) return
 		let alive = true
 		let inFlight = false
 		const tick = async () => {
@@ -166,7 +201,16 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 					body: JSON.stringify({ frame, truth: truthRef.current || undefined })
 				})
 				const j = (await r.json()) as { ok?: boolean; sessionId?: string | null }
-				if (alive && j.ok) setJournal(p => ({ frames: (p?.frames ?? 0) + 1, sessionId: j.sessionId ?? null }))
+				if (alive && j.ok)
+					setJournal(p =>
+						// Counted PER GAME, not per browser session. The share now spans games, so a
+						// running total would tell him "412 frames" about a game that recorded 180 —
+						// a number that looks like evidence and is not one. The daemon rolls the
+						// session id on a backwards clock jump; that roll resets the count.
+						p && p.sessionId === (j.sessionId ?? null) ?
+							{ frames: p.frames + 1, sessionId: p.sessionId }
+						:	{ frames: 1, sessionId: j.sessionId ?? null }
+					)
 			} catch {
 				/* a dropped frame is not worth interrupting a game for */
 			} finally {
@@ -179,7 +223,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 			alive = false
 			clearInterval(id)
 		}
-	}, [share.sharing, share.grabFrame])
+	}, [share.sharing, gate.armed, share.grabFrame])
 
 	const gem = useGeminiLive({
 		/*
@@ -206,7 +250,17 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 				 */
 				setTruthOk(false)
 			}
-			return "No live game data right now — he is not in a game, or the client is closed. Say nothing (PASS) unless the screen clearly shows something worth saying."
+			/*
+			 * Empty means the turn is NOT SENT — see `beat()` in `lib/geminiLive.ts`.
+			 *
+			 * This used to return a sentence telling the model it had no data and should probably
+			 * PASS, and then sent it a screenshot anyway. That is the pixels-only path wearing a
+			 * disclaimer: it still handed her a picture and invited her to find something in it,
+			 * which is how a coach ends up naming a champion who is not in the game. It also fired
+			 * on every beat of champion select and the loading screen, where there is no :2999 data
+			 * by definition. Going quiet costs one turn and cannot be wrong.
+			 */
+			return ""
 		},
 		grabFrame: share.grabFrame
 	})
@@ -219,26 +273,79 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 	 */
 	const [stoppedByHand, setStoppedByHand] = useState(false)
 
-	/*
-	 * Coaching starts on its own once the screen is shared.
+	/**
+	 * One socket per GAME — opened at champion select, closed when the game ends.
 	 *
-	 * Sharing is already the deliberate act — a second button to press before anything happens is
-	 * a step that exists only because the two things were built separately. It waits on a key that
-	 * actually works, so it can never spend money on a connection that was going to fail.
+	 * The share persists across games; the socket deliberately does not. Three reasons, in the
+	 * order they mattered:
+	 *
+	 *  1. **The model keeps the thread.** That is the whole point of a live session, and it is
+	 *     exactly why one socket must not span two games: an hour-old conversation carries game
+	 *     one's roster into game three, and the coach starts referencing a champion who is not in
+	 *     this game. Every other rule in this app exists to stop that happening; keeping a socket
+	 *     open between games would reintroduce it through the back door.
+	 *  2. **An ephemeral token lasts about thirty minutes.** An idle socket held between games does
+	 *     not sit there for free — it expires, closes clean, and the reconnect ladder mints another
+	 *     one, forever, for a coach nobody is listening to. Reconnects exist to survive a token
+	 *     expiring MID-GAME, which is a real and unavoidable case; manufacturing that case while
+	 *     idle is not what the ladder is for.
+	 *  3. **Setup is cheap and it is paid for early.** Minting a token and completing setup is
+	 *     ~0.5s, and arming at champion select spends it during the draft — so she is live before
+	 *     the loading screen finishes, and nothing about the reconnection is on the critical path
+	 *     of his first clear.
+	 *
+	 * Being live is still not permission to talk: `beat()` sends nothing until there is a
+	 * ground-truth block, so the draft and the loading screen warm the socket in silence.
+	 *
+	 * Starting is automatic because sharing is already the deliberate act, and it waits for a key
+	 * that actually works so it can never spend money on a connection that was going to fail.
 	 */
 	useEffect(() => {
-		if (!share.sharing || stoppedByHand) return
+		if (!share.sharing || !gate.armed || stoppedByHand) return
 		if (keyStatus === null || !keyStatus.ok) return
 		if (gem.status !== "off") return
 		void gem.start()
-	}, [share.sharing, stoppedByHand, keyStatus, gem])
+	}, [share.sharing, gate.armed, stoppedByHand, keyStatus, gem])
 
-	// The socket must not outlive the screen share that feeds it.
+	/**
+	 * Closing the socket, which is not quite the same instant as disarming.
+	 *
+	 * The gate flips the moment the nexus falls, and closing on that edge cuts her off mid-word —
+	 * a jarring artifact this change would otherwise have introduced all by itself, at the exact
+	 * moment of the game he most wants a sentence finished. So a game ending gets a few seconds of
+	 * grace to land the line she is already speaking. It costs nothing: `beat()` needs a
+	 * ground-truth block and there is none once the game is over, so no new turn can start.
+	 *
+	 * Pulling the share is different and immediate — that is him asking for it to stop.
+	 *
+	 * The deadline is absolute rather than a timer re-armed on each render. `gem` is a fresh object
+	 * every render, so a relative timeout would be cleared and restarted by her own transcript
+	 * arriving and might never fire at all.
+	 */
+	const disarmedAtRef = useRef<number | null>(null)
 	useEffect(() => {
-		if (!share.sharing && gem.status !== "off") gem.stop()
-		// A fresh share is a fresh intention: the last session's stop should not linger.
-		if (!share.sharing && stoppedByHand) setStoppedByHand(false)
-	}, [share.sharing, gem, stoppedByHand])
+		const wanted = share.sharing && gate.armed
+		if (wanted) {
+			disarmedAtRef.current = null
+			return
+		}
+		// A new game is a new intention: last game's "stop coaching" does not carry into it, the
+		// same way a fresh share never inherited the previous one's.
+		if (stoppedByHand) setStoppedByHand(false)
+		if (gem.status === "off") return
+		if (!share.sharing) {
+			gem.stop()
+			return
+		}
+		disarmedAtRef.current ??= Date.now()
+		const dueInMs = disarmedAtRef.current + POST_GAME_LINGER_MS - Date.now()
+		if (dueInMs <= 0) {
+			gem.stop()
+			return
+		}
+		const id = setTimeout(() => gem.stop(), dueInMs)
+		return () => clearTimeout(id)
+	}, [share.sharing, gate.armed, gem, stoppedByHand])
 
 	const openInWindows = async () => {
 		setOpening(true)
@@ -254,18 +361,43 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 	}
 
 	const needsKey = keyStatus !== null && !keyStatus.ok
+	/**
+	 * Why nothing is being sent, or null when the gate is open.
+	 *
+	 * This is the sentence that keeps a persistent share from reading as a hung feature. Between
+	 * games the coach is silent, the frame count has stopped moving and no dot is green — which is
+	 * indistinguishable from broken unless something says otherwise, and a coach that looks broken
+	 * gets switched off, taking the free graded review down with it.
+	 */
+	const standby = share.sharing ? standbyReason(gate) : null
 
 	if (compact)
 		return (
 			<div className="csk-screen csk-screen--compact">
-				<span className="csk-screen__dot" data-state={gem.status} />
+				<span
+					className="csk-screen__dot"
+					// Sharing-but-idle is its own state, not an off one. Without this the dot is the
+					// same grey in "waiting for your next game" as in "you never pressed share".
+					data-state={standby !== null && gem.status === "off" ? "standby" : gem.status}
+				/>
 				<span className="csk-screen__compactlabel">
 					{gem.status === "live" ?
 						`Coaching · ${gem.usage.turns} check-in${gem.usage.turns === 1 ? "" : "s"}`
 					: gem.status === "reconnecting" ?
 						"Coach reconnecting…"
+					: gem.status === "connecting" ?
+						"Coach connecting…"
+					: share.sharing && gate.armed && needsKey ?
+						// The journal half is running and free; only the voice is blocked. Saying
+						// only "needs a key" would hide the half that is actually working.
+						"Recording — the voice needs a key"
+					: share.sharing && gate.armed ?
+						"In a game — coach arming"
+					: share.sharing && !gate.reachable ?
+						"Sharing — can't reach fawnsei"
 					: share.sharing ?
-						"Screen shared — not coaching yet"
+						// Says the share survived, which is the thing he is checking for.
+						"Sharing — waiting for your next game"
 					: needsKey ?
 						"Live coach needs a key"
 					:	"Live coach"}
@@ -291,6 +423,15 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 						Share your screen and she watches it while you play, talking to you about a
 						second behind. She stays quiet unless she has something worth saying — most of
 						the time she says nothing, and that is on purpose.
+					</p>
+					{/*
+					 * Said BEFORE he shares, because it is the reason he can share once and forget
+					 * about it. Someone who thinks the share is live on his desktop all evening will
+					 * turn it off between games, which is the behaviour this change exists to remove.
+					 */}
+					<p>
+						Share once and leave it. Nothing is sent between games — she wakes up when you
+						hit champion select and goes quiet again when the game ends.
 					</p>
 				</div>
 				{share.sharing ?
@@ -398,16 +539,22 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 
 			{!wsl && !share.sharing && !needsKey && (
 				<div className="csk-screen__warn">
-					Your shared screen is sent to Google about twice a second while this is running,
-					and it is billed per frame — the running total shows while it's on. Your
-					microphone stays off until you turn it on.
+					During a game your shared screen is sent to Google once per check-in, and it is
+					billed per frame — the running total shows while it's on. Between games nothing
+					leaves this machine. Your microphone stays off until you turn it on.
 				</div>
 			)}
 
-			{!truthOk && gem.status === "live" && (
+			{!truthOk && (gem.status === "live" || gem.status === "reconnecting") && (
 				<div className="csk-screen__warn">
-					Can't reach the game data right now, so she's going on the picture alone — she'll be
-					vaguer until it comes back.
+					{/*
+					 * She now HOLDS OFF rather than carrying on from the picture, so this line no
+					 * longer promises a vaguer coach — it explains a silent one. Saying "she'll be
+					 * vaguer" about a coach that has stopped talking is the kind of small lie that
+					 * makes someone stop trusting the rest of the panel.
+					 */}
+					Can't reach the game data right now, so she's holding off rather than guessing from
+					the picture. She'll pick straight back up when it returns.
 				</div>
 			)}
 			{/*
@@ -426,22 +573,31 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 			)}
 			{/*
 			  * The journal's own line, shown whenever the screen is shared.
+			  * ONE line for what is happening right now, shown whenever the screen is shared.
 			  *
-			  * This is the whole difference from the feature it replaces: replay capture ran for
-			  * the app's entire life without ever completing once, and nothing on screen ever said
-			  * so. A frame count is checkable; "it's working" is not.
+			  * It carries the frame count, because that is the whole difference from the feature this
+			  * replaced: replay capture ran for the app's entire life without ever completing once and
+			  * nothing on screen ever said so. A number is checkable; "it's working" is not.			  *
+			  * It also carries the standby reason, in the same place, for the same reason — with the
+			  * share persisting, "no number is moving" is now the normal state between games and has
+			  * to be visibly deliberate rather than merely quiet.
 			  */}
 			{share.sharing && (
-				<div className={journal && journal.frames > 0 ? "csk-screen__journal on" : "csk-screen__journal"}>
-					{journal && journal.frames > 0 ?
+				<div className={journal && journal.frames > 0 && standby === null ? "csk-screen__journal on" : "csk-screen__journal"}>
+					{standby !== null ?
+						standby
+					: journal && journal.frames > 0 ?
 						<>
 							<b>Recording this game.</b> {journal.frames} frame
 							{journal.frames === 1 ? "" : "s"} saved — enough of them and this game gets graded
 							afterwards.
 						</>
+					: gate.inGame ?
+						<>Recording — the first frames are on their way.</>
 					:	<>
-							Not recording yet. Frames are only saved during a real game, so nothing is stored
-							in champ select, in a custom, or on your desktop.
+							{/* Armed but pre-game: champ select or the loading screen. */}
+							Getting ready. Frames are only saved once the game clock starts, so nothing is
+							stored during the draft.
 						</>
 					}
 				</div>
@@ -471,14 +627,29 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 						</button>
 					:	<button
 							className="btn btn-primary"
-							disabled={gem.status === "connecting"}
+							/*
+							 * Disabled off a game, because pressing it would connect and then be shut
+							 * straight back down by the gate — a button that visibly undoes itself is
+							 * worse than one that plainly cannot be pressed yet. The title says when it
+							 * comes back, so "disabled" never has to be guessed at.
+							 */
+							disabled={gem.status === "connecting" || !gate.armed}
+							title={
+								gate.armed ? undefined : (
+									"She starts herself at champion select — there's nothing to coach yet."
+								)
+							}
 							onClick={() => {
 								gem.unlockAudio()
 								setStoppedByHand(false)
 								void gem.start()
 							}}
 						>
-							{gem.status === "connecting" ? "Connecting…" : "Start coaching"}
+							{gem.status === "connecting" ?
+								"Connecting…"
+							: gate.armed ?
+								"Start coaching"
+							:	"Starts at champ select"}
 						</button>
 					}
 

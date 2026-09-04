@@ -100,9 +100,31 @@ src/shared/live-prompt.ts   the coach's system prompt (shared with the eval)
 src/server/routes/live.ts   buildLiveState / buildUnseen — the facts, computed and ranked
 src/review/gemini-live.ts   holds the API key, mints ephemeral tokens  (NODE ONLY)
 src/web/lib/useScreenShare  the shared screen + frame grabber
+src/web/lib/gameflow.ts     the phase gate: whether anything may be sent at all
 src/web/lib/geminiLive.ts   the WebSocket, audio out, mic in, reconnect
 scripts/eval-live.ts        replays real games through the real socket and scores it
 ```
+
+**The screen share persists across games; what is GATED is what gets sent.** He shares
+his whole monitor, not the League window, so making him pick a screen again between two
+games of one session is pure friction. The `MediaStream` therefore outlives the game and
+three things start and stop around it, on the client's own gameflow phase
+(`isCoachingPhase` in `shared/schema/lcu.ts`, served to the browser by
+`GET /api/live/phase`):
+
+- **journal frames** are only POSTed from `ChampSelect` onward — otherwise a screenshot of
+  his desktop was encoded, uploaded and refused every five seconds around the clock;
+- **the socket** opens at `ChampSelect` and closes when the game ends. One socket per game,
+  not per session: the model keeps the thread, and a socket spanning two games would carry
+  game one's roster into game two — the hallucination this app's whole design fights;
+- **a turn** is only sent once there is a ground-truth block to send with the frame, so the
+  draft and the loading screen warm the socket in silence and a failed ground-truth fetch
+  makes her go quiet rather than fall back to reading pixels.
+
+A `MediaStream` in a ref dies with its component, so persistence is a property of **where
+`<ScreenCoach>` is mounted**: `pages/Live.tsx` keeps it at a fixed position in one tree,
+and `App.tsx` keeps `<Live>` mounted on every route rather than only on `home`. Adding a
+condition above that component is how the OS screen picker comes back mid-session.
 
 **The Gemini key never reaches the browser.** It lives in `data/gemini.key` at
 0600, written through a write-only endpoint, and deliberately NOT in the settings

@@ -17,7 +17,7 @@
  *
  *   turns  — on a timer, each carrying ONE screen frame plus the ground-truth block. This is what
  *            makes her speak; video alone produces silence, since the model has no reason to take
- *            a turn.
+ *            a turn. A turn with no ground-truth block is not sent at all — see `beat()`.
  *   audio  — the microphone, 16kHz mono PCM, only while push-to-talk is held.
  *
  * Frames deliberately ride inside the turn rather than streaming through `realtimeInput.video` —
@@ -247,6 +247,8 @@ export interface GeminiLiveOptions {
 	 * it four times per turn meant most "X JUST died" lines were marked spoken and discarded
 	 * before the coach ever saw one. Computing it at the moment it is used makes those the same
 	 * event.
+	 *
+	 * **An empty string means "do not take this turn at all"** — see `beat()`.
 	 */
 	groundTruth: () => Promise<string>
 	/** Supplies a JPEG data URL of the shared screen, or null when not sharing. */
@@ -395,6 +397,18 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		if (!isRetry) {
 			wantLiveRef.current = true
 			attemptRef.current = 0
+			/*
+			 * A deliberate connect is a NEW SESSION, and now that the screen share persists across
+			 * games that is a distinction the screen has to make. Carrying the last game's lines and
+			 * check-in count into this one would show a running total against a game that has not
+			 * started — a number that reads as a measurement of this game and is not one, and a
+			 * transcript that mixes two games' advice into one list.
+			 *
+			 * A RETRY is the same session — the ephemeral token expiring mid-game — so it keeps both.
+			 * The durable record is the daemon's transcript either way; this is only the panel.
+			 */
+			setLines([])
+			setUsage({ totalTokens: 0, turns: 0 })
 		}
 		setError(null)
 		setStatus(isRetry ? "reconnecting" : "connecting")
@@ -630,6 +644,21 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		 */
 		const beat = async () => {
 			const truth = await optsRef.current.groundTruth()
+			/*
+			 * NO FACTS, NO TURN.
+			 *
+			 * The socket is opened at champion select so that setup and the token mint are paid for
+			 * before the clock starts, which means it is live through the draft and the loading
+			 * screen — minutes in which the in-game API on :2999 answers nothing and the only input
+			 * would be pixels. This is the guard that stops those turns being sent.
+			 *
+			 * It also covers the case that matters more: the ground-truth fetch FAILING mid-game.
+			 * The old handling substituted a "you have no data, probably say PASS" sentence and
+			 * sent the frame anyway, which is precisely the pixels-only mode that had her naming
+			 * champions who were not in the game. Going quiet is the honest failure, the panel says
+			 * so, and she picks straight back up on the next beat that has a block.
+			 */
+			if (truth.trim() === "") return
 			truthInFlight.current = truth
 			const frame = optsRef.current.grabFrame()
 			const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = []

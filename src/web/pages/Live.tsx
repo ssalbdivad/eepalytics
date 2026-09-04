@@ -31,6 +31,7 @@
 import { useEffect, useState } from "react"
 import type { LiveResponse } from "../../shared/schema/api.ts"
 import { api } from "../lib/api.ts"
+import { armedHeadline, useGameflow } from "../lib/gameflow.ts"
 import { categoryLabel } from "../lib/format.ts"
 import { ScreenCoach } from "../components/ScreenCoach.tsx"
 import { LiveTranscript } from "../components/LiveTranscript.tsx"
@@ -78,6 +79,15 @@ export const Live = () => {
 	const [data, setData] = useState<LiveResponse | null>(null)
 	const [err, setErr] = useState<string | null>(null)
 	const size = useSize()
+	/*
+	 * Shared with `<ScreenCoach>` through one refcounted poller, so the header and the coach panel
+	 * cannot disagree about whether a game is starting. They used to: :2999 says "no game" right
+	 * through champion select, so the header read "Not in a game" while the coach below it was
+	 * already arming.
+	 */
+	const gate = useGameflow()
+	/** Non-null through champion select and the loading screen — the window :2999 cannot see. */
+	const starting = armedHeadline(gate)
 
 	useEffect(() => {
 		let live = true
@@ -161,8 +171,12 @@ export const Live = () => {
 				<div className="live__idlewrap">
 					<div className="live__idle">
 						<img className="live__mark" src="/icons/icon-128.png" alt="" width={size === "wide" ? 44 : 22} height={size === "wide" ? 44 : 22} />
-						<strong>Not in a game</strong>
-						<span>{data.reason ?? "waiting"}</span>
+						<strong>{starting ?? "Not in a game"}</strong>
+						<span>
+							{starting !== null ?
+								"Your numbers appear as soon as the game clock starts."
+							:	(data.reason ?? "waiting")}
+						</span>
 					</div>
 
 					{data.focus && data.focus.length > 0 && (

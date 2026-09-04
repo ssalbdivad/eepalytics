@@ -222,8 +222,37 @@ export const App = () => {
 						<ClientOffline health={h} />
 					</div>
 				)}
-				{route.name === "home" ?
+				{/*
+				 * The coach is MOUNTED ON EVERY ROUTE and merely hidden off its own screen.
+				 *
+				 * `<Live>` owns `<ScreenCoach>`, which owns the `MediaStream` and the Gemini socket.
+				 * Rendering it only on `home` meant a click on History or Trends unmounted the whole
+				 * chain: the screen-share tracks were stopped, the socket closed, and coming back
+				 * needed a fresh trip through the OS screen picker. Looking up last game's numbers
+				 * between queues is a completely reasonable thing to do mid-session, and it should
+				 * not cost him the share.
+				 *
+				 * `display: none` rather than a conditional, which is the technique this app already
+				 * uses one level down for the compact overlay — same reason, same trade. It keeps the
+				 * 3s `/api/live` poll running while hidden, which is not waste: it is what lets the
+				 * journal keep recording and the coach keep talking while he reads a review.
+				 *
+				 * `contents` rather than `block` when visible: `.app` is a flex column and `.live` is
+				 * sized as one of its items (`min-height: 100vh`). A wrapper that generated a box
+				 * would become the flex item instead and quietly resize the coach. `contents` keeps
+				 * the layout identical to rendering `<Live>` here directly — this wrapper exists to
+				 * hold a `display` toggle, not to participate in layout.
+				 *
+				 * ErrorBoundary's three children — banner, this, the route — are a FIXED-ARITY list,
+				 * so React reconciles them by position and this element never moves. That is
+				 * load-bearing: a shifting index is exactly how the coach used to get unmounted on
+				 * the idle -> in-game flip.
+				 */}
+				<div style={{ display: route.name === "home" ? "contents" : "none" }}>
 					<Live />
+				</div>
+				{route.name === "home" ?
+					null
 				: route.name === "debrief" ?
 					<Debrief gameId={route.gameId} />
 				: route.name === "games" ?

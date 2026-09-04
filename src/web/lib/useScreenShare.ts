@@ -13,6 +13,25 @@
  * at 1536 the same model got it right. Ally and enemy portraits are ~25px at 1024 and ~38px at
  * 1536, which is the difference between "unsure" and a name. The extra pixels cost a couple of
  * hundred milliseconds and no accuracy is worth that trade in the other direction.
+ *
+ * ## The stream is meant to outlive the game — and it is only as durable as its mount point
+ *
+ * He shares his whole MONITOR, not the League window, so one share covers a whole session and
+ * there is no honest reason to make him pick a screen again between two games. Nothing in this
+ * hook ends a share on its own: it ends when he presses stop, when he ends it from the OS chrome
+ * (the `ended` listener below), or when the component unmounts.
+ *
+ * That last one is the fragile one, and it is not fixable from in here — a `MediaStream` held in
+ * a ref dies with its component, so persistence is a property of WHERE `<ScreenCoach>` is
+ * mounted. Two places have already had to be fixed for it and both are commented on site:
+ * `pages/Live.tsx` renders the coach at a fixed position in one tree rather than in three
+ * structurally different returns, and `App.tsx` keeps `<Live>` mounted on every route rather than
+ * only on `home`. Before adding a third conditional above this component, check that it cannot
+ * unmount, because the symptom is not a crash — it is the OS screen picker reappearing at the
+ * start of the next game.
+ *
+ * The unmount teardown stays regardless. Leaking a live capture of someone's monitor because a
+ * component went away is the worse failure of the two.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react"
