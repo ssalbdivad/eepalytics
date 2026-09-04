@@ -3,9 +3,9 @@
  *
  * ## What this is, honestly
  *
- * Not a running commentary. A vision call takes ten to thirty seconds, so this observes the
- * screen periodically — a glance every N seconds, not continuous analysis. The UI says so and
- * the interval is the user's to set, because the interval IS the cost.
+ * Not a running commentary. A vision call takes about three to four seconds, so this observes
+ * the screen periodically — a glance every N seconds, not continuous analysis. The UI says so
+ * and the interval is the user's to set, because the interval IS the cost.
  *
  * ## Why the output must be one sentence
  *
@@ -13,11 +13,20 @@
  * cannot read it while fighting, and TTS turns it into thirty seconds of talking over the game.
  * One sentence, or silence.
  *
- * ## Silence is the default, not the fallback
+ * ## It speaks every time
  *
- * Most frames of most games contain nothing worth interrupting someone for. A coach that speaks
- * every fifteen seconds becomes noise within a minute, and noise gets muted. The prompt makes
- * saying nothing the expected outcome and gives an explicit token for it.
+ * The first design made silence the default and gave the model a `PASS` token for it. Measured
+ * against a real game that produced twenty consecutive silent glances — $0.15 spent, twenty
+ * calls made, not one word said — and a silent coach is indistinguishable from a broken one.
+ *
+ * The cost is in *looking*, not in answering: the frame is the expensive half of the call and it
+ * is uploaded either way. So a glance that says nothing has already spent the money and thrown
+ * the value away. It now always says its one sentence, and the interval — which the user sets —
+ * is the thing that controls both noise and cost.
+ *
+ * This does not loosen the evidence rules. "Say something every time" is not permission to
+ * invent; when a frame holds nothing dramatic, the answer is a small true thing that is legible
+ * on screen, not a big invented one.
  *
  * ## The same evidence rule as everywhere else
  *
@@ -36,8 +45,13 @@ const log = makeLogger("live-vision")
 /** Short: a stale observation is worse than none, and the caller is on a timer. */
 const CLI_TIMEOUT_MS = Number((process.env.FAWNSEI_LIVE_VISION_TIMEOUT_MS ?? process.env.CSK_LIVE_VISION_TIMEOUT_MS) ?? 45_000)
 
-/** The model says this when there is nothing worth saying. Cheaper than a sentence about nothing. */
-export const NOTHING = "PASS"
+/**
+ * Legacy silence token, kept only as a guard.
+ *
+ * The prompt no longer offers it and no longer wants it, but a model that emits it anyway should
+ * not have the literal word "PASS" spoken aloud mid-fight.
+ */
+const NOTHING = "PASS"
 
 export interface LiveObservation {
 	ok: boolean
@@ -75,16 +89,23 @@ const prompt = (input: LiveVisionInput): string => {
 			"unknown"
 		:	`${Math.floor(input.gameTimeSec / 60)}:${String(Math.floor(input.gameTimeSec % 60)).padStart(2, "0")}`
 
+	const scene = `The image attached to this message is a screenshot of a live League of
+Legends game${input.championName ? `, played by the ${input.championName} player` : ""}. Game
+clock: ${clock}.`
+
+	const working =
+		input.focus && input.focus.length > 0 ?
+			`\n## What they are working on\n\n${input.focus.map(f => `- ${f}`).join("\n")}\n`
+		:	""
+
 	const asked = (input.question ?? "").trim()
 
 	/*
-	 * A question changes the contract completely. Unprompted, silence is almost always right;
-	 * asked directly, silence is just unhelpful. The evidence rules do not move either way.
+	 * A question changes the shape of the answer — two sentences instead of one, and answering
+	 * the thing asked rather than choosing what is worth saying. The evidence rules do not move.
 	 */
 	if (asked !== "")
-		return `The image attached to this message is a screenshot of a live League of
-Legends game${input.championName ? `, played by the ${input.championName} player` : ""}. Game
-clock: ${clock}.
+		return `${scene}
 
 They just asked you, out loud, mid-game:
 
@@ -97,48 +118,45 @@ Answer it. Two short sentences at most — it will be read or spoken while they 
   a real answer and a useful one.
 - No preamble, no restating the question, no markdown. Just the answer.
 - If it is a judgement call, give your actual opinion — they asked for it.
-${input.focus && input.focus.length > 0 ? `\nThey are working on: ${input.focus.join("; ")}\n` : ""}`
+${working}`
 
-	return `The image attached to this message is a screenshot of a live League of
-Legends game${input.championName ? `, played by the ${input.championName} player` : ""}. Game
-clock: ${clock}.
+	return `${scene}
 
-You are their coach, watching over their shoulder. Say AT MOST one short sentence.
+You are their coach, watching over their shoulder. Say exactly ONE short sentence. You speak on
+every glance — there is no option to stay quiet, so always have something.
 
-## Say nothing most of the time
+## What to say, in priority order
 
-Reply with exactly \`${NOTHING}\` unless there is something genuinely worth interrupting them
-for. That is the expected answer. A coach who speaks every fifteen seconds becomes noise inside
-a minute, and noise gets muted.
+1. **A warning, if this frame shows one.** An objective spawning or being taken, someone
+   overextended and about to die, a fight starting they are out of position for, a recall they
+   should take now. This beats everything below it.
+2. **Hype, if this frame shows something good.** A multi-kill, a steal, a save, surviving what
+   should have killed them, a fight they had no business winning. Be delighted about it.
+3. **Otherwise, the most useful concrete thing you can actually read.** A number off the HUD, an
+   objective timer, their health or gold, where someone is standing. Small and true beats big and
+   invented — a quiet frame gets a quiet observation, not a manufactured emergency.
 
-**Worth speaking for — a warning:** an objective about to spawn or being taken, a lane visibly
-overextended and about to die, an obvious free play on screen, a recall they should take now, a
-fight starting they are not in position for.
+Not in a game at all? Say what is genuinely on screen — shop, loading, death cam, menu — in one
+warm line. That is a real answer, not a failure.
 
-**Worth speaking for — a genuinely sick play.** If the frame SHOWS something went well, say so:
-a multi-kill, a steal, a save, surviving what should have killed them, a fight they had no
-business winning. A coach who only ever warns is a coach you mute.
+## Voice
 
-Be warm and a little unhinged about it — you are Lillia, so dreams, sleep, pollen and prancing
-are yours to use. "That was CRIMINAL, they need a nap after that." "Bough down." Never force a
-pun, never reuse one, and never fake it for something ordinary: praise spent on a normal recall
-is praise that means nothing when the real moment comes. If you cannot tell it was impressive,
-stay quiet.
-
-**Not worth speaking for:** anything they can already see, general advice, vague encouragement
-with nothing behind it, observations about the score, or anything you said recently.
+You are Lillia: dreamy, warm, slightly unhinged, and dreams, sleep, pollen and prancing are all
+yours. "Bough down." "They need a nap after that." Never force a pun, never reuse one listed
+below, and never fake enthusiasm for something ordinary — praise spent on a normal recall is
+praise that means nothing when the real moment comes.
 
 ## Rules
 
-- **Only what is legible in this frame.** You cannot see cooldowns you cannot read, what happened
-  before, or what they intend. Do not guess at any of it.
-- **One sentence, under 100 characters.** It may be spoken aloud while they are playing.
-- **Imperative and immediate** when it is a warning: "Back off, three missing top" — not "you
-  might consider". When it is praise, just be delighted; there is nothing to instruct.
-- No preamble, no markdown, no quotes. The sentence or \`${NOTHING}\`.
-${input.focus && input.focus.length > 0 ? `\n## What they are working on\n\n${input.focus.map(f => `- ${f}`).join("\n")}\n` : ""}${
+- **Only what is legible in this frame.** Not cooldowns you cannot see, not what happened before
+  it, not what they intend. Speaking every time is not permission to invent.
+- **One sentence, under 100 characters.** It may be spoken aloud while they are fighting.
+- **Imperative and immediate** for a warning: "Back off, three missing top". For praise, just be
+  delighted; there is nothing to instruct.
+- No preamble, no markdown, no quotes. Just the sentence.
+${working}${
 		input.recent && input.recent.length > 0 ?
-			`\n## You recently said — do not repeat these\n\n${input.recent.map(r => `- ${r}`).join("\n")}\n`
+			`\n## You just said these — do not repeat them\n\n${input.recent.map(r => `- ${r}`).join("\n")}\n`
 		:	""
 	}`
 }
@@ -150,12 +168,24 @@ export const observeFrame = async (
 ): Promise<LiveObservation> => {
 	const started = Date.now()
 	const bin = process.env.FAWNSEI_CLAUDE_BIN ?? process.env.CSK_CLAUDE_BIN ?? "claude"
-	// Deliberately the small model: this runs every N seconds and the task is "look and mostly
-	// say nothing", which does not need the expensive one.
+	/*
+	 * Sonnet, not Haiku — measured, against the intuition that a small task wants a small model.
+	 *
+	 * On one real 1024px game frame with this prompt, three runs each:
+	 *
+	 *   haiku-4-5   median 15.3s   ~1551 output tokens   $0.0113   misread the drake timer
+	 *   fable-5-1   median  4.7s     ~36 output tokens   $0.0361   correct
+	 *   sonnet-5    median  3.9s     ~34 output tokens   $0.0058   correct
+	 *
+	 * Haiku is slower AND dearer AND wrong here. It spends 1500 tokens deliberating its way to
+	 * one sentence, and on this frame it read "Chemtech Drake in 7s" as a teammate respawning.
+	 * Sonnet answers in ~34 tokens because it simply reads the screen. Output tokens are the
+	 * latency on this path, so the model that thinks least is the fastest one.
+	 */
 	const model =
 		process.env.FAWNSEI_LIVE_VISION_MODEL ??
 		process.env.CSK_LIVE_VISION_MODEL ??
-		"claude-haiku-4-5-20251001"
+		"claude-sonnet-5"
 
 	return await new Promise<LiveObservation>(resolve => {
 		let proc
@@ -233,7 +263,27 @@ export const observeFrame = async (
 			}
 
 			const cleaned = raw.trim().replace(/^["'`]+|["'`]+$/g, "").trim()
-			const nothing = cleaned === "" || cleaned.toUpperCase().startsWith(NOTHING)
+			/*
+			 * Exact match, deliberately not a prefix.
+			 *
+			 * `startsWith` swallowed any real sentence that happened to open with the word —
+			 * "Pass on this fight, you are down two" is advice, and it silently became silence.
+			 * The trailing-period form is the only variant worth tolerating.
+			 */
+			const upper = cleaned.toUpperCase()
+			const nothing = cleaned === "" || upper === NOTHING || upper === `${NOTHING}.`
+			/*
+			 * Log every glance, including the silent ones.
+			 *
+			 * This path built a logger and never called it, so a coach that had said nothing for
+			 * twenty consecutive calls looked exactly like a coach that was working. An empty
+			 * answer is now unexpected, which makes it worth a line.
+			 */
+			log.info(
+				`glance ${Date.now() - started}ms $${(costUsd ?? 0).toFixed(4)} -> ${
+					nothing ? "(empty)" : JSON.stringify(cleaned.slice(0, 120))
+				}`
+			)
 			resolve({
 				ok: true,
 				text: nothing ? "" : cleaned,

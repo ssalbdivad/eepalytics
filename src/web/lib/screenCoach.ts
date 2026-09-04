@@ -3,8 +3,8 @@
  *
  * ## The honest shape of this
  *
- * It is NOT continuous analysis. A vision call takes ten to thirty seconds, so this is a glance
- * on an interval — and the interval is the cost, which is why the user sets it and why the
+ * It is NOT continuous analysis. A vision call takes about three to four seconds, so this is a
+ * glance on an interval — and the interval is the cost, which is why the user sets it and why the
  * running total is on screen rather than discovered later.
  *
  * ## Never overlap
@@ -233,7 +233,7 @@ export const useScreenCoach = () => {
 					body: JSON.stringify({
 						frame,
 						recent: recentRef.current,
-						...(contextRef.current ?? {})
+							...(contextRef.current ?? {})
 					})
 				})
 				const out = (await res.json()) as {

@@ -8,8 +8,8 @@
  *   - **It costs money per glance.** The interval IS the cost, so the interval is a control and
  *     the running total is on screen while it runs.
  *
- * It is also not continuous, and says so: a vision call takes ten to thirty seconds, so this
- * glances periodically. Calling it "live analysis" would set an expectation the thing cannot meet.
+ * It is also not continuous, and says so: a vision call takes about three to four seconds, so
+ * this glances periodically. Calling it "live analysis" would set an expectation it cannot meet.
  */
 
 import { useState } from "react"
@@ -18,14 +18,15 @@ import "./components.css"
 
 const INTERVALS = [15, 30, 60, 120]
 
+
 /**
  * Pre-start estimate only; the real measured cost replaces it after the first glance.
  *
- * 0.012 rather than a rounder guess because a real call was measured at $0.0159 on a large PNG.
- * A frame from this hook is downscaled JPEG and cheaper, but quoting an optimistic number for
- * something that spends money every thirty seconds is the wrong direction to be wrong in.
+ * Measured, not guessed: $0.0090 per glance across four consecutive calls on a real 1024px game
+ * frame with this prompt. Rounded up rather than down — quoting an optimistic number for
+ * something that spends money every fifteen seconds is the wrong direction to be wrong in.
  */
-const ESTIMATE_PER_CALL = 0.012
+const ESTIMATE_PER_CALL = 0.009
 
 const fmtTime = (ms: number): string =>
 	new Date(ms).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
@@ -74,9 +75,10 @@ export const ScreenCoach = () => {
 				<div>
 					<strong>Watch my screen</strong>
 					<p>
-						The coach glances at your screen every {coach.intervalSec}s and says something only
-						when it is worth interrupting you. It is not continuous — a look takes 10–30
-						seconds.
+						The coach looks at your screen every {coach.intervalSec}s and says something every
+						time — a warning if you need one, hype if you earned it, otherwise whatever it
+						can actually see. Each look takes about 3 seconds, so the interval is the
+						cost.
 					</p>
 				</div>
 				{coach.sharing ?
@@ -152,11 +154,13 @@ export const ScreenCoach = () => {
 
 			{coach.error !== null && <div className="csk-screen__err">{coach.error}</div>}
 
+			{/*
+			  * Only ever shown before the first answer lands. The coach speaks on every glance
+			  * now, so an empty log past that point means something is wrong rather than quiet —
+			  * and `coach.error` is what says so.
+			  */}
 			{coach.sharing && coach.observations.length === 0 && (
-				<div className="csk-screen__quiet">
-					Nothing worth saying yet. That is the normal state — most of a game does not need a
-					coach talking over it.
-				</div>
+				<div className="csk-screen__quiet">Looking at your screen…</div>
 			)}
 
 			{coach.observations.length > 0 && (
