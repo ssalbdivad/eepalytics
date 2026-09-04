@@ -310,6 +310,8 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 						// off to the Windows browser rather than opening a picker that cannot show
 						// League. One press, no second decision.
 						onClick={() => {
+							// A real click, which is the only thing that can start audio output.
+							gem.unlockAudio()
 							void (wsl ? openInWindows() : share.start()).catch(() => {
 								/* both set their own error state; this only stops an unhandled rejection */
 							})
@@ -457,6 +459,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 							className="btn btn-primary"
 							disabled={gem.status === "connecting"}
 							onClick={() => {
+								gem.unlockAudio()
 								setStoppedByHand(false)
 								void gem.start()
 							}}
@@ -464,6 +467,12 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 							{gem.status === "connecting" ? "Connecting…" : "Start coaching"}
 						</button>
 					}
+
+					{gem.audioBlocked && (
+						<button className="csk-screen__unmute" onClick={() => gem.unlockAudio()}>
+							🔇 Your browser is holding the sound back — click to let her talk
+						</button>
+					)}
 
 					<span className="csk-screen__label">Checks in every</span>
 					{TURN_CHOICES.map(sec => (

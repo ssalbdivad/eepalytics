@@ -2129,3 +2129,21 @@ button.csk-chip:focus-visible,
 .csk-screen__journal b {
 	color: var(--text);
 }
+
+/*
+ * The unmute prompt. Loud on purpose: the failure it reports is silent, and a quiet notice about
+ * silence is one nobody reads.
+ */
+.csk-screen__unmute {
+	border: 1px solid var(--warn, #c2884a);
+	background: color-mix(in srgb, var(--warn, #c2884a) 14%, transparent);
+	color: var(--fg, inherit);
+	border-radius: 8px;
+	padding: 6px 12px;
+	font: inherit;
+	font-size: 12.5px;
+	cursor: pointer;
+}
+.csk-screen__unmute:hover {
+	background: color-mix(in srgb, var(--warn, #c2884a) 24%, transparent);
+}

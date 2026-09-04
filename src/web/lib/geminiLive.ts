@@ -22,7 +22,8 @@
  *
  * Frames deliberately ride inside the turn rather than streaming through `realtimeInput.video` —
  * see `beat()`, where the measurement is. Streamed frames were not reaching the answer, and the
- * model filled the gap with generic advice that fit any game ever played.
+ * model filled the gap with generic advice that fit any game ever played. It also, separately,
+ * loses the voice: streaming silences the audio outright. Both measurements are in `beat()`.
  *
  * ## Why the page talks to Google directly
  *
@@ -102,6 +103,16 @@ const bytesToB64 = (bytes: Uint8Array): string => {
 }
 
 /**
+ * Which of Google's prebuilt voices she speaks in.
+ *
+ * Gemini Live has no voice cloning, and building one from Lillia's own game clips would mean
+ * copying a named voice actor's performance — so this is a casting decision, not a synthesis
+ * problem: pick the prebuilt voice that sounds most like her. The candidates were auditioned on
+ * a real coaching line; `scripts/voices.mjs` regenerates the samples.
+ */
+const VOICE = "Vindemiatrix"
+
+/**
  * Play 16-bit PCM as it arrives, gapless.
  *
  * Each chunk is scheduled against a running cursor rather than played on arrival, because
@@ -111,16 +122,77 @@ const bytesToB64 = (bytes: Uint8Array): string => {
 class PcmPlayer {
 	#ctx: AudioContext | null = null
 	#cursor = 0
+	/**
+	 * Every source scheduled and not yet finished.
+	 *
+	 * Tracked so a barge-in can stop sound that is already queued AHEAD of the cursor. Without
+	 * this list the only way to cut her off was to close the whole context, which is what the
+	 * previous version did on every `interrupted` — churning a fresh AudioContext per turn, and
+	 * throwing away the one thing that is expensive to get back (see `unlock`).
+	 */
+	#live = new Set<AudioBufferSourceNode>()
+	/** Chunks actually handed to the hardware. The number that makes "no sound" diagnosable. */
+	played = 0
+	/**
+	 * True when the browser is refusing to start audio until the page is clicked.
+	 *
+	 * This used to be swallowed by a bare `void ctx.resume()`. A rejected resume is precisely the
+	 * "she looks like she is talking and I hear nothing" failure, and it is invisible unless
+	 * something reports it — so it is state, and the UI shows it.
+	 */
+	blocked = false
+	onChange: (() => void) | null = null
+
+	#note() {
+		this.onChange?.()
+	}
+
+	/** The context, created on demand. Kept for the life of the session. */
+	#context(): AudioContext {
+		this.#ctx ??= new AudioContext({ sampleRate: OUT_RATE })
+		return this.#ctx
+	}
+
+	/**
+	 * Start (or restore) audio output. MUST be reachable from a click.
+	 *
+	 * Chrome will not run an AudioContext for a page that has never been interacted with, and the
+	 * coach starts on its own once the screen is shared — so nothing on the speaking path is ever
+	 * a user gesture. Sharing the screen IS a click, which is where this is called from.
+	 */
+	async unlock(): Promise<boolean> {
+		try {
+			const ctx = this.#context()
+			if (ctx.state === "suspended") await ctx.resume()
+			const ok = ctx.state === "running"
+			if (this.blocked !== !ok) {
+				this.blocked = !ok
+				this.#note()
+			}
+			return ok
+		} catch {
+			if (!this.blocked) {
+				this.blocked = true
+				this.#note()
+			}
+			return false
+		}
+	}
 
 	play(bytes: Uint8Array) {
-		this.#ctx ??= new AudioContext({ sampleRate: OUT_RATE })
-		const ctx = this.#ctx
+		const ctx = this.#context()
 		/*
-		 * A context can be created or restored in the "suspended" state — autoplay policy, or the
-		 * tab having been backgrounded. Scheduling into a suspended context succeeds silently and
-		 * plays nothing, which presents as a coach that has stopped talking for no reason.
+		 * A context can be suspended by autoplay policy or by the tab being backgrounded.
+		 * Scheduling into it succeeds silently and plays nothing, so the state is recorded rather
+		 * than ignored; `unlock` on the next click is what clears it.
 		 */
-		if (ctx.state === "suspended") void ctx.resume()
+		if (ctx.state === "suspended") {
+			void this.unlock()
+			if (!this.blocked) {
+				this.blocked = true
+				this.#note()
+			}
+		}
 		const pcm = new Int16Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.byteLength / 2))
 		if (pcm.length === 0) return
 		const buf = ctx.createBuffer(1, pcm.length, OUT_RATE)
@@ -131,15 +203,38 @@ class PcmPlayer {
 		src.connect(ctx.destination)
 		const now = ctx.currentTime
 		if (this.#cursor < now) this.#cursor = now
+		src.onended = () => this.#live.delete(src)
+		this.#live.add(src)
 		src.start(this.#cursor)
 		this.#cursor += buf.duration
+		this.played += 1
+		if (this.played === 1) this.#note()
 	}
 
-	/** Cut the coach off — used when the player starts talking, and on stop. */
+	/**
+	 * Cut her off — barge-in, and stop.
+	 *
+	 * Stops what is scheduled and resets the cursor, but KEEPS the context: it is the same output
+	 * device either way, and re-creating one costs an unlock the page may no longer be able to
+	 * perform.
+	 */
 	silence() {
+		for (const src of this.#live) {
+			try {
+				src.stop()
+			} catch {
+				// Already finished between the callback firing and this loop. Nothing to stop.
+			}
+		}
+		this.#live.clear()
+		this.#cursor = 0
+	}
+
+	/** Give the device back. Only on unmount — `silence` is what a barge-in wants. */
+	close() {
+		this.silence()
 		void this.#ctx?.close()
 		this.#ctx = null
-		this.#cursor = 0
 	}
 }
 
@@ -173,7 +268,12 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	const [usage, setUsage] = useState<GeminiUsage>({ totalTokens: 0, turns: 0 })
 
 	const wsRef = useRef<WebSocket | null>(null)
-	const playerRef = useRef(new PcmPlayer())
+	const playerRef = useRef<PcmPlayer | null>(null)
+	playerRef.current ??= new PcmPlayer()
+	const player = playerRef.current
+	/** Re-renders when the player starts being blocked, or plays its first chunk. */
+	const [audio, setAudio] = useState({ blocked: false, played: 0 })
+	player.onChange = () => setAudio({ blocked: player.blocked, played: player.played })
 	const optsRef = useRef(opts)
 	optsRef.current = opts
 	/** Transcript arrives in fragments; they are joined until the turn completes. */
@@ -225,6 +325,34 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg))
 	}, [])
 
+	/**
+	 * Turn the speakers on. Safe to call repeatedly; only a click makes it succeed.
+	 *
+	 * Exposed because the caller knows which of its handlers are real user gestures and this file
+	 * does not. Sharing the screen is the reliable one.
+	 */
+	const unlockAudio = useCallback(() => void player.unlock(), [player])
+
+	/*
+	 * The fallback: the FIRST click anywhere on the page also tries.
+	 *
+	 * Belt and braces on purpose. The failure this guards against is silent by nature — she is
+	 * talking, the transcript scrolls, and nothing comes out of the speakers — so it is worth
+	 * catching from more than one direction.
+	 */
+	useEffect(() => {
+		const onGesture = () => void player.unlock()
+		window.addEventListener("pointerdown", onGesture)
+		window.addEventListener("keydown", onGesture)
+		return () => {
+			window.removeEventListener("pointerdown", onGesture)
+			window.removeEventListener("keydown", onGesture)
+		}
+	}, [player])
+
+	// The output device is given back when the coach leaves the page, and only then.
+	useEffect(() => () => player.close(), [player])
+
 	const stop = useCallback(() => {
 		wantLiveRef.current = false
 		if (reconnectRef.current) clearTimeout(reconnectRef.current)
@@ -232,13 +360,13 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		attemptRef.current = 0
 		wsRef.current?.close()
 		wsRef.current = null
-		playerRef.current.silence()
+		player.silence()
 		micRef.current?.stream.getTracks().forEach(t => t.stop())
 		void micRef.current?.ctx.close()
 		micRef.current = null
 		setMicOn(false)
 		setStatus("off")
-	}, [])
+	}, [player])
 
 	const connect = useCallback(async (isRetry: boolean) => {
 		if (!isRetry) {
@@ -287,7 +415,10 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					JSON.stringify({
 						setup: {
 							model: tok.model,
-							generationConfig: { responseModalities: ["AUDIO"] },
+							generationConfig: {
+								responseModalities: ["AUDIO"],
+								speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } } }
+							},
 							// Native audio out gives a voice but no words; this is how the log gets text.
 							outputAudioTranscription: {},
 							inputAudioTranscription: {},
@@ -323,7 +454,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				 * The player started talking, so stop talking over them. This is the whole reason
 				 * a live socket feels different from a glance: it can be interrupted.
 				 */
-				if (sc.interrupted) playerRef.current.silence()
+				if (sc.interrupted) player.silence()
 
 				if (sc.inputTranscription?.text) {
 					const said = sc.inputTranscription.text
@@ -359,7 +490,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					}
 					if (t.length >= 5 || /^[^p]/i.test(t)) {
 						turnDecided.current = "speak"
-						for (const chunk of pendingAudio.current) playerRef.current.play(chunk)
+						for (const chunk of pendingAudio.current) player.play(chunk)
 						pendingAudio.current = []
 					}
 				}
@@ -368,7 +499,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				for (const p of sc.modelTurn?.parts ?? []) {
 					if (!p.inlineData?.data) continue
 					const bytes = b64ToBytes(p.inlineData.data)
-					if (turnDecided.current === "speak") playerRef.current.play(bytes)
+					if (turnDecided.current === "speak") player.play(bytes)
 					else if (turnDecided.current === "unknown") {
 						pendingAudio.current.push(bytes)
 						decide()
@@ -384,7 +515,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					 * can hear is recoverable, silence with no explanation is not.
 					 */
 					if (turnDecided.current === "unknown" && !/^pass\b/i.test(text))
-						for (const chunk of pendingAudio.current) playerRef.current.play(chunk)
+						for (const chunk of pendingAudio.current) player.play(chunk)
 					const declined = turnDecided.current === "pass" || /^pass\b/i.test(text)
 					partialRef.current = ""
 					pendingAudio.current = []
@@ -457,6 +588,22 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		 *
 		 * Inline is also ~10x cheaper: one billed image per turn instead of one every two seconds.
 		 * The only thing given up is continuous video the model was demonstrably not using.
+		 *
+		 * Re-measured when the coach went silent, because a single probe had suggested the inline
+		 * image was what suppressed the audio. It is not, and the probe was wrong. Six turns on
+		 * one socket, one Kindred screenshot, asking only what the pixels could answer:
+		 *
+		 *                                 audio turns   named the champion   first audio
+		 *   inlineData inside the turn        6/6              5/6              855ms
+		 *   stream + ask 700ms later          6/6              0/6              825ms
+		 *   stream + ask 1200ms later         0/6              0/6                 —
+		 *   stream 1s continuous + 700ms      0/6              0/6                 —
+		 *
+		 * The streamed rows are the worse failure, and not by a little: every one of them named a
+		 * champion that was not on the screen — "Jinx", then "Jhin", confidently, six times each.
+		 * That is the hallucination this app was rebuilt to stop, and it comes back the moment the
+		 * picture stops riding inside the turn. Do not switch this to streaming to fix a silence;
+		 * the silence was never here (it was the output path — see `PcmPlayer.unlock`).
 		 */
 		const beat = async () => {
 			const truth = await optsRef.current.groundTruth()
@@ -533,7 +680,24 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 
 	useEffect(() => stop, [stop])
 
-	return { status, lines, error, turnMs, setTurnMs, micOn, setMic, start, stop, ask, usage }
+	return {
+		status,
+		lines,
+		error,
+		turnMs,
+		setTurnMs,
+		micOn,
+		setMic,
+		start,
+		stop,
+		ask,
+		usage,
+		unlockAudio,
+		/** True when the browser is holding the sound back until the page is clicked. */
+		audioBlocked: audio.blocked,
+		/** Chunks actually played. Zero while she is talking means the sound is going nowhere. */
+		audioPlayed: audio.played
+	}
 }
 
 /* --------------------------------------------------------------- internals */
