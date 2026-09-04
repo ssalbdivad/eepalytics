@@ -411,6 +411,20 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 				</div>
 			)}
 			{/*
+			 * The other half of "What she said, earlier" being empty.
+			 *
+			 * That panel can tell you it failed to READ. Only this side knows whether the lines were
+			 * ever WRITTEN, and this list is the only copy of them until they are — so a lost line is
+			 * said out loud rather than left to be discovered as a blank transcript after the game.
+			 */}
+			{gem.unsaved > 0 && (
+				<div className="csk-screen__warn">
+					<b>{gem.unsaved}</b> line{gem.unsaved === 1 ? "" : "s"} couldn't be saved to fawnsei,
+					so {gem.unsaved === 1 ? "it is" : "they are"} only here — they won't appear in "What
+					she said, earlier" after the game. Check the daemon is still running.
+				</div>
+			)}
+			{/*
 			  * The journal's own line, shown whenever the screen is shared.
 			  *
 			  * This is the whole difference from the feature it replaces: replay capture ran for

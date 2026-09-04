@@ -194,30 +194,80 @@ export interface TranscriptLine {
 	groundTruth?: string
 }
 
-export const appendTranscript = (line: TranscriptLine): void => {
+/**
+ * How many lines a read returns when it is not told, and the most it will ever return.
+ *
+ * Both are named because a bad `limit` used to be indistinguishable from an empty transcript:
+ * `?limit=` parses to 0, `out.length < 0` is false on the first pass, and the endpoint answered
+ * `{lines: []}` — which the panel renders as "nothing recorded yet" over a file with a game in
+ * it. A limit that cannot be read is a limit that was not given.
+ */
+export const TRANSCRIPT_DEFAULT_LIMIT = 200
+const TRANSCRIPT_MAX_LIMIT = 5000
+
+/** Clamp a `?limit=` — anything unreadable falls back to the default rather than to zero. */
+export const transcriptLimit = (raw: string | undefined | null): number => {
+	if (raw === undefined || raw === null || raw.trim() === "") return TRANSCRIPT_DEFAULT_LIMIT
+	const n = Number(raw)
+	if (!Number.isFinite(n) || n < 1) return TRANSCRIPT_DEFAULT_LIMIT
+	return Math.min(Math.floor(n), TRANSCRIPT_MAX_LIMIT)
+}
+
+/**
+ * Whether the line reached the disk.
+ *
+ * Reported rather than swallowed. The route used to answer `{ok: true}` unconditionally, so a
+ * full disk or a bad permission looked exactly like a successful write to the only code that
+ * could have complained about it — the browser, which is where the only copy of the line was.
+ */
+export const appendTranscript = (line: TranscriptLine): boolean => {
 	try {
 		mkdirSync(dirname(TRANSCRIPT_PATH), { recursive: true })
 		appendFileSync(TRANSCRIPT_PATH, `${JSON.stringify(line)}\n`)
+		return true
 	} catch (err) {
-		// Losing a transcript line must never interrupt a game.
+		// Losing a transcript line must never interrupt a game — but it must not be silent either.
 		log.warn(`transcript append failed: ${errText(err)}`)
+		return false
 	}
 }
 
-/** Newest first. Reads the whole file: it is a few hundred KB after months of play. */
-export const readTranscript = (limit = 200): TranscriptLine[] => {
-	try {
-		const lines = readFileSync(TRANSCRIPT_PATH, "utf8").trim().split("\n").filter(l => l !== "")
-		const out: TranscriptLine[] = []
-		for (let i = lines.length - 1; i >= 0 && out.length < limit; i--) {
-			try {
-				out.push(JSON.parse(lines[i]!) as TranscriptLine)
-			} catch {
-				/* a torn final line during a crash is not worth failing the read for */
-			}
+/**
+ * Parse a transcript file's contents, newest first.
+ *
+ * Split out from the file read so it can be tested without a disk, a socket or a daemon: the
+ * ordering, the limit and a torn last line are the whole of the logic, and all three are pure.
+ */
+export const parseTranscript = (
+	text: string,
+	limit: number = TRANSCRIPT_DEFAULT_LIMIT
+): TranscriptLine[] => {
+	const capped = Number.isFinite(limit) && limit >= 1 ? Math.floor(limit) : TRANSCRIPT_DEFAULT_LIMIT
+	// Whitespace is trimmed PER LINE, never off the whole file: a groundTruth block is full of
+	// newlines, but `JSON.stringify` escaped every one of them, so the only real \n is a separator.
+	const lines = text.split("\n")
+	const out: TranscriptLine[] = []
+	for (let i = lines.length - 1; i >= 0 && out.length < capped; i--) {
+		const raw = lines[i]!.trim()
+		if (raw === "") continue
+		try {
+			const parsed = JSON.parse(raw) as TranscriptLine
+			// A line that parses but is not a record would render as an empty row.
+			if (typeof parsed?.text !== "string") continue
+			out.push(parsed)
+		} catch {
+			/* a torn final line during a crash is not worth failing the read for */
 		}
-		return out
+	}
+	return out
+}
+
+/** Newest first. Reads the whole file: it is a few hundred KB after months of play. */
+export const readTranscript = (limit: number = TRANSCRIPT_DEFAULT_LIMIT): TranscriptLine[] => {
+	try {
+		return parseTranscript(readFileSync(TRANSCRIPT_PATH, "utf8"), limit)
 	} catch {
+		// The file not existing yet is the normal state before the first line, not a fault.
 		return []
 	}
 }

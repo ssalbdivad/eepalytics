@@ -266,6 +266,14 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 * API actually reports.
 	 */
 	const [usage, setUsage] = useState<GeminiUsage>({ totalTokens: 0, turns: 0 })
+	/**
+	 * Lines the daemon refused or never received.
+	 *
+	 * Surfaced, not swallowed. "What she said, earlier" reading empty is ambiguous on its own —
+	 * she may simply have had nothing to say — and this is the half of that question only the
+	 * page can answer.
+	 */
+	const [unsaved, setUnsaved] = useState(0)
 
 	const wsRef = useRef<WebSocket | null>(null)
 	const playerRef = useRef<PcmPlayer | null>(null)
@@ -311,13 +319,28 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 * Fire and forget: a failed log must never interrupt the coach, and the socket is the thing
 	 * that matters. Without this there is no record of the session at all — the first real game
 	 * produced advice worth fixing and not one line of it survived.
+	 *
+	 * Fire and forget is not the same as fire and never look. The failures are COUNTED, because
+	 * the browser holds the only copy of a line until the daemon has it: a rejected POST means
+	 * that line exists nowhere else, and silence about it is what let a whole session go missing
+	 * while the log on screen looked healthy. `keepalive` so the last lines of a game survive the
+	 * tab being closed on the victory screen.
 	 */
 	const record = useCallback((text: string, fromUser: boolean, groundTruth?: string) => {
-		void fetch("/api/live/gemini/transcript", {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ text, fromUser, groundTruth })
-		}).catch(() => {})
+		void (async () => {
+			try {
+				const res = await fetch("/api/live/gemini/transcript", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ text, fromUser, groundTruth }),
+					keepalive: true
+				})
+				// A 4xx/5xx resolves rather than throws, and used to count as saved.
+				if (!res.ok) throw new Error(`HTTP ${res.status}`)
+			} catch {
+				setUnsaved(n => n + 1)
+			}
+		})()
 	}, [])
 
 	const send = useCallback((msg: unknown) => {
@@ -692,13 +715,14 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		stop,
 		ask,
 		usage,
+		/** Lines the daemon has not acknowledged storing. */
+		unsaved,
 		unlockAudio,
 		/** True when the browser is holding the sound back until the page is clicked. */
 		audioBlocked: audio.blocked,
 		/** Chunks actually played. Zero while she is talking means the sound is going nowhere. */
 		audioPlayed: audio.played
-	}
-}
+	}}
 
 /* --------------------------------------------------------------- internals */
 

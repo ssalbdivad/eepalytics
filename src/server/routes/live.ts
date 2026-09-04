@@ -51,7 +51,8 @@ import {
 	geminiKey,
 	mintGeminiToken,
 	readTranscript,
-	setGeminiKey
+	setGeminiKey,
+	transcriptLimit
 } from "../../review/gemini-live.ts"
 import type { VisionState, VisionStatePlayer } from "../../shared/live-state.ts"
 import { fail, send } from "../respond.ts"
@@ -582,7 +583,7 @@ export const createLiveRoute = (): Hono => {
 		} | null
 		if (typeof body?.text !== "string" || body.text.trim() === "")
 			return fail(c, 400, "text is required", "bad-line")
-		appendTranscript({
+		const stored = appendTranscript({
 			atMs: Date.now(),
 			text: body.text.slice(0, 2000),
 			fromUser: body.fromUser === true,
@@ -591,12 +592,26 @@ export const createLiveRoute = (): Hono => {
 				{ groundTruth: body.groundTruth.slice(0, 8000) }
 			:	{})
 		})
+		/*
+		 * The truth about the write, not a reflex `{ok: true}`.
+		 *
+		 * The browser holds the only copy of the line. Telling it the line was stored when it was
+		 * not is how a whole game of coaching went missing while every diagnostic said fine.
+		 */
+		if (!stored)
+			return fail(c, 500, "the line could not be written to the transcript", "transcript-write")
 		return c.json({ ok: true })
 	})
 
-	/** `GET /api/live/gemini/transcript` — the last N lines, newest first, for review. */
+	/**
+	 * `GET /api/live/gemini/transcript` — the last N lines, newest first, for review.
+	 *
+	 * `?limit=` is clamped rather than coerced. `Number("")` is 0 and `Number("all")` is NaN, and
+	 * both used to answer `{lines: []}` — an empty transcript and an unreadable limit rendered as
+	 * the same sentence on screen.
+	 */
 	app.get("/live/gemini/transcript", c =>
-		c.json({ lines: readTranscript(Number(c.req.query("limit") ?? 200)) })
+		c.json({ lines: readTranscript(transcriptLimit(c.req.query("limit"))) })
 	)
 
 	/**
