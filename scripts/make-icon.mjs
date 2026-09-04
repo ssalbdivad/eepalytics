@@ -11,11 +11,21 @@
  * eyes, which took three attempts to get right and, at one point, landed a pair of spectacles on
  * her forehead.
  *
- * THE CROP. Read off a coordinate grid laid over the art rather than estimated: her hair starts
- * at y≈205, the glasses sit at y≈375, her chin at y≈470, and her ear tips at x≈95 and x≈490.
- * `FACE` is the square that keeps both ears and the glasses while filling the frame with her
- * face — checked by rendering the candidates at 16, 32 and 64px, because an icon that only works
- * at 512 is not an icon.
+ * THE CROP. Read off a coordinate grid laid over the art rather than estimated. Her hair starts at
+ * y≈205, the glasses sit at y≈375, her chin at y≈470, and — the measurement that matters most —
+ * her ear tips are at x≈88 and x≈535. A first attempt cropped x 150–480 while claiming to keep
+ * both ears, and clipped both; the numbers are written down here so the next person checks them
+ * against the art instead of trusting the sentence.
+ *
+ * `AVATAR` satisfies two constraints at once:
+ *
+ *   - both ears complete, with margin — they are the most recognisable thing about her at 32px;
+ *   - the library still behind her. Starting near x=0 keeps the bookshelves at the left edge and
+ *     the arched ceiling along the top, so the icon reads as a person in a room rather than a
+ *     head floating on a cream field.
+ *
+ * Candidates were rendered at 16, 32, 64 and 128px before choosing, because an icon that only
+ * works at 512 is not an icon.
  *
  * Run: pnpm icon
  */
@@ -42,8 +52,11 @@ const APP_PUBLIC = join(ROOT, "public")
 const TARGETS = [WEB_PUBLIC, APP_PUBLIC]
 const SIZES = [16, 32, 64, 128, 256, 512]
 
-/** The face crop, in source pixels. See the header for how these were found. */
-const FACE = { x: 150, y: 200, width: 330, height: 330 }
+/** The avatar crop, in source pixels. See the header for how these were found. */
+const AVATAR = { x: 5, y: 5, width: 560, height: 560 }
+
+/** Ear tips in source pixels — asserted below so a future crop cannot silently clip them again. */
+const EAR_TIPS = { left: 88, right: 535 }
 
 /**
  * Splash sizes. The art is 1024² and that is more than any splash needs, so it ships downscaled —
@@ -74,13 +87,26 @@ app.whenReady().then(() => {
 	console.log(`source ${width}×${height}`)
 
 	// Fail loudly rather than silently cropping black: the numbers above are tied to a 1024² source.
-	if (width < FACE.x + FACE.width || height < FACE.y + FACE.height) {
-		console.error(`source is too small for the face crop ${JSON.stringify(FACE)}`)
+	if (width < AVATAR.x + AVATAR.width || height < AVATAR.y + AVATAR.height) {
+		console.error(`source is too small for the avatar crop ${JSON.stringify(AVATAR)}`)
 		app.exit(1)
 		return
 	}
 
-	const face = art.crop(FACE)
+	/*
+	 * The ear check, in code rather than in a comment. Clipping them once was an accident; doing
+	 * it twice would be a habit, and a cropped ear is invisible in a diff.
+	 */
+	const right = AVATAR.x + AVATAR.width
+	if (AVATAR.x > EAR_TIPS.left || right < EAR_TIPS.right) {
+		console.error(
+			`crop x ${AVATAR.x}..${right} clips an ear (tips at ${EAR_TIPS.left} and ${EAR_TIPS.right})`
+		)
+		app.exit(1)
+		return
+	}
+
+	const face = art.crop(AVATAR)
 	for (const size of SIZES)
 		emit(join("icons", `icon-${size}.png`), face.resize({ width: size, height: size, quality: "best" }).toPNG())
 
