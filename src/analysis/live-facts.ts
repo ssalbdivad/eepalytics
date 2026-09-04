@@ -71,6 +71,21 @@ const ENEMY_OBJECTIVE_WORTH_SAYING_SEC = 45
  */
 const DISASTER_QUIET_SEC = 90
 
+/**
+ * How far apart the two junglers must be before it is worth saying. Under this it is one camp of
+ * timing noise, and a coach that reads out a four-CS difference is the farm nag with a new subject.
+ */
+const RACE_MIN_GAP = 14
+
+/** Before this the clear has barely started and the gap is whoever pathed to the bigger camp. */
+const RACE_MIN_SEC = 5 * 60
+
+/** Game-clock seconds between counterpart mentions. */
+const RACE_COOLDOWN_SEC = 150
+
+/** The gap itself must have MOVED; a stable deficit restated is nagging about a fixed number. */
+const RACE_GAP_MOVED = 8
+
 /** Game-clock seconds between farm-pace mentions. */
 export const FARM_COOLDOWN_SEC = 180
 /**
@@ -115,6 +130,9 @@ export interface FactMemory {
 	/** When it first crossed the threshold — the duration is measured from here, not the mention. */
 	goldSinceSec: number
 	lastFarmAtSec: number
+	/** When the counterpart gap was last raised, and how big it was then. */
+	lastRaceAtSec: number
+	lastRaceGap: number
 	/** His CS when farm was last raised; it must actually move before saying it again. */
 	lastFarmCs: number
 	lastLedWithDeath: boolean
@@ -129,6 +147,8 @@ export const newFactMemory = (): FactMemory => ({
 	lastGoldAtSec: 0,
 	goldSinceSec: 0,
 	lastFarmAtSec: 0,
+	lastRaceAtSec: 0,
+	lastRaceGap: 0,
 	lastFarmCs: 0,
 	lastLedWithDeath: false
 })
@@ -165,6 +185,16 @@ export interface FactInput {
 	 * the model picked the best of a worthless list. Ranking by fact TYPE and never by STAKES is
 	 * what makes a coach sound like it is not watching the same game.
 	 */
+	/**
+	 * The enemy jungler as of this tick — the man he is racing.
+	 *
+	 * MEASURED, and this is why it lives here rather than in the block prose: with the counterpart
+	 * only in the block body, the coach said nothing in 12 of 12 turns. The prompt's rule is that
+	 * an empty "not looking at" list means PASS, and the model may only speak from that list. A
+	 * fact that is not ranked is a fact that does not exist, however true it is and however
+	 * prominently the block states it.
+	 */
+	counterpart: { champion: string; cs?: number; level?: number; inferred?: boolean } | null
 	enemyObjectives: { name: string; atSec: number; dragonType?: string }[]
 	myEvents: {
 		id: number
@@ -225,6 +255,38 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * What the enemy just took, and what it means for the next few minutes. Highest stakes on the
 	 * map, so it outranks everything and it SILENCES the trivia below — see `disaster`.
 	 */
+	/*
+	 * The counterpart gap. Ranked HIGH on purpose.
+	 *
+	 * His own average encodes his own mistakes, so a farm line can only ever say he is being
+	 * unusually himself. This says he is losing a race to a specific person, with both numbers off
+	 * the client and neither of them visible without holding TAB.
+	 */
+	const race: string[] = []
+	if (
+		input.counterpart &&
+		input.counterpart.cs !== undefined &&
+		input.pace !== null &&
+		input.nowSec >= RACE_MIN_SEC
+	) {
+		const gap = input.counterpart.cs - input.pace.cs
+		const moved = Math.abs(gap - mem.lastRaceGap)
+		if (
+			Math.abs(gap) >= RACE_MIN_GAP &&
+			(mem.lastRaceAtSec === 0 || input.nowSec - mem.lastRaceAtSec >= RACE_COOLDOWN_SEC) &&
+			(mem.lastRaceAtSec === 0 || moved >= RACE_GAP_MOVED)
+		) {
+			mem.lastRaceAtSec = input.nowSec
+			mem.lastRaceGap = gap
+			const who = input.counterpart.champion
+			race.push(
+				gap > 0 ?
+					`${who} is ${gap} CS up on you — finish the clear before you look at a lane`
+				:	`you're ${-gap} CS up on ${who} — keep the route going and spend the lead`
+			)
+		}
+	}
+
 	const lost: string[] = []
 	for (const e of input.enemyObjectives) {
 		const age = input.nowSec - e.atSec
@@ -485,7 +547,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * So praise still happens, but only when nothing else is on offer. That is most of the time
 	 * it matters anyway — the moment after a fight is usually quiet.
 	 */
-	const nonDeath = [...windows, ...rest, ...money, ...farm]
+	const nonDeath = [...windows, ...race, ...rest, ...money, ...farm]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -502,7 +564,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
 		windows.length > 0 || rest.length > 0 ?
-			[...windows, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
+			[...windows, ...race, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
 		:	[...nonDeath, ...deathsAllowed, ...praise]
 
 	/*

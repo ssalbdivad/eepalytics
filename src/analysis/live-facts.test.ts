@@ -29,6 +29,7 @@ const input = (over: Partial<FactInput> = {}): FactInput => ({
 	currentGold: null,
 	pace: null,
 	enemyObjectives: [],
+	counterpart: null,
 	myEvents: [],
 	drakeBackInSec: null,
 	baronBackInSec: null,
