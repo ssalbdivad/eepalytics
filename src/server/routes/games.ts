@@ -30,7 +30,8 @@ import {
 	listMediaForGame,
 	mediaCounts,
 	momentCounts,
-	reviewHeadlines
+	reviewHeadlines,
+	visionCounts
 } from "../../db/queries.ts"
 import { GameDetailResponse, GameListResponse } from "../../shared/schema/api.ts"
 import type { GameListItem } from "../../shared/schema/api.ts"
@@ -49,13 +50,16 @@ export const createGamesRoutes = (): Hono => {
 		const moments = rows.length > 0 ? momentCounts() : new Map<number, number>()
 		const media = rows.length > 0 ? mediaCounts() : new Map<number, number>()
 		const headlines = rows.length > 0 ? reviewHeadlines() : new Map<number, string>()
+		const vision = rows.length > 0 ? visionCounts() : new Map()
 
 		const games: GameListItem[] = rows.map(g => ({
 			...g,
 			hasReview: reviewed.has(g.gameId),
 			momentCount: moments.get(g.gameId) ?? 0,
 			mediaCount: media.get(g.gameId) ?? 0,
-			headline: headlines.get(g.gameId) ?? null
+			headline: headlines.get(g.gameId) ?? null,
+			frameMoments: vision.get(g.gameId)?.frames ?? 0,
+			watchedMoments: vision.get(g.gameId)?.watched ?? 0
 		}))
 
 		return send(c, GameListResponse, { games }, "GET /api/games")

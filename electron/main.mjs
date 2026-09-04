@@ -25,7 +25,7 @@
  * `data/` and the replay folder exactly as it does today.
  */
 
-import { app, BrowserWindow, dialog, shell } from "electron"
+import { app, BrowserWindow, dialog, globalShortcut, shell } from "electron"
 import { spawn } from "node:child_process"
 import { existsSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
@@ -46,10 +46,20 @@ const DAEMON_BOOT_TIMEOUT_MS = 30_000
 
 let daemon = null
 let win = null
+let overlay = null
 /** Set when we are tearing down on purpose, so an expected exit is not reported as a crash. */
 let quitting = false
 
 const daemonUrl = `http://${HOST}:${PORT}`
+
+/**
+ * Window and taskbar icon. Regenerate with `pnpm icon` after editing `public/icon.svg`.
+ *
+ * Electron wants a raster path here — an SVG is silently ignored and you get a blank default,
+ * which looks like a bug in the app rather than a missing file.
+ */
+const ICON_PATH = join(ROOT, "public", "icon.png")
+const windowIcon = () => (existsSync(ICON_PATH) ? { icon: ICON_PATH } : {})
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
@@ -124,6 +134,7 @@ const createWindow = async () => {
 		show: false,
 		backgroundColor: "#07090e",
 		title: "coachskaffur",
+		...windowIcon(),
 		autoHideMenuBar: true,
 		webPreferences: {
 			// The renderer is the same React app the browser loads and talks to the daemon over
@@ -160,6 +171,51 @@ const createWindow = async () => {
 	if (isDev) win.webContents.openDevTools({ mode: "detach" })
 }
 
+/**
+ * The live overlay: a small always-on-top window for while a game is running.
+ *
+ * Separate from the main window rather than a mode of it, because the two want opposite things.
+ * The main window is browsed; this is glanced at over a running game, so it is small, frameless,
+ * always on top, and skips the taskbar. It is also read-only — it polls `/api/live`, which reads
+ * the in-game API and writes nothing.
+ *
+ * `CSK_OVERLAY=1` opens it on launch instead of the main window, so `pnpm overlay` is a
+ * one-command way to have just the coach up while playing.
+ */
+const createOverlay = async () => {
+	if (overlay && !overlay.isDestroyed()) {
+		overlay.show()
+		overlay.focus()
+		return
+	}
+
+	overlay = new BrowserWindow({
+		width: 380,
+		height: 300,
+		minWidth: 280,
+		minHeight: 160,
+		show: false,
+		frame: false,
+		resizable: true,
+		alwaysOnTop: true,
+		skipTaskbar: true,
+		backgroundColor: "#070910",
+		title: "coach",
+		...windowIcon(),
+		webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true }
+	})
+
+	// Above full-screen game windows, not merely above normal ones.
+	overlay.setAlwaysOnTop(true, "screen-saver")
+	overlay.once("ready-to-show", () => overlay?.show())
+	overlay.on("closed", () => {
+		overlay = null
+	})
+
+	const base = isDev ? DEV_URL : daemonUrl
+	await overlay.loadURL(`${base}/#/live`)
+}
+
 app.whenReady().then(async () => {
 	try {
 		daemon = await startDaemon()
@@ -168,12 +224,31 @@ app.whenReady().then(async () => {
 		app.quit()
 		return
 	}
-	await createWindow()
+	if (process.env.CSK_OVERLAY === "1") {
+		// Overlay-only mode still needs the daemon up before it can poll anything.
+		if (!(await waitForDaemon())) {
+			dialog.showErrorBox("The daemon did not start", `Nothing answered on ${daemonUrl}.`)
+			app.quit()
+			return
+		}
+		await createOverlay()
+	} else {
+		await createWindow()
+	}
+
+	// Ctrl/Cmd+Shift+L toggles the overlay from anywhere, so it can be summoned mid-game
+	// without alt-tabbing to a menu.
+	globalShortcut.register("CommandOrControl+Shift+L", () => {
+		if (overlay && !overlay.isDestroyed()) overlay.close()
+		else void createOverlay()
+	})
 
 	app.on("activate", () => {
 		if (BrowserWindow.getAllWindows().length === 0) void createWindow()
 	})
 })
+
+app.on("will-quit", () => globalShortcut.unregisterAll())
 
 app.on("window-all-closed", () => {
 	// Including on macOS: this is a single-window tool, and leaving a headless daemon running

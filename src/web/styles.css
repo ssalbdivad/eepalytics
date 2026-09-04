@@ -1290,3 +1290,105 @@ input[type="checkbox"] {
 	color: var(--dim);
 }
 .csk-focus__link:hover { color: var(--gold); }
+
+/* ================================================================= live */
+/*
+ * The overlay window. Read in one-second glances with a game behind it, so: large type, high
+ * contrast, no interaction. Nothing here is clickable on purpose.
+ */
+
+body.is-live {
+	background: rgba(7, 9, 14, 0.94);
+}
+.live {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px 14px;
+	font-size: 14px;
+	min-height: 100vh;
+	box-sizing: border-box;
+	-webkit-user-select: none;
+	user-select: none;
+	/* The whole window is a drag handle — there is no title bar to grab. */
+	-webkit-app-region: drag;
+}
+.live__bar {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	border-bottom: 1px solid var(--line);
+	padding-bottom: 8px;
+}
+.live__clock {
+	font-family: var(--mono);
+	font-size: 20px;
+	color: var(--gold-bright);
+}
+.live__champ { color: var(--text-2); font-size: 13px; }
+.live__score {
+	margin-left: auto;
+	font-family: var(--mono);
+	font-size: 13px;
+	color: var(--text-2);
+	display: flex;
+	gap: 8px;
+	align-items: baseline;
+}
+.live__score em { font-style: normal; color: var(--dim); font-size: 11px; }
+
+.live__nudges { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.live__nudge {
+	display: flex;
+	gap: 9px;
+	align-items: flex-start;
+	line-height: 1.42;
+	font-size: 14.5px;
+	color: var(--text);
+	cursor: help;
+}
+.live__icon { flex: none; font-size: 13px; line-height: 1.5; }
+.live__nudge--objective .live__icon { color: var(--teal); }
+.live__nudge--pace .live__icon { color: var(--warn); }
+.live__nudge--safety .live__icon { color: var(--loss); }
+.live__nudge--praise .live__icon { color: var(--win); }
+.live__nudge--habit .live__icon { color: var(--gold); }
+
+.live__quiet { color: var(--faint); font-size: 12.5px; font-style: italic; }
+.live__idle {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	color: var(--dim);
+	font-size: 13px;
+}
+.live__idle strong { color: var(--text-2); }
+.live__idle span { font-size: 11.5px; color: var(--faint); }
+
+.live__focus {
+	border-top: 1px solid var(--line-soft);
+	padding-top: 9px;
+	font-size: 11.5px;
+	color: var(--text-2);
+	line-height: 1.5;
+}
+.live__focus-head {
+	font-size: 9.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--faint);
+	margin-bottom: 5px;
+}
+.live__focus ol { margin: 0; padding-left: 16px; }
+.live__focus b { color: var(--gold); font-weight: 600; text-transform: capitalize; }
+.live__focus--compact { display: flex; flex-direction: column; gap: 4px; }
+.live__err { font-size: 10.5px; color: var(--loss); font-family: var(--mono); }
+
+/* The mark in the topbar. `alt=""` in the markup: it sits beside the word it depicts, so a
+   screen reader announcing it twice would be noise. */
+.brand__mark {
+	border-radius: 6px;
+	vertical-align: -6px;
+	margin-right: 8px;
+}
+.live__mark { border-radius: 5px; flex: none; }

@@ -136,7 +136,11 @@ export const GameList = ({ health, eventTick }: GameListProps) => {
 					{games.refreshing ? " · refreshing…" : ""}
 				</div>
 				<div className="spacer" />
-				<button onClick={sync.run} disabled={sync.pending}>
+				<button
+					onClick={sync.run}
+					disabled={sync.pending}
+					title="Ask the League client for your recent match history and ingest any finished games not already stored. The daemon does this automatically every few minutes; this is the manual version. It does not capture or watch anything."
+				>
 					{sync.pending ? "Syncing…" : "Sync from client"}
 				</button>
 			</div>
@@ -284,6 +288,29 @@ const GameRow = ({ game: g, jobs, headline, now }: GameRowProps) => {
 					{/* Leads the stat line: it is the one number that says how the game WENT,
 					    as opposed to what happened in it. */}
 					<GradeBadge score={g.gradeScore} rank={g.gradeRank} size="sm" />
+					{/*
+					 * Three states, one glyph. Solid = the coach actually looked at replay frames;
+					 * dim = frames exist but nothing has been watched; faint = data only. Without
+					 * this the visual pass is invisible from the list and the only way to find it
+					 * is to already know it exists.
+					 */}
+					<span
+						className={cls(
+							"csk-eye",
+							(g.watchedMoments ?? 0) > 0 ? "csk-eye--watched"
+							: (g.frameMoments ?? 0) > 0 ? "csk-eye--ready"
+							: "csk-eye--none"
+						)}
+						title={
+							(g.watchedMoments ?? 0) > 0 ?
+								`Watched: the coach read replay frames for ${g.watchedMoments} moment(s) and coached execution — abilities, kiting, fight entry.`
+							: (g.frameMoments ?? 0) > 0 ?
+								`Frames captured for ${g.frameMoments} moment(s), but none watched yet. Open the game and hit Watch.`
+							:	"Data only — no replay frames captured, so nothing about ability usage or kiting. Open the game to capture some."
+						}
+					>
+						👁
+					</span>
 					<span>
 						<b>{fmtKda(g.kills, g.deaths, g.assists)}</b>{" "}
 						<span className="faint">{fmtKdaRatio(g.kills, g.deaths, g.assists)} KDA</span>

@@ -21,7 +21,9 @@
     "test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
     "app": "pnpm build && electron .",
     "app:dev": "concurrently -n web,app -c cyan,green \"pnpm dev:web\" \"CSK_DEV=1 electron .\"",
-    "electron": "electron ."
+    "electron": "electron .",
+    "overlay": "pnpm build && CSK_OVERLAY=1 electron .",
+    "icon": "electron scripts/make-icon.mjs"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.258",

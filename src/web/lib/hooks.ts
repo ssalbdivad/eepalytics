@@ -15,6 +15,7 @@ export type Route =
 	| { name: "games" }
 	| { name: "game"; gameId: number }
 	| { name: "replays" }
+	| { name: "live" }
 	| { name: "trends" }
 	| { name: "queue" }
 	| { name: "settings" }
@@ -25,6 +26,7 @@ export const parseRoute = (hash: string): Route => {
 	const [head = "", tail = ""] = path.split("/")
 	if (head === "" || head === "games") return { name: "games" }
 	if (head === "replays") return { name: "replays" }
+	if (head === "live") return { name: "live" }
 	if (head === "trends") return { name: "trends" }
 	if (head === "queue") return { name: "queue" }
 	if (head === "settings") return { name: "settings" }
@@ -38,6 +40,7 @@ export const parseRoute = (hash: string): Route => {
 export const href = {
 	games: "#/games",
 	replays: "#/replays",
+	live: "#/live",
 	trends: "#/trends",
 	queue: "#/queue",
 	settings: "#/settings",

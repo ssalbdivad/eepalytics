@@ -1369,6 +1369,33 @@ export const recentGrades = (limit = 20): { gameId: number; score: number; rank:
 			rank: str((r as Row).gradeRank)
 		}))
 
+/**
+ * Per game: how many moments have real captured frames, and how many have been watched.
+ *
+ * Two counts rather than a boolean because they are three different states the user has to be
+ * able to tell apart — nothing captured, captured but not looked at, and actually watched — and
+ * each has a different next action.
+ */
+export const visionCounts = (): Map<number, { frames: number; watched: number }> => {
+	const out = new Map<number, { frames: number; watched: number }>()
+	const bump = (gameId: number, key: "frames" | "watched", n: number): void => {
+		const row = out.get(gameId) ?? { frames: 0, watched: 0 }
+		row[key] += n
+		out.set(gameId, row)
+	}
+	for (const r of prep(
+		`SELECT gameId, count(DISTINCT momentId) AS n FROM media
+		 WHERE source = 'replay' AND kind = 'screenshot' AND momentId IS NOT NULL
+		 GROUP BY gameId`
+	).all())
+		bump(num((r as Row).gameId), "frames", num((r as Row).n))
+	for (const r of prep(
+		"SELECT gameId, count(*) AS n FROM watch_note WHERE status = 'ok' GROUP BY gameId"
+	).all())
+		bump(num((r as Row).gameId), "watched", num((r as Row).n))
+	return out
+}
+
 /** Housekeeping: forget terminal jobs older than `beforeMs`. */
 export const pruneJobs = (beforeMs: number): number =>
 	prep(

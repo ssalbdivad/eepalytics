@@ -13,6 +13,7 @@ import { cls } from "./lib/format.ts"
 import { ClientOffline } from "./components/ClientOffline.tsx"
 import { GameList } from "./pages/GameList.tsx"
 import { GameReview } from "./pages/GameReview.tsx"
+import { Live } from "./pages/Live.tsx"
 import { Replays } from "./pages/Replays.tsx"
 import { Trends } from "./pages/Trends.tsx"
 import { Queue } from "./pages/Queue.tsx"
@@ -104,10 +105,22 @@ export const App = () => {
 	const h = health.data
 	const offline = health.error !== null && h === null
 
+	/*
+	 * The overlay is its own window, not a page inside the app: no nav, no status bar, no
+	 * health poll. It renders before any of that so a 300x420 always-on-top window is not
+	 * mostly chrome, and so it does not poll /api/health every 20s behind a running game.
+	 */
+	if (route.name === "live") {
+		document.body.classList.add("is-live")
+		return <Live />
+	}
+	document.body.classList.remove("is-live")
+
 	return (
 		<div className="app">
 			<header className="topbar">
 				<div className="brand">
+					<img className="brand__mark" src="/icon.svg" alt="" width={26} height={26} />
 					coachskaffur <small>Gooskaffur#NA1</small>
 				</div>
 
@@ -187,7 +200,7 @@ export const App = () => {
 				{route.name === "games" ?
 					<GameList health={h} eventTick={eventTick} />
 				: route.name === "game" ?
-					<GameReview gameId={route.gameId} eventTick={eventTick} />
+					<GameReview gameId={route.gameId} eventTick={eventTick} health={h} />
 				: route.name === "replays" ?
 					<Replays eventTick={eventTick} />
 				: route.name === "trends" ?

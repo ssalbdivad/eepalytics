@@ -85,7 +85,12 @@ export const HealthResponse = type({
 	 * Why the client is unreachable, when it is. Absent while the LCU is connected — there is
 	 * nothing to diagnose and probing costs a Windows round trip.
 	 */
-	"vanguard?": VanguardReport
+	"vanguard?": VanguardReport,
+	/**
+	 * The capture gate's verdict, in its own words. Declared rather than passed through
+	 * undeclared so the UI can render "why is nothing happening" without guessing at it.
+	 */
+	"capture?": type({ allowed: "boolean", reason: "string" })
 })
 export type HealthResponse = typeof HealthResponse.infer
 
@@ -97,7 +102,12 @@ export const GameListItem = Game.and({
 	momentCount: "number",
 	mediaCount: "number",
 	/** The review's headline, so the list renders in one request instead of one per row. */
-	"headline?": "string|null"
+	"headline?": "string|null",
+	/** Moments with real captured replay frames — what a visual pass could look at. */
+	"frameMoments?": "number",
+	/** Moments actually watched. The three states (0 frames / frames / watched) each have a
+	 *  different next action, which is why this is two numbers and not a flag. */
+	"watchedMoments?": "number"
 })
 export type GameListItem = typeof GameListItem.infer
 
@@ -128,6 +138,38 @@ export type GameDetailResponse = typeof GameDetailResponse.infer
 
 export const WatchListResponse = type({ notes: WatchNote.array() })
 export type WatchListResponse = typeof WatchListResponse.infer
+
+/* ================================================================ live */
+
+/**
+ * The live overlay's whole payload. Every field after `inGame` is optional because "not in a
+ * game" is the normal case and must answer 200 with something truthful rather than erroring.
+ */
+export const LiveNudge = type({
+	kind: "'pace'|'objective'|'habit'|'safety'|'praise'",
+	text: "string",
+	priority: "number",
+	/** What the nudge was derived from, so nothing on screen is unattributable. */
+	source: "string"
+})
+export type LiveNudge = typeof LiveNudge.infer
+
+export const LiveResponse = type({
+	inGame: "boolean",
+	"reason?": "string",
+	"gameTimeSec?": "number",
+	"championName?": "string",
+	"score?": type({
+		kills: "number",
+		deaths: "number",
+		assists: "number",
+		cs: "number",
+		level: "number"
+	}),
+	nudges: LiveNudge.array(),
+	"focus?": type({ category: "string", games: "number", fix: "string" }).array()
+})
+export type LiveResponse = typeof LiveResponse.infer
 
 /* ================================================================ form */
 
@@ -356,6 +398,7 @@ export const API = {
 	media: (id: string) => `/api/media/${encodeURIComponent(id)}`,
 	sync: "/api/sync",
 	form: "/api/form",
+	live: "/api/live",
 	watch: (gameId: number | string) => `/api/games/${gameId}/watch`,
 	replays: "/api/replays",
 	replayIngest: "/api/replays/ingest"

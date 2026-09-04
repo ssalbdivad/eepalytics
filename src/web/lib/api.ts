@@ -14,6 +14,7 @@ import {
 	GameDetailResponse,
 	ChatHistoryResponse,
 	FormResponse,
+	LiveResponse,
 	WatchListResponse,
 	ReplayListResponse,
 	ChatTurnResponse,
@@ -161,6 +162,12 @@ export const api = {
 			body: { momentId },
 			signal
 		}),
+
+	/**
+	 * The live overlay's poll. Answers 200 in every state including "not in a game" — an overlay
+	 * that errors is an overlay that gets closed.
+	 */
+	live: (signal?: AbortSignal) => request(API.live, LiveResponse, { signal }),
 
 	/** Grades and focus areas. Derived from stored data — no model call, so it is instant. */
 	form: (games?: number, signal?: AbortSignal) =>

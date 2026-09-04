@@ -13,7 +13,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import type { GameDetailResponse } from "../../shared/schema/api.ts"
+import type { GameDetailResponse, HealthResponse } from "../../shared/schema/api.ts"
 import type { FeedbackItem, Job, Moment } from "../../shared/schema/domain.ts"
 import { csPerMin, effectiveCs } from "../../shared/schema/domain.ts"
 import { queueName } from "../../shared/constants.ts"
@@ -37,6 +37,7 @@ import {
 import { ChampIcon } from "../components/ChampIcon.tsx"
 import { GradeBadge } from "../components/GradeBadge.tsx"
 import { VisionBadge } from "../components/VisionBadge.tsx"
+import { WatchGamePanel } from "../components/WatchGamePanel.tsx"
 import { CoachChat } from "../components/CoachChat.tsx"
 import { FeedbackCard } from "../components/FeedbackCard.tsx"
 import { GameTimeline } from "../components/GameTimeline.tsx"
@@ -51,9 +52,11 @@ const CURSOR_WINDOW_SEC = 30
 export interface GameReviewProps {
 	gameId: number
 	eventTick: number
+	/** For the capture gate's own words — see `WatchGamePanel`. */
+	health?: HealthResponse | null
 }
 
-export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
+export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps) => {
 	const detail = useResource(signal => api.game(gameId, signal), [gameId, eventTick])
 	const jobsRes = useResource(signal => api.jobs(signal), [eventTick])
 	const watchRes = useResource(signal => api.watchNotes(gameId, signal), [gameId, eventTick])
@@ -431,24 +434,18 @@ export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 						</div>
 
 						{/*
-						 * Said plainly, at the top, when it applies. A data review genuinely cannot
-						 * see ability usage or kiting — presenting it as a finished verdict would be
-						 * the most misleading thing on this screen.
+						 * Always present, in all three states. The visual pass needs frames, frames
+						 * need a capture, and a capture takes over the client — three steps with
+						 * three failure modes, none of which used to be visible anywhere.
 						 */}
-						{watchNotes.filter(n => n.status === "ok").length === 0 && (
-							<div className="notice info" style={{ marginBottom: 10 }}>
-								<span className="icon">◔</span>
-								<div>
-									<strong>This review hasn't watched the game.</strong> It's built from the
-									timeline — positions once a minute, kills, objectives, end-of-game stats.
-									It says nothing about how you used abilities, how you kited, or how you
-									entered fights, because none of that is in any data the client exposes.
-									{framesByMoment.size > 0 ?
-										" Frames are captured — open a moment below and hit Watch."
-									:	" Capture replay frames on this game to unlock that."}
-								</div>
-							</div>
-						)}
+						<WatchGamePanel
+							game={g}
+							health={health}
+							frameMoments={framesByMoment.size}
+							watchedMoments={watchNotes.filter(n => n.status === "ok").length}
+							momentCount={moments.length}
+							onChanged={() => watchRes.reload()}
+						/>
 
 						{items.length > 0 ?
 							<div className="feedback-list">
