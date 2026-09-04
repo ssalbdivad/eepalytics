@@ -102,6 +102,8 @@ export interface ScreenCoachProps {
 	 */
 	compact?: boolean
 }
+import { api } from "../lib/api.ts"
+import { useResource } from "../lib/hooks.ts"
 
 export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	const share = useScreenShare()
@@ -242,7 +244,17 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 		}
 	}, [share.sharing, gate.inGame, share.grabFrame])
 
+	/*
+	 * Which model to speak through. Read here rather than inside the hook so the hook stays a
+	 * transport and the CHOICE stays with the screen the player configures.
+	 */
+	const settings = useResource(signal => api.settings(signal), [])
+	const liveProvider = settings.data?.liveProvider ?? "gemini-live"
+	const liveModel = settings.data?.liveModel ?? ""
+
 	const gem = useGeminiLive({
+		provider: liveProvider,
+		model: liveModel,
 		/*
 		 * Fetched per turn rather than polled.
 		 *

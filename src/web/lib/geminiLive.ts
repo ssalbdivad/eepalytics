@@ -34,6 +34,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../../shared/live-prompt.ts"
+import { runCoachTurn, SystemVoice } from "./turnCoach.ts"
 
 /**
  * How often the coach is prompted to speak. The interval IS the talkativeness — and, now, the
@@ -240,6 +241,16 @@ class PcmPlayer {
 
 export interface GeminiLiveOptions {
 	/**
+	 * Which model to speak through. `gemini-live` is the socket; anything else is an HTTPS turn.
+	 *
+	 * Deliberately part of the SAME hook rather than a parallel one. Everything above the
+	 * transport — the phase gate, the frame, the ground-truth block, the "no facts, no turn" rule,
+	 * the transcript — must be identical across providers or a comparison between them measures
+	 * the plumbing instead of the models.
+	 */
+	provider?: string
+	model?: string
+	/**
 	 * Fetches the current ground-truth block. Called once per turn, and ONLY per turn.
 	 *
 	 * Async, and that matters. It used to be a synchronous read of a value polled every 5s — but
@@ -278,6 +289,9 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	const [unsaved, setUnsaved] = useState(0)
 
 	const wsRef = useRef<WebSocket | null>(null)
+	/** The system voice, for turn-based providers. Gemini Live speaks for itself. */
+	const voiceRef = useRef<SystemVoice | null>(null)
+	voiceRef.current ??= new SystemVoice()
 	const playerRef = useRef<PcmPlayer | null>(null)
 	playerRef.current ??= new PcmPlayer()
 	const player = playerRef.current
@@ -398,6 +412,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		wsRef.current?.close()
 		wsRef.current = null
 		player.silence()
+		voiceRef.current?.silence()
 		micRef.current?.stream.getTracks().forEach(t => t.stop())
 		void micRef.current?.ctx.close()
 		micRef.current = null
@@ -619,7 +634,67 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		}
 	}, [])
 
-	const start = useCallback(() => connect(false), [connect])
+	const turnBased = (opts.provider ?? "gemini-live") !== "gemini-live"
+
+	/**
+	 * The turn-based loop, for every provider that is not Gemini Live.
+	 *
+	 * Same cadence, same gate, same block — it just posts to the daemon and speaks the answer with
+	 * the system voice instead of holding a socket open. It runs in place of `connect`, so the two
+	 * can never both be live at once.
+	 */
+	useEffect(() => {
+		if (!turnBased || !wantLiveRef.current) return
+		let alive = true
+		let inFlight = false
+		const tick = async () => {
+			if (!alive || inFlight) return
+			const truth = await optsRef.current.groundTruth()
+			// The same rule the socket path follows: no facts, no turn. Without it the coach is
+			// back to reading pixels, which is the failure the block exists to prevent.
+			if (truth.trim() === "") return
+			inFlight = true
+			try {
+				const r = await runCoachTurn({
+					provider: opts.provider ?? "",
+					model: opts.model ?? "",
+					frame: optsRef.current.grabFrame(),
+					block: truth
+				})
+				if (!alive) return
+				if (!r.ok) {
+					setError(r.reason ? humanise(r.reason).slice(0, 160) : "that model did not answer")
+					return
+				}
+				setError(null)
+				const text = r.text.trim()
+				setUsage(u => ({ ...u, turns: u.turns + 1 }))
+				// PASS means it judged the moment and declined, exactly as on the socket.
+				if (text === "" || /^pass\b/i.test(text)) return
+				record(text, false, truth)
+				setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
+				voiceRef.current?.silence()
+				voiceRef.current?.speak(text)
+			} finally {
+				inFlight = false
+			}
+		}
+		const id = setInterval(() => void tick(), turnMs)
+		void tick()
+		return () => {
+			alive = false
+			clearInterval(id)
+			voiceRef.current?.silence()
+		}
+	}, [turnBased, opts.provider, opts.model, turnMs, record, status])
+
+	const start = useCallback(() => {
+		if (!turnBased) return connect(false)
+		// No socket to open: mark it live and let the loop above start on the next render.
+		wantLiveRef.current = true
+		setStatus("live")
+		return undefined
+	}, [turnBased, connect])
 
 	/**
 	 * The heartbeat that makes it speak.

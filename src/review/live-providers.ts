@@ -32,7 +32,7 @@
  * NODE ONLY — it holds API keys, which must never reach the browser.
  */
 
-import { existsSync, readFileSync } from "node:fs"
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { DATA_DIR } from "../shared/constants.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../shared/live-prompt.ts"
 
@@ -240,3 +240,23 @@ export const providerStatus = (): { id: ProviderId; label: string; available: bo
 		note: p.note,
 		defaultModel: p.defaultModel
 	}))
+
+/**
+ * Store or clear a provider's key.
+ *
+ * Write-only from the browser's point of view: there is no endpoint that reads one back, and the
+ * key never enters the settings table, because settings round-trip through `GET /api/settings`
+ * into the renderer. Same rule as `data/gemini.key`, for the same reason.
+ */
+export const setProviderKey = (p: ProviderInfo, key: string): void => {
+	const path = `${DATA_DIR}/${p.keyFile}`
+	const trimmed = key.trim()
+	if (trimmed === "") {
+		if (existsSync(path)) rmSync(path)
+		return
+	}
+	mkdirSync(DATA_DIR, { recursive: true })
+	writeFileSync(path, `${trimmed}\n`, { mode: 0o600 })
+	// Explicit, because an existing file keeps its old mode through writeFileSync.
+	chmodSync(path, 0o600)
+}

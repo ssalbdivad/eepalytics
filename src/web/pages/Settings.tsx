@@ -26,6 +26,18 @@ export interface SettingsPageProps {
 export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 	const loaded = useResource(signal => api.settings(signal), [])
 	const [draft, setDraft] = useState<Settings | null>(null)
+	/** Typed but not yet saved. Never populated from the server — keys are write-only. */
+	const [providerKeyDraft, setProviderKeyDraft] = useState("")
+	const providers = useResource(
+		signal =>
+			fetch("/api/live/coach/providers", { signal }).then(
+				r =>
+					r.json() as Promise<{
+						providers: { id: string; label: string; available: boolean; note: string; defaultModel: string }[]
+					}>
+			),
+		[]
+	)
 	/*
 	 * Checking the key is a live call to Google, so it is a button rather than something that
 	 * fires on every keystroke. Someone pasting a bad key should find out here, not mid-game.
@@ -166,6 +178,95 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							CLI login — there's no API key on this machine, so nothing is billed separately.
 						</div>
 					</div>
+
+					{/*
+					 * The LIVE coach's model, which is a different thing from the reviewer's above.
+					 * The trade between the two shapes is stated here rather than left for him to
+					 * discover in a game: only Gemini Live speaks natively and can be interrupted.
+					 */}
+					<div className="field wide">
+						<div className="label">Live coach model</div>
+						<div className="control" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+							<select
+								value={draft.liveProvider}
+								onChange={e => set("liveProvider", e.currentTarget.value)}
+							>
+								<option value="gemini-live">Gemini Live — speaks itself, ~1s, interruptible</option>
+								{providers.data?.providers.map(p => (
+									<option key={p.id} value={p.id} disabled={!p.available}>
+										{p.label}
+										{p.available ? "" : " — no key"}
+									</option>
+								))}
+							</select>
+							{draft.liveProvider !== "gemini-live" && (
+								<input
+									type="text"
+									placeholder={
+										providers.data?.providers.find(p => p.id === draft.liveProvider)
+											?.defaultModel ?? "model id"
+									}
+									value={draft.liveModel}
+									onChange={e => set("liveModel", e.currentTarget.value)}
+									style={{ minWidth: 220 }}
+								/>
+							)}
+						</div>
+						<div className="help">
+							{draft.liveProvider === "gemini-live" ?
+								"A held-open socket: it speaks in its own voice, answers in about a second, and can be cut off mid-sentence."
+							:	<>
+									An HTTPS turn spoken by your system voice — slower (a few seconds), it cannot be
+									usefully interrupted because the sentence is already paid for, and it does not
+									sound like her.{" "}
+									{providers.data?.providers.find(p => p.id === draft.liveProvider)?.note}
+								</>
+							}
+						</div>
+						<div className="help">
+							Model id is free text on purpose — ids change faster than this app does, and a
+							stale dropdown is a bug that looks like a limitation. Leave it blank for the
+							provider's default. Pick a model that accepts images, and a fast one: a
+							reasoning model took fifteen seconds to answer, which is useless in a fight.
+						</div>
+					</div>
+
+					{draft.liveProvider !== "gemini-live" && (
+						<div className="field wide">
+							<div className="label">
+								Key for {providers.data?.providers.find(p => p.id === draft.liveProvider)?.label}
+							</div>
+							<div className="control" style={{ display: "flex", gap: 8 }}>
+								<input
+									type="password"
+									autoComplete="off"
+									placeholder="paste a key — it is written to a 0600 file and never read back"
+									value={providerKeyDraft}
+									onChange={e => setProviderKeyDraft(e.currentTarget.value)}
+									style={{ flex: 1 }}
+								/>
+								<button
+									className="btn"
+									onClick={() => {
+										void fetch(`/api/live/coach/key/${draft.liveProvider}`, {
+											method: "PUT",
+											headers: { "content-type": "application/json" },
+											body: JSON.stringify({ key: providerKeyDraft })
+										}).then(() => {
+											setProviderKeyDraft("")
+											providers.reload()
+										})
+									}}
+								>
+									Save
+								</button>
+							</div>
+							<div className="help">
+								Stored on this machine only, like the Gemini key — the daemon holds it and the
+								browser never sees it. An empty save clears it.
+							</div>
+						</div>
+					)}
 
 					<div className="field wide">
 						<div className="label">Gemini key — live voice coach</div>

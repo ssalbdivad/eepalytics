@@ -55,6 +55,23 @@ export const Settings = type({
 	coachIntensity: "0<=number<=1",
 
 	/**
+	 * Which model the LIVE coach speaks through.
+	 *
+	 * `gemini-live` is the socket: native audio, barge-in, about a second. Everything else is an
+	 * HTTPS turn the browser speaks with the system voice — slower, and it cannot be cut off
+	 * mid-sentence. The trade is real and the settings screen says so.
+	 */
+	liveProvider: "string",
+	/**
+	 * The model id within that provider. FREE TEXT on purpose.
+	 *
+	 * Model ids change faster than this app will be updated — a default written today was already
+	 * refused as "no longer available to new users" within a minute of being typed. Empty means the
+	 * provider's own default.
+	 */
+	liveModel: "string",
+
+	/**
 	 * How we reach the League client across the WSL2 boundary. `bridge` is a long-lived
 	 * Windows-side node.exe over stdio (p50 2.3 ms); `curl` shells out to curl.exe (~88 ms).
 	 * The daemon falls back to curl on its own if the bridge will not start.
@@ -89,6 +106,8 @@ export const DEFAULT_SETTINGS: Settings = {
 	replayFolder: "",
 	captureRequestTtlMin: 15,
 	coachIntensity: 0.8,
+	liveProvider: "gemini-live",
+	liveModel: "",
 	transport: "bridge",
 	pollIdleMs: 5_000,
 	pollInGameMs: 2_000,
@@ -109,6 +128,8 @@ export const SettingsPatch = type({
 	"replayFolder?": "string",
 	"captureRequestTtlMin?": "number",
 	"coachIntensity?": "0<=number<=1",
+	"liveProvider?": "string",
+	"liveModel?": "string",
 	"transport?": "'bridge'|'curl'",
 	"pollIdleMs?": "number",
 	"pollInGameMs?": "number",

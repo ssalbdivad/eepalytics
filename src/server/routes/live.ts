@@ -52,6 +52,7 @@ import { dragonPhrase } from "../../shared/dragons.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
 import { dismissDebrief, dismissedDebrief, lastGameEnded } from "../../daemon/postgame.ts"
 import { matchesMarker, postGameDebrief } from "../../shared/postgame.ts"
+import { coachTurn, providerById, providerStatus, setProviderKey } from "../../review/live-providers.ts"
 import { matchupPromptSection } from "../../shared/matchup-prompt.ts"
 import type { EndedGame, JustEnded } from "../../shared/postgame.ts"
 import { LiveResponse, MatchupResponse } from "../../shared/schema/api.ts"
@@ -950,6 +951,57 @@ export const createLiveRoute = (): Hono => {
 	app.get("/live/gemini/transcript", c =>
 		c.json({ lines: readTranscript(transcriptLimit(c.req.query("limit"))) })
 	)
+
+	/**
+	 * `GET /api/live/coach/providers` — which models the live coach can be pointed at.
+	 *
+	 * Reports availability, never the key. A provider with no key is listed as unavailable with a
+	 * sentence the UI can show, because an option that silently does nothing is worse than one
+	 * that says why it cannot.
+	 */
+	app.get("/live/coach/providers", c => c.json({ providers: providerStatus() }))
+
+	/**
+	 * `PUT /api/live/coach/key/:provider` — store a provider key, or clear it with an empty body.
+	 *
+	 * Write-only, like the Gemini key. Nothing reads a key back to the browser.
+	 */
+	app.put("/live/coach/key/:provider", async c => {
+		const p = providerById(c.req.param("provider"))
+		if (!p) return fail(c, 404, "no such provider", "unknown-provider")
+		const body = (await c.req.json().catch(() => null)) as { key?: unknown } | null
+		if (typeof body?.key !== "string")
+			return fail(c, 400, "send { key } — an empty string clears it", "bad-key")
+		setProviderKey(p, body.key)
+		return c.json({ ok: true, available: body.key.trim() !== "" })
+	})
+
+	/**
+	 * `POST /api/live/coach/turn` — one coaching turn from a turn-based provider.
+	 *
+	 * The browser sends the frame and the block; the daemon holds the key and the system prompt.
+	 * Answers 200 in every state including failure, because this is called from a live game and an
+	 * error status would surface as a broken coach rather than a quiet one.
+	 */
+	app.post("/live/coach/turn", async c => {
+		const body = (await c.req.json().catch(() => null)) as {
+			provider?: unknown
+			model?: unknown
+			frame?: unknown
+			block?: unknown
+		} | null
+		if (typeof body?.provider !== "string" || typeof body?.block !== "string")
+			return c.json({ ok: false, text: "", reason: "provider and block are required" })
+		const frame =
+			typeof body.frame === "string" ? body.frame.replace(/^data:[^,]+,/, "") : undefined
+		const r = await coachTurn({
+			provider: body.provider as never,
+			...(typeof body.model === "string" ? { model: body.model } : {}),
+			...(frame ? { frameJpegBase64: frame } : {}),
+			blockText: body.block
+		})
+		return c.json(r)
+	})
 
 	/**
 	 * `PUT /api/live/gemini/key` — set or clear the key.
