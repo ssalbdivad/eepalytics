@@ -11,6 +11,9 @@
  * about the glance at all.
  */
 
+import { renderKnowledge } from "./live-knowledge.ts"
+import type { LiveJunglerBasis, LiveKnowledge } from "./live-knowledge.ts"
+
 /**
  * Ground truth for the frame, read from the Live Client Data API.
  *
@@ -44,9 +47,41 @@ export interface VisionState {
 		cs?: number
 		dead?: boolean
 		respawnSec?: number
+		/**
+		 * HIS inventory, by display name. Nobody else's.
+		 *
+		 * The live client publishes a full item list for every player and the post-game timeline
+		 * this app otherwise lives on has no purchases at all, so this is the one surface where a
+		 * spending decision can be discussed without inventing anything. It is deliberately his
+		 * alone: a coach that can read one side's items and not the other's would grade the enemy
+		 * build from nothing, which is the exact failure `shared/matchup-prompt.ts` refuses runes
+		 * for. Prices, purchase times and build order are still absent and still unsayable.
+		 */
+		items?: string[]
 	}
 	allies: VisionStatePlayer[]
 	enemies: VisionStatePlayer[]
+	/**
+	 * The enemy jungler — the one identity that makes a champion note actionable.
+	 *
+	 * `basis` is carried because the two ways of knowing are not equally strong (see
+	 * `analysis/live-roles.ts`): a declared position may be asserted, a lone Smite may only be
+	 * hedged. Undefined means nothing identified one, which is different from "there isn't one".
+	 */
+	theirJungler?: { champion: string; basis: LiveJunglerBasis } | null
+	/**
+	 * Champion notes for the two junglers, on the turns that carry them.
+	 *
+	 * Null on most turns by design — `shared/live-knowledge.ts` explains why this rides in the
+	 * per-turn block at all and why it is re-sent periodically rather than once.
+	 */
+	knowledge?: LiveKnowledge | null
+	/**
+	 * The one question this turn has to answer, from `analysis/live-decision.ts`.
+	 *
+	 * Null when the fact list is empty, which is also when the answer is PASS.
+	 */
+	decision?: string | null
 	/** Most recent objective/kill events, already phrased. Newest last. */
 	recentEvents: string[]
 	/**
@@ -88,6 +123,12 @@ export interface VisionStatePlayer {
 const line = (p: VisionStatePlayer): string =>
 	`${p.champion}${p.level ? ` lv${p.level}` : ""} ${p.k ?? 0}/${p.d ?? 0}/${p.a ?? 0}`
 
+/** "Lillia" or "looks like Lillia" — the hedge belongs to the weaker basis, every time. */
+const junglerLine = (j: { champion: string; basis: LiveJunglerBasis }): string =>
+	j.basis === "position" ?
+		`Their jungler: ${j.champion} (the client published his position — you may say this plainly).`
+	:	`Their jungler: ${j.champion}, identified by his Smite alone because nobody declared a position this queue. Say "looks like"; do not assert it.`
+
 /** The authoritative block. Everything in it came from the client, not from the picture. */
 export const renderState = (s: VisionState): string => {
 	const me = s.me
@@ -100,12 +141,19 @@ You: ${me.champion}${me.level ? ` lv${me.level}` : ""} ${me.k ?? 0}/${me.d ?? 0}
 		me.cs !== undefined ? `, ${me.cs} CS` : ""
 	}${hp ? `, ${hp}` : ""}${me.gold !== undefined ? `, ${Math.round(me.gold)}g` : ""}${
 		me.dead ? `, DEAD${me.respawnSec ? ` (respawn ${Math.round(me.respawnSec)}s)` : ""}` : ""
+	}${
+		me.items && me.items.length > 0 ?
+			`
+
+His items right now: ${me.items.join(" · ")}. That is his complete inventory and it is HIS ONLY — you
+cannot see anyone else's. You do not know what anything cost, what order it was bought in, or when.`
+		:	""
 	}
 
 Your team: ${s.allies.map(line).join(" · ") || "unknown"}
 
 Enemy team: ${s.enemies.map(line).join(" · ") || "unknown"}
-
+${s.theirJungler ? `\n${junglerLine(s.theirJungler)}\n` : ""}
 Alive right now: ${1 + s.allies.filter(p => !p.dead).length - (s.me.dead ? 1 : 0)} of yours against ${s.enemies.filter(p => !p.dead).length} of theirs.
 ${s.recentEvents.length > 0 ? `
 Just happened: ${s.recentEvents.join("; ")}` : ""}${
@@ -137,5 +185,27 @@ inferring one — you cannot read health bars, gold or scores off a
 downscaled screenshot accurately, and you do not need to, because they are right here.
 
 Use the screenshot for **where things are** — positions, who is grouped, what is happening on
-screen. Use this block for **what is true**.`
+screen. Use this block for **what is true**.${
+		s.knowledge ? `\n\n${renderKnowledge(s.knowledge)}` : ""
+	}${
+		/*
+		 * The question goes LAST, on purpose.
+		 *
+		 * Everything above it is evidence; this is the only line that says what to do with it. The
+		 * previous design ended on the fact list and got exactly what it asked for — the top fact,
+		 * read back. Ending on the question is the cheapest available way to make the last thing
+		 * the model reads be a decision rather than a number.
+		 */
+		s.decision ?
+			`
+
+## The one decision — ANSWER it, never read it back
+
+${s.decision}
+
+Answer it in one spoken sentence, using the facts above and what you know about these two
+champions. Do not repeat the question, do not say "the decision is", and do not answer it with a
+fact he can already see. If the honest answer is that nothing needs deciding, say PASS.`
+		:	""
+	}`
 }

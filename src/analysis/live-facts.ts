@@ -152,9 +152,31 @@ const hash = (s: string): number => {
 }
 
 /**
- * The ranked, rate-limited list. Mutates `mem`, which is the point — it is the memory.
+ * What KIND of fact this is, carried alongside the sentence.
+ *
+ * The sentences are written to be spoken, so they are the wrong thing to branch on — a caller
+ * that wanted to know "is the top fact a window?" had to match `/of them are dead/` against prose
+ * whose whole job is to be rewritten when it reads badly. `analysis/live-decision.ts` needs
+ * exactly that question answered to frame the turn's decision, and a regex over ranked prose is a
+ * coupling that breaks silently the first time someone improves a sentence.
  */
-export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
+export type FactKind = "window" | "objective" | "gold" | "farm" | "death" | "praise"
+
+export interface TaggedFact {
+	kind: FactKind
+	text: string
+}
+
+/**
+ * The ranked, rate-limited list. Mutates `mem`, which is the point — it is the memory.
+ *
+ * `buildFacts` is the string form every existing caller wants; `buildTaggedFacts` is the same
+ * computation with the kind attached. One implementation, so the two can never rank differently.
+ */
+export const buildFacts = (input: FactInput, mem: FactMemory): string[] =>
+	buildTaggedFacts(input, mem).map(f => f.text)
+
+export const buildTaggedFacts = (input: FactInput, mem: FactMemory): TaggedFact[] => {
 	/** Seconds until he is back on the map; 0 when he is already on it. */
 	const dead = input.meDeadForSec ?? 0
 	const praise: string[] = []
@@ -361,7 +383,17 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * So praise still happens, but only when nothing else is on offer. That is most of the time
 	 * it matters anyway — the moment after a fight is usually quiet.
 	 */
-	const nonDeath = [...windows, ...rest, ...money, ...farm]
+	/** Tag at the point of ranking, so the sentence-building above stays plain strings. */
+	const tag =
+		(kind: FactKind) =>
+		(text: string): TaggedFact => ({ kind, text })
+	const w = windows.map(tag("window"))
+	const o = rest.map(tag("objective"))
+	const g = money.map(tag("gold"))
+	const f = farm.map(tag("farm"))
+	const p = praise.map(tag("praise"))
+
+	const nonDeath = [...w, ...o, ...g, ...f]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -375,11 +407,11 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * most frequent fact by a wide margin, another is along shortly, and a coach that says the
 	 * same sentence twenty times is one nobody listens to at all.
 	 */
-	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
+	const deathsAllowed = (mem.lastLedWithDeath ? [] : deaths.slice(0, 1)).map(tag("death"))
 	const ranked =
 		windows.length > 0 || rest.length > 0 ?
-			[...windows, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
-		:	[...nonDeath, ...deathsAllowed, ...praise]
+			[...w, ...o, ...g, ...f, ...deathsAllowed, ...p]
+		:	[...nonDeath, ...deathsAllowed, ...p]
 
 	/*
 	 * A live window is offered ALONE.
@@ -389,7 +421,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * a number that would be equally true thirty seconds later. When something expires in seconds
 	 * and everything else does not, there is no choice worth offering.
 	 */
-	const out = windows.length > 0 ? windows.slice(0, 1) : ranked.slice(0, MAX_FACTS)
+	const out = w.length > 0 ? w.slice(0, 1) : ranked.slice(0, MAX_FACTS)
 	/*
 	 * Set unconditionally, including to false on an empty turn.
 	 *
@@ -398,6 +430,6 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * the problem: with nothing else ever on offer, deaths would be suppressed for the rest of the
 	 * game after the first one.
 	 */
-	mem.lastLedWithDeath = out.some(f => f.includes("just died"))
+	mem.lastLedWithDeath = out.some(fact => fact.kind === "death")
 	return out
 }
