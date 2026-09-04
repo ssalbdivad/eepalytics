@@ -47,3 +47,18 @@ strong extended fight, and worth naming when she dies early in a short one.
 **Patch context (26.17, live 2026-08-26):** AP junglers took another small-to-moderate nerf this
 patch, the latest in a run of them. This is background for expectations, never an excuse to offer
 him — do not use it to explain away a number.
+
+## Live coaching
+
+One clause per situation, said out loud after the number the client proved. **No digits** — a
+figure here would be a claim about the game, and every figure he hears must come from the client.
+Anything with a number in it is refused at load time, deliberately.
+
+race-behind: your clear accelerates as it chains, so a broken route costs you the speed you already paid for
+race-ahead: keep the route moving, being somewhere they are not is the whole plan
+restraint: you lose the even early fight and that is correct play rather than timidity
+fight-lost: you want the long fight with room to kite, not a short trade
+fight-absent: your case for existing is being somewhere they are not, so get on the map before the next one starts
+death: your escape is movement speed, so once you are committed into a corridor nothing gets you out
+build: itemise for the fight you actually win, which is the long one
+farm-behind: low farm on you is almost always an interrupted route rather than a slow one

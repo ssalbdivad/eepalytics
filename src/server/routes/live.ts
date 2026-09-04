@@ -46,6 +46,7 @@ import { championName, refreshChampionNames } from "../../daemon/champions.ts"
 import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
 import { championNote, pronunciationTable } from "../../knowledge/index.ts"
+import { parseChampionAdvice } from "../../shared/champion-advice.ts"
 import { pronunciationsFor } from "../../shared/pronounce.ts"
 import { dragonPhrase } from "../../shared/dragons.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
@@ -371,6 +372,15 @@ const buildLiveState = (
 				 * taken Baron — the single largest event in the game.
 				 */
 				counterpart,
+				/*
+				 * His champion's own note, or the role default. Parsed every call and cached by the
+				 * knowledge module, so editing the markdown mid-session takes effect on the next
+				 * game with no restart.
+				 */
+				advice: (() => {
+					const note = championNote(me.championName ?? "")
+					return note ? parseChampionAdvice(note.text) : undefined
+				})(),
 				meLevel: me.level,
 				myKillShare: (() => {
 					const ourKills =

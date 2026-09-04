@@ -41,6 +41,8 @@ export const GOLD_FLOOR = 1200
 /** How much more must accumulate before unspent gold is news again. */
 export const GOLD_STEP = 800
 import { dragonPhrase } from "../shared/dragons.ts"
+import { withAdvice } from "../shared/champion-advice.ts"
+import type { ChampionAdvice } from "../shared/champion-advice.ts"
 
 /**
  * Recognises a death-window fact in a rendered line, for the "never lead twice running" rule.
@@ -242,6 +244,14 @@ export interface FactInput {
 	/** His own share of his team's kills, 0-1. */
 	myKillShare?: number
 	/**
+	 * What a one-trick on HIS champion would add to each kind of fact.
+	 *
+	 * Loaded from `knowledge/champions/<champion>.md` and guaranteed digit-free by the parser, so
+	 * it can shape the fix and can never become a claim. Absent for a champion with no note, and
+	 * the facts simply stand alone — which is what they have always done.
+	 */
+	advice?: ChampionAdvice
+	/**
 	 * The read from `analysis/fights.ts`, already phrased by the module that owns the arithmetic.
 	 *
 	 * `quiet` means kills are still landing and NOTHING may be said this turn, about anything — a
@@ -335,8 +345,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 			const who = input.counterpart.champion
 			race.push(
 				gap > 0 ?
-					`${who} is ${gap} CS up on you — finish the clear before you look at a lane`
-				:	`you're ${-gap} CS up on ${who} — keep the route going and spend the lead`
+					withAdvice(`${who} is ${gap} CS up on you`, input.advice?.["race-behind"])
+				:	withAdvice(`you're ${-gap} CS up on ${who}`, input.advice?.["race-ahead"])
 			)
 		}
 	}
@@ -377,7 +387,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 			// The first poll of a game is not news: everything is "new" then. Only announce once a
 			// baseline exists, which is what the flag records.
 			if (!mem.sawCounterpartBuild) continue
-			build.push(`${input.counterpart.champion} just finished ${item}`)
+			build.push(withAdvice(`${input.counterpart.champion} just finished ${item}`, input.advice?.build))
 		}
 		mem.sawCounterpartBuild = true
 	}
@@ -391,12 +401,18 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		if (down >= RESTRAINT_LEVEL_GAP && objectiveUp && !mem.saidRestraint) {
 			mem.saidRestraint = true
 			restraint.push(
-				`you're ${down} levels down on ${input.counterpart.champion} — don't contest this one alone, take the camps that are up instead`
+				withAdvice(
+					`you're ${down} levels down on ${input.counterpart.champion}, don't contest this one alone`,
+					input.advice?.restraint
+				)
 			)
 		} else if (down >= RESTRAINT_LEVEL_GAP && !mem.saidLevelGap) {
 			mem.saidLevelGap = true
 			restraint.push(
-				`${input.counterpart.champion} is ${down} levels up on you — get your clear finished before you take a fight`
+				withAdvice(
+					`${input.counterpart.champion} is ${down} levels up on you`,
+					input.advice?.restraint
+				)
 			)
 		}
 	}
@@ -524,7 +540,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		 */
 		farm.push(
 			behind > 0 ?
-				`you're ${hedge}${behind} CS down on your own pace — full clear before you look at a lane`
+				withAdvice(`you're ${hedge}${behind} CS down on your own pace`, input.advice?.["farm-behind"])
 			:	`you're ${hedge}${-behind} CS up on your own pace, ${input.pace.cs} against ${input.pace.expected} — keep taking the free camps`
 		)
 	}
