@@ -431,7 +431,19 @@ const runSession = async (
 const FORBIDDEN: { label: string; re: RegExp }[] = [
 	{ label: "ability usage / cooldowns", re: /\b(cooldown|abilit(y|ies)|your (q|w|e|r)\b|spell rotation|combo)\b/i },
 	{ label: "ward placement", re: /\b(ward(s|ing)?|deep ward|control ward|pink)\b/i },
-	{ label: "item build / timings", re: /\b(build|itemi[sz]|buy |bought|rush(ing)? \w+|component)\b/i },
+	/*
+	 * Build JUDGEMENT, not the verb "buy".
+	 *
+	 * The first version flagged "you have 2205g unspent, recall right now and buy some items" as
+	 * unsupportable. It is not: the gold figure is in the block and spending it is the obvious
+	 * consequence. What the data cannot support is grading the build — which item, in what order,
+	 * at what time. Scoring the generic verb would have driven a real improvement out of the
+	 * coach to satisfy a bad check.
+	 */
+	{
+		label: "item build / timings",
+		re: /\b(your build|built \w+|should have (bought|built|rushed)|rush(ing)? (a|the|his|her)? ?\w+ (first|before)|bought (it|them)? ?(too|at))\b/i
+	},
 	{ label: "summoner spells", re: /\b(flash|ignite|smite is (up|down)|summoner spell)\b/i },
 	{ label: "clear speed judgement", re: /\b(clear faster|clearing too slow|speed up your clear|slow clear)\b/i },
 	{ label: "unseeable enemy position", re: /\b(their jungler is (in|at|near)|enemy jungler is (in|at|near))\b/i }
