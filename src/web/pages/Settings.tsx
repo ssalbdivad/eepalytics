@@ -26,6 +26,51 @@ export interface SettingsPageProps {
 export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 	const loaded = useResource(signal => api.settings(signal), [])
 	const [draft, setDraft] = useState<Settings | null>(null)
+	/*
+	 * Checking the key is a live call to Google, so it is a button rather than something that
+	 * fires on every keystroke. Someone pasting a bad key should find out here, not mid-game.
+	 */
+	const [gemini, setGemini] = useState<{
+		ok: boolean
+		error?: string | null
+		hint?: string
+		configured?: boolean
+	} | null>(null)
+	/*
+	 * Held apart from `draft` because the key does not live in settings — it is written straight
+	 * to a 0600 file by its own write-only endpoint, so it never comes back in `GET /api/settings`
+	 * and never sits in this page's state after a reload.
+	 */
+	const [geminiKeyInput, setGeminiKeyInput] = useState("")
+
+	const readGemini = async () => {
+		try {
+			const r = await fetch("/api/live/gemini/status")
+			setGemini((await r.json()) as { ok: boolean; error?: string | null; hint?: string })
+		} catch (e) {
+			setGemini({ ok: false, error: e instanceof Error ? e.message : String(e) })
+		}
+	}
+	useEffect(() => {
+		void readGemini()
+	}, [])
+
+	const saveGeminiKey = async (key: string) => {
+		setGemini(null)
+		try {
+			const r = await fetch("/api/live/gemini/key", {
+				method: "PUT",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ key })
+			})
+			const j = (await r.json()) as { configured?: boolean; works?: boolean; error?: string | null }
+			setGeminiKeyInput("")
+			setGemini({ ok: Boolean(j.works), error: j.error, configured: j.configured })
+			if (j.configured) await readGemini()
+		} catch (e) {
+			setGemini({ ok: false, error: e instanceof Error ? e.message : String(e) })
+		}
+	}
 	const now = useNow(30_000)
 
 	useEffect(() => {
@@ -119,6 +164,58 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 						<div className="help">
 							Runs through the Claude Agent SDK on your existing <code className="mono">claude</code>{" "}
 							CLI login — there's no API key on this machine, so nothing is billed separately.
+						</div>
+					</div>
+
+					<div className="field wide">
+						<div className="label">Gemini key — live voice coach</div>
+						<div className="control">
+							<input
+								type="password"
+								autoComplete="off"
+								spellCheck={false}
+								placeholder={
+									gemini?.hint ? `saved (${gemini.hint}) — paste a new one to replace` : (
+										"paste an AI Studio API key"
+									)
+								}
+								value={geminiKeyInput}
+								onChange={e => setGeminiKeyInput(e.target.value)}
+								style={{ width: "100%" }}
+							/>
+							<div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+								<button
+									className="btn"
+									type="button"
+									disabled={geminiKeyInput.trim() === ""}
+									onClick={() => void saveGeminiKey(geminiKeyInput)}
+								>
+									Save &amp; test
+								</button>
+								{gemini?.hint && (
+									<button className="btn" type="button" onClick={() => void saveGeminiKey("")}>
+										Clear
+									</button>
+								)}
+							</div>
+							{gemini !== null && (
+								<div className={gemini.ok ? "ok" : "warn"} style={{ marginTop: 6 }}>
+									{gemini.ok ?
+										`Working${gemini.hint ? ` (${gemini.hint})` : ""}.`
+									:	`Not working: ${gemini.error ?? "no key set"}`}
+								</div>
+							)}
+						</div>
+						<div className="help">
+							Powers <b>Live voice</b> on the live page — a held-open connection that watches your
+							screen continuously and answers out loud in about 0.8s, against ~3s for glances.
+							Get one free at{" "}
+							<code className="mono">aistudio.google.com/apikey</code>. The key stays on this
+							machine: the daemon swaps it for a short-lived token and only that reaches the
+							browser.
+							<br />
+							There is no "sign in with Google" here because there cannot be — the Live API takes
+							an API key, and a consumer Gemini subscription grants no API access.
 						</div>
 					</div>
 

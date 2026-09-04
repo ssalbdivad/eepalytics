@@ -71,7 +71,12 @@ const FRAME_QUALITY = 0.72
  */
 const FRAME_WIDTH = 1536
 
-export const useScreenCoach = () => {
+/**
+ * @param glancesEnabled - false while the Gemini live socket owns the stream. Screen sharing is
+ *   one permission and one stream; only the consumer changes, so the two modes must not both be
+ *   pulling frames and both be charging for them.
+ */
+export const useScreenCoach = (glancesEnabled = true) => {
 	const [state, setState] = useState<ScreenCoachState>({
 		sharing: false,
 		intervalSec: 30,
@@ -229,7 +234,7 @@ export const useScreenCoach = () => {
 	}, [grab])
 
 	useEffect(() => {
-		if (!state.sharing) return
+		if (!state.sharing || !glancesEnabled) return
 		let live = true
 
 		const tick = async () => {
@@ -294,7 +299,7 @@ export const useScreenCoach = () => {
 			live = false
 			clearInterval(id)
 		}
-	}, [state.sharing, state.intervalSec, grab])
+	}, [state.sharing, state.intervalSec, grab, glancesEnabled])
 
 	useEffect(() => stop, [stop])
 
@@ -303,6 +308,8 @@ export const useScreenCoach = () => {
 		start,
 		stop,
 		ask,
+		/** Shared with the Gemini path so one screen-share feeds either coach. */
+		grabFrame: grab,
 		listen,
 		setInterval: (sec: number) => setState(s => ({ ...s, intervalSec: sec })),
 		/** Called by the page each poll so a glance costs no extra client round trip. */

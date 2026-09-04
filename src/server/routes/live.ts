@@ -33,6 +33,8 @@ import { LiveResponse } from "../../shared/schema/api.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { USER_PUUID } from "../../shared/constants.ts"
 import { observeFrame } from "../../review/live-vision.ts"
+import { renderState } from "../../review/live-vision.ts"
+import { checkGeminiKey, geminiKey, mintGeminiToken, setGeminiKey } from "../../review/gemini-live.ts"
 import type { VisionState, VisionStatePlayer } from "../../review/live-vision.ts"
 import { fail, send } from "../respond.ts"
 
@@ -60,6 +62,59 @@ const findMe = (data: LiveAllGameData) => {
  * Returns null when there is no game, which is honest: the prompt then tells the model it has no
  * roster and must not name champions at all, rather than leaving it free to guess.
  */
+/**
+ * The facts worth saying, computed here rather than inferred by the model.
+ *
+ * This is the same split the rest of the app uses: code derives the numbers, the model may only
+ * choose one and phrase it. It exists because forcing a vision model to "be actionable" from a
+ * screenshot is how you get confident nonsense — the fix is that it is not being asked to work
+ * anything out. Every string below is read straight off `allgamedata`.
+ *
+ * Deliberately NOT computed: objective respawn timers. Dragon and Baron respawn windows are
+ * patch-tunable, and a timer that is quietly thirty seconds wrong is worse than no timer at all,
+ * so the elapsed time since the take is reported as the fact it is and the inference is left
+ * alone.
+ */
+const buildUnseen = (data: LiveAllGameData, me: LivePlayer, nowSec: number): string[] => {
+	const out: string[] = []
+
+	/*
+	 * Enemies who are dead right now, longest first. This is the highest-value line the coach can
+	 * say to a jungler: it is exact, it is invisible without opening the scoreboard, and it has a
+	 * shelf life measured in the seconds it takes to walk somewhere.
+	 */
+	const deadEnemies = (data.allPlayers ?? [])
+		.filter(p => p.team !== me.team && p.isDead && (p.respawnTimer ?? 0) > 1)
+		.sort((a, b) => (b.respawnTimer ?? 0) - (a.respawnTimer ?? 0))
+	for (const p of deadEnemies)
+		out.push(`${p.championName ?? "an enemy"} is DEAD for another ${Math.round(p.respawnTimer ?? 0)}s`)
+
+	const gold = data.activePlayer?.currentGold
+	if (gold !== undefined && gold >= 1200) out.push(`${Math.round(gold)}g sitting unspent`)
+
+	/*
+	 * Elapsed time since the last objective take, as a fact. Late in a game the event list runs
+	 * long, so scan from the end.
+	 */
+	const events = data.events?.Events ?? []
+	const lastOf = (name: string) => {
+		for (let i = events.length - 1; i >= 0; i--) if (events[i]!.EventName === name) return events[i]
+		return null
+	}
+	const drake = lastOf("DragonKill")
+	if (drake?.EventTime !== undefined) {
+		const ago = Math.max(0, Math.round(nowSec - drake.EventTime))
+		out.push(`last drake (${drake.DragonType ?? "unknown"}) was taken ${Math.floor(ago / 60)}m${ago % 60}s ago`)
+	}
+	const baron = lastOf("BaronKill")
+	if (baron?.EventTime !== undefined) {
+		const ago = Math.max(0, Math.round(nowSec - baron.EventTime))
+		out.push(`last Baron was taken ${Math.floor(ago / 60)}m${ago % 60}s ago`)
+	}
+
+	return out.slice(0, 6)
+}
+
 const buildLiveState = (
 	data: LiveAllGameData | null,
 	me: ReturnType<typeof findMe>,
@@ -117,7 +172,8 @@ const buildLiveState = (
 		},
 		allies: others.filter(p => p.team === mine).map(asPlayer),
 		enemies: others.filter(p => p.team !== mine).map(asPlayer),
-		recentEvents
+		recentEvents,
+		unseen: buildUnseen(data, me, secs)
 	}
 }
 
@@ -325,6 +381,82 @@ export const createLiveRoute = (): Hono => {
 			costUsd: result.costUsd,
 			durationMs: result.durationMs,
 			...(result.error ? { error: result.error } : {})
+		})
+
+	})
+
+	/**
+	 * `GET /api/live/ground-truth` — the computed facts, as the text the coach is given.
+	 *
+	 * The Gemini path runs in the browser and talks to Google directly, so it cannot call
+	 * `buildLiveState` itself. It polls this instead and forwards the block verbatim, which
+	 * keeps exactly one definition of "what is true" for both coaching paths.
+	 */
+	app.get("/live/ground-truth", async c => {
+		const handle = await lcu()
+		const data = handle ? await handle.live.allGameData().catch(() => null) : null
+		const me = data ? findMe(data) : null
+		const state = buildLiveState(data, me, data?.gameData?.gameTime ?? null)
+		if (!state) return c.json({ inGame: false, text: "" })
+		const focus = cachedFocus().map(f => f.fix).filter(f => f !== "")
+		return c.json({
+			inGame: true,
+			text: `${renderState(state)}${
+				focus.length > 0 ? `\n\n### What he is working on\n\n${focus.map(f => `- ${f}`).join("\n")}` : ""
+			}`
+		})
+	})
+
+	/**
+	 * `POST /api/live/gemini/token` — a one-session credential for the browser.
+	 *
+	 * The page cannot be given the API key: it would sit in a devtools network tab and in any
+	 * screen recording of the app. So the daemon mints a token good for one connection and a
+	 * few minutes, and the page connects to Google directly with that. This is Google's own
+	 * client-to-server shape, and it is the reason the browser can hold the socket at all —
+	 * proxying audio and video through this daemon would give back the second of latency the
+	 * whole feature exists to remove.
+	 */
+	app.post("/live/gemini/token", async c => {
+		const minted = await mintGeminiToken()
+		if (!minted.ok) return c.json({ ok: false, error: minted.error }, 200)
+		return c.json({ ok: true, ...minted.value })
+	})
+
+	/**
+	 * `PUT /api/live/gemini/key` — set or clear the key.
+	 *
+	 * Write-only on purpose. There is no GET that returns it; `status` reports whether one works
+	 * and shows four characters at each end, which is enough to tell two keys apart and useless
+	 * to anyone else.
+	 */
+	app.put("/live/gemini/key", async c => {
+		const body = (await c.req.json().catch(() => null)) as { key?: unknown } | null
+		if (typeof body?.key !== "string") return fail(c, 400, "key must be a string", "bad-key")
+		if (body.key.length > 500) return fail(c, 400, "that is not an API key", "bad-key")
+		setGeminiKey(body.key)
+		const key = geminiKey()
+		if (key === "") return c.json({ ok: true, configured: false })
+		const checked = await checkGeminiKey(key)
+		return c.json({
+			ok: true,
+			configured: true,
+			works: checked.ok,
+			error: checked.ok ? null : checked.error
+		})
+	})
+
+	/** `GET /api/live/gemini/status` — is a key present, and does it work? For the settings UI. */
+	app.get("/live/gemini/status", async c => {
+		const key = geminiKey()
+		if (key === "") return c.json({ configured: false, ok: false, error: "no key set" })
+		const checked = await checkGeminiKey(key)
+		return c.json({
+			configured: true,
+			ok: checked.ok,
+			error: checked.ok ? null : checked.error,
+			// Never the key. Enough to tell two keys apart when someone pastes the wrong one.
+			hint: `${key.slice(0, 4)}…${key.slice(-4)}`
 		})
 	})
 

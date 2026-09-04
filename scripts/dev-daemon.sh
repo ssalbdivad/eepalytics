@@ -11,7 +11,7 @@ for pid in $(pgrep -f "strip-types.*daemon/main" 2>/dev/null); do
 	kill "$pid" 2>/dev/null || true
 done
 sleep 2
-setsid nohup node --experimental-strip-types --no-warnings=ExperimentalWarning \
+setsid nohup node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning \
 	src/daemon/main.ts > data/logs/daemon-live.log 2>&1 < /dev/null &
 sleep 6
 curl -s -m 5 http://127.0.0.1:7700/api/health | head -c 200

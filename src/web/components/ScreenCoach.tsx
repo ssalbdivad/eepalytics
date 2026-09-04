@@ -12,8 +12,9 @@
  * this glances periodically. Calling it "live analysis" would set an expectation it cannot meet.
  */
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useScreenCoach } from "../lib/screenCoach.ts"
+import { useGeminiLive } from "../lib/geminiLive.ts"
 import "./components.css"
 
 const INTERVALS = [15, 30, 60, 120]
@@ -52,10 +53,61 @@ const isWslElectron = (): boolean => {
 	return /Electron/i.test(ua) && /Linux/i.test(ua)
 }
 
+/**
+ * Two coaches, one screen share.
+ *
+ * `glance` photographs the screen every N seconds and asks Claude — cheap, no key needed, and
+ * about 3s behind. `live` holds a socket open to Gemini, streams video continuously and answers
+ * in a voice in about 0.8s. Measured on the same frame, that is the whole difference, and it is
+ * the difference between coaching a fight and describing one that ended.
+ */
+type Mode = "glance" | "live"
+
 export const ScreenCoach = () => {
-	const coach = useScreenCoach()
+	const [mode, setMode] = useState<Mode>("glance")
+	const coach = useScreenCoach(mode === "glance")
 	const [opening, setOpening] = useState(false)
 	const wsl = isWslElectron()
+
+	/*
+	 * The ground-truth block, polled so the live socket can forward it synchronously. It is the
+	 * same text the glance path builds, from one definition in the daemon.
+	 */
+	const truthRef = useRef("")
+	useEffect(() => {
+		if (mode !== "live" || !coach.sharing) return
+		let alive = true
+		const pull = async () => {
+			try {
+				const r = await fetch("/api/live/ground-truth")
+				const j = (await r.json()) as { text?: string }
+				if (alive) truthRef.current = j.text ?? ""
+			} catch {
+				/* the overlay must survive the client being closed */
+			}
+		}
+		void pull()
+		const id = setInterval(() => void pull(), 5000)
+		return () => {
+			alive = false
+			clearInterval(id)
+		}
+	}, [mode, coach.sharing])
+
+	const gem = useGeminiLive({
+		groundTruth: () =>
+			truthRef.current === "" ?
+				"No live game data right now — say nothing unless the screen clearly shows something worth saying."
+			:	truthRef.current,
+		grabFrame: () => coach.grabFrame()
+	})
+
+	const [question, setQuestion] = useState("")
+
+	// Sharing and the socket are separate things; stopping the share must not leave one open.
+	useEffect(() => {
+		if (!coach.sharing && gem.status !== "off") gem.stop()
+	}, [coach.sharing, gem])
 
 	const openInWindows = async () => {
 		setOpening(true)
@@ -118,7 +170,7 @@ export const ScreenCoach = () => {
 				</div>
 			)}
 
-			{!wsl && !coach.sharing && (
+			{mode === "glance" && !wsl && !coach.sharing && (
 				<div className="csk-screen__warn">
 					A screenshot of the screen you share is sent to Anthropic on every glance, and the
 					daemon deletes each one straight after. Roughly{" "}
@@ -127,6 +179,96 @@ export const ScreenCoach = () => {
 				</div>
 			)}
 
+			<div className="csk-screen__modes">
+				<button
+					className={`csk-screen__mode ${mode === "glance" ? "on" : ""}`}
+					onClick={() => setMode("glance")}
+				>
+					Glances
+					<em>Claude · ~3s · no key</em>
+				</button>
+				<button
+					className={`csk-screen__mode ${mode === "live" ? "on" : ""}`}
+					onClick={() => setMode("live")}
+				>
+					Live voice
+					<em>Gemini · ~0.8s · speaks</em>
+				</button>
+			</div>
+
+			{mode === "live" && (
+				<div className="csk-screen__live">
+					{gem.error !== null && <div className="csk-screen__err">{gem.error}</div>}
+					<div className="csk-screen__controls">
+						{gem.status === "live" ?
+							<button className="btn" onClick={gem.stop}>
+								Disconnect
+							</button>
+						:	<button
+								className="btn btn-primary"
+								disabled={!coach.sharing || gem.status === "connecting"}
+								onClick={() => void gem.start()}
+							>
+								{gem.status === "connecting" ? "Connecting…" : "Go live"}
+							</button>
+						}
+						<span className="csk-screen__label">Speaks every</span>
+						{[10, 20, 40].map(sec => (
+							<button
+								key={sec}
+								className={`csk-screen__int ${gem.turnMs === sec * 1000 ? "on" : ""}`}
+								onClick={() => gem.setTurnMs(sec * 1000)}
+							>
+								{sec}s
+							</button>
+						))}
+						{gem.status === "live" && (
+							<button
+								className={`csk-screen__int ${gem.micOn ? "on" : ""}`}
+								onClick={() => void gem.setMic(!gem.micOn)}
+								title="Talk to the coach"
+							>
+								{gem.micOn ? "🎙 on" : "🎙 off"}
+							</button>
+						)}
+						{gem.status === "live" && <span className="csk-screen__meter">connected</span>}
+					</div>
+					{gem.status === "live" && (
+						<form
+							className="csk-screen__ask"
+							onSubmit={e => {
+								e.preventDefault()
+								gem.ask(question)
+								setQuestion("")
+							}}
+						>
+							<input
+								value={question}
+								onChange={e => setQuestion(e.target.value)}
+								placeholder="Ask the coach something…"
+							/>
+							<button className="btn" type="submit">
+								Ask
+							</button>
+						</form>
+					)}
+					{gem.lines.length > 0 && (
+						<ul className="csk-screen__log">
+							{gem.lines.map(l => (
+								<li key={`${l.atMs}-${l.text.slice(0, 12)}`}>
+									<span className="t">{fmtTime(l.atMs)}</span>
+									<span className="s">
+										{l.fromUser ? <b>you: </b> : null}
+										{l.text}
+									</span>
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
+			)}
+
+			{mode === "glance" && (
 			<div className="csk-screen__controls">
 				<span className="csk-screen__label">Every</span>
 				{INTERVALS.map(sec => (
@@ -154,6 +296,7 @@ export const ScreenCoach = () => {
 					</span>
 				)}
 			</div>
+			)}
 
 			{coach.error !== null && <div className="csk-screen__err">{coach.error}</div>}
 
@@ -162,11 +305,11 @@ export const ScreenCoach = () => {
 			  * now, so an empty log past that point means something is wrong rather than quiet —
 			  * and `coach.error` is what says so.
 			  */}
-			{coach.sharing && coach.observations.length === 0 && (
+			{mode === "glance" && coach.sharing && coach.observations.length === 0 && (
 				<div className="csk-screen__quiet">Looking at your screen…</div>
 			)}
 
-			{coach.observations.length > 0 && (
+			{mode === "glance" && coach.observations.length > 0 && (
 				<ul className="csk-screen__log">
 					{coach.observations.map(o => (
 						<li key={o.atMs}>

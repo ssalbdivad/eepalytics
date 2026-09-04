@@ -1895,3 +1895,57 @@ button.csk-chip:focus-visible,
 .csk-screen__blocked strong { color: var(--warn); font-size: 13px; }
 .csk-screen__blocked p { margin: 0; font-size: 12px; line-height: 1.55; color: var(--text-2); }
 .csk-screen__opening { font-size: 11.5px; color: var(--gold); font-family: var(--mono); }
+
+/* ============================================== ScreenCoach: mode switch === */
+/*
+ * Two coaches share one screen-share. The trade between them is latency against a key, so both
+ * numbers are on the buttons rather than in a tooltip — the choice is not obvious and should not
+ * need to be discovered by trying it mid-game.
+ */
+.csk-screen__modes {
+	display: flex;
+	gap: 8px;
+	margin: 10px 0;
+}
+.csk-screen__mode {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 9px 12px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--panel);
+	color: var(--dim);
+	cursor: pointer;
+	font: 600 12px/1.3 inherit;
+	text-align: left;
+}
+.csk-screen__mode em {
+	font: 400 10px/1.3 var(--csk-mono, monospace);
+	color: var(--faint);
+	font-style: normal;
+}
+.csk-screen__mode.on {
+	border-color: var(--accent);
+	color: var(--fg);
+	background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+}
+.csk-screen__live {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.csk-screen__ask {
+	display: flex;
+	gap: 6px;
+}
+.csk-screen__ask input {
+	flex: 1;
+	padding: 7px 10px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--bg);
+	color: var(--fg);
+	font: inherit;
+}
