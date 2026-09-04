@@ -181,6 +181,7 @@ const buildLiveState = (
 		factMemory.saidRestraint = false
 		factMemory.saidLevelGap = false
 		factMemory.saidKillShare = false
+		factMemory.saidOwnDeath = false
 		factMemory.sawCounterpartBuild = false
 		factMemory.seenCounterpartItems.clear()
 		factMemory.lastLedWithDeath = false

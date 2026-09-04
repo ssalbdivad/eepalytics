@@ -163,6 +163,8 @@ export interface FactMemory {
 	sawCounterpartBuild: boolean
 	/** Said once per game — a participation gap is a pattern, not an event. */
 	saidKillShare: boolean
+	/** The champion's death note is a property of the champion, so it is said once. */
+	saidOwnDeath: boolean
 	/** His CS when farm was last raised; it must actually move before saying it again. */
 	lastFarmCs: number
 	lastLedWithDeath: boolean
@@ -184,6 +186,7 @@ export const newFactMemory = (): FactMemory => ({
 	seenCounterpartItems: new Set(),
 	sawCounterpartBuild: false,
 	saidKillShare: false,
+	saidOwnDeath: false,
 	lastFarmCs: 0,
 	lastLedWithDeath: false
 })
@@ -326,6 +329,29 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * unusually himself. This says he is losing a race to a specific person, with both numbers off
 	 * the client and neither of them visible without holding TAB.
 	 */
+	/*
+	 * HIS OWN death, once per game, explained rather than narrated.
+	 *
+	 * The rule against reading his screen back rightly stopped the coach announcing that he died —
+	 * he was there. But an OTP always has something to say about it, and the useful part was never
+	 * the event: it is WHY this champion in particular cannot get out of that situation. That comes
+	 * from the champion note, is not on his HUD, and is not something he can work out mid-death.
+	 *
+	 * Once per game. A death clause is a property of the champion, so a second telling is a lecture,
+	 * and a coach that says the same sentence on every death is one he stops hearing. It also waits
+	 * until he is actually on the respawn screen with nothing else to do.
+	 */
+	const ownDeath: string[] = []
+	if (
+		input.meDeadForSec !== null &&
+		input.meDeadForSec > 0 &&
+		!mem.saidOwnDeath &&
+		input.advice?.death
+	) {
+		mem.saidOwnDeath = true
+		ownDeath.push(input.advice.death)
+	}
+
 	const race: string[] = []
 	if (
 		input.counterpart &&
@@ -701,7 +727,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * So praise still happens, but only when nothing else is on offer. That is most of the time
 	 * it matters anyway — the moment after a fight is usually quiet.
 	 */
-	const nonDeath = [...fight, ...restraint, ...windows, ...build, ...race, ...participation, ...rest, ...money, ...farm]
+	const nonDeath = [...fight, ...ownDeath, ...restraint, ...windows, ...build, ...race, ...participation, ...rest, ...money, ...farm]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -718,7 +744,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
 		windows.length > 0 || rest.length > 0 ?
-			[...fight, ...restraint, ...windows, ...build, ...race, ...participation, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
+			[...fight, ...ownDeath, ...restraint, ...windows, ...build, ...race, ...participation, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
 		:	[...nonDeath, ...deathsAllowed, ...praise]
 
 	/*
