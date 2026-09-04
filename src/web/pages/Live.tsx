@@ -31,6 +31,7 @@
 import { useEffect, useState } from "react"
 import type { LiveResponse } from "../../shared/schema/api.ts"
 import { api } from "../lib/api.ts"
+import { ScreenCoach } from "../components/ScreenCoach.tsx"
 
 /** Fast enough to catch an objective window, slow enough to be free. */
 const POLL_MS = 3000
@@ -235,6 +236,12 @@ export const Live = () => {
 					</div>
 				)}
 			</div>
+
+			{/*
+			 * Wide mode only. The controls need room to state what they cost and what they send,
+			 * and burying that in a 380px window would be the wrong place to make that decision.
+			 */}
+			{size === "wide" && <ScreenCoach />}
 
 			{err !== null && <div className="live__err">{err}</div>}
 		</div>

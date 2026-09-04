@@ -211,14 +211,122 @@ const waitForStableFile = async (
 	}
 }
 
-const firstPngIn = async (dir: string): Promise<string | null> => {
+const allPngsIn = async (dir: string): Promise<string[]> => {
 	const names = await readdir(dir).catch(() => [] as string[])
-	const pngs = names.filter(n => n.toLowerCase().endsWith(".png")).sort()
-	const first = pngs[0]
-	return first === undefined ? null : `${dir}/${first}`
+	// Riot numbers the files, so lexical sort is chronological as long as the numbering is
+	// zero-padded. It is; a natural sort is added as a cheap guard against it changing.
+	return names
+		.filter(n => n.toLowerCase().endsWith(".png"))
+		.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+		.map(n => `${dir}/${n}`)
 }
 
+const firstPngIn = async (dir: string): Promise<string | null> =>
+	(await allPngsIn(dir))[0] ?? null
+
+/**
+ * How fast the engine advances the replay WHILE RENDERING a burst.
+ *
+ * With `enforceFrameRate: true` the render is offline: the engine draws every requested frame
+ * properly and the speed only decides how much wall time that takes. So this is the knob that
+ * makes capture fast, and it does not degrade the frames — unlike raising playback speed, which
+ * would just make a live replay blur past.
+ *
+ * [UNVERIFIED AT RUNTIME] Riot does not document the interaction, and capture has never
+ * completed a full run on this machine. Kept as a named constant so a single measured value
+ * replaces it rather than a hunt through the code.
+ */
+export const BURST_REPLAY_SPEED = 8.0
+
+/** Frames per second of GAME time inside a burst. 2 over an 8s window is 16 frames. */
+export const BURST_FPS = 2
+
 /* ================================================================ public */
+
+/**
+ * Every frame across a window, from ONE render.
+ *
+ * The alternative — and what this replaces — was a seek, a settle and a separate render per
+ * frame. Five frames per moment meant five scrubs, each of which also moved the camera and had
+ * to be re-aimed. One render over the whole window is a single scrub, a single camera lock and a
+ * single file read, and because `enforceFrameRate` makes the render offline it can run at
+ * `BURST_REPLAY_SPEED` without the frames suffering for it.
+ *
+ * It also produces BETTER evidence: sixteen frames across eight seconds shows a kite or an
+ * ability sequence, where five stills mostly show five poses.
+ */
+export const burst = async (
+	opts: RecordOptions & { startSec: number; endSec: number; fps?: number }
+): Promise<Media[]> => {
+	const { session, momentId, signal, startSec, endSec } = opts
+	const slug = captureSlug(momentId, startSec)
+	const stage = stagePaths(session.gameId, `${slug}-burst`)
+	await mkdir(stage.wsl, { recursive: true })
+
+	const fps = opts.fps ?? BURST_FPS
+	const spanSec = Math.max(0.2, endSec - startSec)
+
+	await runRecording(
+		session,
+		{
+			codec: "png",
+			path: stage.win,
+			startTime: startSec,
+			endTime: endSec,
+			framesPerSecond: fps,
+			replaySpeed: BURST_REPLAY_SPEED,
+			enforceFrameRate: true,
+			lossless: true,
+			width: opts.width ?? DEFAULT_WIDTH,
+			height: opts.height ?? DEFAULT_HEIGHT
+		},
+		Math.max(CLIP_TIMEOUT_FLOOR_MS, Math.round(spanSec * CLIP_TIMEOUT_MS_PER_SEC)),
+		signal
+	)
+
+	// The folder can appear a beat after the render reports done.
+	let files: string[] = []
+	const deadline = Date.now() + 20_000
+	for (;;) {
+		files = await allPngsIn(stage.wsl)
+		if (files.length > 0) break
+		if (Date.now() >= deadline) break
+		await sleep(500, signal)
+	}
+	if (files.length === 0)
+		throw new CaptureError("no-output", `the burst render produced no PNGs in ${stage.wsl}`, stage.win)
+
+	const out: Media[] = []
+	for (const [i, src] of files.entries()) {
+		await waitForStableFile(src, 10_000, signal)
+		// Frame index back to a game clock. Even spacing is what `enforceFrameRate` guarantees.
+		const tSec = Math.round((startSec + i / fps) * 100) / 100
+		const id = makeMediaId(session.gameId, momentId, "screenshot", tSec)
+		const rel = `media/${session.gameId}/${id}.png`
+		const dest = `${MEDIA_DIR}/${session.gameId}/${id}.png`
+		await mkdir(`${MEDIA_DIR}/${session.gameId}`, { recursive: true })
+		await copyFile(src, dest)
+		const bytes = await readFile(dest)
+		const size = pngSize(bytes)
+		out.push({
+			id,
+			gameId: session.gameId,
+			momentId,
+			kind: "screenshot",
+			source: "replay",
+			path: rel,
+			tSec,
+			width: size?.width ?? opts.width ?? DEFAULT_WIDTH,
+			height: size?.height ?? opts.height ?? DEFAULT_HEIGHT,
+			bytes: bytes.byteLength,
+			createdMs: Date.now()
+		})
+	}
+	// Deliberately NOT cleanStage(): that wipes the whole game's staging directory, and other
+	// moments in this run are still writing into it. The pipeline cleans up once at the end.
+	await rm(stage.wsl, { recursive: true, force: true }).catch(() => {})
+	return out
+}
 
 /**
  * One frame, as a PNG, at `tSec`.

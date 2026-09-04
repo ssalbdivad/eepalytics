@@ -253,7 +253,32 @@ const createOverlay = async () => {
 	await overlay.loadURL(`${base}/#/live`)
 }
 
+/**
+ * Allow the page to capture the screen, for live coaching.
+ *
+ * `getDisplayMedia` is refused by default in Electron. Granting it needs a handler, and the
+ * handler is where the choice of WHAT gets shared lives — this picks the primary screen rather
+ * than showing a picker, because the alternative is a modal appearing over a running game.
+ *
+ * This is the one place the app can see outside itself, so it is deliberately narrow: video
+ * only, no audio, and only ever the screen the game is on.
+ */
+const allowScreenCapture = async () => {
+	const { desktopCapturer, session } = await import("electron")
+	session.defaultSession.setDisplayMediaRequestHandler(
+		(_request, callback) => {
+			void desktopCapturer
+				.getSources({ types: ["screen"] })
+				.then(sources => callback(sources[0] ? { video: sources[0] } : undefined))
+				.catch(() => callback(undefined))
+		},
+		// Never the microphone or system audio. The feature needs pixels and nothing else.
+		{ useSystemPicker: false }
+	)
+}
+
 app.whenReady().then(async () => {
+	await allowScreenCapture()
 	try {
 		daemon = await startDaemon()
 	} catch (err) {

@@ -23,7 +23,7 @@ import {
 	type LaunchPhase,
 	type ReplaySession
 } from "./launcher.ts"
-import { cleanStage, clip, screenshot } from "./recorder.ts"
+import { burst, cleanStage, clip } from "./recorder.ts"
 import { curlClients } from "./transport.ts"
 import {
 	CaptureError,
@@ -40,16 +40,14 @@ export const SETTLE_MS = 900
 export const CAMERA_SETTLE_MS = 260
 
 /**
- * Frames grabbed around each moment, in seconds relative to it.
+ * The window captured around each moment, in seconds relative to it.
  *
- * Weighted BEFORE the moment because the decision that caused an outcome happens before the
- * outcome. A death at 8:12 is explained by where he was and what he had up at 8:06, not by the
- * grey screen afterwards. The trailing frame exists to show the immediate consequence.
- *
- * Five frames costs four extra seeks per moment (~1.5s each). That is the price of being able to
- * say anything about execution at all.
+ * Only the FIRST and LAST entries matter now: the burst is one continuous render across the
+ * span, not a list of individual seeks. Weighted before the moment because the decision that
+ * caused an outcome happens before the outcome — a death at 8:12 is explained by where he was
+ * and what he had up at 8:06, not by the grey screen afterwards.
  */
-export const DEFAULT_BURST_SEC: readonly number[] = [-6, -3, -1, 0, 2]
+export const DEFAULT_BURST_SEC: readonly number[] = [-6, 2]
 
 /* ============================================================= selection */
 
@@ -288,6 +286,8 @@ interface CaptureOneOptions {
 	fps?: number
 	/** Seconds relative to the moment to grab frames at. `[0]` reproduces the old single shot. */
 	burstOffsetsSec: readonly number[]
+	/** Frames per second of game time inside the burst. */
+	burstFps?: number
 	/**
 	 * The champion whose game this is. Used when a moment names no champion of its own, and as
 	 * the fallback when the named one cannot be resolved — a review of his game should stay on
@@ -341,43 +341,42 @@ const captureOne = async (
 	await aim()
 
 	/*
-	 * A BURST, not a single frame.
+	 * ONE RENDER FOR THE WHOLE WINDOW.
 	 *
-	 * One screenshot shows where everyone stood; it cannot show what happened. Whether an
-	 * ability was used well, whether a camp was kited or tanked, whether a fight was entered
-	 * from the right angle — all of that is a sequence, and no data stream this app reads
-	 * contains it. The timeline has positions and kills; ability casts are only in the replay
-	 * chunk payloads, which need the game engine to decode. Frames either side of the moment
-	 * are the ONLY evidence of execution available, which is what makes the extra seeks worth
-	 * their cost.
+	 * This used to be a seek, a settle, a re-aim and a separate render per frame — five scrubs
+	 * per moment, each of which also moved the camera. `enforceFrameRate` makes the render
+	 * offline, so the engine draws every requested frame properly and `BURST_REPLAY_SPEED` only
+	 * decides how much WALL time that takes. One scrub, one camera lock, one file read.
 	 *
-	 * Offsets are seconds relative to the moment. Weighted before it, because the decision that
-	 * produced the outcome happened before the outcome did.
+	 * It is also better evidence: sixteen frames across eight seconds shows a kite or an ability
+	 * sequence, where five stills mostly showed five poses.
+	 *
+	 * The window is weighted BEFORE the moment, because the decision that produced an outcome
+	 * happens before the outcome does.
 	 */
-	for (const offset of o.burstOffsetsSec) {
-		const at = moment.tSec + offset
-		if (at < 0 || (o.replayLengthSec !== null && at > o.replayLengthSec)) continue
-		if (offset !== 0) {
-			await session.seek(at, o.signal)
-			await sleep(SETTLE_MS, o.signal)
-			// The seek moved the camera. Put it back on him before the shutter.
-			await aim()
-		}
+	const first = o.burstOffsetsSec[0] ?? 0
+	const last = o.burstOffsetsSec[o.burstOffsetsSec.length - 1] ?? 0
+	const startSec = Math.max(0, moment.tSec + first)
+	const endSec =
+		o.replayLengthSec === null ?
+			moment.tSec + last
+		:	Math.min(o.replayLengthSec, moment.tSec + last)
+
+	if (endSec > startSec) {
 		o.sink.push(
-			await screenshot({
+			...(await burst({
 				session,
-				tSec: at,
+				tSec: moment.tSec,
 				momentId: moment.id,
 				signal: o.signal,
+				startSec,
+				endSec,
 				width: o.width,
 				height: o.height,
-				fps: o.fps
-			})
+				fps: o.burstFps
+			}))
 		)
 	}
-	// No seek back to the moment. A rewind costs a full keyframe re-scrub (§6.3), the burst
-	// already ends after the moment, and the next moment is later still — so every seek in a
-	// capture run moves forward. Clips re-seek themselves anyway.
 
 	if (o.clipSeconds > 0) {
 		o.sink.push(

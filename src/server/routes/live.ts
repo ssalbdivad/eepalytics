@@ -22,6 +22,8 @@
  */
 
 import { Hono } from "hono"
+import { mkdir, rm, writeFile } from "node:fs/promises"
+import { join } from "node:path"
 import { liveNudges } from "../../analysis/live-coach.ts"
 import type { LiveState } from "../../analysis/live-coach.ts"
 import { baselineFromRows, perGameMetrics } from "../../analysis/index.ts"
@@ -31,8 +33,9 @@ import { lcu } from "../../daemon/lcu.ts"
 import { getSettings, recentFeedbackItems } from "../../db/queries.ts"
 import { LiveResponse } from "../../shared/schema/api.ts"
 import type { LiveAllGameData } from "../../shared/schema/live.ts"
-import { USER_PUUID } from "../../shared/constants.ts"
-import { send } from "../respond.ts"
+import { DATA_DIR, USER_PUUID } from "../../shared/constants.ts"
+import { observeFrame } from "../../review/live-vision.ts"
+import { fail, send } from "../respond.ts"
 
 /** Event names that mark an objective take we can time a respawn from. */
 const OBJECTIVE_EVENTS = new Set(["DragonKill", "BaronKill", "HeraldKill"])
@@ -153,6 +156,61 @@ export const createLiveRoute = (): Hono => {
 			},
 			"GET /api/live"
 		)
+	})
+
+	/**
+	 * `POST /api/live/observe` — one screen frame in, at most one sentence out.
+	 *
+	 * The frame arrives as a data URL from the renderer's screen capture, is written to a
+	 * scratch file for the CLI to read, and is deleted immediately afterwards. Nothing is kept:
+	 * these are screenshots of the user's whole screen, and an app that silently accumulates
+	 * those on disk is doing something the user did not ask for.
+	 */
+	app.post("/live/observe", async c => {
+		const body = (await c.req.json().catch(() => null)) as {
+			frame?: unknown
+			recent?: unknown
+		} | null
+
+		const frame = typeof body?.frame === "string" ? body.frame : ""
+		const b64 = frame.replace(/^data:image\/\w+;base64,/, "")
+		if (b64 === "" || b64.length > 12_000_000)
+			return fail(c, 400, "frame must be a base64 image under ~12MB", "bad-frame")
+
+		const dir = join(DATA_DIR, "live-frames")
+		await mkdir(dir, { recursive: true })
+		const path = join(dir, `frame-${Date.now()}.png`)
+
+		try {
+			await writeFile(path, Buffer.from(b64, "base64"))
+
+			const settings = getSettings()
+			const focus = standingFocus().map(f => f.fix).filter(f => f !== "")
+			// Best effort: the game may have ended between the capture and this call.
+			const handle = await lcu()
+			const data = handle ? await handle.live.allGameData().catch(() => null) : null
+			const me = data ? findMe(data) : null
+
+			const result = await observeFrame({
+				framePath: path,
+				dir,
+				championName: me?.championName ?? null,
+				gameTimeSec: data?.gameData?.gameTime ?? null,
+				focus,
+				recent: Array.isArray(body?.recent) ? (body.recent as unknown[]).filter(r => typeof r === "string").slice(-4) as string[] : []
+			})
+
+			return c.json({
+				ok: result.ok,
+				text: result.text,
+				costUsd: result.costUsd,
+				durationMs: result.durationMs,
+				...(result.error ? { error: result.error } : {})
+			})
+		} finally {
+			// Always, including on failure. See the route comment.
+			await rm(path, { force: true }).catch(() => {})
+		}
 	})
 
 	return app
