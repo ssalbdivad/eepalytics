@@ -55,6 +55,20 @@ export const DEATH_FACT = /^\d+ seconds without /
  * worth a syllable of nonsense: write "seconds", "gold", "minutes".
  */
 
+/**
+ * How long an enemy objective take is still worth saying. Baron lasts three minutes; a take he
+ * heard about four minutes later is history, not coaching.
+ */
+const ENEMY_OBJECTIVE_WORTH_SAYING_SEC = 45
+
+/**
+ * How long after a lost Baron or Herald the small talk stays off.
+ *
+ * Not a ranking tweak — a blackout. Ranking alone puts farm back on the next turn, twenty seconds
+ * after the game may have been decided.
+ */
+const DISASTER_QUIET_SEC = 90
+
 /** Game-clock seconds between farm-pace mentions. */
 export const FARM_COOLDOWN_SEC = 180
 /** His CS must have moved at least this much before the farm gap is worth restating. */
@@ -75,6 +89,8 @@ export const MAX_FACTS = 3
  */
 export interface FactMemory {
 	announcedDeaths: Set<string>
+	/** Enemy objective takes already announced, keyed by name+time. */
+	announcedLosses: Set<string>
 	announcedEvents: Set<number>
 	/** Praise lines already used verbatim, so the same congratulation is never repeated. */
 	praiseSaid: Set<string>
@@ -91,6 +107,7 @@ export interface FactMemory {
 
 export const newFactMemory = (): FactMemory => ({
 	announcedDeaths: new Set(),
+	announcedLosses: new Set(),
 	announcedEvents: new Set(),
 	praiseSaid: new Set(),
 	lastGoldMentioned: 0,
@@ -124,6 +141,16 @@ export interface FactInput {
 	/** Non-null only when it is far enough off his own average to be worth a sentence. */
 	pace: { cs: number; expected: number; exact: boolean } | null
 	/** Events the player himself caused, already filtered to his name. */
+	/**
+	 * Major objectives the ENEMY just took, newest first.
+	 *
+	 * This did not exist, and its absence produced the worst line of the project: seconds after
+	 * losing Baron the coach said "oh deer, your farm is slightly behind". Losing Baron was not a
+	 * candidate fact at all — only HIM taking one was — so the ranker offered farm and gold and
+	 * the model picked the best of a worthless list. Ranking by fact TYPE and never by STAKES is
+	 * what makes a coach sound like it is not watching the same game.
+	 */
+	enemyObjectives: { name: string; atSec: number; dragonType?: string }[]
 	myEvents: {
 		id: number
 		name: string
@@ -178,6 +205,40 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deaths: string[] = []
 	const windows: string[] = []
 	const rest: string[] = []
+
+	/*
+	 * What the enemy just took, and what it means for the next few minutes. Highest stakes on the
+	 * map, so it outranks everything and it SILENCES the trivia below — see `disaster`.
+	 */
+	const lost: string[] = []
+	for (const e of input.enemyObjectives) {
+		const age = input.nowSec - e.atSec
+		if (age < 0 || age > ENEMY_OBJECTIVE_WORTH_SAYING_SEC) continue
+		const id = `enemy-${e.name}@${Math.round(e.atSec)}`
+		if (mem.announcedLosses.has(id)) continue
+		mem.announcedLosses.add(id)
+		if (e.name === "BaronKill")
+			lost.push(
+				`they have Baron — for the next three minutes their minions push on their own, so do not take a fight in the open`
+			)
+		else if (e.name === "HeraldKill") lost.push(`they have Herald and a free tower charge`)
+		else if (e.name === "DragonKill")
+			lost.push(`they took the ${e.dragonType ? `${e.dragonType.toLowerCase()} ` : ""}dragon`.replace(/\s+/g, " "))
+	}
+
+	/*
+	 * A disaster silences the small talk.
+	 *
+	 * Even correctly RANKED, farm and gold would come back on the very next turn — twenty seconds
+	 * after losing Baron, which is still absurd. For a while after something this size, the only
+	 * things worth saying are about the thing that happened. Being quiet is a legitimate answer
+	 * here and a farm reminder is not.
+	 */
+	const disaster = input.enemyObjectives.some(
+		e => (e.name === "BaronKill" || e.name === "HeraldKill") &&
+			input.nowSec - e.atSec >= 0 &&
+			input.nowSec - e.atSec <= DISASTER_QUIET_SEC
+	)
 
 	/*
 	 * Praise, straight off the event feed and announced once by the feed's own monotonic id.
@@ -421,7 +482,20 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * a number that would be equally true thirty seconds later. When something expires in seconds
 	 * and everything else does not, there is no choice worth offering.
 	 */
-	const out = windows.length > 0 ? windows.slice(0, 1) : ranked.slice(0, MAX_FACTS)
+	/*
+	 * A lost Baron or Herald is offered ALONE, and it silences everything else while it is fresh.
+	 *
+	 * The same argument as the window above, in the other direction. Losing Baron is the largest
+	 * thing that happens in a game of League; offering it alongside a farm number invites the model
+	 * to pick the farm number, and it did — "oh deer, your farm is slightly behind", seconds after
+	 * the enemy took Baron. During the quiet window the ONLY things that may be said are the loss
+	 * itself and anything that expires in seconds; if neither exists, saying nothing is correct.
+	 */
+	const out =
+		lost.length > 0 ? lost.slice(0, 1)
+		: windows.length > 0 ? windows.slice(0, 1)
+		: disaster ? []
+		: ranked.slice(0, MAX_FACTS)
 	/*
 	 * Set unconditionally, including to false on an empty turn.
 	 *

@@ -152,6 +152,7 @@ const buildLiveState = (
 		// Between games: forget everything, so the next game starts clean.
 		factMemory.announcedDeaths.clear()
 		factMemory.announcedEvents.clear()
+		factMemory.announcedLosses.clear()
 		factMemory.lastLedWithDeath = false
 		factMemory.lastGoldMentioned = 0
 		factMemory.lastFarmAtSec = 0
@@ -264,6 +265,26 @@ const buildLiveState = (
 						 * matters, which is the one still on the respawn clock.
 						 */
 						killedByMe: lastKillerOf(data, p.riotId ?? p.summonerName ?? "") === myName
+					})),
+				/*
+				 * Objectives the ENEMY took. `myEvents` is filtered to his own name, so before this
+				 * the coach was structurally incapable of noticing that the other team had just
+				 * taken Baron — the single largest event in the game.
+				 */
+				enemyObjectives: (data.events?.Events ?? [])
+					.filter(e => OBJECTIVE_EVENTS.has(e.EventName) && e.KillerName !== myName)
+					.filter(e => {
+						// A take by one of HIS team is not a loss. Team membership comes from the
+						// roster, since the event feed gives only a name.
+						const killer = (data.allPlayers ?? []).find(
+							p => (p.riotId ?? p.summonerName) === e.KillerName
+						)
+						return killer ? killer.team !== mine : true
+					})
+					.map(e => ({
+						name: e.EventName,
+						atSec: e.EventTime ?? 0,
+						...(e.DragonType ? { dragonType: e.DragonType } : {})
 					})),
 				currentGold: data.activePlayer?.currentGold ?? null,
 				pace: pace ? { cs: pace.cs, expected: pace.expected, exact: pace.exact } : null,

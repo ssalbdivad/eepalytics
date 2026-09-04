@@ -28,6 +28,7 @@ const input = (over: Partial<FactInput> = {}): FactInput => ({
 	deadEnemies: [],
 	currentGold: null,
 	pace: null,
+	enemyObjectives: [],
 	myEvents: [],
 	drakeBackInSec: null,
 	baronBackInSec: null,
@@ -573,5 +574,86 @@ describe("buildFacts — ranking", () => {
 
 	it("says nothing when there is nothing — PASS is a real answer", () => {
 		deepStrictEqual(buildFacts(input(), newFactMemory()), [])
+	})
+})
+
+/**
+ * The worst line the project produced: seconds after the enemy took Baron, the coach said
+ * "oh deer, your farm is slightly behind".
+ *
+ * It was not a tone bug. Losing an objective was not a candidate fact at all — only HIM taking one
+ * was — so the ranker offered farm and gold and the model picked the best of a worthless list.
+ * These tests pin both halves of the fix: the loss must be sayable, and the small talk must stop.
+ */
+describe("buildFacts — losing an objective", () => {
+	const baron = (atSec: number) => ({ name: "BaronKill", atSec })
+
+	it("says the enemy took Baron, and says it alone", () => {
+		const out = buildFacts(
+			input({
+				nowSec: 1500,
+				enemyObjectives: [baron(1490)],
+				currentGold: 3000,
+				pace: { cs: 100, expected: 140, exact: true }
+			}),
+			newFactMemory()
+		)
+		strictEqual(out.length, 1, `the loss must not share a turn with trivia, got: ${out.join(" | ")}`)
+		ok(/Baron/.test(out[0]!), out[0])
+	})
+
+	it("goes quiet rather than offering farm in the minute after", () => {
+		const mem = newFactMemory()
+		// The first turn announces it; the point of this test is the turn AFTER.
+		buildFacts(input({ nowSec: 1500, enemyObjectives: [baron(1490)] }), mem)
+		const next = buildFacts(
+			input({
+				nowSec: 1520,
+				enemyObjectives: [baron(1490)],
+				currentGold: 3000,
+				pace: { cs: 100, expected: 140, exact: true }
+			}),
+			mem
+		)
+		strictEqual(next.length, 0, `silence beats a farm nag here, got: ${next.join(" | ")}`)
+	})
+
+	it("still offers a window that expires in seconds, even during the quiet", () => {
+		// Being quiet must not cost him the one thing that is about the next ten seconds.
+		const out = buildFacts(
+			input({
+				nowSec: 1520,
+				enemyObjectives: [baron(1490)],
+				deadEnemies: [
+					{ champion: "Jhin", respawnSec: 30 },
+					{ champion: "Ashe", respawnSec: 28 }
+				],
+				alliesAlive: 5,
+				enemiesAlive: 3
+			}),
+			newFactMemory()
+		)
+		ok(out.length > 0, "a live window must survive the blackout")
+	})
+
+	it("lets normal facts back once the loss is old news", () => {
+		const mem = newFactMemory()
+		buildFacts(input({ nowSec: 1500, enemyObjectives: [baron(1490)] }), mem)
+		const later = buildFacts(
+			input({
+				nowSec: 1490 + 200,
+				enemyObjectives: [baron(1490)],
+				currentGold: 3000
+			}),
+			mem
+		)
+		ok(later.length > 0, "the blackout is a window, not a mute button")
+	})
+
+	it("does not call his OWN Baron a loss", () => {
+		// The route filters by team; this pins that an empty list stays empty rather than
+		// inventing a disaster out of a good thing.
+		const out = buildFacts(input({ nowSec: 1500, enemyObjectives: [], currentGold: 3000 }), newFactMemory())
+		strictEqual(out.some(f => /they have Baron/.test(f)), false)
 	})
 })
