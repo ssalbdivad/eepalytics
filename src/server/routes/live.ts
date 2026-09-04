@@ -58,6 +58,7 @@ import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
+import type { FightRead } from "../../analysis/live-facts.ts"
 import {
 	appendTranscript,
 	checkGeminiKey,
@@ -119,6 +120,65 @@ const lastKillerOf = (data: LiveAllGameData, victim: string): string => {
 }
 
 /**
+ * Kills clustered into fights, in HIS team's terms.
+ *
+ * TEMPORARY HOME. This belongs in `analysis/fights.ts` with the rest of the pure analysis, and
+ * the shape it produces (`FightRead`) is already the port `buildFacts` consumes — so moving it is
+ * an import change and nothing else. It is here rather than nowhere because the coach had no
+ * fight fact of any kind, which is the owner's third complaint verbatim: "update it to give more
+ * feedback on fights not just camps".
+ *
+ * The clustering rule is the only judgement in it: kills within `FIGHT_GAP_SEC` of each other are
+ * one fight. That is deliberately generous — a missed cluster boundary merges two skirmishes into
+ * one honest summary, while a tight one splits a five-second teamfight into three "fights" and
+ * says three sentences about it.
+ */
+const FIGHT_GAP_SEC = 12
+
+const readFights = (data: LiveAllGameData, me: LivePlayer): FightRead[] => {
+	const myName = me.riotId ?? me.summonerName ?? ""
+	const nameOf = (p: LivePlayer) => p.riotId ?? p.summonerName ?? ""
+	const mates = new Set((data.allPlayers ?? []).filter(p => p.team === me.team).map(nameOf))
+	const kills = (data.events?.Events ?? [])
+		.filter(e => e.EventName === "ChampionKill" && e.EventTime !== undefined)
+		.sort((a, b) => (a.EventTime ?? 0) - (b.EventTime ?? 0))
+	const out: FightRead[] = []
+	for (const k of kills) {
+		const at = k.EventTime ?? 0
+		const last = out[out.length - 1]
+		const fight =
+			last && at - last.atSec <= FIGHT_GAP_SEC ? last : (
+				(out.push({
+					id: `fight@${k.EventID}`,
+					atSec: at,
+					won: 0,
+					lost: 0,
+					involved: false,
+					died: false
+				}),
+				out[out.length - 1]!)
+			)
+		fight.atSec = at
+		// A victim on his team is a loss; anyone else dying to his team is a kill for it.
+		if (mates.has(k.VictimName ?? "")) fight.lost += 1
+		else if (mates.has(k.KillerName ?? "")) fight.won += 1
+		/*
+		 * "Involved" is takedown OR death, which is exactly what the feed can prove. Standing next
+		 * to a fight without landing anything reads as absent here, and that is the honest answer:
+		 * the live API has no positions, so presence is unknowable and only participation is not.
+		 */
+		if (
+			k.KillerName === myName ||
+			k.VictimName === myName ||
+			(k.Assisters ?? []).includes(myName)
+		)
+			fight.involved = true
+		if (k.VictimName === myName) fight.died = true
+	}
+	return out
+}
+
+/**
  * Seconds until an objective is back, counted from a take we ACTUALLY SAW this session.
  *
  * Null when nothing was observed — never assumed from the clock, which is the same rule the
@@ -147,13 +207,15 @@ const buildLiveState = (
 	baseline: ReturnType<typeof baselineFromRows> | null
 ): VisionState | null => {
 	if (!data || !me || !me.championName) {
-		// Between games: forget what was announced so the next game starts clean.
-		// Between games: forget everything, so the next game starts clean.
-		factMemory.announcedDeaths.clear()
-		factMemory.announcedEvents.clear()
-		factMemory.lastLedWithDeath = false
-		factMemory.lastGoldMentioned = 0
-		factMemory.lastFarmAtSec = 0
+		/*
+		 * Between games: forget everything, so the next game starts clean.
+		 *
+		 * Copied wholesale from a fresh memory rather than cleared field by field. The hand-written
+		 * version cleared five of the nine fields it had and silently missed the rest, so a second
+		 * game inherited the first one's praise lines and gold clock — and every field added since
+		 * would have been missed the same way.
+		 */
+		Object.assign(factMemory, newFactMemory())
 		return null
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
@@ -191,6 +253,80 @@ const buildLiveState = (
 		})
 		.filter(t => t !== "")
 
+	const facts = buildFacts(
+		{
+			nowSec: secs,
+			// His own respawn — every tempo line has to be reachable by the person hearing it.
+			meDeadForSec: me.isDead ? (me.respawnTimer ?? null) : null,
+			/*
+			 * Health as a fraction, never as a line. It is on his screen; it is here so that the
+			 * ranker can refuse to hand a man on 18% a "go take his camps" sentence.
+			 */
+			myHpFrac:
+				stats?.currentHealth !== undefined && (stats?.maxHealth ?? 0) > 0 ?
+					stats.currentHealth / stats.maxHealth!
+				:	null,
+			// He counts himself among the living only when he is actually on the map.
+			alliesAlive: (me.isDead ? 0 : 1) + others.filter(p => p.team === mine && !p.isDead).length,
+			enemiesAlive: others.filter(p => p.team !== mine && !p.isDead).length,
+			deadEnemies: others
+				.filter(p => p.team !== mine && p.isDead && (p.respawnTimer ?? 0) > 0)
+				.map(p => ({
+					champion: p.championName ?? "an enemy",
+					respawnSec: p.respawnTimer ?? 0,
+					/*
+					 * Did HE make this kill? The event feed names killer and victim by riotId,
+					 * and a kill he made is something he was present for — announcing it back
+					 * is a readback, not scouting. Only the most recent kill of that victim
+					 * matters, which is the one still on the respawn clock.
+					 */
+					killedByMe: lastKillerOf(data, p.riotId ?? p.summonerName ?? "") === myName,
+					/*
+					 * The live client's own `position`, which the schema notes is reliable — the
+					 * field this repo distrusts is the match-history `timeline.lane`. This is what
+					 * turns a corpse into a decision: only the enemy jungler's death changes what
+					 * a jungler may safely do next.
+					 */
+					isJungler: p.position === "JUNGLE"
+				})),
+			currentGold: data.activePlayer?.currentGold ?? null,
+			pace:
+				baseline ?
+					(() => {
+						const r = paceReading({
+							live: {
+								gameTimeSec: secs,
+								championName: me.championName ?? "",
+								cs: me.scores?.creepScore ?? 0,
+								deaths: me.scores?.deaths ?? 0,
+								kills: me.scores?.kills ?? 0,
+								assists: me.scores?.assists ?? 0,
+								level: me.level ?? 0,
+								observed: { dragonSec: null, baronSec: null, heraldSec: null }
+							},
+							baseline,
+							focus: []
+						})
+						return r ? { cs: r.cs, expected: r.expected, exact: r.exact } : null
+					})()
+				:	null,
+			myEvents: (data.events?.Events ?? [])
+				.filter(e => e.KillerName !== undefined && e.KillerName === myName)
+				.map(e => ({
+					id: e.EventID,
+					name: e.EventName,
+					killStreak: e.KillStreak,
+					dragonType: e.DragonType,
+					stolen: e.Stolen === "True"
+				})),
+			fights: readFights(data, me),
+			drakeBackInSec: backInSec(data, "DragonKill", DRAGON_RESPAWN_SEC, secs),
+			baronBackInSec: backInSec(data, "BaronKill", BARON_RESPAWN_SEC, secs),
+			heraldBackInSec: backInSec(data, "HeraldKill", HERALD_RESPAWN_SEC, secs)
+		},
+		factMemory
+	)
+
 	return {
 		clock,
 		me: {
@@ -209,64 +345,8 @@ const buildLiveState = (
 		allies: others.filter(p => p.team === mine).map(asPlayer),
 		enemies: others.filter(p => p.team !== mine).map(asPlayer),
 		recentEvents,
-		unseen: buildFacts(
-			{
-				nowSec: secs,
-				// His own respawn — every tempo line has to be reachable by the person hearing it.
-				meDeadForSec: me.isDead ? (me.respawnTimer ?? null) : null,
-				// He counts himself among the living only when he is actually on the map.
-				alliesAlive:
-					(me.isDead ? 0 : 1) + others.filter(p => p.team === mine && !p.isDead).length,
-				enemiesAlive: others.filter(p => p.team !== mine && !p.isDead).length,
-				deadEnemies: others
-					.filter(p => p.team !== mine && p.isDead && (p.respawnTimer ?? 0) > 0)
-					.map(p => ({
-						champion: p.championName ?? "an enemy",
-						respawnSec: p.respawnTimer ?? 0,
-						/*
-						 * Did HE make this kill? The event feed names killer and victim by riotId,
-						 * and a kill he made is something he was present for — announcing it back
-						 * is a readback, not scouting. Only the most recent kill of that victim
-						 * matters, which is the one still on the respawn clock.
-						 */
-						killedByMe: lastKillerOf(data, p.riotId ?? p.summonerName ?? "") === myName
-					})),
-				currentGold: data.activePlayer?.currentGold ?? null,
-				pace:
-					baseline ?
-						(() => {
-							const r = paceReading({
-								live: {
-									gameTimeSec: secs,
-									championName: me.championName ?? "",
-									cs: me.scores?.creepScore ?? 0,
-									deaths: me.scores?.deaths ?? 0,
-									kills: me.scores?.kills ?? 0,
-									assists: me.scores?.assists ?? 0,
-									level: me.level ?? 0,
-									observed: { dragonSec: null, baronSec: null, heraldSec: null }
-								},
-								baseline,
-								focus: []
-							})
-							return r ? { cs: r.cs, expected: r.expected, exact: r.exact } : null
-						})()
-					:	null,
-				myEvents: (data.events?.Events ?? [])
-					.filter(e => e.KillerName !== undefined && e.KillerName === myName)
-					.map(e => ({
-						id: e.EventID,
-						name: e.EventName,
-						killStreak: e.KillStreak,
-						dragonType: e.DragonType,
-						stolen: e.Stolen === "True"
-					})),
-				drakeBackInSec: backInSec(data, "DragonKill", DRAGON_RESPAWN_SEC, secs),
-				baronBackInSec: backInSec(data, "BaronKill", BARON_RESPAWN_SEC, secs),
-				heraldBackInSec: backInSec(data, "HeraldKill", HERALD_RESPAWN_SEC, secs)
-			},
-			factMemory
-		)
+		unseen: facts.say.map(f => f.line),
+		context: facts.context.map(f => f.line)
 	}
 }
 

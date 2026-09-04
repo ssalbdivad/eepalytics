@@ -50,7 +50,7 @@ import type { VisionState, VisionStatePlayer } from "../src/shared/live-state.ts
 import { geminiKey, GEMINI_LIVE_MODEL } from "../src/review/gemini-live.ts"
 import { baselineFromRows, perGameMetrics } from "../src/analysis/index.ts"
 import { buildFacts, newFactMemory } from "../src/analysis/live-facts.ts"
-import type { FactInput, FactMemory } from "../src/analysis/live-facts.ts"
+import type { FactInput, FactMemory, FightRead } from "../src/analysis/live-facts.ts"
 import {
 	BARON_RESPAWN_SEC,
 	DRAGON_RESPAWN_SEC,
@@ -62,6 +62,9 @@ import { LIVE_COACH_SYSTEM_PROMPT } from "../src/shared/live-prompt.ts"
 
 /** Fixture-only. See the header: the timeline records deaths, not respawns. */
 const RESPAWN_SEC = 28
+
+/** Kills this far apart are one fight. Same constant, same reasoning, as the daemon's clusterer. */
+const FIGHT_GAP_SEC = 12
 
 /** The same memory object the daemon keeps, rebuilt per game. */
 let mem: FactMemory = newFactMemory()
@@ -78,7 +81,18 @@ const flag = (name: string): boolean => process.argv.includes(`--${name}`)
 /* ------------------------------------------------------- state rebuilding */
 
 interface Roster {
-	[participantId: number]: { champion: string; teamId: number; puuid: string; isUser: boolean }
+	[participantId: number]: {
+		champion: string
+		teamId: number
+		puuid: string
+		isUser: boolean
+		/**
+		 * The role this repo INFERRED post-game (frame positions + Smite), which is the fixture's
+		 * stand-in for the live client's own `position` field. Different source, same answer, and
+		 * the alternative was leaving the enemy-jungler facts untested by the eval entirely.
+		 */
+		role: string
+	}
 }
 
 /**
@@ -95,13 +109,21 @@ const loadGame = (db: DatabaseSync, gameId: string) => {
 	)
 	const roster: Roster = {}
 	for (const r of db
-		.prepare("SELECT participantId, teamId, puuid, championName, isUser FROM participant WHERE gameId = ?")
-		.all(gameId) as { participantId: number; teamId: number; puuid: string; championName: string; isUser: number }[])
+		.prepare("SELECT participantId, teamId, puuid, championName, isUser, role FROM participant WHERE gameId = ?")
+		.all(gameId) as {
+			participantId: number
+			teamId: number
+			puuid: string
+			championName: string
+			isUser: number
+			role: string
+		}[])
 		roster[r.participantId] = {
 			champion: r.championName,
 			teamId: r.teamId,
 			puuid: r.puuid,
-			isUser: r.isUser === 1
+			isUser: r.isUser === 1,
+			role: r.role ?? "UNKNOWN"
 		}
 	return { roster, frames: (timeline.info ?? timeline).frames ?? [] }
 }
@@ -247,11 +269,57 @@ const stateAt = (
 		return lastAt === null ? null : Math.round(lastAt + respawnSec - atSec)
 	}
 
-	const finalUnseen = buildFacts(
+	/*
+	 * Fights, reconstructed the way the daemon reconstructs them from the live event feed: kills
+	 * within `FIGHT_GAP_SEC` of each other are one fight, counted in HIS team's terms.
+	 *
+	 * The timeline's `assistingParticipantIds` is trusted here — the repo's warning about it is
+	 * about ELITE_MONSTER_KILL, where 19% are cross-team corrupt; on CHAMPION_KILL it is what the
+	 * post-game review path already uses. Presence is takedown-or-death either way, so an assist
+	 * he did not get reads as absent, which is the honest answer rather than a guess.
+	 */
+	const fights: FightRead[] = []
+	for (const f of frames)
+		for (const e of f.events ?? []) {
+			if (e.type !== "CHAMPION_KILL" || e.timestamp > atSec * 1000) continue
+			const at = e.timestamp / 1000
+			const last = fights[fights.length - 1]
+			const fight =
+				last && at - last.atSec <= FIGHT_GAP_SEC ? last
+				:	(fights[
+						fights.push({
+							id: `fight@${e.timestamp}`,
+							atSec: at,
+							won: 0,
+							lost: 0,
+							involved: false,
+							died: false
+						}) - 1
+					]!)
+			fight.atSec = at
+			if (roster[e.victimId]?.teamId === myTeam) fight.lost += 1
+			else fight.won += 1
+			if (
+				e.killerId === mePid ||
+				e.victimId === mePid ||
+				(e.assistingParticipantIds ?? []).includes(mePid)
+			)
+				fight.involved = true
+			if (e.victimId === mePid) fight.died = true
+		}
+
+	const facts = buildFacts(
 		{
 			nowSec: atSec,
 			// His own respawn, from the same reconstruction the enemies' comes from.
 			meDeadForSec: meLeft ?? null,
+			/*
+			 * Null, and it stays null: a post-game timeline records gold, level and CS per minute
+			 * and never health. See the header — this is a gap in the fixture, so the low-health
+			 * suppression in `buildFacts` is simply not exercised here rather than fabricated.
+			 */
+			myHpFrac: null,
+			fights,
 			alliesAlive:
 				(meLeft === undefined ? 1 : 0) +
 				others.filter(p => roster[p]!.teamId === myTeam && deadFor(p) === undefined).length,
@@ -264,7 +332,8 @@ const stateAt = (
 					champion: roster[p]!.champion,
 					respawnSec: deadFor(p) ?? 0,
 					// Mirrors the daemon: a kill he made himself is a readback, not scouting.
-					killedByMe: lastKillerOf(p) === mePid
+					killedByMe: lastKillerOf(p) === mePid,
+					isJungler: roster[p]!.role === "JGL"
 				}))
 				.filter(d => d.respawnSec > 0),
 			currentGold: mf.currentGold ?? null,
@@ -301,7 +370,8 @@ const stateAt = (
 			allies: others.filter(p => roster[p]!.teamId === myTeam).map(player),
 			enemies: others.filter(p => roster[p]!.teamId !== myTeam).map(player),
 			recentEvents: [],
-			unseen: finalUnseen
+			unseen: facts.say.map(f => f.line),
+			context: facts.context.map(f => f.line)
 		}
 	}
 }

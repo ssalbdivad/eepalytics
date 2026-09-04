@@ -59,6 +59,21 @@ export interface VisionState {
 	 * checkable.
 	 */
 	unseen: string[]
+	/**
+	 * Facts he CAN see, offered so the model can reason and never read them out.
+	 *
+	 * The split is `analysis/live-facts.ts`'s and it is the answer to the owner's "useless stuff i
+	 * can see in the game": his gold, his health, an objective timer and a lone corpse are all
+	 * true, all already on his HUD, and all genuinely useful for deciding which line to speak and
+	 * how — you do not tell a man on 18% health to go invade. Deleting them made the coach stupid;
+	 * speaking them made it a monitor. So they are here, in the THIRD person, which is the second
+	 * lock: a model that reads one out loud produces an obviously wrong "he has 1334g unspent"
+	 * rather than a plausible-sounding line.
+	 *
+	 * Optional so a caller with nothing to add omits the section entirely rather than printing an
+	 * empty heading for the model to fill in.
+	 */
+	context?: string[]
 }
 
 export interface VisionStatePlayer {
@@ -92,6 +107,30 @@ const line = (p: VisionStatePlayer): string =>
 export const renderState = (s: VisionState): string => {
 	const me = s.me
 	const hp = me.hp !== undefined && me.maxHp !== undefined ? `${Math.round(me.hp)}/${Math.round(me.maxHp)} HP` : ""
+	/*
+	 * The context section is fenced by what it is FOR, not by a politeness.
+	 *
+	 * The owner's complaint was four drake timers, three unspent-gold lines and a farm figure read
+	 * back at him — every one of them a true fact he was already looking at. Removing them from the
+	 * spoken list is what the ranker does; this heading is why they are still in the message at
+	 * all, and it names the one job they have.
+	 */
+	const context =
+		(s.context ?? []).length > 0 ?
+			`
+
+### Background — he can already see every line of this
+
+Saying one of these out loud is the single most useless thing you can do here: he hears a fact he
+is looking at while you spend the interruption. They are here for two other jobs — to decide WHICH
+line above to say and how to phrase it (do not send someone on 20% health to take a camp), and so
+that a timer you were not given is never invented.
+
+They are written in the third person because they are NOT a script. If the sentence you were about
+to say is one of these, the answer is PASS.
+
+${(s.context ?? []).map(c => `- ${c}`).join("\n")}`
+		:	""
 	return `## Ground truth (from the game client — these are FACTS, the screenshot is not)
 
 Clock ${s.clock}.
@@ -128,8 +167,9 @@ ${s.unseen.map(u => `- ${u}`).join("\n")}`
 ### Nothing he is missing right now
 
 There is no fact worth interrupting him for at this instant. Unless the video shows something
-plain and urgent, the correct answer is PASS.`
-	}
+plain and urgent, the correct answer is PASS — and any background printed below is not a
+substitute for one, because it is the part he is already looking at.`
+	}${context}
 
 **The ten champions above are the only champions in this game.** Never name any other. Never
 give a number that is not in this block, and take every timer from the list below rather than
