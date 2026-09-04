@@ -250,6 +250,8 @@ const stateAt = (
 	const finalUnseen = buildFacts(
 		{
 			nowSec: atSec,
+			// Stored timelines carry no enemy-objective feed in this reconstruction.
+			enemyObjectives: [],
 			// His own respawn, from the same reconstruction the enemies' comes from.
 			meDeadForSec: meLeft ?? null,
 			alliesAlive:
