@@ -377,17 +377,46 @@ describe("buildFacts — ranking", () => {
 		for (const f of out) strictEqual(/\bHE\b|\bhis\b/.test(f), false, `third person in: ${f}`)
 	})
 
-	it("puts praise above everything, including a fresh death", () => {
+	it("never lets praise displace a fact", () => {
+		/*
+		 * A dragon, a baron and a multi-kill are announced by the game itself — banner and sound —
+		 * so praising them adds no information. Their value is warmth, and warmth must not cost a
+		 * fact: a judge found the coach congratulating him on a banner he was watching on a tick
+		 * that also carried "12 camps behind your own pace", the one thing he could not see.
+		 */
 		const mem = newFactMemory()
 		const out = buildFacts(
 			input({
 				myEvents: [{ id: 1, name: "ChampionKill", killStreak: 3 }],
-				deadEnemies: [{ champion: "Graves", respawnSec: 30 }],
-				currentGold: 2000
+				currentGold: 2000,
+				pace: { cs: 100, expected: 130, exact: true }
 			}),
 			mem
 		)
-		ok(out[0]!.startsWith("PRAISE: you just got a triple kill"), `praise should lead, got: ${out[0]}`)
+		strictEqual(out[0]!.startsWith("PRAISE:"), false, `a fact must lead, got: ${out[0]}`)
+		ok(out.some(f => f.startsWith("PRAISE:")), "but the praise is still offered")
+	})
+
+	it("offers praise when nothing else is on the table", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(input({ myEvents: [{ id: 1, name: "BaronKill" }] }), mem)
+		ok(out[0]!.startsWith("PRAISE: you secured Baron"), `got: ${out[0]}`)
+	})
+
+	it("never repeats the same congratulation", () => {
+		const mem = newFactMemory()
+		ok(buildFacts(input({ myEvents: [{ id: 1, name: "DragonKill" }] }), mem).length > 0)
+		// A second dragon is a second event, but it is the same sentence.
+		deepStrictEqual(buildFacts(input({ myEvents: [{ id: 2, name: "DragonKill" }] }), mem), [])
+	})
+
+	it("does not read his own kill back to him", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({ deadEnemies: [{ champion: "Renekton", respawnSec: 30, killedByMe: true }] }),
+			mem
+		)
+		deepStrictEqual(out, [], "he was there — that is a readback, not scouting")
 	})
 
 	it("names a steal as a steal", () => {

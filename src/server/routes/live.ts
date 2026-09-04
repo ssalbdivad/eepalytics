@@ -88,6 +88,17 @@ const findMe = (data: LiveAllGameData) => {
  */
 const factMemory = newFactMemory()
 
+/** Who last killed this player, by riotId, or "" if nothing in the feed says. */
+const lastKillerOf = (data: LiveAllGameData, victim: string): string => {
+	if (victim === "") return ""
+	const events = data.events?.Events ?? []
+	for (let i = events.length - 1; i >= 0; i--) {
+		const e = events[i]!
+		if (e.EventName === "ChampionKill" && e.VictimName === victim) return e.KillerName ?? ""
+	}
+	return ""
+}
+
 /**
  * Seconds until an objective is back, counted from a take we ACTUALLY SAW this session.
  *
@@ -128,6 +139,7 @@ const buildLiveState = (
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
 	const clock = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
+	const myName = me.riotId ?? me.summonerName ?? ""
 	const mine = me.team
 	const asPlayer = (p: LivePlayer): VisionStatePlayer => ({
 		champion: p.championName ?? "unknown",
@@ -185,7 +197,17 @@ const buildLiveState = (
 				meDeadForSec: me.isDead ? (me.respawnTimer ?? null) : null,
 				deadEnemies: others
 					.filter(p => p.team !== mine && p.isDead && (p.respawnTimer ?? 0) > 0)
-					.map(p => ({ champion: p.championName ?? "an enemy", respawnSec: p.respawnTimer ?? 0 })),
+					.map(p => ({
+						champion: p.championName ?? "an enemy",
+						respawnSec: p.respawnTimer ?? 0,
+						/*
+						 * Did HE make this kill? The event feed names killer and victim by riotId,
+						 * and a kill he made is something he was present for — announcing it back
+						 * is a readback, not scouting. Only the most recent kill of that victim
+						 * matters, which is the one still on the respawn clock.
+						 */
+						killedByMe: lastKillerOf(data, p.riotId ?? p.summonerName ?? "") === myName
+					})),
 				currentGold: data.activePlayer?.currentGold ?? null,
 				pace:
 					baseline ?
@@ -208,7 +230,7 @@ const buildLiveState = (
 						})()
 					:	null,
 				myEvents: (data.events?.Events ?? [])
-					.filter(e => e.KillerName !== undefined && e.KillerName === (me.riotId ?? me.summonerName ?? ""))
+					.filter(e => e.KillerName !== undefined && e.KillerName === myName)
 					.map(e => ({
 						id: e.EventID,
 						name: e.EventName,

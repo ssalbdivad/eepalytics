@@ -216,6 +216,16 @@ const stateAt = (
 			}
 		}
 
+	/** Who last killed this participant before `atSec`, by participantId, or 0 if unknown. */
+	const lastKillerOf = (victimPid: number): number => {
+		let killer = 0
+		for (const f of frames)
+			for (const e of f.events ?? [])
+				if (e.type === "CHAMPION_KILL" && e.victimId === victimPid && e.timestamp <= atSec * 1000)
+					killer = e.killerId
+		return killer
+	}
+
 	const backIn = (monster: string, respawnSec: number): number | null => {
 		let lastAt: number | null = null
 		for (const f of frames)
@@ -236,7 +246,12 @@ const stateAt = (
 			meDeadForSec: meLeft ?? null,
 			deadEnemies: others
 				.filter(p => roster[p]!.teamId !== myTeam)
-				.map(p => ({ champion: roster[p]!.champion, respawnSec: deadFor(p) ?? 0 }))
+				.map(p => ({
+					champion: roster[p]!.champion,
+					respawnSec: deadFor(p) ?? 0,
+					// Mirrors the daemon: a kill he made himself is a readback, not scouting.
+					killedByMe: lastKillerOf(p) === mePid
+				}))
 				.filter(d => d.respawnSec > 0),
 			currentGold: mf.currentGold ?? null,
 			pace: paced ? { cs: paced.cs, expected: paced.expected, exact: paced.exact } : null,

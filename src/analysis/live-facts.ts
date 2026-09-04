@@ -60,6 +60,8 @@ export const MAX_FACTS = 3
 export interface FactMemory {
 	announcedDeaths: Set<string>
 	announcedEvents: Set<number>
+	/** Praise lines already used verbatim, so the same congratulation is never repeated. */
+	praiseSaid: Set<string>
 	lastGoldMentioned: number
 	/** When gold was last raised, so persistent unspent gold can earn a second mention. */
 	lastGoldAtSec: number
@@ -72,6 +74,7 @@ export interface FactMemory {
 export const newFactMemory = (): FactMemory => ({
 	announcedDeaths: new Set(),
 	announcedEvents: new Set(),
+	praiseSaid: new Set(),
 	lastGoldMentioned: 0,
 	lastGoldAtSec: 0,
 	lastFarmAtSec: 0,
@@ -90,8 +93,14 @@ export interface FactInput {
 	 * never its own player's, and the number was in the block the whole time.
 	 */
 	meDeadForSec: number | null
-	/** Enemies only — an ally's death is on his own HUD. */
-	deadEnemies: { champion: string; respawnSec: number }[]
+	/**
+	 * Enemies only — an ally's death is on his own HUD.
+	 *
+	 * `killedByMe` marks the ones he got himself. A judge caught the coach reading his own kill
+	 * back to him as scouting: his score went 5/0/5 to 6/0/5 on the same tick Renekton died, and
+	 * it announced "Renekton just died, down for 14s" as though it were news.
+	 */
+	deadEnemies: { champion: string; respawnSec: number; killedByMe?: boolean }[]
 	currentGold: number | null
 	/** Non-null only when it is far enough off his own average to be worth a sentence. */
 	pace: { cs: number; expected: number; exact: boolean } | null
@@ -154,6 +163,12 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		else if (e.name === "BaronKill") line = e.stolen ? "you STOLE Baron" : "you secured Baron"
 		else if (e.name === "HeraldKill") line = "you secured Herald"
 		if (line === "") continue
+		/*
+		 * Two dragons are two events, but "you secured the dragon" twice is the same sentence —
+		 * a judge found it delivered character-for-character identically eight lines apart.
+		 */
+		if (mem.praiseSaid.has(line)) continue
+		mem.praiseSaid.add(line)
 		mem.announcedEvents.add(e.id)
 		praise.push(`PRAISE: ${line} — worth saying so`)
 	}
@@ -254,6 +269,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * deaths of the same champion.
 	 */
 	for (const d of [...input.deadEnemies].sort((a, b) => b.respawnSec - a.respawnSec)) {
+		// He was there. Telling him about a kill he just made is a readback, not scouting.
+		if (d.killedByMe) continue
 		// Same rule as the window: a death that ends before he is off the respawn screen is not
 		// a tempo opportunity, it is a fact about someone else's game.
 		if (d.respawnSec - dead < DEATH_WORTH_SAYING_SEC) continue
@@ -281,14 +298,18 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 
 	// A window outranks everything but praise: it is the most actionable thing a jungler gets.
 	/*
-	 * Windows and objectives outrank praise.
+	 * Praise goes LAST, below everything, including single deaths.
 	 *
-	 * A judge found a turn offering dragon praise, THREE enemies dead with an 18s window, and a
-	 * single death — and it chose to congratulate him on the dragon he was watching happen, then
-	 * dropped the only fact that decided the next thirty seconds. Praise is warm; a window is the
-	 * game.
+	 * A dragon, a baron and a multi-kill are all announced by the game itself — full-screen banner
+	 * and a sound cue — so saying them adds no information at all. Their value is warmth, not
+	 * news, and warmth must never cost a fact: a judge found the coach spending its one
+	 * interruption congratulating him on a banner he was watching, on a tick that also carried
+	 * "12 camps behind your own pace", the only thing on screen he could not see.
+	 *
+	 * So praise still happens, but only when nothing else is on offer. That is most of the time
+	 * it matters anyway — the moment after a fight is usually quiet.
 	 */
-	const nonDeath = [...windows, ...rest, ...praise, ...money, ...farm]
+	const nonDeath = [...windows, ...rest, ...money, ...farm]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -304,9 +325,9 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 */
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
-		praise.length > 0 || windows.length > 0 || rest.length > 0 ?
-			[...windows, ...rest, ...praise, ...money, ...farm, ...deathsAllowed]
-		:	[...nonDeath, ...deathsAllowed]
+		windows.length > 0 || rest.length > 0 ?
+			[...windows, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
+		:	[...nonDeath, ...deathsAllowed, ...praise]
 
 	const out = ranked.slice(0, MAX_FACTS)
 	/*
