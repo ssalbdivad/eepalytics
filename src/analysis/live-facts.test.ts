@@ -9,7 +9,14 @@
 
 import { deepStrictEqual, ok, strictEqual } from "node:assert/strict"
 import { describe, it } from "node:test"
-import { buildFacts, newFactMemory, FARM_COOLDOWN_SEC, GOLD_STEP, MAX_FACTS } from "./live-facts.ts"
+import {
+	buildFacts,
+	newFactMemory,
+	FARM_COOLDOWN_SEC,
+	GOLD_NAG_SEC,
+	GOLD_STEP,
+	MAX_FACTS
+} from "./live-facts.ts"
 import type { FactInput } from "./live-facts.ts"
 
 const input = (over: Partial<FactInput> = {}): FactInput => ({
@@ -123,6 +130,49 @@ describe("buildFacts — rate limiting", () => {
 		)
 	})
 
+	it("raises persistent gold again even without a step, because persistence is the point", () => {
+		/*
+		 * A judge found the coach silent through six minutes of an unspent item while spending
+		 * eight lines on death timers. Novel events were treated as valuable and durable state as
+		 * one-shot, which is backwards — the longer it sits, the more it is worth saying.
+		 */
+		const mem = newFactMemory()
+		ok(buildFacts(input({ nowSec: 600, currentGold: 1400 }), mem).some(f => f.includes("unspent")))
+		strictEqual(
+			buildFacts(input({ nowSec: 700, currentGold: 1400 }), mem).some(f => f.includes("unspent")),
+			false,
+			"a hundred seconds later is still nagging"
+		)
+		const later = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1400 }), mem)
+		ok(later.some(f => f.includes("STILL unspent")), "four minutes on, it has earned a re-mention")
+	})
+
+	it("does not restate the farm gap when his CS has not moved", () => {
+		/*
+		 * Regression: stated three times in ten minutes with a bigger number each time, over a
+		 * stretch where CS did not change at all — the deficit grew only because the expected
+		 * curve rises. That is scolding someone with a number they cannot affect.
+		 */
+		const mem = newFactMemory()
+		ok(
+			buildFacts(input({ nowSec: 600, pace: { cs: 100, expected: 130, exact: true } }), mem).some(
+				f => f.startsWith("FARM:")
+			)
+		)
+		const frozen = buildFacts(
+			// Long past the cooldown, bigger gap — but he has not farmed a single camp.
+			input({ nowSec: 600 + FARM_COOLDOWN_SEC * 2, pace: { cs: 100, expected: 160, exact: true } }),
+			mem
+		)
+		strictEqual(frozen.some(f => f.startsWith("FARM:")), false, "same CS, so nothing new to say")
+
+		const moved = buildFacts(
+			input({ nowSec: 600 + FARM_COOLDOWN_SEC * 2, pace: { cs: 130, expected: 175, exact: true } }),
+			mem
+		)
+		ok(moved.some(f => f.startsWith("FARM:")), "once he has actually farmed, the gap is news again")
+	})
+
 	it("forgets gold after a recall", () => {
 		const mem = newFactMemory()
 		buildFacts(input({ currentGold: 1500 }), mem)
@@ -143,10 +193,12 @@ describe("buildFacts — rate limiting", () => {
 			"a minute later is nagging"
 		)
 		ok(
-			buildFacts(input({ nowSec: 600 + FARM_COOLDOWN_SEC, pace }), mem).some(f =>
-				f.startsWith("FARM:")
-			),
-			"after the cooldown it has earned a second mention"
+			buildFacts(
+				// Past the cooldown AND he has actually farmed since — both are required.
+				input({ nowSec: 600 + FARM_COOLDOWN_SEC, pace: { cs: 130, expected: 165, exact: true } }),
+				mem
+			).some(f => f.startsWith("FARM:")),
+			"after the cooldown, with real progress, it has earned a second mention"
 		)
 	})
 
@@ -159,6 +211,54 @@ describe("buildFacts — rate limiting", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(input({ pace: { cs: 100, expected: 130, exact: false } }), mem)
 		ok(out[0]!.includes("approximate"), "a between-checkpoints reading must carry its hedge")
+	})
+})
+
+describe("buildFacts — the window", () => {
+	it("calls two enemies down as a window, not as two deaths", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				deadEnemies: [
+					{ champion: "Graves", respawnSec: 30 },
+					{ champion: "Jinx", respawnSec: 18 }
+				]
+			}),
+			mem
+		)
+		ok(out[0]!.includes("2 of them are dead"), `window should lead, got: ${out[0]}`)
+		// Counted from the SHORTEST timer: the window closes when the first of them is back.
+		ok(out[0]!.includes("18s"), `must use the shortest timer, got: ${out[0]}`)
+	})
+
+	it("does not call a window when one of them is already walking back", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				deadEnemies: [
+					{ champion: "Graves", respawnSec: 30 },
+					{ champion: "Jinx", respawnSec: 4 }
+				]
+			}),
+			mem
+		)
+		strictEqual(out.some(f => f.includes("of them are dead")), false)
+	})
+
+	it("ranks a window above gold and farm", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				deadEnemies: [
+					{ champion: "Graves", respawnSec: 25 },
+					{ champion: "Jinx", respawnSec: 22 }
+				],
+				currentGold: 3000,
+				pace: { cs: 100, expected: 140, exact: true }
+			}),
+			mem
+		)
+		ok(out[0]!.includes("of them are dead"))
 	})
 })
 

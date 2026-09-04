@@ -41,6 +41,13 @@ export const GOLD_FLOOR = 1200
 export const GOLD_STEP = 800
 /** Game-clock seconds between farm-pace mentions. */
 export const FARM_COOLDOWN_SEC = 180
+/** His CS must have moved at least this much before the farm gap is worth restating. */
+export const FARM_CS_MOVED = 15
+/** Gold still unspent after this long has earned a second mention on its own. */
+export const GOLD_NAG_SEC = 240
+/** Both must have at least this long left for a multi-kill window to be worth calling. */
+export const WINDOW_MIN_SEC = 10
+
 /** Never offer more than this many facts — the model takes the top one most of the time. */
 export const MAX_FACTS = 3
 
@@ -54,7 +61,11 @@ export interface FactMemory {
 	announcedDeaths: Set<string>
 	announcedEvents: Set<number>
 	lastGoldMentioned: number
+	/** When gold was last raised, so persistent unspent gold can earn a second mention. */
+	lastGoldAtSec: number
 	lastFarmAtSec: number
+	/** His CS when farm was last raised; it must actually move before saying it again. */
+	lastFarmCs: number
 	lastLedWithDeath: boolean
 }
 
@@ -62,7 +73,9 @@ export const newFactMemory = (): FactMemory => ({
 	announcedDeaths: new Set(),
 	announcedEvents: new Set(),
 	lastGoldMentioned: 0,
+	lastGoldAtSec: 0,
 	lastFarmAtSec: 0,
+	lastFarmCs: 0,
 	lastLedWithDeath: false
 })
 
@@ -97,6 +110,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const farm: string[] = []
 	const money: string[] = []
 	const deaths: string[] = []
+	const windows: string[] = []
 	const rest: string[] = []
 
 	/*
@@ -118,12 +132,24 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		praise.push(`PRAISE: ${line} — worth saying so`)
 	}
 
+	/*
+	 * The farm gap is reported again only if the gap itself has MOVED, not merely if time passed.
+	 *
+	 * A judge found it stated three times in ten minutes with a bigger number each time, during a
+	 * stretch where the player's CS had not changed at all — the "deficit" was growing purely
+	 * because the expected-pace curve keeps rising. That is scolding someone with a number they
+	 * cannot affect between mentions, and it is exactly the pile-on that made the player stop
+	 * listening.
+	 */
+	const gap = input.pace ? Math.abs(input.pace.cs - input.pace.expected) : 0
 	if (
 		input.pace &&
-		Math.abs(input.pace.cs - input.pace.expected) >= 12 &&
-		(mem.lastFarmAtSec === 0 || input.nowSec - mem.lastFarmAtSec >= FARM_COOLDOWN_SEC)
+		gap >= 12 &&
+		(mem.lastFarmAtSec === 0 || input.nowSec - mem.lastFarmAtSec >= FARM_COOLDOWN_SEC) &&
+		(mem.lastFarmCs === 0 || Math.abs(input.pace.cs - mem.lastFarmCs) >= FARM_CS_MOVED)
 	) {
 		mem.lastFarmAtSec = input.nowSec
+		mem.lastFarmCs = input.pace.cs
 		const behind = input.pace.expected - input.pace.cs
 		const tail = input.pace.exact ? "" : " — interpolated, approximate"
 		farm.push(
@@ -133,14 +159,54 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		)
 	}
 
+	/*
+	 * Unspent gold is PERSISTENT state, and persistence is what makes it worth interrupting for.
+	 *
+	 * The first version raised it once and then suppressed it until another 800g arrived, so a
+	 * judge found the coach silent through six minutes of an unspent item — a whole component
+	 * sitting unbought — while spending eight lines on enemy death timers the player could read
+	 * off his own HUD. Novel events were treated as valuable and durable state as one-shot,
+	 * which is backwards.
+	 *
+	 * So: a step up is news, and so is the same gold still sitting there several minutes later.
+	 */
 	if (input.currentGold !== null) {
-		if (input.currentGold < GOLD_FLOOR) mem.lastGoldMentioned = 0
-		else if (
-			mem.lastGoldMentioned === 0 ||
-			input.currentGold - mem.lastGoldMentioned >= GOLD_STEP
-		) {
-			money.push(`${Math.round(input.currentGold)}g sitting unspent`)
-			mem.lastGoldMentioned = input.currentGold
+		if (input.currentGold < GOLD_FLOOR) {
+			mem.lastGoldMentioned = 0
+			mem.lastGoldAtSec = 0
+		} else {
+			const stepped =
+				mem.lastGoldMentioned === 0 || input.currentGold - mem.lastGoldMentioned >= GOLD_STEP
+			const stale = mem.lastGoldAtSec > 0 && input.nowSec - mem.lastGoldAtSec >= GOLD_NAG_SEC
+			if (stepped || stale) {
+				money.push(
+					stale && !stepped ?
+						`${Math.round(input.currentGold)}g STILL unspent — ${Math.round((input.nowSec - mem.lastGoldAtSec) / 60)}m since you last had a chance`
+					:	`${Math.round(input.currentGold)}g sitting unspent`
+				)
+				mem.lastGoldMentioned = input.currentGold
+				mem.lastGoldAtSec = input.nowSec
+			}
+		}
+	}
+
+	/*
+	 * Two or more enemies down at once is a different fact from one enemy down, and a much better
+	 * one: it is the window in which objectives are actually taken. It is exact, it is invisible
+	 * without opening the scoreboard, and it expires in seconds.
+	 *
+	 * Deliberately not subject to the announce-once rule that single deaths use — the window is
+	 * the thing being reported, not the deaths, and it changes as each of them respawns.
+	 */
+	const windowOpen = input.deadEnemies.filter(d => d.respawnSec >= WINDOW_MIN_SEC)
+	if (windowOpen.length >= 2) {
+		const shortest = Math.min(...windowOpen.map(d => d.respawnSec))
+		const key = `${windowOpen.length}@${Math.round((input.nowSec + shortest) / 4)}`
+		if (!mem.announcedDeaths.has(key)) {
+			mem.announcedDeaths.add(key)
+			windows.push(
+				`${windowOpen.length} of them are dead — you have about ${Math.round(shortest)}s`
+			)
 		}
 	}
 
@@ -160,7 +226,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	if (input.sinceDrakeSec !== null) rest.push(`last drake was taken ${mmss(input.sinceDrakeSec)} ago`)
 	if (input.sinceBaronSec !== null) rest.push(`last Baron was taken ${mmss(input.sinceBaronSec)} ago`)
 
-	const nonDeath = [...praise, ...farm, ...money, ...rest]
+	// A window outranks everything but praise: it is the most actionable thing a jungler gets.
+	const nonDeath = [...praise, ...windows, ...farm, ...money, ...rest]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -177,7 +244,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
 		praise.length > 0 ?
-			[...praise, ...farm, ...money, ...deathsAllowed]
+			[...praise, ...windows, ...farm, ...money, ...deathsAllowed]
 		:	[...nonDeath, ...deathsAllowed]
 
 	const out = ranked.slice(0, MAX_FACTS)
