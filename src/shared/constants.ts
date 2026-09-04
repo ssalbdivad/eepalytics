@@ -24,7 +24,7 @@ export const ANALYSIS_VERSION = 3
 export const REVIEW_VERSION = 6
 
 /** Migration file set currently shipped. openDb() refuses to run against a newer DB. */
-export const SCHEMA_VERSION = 7
+export const SCHEMA_VERSION = 8
 
 /** Hono listens here; vite dev proxies /api + /media to it. */
 export const SERVER_PORT = Number(setting("PORT") ?? 7700)
