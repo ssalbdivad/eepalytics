@@ -63,6 +63,9 @@ turns running. Without that she became a death-timer parrot — measured, 40 of 
 Silence is a normal answer and she uses it about a quarter of the time. A coach who talks every
 twenty seconds gets muted.
 
+Check it works before a game with `pnpm smoke:live` — it walks the whole path (key → token →
+League client → socket) and tells you which step broke.
+
 **Setup:** it needs a free [Google AI Studio key](https://aistudio.google.com/apikey). Paste it
 into the panel on the Live screen — the instructions are right there. The key is stored in
 `data/gemini.key` (0600) and never reaches the browser: the daemon swaps it for a token that

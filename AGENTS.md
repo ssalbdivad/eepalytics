@@ -60,6 +60,10 @@ minutes will otherwise be repeated until it is noise: each death is announced on
 gold once per 800g, farm once per three minutes, and a death may not lead two turns
 running.
 
+`pnpm smoke:live` walks the shipped path end to end — key, token, ground truth, socket, one real
+turn — and names the step that failed. Every one of those steps has broken at least once for a
+different reason, which is why it checks all five rather than only the last.
+
 `src/shared/live-prompt.ts` holds the system prompt, deliberately in `shared/` so
 that `scripts/eval-live.ts` drives the same text. **Change it and re-run the eval**
 (`pnpm eval:live --games 3 --every 30`): it reconstructs real game states from
