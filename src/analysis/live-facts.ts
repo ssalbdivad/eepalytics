@@ -102,6 +102,17 @@ const KP_MIN_GAP_PCT = 25
 /** Before this there are too few kills for a share to mean anything. */
 const KP_MIN_SEC = 10 * 60
 
+/**
+ * How far behind on objectives before it is worth a sentence, and how early.
+ *
+ * Two is the point at which it stops being one contested pit and starts being a pattern — and for
+ * a jungler an objective deficit is the job description rather than a statistic.
+ */
+const OBJECTIVES_MIN_GAP = 2
+
+/** Before this there have not been enough objectives for a count to mean anything. */
+const OBJECTIVES_MIN_SEC = 8 * 60
+
 /** Game-clock seconds between counterpart mentions. */
 const RACE_COOLDOWN_SEC = 150
 
@@ -176,6 +187,8 @@ export interface FactMemory {
 	saidOwnDeath: boolean
 	/** The comeback is celebrated once — the point is the turnaround, not a commentary. */
 	saidSwing: boolean
+	/** The objective deficit is a state, said once. */
+	saidObjectives: boolean
 	/** His CS when farm was last raised; it must actually move before saying it again. */
 	lastFarmCs: number
 	lastLedWithDeath: boolean
@@ -199,6 +212,7 @@ export const newFactMemory = (): FactMemory => ({
 	saidKillShare: false,
 	saidOwnDeath: false,
 	saidSwing: false,
+	saidObjectives: false,
 	lastFarmCs: 0,
 	lastLedWithDeath: false
 })
@@ -244,6 +258,8 @@ export interface FactInput {
 	 * fact that is not ranked is a fact that does not exist, however true it is and however
 	 * prominently the block states it.
 	 */
+	/** Major objectives taken by each side so far. */
+	objectiveCount?: { mine: number; theirs: number }
 	counterpart: {
 		champion: string
 		cs?: number
@@ -367,6 +383,27 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	) {
 		mem.saidOwnDeath = true
 		ownDeath.push(input.advice.death)
+	}
+
+	/*
+	 * Objective control, both sides, as a running count.
+	 *
+	 * Exact from the event feed and genuinely hard to hold in your head mid-game: he knows the last
+	 * drake went, he does not reliably know the score is three to none. For a jungler that count is
+	 * the job description, which is why it earns a sentence the individual takes do not.
+	 */
+	const objectives: string[] = []
+	if (input.objectiveCount && input.nowSec >= OBJECTIVES_MIN_SEC) {
+		const { mine: mineCount, theirs } = input.objectiveCount
+		const gap = theirs - mineCount
+		if (gap >= OBJECTIVES_MIN_GAP && !mem.saidObjectives) {
+			mem.saidObjectives = true
+			objectives.push(
+				mineCount === 0 ?
+					`they have taken ${theirs} of the objectives and you have taken none`
+				:	`objectives are ${theirs} to ${mineCount} against you`
+			)
+		}
 	}
 
 	const race: string[] = []
@@ -775,7 +812,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * So praise still happens, but only when nothing else is on offer. That is most of the time
 	 * it matters anyway — the moment after a fight is usually quiet.
 	 */
-	const nonDeath = [...fight, ...ownDeath, ...restraint, ...windows, ...build, ...race, ...participation, ...rest, ...money, ...farm]
+	const nonDeath = [...fight, ...ownDeath, ...restraint, ...windows, ...build, ...race, ...objectives, ...participation, ...rest, ...money, ...farm]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -792,7 +829,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
 		windows.length > 0 || rest.length > 0 ?
-			[...fight, ...ownDeath, ...restraint, ...windows, ...build, ...race, ...participation, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
+			[...fight, ...ownDeath, ...restraint, ...windows, ...build, ...race, ...objectives, ...participation, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
 		:	[...nonDeath, ...deathsAllowed, ...praise]
 
 	/*

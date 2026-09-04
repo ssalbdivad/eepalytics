@@ -183,6 +183,7 @@ const buildLiveState = (
 		factMemory.saidKillShare = false
 		factMemory.saidOwnDeath = false
 		factMemory.saidSwing = false
+		factMemory.saidObjectives = false
 		factMemory.sawCounterpartBuild = false
 		factMemory.seenCounterpartItems.clear()
 		factMemory.lastLedWithDeath = false
@@ -384,6 +385,21 @@ const buildLiveState = (
 					return note ? parseChampionAdvice(note.text) : undefined
 				})(),
 				meLevel: me.level,
+				objectiveCount: (() => {
+					let mineN = 0
+					let theirs = 0
+					for (const e of data.events?.Events ?? []) {
+						if (!OBJECTIVE_EVENTS.has(e.EventName)) continue
+						const k = (data.allPlayers ?? []).find(
+							p => p.riotId === e.KillerName || p.summonerName === e.KillerName
+						)
+						// An unresolvable killer counts for nobody rather than for the enemy.
+						if (!k) continue
+						if (k.team === mine) mineN += 1
+						else theirs += 1
+					}
+					return { mine: mineN, theirs }
+				})(),
 				myKillShare: (() => {
 					const ourKills =
 						others.filter(p => p.team === mine).reduce((n, p) => n + (p.scores?.kills ?? 0), 0) +
