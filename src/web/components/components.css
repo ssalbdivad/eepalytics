@@ -1911,7 +1911,7 @@ button.csk-chip:focus-visible,
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
 	background: var(--bg);
-	color: var(--fg);
+	color: var(--text);
 	font: inherit;
 }
 
@@ -1922,11 +1922,16 @@ button.csk-chip:focus-visible,
  * it is indistinguishable from the feature being broken, which is how it read the first time.
  */
 .csk-screen__setup {
-	border: 1px solid var(--accent);
+	border: 1px solid var(--gold);
+	border-left-width: 3px;
 	border-radius: var(--radius);
-	background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+	background: rgba(200, 170, 110, 0.06);
 	padding: 12px 14px;
 	margin: 10px 0;
+}
+.csk-screen__setup > strong {
+	color: var(--gold);
+	font-size: 13px;
 }
 .csk-screen__setup ol {
 	margin: 8px 0 10px;
@@ -1935,7 +1940,7 @@ button.csk-chip:focus-visible,
 	font-size: 12.5px;
 }
 .csk-screen__setup a {
-	color: var(--accent);
+	color: var(--gold);
 }
 .csk-screen__keyrow {
 	display: flex;
@@ -1947,7 +1952,7 @@ button.csk-chip:focus-visible,
 	border: 1px solid var(--line);
 	border-radius: var(--radius);
 	background: var(--bg);
-	color: var(--fg);
+	color: var(--text);
 	font: inherit;
 }
 .csk-screen__fine {

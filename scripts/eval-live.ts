@@ -51,11 +51,15 @@ const RESPAWN_SEC = 28
 /** Mirrors the daemon's gold stepping; reset between games by `resetSessionState`. */
 let lastGoldMentioned = 0
 const announcedDeaths = new Set<string>()
+const announcedEvents = new Set<string>()
 let lastFarmAtSec = 0
+let lastLedWithDeath = false
 const resetSessionState = () => {
+	lastLedWithDeath = false
 	lastGoldMentioned = 0
 	lastFarmAtSec = 0
 	announcedDeaths.clear()
+	announcedEvents.clear()
 }
 
 const arg = (name: string, fallback: string): string => {
@@ -182,7 +186,7 @@ const stateAt = (
 	if (
 		pace &&
 		Math.abs(pace.cs - pace.expected) >= 12 &&
-		(lastFarmAtSec === 0 || atSec - lastFarmAtSec >= 240)
+		(lastFarmAtSec === 0 || atSec - lastFarmAtSec >= 180)
 	) {
 		lastFarmAtSec = atSec
 		const behind = pace.expected - pace.cs
@@ -192,6 +196,35 @@ const stateAt = (
 			:	`FARM: ${-behind} camps AHEAD of his own pace (${pace.cs} vs his usual ${pace.expected})${pace.exact ? "" : " — interpolated, approximate"}`
 		)
 	}
+
+	/*
+	 * Praise, mirroring the daemon. The stored timeline is a different shape from the live event
+	 * feed — no KillStreak counter — so a multi-kill is reconstructed as "N kills by him inside
+	 * 10 seconds", which is what a multi-kill is.
+	 */
+	for (const f of frames)
+		for (const e of f.events ?? []) {
+			if (e.timestamp > atSec * 1000 || e.timestamp < (atSec - 30) * 1000) continue
+			const id = `${e.type}@${e.timestamp}`
+			if (announcedEvents.has(id)) continue
+			if (e.type === "CHAMPION_KILL" && e.killerId === mePid) {
+				const window = frames
+					.flatMap((fr: { events?: { type: string; killerId?: number; timestamp: number }[] }) => fr.events ?? [])
+					.filter(
+						(x: { type: string; killerId?: number; timestamp: number }) =>
+							x.type === "CHAMPION_KILL" &&
+							x.killerId === mePid &&
+							Math.abs(x.timestamp - e.timestamp) <= 10_000
+					).length
+				if (window >= 2) {
+					announcedEvents.add(id)
+					unseen.unshift(`HE just got a ${window >= 5 ? "PENTAKILL" : `${window}-kill`} — worth saying so`)
+				}
+			} else if (e.type === "ELITE_MONSTER_KILL" && e.killerId === mePid) {
+				announcedEvents.add(id)
+				unseen.unshift(`HE secured the ${String(e.monsterType ?? "objective").toLowerCase()} — worth saying so`)
+			}
+		}
 
 	// Mirrors the daemon: each death is announced once, and only while it is still worth saying.
 	for (const pid of others.filter(p => roster[p]!.teamId !== myTeam)) {
@@ -214,6 +247,19 @@ const stateAt = (
 		lastGoldMentioned = g
 	}
 
+	// Mirrors the daemon's ranking and cap. See buildUnseen in src/server/routes/live.ts.
+	const praise = unseen.filter(t => t.startsWith("HE "))
+	const farm = unseen.filter(t => t.startsWith("FARM:"))
+	const money = unseen.filter(t => t.includes("unspent"))
+	const deaths = unseen.filter(t => t.includes("JUST died"))
+	const nonDeath = [...praise, ...farm, ...money]
+	const ranked =
+		praise.length > 0 ? [...praise, ...farm, ...money, ...deaths.slice(0, 1)]
+		: !lastLedWithDeath && deaths.length > 0 ? [...deaths.slice(0, 1), ...nonDeath]
+		: [...nonDeath, ...deaths.slice(0, 1)]
+	const finalUnseen = ranked.slice(0, 3)
+	if (finalUnseen.length > 0) lastLedWithDeath = finalUnseen[0]!.includes("JUST died")
+
 	return {
 		mePid,
 		state: {
@@ -232,7 +278,7 @@ const stateAt = (
 			allies: others.filter(p => roster[p]!.teamId === myTeam).map(player),
 			enemies: others.filter(p => roster[p]!.teamId !== myTeam).map(player),
 			recentEvents: [],
-			unseen
+			unseen: finalUnseen
 		}
 	}
 }
@@ -499,18 +545,45 @@ const main = async () => {
 	const frameB64 = readFileSync(arg("frame", `${DATA_DIR}/eval/frame.jpg`)).toString("base64")
 
 	const all: Said[] = []
+	const failures: string[] = []
 	for (const gameId of games) {
 		process.stderr.write(`game ${gameId} … `)
-		try {
-			resetSessionState()
-			const game = loadGame(db, gameId)
-			const said = await runSession(gameId, marks, game, frameB64, baseline)
-			all.push(...said)
-			process.stderr.write(`${said.length} lines\n`)
-		} catch (e) {
-			process.stderr.write(`FAILED: ${e instanceof Error ? e.message : String(e)}\n`)
+		/*
+		 * Retry the session, because Gemini Live really does fail transiently.
+		 *
+		 * Observed under repeated eval runs: `closed 1011: Internal error encountered` on two of
+		 * three games, with per-turn latency spiking from ~700ms to 12-29s beforehand. A run that
+		 * silently reports "5 lines" from a broken socket is worse than no run, because the
+		 * numbers still print and look like a result.
+		 */
+		let attempt = 0
+		for (;;) {
+			try {
+				resetSessionState()
+				const game = loadGame(db, gameId)
+				const said = await runSession(gameId, marks, game, frameB64, baseline)
+				all.push(...said)
+				process.stderr.write(`${said.length} lines\n`)
+				break
+			} catch (e) {
+				attempt += 1
+				const msg = e instanceof Error ? e.message : String(e)
+				if (attempt >= 3) {
+					process.stderr.write(`FAILED after ${attempt}: ${msg}\n`)
+					failures.push(`${gameId}: ${msg}`)
+					break
+				}
+				const wait = attempt * 20_000
+				process.stderr.write(`retry ${attempt} in ${wait / 1000}s (${msg}) … `)
+				await new Promise(r => setTimeout(r, wait))
+			}
 		}
+		// Space the sessions out; back to back is what provoked the 1011s.
+		await new Promise(r => setTimeout(r, 5_000))
 	}
+
+	if (failures.length > 0)
+		console.log(`\n!! ${failures.length} session(s) failed — these numbers are incomplete:\n  ${failures.join("\n  ")}`)
 
 	const scored = all.map(s => ({ said: s, score: scoreLine(s, championNames) }))
 	const n = scored.length || 1

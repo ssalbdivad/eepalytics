@@ -99,8 +99,27 @@ const DEATH_WORTH_SAYING_SEC = 12
  */
 const announcedDeaths = new Set<string>()
 
+/**
+ * Did the previous turn's list lead with a death?
+ *
+ * Deaths are the most frequent fact by a wide margin, so without alternating they dominate
+ * everything else. This is the "never two of the same kind running" rule, made structural.
+ */
+let lastLedWithDeath = false
+
+/** Praise-worthy events already mentioned, by the feed's own monotonic id. */
+const announcedEvents = new Set<number>()
+
+/** Riot's KillStreak counter, as words. */
+const MULTI: Record<number, string> = {
+	2: "double kill",
+	3: "triple kill",
+	4: "quadra kill",
+	5: "PENTAKILL"
+}
+
 /** Four minutes of game clock between farm-pace mentions. */
-const FARM_COOLDOWN_SEC = 240
+const FARM_COOLDOWN_SEC = 180
 let lastFarmAtSec = 0
 
 /** Below this, unspent gold is not worth a sentence. */
@@ -193,11 +212,40 @@ const buildUnseen = (
 		}
 	}
 
+	const events = data.events?.Events ?? []
+
+	/*
+	 * Things he did well, straight off the event feed.
+	 *
+	 * Without these the coach had nothing warm that was also grounded, so it either stayed silent
+	 * (48% of turns, measured) or reached for a compliment it could not support. A multi-kill, a
+	 * stolen objective and a secured objective are all exact, all his, and all worth interrupting
+	 * for — which is the definition this file uses for everything else.
+	 *
+	 * `EventID` is monotonic and unique, so announcing each once is exact rather than heuristic.
+	 */
+	const myName = me.riotId ?? me.summonerName ?? ""
+	for (const e of events) {
+		if (e.EventID === undefined || announcedEvents.has(e.EventID)) continue
+		const mine = e.KillerName !== undefined && e.KillerName === myName
+		if (!mine) continue
+		let praise = ""
+		if (e.EventName === "ChampionKill" && (e.KillStreak ?? 0) >= 2)
+			praise = `HE just got a ${MULTI[e.KillStreak!] ?? `${e.KillStreak}-kill`}`
+		else if (e.EventName === "DragonKill")
+			praise = e.Stolen === "True" ? `HE STOLE the ${e.DragonType ?? ""} dragon`.trim() : "HE secured the dragon"
+		else if (e.EventName === "BaronKill")
+			praise = e.Stolen === "True" ? "HE STOLE Baron" : "HE secured Baron"
+		else if (e.EventName === "HeraldKill") praise = "HE secured Herald"
+		if (praise === "") continue
+		announcedEvents.add(e.EventID)
+		out.unshift(`${praise} — worth saying so`)
+	}
+
 	/*
 	 * Elapsed time since the last objective take, as a fact. Late in a game the event list runs
 	 * long, so scan from the end.
 	 */
-	const events = data.events?.Events ?? []
 	const lastOf = (name: string) => {
 		for (let i = events.length - 1; i >= 0; i--) if (events[i]!.EventName === name) return events[i]
 		return null
@@ -213,7 +261,34 @@ const buildUnseen = (
 		out.push(`last Baron was taken ${Math.floor(ago / 60)}m${ago % 60}s ago`)
 	}
 
-	return out.slice(0, 6)
+	/*
+	 * Order and cap, rather than handing over everything and hoping.
+	 *
+	 * A judge pass found 40 of 55 spoken lines were respawn timers — including one that chose a
+	 * fourth Morgana timer over an explicit "1393g sitting unspent" sitting next to it in the same
+	 * list. The model takes the top item most of the time, so the ranking has to be here.
+	 *
+	 * Praise first because it is rare and time-critical; then the comparisons he cannot make
+	 * himself; then ONE death, because deaths are frequent enough to crowd out everything else if
+	 * they are all offered. If the previous turn led with a death, a death is not allowed to lead
+	 * this one — that is the variety rule, enforced rather than requested.
+	 */
+	const praise = out.filter(t => t.startsWith("HE "))
+	const farm = out.filter(t => t.startsWith("FARM:"))
+	const money = out.filter(t => t.includes("unspent"))
+	const deaths = out.filter(t => t.includes("JUST died"))
+	const rest = out.filter(t => !praise.includes(t) && !farm.includes(t) && !money.includes(t) && !deaths.includes(t))
+
+	const nonDeath = [...praise, ...farm, ...money, ...rest]
+	const leadWithDeath = lastLedWithDeath === false && deaths.length > 0
+	const ranked =
+		praise.length > 0 ? [...praise, ...farm, ...money, ...deaths.slice(0, 1)]
+		: leadWithDeath ? [...deaths.slice(0, 1), ...nonDeath]
+		: [...nonDeath, ...deaths.slice(0, 1)]
+
+	const finalList = ranked.slice(0, 3)
+	if (finalList.length > 0) lastLedWithDeath = finalList[0]!.includes("JUST died")
+	return finalList
 }
 
 const buildLiveState = (
@@ -225,6 +300,8 @@ const buildLiveState = (
 	if (!data || !me || !me.championName) {
 		// Between games: forget what was announced so the next game starts clean.
 		announcedDeaths.clear()
+		announcedEvents.clear()
+		lastLedWithDeath = false
 		lastGoldMentioned = 0
 		lastFarmAtSec = 0
 		return null

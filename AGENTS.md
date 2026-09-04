@@ -21,15 +21,47 @@ load-bearing — do not delete or reorder them.
 
 **fawnsei** is a local League of Legends coaching app for a single user
 (**Gooskaffur#NA1**, `puuid 188dee22-18d6-5752-ba7f-b69cf3d2506e`, NA1). It is a
-jungle-main's replay coach: it harvests finished games from the local League
-Client (LCU), compresses each match + timeline into a compact digest, asks Claude
-for feedback bound to real timestamps, and cuts screenshots/clips from the replay
-so every point is something you can *watch*, not just read.
+jungle-main's coach: it harvests finished games from the local League Client
+(LCU), compresses each match + timeline into a compact digest, asks Claude for
+feedback bound to real timestamps, and cuts screenshots/clips from the replay so
+every point is something you can *watch*, not just read.
 
-Two output tiers:
+Three output tiers:
 
+- **Live voice coach** — the flagship. Share your screen and a Gemini Live socket
+  watches it while a coach talks to you out loud, about 0.8s behind.
 - **Per-game review** — timestamped moments in one game.
 - **Cross-game trends** — goals and patterns across the last N games.
+
+### The live coach, and the rule that makes it work
+
+The model gets a screenshot stream AND a **ground-truth block** computed by the
+daemon from the Live Client Data API: the roster, who is dead and for how long,
+the score, gold, and farm against the player's own average. The screenshot is for
+*where things are*; the block is for *what is true*.
+
+That split is not decoration, it is the whole design. Given pixels alone the coach
+named a champion who was not in the game four times in seven minutes, called a
+teammate a threat, and told a player who was dead on screen to recall. Given a
+block it cannot see past, it stops.
+
+The facts are **computed in TypeScript and ranked there** (`buildUnseen` in
+`src/server/routes/live.ts`); the model may only choose one and phrase it. Asking a
+vision model to "be actionable" from a screenshot is how you get *"clear faster,
+you need to use more abilities"* said to someone using abilities on cooldown —
+which happened, and which nothing in the live data could have checked.
+
+Rate-limiting lives in that same function, because a fact that stays true for
+minutes will otherwise be repeated until it is noise: each death is announced once,
+gold once per 800g, farm once per three minutes, and a death may not lead two turns
+running.
+
+`src/shared/live-prompt.ts` holds the system prompt, deliberately in `shared/` so
+that `scripts/eval-live.ts` drives the same text. **Change it and re-run the eval**
+(`pnpm eval:live --games 3 --every 30`): it reconstructs real game states from
+stored timelines, runs them through the real Gemini socket, and scores what comes
+back for invented champions, unsupportable claims, unbacked numbers and variety.
+Every prompt rule in that file is a measured failure, not a guess.
 
 ### Architecture in one breath
 
@@ -49,6 +81,25 @@ src/daemon/   job queue, gate, poller, jobs/*       (owns every side effect)
 src/server/   Hono HTTP + SSE
 src/web/      React UI
 ```
+
+The live coach spans those in a way worth naming, since it is the newest thing here:
+
+```
+src/shared/live-state.ts    the ground-truth block: types + renderer (pure, shared)
+src/shared/live-prompt.ts   the coach's system prompt (shared with the eval)
+src/server/routes/live.ts   buildLiveState / buildUnseen — the facts, computed and ranked
+src/review/gemini-live.ts   holds the API key, mints ephemeral tokens  (NODE ONLY)
+src/web/lib/useScreenShare  the shared screen + frame grabber
+src/web/lib/geminiLive.ts   the WebSocket, audio out, mic in, reconnect
+scripts/eval-live.ts        replays real games through the real socket and scores it
+```
+
+**The Gemini key never reaches the browser.** It lives in `data/gemini.key` at
+0600, written through a write-only endpoint, and deliberately NOT in the settings
+table — settings round-trip through `GET /api/settings`, which would hand it to the
+renderer. The daemon mints a one-use ephemeral token and the page connects to
+Google with that. There is no "sign in with Google" because no such flow exists for
+this API.
 
 ### Engineering rules
 

@@ -221,8 +221,19 @@ export const ScreenCoach = () => {
 							{savingKey ? "Checking…" : "Save"}
 						</button>
 					</div>
+					{/*
+					 * Google's own message here is "Request had invalid authentication credentials.
+					 * Expected OAuth 2 access token, login cookie or other valid authentication
+					 * credential. See https://developers.google.com/identity/sign-in/web/..." —
+					 * accurate, and useless to someone who has just pasted a key. The real cause is
+					 * almost always a partial copy, so say that; the raw text stays available on
+					 * hover for anyone who wants it.
+					 */}
 					{keyStatus?.configured && keyStatus.error && (
-						<div className="csk-screen__err">That key did not work: {keyStatus.error}</div>
+						<div className="csk-screen__err" title={keyStatus.error}>
+							That key wasn't accepted. Check you copied the whole thing from AI Studio — they
+							are long, and it's easy to miss the end.
+						</div>
 					)}
 					<p className="csk-screen__fine">
 						The key stays on this machine. The page never sees it — the app swaps it for a
