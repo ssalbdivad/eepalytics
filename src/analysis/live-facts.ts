@@ -80,6 +80,15 @@ const RACE_MIN_GAP = 14
 /** Before this the clear has barely started and the gap is whoever pathed to the bigger camp. */
 const RACE_MIN_SEC = 5 * 60
 
+/**
+ * A level gap this size is a real power difference rather than one camp of timing, and it is the
+ * gate on saying "don't". Two levels is the classic solo-queue coinflip a jungler should decline.
+ */
+const RESTRAINT_LEVEL_GAP = 2
+
+/** An objective is "live" for restraint purposes when it is this close. */
+const OBJECTIVE_SOON_SEC = 45
+
 /** Game-clock seconds between counterpart mentions. */
 const RACE_COOLDOWN_SEC = 150
 
@@ -133,6 +142,9 @@ export interface FactMemory {
 	/** When the counterpart gap was last raised, and how big it was then. */
 	lastRaceAtSec: number
 	lastRaceGap: number
+	/** Said once each per game — a level gap is a state, not an event, and restating it is nagging. */
+	saidRestraint: boolean
+	saidLevelGap: boolean
 	/** His CS when farm was last raised; it must actually move before saying it again. */
 	lastFarmCs: number
 	lastLedWithDeath: boolean
@@ -149,6 +161,8 @@ export const newFactMemory = (): FactMemory => ({
 	lastFarmAtSec: 0,
 	lastRaceAtSec: 0,
 	lastRaceGap: 0,
+	saidRestraint: false,
+	saidLevelGap: false,
 	lastFarmCs: 0,
 	lastLedWithDeath: false
 })
@@ -195,6 +209,8 @@ export interface FactInput {
 	 * prominently the block states it.
 	 */
 	counterpart: { champion: string; cs?: number; level?: number; inferred?: boolean } | null
+	/** His own level, for the gap against the counterpart. */
+	meLevel?: number
 	enemyObjectives: { name: string; atSec: number; dragonType?: string }[]
 	myEvents: {
 		id: number
@@ -283,6 +299,35 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 				gap > 0 ?
 					`${who} is ${gap} CS up on you — finish the clear before you look at a lane`
 				:	`you're ${-gap} CS up on ${who} — keep the route going and spend the lead`
+			)
+		}
+	}
+
+	/*
+	 * RESTRAINT — the thing an OTP says most and this coach could not say at all.
+	 *
+	 * A level gap against the counterpart, with an objective live, is the one moment where "don't"
+	 * is the whole coaching point. Both numbers are exact and come off the client; what makes it a
+	 * decision rather than a stat is that it names what to do instead.
+	 *
+	 * Offered ALONE and ranked at the very top with the other things that expire, because measured
+	 * repeatedly in this file: put beside a farm number, the model takes the farm number.
+	 */
+	const restraint: string[] = []
+	if (input.counterpart && input.counterpart.level !== undefined && input.meLevel !== undefined) {
+		const down = input.counterpart.level - input.meLevel
+		const objectiveUp =
+			(input.drakeBackInSec !== null && input.drakeBackInSec <= OBJECTIVE_SOON_SEC) ||
+			(input.baronBackInSec !== null && input.baronBackInSec <= OBJECTIVE_SOON_SEC)
+		if (down >= RESTRAINT_LEVEL_GAP && objectiveUp && !mem.saidRestraint) {
+			mem.saidRestraint = true
+			restraint.push(
+				`you're ${down} levels down on ${input.counterpart.champion} — don't contest this one alone, take the camps that are up instead`
+			)
+		} else if (down >= RESTRAINT_LEVEL_GAP && !mem.saidLevelGap) {
+			mem.saidLevelGap = true
+			restraint.push(
+				`${input.counterpart.champion} is ${down} levels up on you — get your clear finished before you take a fight`
 			)
 		}
 	}
@@ -547,7 +592,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * So praise still happens, but only when nothing else is on offer. That is most of the time
 	 * it matters anyway — the moment after a fight is usually quiet.
 	 */
-	const nonDeath = [...windows, ...race, ...rest, ...money, ...farm]
+	const nonDeath = [...restraint, ...windows, ...race, ...rest, ...money, ...farm]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -564,7 +609,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
 		windows.length > 0 || rest.length > 0 ?
-			[...windows, ...race, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
+			[...restraint, ...windows, ...race, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
 		:	[...nonDeath, ...deathsAllowed, ...praise]
 
 	/*
@@ -585,7 +630,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * itself and anything that expires in seconds; if neither exists, saying nothing is correct.
 	 */
 	const out =
-		lost.length > 0 ? lost.slice(0, 1)
+		restraint.length > 0 ? restraint.slice(0, 1)
+		: lost.length > 0 ? lost.slice(0, 1)
 		: windows.length > 0 ? windows.slice(0, 1)
 		: disaster ? []
 		: ranked.slice(0, MAX_FACTS)

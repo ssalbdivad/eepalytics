@@ -317,6 +317,7 @@ const buildLiveState = (
 				 * taken Baron — the single largest event in the game.
 				 */
 				counterpart,
+				meLevel: me.level,
 				enemyObjectives: (data.events?.Events ?? [])
 					.filter(e => OBJECTIVE_EVENTS.has(e.EventName) && e.KillerName !== myName)
 					.filter(e => {
