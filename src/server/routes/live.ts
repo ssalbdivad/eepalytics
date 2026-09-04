@@ -166,6 +166,22 @@ const buildLiveState = (
 		factMemory.announcedEvents.clear()
 		factMemory.announcedLosses.clear()
 		resetFightMemory(fightMemory)
+		/*
+		 * Every field, not five of them. `praiseSaid`, `lastGoldAtSec`, `goldSinceSec` and
+		 * `lastFarmCs` were carrying into the next game, so a gold reminder or a praise line could
+		 * be suppressed in game two by something that happened in game one.
+		 */
+		factMemory.lastFarmCs = 0
+		factMemory.lastGoldAtSec = 0
+		factMemory.goldSinceSec = 0
+		factMemory.praiseSaid.clear()
+		factMemory.lastRaceAtSec = 0
+		factMemory.lastRaceGap = 0
+		factMemory.saidRestraint = false
+		factMemory.saidLevelGap = false
+		factMemory.saidKillShare = false
+		factMemory.sawCounterpartBuild = false
+		factMemory.seenCounterpartItems.clear()
 		factMemory.lastLedWithDeath = false
 		factMemory.lastGoldMentioned = 0
 		factMemory.lastFarmAtSec = 0
@@ -203,7 +219,15 @@ const buildLiveState = (
 	 */
 	const championOf = (who: string | undefined): string => {
 		if (!who) return "someone"
-		const p = (data.allPlayers ?? []).find(x => (x.riotId ?? x.summonerName) === who)
+		/*
+		 * Match on BOTH names, because the two feeds disagree.
+		 *
+		 * The roster carries riotIds and the EVENT feed sends bare summoner names, so a one-sided
+		 * lookup misses and falls through to the raw string. It did: "jestericide killed Smael"
+		 * reached the player in a block whose every other line is champions. Half-fixing this was
+		 * worse than not fixing it, because the remaining misses look exactly like hallucination.
+		 */
+		const p = (data.allPlayers ?? []).find(x => x.riotId === who || x.summonerName === who)
 		return p?.championName ?? who
 	}
 	const recentEvents = (data.events?.Events ?? [])
