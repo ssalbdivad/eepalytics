@@ -9,9 +9,80 @@
 		<!-- The real mark, served from public/. Regenerate rasters with `pnpm icon`. -->
 		<link rel="icon" type="image/png" href="/icons/icon-64.png" />
 		<link rel="apple-touch-icon" href="/icons/icon-256.png" />
+		<!-- Preloaded so the splash paints with the first frame rather than one frame later. -->
+		<link rel="preload" as="image" href="/splash-512.png" />
+		<style>
+			/*
+				Inline, and deliberately: a stylesheet is another request, and the whole point of
+				this element is to be on screen before anything else has loaded.
+			*/
+			body {
+				margin: 0;
+				background: #07090e;
+			}
+			.splash {
+				position: fixed;
+				inset: 0;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 14px;
+				background: #07090e;
+				color: #e7e9ef;
+				font: 400 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+			}
+			.splash__art {
+				border-radius: 18px;
+				box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+				/* Fades in rather than popping, which reads as "loading" instead of "flash". */
+				animation: splash-in 0.45s ease-out both;
+			}
+			.splash__name {
+				/* Family repeated, not inherited: the app stylesheet loads alongside this and
+				   was quietly restyling it. */
+				font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+				font-size: 20px;
+				font-weight: 640;
+				letter-spacing: 0.02em;
+			}
+			.splash__sub {
+				color: #737d92;
+				font-size: 12px;
+			}
+			@keyframes splash-in {
+				from {
+					opacity: 0;
+					transform: scale(0.97);
+				}
+				to {
+					opacity: 1;
+					transform: none;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.splash__art {
+					animation: none;
+				}
+			}
+		</style>
 	</head>
 	<body>
-		<div id="root"></div>
+		<!--
+			The splash lives in the HTML, not in React.
+			
+			Everything React can render arrives after the bundle has parsed and mounted, which is
+			exactly the window this covers — the app used to show a bare dark rectangle until then.
+			React replaces `#root`'s children on mount, so there is nothing to tear down and no
+			state to coordinate: it is on screen from first paint and gone the moment the app is.
+		-->
+		<div id="root">
+			<div class="splash">
+				<img class="splash__art" src="/splash-512.png" alt="" width="320" height="320" />
+				<div class="splash__name">fawnsei</div>
+				<div class="splash__sub">warming up the whiteboard…</div>
+			</div>
+		</div>
 		<noscript>fawnsei is a React app; JavaScript is required.</noscript>
 		<script type="module" src="./main.tsx"></script>
 	</body>

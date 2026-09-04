@@ -120,9 +120,20 @@ export const createApp = (deps: ServerDeps = {}): Hono => {
 								"public, max-age=31536000, immutable"
 							:	"no-cache"
 					})
-				// A missing hashed chunk must not become the HTML shell — the browser would
-				// try to parse index.html as JavaScript and the error would name the wrong file.
-				if (rel.startsWith("assets/")) return fail(c, 404, `no such asset: ${rel}`, "not-found")
+				/*
+				 * Anything that LOOKS like a file 404s rather than becoming the HTML shell.
+				 *
+				 * This used to cover `assets/` only, so a missing `/splash-512.png` answered 200
+				 * with index.html and the browser rendered a broken image — a request that failed
+				 * while every diagnostic said it succeeded. That is how an icon regenerated into
+				 * the wrong directory went unnoticed: `curl -w %{http_code}` said 200.
+				 *
+				 * Client-side routes here are hash fragments (`#/games`), so a path segment with
+				 * an extension is never a route. `.html` is excluded so a deliberate static page
+				 * still resolves.
+				 */
+				if (/\.[a-z0-9]{2,5}$/i.test(rel) && !rel.endsWith(".html"))
+					return fail(c, 404, `no such file: ${rel}`, "not-found")
 			}
 			// Client-side routing: every other unknown path is the shell.
 			return sendFile(c, indexHtml, {

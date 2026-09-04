@@ -386,6 +386,16 @@ client's timeline endpoint instead.
 
 ---
 
+## The artwork
+
+`public/lillia-art.png` is the single source. `pnpm icon` crops her face for the app icon and the
+avatars you see beside her coaching, and downscales the whole illustration for the splash that
+shows while the app starts. Replace that one file and re-run it to change her everywhere.
+
+It writes into two public directories on purpose: Vite serves `src/web/public`, and Electron reads
+its window icon from the project's own `public/`. Writing to only one of them looks entirely
+successful and changes nothing you can see.
+
 ## Development
 
 ```bash

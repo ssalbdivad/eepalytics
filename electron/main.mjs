@@ -127,6 +127,54 @@ const waitForDaemon = async () => {
 	return false
 }
 
+/**
+ * A splash while the main window loads.
+ *
+ * The main window is created with `show: false` and only appears on `ready-to-show`, which is
+ * correct — showing a half-painted window looks broken — but it means clicking the app produces
+ * nothing at all for a second or two, and a launcher that appears to do nothing gets clicked
+ * again. This fills that gap and closes itself the moment the real window is ready.
+ *
+ * Frameless, transparent and not resizable: it is a picture, not a window, and it must never
+ * outlive the thing it is covering. `closeSplash` is called from `ready-to-show` AND from the
+ * failure paths, because a splash that survives a failed launch is worse than no splash.
+ */
+let splash = null
+
+const closeSplash = () => {
+	if (splash && !splash.isDestroyed()) splash.close()
+	splash = null
+}
+
+const createSplash = () => {
+	splash = new BrowserWindow({
+		width: 340,
+		height: 400,
+		frame: false,
+		transparent: true,
+		resizable: false,
+		movable: false,
+		skipTaskbar: true,
+		alwaysOnTop: true,
+		show: true,
+		webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true }
+	})
+	const art = join(ROOT, "public", "splash-512.png")
+	const src = existsSync(art) ? `file://${art}` : ""
+	// A data URL: no server is running yet, and this must not depend on one.
+	splash.loadURL(
+		`data:text/html;charset=utf-8,${encodeURIComponent(`<html><body style="margin:0;background:transparent;overflow:hidden">
+	<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;height:100vh;background:#07090e;border-radius:16px;color:#e7e9ef;font:400 13px/1.5 ui-sans-serif,system-ui,'Segoe UI',sans-serif">
+	  ${src ? `<img src="${src}" width="260" height="260" style="border-radius:16px"/>` : ""}
+	  <div style="font-size:19px;font-weight:640">fawnsei</div>
+	  <div style="color:#737d92;font-size:12px">warming up the whiteboard…</div>
+	</div></body></html>`)}`
+	)
+	splash.on("closed", () => {
+		splash = null
+	})
+}
+
 const createWindow = async () => {
 	win = new BrowserWindow({
 		width: 1500,
@@ -149,7 +197,10 @@ const createWindow = async () => {
 		}
 	})
 
-	win.once("ready-to-show", () => win?.show())
+	win.once("ready-to-show", () => {
+		closeSplash()
+		win?.show()
+	})
 
 	win.webContents.setWindowOpenHandler(({ url }) => {
 		// The nav's "Live" link is a normal anchor with target=_blank so it still works in a
@@ -287,10 +338,16 @@ const allowScreenCapture = async () => {
 }
 
 app.whenReady().then(async () => {
+	/*
+	 * Up before anything slow happens. Starting the daemon and waiting for it to answer is most
+	 * of the launch, and that is the whole stretch a person is staring at nothing.
+	 */
+	createSplash()
 	await allowScreenCapture()
 	try {
 		daemon = await startDaemon()
 	} catch (err) {
+		closeSplash()
 		dialog.showErrorBox("fawnsei could not start", String(err))
 		app.quit()
 		return
@@ -298,11 +355,14 @@ app.whenReady().then(async () => {
 	if ((process.env.FAWNSEI_OVERLAY ?? process.env.CSK_OVERLAY) === "1") {
 		// Overlay-only mode still needs the daemon up before it can poll anything.
 		if (!(await waitForDaemon())) {
+			closeSplash()
 			dialog.showErrorBox("The daemon did not start", `Nothing answered on ${daemonUrl}.`)
 			app.quit()
 			return
 		}
 		await createOverlay()
+		// The overlay has its own ready-to-show; the splash is not its problem.
+		closeSplash()
 	} else {
 		await createWindow()
 	}

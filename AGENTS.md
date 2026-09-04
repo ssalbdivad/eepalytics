@@ -111,6 +111,17 @@ renderer. The daemon mints a one-use ephemeral token and the page connects to
 Google with that. There is no "sign in with Google" because no such flow exists for
 this API.
 
+### The artwork
+
+One source file, `public/lillia-art.png`, produces everything: `pnpm icon` crops her face for the
+app icon and avatars, and downscales the whole illustration for the splash. Nothing is drawn in
+code any more — the previous icon composited Riot's champion portrait and drew spectacles over it
+in hand-written SVG, which took three attempts and at one point put them on her forehead.
+
+**It writes to BOTH public directories, and that is not redundant.** Vite's root is `src/web`, so
+`src/web/public` is what ships in `dist/`; Electron reads its window icon from the project's own
+`public/`. Writing to one of them looks completely successful and changes nothing the user sees.
+
 ### Engineering rules
 
 - **Write TypeScript that runs under `node --experimental-strip-types`.** Type-only
