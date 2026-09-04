@@ -143,7 +143,15 @@ export const FeedbackCard = ({
 				<p className="csk-fb__fix">
 					{/* The tag stays outside so the glossary never scans its own label. */}
 					<span className="csk-fb__fix-tag">Do this</span>
-					<Glossed>{item.fix}</Glossed>
+					{/*
+					 * Wrapped in ONE span on purpose: this row is `display: flex; gap: 9px`, and
+					 * `Glossed` splits its text into a fragment per glossary hit. Without the
+					 * wrapper flex applies the gap between every fragment, so each defined term
+					 * ended up floating in nine pixels of whitespace on both sides.
+					 */}
+					<span>
+						<Glossed>{item.fix}</Glossed>
+					</span>
 				</p>
 			:	null}
 
