@@ -147,9 +147,15 @@ const createWindow = async () => {
 
 	win.once("ready-to-show", () => win?.show())
 
-	// Anything that is not this app opens in the real browser rather than a chrome-less window
-	// the user cannot navigate out of.
 	win.webContents.setWindowOpenHandler(({ url }) => {
+		// The nav's "Live" link is a normal anchor with target=_blank so it still works in a
+		// browser. In the desktop app it should open the overlay window instead of a tab.
+		if (url.includes("#/live")) {
+			void createOverlay()
+			return { action: "deny" }
+		}
+		// Anything else that is not this app opens in the real browser rather than a chrome-less
+		// window the user cannot navigate out of.
 		void shell.openExternal(url)
 		return { action: "deny" }
 	})

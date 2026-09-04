@@ -60,6 +60,20 @@ html,
 body {
 	margin: 0;
 	padding: 0;
+	/*
+	 * Nothing may make the page scroll sideways. A stray wide child used to slide the whole
+	 * layout left and leave a horizontal scrollbar down the right edge; containers that really
+	 * do have wide content (tables, the timeline) scroll inside themselves instead.
+	 */
+	max-width: 100%;
+	overflow-x: hidden;
+}
+
+/* Media never widens its container. */
+img,
+svg,
+video {
+	max-width: 100%;
 }
 
 body {
@@ -112,12 +126,24 @@ h4 {
 	gap: 18px;
 	padding: 0 20px;
 	height: 52px;
+	/*
+	 * The bar itself must NOT scroll. Making it the scroll container let the right-hand status
+	 * block ride over the nav at narrow widths — verified at 900px, where "Trends" sat half
+	 * under a status pill and Queue/Settings/Live vanished entirely.
+	 *
+	 * The NAV scrolls instead (below), inside whatever space is left after the fixed-width brand
+	 * and status blocks. Nothing overlaps and the page never scrolls sideways.
+	 */
+	overflow: visible;
 	background: rgba(10, 13, 19, 0.86);
 	backdrop-filter: blur(12px);
 	border-bottom: 1px solid var(--line);
 }
 
 .brand {
+	flex: none;
+	/* At narrow widths the handle goes before the nav does. */
+	min-width: 0;
 	display: flex;
 	align-items: baseline;
 	gap: 8px;
@@ -135,6 +161,11 @@ h4 {
 }
 
 .nav {
+	/* Takes the leftover space and scrolls inside it, rather than pushing its neighbours. */
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-x: auto;
+	scrollbar-width: none;
 	display: flex;
 	gap: 2px;
 	margin-left: 8px;
@@ -163,8 +194,10 @@ h4 {
 	color: var(--gold);
 }
 
+.nav::-webkit-scrollbar { display: none; }
+
 .topbar-right {
-	margin-left: auto;
+	flex: none;
 	display: flex;
 	align-items: center;
 	gap: 10px;
@@ -1232,12 +1265,40 @@ input[type="checkbox"] {
 	font-size: 11px;
 	color: var(--faint);
 }
-.csk-form__spark {
+.csk-form__verdict {
+	font-size: 14px;
+	color: var(--text);
+	margin-top: 2px;
+}
+.csk-form__recent {
 	display: flex;
 	flex-direction: column;
-	gap: 3px;
-	font-size: 10px;
+	gap: 5px;
 }
+.csk-form__recent-label {
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--dim);
+}
+.csk-form__chips { display: flex; gap: 5px; }
+.csk-form__chip {
+	font-family: var(--mono);
+	font-size: 12px;
+	font-weight: 700;
+	padding: 5px 9px;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--line);
+	background: var(--panel-2);
+	color: var(--text-2);
+	cursor: help;
+}
+.csk-form__chip.r-sp { color: #ffd98a; border-color: #c8aa6e; }
+.csk-form__chip.r-s  { color: #f0e6d2; border-color: var(--gold-dim); }
+.csk-form__chip.r-a  { color: var(--win); border-color: rgba(51,185,133,0.45); }
+.csk-form__chip.r-b  { color: var(--blue); border-color: rgba(74,158,219,0.4); }
+.csk-form__chip.r-d  { color: var(--warn); border-color: rgba(232,177,61,0.4); }
+.csk-form__chip.r-e  { color: var(--loss); border-color: rgba(224,82,95,0.45); }
 
 .csk-focus-list {
 	list-style: none;
@@ -1392,3 +1453,40 @@ body.is-live {
 	margin-right: 8px;
 }
 .live__mark { border-radius: 5px; flex: none; }
+
+/* The live-overlay link. Marked out from the page nav because it opens a separate window
+   rather than navigating, and because it is the only thing here you would reach for mid-game. */
+.nav a.nav-live {
+	color: var(--teal);
+	margin-left: 4px;
+}
+.nav a.nav-live:hover { color: #7ff0e4; }
+
+/* ==================================================== narrow-window chrome */
+/*
+ * Under ~1150px there is not room for the brand handle, six nav items and two full status
+ * pills. Verified by screenshot at 900px: the nav clipped mid-word ("Tr") and the pills sat on
+ * top of it.
+ *
+ * Rather than let the nav scroll — which hides navigation behind an invisible gesture — the
+ * chrome sheds the parts that carry least: the account handle (it never changes), then the pill
+ * labels (the coloured dot already carries the state, and the title attribute still explains it).
+ */
+@media (max-width: 1150px) {
+	.brand small { display: none; }
+	.topbar { gap: 12px; padding: 0 14px; }
+}
+
+@media (max-width: 1000px) {
+	/* Dots only. `title` on each pill still gives the full text on hover. */
+	.status-pill { font-size: 0; gap: 0; padding: 6px; }
+	.status-pill .dot { margin: 0; }
+	.status-pill .count { font-size: 10px; }
+	.nav a { padding: 6px 9px; }
+}
+
+@media (max-width: 860px) {
+	.brand { font-size: 13px; }
+	.nav { gap: 2px; }
+	.nav a { padding: 6px 7px; font-size: 12px; }
+}

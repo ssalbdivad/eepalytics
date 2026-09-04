@@ -1682,3 +1682,162 @@ button.csk-chip:focus-visible,
 .csk-eye--watched { filter: none; }
 .csk-eye--ready { opacity: 0.65; }
 .csk-eye--none { opacity: 0.28; }
+
+/* ============================================================== glossary */
+/*
+ * A dotted underline and nothing else. Anything stronger — colour, background, a badge — turns
+ * a coaching paragraph into a page of links and makes the prose harder to read than the jargon
+ * was. The cursor change is what tells you it is askable.
+ */
+.csk-term {
+	text-decoration: none;
+	border-bottom: 1px dotted var(--gold-dim);
+	cursor: help;
+}
+.csk-term:hover {
+	border-bottom-color: var(--gold);
+	color: var(--gold-bright);
+}
+
+/* ========================================================= coach bubble */
+/*
+ * Professor Lillia with a speech bubble. The tail is a rotated square rather than a border
+ * trick so it inherits the bubble's background and border cleanly at every tone.
+ *
+ * Tones are deliberately gentle. A "you should fix this" bubble in red would undo the entire
+ * reason for having a face: the reader who most needs this is already expecting to be told off.
+ */
+
+.csk-bubble {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+}
+.csk-bubble__face {
+	flex: none;
+	border-radius: 10px;
+	border: 1px solid var(--line);
+	background: var(--panel-2);
+}
+.csk-bubble__speech {
+	position: relative;
+	background: var(--panel-2);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 11px 14px;
+	flex: 1;
+	min-width: 0;
+	font-size: 13.5px;
+	line-height: 1.6;
+	color: var(--text);
+}
+/* the tail */
+.csk-bubble__speech::before {
+	content: "";
+	position: absolute;
+	left: -6px;
+	top: 15px;
+	width: 10px;
+	height: 10px;
+	background: inherit;
+	border-left: 1px solid var(--line);
+	border-bottom: 1px solid var(--line);
+	transform: rotate(45deg);
+	border-radius: 2px;
+}
+.csk-bubble__kicker {
+	font-size: 10.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--gold);
+	margin-bottom: 5px;
+}
+.csk-bubble__body > :first-child { margin-top: 0; }
+.csk-bubble__body > :last-child { margin-bottom: 0; }
+
+.csk-bubble--lg .csk-bubble__speech { font-size: 15px; padding: 14px 17px; }
+.csk-bubble--sm .csk-bubble__speech { font-size: 12.5px; padding: 8px 11px; }
+
+.csk-bubble--nudge .csk-bubble__speech {
+	border-color: var(--gold-dim);
+	background: linear-gradient(180deg, rgba(200, 170, 110, 0.07), rgba(200, 170, 110, 0.02));
+}
+.csk-bubble--nudge .csk-bubble__speech::before { border-color: var(--gold-dim); }
+.csk-bubble--cheer .csk-bubble__speech {
+	border-color: rgba(51, 185, 133, 0.45);
+	background: rgba(51, 185, 133, 0.06);
+}
+.csk-bubble--cheer .csk-bubble__speech::before { border-color: rgba(51, 185, 133, 0.45); }
+.csk-bubble--cheer .csk-bubble__kicker { color: var(--win); }
+.csk-bubble--note .csk-bubble__speech { background: transparent; color: var(--text-2); }
+
+/* =============================================================== drill */
+/*
+ * The one expander used everywhere. Identical affordance at every depth, because a page where
+ * each section opens differently reads as chaos — which is precisely the overwhelm this is for.
+ */
+
+.csk-drill {
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--panel);
+	margin-bottom: 10px;
+}
+.csk-drill > summary {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	padding: 11px 14px;
+	cursor: pointer;
+	list-style: none;
+	user-select: none;
+	border-radius: var(--radius);
+}
+.csk-drill > summary::-webkit-details-marker { display: none; }
+.csk-drill > summary::before {
+	content: "▸";
+	color: var(--dim);
+	font-size: 10px;
+	transition: transform 0.12s ease;
+	flex: none;
+}
+.csk-drill[open] > summary::before { transform: rotate(90deg); }
+.csk-drill > summary:hover { background: var(--panel-2); }
+.csk-drill > summary:hover .csk-drill__title { color: var(--gold-bright); }
+
+.csk-drill__title {
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	font-weight: 600;
+	color: var(--text-2);
+}
+.csk-drill__count {
+	font-family: var(--mono);
+	font-size: 10.5px;
+	color: var(--dim);
+	background: var(--panel-2);
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	padding: 1px 7px;
+}
+.csk-drill__hint {
+	font-size: 11.5px;
+	color: var(--faint);
+	margin-left: auto;
+	text-align: right;
+	/* Never let the hint force the row wider than the panel. */
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.csk-drill__body {
+	padding: 4px 14px 14px;
+	border-top: 1px solid var(--line-soft);
+}
+.csk-drill--quiet { background: transparent; border-style: dashed; }
+
+@media (prefers-reduced-motion: reduce) {
+	.csk-drill > summary::before { transition: none; }
+}

@@ -20,8 +20,25 @@ export interface ChampIconProps {
 	title?: string
 }
 
+/**
+ * Community Dragon's square portrait, by numeric id.
+ *
+ * The previous path (`.../rcp-be-lol-game-data/.../champion-icons/<id>.png`) now 404s — verified
+ * against a live request, which is why every row was rendering a bare number. This endpoint is
+ * the current one and is version-agnostic, so it does not go stale on a patch.
+ */
 export const champIconUrl = (championId: number): string =>
-	`https://raw.communitydragon.org/latest/plugin/rift/rcp-be-lol-game-data/global/default/v1/champion-icons/${championId}.png`
+	`https://cdn.communitydragon.org/latest/champion/${championId}/square`
+
+/**
+ * Data Dragon's portrait, by champion KEY string ("Lillia").
+ *
+ * Needed because a game adopted from a `.rofl` has no numeric championId — the file names
+ * champions by internal string only — so those rows have nothing to look up by id. Riot's own
+ * CDN, so it is the more authoritative of the two when we have the name.
+ */
+export const champIconUrlByName = (championName: string, patch = "16.17.1"): string =>
+	`https://ddragon.leagueoflegends.com/cdn/${patch}/img/champion/${championName.replace(/[^A-Za-z]/g, "")}.png`
 
 export const ChampIcon = ({ championId, size = 28, championName, title }: ChampIconProps) => {
 	const [failed, setFailed] = useState(false)
@@ -31,11 +48,19 @@ export const ChampIcon = ({ championId, size = 28, championName, title }: ChampI
 	useEffect(() => setFailed(false), [championId])
 
 	const label = championName ?? (valid ? `Champion ${championId}` : "Unknown champion")
-	const initials = championName
-		? championName.slice(0, 2).toUpperCase()
-		: valid
-			? String(championId)
-			: "?"
+	/*
+	 * Never the raw championId. "876" means nothing to anyone — it was on screen for every row
+	 * when the icon URL broke, and it reads as a bug rather than as a missing picture. Two
+	 * letters of the champion's name degrade gracefully instead.
+	 */
+	const initials = championName ? championName.slice(0, 2).toUpperCase() : "?"
+
+	// A .rofl-sourced game has a name but no numeric id, so fall back to Riot's name-keyed CDN
+	// before giving up on a picture entirely.
+	const src =
+		valid ? champIconUrl(championId)
+		: championName ? champIconUrlByName(championName)
+		: null
 
 	return (
 		<span
@@ -45,9 +70,9 @@ export const ChampIcon = ({ championId, size = 28, championName, title }: ChampI
 			aria-label={label}
 			role="img"
 		>
-			{valid && !failed ?
+			{src !== null && !failed ?
 				<img
-					src={champIconUrl(championId)}
+					src={src}
 					alt=""
 					width={size}
 					height={size}

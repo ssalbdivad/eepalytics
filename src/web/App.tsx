@@ -143,6 +143,21 @@ export const App = () => {
 					<a className={cls(route.name === "settings" && "active")} href={href.settings}>
 						Settings
 					</a>
+					{/*
+					 * The overlay is a separate always-on-top window, so this opens it rather than
+					 * navigating — clicking "Live" and having the main window become a 380px
+					 * overlay would be a surprise. In a browser there is no second window to open,
+					 * so it falls back to navigating and says so.
+					 */}
+					<a
+						className="nav-live"
+						href={href.live}
+						target="_blank"
+						rel="noreferrer"
+						title="Open the live coach: a small always-on-top window with objective timers, your farm pace against your own baseline, and your current focus. In the desktop app you can also toggle it with Ctrl+Shift+L."
+					>
+						● Live
+					</a>
 				</nav>
 
 				<div className="topbar-right">
