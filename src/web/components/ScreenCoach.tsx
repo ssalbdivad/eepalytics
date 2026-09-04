@@ -413,7 +413,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 					: share.sharing && gate.armed ?
 						"In a game — coach arming"
 					: share.sharing && !gate.reachable ?
-						"Sharing — can't reach fawnsei"
+						"Sharing — can't reach eepalytics"
 					: share.sharing ?
 						// Says the share survived, which is the thing he is checking for.
 						"Sharing — waiting for your next game"
@@ -437,7 +437,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 					 * She had no name anywhere on screen — she was only ever "she", which is a
 					 * strange way to meet someone who is about to start talking to you.
 					 */}
-					<strong>fawnsei will coach you out loud</strong>
+					<strong>Coach Lillia will coach you out loud</strong>
 					<p>
 						Share your screen and she watches it while you play, talking to you about a
 						second behind. She stays quiet unless she has something worth saying — most of
@@ -497,7 +497,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 								aistudio.google.com/apikey
 							</a>{" "}
 							and sign in with any Google account. This is Google's page, not ours — it gives
-							you a password that lets fawnsei talk to their voice model.
+							you a password that lets eepalytics talk to their voice model.
 						</li>
 						<li>
 							Press <b>Create API key</b>. The free tier is enough to try this.
@@ -536,7 +536,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 						</div>
 					)}
 					<p className="csk-screen__fine">
-						Your key stays on this computer — this page never sees it. fawnsei swaps it for a
+						Your key stays on this computer — this page never sees it. eepalytics swaps it for a
 						pass that works for one session and then stops working.
 						<br />
 						There is no "sign in with Google" button because Google does not offer one for
@@ -551,7 +551,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 					<p>
 						This window can only see its own Linux screens, not the Windows desktop and not
 						the game. Your Windows browser can see the game, and it still talks to the same
-						fawnsei running here — so nothing is lost by moving over.
+						eepalytics running here — so nothing is lost by moving over.
 					</p>
 				</div>
 			)}
@@ -585,7 +585,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 			 */}
 			{gem.unsaved > 0 && (
 				<div className="csk-screen__warn">
-					<b>{gem.unsaved}</b> line{gem.unsaved === 1 ? "" : "s"} couldn't be saved to fawnsei,
+					<b>{gem.unsaved}</b> line{gem.unsaved === 1 ? "" : "s"} couldn't be saved to eepalytics,
 					so {gem.unsaved === 1 ? "it is" : "they are"} only here — they won't appear in "What
 					she said, earlier" after the game. Check the daemon is still running.
 				</div>

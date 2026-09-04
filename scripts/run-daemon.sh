@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Launcher for the fawnsei daemon, used by the systemd --user unit.
+# Launcher for the eepalytics daemon, used by the systemd --user unit.
 #
 # It resolves node through nvm at RUN time rather than baking a path into the unit file: nvm
 # rewrites ~/.nvm/versions/node/<version>/bin on every `nvm install`, so a hardcoded
@@ -23,7 +23,7 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
 fi
 
 if ! command -v node >/dev/null 2>&1; then
-	echo "fawnsei: no 'node' on PATH and nvm did not provide one." >&2
+	echo "eepalytics: no 'node' on PATH and nvm did not provide one." >&2
 	echo "  tried NVM_DIR=$NVM_DIR" >&2
 	exit 127
 fi
@@ -31,7 +31,7 @@ fi
 # node:sqlite and --experimental-strip-types both need Node 25+.
 major="$(node -p 'process.versions.node.split(".")[0]')"
 if [ "$major" -lt 25 ]; then
-	echo "fawnsei: node $major is too old; node:sqlite and type stripping need >= 25." >&2
+	echo "eepalytics: node $major is too old; node:sqlite and type stripping need >= 25." >&2
 	exit 1
 fi
 

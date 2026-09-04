@@ -305,7 +305,7 @@ export class LcuClient {
 			await this.transport.request(
 				"POST",
 				`/lol-replays/v1/rofls/${gameId}/${suffix}`,
-				{ componentType: opts.componentType ?? "fawnsei" },
+				{ componentType: opts.componentType ?? "eepalytics" },
 				{ timeoutMs: 20_000 }
 			),
 			`download replay ${gameId}`
@@ -321,7 +321,7 @@ export class LcuClient {
 	 * `isPlayingReplay:false`, gameflow `None`/`Lobby`, watch `None`). Nothing in the LCU unit
 	 * calls it, and nothing verified it — the research phase deliberately issued no POSTs.
 	 */
-	async watchReplay(gameId: number, componentType = "fawnsei"): Promise<void> {
+	async watchReplay(gameId: number, componentType = "eepalytics"): Promise<void> {
 		expectOk(
 			await this.transport.request(
 				"POST",

@@ -110,7 +110,7 @@ const bytesToB64 = (bytes: Uint8Array): string => {
  * problem: pick the prebuilt voice that sounds most like her. The candidates were auditioned on
  * a real coaching line; `scripts/voices.mjs` regenerates the samples.
  */
-const VOICE = "Vindemiatrix"
+const VOICE = "Leda"
 
 /**
  * Play 16-bit PCM as it arrives, gapless.

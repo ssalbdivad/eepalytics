@@ -1,5 +1,5 @@
 /**
- * Electron shell for fawnsei.
+ * Electron shell for eepalytics.
  *
  * ## Why this is plain JavaScript, not TypeScript
  *
@@ -35,11 +35,11 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(HERE, "..")
 
 /** Must match `SERVER_PORT` in src/shared/constants.ts. */
-const PORT = Number((process.env.FAWNSEI_PORT ?? process.env.CSK_PORT) ?? 7700)
+const PORT = Number((process.env.EEPALYTICS_PORT ?? process.env.CSK_PORT) ?? 7700)
 const HOST = "127.0.0.1"
 // Must match `server.port` in vite.config.ts.
-const DEV_URL = (process.env.FAWNSEI_DEV_URL ?? process.env.CSK_DEV_URL) ?? "http://127.0.0.1:7701"
-const isDev = (process.env.FAWNSEI_DEV ?? process.env.CSK_DEV) === "1"
+const DEV_URL = (process.env.EEPALYTICS_DEV_URL ?? process.env.CSK_DEV_URL) ?? "http://127.0.0.1:7701"
+const isDev = (process.env.EEPALYTICS_DEV ?? process.env.CSK_DEV) === "1"
 
 /** How long to wait for the daemon's own health endpoint before giving up. */
 const DAEMON_BOOT_TIMEOUT_MS = 30_000
@@ -107,7 +107,7 @@ const startDaemon = async () => {
 		if (quitting) return
 		// The daemon dying under us is not something to hide behind a blank window.
 		dialog.showErrorBox(
-			"The fawnsei daemon stopped",
+			"The eepalytics daemon stopped",
 			`It exited with ${signal ?? `code ${code}`}.\n\n` +
 				`Nothing was lost — reviews, metrics and replays are all on disk. ` +
 				`Close and reopen the app to restart it, or run "pnpm daemon" in a terminal to see why it stopped.`
@@ -166,7 +166,7 @@ const createSplash = () => {
 		`data:text/html;charset=utf-8,${encodeURIComponent(`<html><body style="margin:0;background:transparent;overflow:hidden">
 	<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;height:100vh;background:#07090e;border-radius:16px;color:#e7e9ef;font:400 13px/1.5 ui-sans-serif,system-ui,'Segoe UI',sans-serif">
 	  ${src ? `<img src="${src}" width="260" height="260" style="border-radius:16px"/>` : ""}
-	  <div style="font-size:19px;font-weight:640">fawnsei</div>
+	  <div style="font-size:19px;font-weight:640">eepalytics</div>
 	  <div style="color:#737d92;font-size:12px">warming up the whiteboard…</div>
 	</div></body></html>`)}`
 	)
@@ -183,7 +183,7 @@ const createWindow = async () => {
 		minHeight: 600,
 		show: false,
 		backgroundColor: "#07090e",
-		title: "fawnsei",
+		title: "eepalytics",
 		...windowIcon(),
 		autoHideMenuBar: true,
 		webPreferences: {
@@ -348,11 +348,11 @@ app.whenReady().then(async () => {
 		daemon = await startDaemon()
 	} catch (err) {
 		closeSplash()
-		dialog.showErrorBox("fawnsei could not start", String(err))
+		dialog.showErrorBox("eepalytics could not start", String(err))
 		app.quit()
 		return
 	}
-	if ((process.env.FAWNSEI_OVERLAY ?? process.env.CSK_OVERLAY) === "1") {
+	if ((process.env.EEPALYTICS_OVERLAY ?? process.env.CSK_OVERLAY) === "1") {
 		// Overlay-only mode still needs the daemon up before it can poll anything.
 		if (!(await waitForDaemon())) {
 			closeSplash()

@@ -171,7 +171,7 @@ export const Live = () => {
 					 */}
 					{err !== null && (
 						<span>
-							Can't reach fawnsei: {err}. Is the daemon running?
+							Can't reach eepalytics: {err}. Is the daemon running?
 						</span>
 					)}
 				</div>

@@ -296,7 +296,7 @@ const PendingCoach = ({
 	return (
 		<div className="csk-debrief__waiting">
 			<strong>
-				{analyzed ? "fawnsei is writing this one up…" : "Crunching the match…"}
+				{analyzed ? "Coach Lillia is writing this one up…" : "Crunching the match…"}
 			</strong>
 			<span>
 				{analyzed ?

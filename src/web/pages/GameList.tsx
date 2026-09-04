@@ -437,7 +437,7 @@ const EmptyState = ({
 						<ol>
 							<li>
 								Start it: <code className="mono">pnpm daemon</code> (or{" "}
-								<code className="mono">systemctl --user start fawnsei</code>)
+								<code className="mono">systemctl --user start eepalytics</code>)
 							</li>
 							<li>
 								Check it: <code className="mono">pnpm doctor</code>

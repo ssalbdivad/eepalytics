@@ -7,15 +7,15 @@ const env: Record<string, string | undefined> =
 	typeof process !== "undefined" && process.env ? process.env : {}
 
 /**
- * Read a `FAWNSEI_*` setting, falling back to the old `CSK_*` name.
+ * Read an `EEPALYTICS_*` setting, falling back to the older `CSK_*` name.
  *
- * The app was called fawnsei and its environment variables still carry that abbreviation.
- * Renaming them outright would silently ignore any value a user already has exported — the
- * variable would simply stop being read, with no error — so both spellings are accepted and the
- * new one wins. The old names can be dropped once nothing sets them.
+ * `CSK_` is what this was called before it had a name worth saying — it is kept because dropping
+ * a variable does not fail, it just silently stops being read, and a setting that quietly reverts
+ * to its default is the kind of bug you chase for an hour. Both spellings are accepted and the
+ * new one wins. The old ones can go once nothing sets them.
  */
 const setting = (name: string): string | undefined =>
-	env[`FAWNSEI_${name}`] ?? env[`CSK_${name}`]
+	env[`EEPALYTICS_${name}`] ?? env[`CSK_${name}`]
 
 /** Bump to invalidate derived metrics + moments for every game. */
 export const ANALYSIS_VERSION = 4

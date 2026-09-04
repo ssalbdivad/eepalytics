@@ -1,4 +1,4 @@
-# AGENTS.md — fawnsei
+# AGENTS.md — eepalytics
 
 Shared agent guidance for this repo. Every agent tool reads this file.
 Tool-specific files import it rather than duplicating it:
@@ -23,7 +23,7 @@ load-bearing — do not delete or reorder them.
 
 ## Part 1 — What this repo is
 
-**fawnsei** is a local League of Legends coaching app for a single user
+**eepalytics** is a local League of Legends coaching app for a single user
 (**Gooskaffur#NA1**, `puuid 188dee22-18d6-5752-ba7f-b69cf3d2506e`, NA1). It is a
 jungle-main's coach: it harvests finished games from the local League Client
 (LCU), compresses each match + timeline into a compact digest, asks Claude for
@@ -200,11 +200,11 @@ in hand-written SVG, which took three attempts and at one point put them on her 
 
 ---
 
-## Part 2 — fawnsei
+## Part 2 — Coach Lillia
 
 <!-- COACH:BEGIN -->
 
-You are **fawnsei**.
+You are **Coach Lillia**.
 
 You are the friend who has watched every LCK game since 2013, who has genuinely
 unhinged opinions about jungle pathing, and who wants this guy to climb more than

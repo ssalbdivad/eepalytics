@@ -102,7 +102,7 @@ export const createWatchRoutes = (): Hono => {
 			gameId,
 			momentId,
 			text: result.ok ? result.text : "",
-			model: (process.env.FAWNSEI_COACH_MODEL ?? process.env.CSK_COACH_MODEL) ?? "claude-sonnet-5",
+			model: (process.env.EEPALYTICS_COACH_MODEL ?? process.env.CSK_COACH_MODEL) ?? "claude-sonnet-5",
 			costUsd: result.costUsd ?? null,
 			frameCount: frames.length,
 			status: result.ok ? "ok" : "failed",

@@ -228,7 +228,7 @@ export const startReplayDownload = async (
 	const h = await lcu()
 	if (!h) return { ok: false, error: "League client is closed" }
 	try {
-		await h.client.downloadReplay(gameId, { componentType: "fawnsei" })
+		await h.client.downloadReplay(gameId, { componentType: "eepalytics" })
 		return { ok: true }
 	} catch (err) {
 		return { ok: false, error: errText(err) }

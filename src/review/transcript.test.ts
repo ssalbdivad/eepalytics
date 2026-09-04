@@ -26,8 +26,8 @@ import { after, describe, it } from "node:test"
  * the module is imported — hence the dynamic import. Node's test runner gives each file its own
  * process, so this cannot leak into another test.
  */
-const dir = mkdtempSync(join(tmpdir(), "fawnsei-transcript-"))
-process.env.FAWNSEI_DATA_DIR = dir
+const dir = mkdtempSync(join(tmpdir(), "eepalytics-transcript-"))
+process.env.EEPALYTICS_DATA_DIR = dir
 after(() => rmSync(dir, { recursive: true, force: true }))
 
 const { appendTranscript, parseTranscript, readTranscript, transcriptLimit, TRANSCRIPT_DEFAULT_LIMIT } =

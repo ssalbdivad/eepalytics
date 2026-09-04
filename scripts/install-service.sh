@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Install (or refresh) the fawnsei systemd --user unit.
+# Install (or refresh) the eepalytics systemd --user unit.
 #
 #   bash scripts/install-service.sh            # install + enable + start
 #   bash scripts/install-service.sh --no-start # install + enable only
@@ -8,9 +8,9 @@
 set -euo pipefail
 
 REPO="$(dirname "$(dirname "$(readlink -f "$0")")")"
-UNIT_SRC="$REPO/systemd/fawnsei.service"
+UNIT_SRC="$REPO/systemd/eepalytics.service"
 UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
-UNIT_DST="$UNIT_DIR/fawnsei.service"
+UNIT_DST="$UNIT_DIR/eepalytics.service"
 
 if ! command -v systemctl >/dev/null 2>&1; then
 	echo "systemctl not found. Run the daemon directly instead:" >&2
@@ -23,8 +23,8 @@ mkdir -p "$UNIT_DIR"
 chmod +x "$REPO/scripts/run-daemon.sh"
 
 # %h expands to the user's home, so the unit is portable, but WorkingDirectory must point at
-# THIS checkout — which may not be ~/fawnsei.
-sed -e "s#%h/fawnsei#$REPO#g" "$UNIT_SRC" >"$UNIT_DST"
+# THIS checkout — which may not be ~/eepalytics.
+sed -e "s#%h/eepalytics#$REPO#g" "$UNIT_SRC" >"$UNIT_DST"
 echo "==> wrote $UNIT_DST"
 
 # Lingering is what lets the unit run without an interactive login. It is already enabled on
@@ -39,20 +39,20 @@ if command -v loginctl >/dev/null 2>&1; then
 fi
 
 systemctl --user daemon-reload
-systemctl --user enable fawnsei.service
+systemctl --user enable eepalytics.service
 echo "==> enabled"
 
 if [ "${1:-}" != "--no-start" ]; then
-	systemctl --user restart fawnsei.service
+	systemctl --user restart eepalytics.service
 	sleep 1
-	systemctl --user --no-pager --lines=0 status fawnsei.service || true
+	systemctl --user --no-pager --lines=0 status eepalytics.service || true
 fi
 
 cat <<'TIPS'
 
-  logs:     journalctl --user -u fawnsei -f
-  stop:     systemctl --user stop fawnsei
-  disable:  systemctl --user disable --now fawnsei
+  logs:     journalctl --user -u eepalytics -f
+  stop:     systemctl --user stop eepalytics
+  disable:  systemctl --user disable --now eepalytics
   UI:       http://127.0.0.1:7700
 
   WSL2 caveat: lingering starts the unit once WSL boots, but it cannot make Windows boot WSL.

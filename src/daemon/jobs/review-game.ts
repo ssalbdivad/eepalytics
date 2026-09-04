@@ -1,5 +1,5 @@
 /**
- * `review-game` — run fawnsei over one game and store the result.
+ * `review-game` — run Coach Lillia over one game and store the result.
  *
  * `src/review/` owns the persona, the prompt template, the Claude call and the parser; all of
  * them are pure or near-pure. The daemon owns the I/O and the money:

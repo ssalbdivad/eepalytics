@@ -1,4 +1,4 @@
-# fawnsei
+# eepalytics
 
 A local League of Legends coaching app for one jungler.
 
@@ -7,9 +7,9 @@ compresses the match and its timeline into a compact digest, and asks Claude for
 that is **bound to real timestamps** — so every point it makes is something you can jump to,
 see on the map, and (when capture is on) watch as a clip.
 
-The coach is **fawnsei**, who has watched every LCK game since 2013, has strong
-opinions about your pathing, and will not shut up about Oner. He roasts you constantly and
-never makes you feel bad about playing. His personality lives in [`AGENTS.md`](AGENTS.md) and
+The coach is **Coach Lillia**, who has watched every LCK game since 2013, has strong
+opinions about your pathing, and will not shut up about Oner. She roasts you constantly and
+never makes you feel bad about playing. Her personality lives in [`AGENTS.md`](AGENTS.md) and
 you can edit it without touching a line of code.
 
 Everything runs on your machine. No account, no telemetry.
@@ -203,8 +203,8 @@ holding the raw match and timeline verbatim, so re-analysis never needs the clie
 ## Running it in the background while you play
 
 ```bash
-pnpm service:install                 # writes ~/.config/systemd/user/fawnsei.service
-systemctl --user enable --now fawnsei
+pnpm service:install                 # writes ~/.config/systemd/user/eepalytics.service
+systemctl --user enable --now eepalytics
 pnpm service:logs                    # journalctl -f
 ```
 
@@ -226,7 +226,7 @@ Capture is the only intrusive step, it is **off by default**, and it waits for y
 
 ## Editing the coach
 
-The persona is section "Part 2 — fawnsei" in [`AGENTS.md`](AGENTS.md), between the
+The persona is section "Part 2 — Coach Lillia" in [`AGENTS.md`](AGENTS.md), between the
 `<!-- COACH:BEGIN -->` and `<!-- COACH:END -->` markers. It is read at runtime and sent as the
 system prompt for every coaching call. **Edit the file, get a different coach — no code
 change, no rebuild.**

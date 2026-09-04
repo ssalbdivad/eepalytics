@@ -152,7 +152,7 @@ export const armedHeadline = (gate: GameflowGate): string | null =>
 
 export const standbyReason = (gate: GameflowGate): string | null => {
 	if (!gate.reachable)
-		return "Can't reach fawnsei, so nothing is being sent. Your screen is still shared — is the daemon running?"
+		return "Can't reach eepalytics, so nothing is being sent. Your screen is still shared — is the daemon running?"
 	if (gate.phase === null)
 		return "Waiting for the League client. Your screen stays shared, and nothing leaves this machine until you're in a game."
 	if (gate.armed) return null

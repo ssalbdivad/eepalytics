@@ -43,7 +43,7 @@ const fail: (detail: string) => never = detail => {
 }
 
 const main = async () => {
-	console.log(`\nfawnsei live coach — smoke test against ${BASE}\n`)
+	console.log(`\neepalytics live coach — smoke test against ${BASE}\n`)
 
 	step(1, "daemon reachable")
 	const health = await fetch(`${BASE}/api/health`).catch(() => null)

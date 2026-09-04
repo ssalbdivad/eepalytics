@@ -316,9 +316,9 @@ describe("preflight", () => {
 
 describe("WSL <-> Windows paths", () => {
 	it("round-trips a real capture path", () => {
-		const wsl = "/mnt/c/Users/ssalb/fawnsei-captures/g5631300987/shot"
+		const wsl = "/mnt/c/Users/ssalb/eepalytics-captures/g5631300987/shot"
 		const win = toWindowsPath(wsl)
-		assert.equal(win, "C:\\Users\\ssalb\\fawnsei-captures\\g5631300987\\shot")
+		assert.equal(win, "C:\\Users\\ssalb\\eepalytics-captures\\g5631300987\\shot")
 		assert.equal(toWslPath(win as string), wsl)
 	})
 

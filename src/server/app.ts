@@ -95,7 +95,7 @@ export const createApp = (deps: ServerDeps = {}): Hono => {
 
 	const notBuiltYet = (c: Context): Response =>
 		c.text(
-			`fawnsei ${deps.version ?? APP_VERSION} — the API is up at /api/health.\n` +
+			`eepalytics ${deps.version ?? APP_VERSION} — the API is up at /api/health.\n` +
 				`The UI has not been built yet. Run \`pnpm dev\` for the Vite server on :7701, ` +
 				`or \`pnpm build\` to produce dist/.\n`,
 			503

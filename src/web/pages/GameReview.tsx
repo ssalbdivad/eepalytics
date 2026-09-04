@@ -651,7 +651,7 @@ const CoachBlock = ({
 	if (r && r.status !== "failed")
 		return (
 			<div className="coach">
-				<div className="who">fawnsei</div>
+				<div className="who">Coach Lillia</div>
 				<div className="headline">{r.headline}</div>
 				{r.encouragement ? <div className="encouragement">{r.encouragement}</div> : null}
 				{r.goals.length > 0 ?
@@ -751,7 +751,7 @@ const ReviewProgress = ({ job, now }: { job: Job; now: number }) => {
 			<div>
 				<strong>
 					{job.state === "leased" ?
-						"fawnsei is writing your review — usually about 20 seconds."
+						"Coach Lillia is writing your review — usually about 20 seconds."
 					: job.state === "deferred" ?
 						deferredReason(job.lastError)
 					: job.notBeforeMs > now ?

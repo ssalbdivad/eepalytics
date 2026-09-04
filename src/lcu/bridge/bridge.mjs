@@ -1,5 +1,5 @@
 /**
- * fawnsei LCU bridge — THIS FILE RUNS ON WINDOWS `node.exe`, NOT WSL NODE.
+ * eepalytics LCU bridge — THIS FILE RUNS ON WINDOWS `node.exe`, NOT WSL NODE.
  *
  * WSL2 cannot reach Windows' loopback, so a Windows-side process has to perform every League
  * request for us. Spawning `curl.exe` per request costs ~88 ms (Windows process creation

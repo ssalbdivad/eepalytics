@@ -86,7 +86,7 @@ const step = (s: string): void => console.log(`  ${s}`)
 
 if (flag("help") || flag("h")) {
 	log(`
-fawnsei seed — ingest your real recent games from the running League client (GET only)
+eepalytics seed — ingest your real recent games from the running League client (GET only)
 
   pnpm seed                      every game in the client's window that is not already stored
   pnpm seed --limit 5            only the 5 most recent
@@ -428,7 +428,7 @@ const ingestGame = async (
 /* ============================================================ main */
 
 const main = async (): Promise<void> => {
-	log("\nfawnsei seed")
+	log("\neepalytics seed")
 	log("  ingests your real recent games from the League client (GET only)\n")
 
 	ensureDataDirs()

@@ -1,5 +1,5 @@
 /**
- * fawnsei daemon — the entry point.
+ * eepalytics daemon — the entry point.
  *
  * One process. It owns SQLite, the job queue, the League-client connection and the HTTP+SSE
  * server, because the daemon has to run whether or not a browser tab is open and a Hono app is
@@ -65,7 +65,7 @@ const KV_LAST_SYNC = "lastSyncMs"
  * meant to run, so the kernel release string is the detection that actually works there.
  */
 const serverHost = (): string => {
-	const configured = process.env.FAWNSEI_HOST ?? process.env.CSK_HOST
+	const configured = process.env.EEPALYTICS_HOST ?? process.env.CSK_HOST
 	if (configured) return configured
 	let osRelease = ""
 	try {
@@ -102,8 +102,8 @@ const warnings = (): string[] => {
 
 export const startDaemon = async (): Promise<DaemonContext> => {
 	const startedMs = Date.now()
-	setLogLevel(((process.env.FAWNSEI_LOG_LEVEL ?? process.env.CSK_LOG_LEVEL) as "info") ?? "info")
-	log.info("fawnsei daemon starting", {
+	setLogLevel(((process.env.EEPALYTICS_LOG_LEVEL ?? process.env.CSK_LOG_LEVEL) as "info") ?? "info")
+	log.info("eepalytics daemon starting", {
 		version: DAEMON_VERSION,
 		node: process.version,
 		db: DB_PATH

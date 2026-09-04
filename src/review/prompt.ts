@@ -1,7 +1,7 @@
 /**
  * Building the coach's prompts.
  *
- * The system prompt is **not** in this file. It is the fawnsei section of `AGENTS.md`,
+ * The system prompt is **not** in this file. It is the Coach Lillia section of `AGENTS.md`,
  * read off disk at runtime and cached against the file's mtime. Editing `AGENTS.md` changes
  * the coach with no code change and no restart — which is the point: the persona is user-facing
  * copy, and copy should not require a deploy. The section is delimited by
@@ -40,7 +40,7 @@ export const PROMPT_TEMPLATE_VERSION = 3
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 /** `src/review/prompt.ts` -> repo root. Overridable for tests and for a packaged install. */
-export const PERSONA_PATH = (process.env.FAWNSEI_AGENTS_MD ?? process.env.CSK_AGENTS_MD) ?? resolve(HERE, "../../AGENTS.md")
+export const PERSONA_PATH = (process.env.EEPALYTICS_AGENTS_MD ?? process.env.CSK_AGENTS_MD) ?? resolve(HERE, "../../AGENTS.md")
 
 const BEGIN_MARKER = "<!-- COACH:BEGIN -->"
 const END_MARKER = "<!-- COACH:END -->"
@@ -64,7 +64,7 @@ export interface Persona {
  * ever ships to a user, the `warnings` array is how they find out, and a bland-but-honest
  * coach beats a crash or an empty system prompt.
  */
-const FALLBACK_PERSONA = `You are fawnsei, a League of Legends coach for one jungle player.
+const FALLBACK_PERSONA = `You are Coach Lillia, a League of Legends coach for one jungle player.
 You are encouraging and funny, you reference T1 players (Faker, Oner, Keria, Gumayusi, Doran), and you roast the play, never the player.
 Hard rules: never invent a statistic; cite only numbers, timestamps and ids that appear in the digest you were given; every point ends with something concrete to do next game; hedge anything the data cannot prove, because positions are sampled only once per minute.
 Return JSON only, matching the schema in the request.`

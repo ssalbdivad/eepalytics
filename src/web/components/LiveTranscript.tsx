@@ -117,7 +117,7 @@ export const LiveTranscript = () => {
 				</p>
 			: view.kind === "empty" ?
 				<p className="faint" style={{ padding: "0 14px 12px" }}>
-					Nothing recorded yet — fawnsei answered, and the transcript is empty. Lines land here
+					Nothing recorded yet — Coach Lillia answered, and the transcript is empty. Lines land here
 					as soon as the live coach speaks.
 				</p>
 			:	<>
