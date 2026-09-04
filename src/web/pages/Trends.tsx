@@ -94,7 +94,7 @@ export const Trends = ({ eventTick }: TrendsProps) => {
 
 			{t.review ?
 				<div className="coach" style={{ marginBottom: 14 }}>
-					<div className="who">Coach Skaffur · across {t.gameCount} games</div>
+					<div className="who">coachskaffur · across {t.gameCount} games</div>
 					<div className="headline">{t.review.headline}</div>
 					{t.review.encouragement ?
 						<div className="encouragement">{t.review.encouragement}</div>

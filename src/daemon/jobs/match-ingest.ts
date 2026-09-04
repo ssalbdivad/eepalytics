@@ -22,6 +22,7 @@ import {
 	riotIdOf,
 	teamWon
 } from "../../shared/schema/lcu.ts"
+import { uncoachableReason } from "../../shared/coachable.ts"
 import type { LcuGame, LcuParticipant } from "../../shared/schema/lcu.ts"
 import type { ParticipantSummary } from "../../shared/schema/domain.ts"
 import { BLOB_MATCH, BLOB_TIMELINE, contentHash, writeBlob } from "../../db/blobs.ts"
@@ -189,6 +190,15 @@ export const runMatchIngest = async (ctx: JobContext): Promise<JobOutcome> => {
 			if (replayWindowOpen(endedAt) && needsReplay(gameId))
 				enqueueReplayDownload(gameId, endedAt)
 		}
+		/*
+		 * A Practice Tool or custom game never completes. The LCU returns one participant and
+		 * keeps doing so, so this deferred every thirty seconds for the life of the daemon —
+		 * measured at 103 deferrals in 52 minutes — and dragged a stuck analysis and a stuck
+		 * review along behind it.
+		 */
+		const why = uncoachableReason(game)
+		if (why !== null) return { note: `${why} — not waiting for a match that will not arrive` }
+
 		return {
 			defer: {
 				reason: `only ${game.participants.length} participant(s) returned; the client is still assembling this match`,

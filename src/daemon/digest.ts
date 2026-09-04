@@ -279,6 +279,8 @@ export interface BuildDigestInput {
 	moments: readonly Moment[]
 	timeline: LcuTimeline | null
 	baseline?: Baseline
+	/** True when real replay frames exist; see `GameDigest.hasFrames`. */
+	hasFrames?: boolean
 	/** Anything analysis wanted to flag: "only 6 frames — game ended at 5:41". */
 	notes?: readonly string[]
 	analysisVersion: number
@@ -341,6 +343,7 @@ export const buildGameDigest = (input: BuildDigestInput): GameDigest => {
 			input.baseline ? baselineProse(input.baseline, restated)
 			:	["No baseline yet — this is one of the first games stored, so nothing is banded."],
 		championContext,
+		hasFrames: input.hasFrames ?? false,
 		objectives: digestObjectives(timeline, game.participantId, teamId),
 		timeline: digestTimeline(timeline, game.participantId, opponent?.participantId ?? null, teamId),
 		notes

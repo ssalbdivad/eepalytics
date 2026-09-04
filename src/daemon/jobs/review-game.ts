@@ -1,5 +1,5 @@
 /**
- * `review-game` — run Coach Skaffur over one game and store the result.
+ * `review-game` — run coachskaffur over one game and store the result.
  *
  * `src/review/` owns the persona, the prompt template, the Claude call and the parser; all of
  * them are pure or near-pure. The daemon owns the I/O and the money:
@@ -19,6 +19,7 @@
  * NODE ONLY.
  */
 
+import { uncoachableReason } from "../../shared/coachable.ts"
 import { ANALYSIS_VERSION, REVIEW_VERSION } from "../../shared/constants.ts"
 import { Review, parseOrThrow } from "../../shared/schema/domain.ts"
 import {
@@ -27,6 +28,7 @@ import {
 	getMoments,
 	getParticipants,
 	getReview,
+	listMediaForGame,
 	getSettings,
 	insertReview,
 	reviewExistsForPrompt,
@@ -57,6 +59,9 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 				untilMs: Date.now() + 30_000
 			}
 		}
+	const notCoachable = uncoachableReason(game)
+	if (notCoachable !== null) return { note: `${notCoachable}; skipped` }
+
 	if (game.analysisVersion < ANALYSIS_VERSION)
 		return {
 			defer: {
@@ -92,6 +97,11 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 		moments,
 		timeline: loadTimeline(gameId),
 		baseline: baselineFromRows(perGameMetrics(corpus)),
+		// Real captured frames only. A generated map diagram illustrates position, which the
+		// data already covers; it is not evidence of execution and must not unlock claims about it.
+		hasFrames: listMediaForGame(gameId).some(
+			m => m.source === "replay" && m.kind === "screenshot"
+		),
 		analysisVersion: ANALYSIS_VERSION
 	})
 

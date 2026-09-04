@@ -60,7 +60,7 @@ export const CoachBubble = ({ tone = "warm", kicker, children, size = "md" }: Co
 	<div className={`csk-bubble csk-bubble--${tone} csk-bubble--${size}`}>
 		<img
 			className="csk-bubble__face"
-			src="/icon.svg"
+			src="/icons/icon-128.png"
 			alt="Professor Lillia"
 			width={size === "lg" ? 56 : size === "sm" ? 30 : 42}
 			height={size === "lg" ? 56 : size === "sm" ? 30 : 42}

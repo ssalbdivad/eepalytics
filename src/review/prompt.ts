@@ -1,7 +1,7 @@
 /**
  * Building the coach's prompts.
  *
- * The system prompt is **not** in this file. It is the Coach Skaffur section of `AGENTS.md`,
+ * The system prompt is **not** in this file. It is the coachskaffur section of `AGENTS.md`,
  * read off disk at runtime and cached against the file's mtime. Editing `AGENTS.md` changes
  * the coach with no code change and no restart — which is the point: the persona is user-facing
  * copy, and copy should not require a deploy. The section is delimited by
@@ -64,7 +64,7 @@ export interface Persona {
  * ever ships to a user, the `warnings` array is how they find out, and a bland-but-honest
  * coach beats a crash or an empty system prompt.
  */
-const FALLBACK_PERSONA = `You are Coach Skaffur, a League of Legends coach for one jungle player.
+const FALLBACK_PERSONA = `You are coachskaffur, a League of Legends coach for one jungle player.
 You are encouraging and funny, you reference T1 players (Faker, Oner, Keria, Gumayusi, Doran), and you roast the play, never the player.
 Hard rules: never invent a statistic; cite only numbers, timestamps and ids that appear in the digest you were given; every point ends with something concrete to do next game; hedge anything the data cannot prove, because positions are sampled only once per minute.
 Return JSON only, matching the schema in the request.`
@@ -621,6 +621,46 @@ ${cc.text}${
 	}
 
 	if (d.notes && d.notes.length > 0) sections.push(`## ANALYSIS CAVEATS\n\n${bullets(d.notes)}`)
+
+	/*
+	 * WITHOUT FRAMES, THE BAR IS MUCH HIGHER.
+	 *
+	 * A data-only review knows end-of-game totals and positions once a minute. That supports
+	 * arithmetic about the whole game and supports almost nothing about individual moments —
+	 * whether contesting an objective was possible depends on who was alive, whether smite was
+	 * up and whether a trade elsewhere was better, and none of that is recorded.
+	 *
+	 * A real review said "Enemy took baron nashor while you were elsewhere" about a baron taken
+	 * seconds after the player died. That is the failure mode: a confident accusation built on an
+	 * interpolated position, about a moment he could not have affected.
+	 */
+	if (d.hasFrames !== true)
+		sections.push(`## NO REPLAY FRAMES FOR THIS GAME — STAY ON THE NUMBERS
+
+Nobody has watched this game. You have end-of-game totals and positions sampled once a MINUTE.
+That is enough for arithmetic about the whole game and almost nothing about single moments.
+
+**What you may claim:**
+- Whole-game and checkpoint figures against his own baseline: camps, CS at 10/14/20, gold and xp
+  deltas, damage share, vision score, KDA, deaths, objective COUNTS for each team.
+- That an event happened, with its timestamp: he died at 14:20; the enemy took baron at 20:51.
+
+**What you may NOT claim, at all:**
+- That he *should have* been somewhere, or that being somewhere was a mistake. You cannot see
+  who else was alive, whether smite was up, what his team was doing, or whether trading elsewhere
+  was correct. An uncontested objective is a FACT about the game, not a fault.
+- Anything about how an ability was used, how a camp was cleared, or how a fight was entered.
+  None of that is in this data.
+- Any read that depends on where he was between two frames.
+
+**Write FEWER items than usual — three is plenty, two is fine.** An honest short review beats a
+padded one, and there is genuinely less to say without having watched the game.
+
+Set \`confidence\` honestly and expect it to be lower here; the app demotes low-confidence items
+out of the corrective voice, which is the correct outcome rather than a failure.
+
+End the review by telling him that watching the replay frames is how he gets feedback on ability
+usage, kiting and fight execution — the things this data cannot reach.`)
 
 	sections.push(OUTPUT_RULES)
 	sections.push(

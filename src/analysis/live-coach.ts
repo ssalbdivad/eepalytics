@@ -31,7 +31,11 @@ export const DRAGON_RESPAWN_SEC = 5 * 60
 export const BARON_RESPAWN_SEC = 6 * 60
 export const HERALD_RESPAWN_SEC = 6 * 60
 
-export type NudgeKind = "pace" | "objective" | "habit" | "safety" | "praise"
+/*
+ * `habit` and `safety` are gone with the nudges that used them. A kind that nothing can emit is
+ * an invitation to emit it again.
+ */
+export type NudgeKind = "pace" | "objective" | "praise"
 
 export interface Nudge {
 	kind: NudgeKind
@@ -141,33 +145,24 @@ const objectiveNudges = (live: LiveState): Nudge[] => {
 	return out
 }
 
-/**
- * The habit he is already working on, surfaced when this game starts repeating it.
+/*
+ * THERE IS NO HABIT NUDGE, AND THAT IS DELIBERATE.
  *
- * Only fires on evidence from THIS game — a reminder that triggers regardless of what is
- * happening is wallpaper, and wallpaper gets ignored.
+ * There used to be one: it counted deaths against a pro-rated average and appended the top fix
+ * from the player's review history. It read like situational awareness and was nothing of the
+ * sort — "7 deaths already, and when you're the furthest player from your team, back off" was
+ * generic advice from past games pasted onto a live moment the app cannot see. Nothing here
+ * knows live positions, cooldowns, lane states or what the team is doing.
+ *
+ * It was also wrong on its own terms. Deaths are not a defect to be minimised: some are the
+ * correct price of an objective, and "ahead of your usual pace" says nothing about whether the
+ * ones in THIS game bought anything.
+ *
+ * The rule this leaves behind: a nudge needs a live measurement AND a measured comparison. CS
+ * against a baseline qualifies. An objective timer counted from a take we actually observed
+ * qualifies. Coaching about positioning does not, and so is not offered — the death count is
+ * shown as a plain number in the stat strip instead, with no lecture attached.
  */
-const habitNudges = (input: LiveCoachInput): Nudge[] => {
-	const { live, baseline, focus } = input
-	const out: Nudge[] = []
-	const deathStat = baseline?.deaths
-
-	for (const area of focus.slice(0, 2)) {
-		if (area.category === "deaths" && deathStat && deathStat.n >= 5) {
-			// Pro-rate his own average across the game so far: three deaths by 12:00 is a
-			// different fact from three deaths by 32:00.
-			const expected = (deathStat.mean * live.gameTimeSec) / (30 * 60)
-			if (live.deaths >= 2 && live.deaths > expected + 1)
-				out.push({
-					kind: "safety",
-					text: `${live.deaths} deaths already — ahead of your usual pace. ${area.fixes[0] ?? "Take the safe camp instead."}`,
-					priority: 0.9,
-					source: `deaths baseline over ${deathStat.n} games`
-				})
-		}
-	}
-	return out
-}
 
 /**
  * A rough farm pace between the checkpoints.
@@ -205,28 +200,6 @@ const roughPaceNudge = (input: LiveCoachInput): Nudge | null => {
 }
 
 /**
- * Dying early, before any of the other signals have data.
- *
- * Separate from the habit nudge, which needs two deaths and a pro-rated average. One death in
- * the first five minutes is already worth naming for someone whose recurring problem is deaths,
- * and it is the point in the game where saying so can still change the next ten minutes.
- */
-const earlyDeathNudge = (input: LiveCoachInput): Nudge | null => {
-	const { live, focus } = input
-	if (live.deaths < 1 || live.gameTimeSec > 6 * 60) return null
-	const area = focus.find(f => f.category === "deaths")
-	return {
-		kind: "safety",
-		text:
-			live.deaths === 1 ?
-				`Died once already at ${fmt(live.gameTimeSec)}. Take the safe half of the jungle and get back to even.`
-			:	`${live.deaths} deaths before ${fmt(live.gameTimeSec)}. Farm your own side until you are level 6.`,
-		priority: 0.85,
-		source: area ? `deaths is your #1 focus (${area.games} games)` : "live score"
-	}
-}
-
-/**
  * What to show right now, best first. Empty is a valid answer and a common one — an overlay
  * that always has something to say trains you to stop reading it.
  */
@@ -234,9 +207,7 @@ export const liveNudges = (input: LiveCoachInput, limit = 3): Nudge[] =>
 	[
 		...objectiveNudges(input.live),
 		...(paceNudge(input) ? [paceNudge(input)!] : []),
-		...(roughPaceNudge(input) ? [roughPaceNudge(input)!] : []),
-		...(earlyDeathNudge(input) ? [earlyDeathNudge(input)!] : []),
-		...habitNudges(input)
+		...(roughPaceNudge(input) ? [roughPaceNudge(input)!] : [])
 	]
 		.sort((a, b) => b.priority - a.priority)
 		.slice(0, limit)

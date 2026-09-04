@@ -260,6 +260,27 @@ export const selectMomentsDetailed = (
 
 	/* ------------------------------------------------- objectives conceded */
 
+	/*
+	 * When was the user dead?
+	 *
+	 * An objective conceded while he was on the respawn timer is not a missed objective — it is
+	 * something he could not have contested under any circumstances, and calling it "while you
+	 * were elsewhere" is simply false. A real review said exactly that about a baron taken 20
+	 * seconds after he died.
+	 *
+	 * The window is deliberately GENEROUS. Respawn time scales with level and game time and can
+	 * exceed a minute late on, and this app cannot see the exact timer. Over-suppressing costs a
+	 * few real observations; under-suppressing produces confident accusations about moments the
+	 * player was physically unable to affect, which is far worse.
+	 */
+	const deathTimes = events
+		.filter(e => e.type === "CHAMPION_KILL" && (e.victimId ?? 0) === userId)
+		.map(e => e.timestamp)
+		.sort((a, b) => a - b)
+	const DEAD_WINDOW_MS = 75_000
+	const wasDead = (tMs: number): boolean =>
+		deathTimes.some(d => tMs >= d && tMs - d <= DEAD_WINDOW_MS)
+
 	for (const e of events) {
 		if (e.type !== "ELITE_MONSTER_KILL") continue
 		const killer = e.killerId ?? 0
@@ -267,6 +288,8 @@ export const selectMomentsDetailed = (
 		const tMs = e.timestamp
 		const tSec = round(tMs / 1000, 1)
 		if (durSec > 0 && tSec > durSec - endgameGuard) continue
+		// Could not possibly have been there. Not a coaching moment.
+		if (wasDead(tMs)) continue
 		const objPos: Pos =
 			e.position ? { x: e.position.x, y: e.position.y } : { x: 0, y: 0 }
 		const mePos = interpPosition(frames, userId, tMs)
@@ -292,7 +315,12 @@ export const selectMomentsDetailed = (
 				gameId,
 				tSec,
 				kind: "objective_missed",
-				title: `Enemy took ${name} while you were elsewhere`,
+				// A FACT, not an accusation. "While you were elsewhere" asserted both that he was
+				// absent and that being absent was wrong. The app can establish neither: position
+				// is interpolated, and whether contesting was even possible depends on who else
+				// was alive, whether smite was up, and whether pushing was the better trade —
+				// none of which is in this data.
+				title: `Enemy took ${name} at ${fmtClock(tSec)}`,
 				severity: severityOf(score),
 				mapX: mePos ? round(mePos.x) : objPos.x,
 				mapY: mePos ? round(mePos.y) : objPos.y,
@@ -300,7 +328,7 @@ export const selectMomentsDetailed = (
 				participantsInvolved: [userId, killer],
 				costGold: value,
 				confidence: mePos ? "low" : "medium",
-				evidence: `ELITE_MONSTER_KILL ${e.monsterType}${e.monsterSubType ? `/${e.monsterSubType}` : ""} at ${fmtClock(tSec)}, killerId ${killer} (enemy team). Your position at that instant is INTERPOLATED between once-per-minute frames — estimated ${away === null ? "unknown" : `${Math.round(away)} units`} away, which is a guess with a median error around 1450 units. The ${value}g cost is a fixed objective-value proxy, not a measurement; the measured team gold-lead swing over the next 90s was ${swing === null ? "unavailable" : `${swing}g`}.`
+				evidence: `ELITE_MONSTER_KILL ${e.monsterType}${e.monsterSubType ? `/${e.monsterSubType}` : ""} at ${fmtClock(tSec)}, killerId ${killer} (enemy team). He was ALIVE (deaths within 75s are excluded). Your position is INTERPOLATED between once-per-minute frames — estimated ${away === null ? "unknown" : `${Math.round(away)} units`} away, a guess with median error around 1450 units. THIS IS NOT EVIDENCE OF A MISTAKE: contesting depends on teammates alive, smite availability and whether a cross-map trade was better, none of which is recorded here. Report it as a fact about the game, not as something he did wrong. The ${value}g cost is a fixed objective-value proxy, not a measurement; the measured team gold-lead swing over the next 90s was ${swing === null ? "unavailable" : `${swing}g`}.`
 			},
 			kind: "objective_missed",
 			positive: false,
@@ -311,7 +339,7 @@ export const selectMomentsDetailed = (
 			signature: sig,
 			zoneLabel: zoneOf(objPos, teamId),
 			measuredSwing90s: swing,
-			why: `${fmtClock(tSec)} — the enemy took ${name} in the ${zoneOf(objPos, teamId)}. You were likely ${away === null ? "not nearby" : `about ${Math.round(away)} units away`}; positions are sampled once a minute so this is an estimate, not proof.`
+			why: `${fmtClock(tSec)} — the enemy took ${name} in the ${zoneOf(objPos, teamId)}. Your estimated distance was ${away === null ? "unknown" : `about ${Math.round(away)} units`}, interpolated between once-per-minute frames. This does NOT establish that contesting was possible: whether it was depends on who else was alive, whether smite was up and whether a trade elsewhere was better, none of which this data contains.`
 		})
 	}
 

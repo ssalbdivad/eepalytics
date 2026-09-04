@@ -18,6 +18,7 @@
  * NODE ONLY.
  */
 
+import { uncoachableReason } from "../../shared/coachable.ts"
 import { ANALYSIS_VERSION } from "../../shared/constants.ts"
 import { Metric, Moment, parseOrThrow } from "../../shared/schema/domain.ts"
 import { BLOB_DIGEST, writeBlob } from "../../db/blobs.ts"
@@ -62,6 +63,12 @@ export const runAnalysisJob = async (ctx: JobContext): Promise<JobOutcome> => {
 				untilMs: Date.now() + 30_000
 			}
 		}
+
+	// Practice Tool, customs and remakes are never analysed: there is nothing meaningful to
+	// measure, and their metrics would pollute the rolling baseline every real review is judged
+	// against. Terminal, not deferred — waiting changes nothing.
+	const why = uncoachableReason(game)
+	if (why !== null) return { note: `${why}; skipped` }
 
 	// Re-ingest may have replaced the blobs under a cached copy.
 	forgetGame(gameId)

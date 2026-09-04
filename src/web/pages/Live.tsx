@@ -1,23 +1,31 @@
 /**
- * The live overlay: a small always-on-top window for while you are playing.
+ * The live overlay: your own numbers while a game is running.
  *
- * ## Different rules from every other screen
+ * ## What it is, after being cut back
  *
- * This is read in one-second glances with a game running behind it. So: big type, at most three
- * lines that matter, and nothing that needs a click. Everything else in the app can afford to be
- * browsed; this cannot.
+ * A stats display with two exceptions. It shows what you have — CS, deaths, level, K/A, the
+ * clock — and it speaks only for two things it can actually stand behind:
  *
- * ## An empty overlay is a correct overlay
+ *   - your CS against your OWN measured baseline;
+ *   - an objective respawn counted from a take we watched happen.
  *
- * The strong temptation is to always have something on screen. That is exactly how an overlay
- * becomes wallpaper — if it always says something, none of it gets read. When nothing is
- * genuinely worth saying, this shows the standing focus reminders and stays quiet.
+ * ## What it deliberately does not do
  *
- * ## Nothing here is predicted
+ * It used to say things like "7 deaths already — ahead of your usual pace" with a fix appended
+ * from past reviews. That read as situational awareness and was nothing of the sort: nothing
+ * here can see positions, cooldowns, lane states or what the team is doing, so the advice was
+ * generic history pasted onto a live moment. It was also wrong on its own terms — deaths are not
+ * a defect to minimise, some are the correct price of an objective, and a count says nothing
+ * about whether these ones bought anything.
  *
- * Objective timers come from takes actually observed in this game's event feed; pace comes from
- * checkpoints where a baseline really exists. Mid-game is the worst place to be confidently
- * wrong — he will act on it immediately and cannot check it.
+ * The rule that replaced it: a live measurement AND a measured comparison, or it is a number on
+ * screen with no commentary attached.
+ *
+ * ## Two sizes, one page
+ *
+ * Compact (<700px) is glanced at over a running game: clock, stats, at most a couple of lines.
+ * Wide is a second monitor and can be read properly — bigger numbers, sources shown rather than
+ * hidden in tooltips. Same data, different layout, because those are genuinely different jobs.
  */
 
 import { useEffect, useState } from "react"
@@ -30,8 +38,6 @@ const POLL_MS = 3000
 const KIND_ICON: Record<string, string> = {
 	objective: "◈",
 	pace: "▲",
-	safety: "⚠",
-	habit: "◆",
 	praise: "✓"
 }
 
@@ -106,7 +112,7 @@ export const Live = () => {
 		return (
 			<div className={`live live--${size}`}>
 				<div className="live__idle">
-					<img className="live__mark" src="/icon.svg" alt="" width={22} height={22} />
+					<img className="live__mark" src="/icons/icon-128.png" alt="" width={22} height={22} />
 					<strong>Not in a game</strong>
 					<span>{data.reason ?? "waiting"}</span>
 				</div>
@@ -128,7 +134,7 @@ export const Live = () => {
 	return (
 		<div className={`live live--${size}`}>
 			<div className="live__bar">
-				<img className="live__mark" src="/icon.svg" alt="" width={20} height={20} />
+				<img className="live__mark" src="/icons/icon-128.png" alt="" width={20} height={20} />
 				<span className="live__clock">{fmtClock(data.gameTimeSec ?? 0)}</span>
 				<span className="live__champ">{data.championName}</span>
 				{data.score && (
@@ -184,7 +190,7 @@ export const Live = () => {
 					 * from across a desk, and they are plain readings — no derived pace estimate
 					 * between the checkpoints where a baseline actually exists.
 					 */}
-					{size === "wide" && data.score && (
+					{data.score && (
 						<div className="live__stats">
 							<div className="live__stat">
 								<span className="v">{data.score.cs}</span>

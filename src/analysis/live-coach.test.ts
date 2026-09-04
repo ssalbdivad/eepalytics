@@ -79,19 +79,34 @@ describe("farm pace", () => {
 	})
 })
 
-describe("early deaths", () => {
-	it("names a single early death", () => {
-		const n = run({ gameTimeSec: 300, deaths: 1 })
-		ok(n.some(x => x.kind === "safety"))
+/**
+ * The nudges that were removed, pinned so they do not come back.
+ *
+ * Both read as situational awareness and were nothing of the sort: they attached a generic fix
+ * mined from past reviews to a live moment the app cannot see. Nothing here knows positions,
+ * cooldowns or what the team is doing.
+ */
+describe("no ungrounded coaching", () => {
+	it("says nothing about deaths, however many there are", () => {
+		const many = run({ gameTimeSec: 20 * 60, deaths: 7, cs: 200 }, [
+			{ category: "deaths", games: 15, fixes: ["back off instead of pushing one more camp"] }
+		])
+		strictEqual(many.length, 0, `expected silence, got: ${many.map(n => n.text).join(" | ")}`)
 	})
 
-	it("credits the focus area when deaths is the standing problem", () => {
-		const n = run({ gameTimeSec: 300, deaths: 1 }, [{ category: "deaths", games: 15, fixes: ["back off"] }])
-		ok(n.find(x => x.kind === "safety")!.source.includes("15 games"))
+	it("never repeats a fix mined from past games as if it were about this one", () => {
+		const n = run({ gameTimeSec: 7 * 60, cs: 5, deaths: 4 }, [
+			{ category: "deaths", games: 15, fixes: ["back off instead of pushing one more camp"] }
+		])
+		ok(
+			!n.some(x => x.text.includes("back off instead of pushing one more camp")),
+			"a history fix must not be presented as live advice"
+		)
 	})
 
-	it("stops once the early game is over", () => {
-		strictEqual(run({ gameTimeSec: 20 * 60, deaths: 1 }).filter(n => n.kind === "safety").length, 0)
+	it("still reports the farm gap, which is a real measurement", () => {
+		const n = run({ gameTimeSec: 7 * 60, cs: 5, deaths: 4 })
+		ok(n.some(x => x.kind === "pace"))
 	})
 })
 
@@ -106,5 +121,9 @@ describe("quiet is a valid answer", () => {
 			[{ category: "deaths", games: 15, fixes: ["back off"] }]
 		)
 		ok(busy.length <= 3, `overlay must stay glanceable, got ${busy.length}`)
+	})
+
+	it("is silent through a normal game rather than filling the space", () => {
+		strictEqual(run({ gameTimeSec: 12 * 60, cs: 106, deaths: 2 }).length, 0)
 	})
 })

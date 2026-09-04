@@ -7,10 +7,10 @@ const env: Record<string, string | undefined> =
 	typeof process !== "undefined" && process.env ? process.env : {}
 
 /** Bump to invalidate derived metrics + moments for every game. */
-export const ANALYSIS_VERSION = 2
+export const ANALYSIS_VERSION = 3
 
 /** Bump to invalidate every Claude review. */
-export const REVIEW_VERSION = 5
+export const REVIEW_VERSION = 6
 
 /** Migration file set currently shipped. openDb() refuses to run against a newer DB. */
 export const SCHEMA_VERSION = 7

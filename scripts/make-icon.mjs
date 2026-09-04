@@ -1,5 +1,6 @@
 /**
- * Rasterise `public/icon.svg` into the PNGs Electron needs for a window and taskbar icon.
+ * Build the app icon: Riot's champion portrait with glasses drawn over it, rendered to the PNGs
+ * Electron needs for a window and taskbar icon.
  *
  * WHY ELECTRON AND NOT A LIBRARY. This machine has no rsvg-convert, no ImageMagick, no sharp and
  * no cairosvg, and adding a native image dependency to a local tool in order to draw one icon is
@@ -16,7 +17,6 @@ import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-const SVG = join(ROOT, "public", "icon.svg")
 const OUT = join(ROOT, "public", "icons")
 const SIZES = [16, 32, 64, 128, 256, 512]
 
@@ -24,7 +24,8 @@ app.disableHardwareAcceleration()
 
 app.whenReady().then(async () => {
 	mkdirSync(OUT, { recursive: true })
-	const svg = readFileSync(SVG, "utf8")
+	// Riot's own champion portrait, base64'd so the renderer needs no file access.
+	const portrait = readFileSync(join(ROOT, "public", "lillia-source.png")).toString("base64")
 
 	// Rendered at the largest size once, then downscaled. Re-rendering per size would be
 	// sharper in principle, but the art is vector-simple and Electron's resize is fine — and
@@ -41,10 +42,38 @@ app.whenReady().then(async () => {
 
 	// A data URL rather than a file URL: no path escaping, and the page is exactly the SVG on a
 	// transparent ground with no margin to trim afterwards.
-	const html = `<html><body style="margin:0;background:transparent">${svg.replace(
-		/width="256" height="256"/,
-		`width="${largest}" height="${largest}"`
-	)}</body></html>`
+	/*
+	 * Riot's portrait with glasses drawn over it, rather than an illustration of a fawn.
+	 *
+	 * The previous icon was hand-coded SVG and looked like it. This composites the official
+	 * champion square — the same asset the app already displays for every game — and adds the
+	 * one thing the joke needs. Eye positions were measured off the 128px source and scaled.
+	 *
+	 * `image-rendering: auto` matters: the source is 128px being drawn at 512, and the default
+	 * nearest-neighbour upscale in some paths looks like a screenshot of a screenshot.
+	 */
+	const s = largest / 512
+	const html = `<html><body style="margin:0;background:transparent">
+	<div style="position:relative;width:${largest}px;height:${largest}px;border-radius:${
+		Math.round(112 * s)
+	}px;overflow:hidden;background:#07090e">
+	  <img src="data:image/png;base64,${portrait}" width="${largest}" height="${largest}"
+	       style="display:block;image-rendering:auto;filter:saturate(1.05) contrast(1.03)"/>
+	  <svg width="${largest}" height="${largest}" viewBox="0 0 512 512"
+	       style="position:absolute;inset:0">
+	    <g fill="none" stroke="#15171d" stroke-width="14" stroke-linecap="round">
+	      <circle cx="196" cy="252" r="54" fill="#dceefc" fill-opacity="0.18"/>
+	      <circle cx="304" cy="242" r="54" fill="#dceefc" fill-opacity="0.18"/>
+	      <path d="M250 247 L250 247"/>
+	      <path d="M142 246 l-28 -12"/>
+	      <path d="M358 238 l28 -12"/>
+	    </g>
+	    <path d="M172 228 a38 38 0 0 1 32 -20" stroke="#ffffff" stroke-opacity="0.68"
+	          stroke-width="8" fill="none" stroke-linecap="round"/>
+	    <path d="M282 218 a38 38 0 0 1 32 -20" stroke="#ffffff" stroke-opacity="0.68"
+	          stroke-width="8" fill="none" stroke-linecap="round"/>
+	  </svg>
+	</div></body></html>`
 	await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
 	// Give the renderer a beat to paint before capturing.
 	await new Promise(r => setTimeout(r, 400))

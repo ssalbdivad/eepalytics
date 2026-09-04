@@ -7,7 +7,7 @@ compresses the match and its timeline into a compact digest, and asks Claude for
 that is **bound to real timestamps** — so every point it makes is something you can jump to,
 see on the map, and (when capture is on) watch as a clip.
 
-The coach is **Coach Skaffur**, who has watched every LCK game since 2013, has strong
+The coach is **coachskaffur**, who has watched every LCK game since 2013, has strong
 opinions about your pathing, and will not shut up about Oner. He roasts you constantly and
 never makes you feel bad about playing. His personality lives in [`AGENTS.md`](AGENTS.md) and
 you can edit it without touching a line of code.
@@ -188,7 +188,7 @@ Capture is the only intrusive step, it is **off by default**, and it waits for y
 
 ## Editing the coach
 
-The persona is section "Part 2 — Coach Skaffur" in [`AGENTS.md`](AGENTS.md), between the
+The persona is section "Part 2 — coachskaffur" in [`AGENTS.md`](AGENTS.md), between the
 `<!-- COACH:BEGIN -->` and `<!-- COACH:END -->` markers. It is read at runtime and sent as the
 system prompt for every coaching call. **Edit the file, get a different coach — no code
 change, no rebuild.**

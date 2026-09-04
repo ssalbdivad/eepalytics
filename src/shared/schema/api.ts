@@ -146,7 +146,7 @@ export type WatchListResponse = typeof WatchListResponse.infer
  * game" is the normal case and must answer 200 with something truthful rather than erroring.
  */
 export const LiveNudge = type({
-	kind: "'pace'|'objective'|'habit'|'safety'|'praise'",
+	kind: "'pace'|'objective'|'praise'",
 	text: "string",
 	priority: "number",
 	/** What the nudge was derived from, so nothing on screen is unattributable. */

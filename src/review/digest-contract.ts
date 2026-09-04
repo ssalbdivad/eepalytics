@@ -140,7 +140,16 @@ export const GameDigest = type({
 	 * data. The prompt fences it accordingly: it may justify a fix, it may never become a
 	 * number, and the digest wins any disagreement.
 	 */
-	"championContext?": ChampionContext
+	"championContext?": ChampionContext,
+	/**
+	 * Whether replay frames exist for this game.
+	 *
+	 * This changes what the coach is allowed to claim, not merely what it can illustrate. Without
+	 * frames the app knows positions once a minute and nothing about what anyone was doing, so
+	 * per-moment fault attribution is guesswork wearing a timestamp. The prompt restricts itself
+	 * accordingly.
+	 */
+	"hasFrames?": "boolean"
 })
 export type GameDigest = typeof GameDigest.infer
 

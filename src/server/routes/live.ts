@@ -54,17 +54,43 @@ const findMe = (data: LiveAllGameData) => {
 export const createLiveRoute = (): Hono => {
 	const app = new Hono()
 
+	/**
+	 * Focus areas, for the states where there is no game to report on.
+	 *
+	 * The idle overlay used to be a single line saying nothing was happening, which makes it
+	 * worth closing. What you are working on is true whether or not a game is running, and it is
+	 * clearly labelled as coming from past reviews rather than from anything live.
+	 */
+	const standingFocus = () => {
+		const settings = getSettings()
+		return focusAreas(recentFeedbackItems(settings.gamesForTrends * 8), 3).map(f => ({
+			category: f.category,
+			games: f.games,
+			fix: f.fixes[0] ?? ""
+		}))
+	}
+
 	app.get("/live", async c => {
 		const handle = await lcu()
 		if (!handle)
-			return send(c, LiveResponse, { inGame: false, reason: "the League client is not running", nudges: [] }, "GET /api/live")
+			return send(
+				c,
+				LiveResponse,
+				{
+					inGame: false,
+					reason: "the League client is not running",
+					nudges: [],
+					focus: standingFocus()
+				},
+				"GET /api/live"
+			)
 
 		const data = await handle.live.allGameData().catch(() => null)
 		if (!data?.gameData)
 			return send(
 				c,
 				LiveResponse,
-				{ inGame: false, reason: "no game in progress", nudges: [] },
+				{ inGame: false, reason: "no game in progress", nudges: [], focus: standingFocus() },
 				"GET /api/live"
 			)
 

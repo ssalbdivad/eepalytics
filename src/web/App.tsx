@@ -120,7 +120,7 @@ export const App = () => {
 		<div className="app">
 			<header className="topbar">
 				<div className="brand">
-					<img className="brand__mark" src="/icon.svg" alt="" width={26} height={26} />
+					<img className="brand__mark" src="/icons/icon-128.png" alt="" width={26} height={26} />
 					coachskaffur <small>Gooskaffur#NA1</small>
 				</div>
 
