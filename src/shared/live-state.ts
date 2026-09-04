@@ -72,17 +72,21 @@ export interface VisionStatePlayer {
 }
 
 /*
- * The roster carries WHO and their score, and says DEAD — but never the seconds.
+ * The roster carries WHO and their score. Nothing else — no timers, and no death state.
  *
- * It used to print `DEAD (14s)`, and the model read timers straight off it, bypassing the vetted
- * list entirely: a judge found it announcing two respawn timers to a player who was himself dead
- * for longer than both, a case the curated list had already correctly suppressed. Every timer the
- * coach is allowed to say now exists in exactly one place, where the rules about it apply.
+ * It went in two steps, both forced. It first printed `DEAD (14s)`, and the model read timers
+ * straight off it, bypassing the vetted list: it announced two respawn timers to a player who was
+ * himself dead for longer than both, a case the list had already correctly suppressed. Dropping
+ * the seconds was not enough — with a bare `DEAD` it invented a timer to go with it ("Qiyana is
+ * down for 8 seconds", when Qiyana had none), and announced "Graves is DEAD" to the last man
+ * alive in a 1v4, which the fact list had also already suppressed.
+ *
+ * Anything the coach may say about who is down now comes from the vetted list, where the rules
+ * about respawn length, alternation and being outnumbered all apply. The count is still available
+ * as "Alive right now", which is the part that is useful without being a hook to invent from.
  */
 const line = (p: VisionStatePlayer): string =>
-	`${p.champion}${p.level ? ` lv${p.level}` : ""} ${p.k ?? 0}/${p.d ?? 0}/${p.a ?? 0}${
-		p.dead ? " DEAD" : ""
-	}`
+	`${p.champion}${p.level ? ` lv${p.level}` : ""} ${p.k ?? 0}/${p.d ?? 0}/${p.a ?? 0}`
 
 /** The authoritative block. Everything in it came from the client, not from the picture. */
 export const renderState = (s: VisionState): string => {

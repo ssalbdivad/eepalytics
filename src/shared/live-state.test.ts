@@ -48,6 +48,21 @@ describe("renderState", () => {
 		ok(out.includes("PASS"), "and it must name the correct answer")
 	})
 
+	it("gives the roster no death state to invent a timer from", () => {
+		/*
+		 * Twice a regression. `DEAD (14s)` let the model read timers past the vetted list; a bare
+		 * `DEAD` let it invent one ("Qiyana is down for 8 seconds", when Qiyana had no timer) and
+		 * announce a death to the last man alive in a 1v4. Who is down is the fact list's job,
+		 * where the rules about it apply.
+		 */
+		const out = renderState(
+			base({ enemies: [{ champion: "Graves", level: 12, k: 6, d: 3, a: 3, dead: true, respawnSec: 22 }] })
+		)
+		strictEqual(/DEAD/.test(out), false, "no death marker in the roster")
+		strictEqual(out.includes("22"), false, "and certainly no timer")
+		ok(out.includes("Alive right now"), "the count is still available")
+	})
+
 	it("still names the roster and the clock", () => {
 		const out = renderState(base())
 		ok(out.includes("Clock 14:30"))

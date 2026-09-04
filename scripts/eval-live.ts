@@ -19,7 +19,15 @@
  * give the scoreline and who was dead when. That is real data about a real game, assembled into
  * the shape the live path would have produced.
  *
- * The one approximation is the respawn clock — the timeline says when someone died, not when
+ * ## One thing this fixture cannot supply
+ *
+ * The player's CURRENT HEALTH. `buildLiveState` includes it in production (the live client
+ * reports `championStats.currentHealth`), but a post-game timeline records gold, level and CS per
+ * minute and never health. So a line like "you survived with 411 health!" — read correctly off
+ * the frame — scores as a number not in the block, because in this harness it genuinely is not.
+ * That is a gap in the fixture, not in the coach; do not "fix" it by tightening the prompt.
+ *
+ * ## The other approximation is the respawn clock — the timeline says when someone died, not when
  * they came back, and the real formula is level- and patch-dependent. `RESPAWN_SEC` is a fixture
  * constant, and it is only ever used to decide whether to mark someone dead in a test input. It
  * is never presented as a measurement and never ships.
