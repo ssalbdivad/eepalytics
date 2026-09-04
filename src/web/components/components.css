@@ -2289,3 +2289,15 @@ button.csk-chip:focus-visible,
 	color: var(--dim, #8a8a8a);
 	line-height: 1.35;
 }
+
+/*
+ * Who is speaking, in the live transcript.
+ *
+ * Her lines used to carry no label at all while his carried "you:", so a coach line read as
+ * unattributed text floating between questions — indistinguishable from a system notice.
+ */
+.csk-screen__log .who,
+.csk-live__log .who {
+	color: var(--gold, #c9a227);
+	font-weight: 600;
+}

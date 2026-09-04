@@ -299,6 +299,18 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 */
 	const pendingAudio = useRef<Uint8Array[]>([])
 	const turnDecided = useRef<"unknown" | "speak" | "pass">("unknown")
+	/**
+	 * Set while an answer to a TYPED QUESTION is in flight, which exempts that turn from PASS.
+	 *
+	 * A question goes to the model down the same socket as the heartbeat, so it reads as one more
+	 * "is anything worth saying?" decision — and the system prompt is emphatic that the answer is
+	 * usually no. Measured on a real session: of four questions typed in twenty seconds, one was
+	 * answered and three were PASSed and silently dropped, transcript line and all. He was asking
+	 * a coach questions and getting nothing back.
+	 *
+	 * A heartbeat may go unanswered; that is the whole design. A question may not.
+	 */
+	const answering = useRef(false)
 	const micRef = useRef<{ stream: MediaStream; ctx: AudioContext } | null>(null)
 	/**
 	 * The exact facts that produced the turn now in flight.
@@ -518,6 +530,13 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				 */
 				const decide = () => {
 					if (turnDecided.current !== "unknown") return
+					// He asked; he gets an answer. PASS is not available on this turn.
+					if (answering.current) {
+						turnDecided.current = "speak"
+						for (const chunk of pendingAudio.current) player.play(chunk)
+						pendingAudio.current = []
+						return
+					}
 					const t = partialRef.current.trimStart()
 					if (t === "") return
 					if (/^pass\b/i.test(t)) {
@@ -553,7 +572,10 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					 */
 					if (turnDecided.current === "unknown" && !/^pass\b/i.test(text))
 						for (const chunk of pendingAudio.current) player.play(chunk)
-					const declined = turnDecided.current === "pass" || /^pass\b/i.test(text)
+					const wasAnswer = answering.current
+					answering.current = false
+					const declined =
+						!wasAnswer && (turnDecided.current === "pass" || /^pass\b/i.test(text))
 					partialRef.current = ""
 					pendingAudio.current = []
 					turnDecided.current = "unknown"
@@ -725,9 +747,15 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			if (q === "") return
 			record(q, true)
 			setLines(l => [{ text: q, atMs: Date.now(), fromUser: true }, ...l].slice(0, 40))
+			/*
+			 * Marked BEFORE the send so the flag is already set when the first fragment arrives —
+			 * the answer can begin streaming in well under the time a state update would take.
+			 */
+			answering.current = true
+			player.silence()
 			send({ clientContent: { turns: [{ role: "user", parts: [{ text: q }] }], turnComplete: true } })
 		},
-		[send, record]
+		[send, record, player]
 	)
 
 	useEffect(() => stop, [stop])

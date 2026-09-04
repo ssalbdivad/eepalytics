@@ -136,7 +136,7 @@ export const LiveTranscript = () => {
 								<div className="row">
 									<span className="t">{fmt(l.atMs)}</span>
 									<span className="s">
-										{l.fromUser ? <b>you: </b> : null}
+										{l.fromUser ? <b>you: </b> : <b className="who">Coach Lillia: </b>}
 										{l.text}
 									</span>
 								</div>

@@ -753,7 +753,7 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 						<li key={`${l.atMs}-${l.text.slice(0, 12)}`}>
 							<span className="t">{fmtTime(l.atMs)}</span>
 							<span className="s">
-								{l.fromUser ? <b>you: </b> : null}
+								{l.fromUser ? <b>you: </b> : <b className="who">Coach Lillia: </b>}
 								{l.text}
 							</span>
 						</li>
