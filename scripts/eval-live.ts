@@ -287,6 +287,9 @@ const stateAt = (
 		mePid,
 		state: {
 			clock: `${Math.floor(atSec / 60)}:${String(Math.floor(atSec % 60)).padStart(2, "0")}`,
+			// The eval reconstructs states from stored timelines and has no baseline to hand, which
+			// is exactly the case the rendered "NONE" line exists to describe honestly.
+			pace: null,
 			me: {
 				champion: roster[mePid]!.champion,
 				level: mf.level,

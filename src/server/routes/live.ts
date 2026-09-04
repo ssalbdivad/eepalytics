@@ -191,6 +191,29 @@ const buildLiveState = (
 		})
 		.filter(t => t !== "")
 
+	/*
+	 * Read ONCE, and used twice: the rate-limited "you're N camps behind" fact, and the standing
+	 * `Farm baseline:` line in the block. It used to feed only the first, so between farm mentions
+	 * the block carried a CS with nothing to compare it to — and a gap is where the model invents.
+	 */
+	const pace =
+		baseline ?
+			paceReading({
+				live: {
+					gameTimeSec: secs,
+					championName: me.championName ?? "",
+					cs: me.scores?.creepScore ?? 0,
+					deaths: me.scores?.deaths ?? 0,
+					kills: me.scores?.kills ?? 0,
+					assists: me.scores?.assists ?? 0,
+					level: me.level ?? 0,
+					observed: { dragonSec: null, baronSec: null, heraldSec: null }
+				},
+				baseline,
+				focus: []
+			})
+		:	null
+
 	return {
 		clock,
 		me: {
@@ -206,6 +229,7 @@ const buildLiveState = (
 			dead: me.isDead,
 			respawnSec: me.respawnTimer
 		},
+		pace,
 		allies: others.filter(p => p.team === mine).map(asPlayer),
 		enemies: others.filter(p => p.team !== mine).map(asPlayer),
 		recentEvents,
@@ -232,26 +256,7 @@ const buildLiveState = (
 						killedByMe: lastKillerOf(data, p.riotId ?? p.summonerName ?? "") === myName
 					})),
 				currentGold: data.activePlayer?.currentGold ?? null,
-				pace:
-					baseline ?
-						(() => {
-							const r = paceReading({
-								live: {
-									gameTimeSec: secs,
-									championName: me.championName ?? "",
-									cs: me.scores?.creepScore ?? 0,
-									deaths: me.scores?.deaths ?? 0,
-									kills: me.scores?.kills ?? 0,
-									assists: me.scores?.assists ?? 0,
-									level: me.level ?? 0,
-									observed: { dragonSec: null, baronSec: null, heraldSec: null }
-								},
-								baseline,
-								focus: []
-							})
-							return r ? { cs: r.cs, expected: r.expected, exact: r.exact } : null
-						})()
-					:	null,
+				pace: pace ? { cs: pace.cs, expected: pace.expected, exact: pace.exact } : null,
 				myEvents: (data.events?.Events ?? [])
 					.filter(e => e.KillerName !== undefined && e.KillerName === myName)
 					.map(e => ({

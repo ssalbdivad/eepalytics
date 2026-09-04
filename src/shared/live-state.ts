@@ -45,6 +45,18 @@ export interface VisionState {
 		dead?: boolean
 		respawnSec?: number
 	}
+	/**
+	 * His farm against his own average at this point in the game, or null when there is no
+	 * baseline for it — and NULL IS RENDERED, deliberately, as a stated absence.
+	 *
+	 * Measured: asked "how am I doing" of a block whose CS carried no baseline, the coach invented
+	 * one in 2 of 5 answers ("ahead of your usual pace of 85") and asserted an unbacked comparison
+	 * in words in a third ("which is what you usually get for this time"). Prompt rules cut it down
+	 * and never to zero, which is the wrong tool: the model was policing a GAP. A gap is an
+	 * invitation, so the block no longer leaves one. Telling it plainly that no baseline exists is
+	 * a fact it can repeat, and repeating a fact is the one thing it does reliably.
+	 */
+	pace: { cs: number; expected: number; exact: boolean; source: string } | null
 	allies: VisionStatePlayer[]
 	enemies: VisionStatePlayer[]
 	/** Most recent objective/kill events, already phrased. Newest last. */
@@ -100,6 +112,12 @@ You: ${me.champion}${me.level ? ` lv${me.level}` : ""} ${me.k ?? 0}/${me.d ?? 0}
 		me.cs !== undefined ? `, ${me.cs} CS` : ""
 	}${hp ? `, ${hp}` : ""}${me.gold !== undefined ? `, ${Math.round(me.gold)}g` : ""}${
 		me.dead ? `, DEAD${me.respawnSec ? ` (respawn ${Math.round(me.respawnSec)}s)` : ""}` : ""
+	}
+
+Farm baseline: ${
+		s.pace ?
+			`${s.pace.cs} CS against ${s.pace.expected}, ${s.pace.source}${s.pace.exact ? "" : " (approximate)"}`
+		:	"NONE — you have no average to compare his farm against right now, so do not say whether it is ahead, behind, on pace, or what he usually gets. Say the CS and say you cannot compare it."
 	}
 
 Your team: ${s.allies.map(line).join(" · ") || "unknown"}
