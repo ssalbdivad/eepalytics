@@ -232,7 +232,14 @@ h4 {
 .status-pill.bad .dot {
 	background: var(--loss);
 }
-.status-pill.live .dot {
+/*
+ * `streaming`, not `live` — that modifier used to be `.live`, which is ALSO the class on the
+ * coach page's root element. The pill therefore picked up the page's `display: flex`, its
+ * padding and its `min-height: 100vh`, and rendered as a 900px dark panel sitting on top of the
+ * right-hand side of the page: it covered the "Share my screen" button and half of the third
+ * focus card, on every browser, at every width.
+ */
+.status-pill.streaming .dot {
 	animation: pulse 1.6s ease-in-out infinite;
 }
 
@@ -1361,6 +1368,11 @@ input[type="checkbox"] {
 body.is-live {
 	background: rgba(7, 9, 14, 0.94);
 }
+/*
+ * The coach page's ROOT element. Bare and generic on purpose, but that is a hazard: any
+ * component that adds `live` as a state modifier inherits a full-page layout. One did — see
+ * `.status-pill.streaming` above. Do not add `live` as a modifier anywhere; say what it means.
+ */
 .live {
 	display: flex;
 	flex-direction: column;

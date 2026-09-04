@@ -198,7 +198,7 @@ export const App = () => {
 						</>
 					}
 					<button
-						className={cls("status-pill", sseStatus === "open" ? "ok live" : "warn")}
+						className={cls("status-pill", sseStatus === "open" ? "ok streaming" : "warn")}
 						title={`Event stream from the daemon — last event #${sseLastEventId()}. Click to reconnect now.`}
 						onClick={reconnectSse}
 					>
