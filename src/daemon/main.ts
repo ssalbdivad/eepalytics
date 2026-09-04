@@ -30,6 +30,7 @@ import { refreshChampionNames } from "./champions.ts"
 import { ensureBoundToCurrentClient, fetchLcuAsset } from "./lcu.ts"
 import runRetentionPrune from "./jobs/retention-prune.ts"
 import { log, setLogLevel } from "./log.ts"
+import { noteGameEnded } from "./postgame.ts"
 import { adoptOrphanedLeases, sweep } from "./queue.ts"
 import * as queue from "./queue.ts"
 import { reconcile, reconcileFinishedGame } from "./reconcile.ts"
@@ -149,6 +150,15 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 			})()
 		},
 		onGameEnded: gameId => {
+			/*
+			 * Two things happen here, and they are independent on purpose.
+			 *
+			 * The marker is written FIRST and synchronously: it is one row, it cannot fail the
+			 * way an LCU round trip can, and it is what the coach window reads on its next poll
+			 * to stop saying "not in a game" the second a game finishes. The ingest that fills
+			 * the debrief in follows behind it.
+			 */
+			noteGameEnded(gameId)
 			// The 30-minute replay clock just started. Do not wait for the next sweep.
 			void (async () => {
 				const report = await reconcileFinishedGame(gameId)

@@ -19,6 +19,14 @@
  *
  * Client closed, in the lobby, in champ select, in a game with no data yet: each answers 200
  * with something truthful. An overlay that errors is an overlay that gets closed.
+ *
+ * ## And "a game just ended" is one of them
+ *
+ * `justEnded` rides on the same payload rather than arriving on a stream of its own. The
+ * overlay already polls this route, the daemon already wrote down which game finished, and a
+ * poll is correct in the case that actually happens: he alt-tabs out of the client into a
+ * window that was not open when the game ended, so there is no event it could have missed.
+ * SSE would have been a second mechanism for a fact this route can simply state.
  */
 
 import { Hono } from "hono"
@@ -38,7 +46,10 @@ import { championName, refreshChampionNames } from "../../daemon/champions.ts"
 import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
 import { championNote } from "../../knowledge/index.ts"
-import { getSettings, recentFeedbackItems } from "../../db/queries.ts"
+import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
+import { dismissDebrief, dismissedDebrief, lastGameEnded } from "../../daemon/postgame.ts"
+import { matchesMarker, postGameDebrief } from "../../shared/postgame.ts"
+import type { EndedGame, JustEnded } from "../../shared/postgame.ts"
 import { LiveResponse, MatchupResponse } from "../../shared/schema/api.ts"
 import { isCoachingPhase } from "../../shared/schema/lcu.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
@@ -318,29 +329,83 @@ export const createLiveRoute = (): Hono => {
 		return value
 	}
 
+	/**
+	 * The game that just ended, if there is one worth showing.
+	 *
+	 * The daemon wrote down WHICH game and WHEN (`src/daemon/postgame.ts`); this resolves that
+	 * marker against the library and lets `postGameDebrief` decide. Two rows and a clock read —
+	 * cheap enough to sit on a route the overlay polls every three seconds.
+	 *
+	 * `uncoachableReason` is asked with the stored row, which does not carry `gameType`. That
+	 * costs nothing in practice: a custom game and the Practice Tool both land on `queueId 0`,
+	 * which the same check rejects. `src/daemon/jobs/analysis-run.ts` makes exactly this call.
+	 */
+	const justEnded = (): JustEnded | null => {
+		const marker = lastGameEnded()
+		if (!marker) return null
+
+		/*
+		 * Normally the marker names the game. When the gameflow session could not be read on
+		 * the way in it does not, and the newest row has to be matched by time instead — with a
+		 * window tight enough that the PREVIOUS game cannot be mistaken for this one.
+		 */
+		const game =
+			marker.gameId !== null ? getGame(marker.gameId)
+			: (listGames(1)[0] ?? null)
+
+		const resolved =
+			game && (marker.gameId !== null || matchesMarker(game.endedAtMs, marker.endedAtMs)) ?
+				(game as EndedGame)
+			:	null
+
+		return postGameDebrief({
+			marker,
+			dismissedEndedAtMs: dismissedDebrief(),
+			game: resolved,
+			nowMs: Date.now()
+		})
+	}
+
 	app.get("/live", async c => {
 		const handle = await lcu()
-		if (!handle)
+		/*
+		 * Only computed when there is no game running. During a game the screen's job is the
+		 * game — and the marker for the game he is playing has not been written yet anyway.
+		 */
+		if (!handle) {
+			const ended = justEnded()
 			return send(
 				c,
 				LiveResponse,
 				{
 					inGame: false,
+					// He closed the client after playing. The debrief is still the point of the
+					// screen, so the reason line stops being the headline.
 					reason: "the League client is not running",
 					nudges: [],
-					focus: standingFocus()
+					focus: standingFocus(),
+					...(ended ? { justEnded: ended } : {})
 				},
 				"GET /api/live"
 			)
+		}
 
 		const data = await handle.live.allGameData().catch(() => null)
-		if (!data?.gameData)
+		if (!data?.gameData) {
+			const ended = justEnded()
 			return send(
 				c,
 				LiveResponse,
-				{ inGame: false, reason: "no game in progress", nudges: [], focus: standingFocus() },
+				{
+					inGame: false,
+					reason: "no game in progress",
+					nudges: [],
+					focus: standingFocus(),
+					...(ended ? { justEnded: ended } : {})
+				},
 				"GET /api/live"
 			)
+		}
 
 		const me = findMe(data)
 		const gameTimeSec = Math.round(data.gameData.gameTime ?? 0)
@@ -405,6 +470,26 @@ export const createLiveRoute = (): Hono => {
 	})
 
 	/**
+	 * `POST /api/live/dismiss` — close the post-game debrief.
+	 *
+	 * Server-side on purpose. He reads the debrief, closes it, and alt-tabs into a fresh window
+	 * ten seconds later; a dismissal held in the page would come straight back, and one held in
+	 * `localStorage` would be per-browser-profile — the overlay window and a browser tab are two
+	 * of those. One row in `kv` is the only version of this that is true everywhere at once.
+	 *
+	 * Keyed on the end time rather than the gameId because the panel is dismissable while the
+	 * match is still being assembled, when there is no id yet.
+	 */
+	app.post("/live/dismiss", async c => {
+		const body = (await c.req.json().catch(() => null)) as { endedAtMs?: unknown } | null
+		const endedAtMs = typeof body?.endedAtMs === "number" ? body.endedAtMs : null
+		if (endedAtMs === null || !Number.isFinite(endedAtMs))
+			return fail(c, 400, "endedAtMs must be the number from the justEnded payload", "bad-dismiss")
+		dismissDebrief(endedAtMs)
+		return c.json({ ok: true })
+	})
+
+	/**
 	 * `GET /api/live/phase` — the one thing that decides whether the coach sends anything.
 	 *
 	 * The screen share persists across games now, so "is a stream open" no longer answers "is he
@@ -415,8 +500,7 @@ export const createLiveRoute = (): Hono => {
 	 * `GET /api/health` already carries `gameflowPhase`, and it is the wrong source here: it is
 	 * polled every 20 seconds, which would leave the coach dead for a third of a minute after the
 	 * loading screen, and it drags a Vanguard probe and a database read behind it. This is one
-	 * gameflow read (p50 2.3 ms over the bridge) and nothing else.
-	 *
+	 * gameflow read (p50 2.3 ms over the bridge) and nothing else.	 *
 	 * Null phase means the League client is closed. That is a state, not an error — it answers
 	 * 200 disarmed, and the browser says so rather than showing a broken coach.
 	 */

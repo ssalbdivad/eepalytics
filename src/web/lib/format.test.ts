@@ -14,6 +14,7 @@ import {
 	GameListResponse,
 	HealthResponse,
 	JobListResponse,
+	LiveResponse,
 	TrendsResponse
 } from "../../shared/schema/api.ts"
 import { DEFAULT_SETTINGS, Settings } from "../../shared/schema/settings.ts"
@@ -194,6 +195,40 @@ describe("response validators", () => {
 			]
 		})
 		assert.ok(!(out instanceof type.errors), String(out))
+	})
+
+	it("accepts the idle live payload with and without a game that just ended", () => {
+		const idle = { inGame: false, reason: "no game in progress", nudges: [] }
+		assert.ok(!(LiveResponse(idle) instanceof type.errors))
+
+		// The debrief the coach window draws the moment a game finishes.
+		const ended = LiveResponse({
+			...idle,
+			justEnded: {
+				gameId: game.gameId,
+				endedAtMs: 1_756_802_600_000,
+				stage: "stored",
+				championName: game.championName,
+				win: game.win
+			}
+		})
+		assert.ok(!(ended instanceof type.errors), String(ended))
+
+		// And the seconds before the client has handed the match over, when there is no id yet.
+		const waiting = LiveResponse({
+			...idle,
+			justEnded: { gameId: null, endedAtMs: 1_756_802_600_000, stage: "ingesting" }
+		})
+		assert.ok(!(waiting instanceof type.errors), String(waiting))
+	})
+
+	it("rejects a justEnded whose stage this build does not know", () => {
+		const out = LiveResponse({
+			inGame: false,
+			nudges: [],
+			justEnded: { gameId: 1, endedAtMs: 1_756_802_600_000, stage: "reviewed" }
+		})
+		assert.ok(out instanceof type.errors, "an unknown stage must not validate")
 	})
 
 	it("accepts a trend series that admits it is noise", () => {

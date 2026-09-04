@@ -2172,3 +2172,100 @@ button.csk-chip:focus-visible,
 .csk-screen__unmute:hover {
 	background: color-mix(in srgb, var(--warn, #c2884a) 24%, transparent);
 }
+/* ==================================================================== debrief */
+/*
+ * The panel that replaces "Not in a game" the moment a game ends. It lives inside the coach
+ * window, which is a drag handle end to end, so every control in here has to opt back out of
+ * that or the buttons become places to pick the window up by.
+ */
+.csk-debrief {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	-webkit-app-region: no-drag;
+	user-select: text;
+	-webkit-user-select: text;
+}
+.csk-debrief button,
+.csk-debrief a { -webkit-app-region: no-drag; }
+
+.csk-debrief__head { display: flex; align-items: center; gap: 11px; }
+.csk-debrief__who { min-width: 0; flex: 1 1 auto; }
+.csk-debrief__who strong { display: block; color: var(--gold-bright); font-size: 15px; }
+.csk-debrief--wide .csk-debrief__who strong { font-size: 22px; }
+.csk-debrief__line {
+	display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+	margin-top: 3px; font-size: 12px; color: var(--text-2);
+}
+.csk-debrief--wide .csk-debrief__line { font-size: 14px; gap: 12px; }
+.csk-debrief__close {
+	background: none; border: 1px solid var(--line); color: var(--dim);
+	border-radius: 5px; width: 24px; height: 22px; font-size: 11px; line-height: 1;
+	padding: 0; flex: none;
+}
+.csk-debrief__close:hover { color: var(--gold); border-color: var(--gold-dim); }
+
+/* The one line he reads if he reads nothing else. */
+.csk-debrief__headline {
+	font-size: 15px; line-height: 1.45; color: var(--text);
+	border-left: 3px solid var(--gold-dim); padding-left: 11px;
+}
+.csk-debrief--wide .csk-debrief__headline { font-size: 21px; line-height: 1.4; padding-left: 16px; }
+.csk-debrief__hype { font-size: 12.5px; line-height: 1.5; color: var(--win); }
+.csk-debrief--wide .csk-debrief__hype { font-size: 15px; }
+
+.csk-debrief__label {
+	font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.07em;
+	color: var(--faint); margin-bottom: 6px;
+}
+.csk-debrief__section { border-top: 1px solid var(--line-soft); padding-top: 9px; }
+.csk-debrief__section--good .csk-debrief__label { color: var(--band-good); }
+.csk-debrief__section--bad .csk-debrief__label { color: var(--sev-minor); }
+.csk-debrief__item + .csk-debrief__item { margin-top: 10px; }
+.csk-debrief__item .t { font-size: 13.5px; line-height: 1.4; color: var(--text); }
+.csk-debrief--wide .csk-debrief__item .t { font-size: 16px; }
+/* The fix is the only part that changes behaviour, so it is never the quiet one. */
+.csk-debrief__item .f {
+	margin-top: 4px; font-size: 12.5px; line-height: 1.5; color: var(--gold);
+}
+.csk-debrief--wide .csk-debrief__item .f { font-size: 14.5px; }
+.csk-debrief__item .b {
+	margin-top: 5px; font-size: 13px; line-height: 1.55; color: var(--text-2);
+}
+
+.csk-debrief__waiting {
+	display: flex; flex-direction: column; gap: 7px; align-items: flex-start;
+	border-top: 1px solid var(--line-soft); padding-top: 10px;
+	font-size: 12.5px; line-height: 1.5; color: var(--text-2);
+}
+.csk-debrief__waiting > .skeleton { align-self: stretch; }
+.csk-debrief__waiting strong { color: var(--gold); }
+.csk-debrief__waiting.bad strong { color: var(--loss); }
+
+/* Measured figures, shown only while the coach is still writing. */
+.csk-debrief__measured { border-top: 1px solid var(--line-soft); padding-top: 9px; }
+.csk-debrief__bands { display: flex; flex-wrap: wrap; gap: 14px 22px; }
+.csk-debrief__band { display: flex; flex-direction: column; gap: 2px; cursor: help; }
+.csk-debrief__band .v { font-family: var(--mono); font-size: 19px; line-height: 1; }
+.csk-debrief--wide .csk-debrief__band .v { font-size: 28px; }
+.csk-debrief__band .v em { font-style: normal; font-size: 0.55em; margin-left: 3px; color: var(--dim); }
+.csk-debrief__band .k { font-size: 10.5px; color: var(--text-2); }
+.csk-debrief__band .d { font-size: 10px; color: var(--faint); font-family: var(--mono); }
+
+.csk-debrief__goals {
+	list-style: none; margin: 0; padding: 0;
+	display: flex; flex-direction: column; gap: 7px;
+	border-top: 1px solid var(--line-soft); padding-top: 9px;
+}
+.csk-debrief__goals li { display: flex; gap: 9px; font-size: 12.5px; line-height: 1.45; color: var(--text); }
+.csk-debrief--wide .csk-debrief__goals li { font-size: 15px; }
+.csk-debrief__goals .n {
+	font-family: var(--mono); color: var(--gold); flex: none; font-size: 0.9em;
+}
+
+.csk-debrief__foot {
+	display: flex; align-items: baseline; gap: 12px;
+	font-size: 11.5px; border-top: 1px solid var(--line-soft); padding-top: 8px;
+}
+.csk-debrief__foot a { color: var(--teal); text-decoration: none; }
+.csk-debrief__foot a:hover { text-decoration: underline; }

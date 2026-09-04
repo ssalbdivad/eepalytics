@@ -178,6 +178,12 @@ export const api = {
 	 */
 	matchup: (signal?: AbortSignal) => request(API.matchup, MatchupResponse, { signal }),
 
+	/**
+	 * Close the post-game debrief for good. Stored by the daemon, not by this page: he closes it
+	 * and alt-tabs into a fresh window, and a dismissal that only lived here would come back.
+	 */
+	dismissDebrief: (endedAtMs: number) =>
+		request(API.liveDismiss, OkResponse, { method: "POST", body: { endedAtMs } }),
 	/** Grades and focus areas. Derived from stored data — no model call, so it is instant. */
 	form: (games?: number, signal?: AbortSignal) =>
 		request(API.form, FormResponse, { signal, query: { games } }),

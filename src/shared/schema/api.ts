@@ -164,6 +164,32 @@ export const LiveNudge = type({
 })
 export type LiveNudge = typeof LiveNudge.infer
 
+/**
+ * The game that just finished, when one has.
+ *
+ * Carried on the live payload rather than on a stream of its own. The overlay is already
+ * polling this route every few seconds, the daemon already knows the answer, and a poll is
+ * correct in the case that actually happens — he alt-tabs out of the client into a window that
+ * was not open when the game ended, so there is no event to have missed.
+ *
+ * `stage` answers one question: is there a row to fetch? Everything finer (analysed yet,
+ * review written, review failed) already lives in `GET /api/games/:id`, and restating it here
+ * would give the UI two sources that can disagree.
+ *
+ * `endedAtMs` is when the client LEFT the game, and it is also the dismissal key —
+ * `POST /api/live/dismiss` takes it back. See `src/shared/postgame.ts`.
+ */
+export const LiveJustEnded = type({
+	/** Null only while the client is still assembling a match whose id we never read. */
+	gameId: "number|null",
+	endedAtMs: "number",
+	stage: "'ingesting'|'stored'",
+	/** Present once there is a row, so the panel's header draws before the detail arrives. */
+	"championName?": "string",
+	"win?": "boolean"
+})
+export type LiveJustEnded = typeof LiveJustEnded.infer
+
 export const LiveResponse = type({
 	inGame: "boolean",
 	"reason?": "string",
@@ -182,7 +208,13 @@ export const LiveResponse = type({
 	 * Farm against his own history, for continuous display rather than as an alert.
 	 * `exact` is false between the checkpoints where a baseline was actually measured.
 	 */
-	"pace?": type({ cs: "number", expected: "number", exact: "boolean", source: "string" }).or("null")
+	"pace?": type({ cs: "number", expected: "number", exact: "boolean", source: "string" }).or("null"),
+	/**
+	 * Absent whenever there is nothing to debrief: no game has ended, the panel was dismissed,
+	 * or the game was a custom / Practice Tool / remake, which this app declines to coach at
+	 * all. Absent during a game too — the running game is the screen's job then.
+	 */
+	"justEnded?": LiveJustEnded
 })
 export type LiveResponse = typeof LiveResponse.infer
 
@@ -498,7 +530,7 @@ export const API = {
 	form: "/api/form",
 	live: "/api/live",
 	matchup: "/api/live/matchup",
-	watch: (gameId: number | string) => `/api/games/${gameId}/watch`,
+	liveDismiss: "/api/live/dismiss",	watch: (gameId: number | string) => `/api/games/${gameId}/watch`,
 	replays: "/api/replays",
 	replayIngest: "/api/replays/ingest"
 } as const

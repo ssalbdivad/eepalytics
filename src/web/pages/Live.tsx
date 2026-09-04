@@ -28,13 +28,14 @@
  * hidden in tooltips. Same data, different layout, because those are genuinely different jobs.
  */
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import type { LiveResponse } from "../../shared/schema/api.ts"
 import { api } from "../lib/api.ts"
 import { armedHeadline, useGameflow } from "../lib/gameflow.ts"
 import { categoryLabel } from "../lib/format.ts"
 import { ScreenCoach } from "../components/ScreenCoach.tsx"
 import { LiveTranscript } from "../components/LiveTranscript.tsx"
+import { Debrief } from "../components/Debrief.tsx"
 
 /** Fast enough to catch an objective window, slow enough to be free. */
 const POLL_MS = 3000
@@ -76,6 +77,13 @@ const sendToShell = (channel: string): void => {
 }
 
 export const Live = () => {
+	/**
+	 * The debrief he has closed, keyed by when the game ended.
+	 *
+	 * Mirrored to the daemon rather than kept here alone: he closes it, alt-tabs, and a dismissal
+	 * that only lived in this component would come back with the next window.
+	 */
+	const [closed, setClosed] = useState<number | null>(null)
 	const [data, setData] = useState<LiveResponse | null>(null)
 	const [err, setErr] = useState<string | null>(null)
 	const size = useSize()
@@ -124,6 +132,21 @@ export const Live = () => {
 	 *
 	 * The body varies; the coach's position in the tree does not.
 	 */
+	const dismiss = useCallback((endedAtMs: number) => {
+		setClosed(endedAtMs)
+		// A failed request costs nothing worse than the panel returning on the next poll, which is
+		// honest — not worth an error banner over a running game.
+		void api.dismissDebrief(endedAtMs).catch(() => {})
+	}, [])
+
+	/*
+	 * A game that just finished outranks everything else on the idle screen: the focus list is
+	 * about the last twenty games and will still be there in a minute, while the debrief is about
+	 * the game whose scoreboard he is looking at right now.
+	 */
+	const ended =
+		data?.justEnded && data.justEnded.endedAtMs !== closed ? data.justEnded : null
+
 	const body =
 		!data ?
 			<div className="live__content">
@@ -169,7 +192,17 @@ export const Live = () => {
 					</span>
 				</div>
 				<div className="live__idlewrap">
-					<div className="live__idle">
+					{ended ?
+						ended.stage === "stored" && ended.gameId !== null ?
+							<Debrief
+								gameId={ended.gameId}
+								size={size}
+								championName={ended.championName}
+								win={ended.win}
+								onDismiss={() => dismiss(ended.endedAtMs)}
+							/>
+						:	<Ingesting endedAtMs={ended.endedAtMs} onDismiss={() => dismiss(ended.endedAtMs)} />
+					:	<div className="live__idle">
 						<img className="live__mark" src="/icons/icon-128.png" alt="" width={size === "wide" ? 44 : 22} height={size === "wide" ? 44 : 22} />
 						<strong>{starting ?? "Not in a game"}</strong>
 						<span>
@@ -177,7 +210,8 @@ export const Live = () => {
 								"Your numbers appear as soon as the game clock starts."
 							:	(data.reason ?? "waiting")}
 						</span>
-					</div>
+						</div>
+					}
 
 					{data.focus && data.focus.length > 0 && (
 						<div className="live__bigfocus">
@@ -352,3 +386,34 @@ export const Live = () => {
 		</div>
 	)
 }
+
+/**
+ * The gap between the game ending and the match existing.
+ *
+ * The client publishes a finished game to match history on its own schedule, so there is a real
+ * window — usually seconds — where the only honest thing to show is that we are fetching. Saying
+ * that beats an empty panel: the screen he described was one that looked broken while working.
+ */
+const Ingesting = ({ endedAtMs, onDismiss }: { endedAtMs: number; onDismiss: () => void }) => (
+	<div className="csk-debrief csk-debrief--compact">
+		<div className="csk-debrief__head">
+			<img className="live__mark" src="/icons/icon-128.png" alt="" width={32} height={32} />
+			<div className="csk-debrief__who">
+				<strong>Game over</strong>
+				<span className="csk-debrief__line">
+					<span className="dim">pulling the match out of the client — this fills in on its own</span>
+				</span>
+			</div>
+			<button className="csk-debrief__close" onClick={onDismiss} title="Close this debrief">
+				✕
+			</button>
+		</div>
+		<div className="csk-debrief__waiting">
+			<div className="skeleton" style={{ height: 14, marginBottom: 8 }} />
+			<div className="skeleton" style={{ height: 40 }} />
+			<span className="dim">
+				ended {new Date(endedAtMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+			</span>
+		</div>
+	</div>
+)
