@@ -167,7 +167,7 @@ describe("buildFacts — rate limiting", () => {
 		const mem = newFactMemory()
 		ok(
 			buildFacts(input({ nowSec: 600, pace: { cs: 100, expected: 130, exact: true } }), mem).some(
-				f => f.startsWith("FARM:")
+				f => /camps (behind|ahead)/.test(f)
 			)
 		)
 		const frozen = buildFacts(
@@ -175,13 +175,13 @@ describe("buildFacts — rate limiting", () => {
 			input({ nowSec: 600 + FARM_COOLDOWN_SEC * 2, pace: { cs: 100, expected: 160, exact: true } }),
 			mem
 		)
-		strictEqual(frozen.some(f => f.startsWith("FARM:")), false, "same CS, so nothing new to say")
+		strictEqual(frozen.some(f => /camps (behind|ahead)/.test(f)), false, "same CS, so nothing new to say")
 
 		const moved = buildFacts(
 			input({ nowSec: 600 + FARM_COOLDOWN_SEC * 2, pace: { cs: 130, expected: 175, exact: true } }),
 			mem
 		)
-		ok(moved.some(f => f.startsWith("FARM:")), "once he has actually farmed, the gap is news again")
+		ok(moved.some(f => /camps (behind|ahead)/.test(f)), "once he has actually farmed, the gap is news again")
 	})
 
 	it("forgets gold after a recall", () => {
@@ -197,9 +197,9 @@ describe("buildFacts — rate limiting", () => {
 	it("mentions the farm gap once, then not for minutes", () => {
 		const mem = newFactMemory()
 		const pace = { cs: 100, expected: 130, exact: true }
-		ok(buildFacts(input({ nowSec: 600, pace }), mem).some(f => f.startsWith("FARM:")))
+		ok(buildFacts(input({ nowSec: 600, pace }), mem).some(f => /camps (behind|ahead)/.test(f)))
 		strictEqual(
-			buildFacts(input({ nowSec: 660, pace }), mem).some(f => f.startsWith("FARM:")),
+			buildFacts(input({ nowSec: 660, pace }), mem).some(f => /camps (behind|ahead)/.test(f)),
 			false,
 			"a minute later is nagging"
 		)
@@ -208,7 +208,7 @@ describe("buildFacts — rate limiting", () => {
 				// Past the cooldown AND he has actually farmed since — both are required.
 				input({ nowSec: 600 + FARM_COOLDOWN_SEC, pace: { cs: 130, expected: 165, exact: true } }),
 				mem
-			).some(f => f.startsWith("FARM:")),
+			).some(f => /camps (behind|ahead)/.test(f)),
 			"after the cooldown, with real progress, it has earned a second mention"
 		)
 	})
@@ -221,7 +221,7 @@ describe("buildFacts — rate limiting", () => {
 	it("marks an interpolated farm reading as approximate", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(input({ pace: { cs: 100, expected: 130, exact: false } }), mem)
-		ok(out[0]!.includes("approximate"), "a between-checkpoints reading must carry its hedge")
+		ok(out[0]!.includes("roughly"), "a between-checkpoints reading must carry its hedge")
 	})
 })
 
@@ -401,6 +401,33 @@ describe("buildFacts — objectives", () => {
 	})
 })
 
+describe("buildFacts — every string is a script", () => {
+	it("emits nothing a person would not say out loud", () => {
+		/*
+		 * The coach reads these verbatim. It once said "Praise, you just got a double kill!" —
+		 * reading an internal label aloud — and "14 camps AHEAD of your own pace (193 vs your
+		 * usual 179)", parenthetical and shouting included, while dropping the hedge that trailed
+		 * after it.
+		 */
+		const mem = newFactMemory()
+		const out = [
+			...buildFacts(input({ myEvents: [{ id: 1, name: "DragonKill", stolen: true }] }), mem),
+			...buildFacts(input({ nowSec: 700, pace: { cs: 193, expected: 179, exact: false } }), mem),
+			...buildFacts(input({ nowSec: 800, currentGold: 2000 }), mem),
+			...buildFacts(
+				input({ nowSec: 900, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }),
+				mem
+			)
+		]
+		ok(out.length >= 4, `expected several facts, got ${out.length}`)
+		for (const f of out) {
+			strictEqual(/^[A-Z]+:/.test(f), false, `internal label in: ${f}`)
+			strictEqual(/\(/.test(f), false, `parenthetical in: ${f}`)
+			strictEqual(/\b[A-Z]{4,}\b/.test(f), false, `shouting in: ${f}`)
+		}
+	})
+})
+
 describe("buildFacts — ranking", () => {
 	it("phrases every fact in the second person", () => {
 		/*
@@ -435,14 +462,14 @@ describe("buildFacts — ranking", () => {
 			}),
 			mem
 		)
-		strictEqual(out[0]!.startsWith("PRAISE:"), false, `a fact must lead, got: ${out[0]}`)
-		ok(out.some(f => f.startsWith("PRAISE:")), "but the praise is still offered")
+		strictEqual(/just got a/.test(out[0]!), false, `a fact must lead, got: ${out[0]}`)
+		ok(out.some(f => /just got a/.test(f)), "but the praise is still offered")
 	})
 
 	it("offers praise when nothing else is on the table", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(input({ myEvents: [{ id: 1, name: "BaronKill" }] }), mem)
-		ok(out[0]!.startsWith("PRAISE: you secured Baron"), `got: ${out[0]}`)
+		ok(out[0]! === "you secured Baron", `got: ${out[0]}`)
 	})
 
 	it("never repeats the same congratulation", () => {
@@ -464,7 +491,7 @@ describe("buildFacts — ranking", () => {
 	it("names a steal as a steal", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(input({ myEvents: [{ id: 7, name: "BaronKill", stolen: true }] }), mem)
-		ok(out[0]!.includes("you STOLE Baron"))
+		ok(out[0]!.includes("you stole Baron"))
 	})
 
 	it("announces each event once", () => {
@@ -474,7 +501,7 @@ describe("buildFacts — ranking", () => {
 		deepStrictEqual(buildFacts(input({ myEvents: ev }), mem), [])
 	})
 
-	it("offers at most one death even when four people are dead", () => {
+	it("collapses four dead enemies into one window, not four timers", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(
 			input({
@@ -487,7 +514,13 @@ describe("buildFacts — ranking", () => {
 			}),
 			mem
 		)
-		strictEqual(out.filter(f => f.includes("just died")).length, 1)
+		/*
+		 * Four dead is a window, and a window is offered ALONE — there is no list to count deaths
+		 * in. That is the stronger version of "at most one death": zero, plus the thing that
+		 * actually matters.
+		 */
+		strictEqual(out.length, 1)
+		ok(out[0]!.includes("of them are dead"), `got: ${out[0]}`)
 	})
 
 	it("never offers more than the cap", () => {

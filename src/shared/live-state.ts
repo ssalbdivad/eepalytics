@@ -101,6 +101,8 @@ You: ${me.champion}${me.level ? ` lv${me.level}` : ""} ${me.k ?? 0}/${me.d ?? 0}
 Your team: ${s.allies.map(line).join(" · ") || "unknown"}
 
 Enemy team: ${s.enemies.map(line).join(" · ") || "unknown"}
+
+Alive right now: ${1 + s.allies.filter(p => !p.dead).length - (s.me.dead ? 1 : 0)} of yours against ${s.enemies.filter(p => !p.dead).length} of theirs.
 ${s.recentEvents.length > 0 ? `
 Just happened: ${s.recentEvents.join("; ")}` : ""}${
 		s.unseen.length > 0 ?

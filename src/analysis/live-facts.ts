@@ -30,7 +30,8 @@ const MULTI: Record<number, string> = {
 	2: "double kill",
 	3: "triple kill",
 	4: "quadra kill",
-	5: "PENTAKILL"
+	// Left shouting: it is a word people shout, and the game shouts it too.
+	5: "pentakill"
 }
 
 /** A death with less than this left is spent before the sentence is spoken and heard. */
@@ -169,8 +170,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		if (e.name === "ChampionKill" && (e.killStreak ?? 0) >= 2)
 			line = `you just got a ${MULTI[e.killStreak!] ?? `${e.killStreak}-kill`}`
 		else if (e.name === "DragonKill")
-			line = e.stolen ? `you STOLE the ${e.dragonType ?? ""} dragon`.trim() : "you secured the dragon"
-		else if (e.name === "BaronKill") line = e.stolen ? "you STOLE Baron" : "you secured Baron"
+			line = e.stolen ? `you stole the ${e.dragonType ?? ""} dragon`.trim() : "you secured the dragon"
+		else if (e.name === "BaronKill") line = e.stolen ? "you stole Baron" : "you secured Baron"
 		else if (e.name === "HeraldKill") line = "you secured Herald"
 		if (line === "") continue
 		/*
@@ -180,7 +181,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		if (mem.praiseSaid.has(line)) continue
 		mem.praiseSaid.add(line)
 		mem.announcedEvents.add(e.id)
-		praise.push(`PRAISE: ${line} — worth saying so`)
+		praise.push(line)
 	}
 
 	/*
@@ -202,11 +203,20 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		mem.lastFarmAtSec = input.nowSec
 		mem.lastFarmCs = input.pace.cs
 		const behind = input.pace.expected - input.pace.cs
-		const tail = input.pace.exact ? "" : " — interpolated, approximate"
+		/*
+		 * Written to be SAID, not parsed.
+		 *
+		 * The old form was `FARM: 14 camps AHEAD of your own pace (193 vs your usual 179) —
+		 * interpolated, approximate`, and the coach read it out: label, shouty caps, parenthetical
+		 * and all, while silently dropping the hedge at the end. These strings are the script, so
+		 * the hedge is a word inside the sentence and there is nothing in them a person would not
+		 * say out loud.
+		 */
+		const hedge = input.pace.exact ? "" : "roughly "
 		farm.push(
 			behind > 0 ?
-				`FARM: ${behind} camps behind your own pace (${input.pace.cs} vs your usual ${input.pace.expected})${tail}`
-			:	`FARM: ${-behind} camps AHEAD of your own pace (${input.pace.cs} vs your usual ${input.pace.expected})${tail}`
+				`you're ${hedge}${behind} camps behind your usual pace, ${input.pace.cs} against your usual ${input.pace.expected}`
+			:	`you're ${hedge}${-behind} camps ahead of your usual pace, ${input.pace.cs} against your usual ${input.pace.expected}`
 		)
 	}
 
@@ -345,7 +355,15 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 			[...windows, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
 		:	[...nonDeath, ...deathsAllowed, ...praise]
 
-	const out = ranked.slice(0, MAX_FACTS)
+	/*
+	 * A live window is offered ALONE.
+	 *
+	 * Ranking it first was not enough: a judge found the coach picking a farm stat over "2 of them
+	 * are dead — you have about 10s", the single most actionable fact in the transcript, spent on
+	 * a number that would be equally true thirty seconds later. When something expires in seconds
+	 * and everything else does not, there is no choice worth offering.
+	 */
+	const out = windows.length > 0 ? windows.slice(0, 1) : ranked.slice(0, MAX_FACTS)
 	/*
 	 * Set unconditionally, including to false on an empty turn.
 	 *

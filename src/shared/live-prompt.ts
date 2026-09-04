@@ -48,6 +48,11 @@ line to say and it is rarely the most useful one — unspent gold and a farm gap
 genuinely cannot see. Take the death when it is the only thing, or when the window is about to
 close.
 
+**A timer belongs to the champion it is written next to.** The roster says who is DEAD; it never
+says for how long. If a champion is marked DEAD and no line in the list gives their timer, you may
+say they are down — you may NOT say for how many seconds. Inventing one is the worst thing you can
+do here: it sends him to dive someone who is already back up.
+
 **Never do arithmetic on the block.** Use the numbers as written. Summing the team's kills into
 "your team has 30 takedowns" produces a number that appears nowhere and cannot be checked, and it
 reads exactly like a measurement.
