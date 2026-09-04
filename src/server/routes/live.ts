@@ -22,8 +22,6 @@
  */
 
 import { Hono } from "hono"
-import { mkdir, rm, writeFile } from "node:fs/promises"
-import { join } from "node:path"
 import { liveNudges, paceReading } from "../../analysis/live-coach.ts"
 import type { LiveState } from "../../analysis/live-coach.ts"
 import { baselineFromRows, perGameMetrics } from "../../analysis/index.ts"
@@ -33,7 +31,7 @@ import { lcu } from "../../daemon/lcu.ts"
 import { getSettings, recentFeedbackItems } from "../../db/queries.ts"
 import { LiveResponse } from "../../shared/schema/api.ts"
 import type { LiveAllGameData } from "../../shared/schema/live.ts"
-import { DATA_DIR, USER_PUUID } from "../../shared/constants.ts"
+import { USER_PUUID } from "../../shared/constants.ts"
 import { observeFrame } from "../../review/live-vision.ts"
 import { fail, send } from "../respond.ts"
 
@@ -71,6 +69,20 @@ export const createLiveRoute = (): Hono => {
 			games: f.games,
 			fix: f.fixes[0] ?? ""
 		}))
+	}
+
+	/**
+	 * Focus areas change when a review lands, not between two glances a few seconds apart, and
+	 * rebuilding them means aggregating every recent feedback item. Cached for a minute so the
+	 * observe path does no SQL at all in the common case.
+	 */
+	let focusCache: { atMs: number; value: ReturnType<typeof standingFocus> } | null = null
+	const cachedFocus = (): ReturnType<typeof standingFocus> => {
+		const now = Date.now()
+		if (focusCache && now - focusCache.atMs < 60_000) return focusCache.value
+		const value = standingFocus()
+		focusCache = { atMs: now, value }
+		return value
 	}
 
 	app.get("/live", async c => {
@@ -171,6 +183,9 @@ export const createLiveRoute = (): Hono => {
 		const body = (await c.req.json().catch(() => null)) as {
 			frame?: unknown
 			recent?: unknown
+			/** Supplied by the overlay, which already polls for them. Saves an LCU round trip. */
+			championName?: unknown
+			gameTimeSec?: unknown
 			/** A spoken question. Present only when the user actually asked something. */
 			question?: unknown
 		} | null
@@ -180,41 +195,55 @@ export const createLiveRoute = (): Hono => {
 		if (b64 === "" || b64.length > 12_000_000)
 			return fail(c, 400, "frame must be a base64 image under ~12MB", "bad-frame")
 
-		const dir = join(DATA_DIR, "live-frames")
-		await mkdir(dir, { recursive: true })
-		const path = join(dir, `frame-${Date.now()}.png`)
+		/*
+		 * The frame goes straight into the model message. It is never written to disk: these are
+		 * screenshots of the user's whole screen, and the previous version's write-then-delete
+		 * was both a privacy surface and a latency cost for no benefit.
+		 */
+		/*
+		 * Context comes from the CALLER when it has it.
+		 *
+		 * This route used to re-read the live client and rebuild the focus list on every glance,
+		 * which put an LCU round trip and a pile of SQL in front of a call whose entire value is
+		 * being fast. The overlay already polls /api/live every few seconds and holds both the
+		 * champion and the clock, so it can simply say what it knows. The LCU read stays as a
+		 * fallback for callers that do not.
+		 */
+		const givenChampion = typeof body?.championName === "string" ? body.championName : null
+		const givenTime = typeof body?.gameTimeSec === "number" ? body.gameTimeSec : null
 
-		try {
-			await writeFile(path, Buffer.from(b64, "base64"))
-
-			const settings = getSettings()
-			const focus = standingFocus().map(f => f.fix).filter(f => f !== "")
-			// Best effort: the game may have ended between the capture and this call.
+		let championName = givenChampion
+		let gameTimeSec = givenTime
+		if (championName === null || gameTimeSec === null) {
 			const handle = await lcu()
 			const data = handle ? await handle.live.allGameData().catch(() => null) : null
 			const me = data ? findMe(data) : null
-
-			const result = await observeFrame({
-				framePath: path,
-				dir,
-				championName: me?.championName ?? null,
-				gameTimeSec: data?.gameData?.gameTime ?? null,
-				focus,
-				recent: Array.isArray(body?.recent) ? (body.recent as unknown[]).filter(r => typeof r === "string").slice(-4) as string[] : [],
-				question: typeof body?.question === "string" ? body.question.slice(0, 400) : null
-			})
-
-			return c.json({
-				ok: result.ok,
-				text: result.text,
-				costUsd: result.costUsd,
-				durationMs: result.durationMs,
-				...(result.error ? { error: result.error } : {})
-			})
-		} finally {
-			// Always, including on failure. See the route comment.
-			await rm(path, { force: true }).catch(() => {})
+			championName = championName ?? me?.championName ?? null
+			gameTimeSec = gameTimeSec ?? data?.gameData?.gameTime ?? null
 		}
+
+		const focus = cachedFocus().map(f => f.fix).filter(f => f !== "")
+
+		const result = await observeFrame({
+			imageBase64: b64,
+			mediaType: /^data:(image\/\w+);/.exec(frame)?.[1] ?? "image/jpeg",
+			championName,
+			gameTimeSec,
+			focus,
+			recent:
+				Array.isArray(body?.recent) ?
+					((body.recent as unknown[]).filter(r => typeof r === "string").slice(-4) as string[])
+				:	[],
+			question: typeof body?.question === "string" ? body.question.slice(0, 400) : null
+		})
+
+		return c.json({
+			ok: result.ok,
+			text: result.text,
+			costUsd: result.costUsd,
+			durationMs: result.durationMs,
+			...(result.error ? { error: result.error } : {})
+		})
 	})
 
 	return app

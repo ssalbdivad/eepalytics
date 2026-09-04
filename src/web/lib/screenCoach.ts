@@ -46,9 +46,14 @@ export interface ScreenCoachState {
 
 /** JPEG at 0.7 rather than PNG: a screenshot of a game compresses to roughly a tenth the bytes,
  *  and the model is reading a scene, not inspecting pixels. Smaller upload, faster call. */
-const FRAME_QUALITY = 0.7
-/** Downscale before upload. 1280 wide is plenty to read a minimap and health bars. */
-const FRAME_WIDTH = 1280
+const FRAME_QUALITY = 0.65
+/**
+ * Downscale before upload. 1024 is still plenty to read a minimap and health bars, and it is a
+ * third fewer bytes than 1280 — which matters on a path whose whole value is being fast.
+ * Measured across 800/1024/1280 the model's own latency varies more than the size does, so this
+ * is the cheap end of a range where quality is unaffected rather than a tuned optimum.
+ */
+const FRAME_WIDTH = 1024
 
 export const useScreenCoach = () => {
 	const [state, setState] = useState<ScreenCoachState>({
@@ -71,6 +76,8 @@ export const useScreenCoach = () => {
 	const speakRef = useRef(false)
 	// Read inside the interval without re-arming it on every observation.
 	const recentRef = useRef<string[]>([])
+	/** Champion + clock from the caller's own poll, to keep the observe path off the LCU. */
+	const contextRef = useRef<{ championName?: string; gameTimeSec?: number } | null>(null)
 
 	useEffect(() => {
 		speakRef.current = state.speak
@@ -221,7 +228,13 @@ export const useScreenCoach = () => {
 				const res = await fetch("/api/live/observe", {
 					method: "POST",
 					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ frame, recent: recentRef.current })
+					// The overlay already polls /api/live, so it tells the server what it knows
+					// rather than making it re-read the client. See the route.
+					body: JSON.stringify({
+						frame,
+						recent: recentRef.current,
+						...(contextRef.current ?? {})
+					})
 				})
 				const out = (await res.json()) as {
 					text?: string
@@ -276,6 +289,10 @@ export const useScreenCoach = () => {
 		ask,
 		listen,
 		setInterval: (sec: number) => setState(s => ({ ...s, intervalSec: sec })),
+		/** Called by the page each poll so a glance costs no extra client round trip. */
+		setContext: (ctx: { championName?: string; gameTimeSec?: number } | null) => {
+			contextRef.current = ctx
+		},
 		setSpeak: (on: boolean) => {
 			if (!on) window.speechSynthesis?.cancel()
 			setState(s => ({ ...s, speak: on }))

@@ -49,10 +49,10 @@ export interface LiveObservation {
 }
 
 export interface LiveVisionInput {
-	/** Absolute path to the frame. */
-	framePath: string
-	/** Directory the CLI is allowed to read. */
-	dir: string
+	/** The frame itself, base64. Never written to disk — see the header. */
+	imageBase64: string
+	/** Defaults to image/jpeg. */
+	mediaType?: string
 	championName?: string | null
 	/** Game clock, when known, so the advice can be phase-appropriate. */
 	gameTimeSec?: number | null
@@ -82,7 +82,7 @@ const prompt = (input: LiveVisionInput): string => {
 	 * asked directly, silence is just unhelpful. The evidence rules do not move either way.
 	 */
 	if (asked !== "")
-		return `Read the image at \`${input.framePath}\`. It is a screenshot of a live League of
+		return `The image attached to this message is a screenshot of a live League of
 Legends game${input.championName ? `, played by the ${input.championName} player` : ""}. Game
 clock: ${clock}.
 
@@ -99,7 +99,7 @@ Answer it. Two short sentences at most — it will be read or spoken while they 
 - If it is a judgement call, give your actual opinion — they asked for it.
 ${input.focus && input.focus.length > 0 ? `\nThey are working on: ${input.focus.join("; ")}\n` : ""}`
 
-	return `Read the image at \`${input.framePath}\`. It is a screenshot of a live League of
+	return `The image attached to this message is a screenshot of a live League of
 Legends game${input.championName ? `, played by the ${input.championName} player` : ""}. Game
 clock: ${clock}.
 
@@ -111,19 +111,30 @@ Reply with exactly \`${NOTHING}\` unless there is something genuinely worth inte
 for. That is the expected answer. A coach who speaks every fifteen seconds becomes noise inside
 a minute, and noise gets muted.
 
-Worth speaking for: an objective about to spawn or being taken, a lane visibly overextended and
-about to die, an obvious free play on screen, a recall they should take now, a fight starting
-they are not in position for.
+**Worth speaking for — a warning:** an objective about to spawn or being taken, a lane visibly
+overextended and about to die, an obvious free play on screen, a recall they should take now, a
+fight starting they are not in position for.
 
-Not worth speaking for: anything they can already see, general advice, encouragement,
-observations about the score, or anything you said recently.
+**Worth speaking for — a genuinely sick play.** If the frame SHOWS something went well, say so:
+a multi-kill, a steal, a save, surviving what should have killed them, a fight they had no
+business winning. A coach who only ever warns is a coach you mute.
+
+Be warm and a little unhinged about it — you are Lillia, so dreams, sleep, pollen and prancing
+are yours to use. "That was CRIMINAL, they need a nap after that." "Bough down." Never force a
+pun, never reuse one, and never fake it for something ordinary: praise spent on a normal recall
+is praise that means nothing when the real moment comes. If you cannot tell it was impressive,
+stay quiet.
+
+**Not worth speaking for:** anything they can already see, general advice, vague encouragement
+with nothing behind it, observations about the score, or anything you said recently.
 
 ## Rules
 
 - **Only what is legible in this frame.** You cannot see cooldowns you cannot read, what happened
   before, or what they intend. Do not guess at any of it.
 - **One sentence, under 100 characters.** It may be spoken aloud while they are playing.
-- **Imperative and immediate.** "Back off, three missing top" — not "you might consider".
+- **Imperative and immediate** when it is a warning: "Back off, three missing top" — not "you
+  might consider". When it is praise, just be delighted; there is nothing to instruct.
 - No preamble, no markdown, no quotes. The sentence or \`${NOTHING}\`.
 ${input.focus && input.focus.length > 0 ? `\n## What they are working on\n\n${input.focus.map(f => `- ${f}`).join("\n")}\n` : ""}${
 		input.recent && input.recent.length > 0 ?
@@ -138,10 +149,13 @@ export const observeFrame = async (
 	signal?: AbortSignal
 ): Promise<LiveObservation> => {
 	const started = Date.now()
-	const bin = (process.env.FAWNSEI_CLAUDE_BIN ?? process.env.CSK_CLAUDE_BIN) ?? "claude"
+	const bin = process.env.FAWNSEI_CLAUDE_BIN ?? process.env.CSK_CLAUDE_BIN ?? "claude"
 	// Deliberately the small model: this runs every N seconds and the task is "look and mostly
 	// say nothing", which does not need the expensive one.
-	const model = (process.env.FAWNSEI_LIVE_VISION_MODEL ?? process.env.CSK_LIVE_VISION_MODEL) ?? "claude-haiku-4-5-20251001"
+	const model =
+		process.env.FAWNSEI_LIVE_VISION_MODEL ??
+		process.env.CSK_LIVE_VISION_MODEL ??
+		"claude-haiku-4-5-20251001"
 
 	return await new Promise<LiveObservation>(resolve => {
 		let proc
@@ -150,14 +164,19 @@ export const observeFrame = async (
 				bin,
 				[
 					"--print",
+					// stream-json BOTH ways: the input format is what allows an image content
+					// block, and the CLI refuses stream-json input without it (and without
+					// --verbose). No Read tool, no --add-dir, no file on disk.
+					"--input-format",
+					"stream-json",
 					"--output-format",
-					"json",
+					"stream-json",
+					"--verbose",
 					"--model",
 					model,
+					// No tools at all. The picture arrives in the message; there is nothing to fetch.
 					"--tools",
-					"Read",
-					"--add-dir",
-					input.dir,
+					"",
 					"--disable-slash-commands",
 					"--strict-mcp-config",
 					"--no-session-persistence",
@@ -176,6 +195,9 @@ export const observeFrame = async (
 		let stdout = ""
 		proc.stdout.on("data", d => (stdout += String(d)))
 		proc.stderr.on("data", () => {})
+		// The CLI can close stdin before we finish writing a large frame; that is not an error
+		// worth surfacing, and without a handler it becomes an unhandled EPIPE that kills us.
+		proc.stdin.on("error", () => {})
 		proc.on("error", err => {
 			clearTimeout(timer)
 			resolve({ ok: false, text: "", costUsd: null, durationMs: Date.now() - started, error: errText(err) })
@@ -192,30 +214,49 @@ export const observeFrame = async (
 				})
 				return
 			}
-			try {
-				const env = JSON.parse(stdout) as { result?: unknown; total_cost_usd?: unknown }
-				const raw = typeof env.result === "string" ? env.result.trim() : ""
-				// Strip the quotes and trailing period a model adds to a one-liner.
-				const cleaned = raw.replace(/^["'`]+|["'`]+$/g, "").trim()
-				const nothing = cleaned === "" || cleaned.toUpperCase().startsWith(NOTHING)
-				resolve({
-					ok: true,
-					text: nothing ? "" : cleaned,
-					costUsd: typeof env.total_cost_usd === "number" ? env.total_cost_usd : null,
-					durationMs: Date.now() - started
-				})
-			} catch (err) {
-				resolve({
-					ok: false,
-					text: "",
-					costUsd: null,
-					durationMs: Date.now() - started,
-					error: `unreadable CLI envelope: ${errText(err)}`
-				})
+
+			// stream-json emits one JSON object per line; the `result` line carries the answer.
+			let raw = ""
+			let costUsd: number | null = null
+			for (const line of stdout.split("\n")) {
+				if (line.trim() === "") continue
+				let o: { type?: string; result?: unknown; total_cost_usd?: unknown }
+				try {
+					o = JSON.parse(line)
+				} catch {
+					continue
+				}
+				if (o.type === "result") {
+					if (typeof o.result === "string") raw = o.result
+					if (typeof o.total_cost_usd === "number") costUsd = o.total_cost_usd
+				}
 			}
+
+			const cleaned = raw.trim().replace(/^["'`]+|["'`]+$/g, "").trim()
+			const nothing = cleaned === "" || cleaned.toUpperCase().startsWith(NOTHING)
+			resolve({
+				ok: true,
+				text: nothing ? "" : cleaned,
+				costUsd,
+				durationMs: Date.now() - started
+			})
 		})
 
-		proc.stdin.end(prompt(input))
+		proc.stdin.end(
+			`${JSON.stringify({
+				type: "user",
+				message: {
+					role: "user",
+					content: [
+						{
+							type: "image",
+							source: { type: "base64", media_type: input.mediaType ?? "image/jpeg", data: input.imageBase64 }
+						},
+						{ type: "text", text: prompt(input) }
+					]
+				}
+			})}\n`
+		)
 	})
 }
 

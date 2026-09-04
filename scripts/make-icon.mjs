@@ -61,17 +61,23 @@ app.whenReady().then(async () => {
 	       style="display:block;image-rendering:auto;filter:saturate(1.05) contrast(1.03)"/>
 	  <svg width="${largest}" height="${largest}" viewBox="0 0 512 512"
 	       style="position:absolute;inset:0">
-	    <g fill="none" stroke="#15171d" stroke-width="14" stroke-linecap="round">
-	      <circle cx="196" cy="252" r="54" fill="#dceefc" fill-opacity="0.18"/>
-	      <circle cx="304" cy="242" r="54" fill="#dceefc" fill-opacity="0.18"/>
-	      <path d="M250 247 L250 247"/>
-	      <path d="M142 246 l-28 -12"/>
-	      <path d="M358 238 l28 -12"/>
+	    <!--
+	      Positions measured off the 128px source and scaled x4: her eyes sit at roughly
+	      (50,70) and (80,70) in the source, i.e. (200,280) and (320,278) here. The first
+	      attempt put them at y=252 with r=54 — 28px too high and far too large, which landed
+	      them on her forehead and read, accurately, as cursed.
+	    -->
+	    <g fill="none" stroke="#1b1d24" stroke-width="11" stroke-linecap="round">
+	      <circle cx="200" cy="280" r="38" fill="#dceefc" fill-opacity="0.16"/>
+	      <circle cx="320" cy="278" r="38" fill="#dceefc" fill-opacity="0.16"/>
+	      <path d="M238 279 L282 279"/>
+	      <path d="M162 275 l-26 -10"/>
+	      <path d="M358 273 l26 -10"/>
 	    </g>
-	    <path d="M172 228 a38 38 0 0 1 32 -20" stroke="#ffffff" stroke-opacity="0.68"
-	          stroke-width="8" fill="none" stroke-linecap="round"/>
-	    <path d="M282 218 a38 38 0 0 1 32 -20" stroke="#ffffff" stroke-opacity="0.68"
-	          stroke-width="8" fill="none" stroke-linecap="round"/>
+	    <path d="M182 262 a30 30 0 0 1 24 -15" stroke="#ffffff" stroke-opacity="0.6"
+	          stroke-width="6" fill="none" stroke-linecap="round"/>
+	    <path d="M302 260 a30 30 0 0 1 24 -15" stroke="#ffffff" stroke-opacity="0.6"
+	          stroke-width="6" fill="none" stroke-linecap="round"/>
 	  </svg>
 	</div></body></html>`
 	await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
