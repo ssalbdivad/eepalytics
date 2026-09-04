@@ -31,7 +31,7 @@
 import { getSettings } from "../db/queries.ts"
 import { publish } from "./bus.ts"
 import { notePhase } from "./gate.ts"
-import { isPidAlive, readLockfileSync, sameLockfile, watchLockfile } from "../lcu/index.ts"
+import { isPidAlive, readAnyLockfileSync, sameLockfile, watchAnyLockfile } from "../lcu/index.ts"
 import type { Lockfile } from "../lcu/index.ts"
 import {
 	fetchCurrentGameId,
@@ -143,9 +143,9 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 	}
 
 	/**
-	 * Deliberately `null`, NOT `readLockfileSync()`.
+	 * Deliberately `null`, NOT `readAnyLockfileSync()`.
 	 *
-	 * `watchLockfile` fires once immediately, and `onLockfileChanged` short-circuits on
+	 * `watchAnyLockfile` fires once immediately, and `onLockfileChanged` short-circuits on
 	 * `sameLockfile(bound, next)`. Seeding `bound` with the lockfile that is already on disk
 	 * therefore made that first callback a no-op, and the whole boot path below it — the
 	 * `isPidAlive` staleness probe in particular — never ran for the case it exists to catch:
@@ -192,7 +192,7 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 		if (stopped || polling) return
 		polling = true
 		try {
-			const creds = readLockfileSync()
+			const creds = readAnyLockfileSync()
 			if (!creds) {
 				setPhase(null)
 				setState("DISCONNECTED", "no lockfile")
@@ -207,7 +207,7 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 				if (failures >= FAILURE_THRESHOLD) {
 					// Re-read the lockfile before giving up: the client may have restarted on a
 					// new port while we were away.
-					const fresh = readLockfileSync()
+					const fresh = readAnyLockfileSync()
 					if (!sameLockfile(fresh, creds)) {
 						onLockfileChanged(fresh)
 						return
@@ -255,7 +255,7 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 		timer.unref?.()
 	}
 
-	const unwatch = watchLockfile(onLockfileChanged, { intervalMs: 2000 })
+	const unwatch = watchAnyLockfile(onLockfileChanged, { intervalMs: 2000 })
 	void tick().finally(schedule)
 
 	return {

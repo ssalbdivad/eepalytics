@@ -420,7 +420,7 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 						<div className="label">Transport</div>
 						<div className="control">
 							<div className="seg">
-								{(["bridge", "curl"] as const).map(t => (
+								{(["bridge", "curl", "direct"] as const).map(t => (
 									<button
 										key={t}
 										className={cls(draft.transport === t && "active")}
@@ -432,10 +432,13 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							</div>
 						</div>
 						<div className="help">
-							WSL2 can't reach the Windows client over TCP, so everything goes through Windows
-							interop. <strong>bridge</strong> is a long-lived <code className="mono">node.exe</code>{" "}
-							over stdio (~2 ms); <strong>curl</strong> shells out per request (~88 ms). The
-							daemon falls back to curl on its own if the bridge won't start.
+							WSL2 can't reach the Windows client over TCP, so on WSL everything goes through
+							Windows interop. <strong>bridge</strong> is a long-lived{" "}
+							<code className="mono">node.exe</code> over stdio (~2 ms); <strong>curl</strong>{" "}
+							shells out per request (~88 ms); <strong>direct</strong> is this process talking to
+							the loopback itself, which is what a native Windows install uses. This is a
+							preference — the daemon picks whichever actually works here and says which in the
+							log.
 						</div>
 					</div>
 

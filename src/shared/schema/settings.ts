@@ -55,11 +55,16 @@ export const Settings = type({
 	coachIntensity: "0<=number<=1",
 
 	/**
-	 * How we reach the League client across the WSL2 boundary. `bridge` is a long-lived
-	 * Windows-side node.exe over stdio (p50 2.3 ms); `curl` shells out to curl.exe (~88 ms).
-	 * The daemon falls back to curl on its own if the bridge will not start.
+	 * How we reach the League client. `bridge` is a long-lived Windows-side node.exe over stdio
+	 * (p50 2.3 ms) and `curl` shells out to curl.exe (~88 ms) — both exist only to cross the
+	 * WSL2 boundary. `direct` is this process talking to the loopback itself, which is what a
+	 * native Windows install uses and is faster than either.
+	 *
+	 * This is a *preference*, not a command: the daemon reorders around what can actually run
+	 * here (there is no `/mnt/c` on native Windows, and no reachable loopback under WSL2 NAT)
+	 * and says in the log which it picked and why. See `src/lcu/select.ts`.
 	 */
-	transport: "'bridge'|'curl'",
+	transport: "'bridge'|'curl'|'direct'",
 
 	/** Poll the LCU this often while idle. Cheap — one request. */
 	pollIdleMs: "number",
@@ -109,7 +114,7 @@ export const SettingsPatch = type({
 	"replayFolder?": "string",
 	"captureRequestTtlMin?": "number",
 	"coachIntensity?": "0<=number<=1",
-	"transport?": "'bridge'|'curl'",
+	"transport?": "'bridge'|'curl'|'direct'",
 	"pollIdleMs?": "number",
 	"pollInGameMs?": "number",
 	"idleGraceMs?": "number",

@@ -33,8 +33,8 @@ export interface CaptureGate {
 export interface DaemonStatus {
 	daemon: "ok" | "starting" | "degraded" | "stopped"
 	lcu: "connected" | "disconnected"
-	/** Which transport actually carried the last LCU request. `none` = neither works. */
-	bridge: "bridge" | "curl" | "none"
+	/** Which transport actually carried the last LCU request. `none` = none of them works. */
+	bridge: "bridge" | "curl" | "direct" | "none"
 	gameflowPhase: string | null
 	/** Epoch ms the daemon process came up, for the uptime readout. */
 	startedMs?: number

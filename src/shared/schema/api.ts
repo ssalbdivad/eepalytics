@@ -69,8 +69,8 @@ export const HealthResponse = type({
 	/** `ok` = workers running. `starting` = booting. `degraded` = running without the LCU. */
 	daemon: "'ok'|'starting'|'degraded'|'stopped'",
 	lcu: "'connected'|'disconnected'",
-	/** Which transport actually carried the last request. `none` = neither is working. */
-	bridge: "'bridge'|'curl'|'none'",
+	/** Which transport actually carried the last request. `none` = none of them is working. */
+	bridge: "'bridge'|'curl'|'direct'|'none'",
 	/** Last known gameflow phase, or null when the client is closed. */
 	gameflowPhase: "string|null",
 	queueDepth: "number",

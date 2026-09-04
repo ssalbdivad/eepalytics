@@ -8,12 +8,21 @@
  * `.research/replay-capture.md` §1.1. **Every** League request must be performed by a
  * *Windows* process reached through WSL interop.
  *
- * Two implementations satisfy this interface:
+ * ...on THIS machine. That constraint is a property of WSL2's NAT networking, not of League:
+ * on a native Windows install — which is how this ships to anyone who has never opened WSL —
+ * this process's `127.0.0.1` IS the client's, and the interop transports cannot run at all
+ * (there is no `wslpath` and no `/mnt/c/...curl.exe`).
+ *
+ * Three implementations satisfy this interface:
  *   - `LcuBridge`  (`bridge-client.ts`) — a long-lived Windows `node.exe` speaking NDJSON over
  *     stdio. Measured p50 **2.3 ms** per round trip. Also holds the LCU WAMP websocket open.
  *   - `LcuCurl`    (`curl-fallback.ts`) — one `curl.exe -K -` per request, ~88 ms. No events.
+ *   - `LcuDirect`  (`direct.ts`) — `node:https` straight at the loopback. No process to spawn,
+ *     so it is the fastest of the three, and it holds the WAMP websocket too. Only usable
+ *     where the loopback actually reaches the client.
  *
- * `createLcu()` in `index.ts` prefers the bridge and silently falls back to curl.
+ * `createLcu()` in `index.ts` picks between them with evidence rather than a platform string —
+ * see `select.ts` and `environment.ts`.
  *
  * ## Status codes are DATA, not errors
  * `request()` resolves for every HTTP status. 404 is a legitimate state all over this API
@@ -32,7 +41,7 @@ export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 /** `lcu` = the lockfile port (basic auth). `live` = the game process on 2999 (no auth). */
 export type LcuTarget = "lcu" | "live"
 
-export type TransportKind = "bridge" | "curl"
+export type TransportKind = "bridge" | "curl" | "direct"
 
 /**
  * `degraded` means "the transport is alive but the League client is not reachable right now"
@@ -98,6 +107,8 @@ export type TransportErrorCode =
 	| "PROTOCOL"
 	| "PATH"
 	| "CURL_FAILED"
+	/** A socket error from `LcuDirect` that is not a refusal or a timeout (TLS, EPIPE, ...). */
+	| "DIRECT_FAILED"
 
 /** A transport-level failure: we never reached the API. Distinct from an HTTP status. */
 export class LcuTransportError extends Error {

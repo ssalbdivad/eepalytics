@@ -28,11 +28,23 @@ import fs from "node:fs"
 import fsp from "node:fs/promises"
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
-import { LCU_AUTH_USER, LOCKFILE_PATH } from "../shared/constants.ts"
+import {
+	LCU_AUTH_USER,
+	LEAGUE_DIR_EXPLICIT,
+	LOCKFILE_PATH,
+	WIN_LOCKFILE_CANDIDATES
+} from "../shared/constants.ts"
 
 const execFileAsync = promisify(execFile)
 
-const TASKLIST = "/mnt/c/WINDOWS/system32/tasklist.exe"
+/**
+ * Under WSL this has to be the interop path — `tasklist` is not on the Linux PATH. Natively
+ * it is a normal Windows binary, and the `/mnt/c` spelling does not exist there at all.
+ */
+const TASKLIST =
+	typeof process !== "undefined" && process.platform === "win32" ?
+		"tasklist.exe"
+	:	"/mnt/c/WINDOWS/system32/tasklist.exe"
 
 export interface Lockfile {
 	/** Always `LeagueClient` in practice, but do not depend on it. */
@@ -109,6 +121,32 @@ export const readLockfileSync = (path = LOCKFILE_PATH): Lockfile | null => {
 	} catch {
 		return null
 	}
+}
+
+/**
+ * Where to look for the lockfile on this host, most likely first.
+ *
+ * Under WSL there is exactly one answer — `/mnt/c/...`, which `LOCKFILE_PATH` already spells —
+ * so the interop transports keep reading a single fixed path and nothing about them changes.
+ * On a **native Windows** install the app has no `/mnt/c` and no idea which drive the user let
+ * the installer pick, so `LcuDirect` watches every standard location until one of them holds a
+ * lockfile. An explicit `EEPALYTICS_LEAGUE_DIR` always wins outright: a configured path that is
+ * silently overridden by a guess is the worst of both.
+ */
+export const lockfileCandidates = (
+	platform: string = typeof process !== "undefined" ? process.platform : "linux"
+): string[] =>
+	LEAGUE_DIR_EXPLICIT || platform !== "win32" ? [LOCKFILE_PATH] : [...WIN_LOCKFILE_CANDIDATES]
+
+/** The first candidate that holds a readable lockfile. Under WSL that is the only one. */
+export const readAnyLockfileSync = (
+	paths: readonly string[] = lockfileCandidates()
+): Lockfile | null => {
+	for (const candidate of paths) {
+		const found = readLockfileSync(candidate)
+		if (found) return found
+	}
+	return null
 }
 
 /** Two lockfiles describe the same client session when port AND password match. */
@@ -208,5 +246,38 @@ export const watchLockfile = (
 	return () => {
 		stopped = true
 		fs.unwatchFile(path, listener)
+	}
+}
+
+/**
+ * `watchLockfile` across every candidate path, reporting the first one that holds a lockfile.
+ *
+ * Needed because a native Windows install could be in any of `WIN_LOCKFILE_CANDIDATES` and the
+ * client may not have been started yet when the daemon comes up — there is nothing to `stat`
+ * until it is. With a single candidate (WSL, or an explicit `EEPALYTICS_LEAGUE_DIR`) this is
+ * `watchLockfile` with one extra function call and identical behaviour.
+ */
+export const watchAnyLockfile = (
+	cb: (lf: Lockfile | null) => void,
+	opts: { paths?: readonly string[]; intervalMs?: number; immediate?: boolean } = {}
+): (() => void) => {
+	const paths = opts.paths ?? lockfileCandidates()
+	let last: Lockfile | null = null
+	let started = false
+
+	const recompute = (): void => {
+		const next = readAnyLockfileSync(paths)
+		if (started && sameLockfile(last, next)) return
+		started = true
+		last = next
+		cb(next)
+	}
+
+	const stops = paths.map(path =>
+		watchLockfile(recompute, { path, intervalMs: opts.intervalMs, immediate: false })
+	)
+	if (opts.immediate !== false) recompute()
+	return () => {
+		for (const stop of stops) stop()
 	}
 }

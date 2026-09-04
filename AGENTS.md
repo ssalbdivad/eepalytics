@@ -81,7 +81,7 @@ build step) · `systemd --user` for the background daemon.
 ```
 src/shared/   types + pure helpers, browser-safe    (schemas, map math, time)
 src/db/       SQLite: migrations, queries, blobs    (NODE ONLY; all SQL lives here)
-src/lcu/      the Windows-interop transport + LCU/live-client clients
+src/lcu/      transports (interop + native) + LCU/live-client clients
 src/rofl/     ROFL2 replay-file decoding
 src/capture/  replay screenshots + clips           (NODE ONLY; drives the game client)
 src/knowledge/champion notes, loaded into reviews  (editable markdown, no code change)
@@ -155,10 +155,23 @@ in hand-written SVG, which took three attempts and at one point put them on her 
   surrounding file; do not reformat code you did not write.
 - **WSL2 cannot reach the Windows-side League APIs over TCP.** Native `fetch` and
   `curl` to `127.0.0.1:<lcu port>` or `127.0.0.1:2999` return HTTP 000. *All*
-  League traffic goes through Windows interop: a long-lived Windows-side
-  `node.exe` bridge over stdio (p50 **2.3 ms**), falling back to
+  League traffic **on this machine** goes through Windows interop: a long-lived
+  Windows-side `node.exe` bridge over stdio (p50 **2.3 ms**), falling back to
   `/mnt/c/WINDOWS/system32/curl.exe -K -` (~88 ms). Do not "fix" this by swapping
   in `fetch`.
+- **On a native Windows install the loopback works, and that is a third
+  transport, not a replacement.** `LcuDirect` (`src/lcu/direct.ts`) opens the
+  socket in-process — fastest of the three, and it carries the WAMP websocket, so
+  choosing it does not cost you LCU events. It uses `node:https` rather than
+  `fetch` because the LCU's certificate is self-signed and `fetch` has no
+  per-request TLS option: accepting it through `fetch` means
+  `NODE_TLS_REJECT_UNAUTHORIZED=0`, which would also stop verifying the Anthropic
+  and Gemini calls in the same process. Which transport runs is decided by
+  evidence — `src/lcu/environment.ts` collects several independent WSL markers
+  (never one), `src/lcu/select.ts` orders the candidates, and under WSL `direct`
+  is tried **last and only if a real request answers**, because WSL2 in mirrored
+  networking mode can reach the loopback and NAT mode cannot. The WSL order is
+  still bridge → curl and must stay that way.
 - **The app does write to the LCU — but only through the gate.** This is not a
   read-only client. It `POST`s `/lol-replays/v1/rofls/{gameId}/download` to grab a
   replay before it expires, and it launches replays for screenshot/clip capture.

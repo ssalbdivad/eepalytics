@@ -58,6 +58,26 @@ export const LEAGUE_DIR = setting("LEAGUE_DIR") ?? "/mnt/c/Games/Riot Games/Leag
 /** NOTE: this file has NO trailing newline. `name:pid:PORT:PASSWORD:https` */
 export const LOCKFILE_PATH = `${LEAGUE_DIR}/lockfile`
 
+/**
+ * True when the user named the install explicitly. Then `LOCKFILE_PATH` is the answer
+ * everywhere and no candidate list may override it — a configured path that gets quietly
+ * ignored is worse than no configuration at all.
+ */
+export const LEAGUE_DIR_EXPLICIT = setting("LEAGUE_DIR") !== undefined
+
+/**
+ * Where the lockfile lives on a **native Windows** install, most likely first.
+ *
+ * `C:\Riot Games\League of Legends` is Riot's default; the other two are the install
+ * locations people actually pick. These are pointless under WSL — there the same files are
+ * reached as `/mnt/c/...` and `LOCKFILE_PATH` already says so.
+ */
+export const WIN_LOCKFILE_CANDIDATES = [
+	"C:/Riot Games/League of Legends/lockfile",
+	"C:/Program Files/Riot Games/League of Legends/lockfile",
+	"C:/Games/Riot Games/League of Legends/lockfile"
+] as const
+
 /** Where the client puts .rofl files. Both spellings of the same directory. */
 export const REPLAY_DIR_WIN = "C:/Users/ssalb/Documents/League of Legends/Replays"
 export const REPLAY_DIR_WSL = "/mnt/c/Users/ssalb/Documents/League of Legends/Replays"

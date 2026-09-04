@@ -13,8 +13,12 @@
  *    every path during a live game, which is exactly how you detect that you are not in a
  *    replay. Its field names come from the signed binary; its response shapes are unverified.
  *
- * Same WSL2 constraint as the LCU: every request goes through the Windows-side transport with
- * `target: "live"`. There is no Authorization header on this port.
+ * Same constraint as the LCU, and the same escape from it: every request goes through whichever
+ * transport is in use, with `target: "live"`. Under WSL that is a Windows-side process (bridge or
+ * curl); natively it is `LcuDirect` opening the socket itself. **This file needs no branch for
+ * that** — it never builds a URL and never touches a port, so the native path came for free with
+ * `LcuDirect`'s `target: "live"` support. There is no Authorization header on this port either
+ * way: 2999 has no auth, and sending the client's password there would be a leak.
  *
  * **Nothing in this file is invoked by the LCU unit.** The capture unit drives it, behind the
  * daemon's idle gate.

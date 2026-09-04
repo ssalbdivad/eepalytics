@@ -19,7 +19,7 @@
 import { IDLE_PHASES } from "../shared/constants.ts"
 import type { Settings } from "../shared/schema/settings.ts"
 import { intrusiveJobRunning } from "../db/queries.ts"
-import { readLockfileSync, sameLockfile } from "../lcu/index.ts"
+import { readAnyLockfileSync, sameLockfile } from "../lcu/index.ts"
 import type { Lockfile } from "../lcu/index.ts"
 import { fetchIdleSnapshot, roflExistsOnDisk } from "./lcu.ts"
 import { sleep } from "./bus.ts"
@@ -303,7 +303,7 @@ export const watchForAbort = (
 	const intervalMs = opts.intervalMs ?? 1000
 	const budgetMs = opts.budgetMs ?? 10 * 60 * 1000
 	const startedMs = Date.now()
-	const startCreds = opts.creds ?? readLockfileSync()
+	const startCreds = opts.creds ?? readAnyLockfileSync()
 	let stopped = false
 
 	const fire = (rule: AbortRule, reason: string): void => {
@@ -329,7 +329,7 @@ export const watchForAbort = (
 				fire("A5", `capture exceeded its ${Math.round(budgetMs / 60000)} minute budget`)
 				break
 			}
-			if (!sameLockfile(startCreds, readLockfileSync())) {
+			if (!sameLockfile(startCreds, readAnyLockfileSync())) {
 				fire("A3", "the League client restarted (lockfile rotated)")
 				break
 			}

@@ -24,7 +24,7 @@ import type {
 	ReplayConfiguration,
 	ReplayMetadata
 } from "../shared/schema/lcu.ts"
-import { createLcu, isClientClosed, readLockfileSync, sameLockfile } from "../lcu/index.ts"
+import { createLcu, isClientClosed, readAnyLockfileSync, sameLockfile } from "../lcu/index.ts"
 import type { Lcu, Lockfile, TransportKind } from "../lcu/index.ts"
 import { getSettings } from "../db/queries.ts"
 import { errText, makeLogger } from "./log.ts"
@@ -59,7 +59,7 @@ export const lcu = async (): Promise<Lcu | null> => {
 				onWarn: message => log.warn(message)
 			})
 			handle = made
-			boundTo = readLockfileSync()
+			boundTo = readAnyLockfileSync()
 			log.info("transport ready", {
 				kind: made.kind,
 				fallbackReason: made.fallbackReason ?? undefined
@@ -92,7 +92,7 @@ export const resetTransport = async (): Promise<void> => {
  * would 401 forever; never reuse credentials across a rotation.
  */
 export const ensureBoundToCurrentClient = async (): Promise<void> => {
-	const now = readLockfileSync()
+	const now = readAnyLockfileSync()
 	if (handle && !sameLockfile(boundTo, now)) {
 		log.info("lockfile rotated; rebuilding transport")
 		await resetTransport()
@@ -106,9 +106,9 @@ export const ensureBoundToCurrentClient = async (): Promise<void> => {
  * working connection where there is none.
  */
 export const transportName = (): TransportName =>
-	readLockfileSync() === null ? "none" : (handle?.kind ?? "none")
+	readAnyLockfileSync() === null ? "none" : (handle?.kind ?? "none")
 
-export const getCreds = (): Lockfile | null => readLockfileSync()
+export const getCreds = (): Lockfile | null => readAnyLockfileSync()
 
 export const closeTransport = resetTransport
 
