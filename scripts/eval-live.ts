@@ -504,8 +504,17 @@ const scoreLine = (s: Said, championNames: Set<string>) => {
 	 * both passed a wholly invented event.
 	 */
 	const claimsDeath = /\b(just died|is dead|are dead|down for|gone for|respawn)/i.test(s.text)
-	const anyoneDead = /DEAD/.test(block)
-	const inventedDeath = claimsDeath && !anyoneDead
+	/*
+	 * Matched against the VETTED LIST, not the roster.
+	 *
+	 * This used to look for "DEAD" in the block, which worked only while the roster printed a
+	 * death marker. That marker was removed — the model kept inventing timers to go with it — and
+	 * the check promptly flagged 19% of perfectly good lines. A check keyed to a string that the
+	 * thing it checks is allowed to stop emitting is a check that will lie to you exactly once,
+	 * loudly, at the worst moment.
+	 */
+	const deathOffered = /just died|of them are dead/i.test(block)
+	const inventedDeath = claimsDeath && !deathOffered
 	return {
 		invented,
 		forbidden,
