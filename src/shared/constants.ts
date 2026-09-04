@@ -18,7 +18,7 @@ const setting = (name: string): string | undefined =>
 	env[`FAWNSEI_${name}`] ?? env[`CSK_${name}`]
 
 /** Bump to invalidate derived metrics + moments for every game. */
-export const ANALYSIS_VERSION = 3
+export const ANALYSIS_VERSION = 4
 
 /** Bump to invalidate every Claude review. */
 export const REVIEW_VERSION = 6

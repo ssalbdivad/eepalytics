@@ -182,6 +182,18 @@ export interface DeathAnalysis {
 	phase: DeathPhase
 	economy: DeathEconomy
 	outnumbering: DeathOutnumbering
+	/**
+	 * Whether a teammate had ALREADY gone down when this death happened.
+	 *
+	 * A sequence fact, not a judgement: it says only whether he was the first of his team to fall
+	 * in this exchange or arrived into one already going badly. It is a dimension like any other
+	 * here — the miner tests it against the same marginal-product null and the same
+	 * Benjamini-Hochberg correction, so it surfaces only if it is over-represented for him.
+	 */
+	aftermath: DeathAftermath
+	/** Gold in pocket at the moment of death, and its bucket. */
+	goldInPocket: number | null
+	purse: DeathPurse
 	/** Coarse recurrence key: `ZONE|PHASE|ISOLATION`. Used for cross-game repetition. */
 	signature: string
 	/** One honest sentence. Safe to hand to Claude verbatim. */
@@ -265,6 +277,32 @@ export const analyzeDeaths = (
 		const goldDelta =
 			totalGold !== null && oppGold !== null ? totalGold - oppGold : null
 		const levelDelta = level !== null && oppLevel !== null ? level - oppLevel : null
+
+		/*
+		 * ---- aftermath ----
+		 *
+		 * Had one of his own already gone down? Uses the same kill list isolation walks, and looks
+		 * only BACKWARDS: a teammate dying after him is a consequence of the fight, not a
+		 * condition he entered it under.
+		 */
+		const allyDownBefore = kills.some(
+			k =>
+				k !== ev &&
+				allies.includes(k.victimId ?? 0) &&
+				tMs - k.timestamp > 0 &&
+				tMs - k.timestamp <= ALLY_DOWN_WINDOW_MS
+		)
+		const aftermath: DeathAftermath = allyDownBefore ? "AFTER_ALLY_DOWN" : "FIRST_DOWN"
+
+		/*
+		 * ---- purse ----
+		 *
+		 * `stepScalar`, not `interpScalar`: currentGold drops discontinuously at a purchase, so
+		 * interpolating across one invents a figure that was never true at any instant.
+		 */
+		const goldInPocket = stepScalar(frames, userId, tMs, "currentGold")
+		const purse: DeathPurse =
+			goldInPocket !== null && goldInPocket >= PURSE_CARRYING_GOLD ? "CARRYING" : "SPENT"
 
 		/* ---- isolation ---- */
 		const proven = new Set<number>()
@@ -405,6 +443,9 @@ export const analyzeDeaths = (
 			killerId,
 			assistIds,
 			isolation,
+			aftermath,
+			goldInPocket,
+			purse,
 			objectiveContext: {
 				objectiveConcededWithin45s: conceded,
 				secondsToNextDragonSpawn: toDragon,
@@ -422,6 +463,17 @@ export const analyzeDeaths = (
 				: goldDelta < 0 ? `${round(-goldDelta)}g behind your opposite number`
 				: `${round(goldDelta)}g ahead of your opposite number`
 			}. ${isoNote}${
+				/*
+				 * Stated as sequence and nothing more. "A teammate had already gone down" is a
+				 * fact from the event list; "he went in to save them" is a motive, and this data
+				 * cannot see motives.
+				 */
+				allyDownBefore ? " A teammate had already gone down in the previous 20 seconds." : ""
+			}${
+				goldInPocket !== null && goldInPocket >= PURSE_CARRYING_GOLD ?
+					` ${round(goldInPocket)}g was still in your pocket.`
+				:	""
+			}${
 				conceded.length > 0 ?
 					` The enemy took ${conceded.join(" and ")} within 45 seconds.`
 				:	""
@@ -433,8 +485,31 @@ export const analyzeDeaths = (
 
 /* ============================================================ clustering */
 
+/**
+ * `AFTER_ALLY_DOWN` — a teammate died within `ALLY_DOWN_WINDOW_MS` before this one.
+ * `FIRST_DOWN`      — nobody on his team had fallen yet.
+ */
+export type DeathAftermath = "AFTER_ALLY_DOWN" | "FIRST_DOWN"
+
+/**
+ * Gold sitting in his pocket when he died — value he had earned and not yet turned into stats.
+ *
+ * `currentGold`, not `totalGold`: the former is the purse, the latter is career earnings. It moves
+ * in steps at a purchase, so it is read from the last frame at or before the death and never
+ * interpolated across one.
+ */
+export type DeathPurse = "SPENT" | "CARRYING"
+
+/** A component's worth. Below this, unspent gold is not what lost the fight. */
+export const PURSE_CARRYING_GOLD = 800
+
+/** How recently a teammate must have died for this death to count as following it. */
+export const ALLY_DOWN_WINDOW_MS = 20_000
+
 export type PatternDim =
 	| "zone"
+	| "aftermath"
+	| "purse"
 	| "phase"
 	| "economy"
 	| "isolation"
@@ -476,11 +551,27 @@ const dimValue = (d: DeathAnalysis, dim: PatternDim): string => {
 			return d.outnumbering
 		case "half":
 			return d.half
+		case "aftermath":
+			return d.aftermath
+		case "purse":
+			return d.purse
 	}
 }
 
 const PRETTY: Record<PatternDim, (v: string) => string> = {
 	zone: v => v.toLowerCase().replace(/_/g, " "),
+	// Phrased as sequence, never as motive. The data says a teammate had already fallen; it does
+	// not say he went in to save them, and the difference is the whole honesty of the line.
+	aftermath: v =>
+		({
+			AFTER_ALLY_DOWN: "moments after a teammate went down",
+			FIRST_DOWN: "as the first of your team to fall"
+		})[v] ?? v,
+	purse: v =>
+		({
+			CARRYING: "carrying gold you had not spent",
+			SPENT: "with your gold already spent"
+		})[v] ?? v,
 	phase: v =>
 		({
 			EARLY: "before 10:00",
@@ -587,7 +678,9 @@ export const clusterDeaths = (
 		"economy",
 		"isolation",
 		"outnumbering",
-		"half"
+		"half",
+		"aftermath",
+		"purse"
 	]
 	const n = deaths.length
 	if (n === 0) return []
