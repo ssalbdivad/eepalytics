@@ -107,13 +107,15 @@ export const App = () => {
 	const offline = health.error !== null && h === null
 
 	/*
-	 * The overlay is its own window, not a page inside the app: no nav, no status bar, no
-	 * health poll. It renders before any of that so a 300x420 always-on-top window is not
-	 * mostly chrome, and so it does not poll /api/health every 20s behind a running game.
-	 */
-	/*
-	 * `#/live` is the overlay WINDOW: no nav, no status bar, no health poll, so a 380px
-	 * always-on-top window is not mostly chrome. `#/` is the same coach with the app around it.
+	 * `#/live` is the SAME coach as `#/`, served without the app around it: no nav, no status
+	 * bar, no health poll. That is the whole difference, and it is worth a route because a
+	 * narrow window parked beside the game should not be mostly chrome, and should not poll
+	 * /api/health every 20s behind a running match.
+	 *
+	 * It used to also be a separate always-on-top Electron window. That window is gone: it
+	 * rendered this identical component, and it could never run the screen share the coach
+	 * exists for, because Electron under WSLg sees only Linux windows and never the League
+	 * client. A second UI that structurally cannot do the main thing is not a feature.
 	 */
 	if (route.name === "live") {
 		document.body.classList.add("is-live")
@@ -149,24 +151,18 @@ export const App = () => {
 						Settings
 					</a>
 					{/*
-					 * The overlay is a separate always-on-top window, so this opens it rather than
-					 * navigating — clicking "Live" and having the main window become a 380px
-					 * overlay would be a surprise. In a browser there is no second window to open,
-					 * so it falls back to navigating and says so.
-					 */}
-					{/*
 					 * The coach is the page you are already on, so this is not a link to it — it
-					 * pops the same coach out into the small always-on-top window you keep beside
-					 * the game. Labelled for what it does rather than where it goes.
+					 * opens the same coach chrome-free, for parking in a narrow window beside the
+					 * game. Labelled for what it does rather than where it goes.
 					 */}
 					<a
 						className="nav-live"
 						href={href.live}
 						target="_blank"
 						rel="noreferrer"
-						title="Pop the coach out into a small always-on-top window to keep beside the game (Ctrl+Shift+L in the desktop app)."
+						title="Open the coach on its own, without the app around it — sized for a narrow window beside the game."
 					>
-						↗ Overlay
+						↗ Pop out
 					</a>
 				</nav>
 
@@ -233,7 +229,7 @@ export const App = () => {
 				 * not cost him the share.
 				 *
 				 * `display: none` rather than a conditional, which is the technique this app already
-				 * uses one level down for the compact overlay — same reason, same trade. It keeps the
+				 * uses one level down for the compact coach — same reason, same trade. It keeps the
 				 * 3s `/api/live` poll running while hidden, which is not waste: it is what lets the
 				 * journal keep recording and the coach keep talking while he reads a review.
 				 *

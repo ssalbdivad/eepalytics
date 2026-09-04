@@ -23,7 +23,7 @@
  * ## One poller per tab
  *
  * Subscribers are refcounted the way `sse.ts` refcounts the event stream. The coach panel, the
- * compact strip and the overlay page all ask this same question, and they should not each open
+ * compact strip and the `#/live` page all ask this same question, and they should not each open
  * their own timer against the League client.
  */
 
@@ -42,7 +42,7 @@ export interface GameflowGate {
 
 const OFF: GameflowGate = { phase: null, armed: false, inGame: false, reachable: false }
 
-/** Same cadence as the live overlay's own poll: fast enough to arm on the loading screen. */
+/** Same cadence as the live coach's own poll: fast enough to arm on the loading screen. */
 const POLL_MS = 3000
 
 /**
@@ -141,7 +141,7 @@ export const useGameflow = (): GameflowGate => {
  * say than whatever `/api/live` reported.
  *
  * `/api/live` reads the in-game API on :2999, which does not answer during champion select or the
- * loading screen — so its honest answer there is "no game in progress", and the overlay rendered
+ * loading screen — so its honest answer there is "no game in progress", and the coach rendered
  * "Not in a game" while the coach panel two inches below said it was arming. Both were true and
  * together they read as a bug. The gameflow phase is the thing that knows the difference.
  */

@@ -95,17 +95,15 @@ export interface ScreenCoachProps {
 	/**
 	 * Compact renders a one-line strip instead of the full panel — never nothing.
 	 *
-	 * The panel used to be dropped entirely below 700px, which is the width the overlay window
-	 * opens at, so the app's flagship feature was invisible exactly where a new user first meets
-	 * it. The component stays mounted either way: unmounting closes the socket and stops the
+	 * The panel used to be dropped entirely below 700px, which is the width a narrow window
+	 * beside the game opens at, so the app's flagship feature was invisible exactly where a new
+	 * user first meets it. The component stays mounted either way: unmounting closes the socket and stops the
 	 * screen share, so a session must survive being collapsed.
 	 */
 	compact?: boolean
-	/** Ask the shell to grow the overlay. Only meaningful in the Electron window. */
-	onExpand?: () => void
 }
 
-export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => {
+export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	const share = useScreenShare()
 	/*
 	 * What the LEAGUE CLIENT is doing, which is no longer the same question as what the browser is
@@ -421,11 +419,6 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 						"Live coach needs a key"
 					:	"Live coach"}
 				</span>
-				{onExpand && (
-					<button className="btn" onClick={onExpand}>
-						Open
-					</button>
-				)}
 			</div>
 		)
 

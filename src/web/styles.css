@@ -1593,25 +1593,6 @@ body.is-live {
 .live--wide .live__focus-row em { display: block; margin-top: 3px; }
 
 /* Window controls: a frameless window has no titlebar, so the page supplies them. */
-.live__controls {
-	display: flex;
-	gap: 4px;
-	margin-left: 10px;
-	-webkit-app-region: no-drag;
-}
-.live__controls button {
-	background: none;
-	border: 1px solid var(--line);
-	color: var(--dim);
-	border-radius: 5px;
-	width: 24px;
-	height: 22px;
-	font-size: 11px;
-	line-height: 1;
-	cursor: pointer;
-	padding: 0;
-}
-.live__controls button:hover { color: var(--gold); border-color: var(--gold-dim); }
 
 /* Wide-mode stat strip: the figures worth reading from across a desk. */
 .live__stats {

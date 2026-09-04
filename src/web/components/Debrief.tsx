@@ -49,7 +49,7 @@ const WAITING_POLL_MS = 6000
 export interface DebriefProps {
 	gameId: number
 	/**
-	 * `compact` is the 380px overlay: one thing that went well, two to fix. `wide` is a second
+	 * `compact` is the 380px narrow window: one thing that went well, two to fix. `wide` is a second
 	 * monitor and can carry the reasoning. Same data, different amount of it.
 	 */
 	size?: "compact" | "wide"

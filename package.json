@@ -22,7 +22,6 @@
 		"app": "pnpm build && electron .",
 		"app:dev": "concurrently -n web,app -c cyan,green \"pnpm dev:web\" \"CSK_DEV=1 electron .\"",
 		"electron": "electron .",
-		"overlay": "pnpm build && CSK_OVERLAY=1 electron .",
 		"icon": "electron scripts/make-icon.mjs",
 		"shoot": "electron scripts/shoot.mjs",
 		"eval:live": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/eval-live.ts",

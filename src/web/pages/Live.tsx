@@ -1,5 +1,5 @@
 /**
- * The live overlay: your own numbers while a game is running.
+ * The live coach: your own numbers while a game is running.
  *
  * ## What it is, after being cut back
  *
@@ -66,14 +66,6 @@ const useSize = (): "compact" | "wide" => {
 		return () => window.removeEventListener("resize", onResize)
 	}, [])
 	return size
-}
-
-/** Frameless window, so the page provides its own controls. */
-const sendToShell = (channel: string): void => {
-	const ipc = (window as { electron?: { ipcRenderer?: { send: (c: string) => void } } }).electron
-	if (ipc?.ipcRenderer) ipc.ipcRenderer.send(channel)
-	// In a browser tab there is no shell to talk to; the buttons simply do nothing rather than
-	// throwing, because the same page is served to both.
 }
 
 export const Live = () => {
@@ -190,19 +182,6 @@ export const Live = () => {
 				 * first — "Not in a game" — offered no way to close the window or grow it, in a
 				 * frameless shell that provides no chrome of its own.
 				 */}
-				<div className="live__bar live__bar--idle">
-					<span className="live__controls">
-						<button
-							onClick={() => sendToShell("overlay:toggle-size")}
-							title="Grow onto a second monitor, or shrink back to a corner window (Ctrl+Shift+F)"
-						>
-							{size === "wide" ? "▾" : "▴"}
-						</button>
-						<button onClick={() => sendToShell("overlay:close")} title="Close (Ctrl+Shift+L)">
-							✕
-						</button>
-					</span>
-				</div>
 				<div className="live__idlewrap">
 					{ended ?
 						ended.stage === "stored" && ended.gameId !== null ?
@@ -256,17 +235,6 @@ export const Live = () => {
 						<em>{data.score.cs} cs</em>
 					</span>
 				)}
-				<span className="live__controls">
-					<button
-						onClick={() => sendToShell("overlay:toggle-size")}
-						title="Grow onto a second monitor, or shrink back to a corner window (Ctrl+Shift+F)"
-					>
-						{size === "wide" ? "▾" : "▴"}
-					</button>
-					<button onClick={() => sendToShell("overlay:close")} title="Close (Ctrl+Shift+L)">
-						✕
-					</button>
-				</span>
 			</div>
 
 			<div className="live__cols">
@@ -387,13 +355,12 @@ export const Live = () => {
 			 */}
 			{/*
 			 * Always mounted, at a fixed position in the tree. Compact renders a one-line strip
-			 * rather than nothing: 700px is the width this overlay opens at, and hiding the
+			 * rather than nothing: 700px is the width this page is commonly first seen at, and hiding the
 			 * flagship feature at the size a new user first meets it is not a layout decision.
 			 */}
 			<div className="live__coach">
 				<ScreenCoach
 					compact={size !== "wide"}
-					onExpand={size !== "wide" ? () => sendToShell("overlay:toggle-size") : undefined}
 				/>
 				{size === "wide" && <LiveTranscript />}
 			</div>

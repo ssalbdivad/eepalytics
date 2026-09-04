@@ -25,7 +25,7 @@
  * `data/` and the replay folder exactly as it does today.
  */
 
-import { app, BrowserWindow, dialog, globalShortcut, shell } from "electron"
+import { app, BrowserWindow, dialog, shell } from "electron"
 import { spawn } from "node:child_process"
 import { existsSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
@@ -46,7 +46,6 @@ const DAEMON_BOOT_TIMEOUT_MS = 30_000
 
 let daemon = null
 let win = null
-let overlay = null
 /** Set when we are tearing down on purpose, so an expected exit is not reported as a crash. */
 let quitting = false
 
@@ -59,8 +58,6 @@ const daemonUrl = `http://${HOST}:${PORT}`
  * which looks like a bug in the app rather than a missing file.
  */
 const ICON_PATH = join(ROOT, "public", "icon.png")
-/** The renderer's allow-listed bridge. Without it the overlay's own buttons do nothing. */
-const PRELOAD = join(HERE, "preload.mjs")
 const windowIcon = () => (existsSync(ICON_PATH) ? { icon: ICON_PATH } : {})
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
@@ -189,8 +186,6 @@ const createWindow = async () => {
 		webPreferences: {
 			// The renderer is the same React app the browser loads and talks to the daemon over
 			// HTTP. It needs no Node access, so it does not get any beyond the two-channel
-			// bridge in preload.mjs.
-			preload: PRELOAD,
 			nodeIntegration: false,
 			contextIsolation: true,
 			sandbox: true
@@ -203,14 +198,16 @@ const createWindow = async () => {
 	})
 
 	win.webContents.setWindowOpenHandler(({ url }) => {
-		// The nav's "Live" link is a normal anchor with target=_blank so it still works in a
-		// browser. In the desktop app it should open the overlay window instead of a tab.
-		if (url.includes("#/live")) {
-			void createOverlay()
+		// `#/live` used to summon a separate always-on-top overlay window. It no longer exists —
+		// it rendered the same <Live> component this window already shows, and it could never run
+		// the screen share that the coach is FOR, because Electron under WSLg cannot see Windows
+		// windows. So an in-app link navigates this window instead of opening anything.
+		if (url.startsWith(isDev ? DEV_URL : daemonUrl)) {
+			void win?.loadURL(url)
 			return { action: "deny" }
 		}
-		// Anything else that is not this app opens in the real browser rather than a chrome-less
-		// window the user cannot navigate out of.
+		// Anything else opens in the real browser rather than a chrome-less window the user
+		// cannot navigate out of.
 		void shell.openExternal(url)
 		return { action: "deny" }
 	})
@@ -230,87 +227,6 @@ const createWindow = async () => {
 	// the built assets, which keeps one origin and avoids file:// CORS entirely.
 	await win.loadURL(isDev ? DEV_URL : daemonUrl)
 	if (isDev) win.webContents.openDevTools({ mode: "detach" })
-}
-
-/**
- * The live overlay: a small always-on-top window for while a game is running.
- *
- * Separate from the main window rather than a mode of it, because the two want opposite things.
- * The main window is browsed; this is glanced at over a running game, so it is small, frameless,
- * always on top, and skips the taskbar. It is also read-only — it polls `/api/live`, which reads
- * the in-game API and writes nothing.
- *
- * `CSK_OVERLAY=1` opens it on launch instead of the main window, so `pnpm overlay` is a
- * one-command way to have just the coach up while playing.
- */
-const createOverlay = async () => {
-	if (overlay && !overlay.isDestroyed()) {
-		overlay.show()
-		overlay.focus()
-		return
-	}
-
-	overlay = new BrowserWindow({
-		width: 380,
-		height: 300,
-		minWidth: 260,
-		minHeight: 150,
-		show: false,
-		frame: false,
-		resizable: true,
-		maximizable: true,
-		fullscreenable: true,
-		alwaysOnTop: true,
-		// Kept off the taskbar while it is a small always-on-top corner window; once it is
-		// maximised onto a second monitor it is a window in its own right and should be
-		// switchable to like one.
-		skipTaskbar: true,
-		backgroundColor: "#070910",
-		title: "coach",
-		...windowIcon(),
-		webPreferences: {
-			preload: PRELOAD,
-			nodeIntegration: false,
-			contextIsolation: true,
-			sandbox: true
-		}
-	})
-
-	// Above full-screen game windows, not merely above normal ones.
-	overlay.setAlwaysOnTop(true, "screen-saver")
-	overlay.once("ready-to-show", () => overlay?.show())
-	overlay.on("closed", () => {
-		overlay = null
-	})
-
-	/*
-	 * Big mode, for a second monitor.
-	 *
-	 * The small window and the big one want opposite things — one is glanced at over a game, the
-	 * other is looked at properly — so the page renders a different layout at width. Electron's
-	 * job is only to let the window get big and to stop it fighting the desktop when it does:
-	 * "always on top" and "skip taskbar" are right for a 380px corner window and wrong for a
-	 * maximised one, so they are dropped on the way up and restored on the way back down.
-	 */
-	const setBig = big => {
-		if (!overlay || overlay.isDestroyed()) return
-		overlay.setAlwaysOnTop(!big, big ? "normal" : "screen-saver")
-		overlay.setSkipTaskbar(!big)
-		if (big) overlay.maximize()
-		else overlay.unmaximize()
-	}
-	overlay.on("maximize", () => setBig(true))
-	overlay.on("unmaximize", () => setBig(false))
-
-	// The window is frameless, so there is no titlebar to double-click. The page sends this.
-	overlay.webContents.on("ipc-message", (_e, channel) => {
-		if (channel === "overlay:toggle-size")
-			setBig(!overlay?.isMaximized() && !overlay?.isFullScreen())
-		if (channel === "overlay:close") overlay?.close()
-	})
-
-	const base = isDev ? DEV_URL : daemonUrl
-	await overlay.loadURL(`${base}/#/live`)
 }
 
 /**
@@ -352,41 +268,13 @@ app.whenReady().then(async () => {
 		app.quit()
 		return
 	}
-	if ((process.env.EEPALYTICS_OVERLAY ?? process.env.CSK_OVERLAY) === "1") {
-		// Overlay-only mode still needs the daemon up before it can poll anything.
-		if (!(await waitForDaemon())) {
-			closeSplash()
-			dialog.showErrorBox("The daemon did not start", `Nothing answered on ${daemonUrl}.`)
-			app.quit()
-			return
-		}
-		await createOverlay()
-		// The overlay has its own ready-to-show; the splash is not its problem.
-		closeSplash()
-	} else {
-		await createWindow()
-	}
-
-	// Ctrl/Cmd+Shift+L toggles the overlay from anywhere, so it can be summoned mid-game
-	// without alt-tabbing to a menu.
-	globalShortcut.register("CommandOrControl+Shift+L", () => {
-		if (overlay && !overlay.isDestroyed()) overlay.close()
-		else void createOverlay()
-	})
-
-	// Grow the coach onto a second monitor without reaching for a frameless window's edges.
-	globalShortcut.register("CommandOrControl+Shift+F", () => {
-		if (!overlay || overlay.isDestroyed()) return
-		if (overlay.isMaximized()) overlay.unmaximize()
-		else overlay.maximize()
-	})
+	await createWindow()
 
 	app.on("activate", () => {
 		if (BrowserWindow.getAllWindows().length === 0) void createWindow()
 	})
 })
 
-app.on("will-quit", () => globalShortcut.unregisterAll())
 
 app.on("window-all-closed", () => {
 	// Including on macOS: this is a single-window tool, and leaving a headless daemon running

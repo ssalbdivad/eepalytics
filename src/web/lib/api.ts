@@ -165,8 +165,8 @@ export const api = {
 		}),
 
 	/**
-	 * The live overlay's poll. Answers 200 in every state including "not in a game" — an overlay
-	 * that errors is an overlay that gets closed.
+	 * The live coach's poll. Answers 200 in every state including "not in a game" — a coach that
+	 * errors is a coach that gets closed.
 	 */
 	live: (signal?: AbortSignal) => request(API.live, LiveResponse, { signal }),
 

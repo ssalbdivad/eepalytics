@@ -189,7 +189,7 @@ export const fmtKdaRatio = (k: number, d: number, a: number): string =>
 /**
  * Coaching categories, in words rather than as the enum key.
  *
- * These are rendered on the two screens someone sees first — the live overlay's "what to work on"
+ * These are rendered on the two screens someone sees first — the live coach's "what to work on"
  * and the games list — and they were printed raw: "tempo", "objectives", "pathing". Those are
  * fine for a jungle main and mean nothing to the beginner the app is also built for, who cannot
  * look up a word he does not know is a word.

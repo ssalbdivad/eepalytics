@@ -16,8 +16,8 @@ export type Route =
 	 * The coach, and the app's front door.
 	 *
 	 * Distinct from `live`, which is the SAME content rendered chrome-free for the always-on-top
-	 * overlay window. One component, two shells: the app's home has nav and a status bar, the
-	 * 380px overlay must not.
+	 * chrome-free route. One component, two shells: the app's home has nav and a status bar, the
+	 * 380px `#/live` must not.
 	 */
 	| { name: "home" }
 	| { name: "games" }
