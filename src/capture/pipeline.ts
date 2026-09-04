@@ -288,6 +288,8 @@ interface CaptureOneOptions {
 	burstOffsetsSec: readonly number[]
 	/** Frames per second of game time inside the burst. */
 	burstFps?: number
+	/** Diagnostics that are worth a log line but must not fail the capture. */
+	onNote?: (note: string) => void
 	/**
 	 * The champion whose game this is. Used when a moment names no champion of its own, and as
 	 * the fallback when the named one cannot be resolved — a review of his game should stay on
@@ -323,13 +325,30 @@ const captureOne = async (
 	 * someone else. Falling back to the user's own champion is deliberate: this is a review of
 	 * HIS game, and a frame centred on the enemy who killed him answers a question nobody asked.
 	 */
-	let selectionName: string | null = null
-	const target = o.championName ?? o.userChampionName
+	/*
+	 * The objects lookup VALIDATES the name; it must not be able to veto it.
+	 *
+	 * `/replay/objects` can come back empty or fail on a paused replay, and when it did,
+	 * `selectionName` was left null and `frameMoment` fell through to `cameraMode: "fps"` with
+	 * the unverified coordinate calibration — which points the camera at an arbitrary map
+	 * position and whatever champion happens to be standing there. That is the "random
+	 * champions" the user saw, and it makes the frames useless for reviewing their play.
+	 *
+	 * Riot documents `selectionName` as case-insensitive and champion-named, so the champion
+	 * name is a good value on its own. The lookup is kept because it returns the engine's exact
+	 * spelling when it works, and its failure is logged rather than silently swallowed.
+	 */
+	const target = o.championName ?? o.userChampionName ?? null
+	let selectionName: string | null = target
 	if (target) {
 		const objects = await session.objects("hero", true).catch(() => [] as ReplayObject[])
-		selectionName =
-			matchSelectionName(objects, target) ??
-			(o.userChampionName ? matchSelectionName(objects, o.userChampionName) : null)
+		const exact = matchSelectionName(objects, target)
+		if (exact !== null) selectionName = exact
+		else
+			o.onNote?.(
+				`could not confirm "${target}" among ${objects.length} replay hero object(s); ` +
+					`using the champion name directly`
+			)
 	}
 
 	/** Re-applied after every seek, because a seek moves the camera. */

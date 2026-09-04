@@ -73,6 +73,27 @@ describe("idle continuity", () => {
  * holds the client" and settled having captured nothing — the second reason replay capture had
  * never completed a run.
  */
+/**
+ * The streak must survive a failed read.
+ *
+ * `readGateState` only calls `notePhase` when the snapshot was reachable. Before that, a
+ * transient LCU hiccup produced a null phase, which is not idle, which wiped the clock — and
+ * with two pollers running, capture sat at "only idle for 31s of the required 120s" forever.
+ */
+describe("transient read failures", () => {
+	it("does not reset when the phase was never observed", () => {
+		notePhase("Lobby", 0)
+		// A failed read must NOT reach notePhase at all; simulate the call simply not happening.
+		strictEqual(idleForMs(60_000), 60_000)
+	})
+
+	it("still resets when the client genuinely reports something else", () => {
+		notePhase("Lobby", 0)
+		notePhase("ChampSelect", 30_000)
+		strictEqual(idleForMs(60_000), 0)
+	})
+})
+
 describe("G8 self-exclusion", () => {
 	const state = (otherIntrusiveRunning: boolean) => ({
 		phase: "Lobby",

@@ -79,9 +79,9 @@ export const JobBadge = ({ job, showGame = true, nowMs = Date.now() }: JobBadgeP
 			{job.intrusive && (
 				<span
 					className="csk-job__meta csk-job__meta--intrusive"
-					title="Intrusive — takes over the League client, so it only runs while you are not in a game."
+					title="Opens League and controls it for a few minutes to record your replay. It only runs while you are out of a game, and stops if you start one."
 				>
-					⚠ takes over client
+					⚠ opens your game
 				</span>
 			)}
 			{metaText && (

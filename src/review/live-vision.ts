@@ -60,6 +60,13 @@ export interface LiveVisionInput {
 	focus?: readonly string[]
 	/** Recent observations, so it does not repeat itself every tick. */
 	recent?: readonly string[]
+	/**
+	 * A spoken question from the player, when there is one.
+	 *
+	 * This flips the whole call: an unprompted glance should almost always stay quiet, but
+	 * someone who just asked deserves an answer. Same evidence rules either way.
+	 */
+	question?: string | null
 }
 
 const prompt = (input: LiveVisionInput): string => {
@@ -67,6 +74,30 @@ const prompt = (input: LiveVisionInput): string => {
 		input.gameTimeSec === null || input.gameTimeSec === undefined ?
 			"unknown"
 		:	`${Math.floor(input.gameTimeSec / 60)}:${String(Math.floor(input.gameTimeSec % 60)).padStart(2, "0")}`
+
+	const asked = (input.question ?? "").trim()
+
+	/*
+	 * A question changes the contract completely. Unprompted, silence is almost always right;
+	 * asked directly, silence is just unhelpful. The evidence rules do not move either way.
+	 */
+	if (asked !== "")
+		return `Read the image at \`${input.framePath}\`. It is a screenshot of a live League of
+Legends game${input.championName ? `, played by the ${input.championName} player` : ""}. Game
+clock: ${clock}.
+
+They just asked you, out loud, mid-game:
+
+> ${asked}
+
+Answer it. Two short sentences at most — it will be read or spoken while they are playing.
+
+- **Answer from what is visible in this frame.** If the screen does not show what they asked
+  about, say so in a few words rather than guessing. "Can't see their jungler on this screen" is
+  a real answer and a useful one.
+- No preamble, no restating the question, no markdown. Just the answer.
+- If it is a judgement call, give your actual opinion — they asked for it.
+${input.focus && input.focus.length > 0 ? `\nThey are working on: ${input.focus.join("; ")}\n` : ""}`
 
 	return `Read the image at \`${input.framePath}\`. It is a screenshot of a live League of
 Legends game${input.championName ? `, played by the ${input.championName} player` : ""}. Game

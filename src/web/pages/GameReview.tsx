@@ -20,6 +20,7 @@ import { queueName } from "../../shared/constants.ts"
 import { zoneOf } from "../../shared/map.ts"
 import { api } from "../lib/api.ts"
 import { href, useAction, useNow, useResource } from "../lib/hooks.ts"
+import { useSse } from "../lib/sse.ts"
 import {
 	SEVERITY_RANK,
 	cls,
@@ -36,6 +37,7 @@ import {
 } from "../lib/format.ts"
 import { ChampIcon } from "../components/ChampIcon.tsx"
 import { GradeBadge } from "../components/GradeBadge.tsx"
+import { CaptureProgress } from "../components/CaptureProgress.tsx"
 import { VisionBadge } from "../components/VisionBadge.tsx"
 import { WatchGamePanel } from "../components/WatchGamePanel.tsx"
 import { CoachChat } from "../components/CoachChat.tsx"
@@ -61,6 +63,29 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 	const jobsRes = useResource(signal => api.jobs(signal), [eventTick])
 	const watchRes = useResource(signal => api.watchNotes(gameId, signal), [gameId, eventTick])
 	const [watching, setWatching] = useState<string | null>(null)
+	/**
+	 * Live capture progress from the daemon's SSE stream.
+	 *
+	 * Without this the screen showed a gate reason and then nothing for several minutes, so a
+	 * working capture and a hung one were indistinguishable — which is exactly how it read.
+	 */
+	const [captureProgress, setCaptureProgress] = useState<{
+		phase: string
+		note: string | null
+		done: number
+		total: number
+	} | null>(null)
+
+	useSse(m => {
+		if (m.name !== "capture") return
+		const d = m.data as { gameId?: number; phase?: string; note?: string; done?: number; total?: number }
+		if (d.gameId !== gameId || typeof d.phase !== "string") return
+		setCaptureProgress(
+			d.phase === "closed" || d.phase === "failed" ?
+				null
+			:	{ phase: d.phase, note: d.note ?? null, done: d.done ?? 0, total: d.total ?? 0 }
+		)
+	})
 	const now = useNow(15_000)
 
 	const [cursorSec, setCursorSec] = useState(0)
@@ -438,6 +463,15 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 						 * need a capture, and a capture takes over the client — three steps with
 						 * three failure modes, none of which used to be visible anywhere.
 						 */}
+						{captureProgress !== null && (
+							<CaptureProgress
+								phase={captureProgress.phase}
+								note={captureProgress.note}
+								done={captureProgress.done}
+								total={captureProgress.total}
+							/>
+						)}
+
 						<WatchGamePanel
 							game={g}
 							health={health}

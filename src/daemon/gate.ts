@@ -200,7 +200,21 @@ export const readGateState = async (
 		log.warn("gate read failed; treating client as busy", { err: errText(err) })
 	}
 
-	notePhase(snapshot.phase)
+	/*
+	 * ONLY a successful read may reset the idle streak.
+	 *
+	 * `fetchIdleSnapshot` returns `reachable: false` with a null phase when it throws or when
+	 * the client did not answer — and `isIdlePhase(null)` is false, so feeding that to
+	 * `notePhase` wiped the streak. With the gate and the supervisor both polling every few
+	 * seconds, a single transient hiccup reset 120 seconds of accumulated idle to zero, and the
+	 * capture gate could sit at "only idle for 31s of the required 120s" indefinitely. Observed
+	 * repeatedly after games.
+	 *
+	 * Failing to ASK is not the same as being told the client is busy. An unreadable client
+	 * still fails G1 on `reachable` below, so nothing becomes less safe by leaving the clock
+	 * alone here.
+	 */
+	if (snapshot.reachable) notePhase(snapshot.phase)
 
 	return {
 		phase: snapshot.phase,

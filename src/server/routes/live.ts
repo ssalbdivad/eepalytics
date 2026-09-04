@@ -170,6 +170,8 @@ export const createLiveRoute = (): Hono => {
 		const body = (await c.req.json().catch(() => null)) as {
 			frame?: unknown
 			recent?: unknown
+			/** A spoken question. Present only when the user actually asked something. */
+			question?: unknown
 		} | null
 
 		const frame = typeof body?.frame === "string" ? body.frame : ""
@@ -197,7 +199,8 @@ export const createLiveRoute = (): Hono => {
 				championName: me?.championName ?? null,
 				gameTimeSec: data?.gameData?.gameTime ?? null,
 				focus,
-				recent: Array.isArray(body?.recent) ? (body.recent as unknown[]).filter(r => typeof r === "string").slice(-4) as string[] : []
+				recent: Array.isArray(body?.recent) ? (body.recent as unknown[]).filter(r => typeof r === "string").slice(-4) as string[] : [],
+				question: typeof body?.question === "string" ? body.question.slice(0, 400) : null
 			})
 
 			return c.json({

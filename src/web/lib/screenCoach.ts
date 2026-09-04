@@ -24,6 +24,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 export interface Observation {
 	text: string
+	/** Set when the user asked; kept so the log does not read as a string of non sequiturs. */
+	question?: string
 	atMs: number
 	costUsd: number | null
 }
@@ -38,6 +40,8 @@ export interface ScreenCoachState {
 	error: string | null
 	busy: boolean
 	speak: boolean
+	/** True while the microphone is open for a question. */
+	listening: boolean
 }
 
 /** JPEG at 0.7 rather than PNG: a screenshot of a game compresses to roughly a tenth the bytes,
@@ -55,12 +59,15 @@ export const useScreenCoach = () => {
 		calls: 0,
 		error: null,
 		busy: false,
-		speak: false
+		speak: false,
+		listening: false
 	})
 
 	const streamRef = useRef<MediaStream | null>(null)
 	const videoRef = useRef<HTMLVideoElement | null>(null)
 	const inFlight = useRef(false)
+	// `ask` is defined before `grab`, so it reaches the current one through a ref.
+	const grabRef = useRef<(() => string | null) | null>(null)
 	const speakRef = useRef(false)
 	// Read inside the interval without re-arming it on every observation.
 	const recentRef = useRef<string[]>([])
@@ -94,6 +101,93 @@ export const useScreenCoach = () => {
 		}
 	}, [stop])
 
+	/**
+	 * Ask a question out loud about what is on screen right now.
+	 *
+	 * Voice in is the browser's own SpeechRecognition — local, free, no API — and voice out is
+	 * `speechSynthesis`. Together they make a conversation, but it is turn-based by necessity:
+	 * Anthropic has no realtime bidirectional session API, so this is speak -> look -> answer
+	 * at a few seconds a turn, not the continuous back-and-forth of a live voice assistant.
+	 * Saying otherwise would set an expectation the thing cannot meet.
+	 */
+	const ask = useCallback(
+		async (question: string) => {
+			const q = question.trim()
+			if (q === "" || inFlight.current) return
+			const frame = grabRef.current?.() ?? null
+			if (frame === null) {
+				setState(s => ({ ...s, error: "not sharing a screen yet" }))
+				return
+			}
+			inFlight.current = true
+			setState(s => ({ ...s, busy: true, error: null }))
+			try {
+				const res = await fetch("/api/live/observe", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ frame, question: q })
+				})
+				const out = (await res.json()) as { text?: string; costUsd?: number | null; error?: string }
+				setState(s => ({
+					...s,
+					calls: s.calls + 1,
+					spent: s.spent + (out.costUsd ?? 0),
+					error: out.error ?? null,
+					observations: [
+						// The question is kept beside the answer; an answer alone reads as a non sequitur
+						// when you scroll back through the log.
+						{ text: `${out.text || "(no answer)"}`, question: q, atMs: Date.now(), costUsd: out.costUsd ?? null },
+						...s.observations
+					].slice(0, 30)
+				}))
+				if (out.text && window.speechSynthesis) {
+					const u = new SpeechSynthesisUtterance(out.text)
+					u.rate = 1.15
+					window.speechSynthesis.speak(u)
+				}
+			} catch (e) {
+				setState(s => ({ ...s, error: e instanceof Error ? e.message : String(e) }))
+			} finally {
+				inFlight.current = false
+				setState(s => ({ ...s, busy: false }))
+			}
+		},
+		[]
+	)
+
+	/** Push-to-talk. Resolves when the browser has a final transcript. */
+	const listen = useCallback((): void => {
+		const Ctor =
+			(window as { SpeechRecognition?: new () => never; webkitSpeechRecognition?: new () => never })
+				.SpeechRecognition ??
+			(window as { webkitSpeechRecognition?: new () => never }).webkitSpeechRecognition
+		if (!Ctor) {
+			setState(s => ({ ...s, error: "this build has no speech recognition" }))
+			return
+		}
+		const rec = new Ctor() as unknown as {
+			lang: string
+			interimResults: boolean
+			continuous: boolean
+			start: () => void
+			stop: () => void
+			onresult: ((e: { results: { 0: { transcript: string } }[] }) => void) | null
+			onerror: ((e: { error: string }) => void) | null
+			onend: (() => void) | null
+		}
+		rec.lang = "en-US"
+		rec.interimResults = false
+		rec.continuous = false
+		setState(s => ({ ...s, listening: true }))
+		rec.onresult = e => {
+			const said = e.results[0]?.[0]?.transcript ?? ""
+			if (said) void ask(said)
+		}
+		rec.onerror = e => setState(s => ({ ...s, error: `mic: ${e.error}`, listening: false }))
+		rec.onend = () => setState(s => ({ ...s, listening: false }))
+		rec.start()
+	}, [ask])
+
 	const grab = useCallback((): string | null => {
 		const video = videoRef.current
 		if (!video || video.videoWidth === 0) return null
@@ -106,6 +200,10 @@ export const useScreenCoach = () => {
 		ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 		return canvas.toDataURL("image/jpeg", FRAME_QUALITY)
 	}, [])
+
+	useEffect(() => {
+		grabRef.current = grab
+	}, [grab])
 
 	useEffect(() => {
 		if (!state.sharing) return
@@ -175,6 +273,8 @@ export const useScreenCoach = () => {
 		...state,
 		start,
 		stop,
+		ask,
+		listen,
 		setInterval: (sec: number) => setState(s => ({ ...s, intervalSec: sec })),
 		setSpeak: (on: boolean) => {
 			if (!on) window.speechSynthesis?.cancel()

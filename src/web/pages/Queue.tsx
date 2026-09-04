@@ -109,7 +109,7 @@ export const Queue = ({ health, eventTick }: QueueProps) => {
 					: idle ?
 						<>
 							<strong>Capture is allowed right now.</strong> The client is in{" "}
-							<code className="mono">{phase}</code>, which is an idle phase — an intrusive
+							<code className="mono">{phase}</code>, which is an idle phase — a replay
 							capture job may start at any time.
 						</>
 					:	<>
@@ -200,8 +200,14 @@ const JobRow = ({ job, game, now }: { job: Job; game: Game | null; now: number }
 						{subject}
 					</span>
 					{job.intrusive ?
-						<span className="chip warn" style={{ marginLeft: 8 }} title="Takes over the League client">
-							intrusive
+						// "intrusive" is this codebase's word for it, not the user's. Say what
+						// actually happens: it opens their game and drives it.
+						<span
+							className="chip warn"
+							style={{ marginLeft: 8 }}
+							title="This job opens League and controls it for a few minutes to record your replay. It waits until you are out of a game, and it stops if you start one."
+						>
+							opens your game
 						</span>
 					:	null}
 				</div>

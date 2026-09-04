@@ -339,7 +339,11 @@ export type SseReviewEvent = typeof SseReviewEvent.infer
 export const SseCaptureEvent = type({
 	gameId: "number",
 	"progress?": "number",
-	phase: "string"
+	phase: "string",
+	/** The pipeline's own detail line — which moment, which step. */
+	"note?": "string",
+	"done?": "number",
+	"total?": "number"
 })
 export type SseCaptureEvent = typeof SseCaptureEvent.infer
 
