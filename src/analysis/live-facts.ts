@@ -105,6 +105,15 @@ const KP_MIN_SEC = 10 * 60
 /** Game-clock seconds between counterpart mentions. */
 const RACE_COOLDOWN_SEC = 150
 
+/**
+ * How much of a deficit he must claw back before it is worth celebrating.
+ *
+ * Smaller than the gap that earns a criticism, deliberately: a recovery is harder than a decline
+ * and he should hear about it sooner. Said once, because the point is the turnaround rather than
+ * a running commentary on the same race.
+ */
+const RACE_SWING = 10
+
 /** The gap itself must have MOVED; a stable deficit restated is nagging about a fixed number. */
 const RACE_GAP_MOVED = 8
 
@@ -165,6 +174,8 @@ export interface FactMemory {
 	saidKillShare: boolean
 	/** The champion's death note is a property of the champion, so it is said once. */
 	saidOwnDeath: boolean
+	/** The comeback is celebrated once — the point is the turnaround, not a commentary. */
+	saidSwing: boolean
 	/** His CS when farm was last raised; it must actually move before saying it again. */
 	lastFarmCs: number
 	lastLedWithDeath: boolean
@@ -187,6 +198,7 @@ export const newFactMemory = (): FactMemory => ({
 	sawCounterpartBuild: false,
 	saidKillShare: false,
 	saidOwnDeath: false,
+	saidSwing: false,
 	lastFarmCs: 0,
 	lastLedWithDeath: false
 })
@@ -261,7 +273,12 @@ export interface FactInput {
 	 * sentence arriving behind a live teamfight is noise at the moment noise costs most, and any
 	 * count spoken now is revised three seconds later.
 	 */
-	fight?: { quiet: boolean; line: string | null }
+	fight?: {
+		quiet: boolean
+		line: string | null
+		/** Which champion clause fits: he was not in it, or he was and it went badly. */
+		kind?: "fight-lost" | "fight-absent"
+	}
 	enemyObjectives: { name: string; atSec: number; dragonType?: string }[]
 	myEvents: {
 		id: number
@@ -361,6 +378,34 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	) {
 		const gap = input.counterpart.cs - input.pace.cs
 		const moved = Math.abs(gap - mem.lastRaceGap)
+		/*
+		 * A SWING is the best encouragement available, and it is exact.
+		 *
+		 * Praise today only fires on a multikill or an objective — things he already knows he did.
+		 * Clawing back a deficit against the man he is racing is invisible: it happens across
+		 * minutes, neither number is on screen, and it is the one moment encouragement actually
+		 * lands, because it is evidence that what he changed worked.
+		 *
+		 * Only counts as a swing if he was genuinely behind before, so the first mention of a game
+		 * can never be one.
+		 */
+		if (
+			mem.lastRaceAtSec > 0 &&
+			mem.lastRaceGap >= RACE_MIN_GAP &&
+			mem.lastRaceGap - gap >= RACE_SWING &&
+			!mem.saidSwing
+		) {
+			// Read the old gap BEFORE overwriting it — the whole line is the difference between them.
+			const was = mem.lastRaceGap
+			mem.saidSwing = true
+			mem.lastRaceGap = gap
+			mem.lastRaceAtSec = input.nowSec
+			praise.push(
+				gap <= 0 ?
+					`you were ${was} CS down on ${input.counterpart.champion} and you're ahead now`
+				:	`you've pulled ${was - gap} CS back on ${input.counterpart.champion}`
+			)
+		}
 		if (
 			Math.abs(gap) >= RACE_MIN_GAP &&
 			(mem.lastRaceAtSec === 0 || input.nowSec - mem.lastRaceAtSec >= RACE_COOLDOWN_SEC) &&
@@ -392,7 +437,10 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * decisions actually cash out, and "that fight happened without you" is the single thing a
 	 * player is least able to notice for himself.
 	 */
-	const fight: string[] = input.fight?.line ? [input.fight.line] : []
+	const fight: string[] =
+		input.fight?.line ?
+			[withAdvice(input.fight.line, input.fight.kind ? input.advice?.[input.fight.kind] : undefined)]
+		:	[]
 
 	/*
 	 * What the counterpart just FINISHED, by name.

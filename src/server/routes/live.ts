@@ -182,6 +182,7 @@ const buildLiveState = (
 		factMemory.saidLevelGap = false
 		factMemory.saidKillShare = false
 		factMemory.saidOwnDeath = false
+		factMemory.saidSwing = false
 		factMemory.sawCounterpartBuild = false
 		factMemory.seenCounterpartItems.clear()
 		factMemory.lastLedWithDeath = false
@@ -435,7 +436,17 @@ const buildLiveState = (
 						},
 						fightMemory
 					)
-					return { quiet: r.quiet, line: r.line }
+					/*
+					 * Which champion clause fits. Absence and a lost fight want different advice —
+					 * "be on the map before the next one" against "you want the long fight" — and
+					 * handing the wrong one over is how champion knowledge starts sounding generic.
+					 */
+					const kind =
+						!r.fight ? undefined
+						: r.fight.participation === "absent" ? ("fight-absent" as const)
+						: r.fight.lost > r.fight.won ? ("fight-lost" as const)
+						: undefined
+					return { quiet: r.quiet, line: r.line, ...(kind ? { kind } : {}) }
 				})(),
 				enemyObjectives: (data.events?.Events ?? [])
 					.filter(e => OBJECTIVE_EVENTS.has(e.EventName) && e.KillerName !== myName)
