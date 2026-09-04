@@ -262,6 +262,16 @@ const buildLiveState = (
 				 * so it gates what is worth mentioning — but the line names the item rather than
 				 * counting them, so no threshold is ever spoken as a fact.
 				 */
+				...(() => {
+					// Share of his own team's kills. Exact — every K/A is in the block.
+					const theirKills = enemies.reduce((n, p) => n + (p.scores?.kills ?? 0), 0)
+					return theirKills > 0 ?
+							{
+								killShare:
+									((bySmite.scores?.kills ?? 0) + (bySmite.scores?.assists ?? 0)) / theirKills
+							}
+						:	{}
+				})(),
 				items: (bySmite.items ?? [])
 					.filter(i => !i.consumable && (i.price ?? 0) >= LEGENDARY_ITEM_GOLD && i.displayName)
 					.map(i => i.displayName!),
@@ -338,6 +348,14 @@ const buildLiveState = (
 				 */
 				counterpart,
 				meLevel: me.level,
+				myKillShare: (() => {
+					const ourKills =
+						others.filter(p => p.team === mine).reduce((n, p) => n + (p.scores?.kills ?? 0), 0) +
+						(me.scores?.kills ?? 0)
+					return ourKills > 0 ?
+							((me.scores?.kills ?? 0) + (me.scores?.assists ?? 0)) / ourKills
+						:	undefined
+				})(),
 				/*
 				 * The fight read is computed HERE and handed in already phrased, because the
 				 * arithmetic over kill clusters belongs in its own module and the ranker only needs

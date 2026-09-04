@@ -89,6 +89,17 @@ const RESTRAINT_LEVEL_GAP = 2
 /** An objective is "live" for restraint purposes when it is this close. */
 const OBJECTIVE_SOON_SEC = 45
 
+/**
+ * Kill-participation gap worth a sentence, in percentage points.
+ *
+ * Below this it is one skirmish of variance. At this size he is genuinely being left out of his
+ * team's fights, which is a different failure from being behind on CS and has a different fix.
+ */
+const KP_MIN_GAP_PCT = 25
+
+/** Before this there are too few kills for a share to mean anything. */
+const KP_MIN_SEC = 10 * 60
+
 /** Game-clock seconds between counterpart mentions. */
 const RACE_COOLDOWN_SEC = 150
 
@@ -148,6 +159,8 @@ export interface FactMemory {
 	/** Legendary items already announced for the counterpart, and whether a baseline exists yet. */
 	seenCounterpartItems: Set<string>
 	sawCounterpartBuild: boolean
+	/** Said once per game — a participation gap is a pattern, not an event. */
+	saidKillShare: boolean
 	/** His CS when farm was last raised; it must actually move before saying it again. */
 	lastFarmCs: number
 	lastLedWithDeath: boolean
@@ -168,6 +181,7 @@ export const newFactMemory = (): FactMemory => ({
 	saidLevelGap: false,
 	seenCounterpartItems: new Set(),
 	sawCounterpartBuild: false,
+	saidKillShare: false,
 	lastFarmCs: 0,
 	lastLedWithDeath: false
 })
@@ -220,9 +234,13 @@ export interface FactInput {
 		inferred?: boolean
 		/** Legendary items he has finished, by NAME, newest last. */
 		items?: string[]
+		/** His share of his team's kills, 0-1. Exact: every K/D/A is in the block. */
+		killShare?: number
 	} | null
 	/** His own level, for the gap against the counterpart. */
 	meLevel?: number
+	/** His own share of his team's kills, 0-1. */
+	myKillShare?: number
 	/**
 	 * The read from `analysis/fights.ts`, already phrased by the module that owns the arithmetic.
 	 *
@@ -379,6 +397,30 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 			mem.saidLevelGap = true
 			restraint.push(
 				`${input.counterpart.champion} is ${down} levels up on you — get your clear finished before you take a fight`
+			)
+		}
+	}
+
+	/*
+	 * Kill participation against the counterpart.
+	 *
+	 * The game-scale version of "that fight happened without you": both shares are exact, neither
+	 * is visible without doing arithmetic on the scoreboard, and a jungler who is 30 points behind
+	 * on participation is being left out of his team's fights — which is a different problem from
+	 * being behind on farm and has a different fix.
+	 */
+	const participation: string[] = []
+	if (
+		input.counterpart?.killShare !== undefined &&
+		input.myKillShare !== undefined &&
+		input.nowSec >= KP_MIN_SEC &&
+		!mem.saidKillShare
+	) {
+		const gap = Math.round((input.counterpart.killShare - input.myKillShare) * 100)
+		if (gap >= KP_MIN_GAP_PCT) {
+			mem.saidKillShare = true
+			participation.push(
+				`${input.counterpart.champion} is in ${gap} percent more of his team's kills than you are — get to the next fight before it starts, not after`
 			)
 		}
 	}
@@ -643,7 +685,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * So praise still happens, but only when nothing else is on offer. That is most of the time
 	 * it matters anyway — the moment after a fight is usually quiet.
 	 */
-	const nonDeath = [...fight, ...restraint, ...windows, ...build, ...race, ...rest, ...money, ...farm]
+	const nonDeath = [...fight, ...restraint, ...windows, ...build, ...race, ...participation, ...rest, ...money, ...farm]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -660,7 +702,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
 		windows.length > 0 || rest.length > 0 ?
-			[...fight, ...restraint, ...windows, ...build, ...race, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
+			[...fight, ...restraint, ...windows, ...build, ...race, ...participation, ...rest, ...money, ...farm, ...deathsAllowed, ...praise]
 		:	[...nonDeath, ...deathsAllowed, ...praise]
 
 	/*
