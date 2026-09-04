@@ -85,6 +85,7 @@ import {
 	wilson
 } from "../src/analysis/coach-score.ts"
 import type { CoachFault, Interval, LineScore } from "../src/analysis/coach-score.ts"
+import { coachTurn, providerById as sharedProvider } from "../src/review/live-providers.ts"
 
 /* ================================================================= arguments */
 
@@ -946,19 +947,75 @@ const runMock = async (_arm: Arm, ctx: RunContext): Promise<Turn[]> =>
 		error: null
 	}))
 
-const runArm = async (arm: Arm, ctx: RunContext): Promise<Turn[]> => {
-	switch (arm.provider.kind) {
-		case "gemini-live":
-			return await runGeminiLive(arm, ctx)
-		case "openai":
-			return await runOpenAiCompatible(arm, ctx)
-		case "anthropic":
-			return await runAnthropic(arm, ctx)
-		case "claude-cli":
-			return await runClaudeCli(arm, ctx)
-		case "mock":
-			return await runMock(arm, ctx)
+/**
+ * Every turn-based arm goes through `coachTurn`, the SAME path the live coach uses.
+ *
+ * This benchmark was written with its own per-vendor HTTP calls. That is the one thing it must not
+ * have: if the adapters differ, the differences between the adapters are what gets measured, and
+ * the whole question is about the models. `src/review/live-providers.ts` is the single path — one
+ * SDK, one image content part, one set of options, and the system prompt is not even a parameter
+ * there, so it cannot drift between arms.
+ *
+ * `gemini-live` keeps its own runner because it genuinely is a different thing: a socket with
+ * native audio. That is the arm the comparison exists to test against, not a variation of it.
+ */
+const runViaSdk = async (arm: Arm, ctx: RunContext): Promise<Turn[]> => {
+	const out: Turn[] = []
+	let index = 0
+	for (const state of ctx.states) {
+		const r = await coachTurn({
+			provider: arm.provider.id as never,
+			model: arm.model,
+			blockText: state.block,
+			...(ctx.frameB64 ? { frameJpegBase64: ctx.frameB64 } : {})
+		})
+		out.push({
+			index: index++,
+			gameId: state.gameId,
+			atSec: state.atSec,
+			clock: state.state.clock,
+			text: r.text,
+			ms: r.latencyMs,
+			inputTokens: null,
+			outputTokens: null,
+			costUsd: null,
+			error: r.ok ? null : (r.reason ?? "failed")
+		})
 	}
+	return out
+}
+
+const runArm = async (arm: Arm, ctx: RunContext): Promise<Turn[]> => {
+	if (arm.provider.kind === "gemini-live") return await runGeminiLive(arm, ctx)
+	if (arm.provider.kind === "mock") return await runMock(arm, ctx)
+	// Anything the shared provider layer knows about goes through it.
+	/*
+	 * The bench and the shared layer name the same vendors differently — the bench grew its own
+	 * ids before the layer existed. Mapped rather than renamed on either side, because the bench's
+	 * ids are what he types on the command line and the layer's are what the settings screen
+	 * stores; changing either would break something he already uses.
+	 */
+	const SHARED_ID: Record<string, string> = {
+		gemini: "gemini-http",
+		"gemini-http": "gemini-http",
+		openai: "openai",
+		anthropic: "anthropic",
+		kimi: "kimi",
+		glm: "glm"
+	}
+	const mapped = SHARED_ID[arm.provider.id]
+	if (mapped && sharedProvider(mapped))
+		return await runViaSdk({ ...arm, provider: { ...arm.provider, id: mapped } }, ctx)
+	/*
+	 * `claude-cli` has no runner ON PURPOSE. Print mode cannot carry an image, so an arm using it
+	 * would be a text-only run sitting in a table of vision runs — a clean-looking number about a
+	 * different experiment. Anthropic needs an API key.
+	 */
+	throw new Error(
+		arm.provider.id === "claude-cli" ?
+			"the claude CLI cannot take an image — use the anthropic arm with an API key"
+		:	`no runner for ${arm.provider.id}`
+	)
 }
 
 /* ================================================================== pricing */

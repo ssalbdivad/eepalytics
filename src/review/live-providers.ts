@@ -36,7 +36,7 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync }
 import { DATA_DIR } from "../shared/constants.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../shared/live-prompt.ts"
 
-export type ProviderId = "gemini-http" | "anthropic" | "openai" | "kimi" | "glm"
+export type ProviderId = "gemini-http" | "anthropic" | "openai" | "kimi" | "glm" | "mock"
 
 export interface ProviderInfo {
 	id: ProviderId
@@ -57,6 +57,25 @@ export interface ProviderInfo {
  * hardcoded list is a bug that looks like a limitation. The settings field is free text.
  */
 export const PROVIDERS: readonly ProviderInfo[] = [
+	{
+		/*
+		 * A provider that needs no key and calls nothing.
+		 *
+		 * It exists so the whole turn-based path — route, browser loop, system voice, transcript —
+		 * can be exercised without an API key, a bill, or a rate limit. Every other provider was
+		 * unverifiable end to end the day it was written: the Gemini quota was exhausted by testing
+		 * and there were no other keys on the machine.
+		 *
+		 * It echoes the FIRST ranked fact back, which makes it a useful control in its own right:
+		 * it is exactly what the coach would say if the model contributed nothing at all, so any
+		 * arm that does not beat it is not earning its latency.
+		 */
+		id: "mock",
+		label: "Mock (no key, says the top fact)",
+		keyFile: "mock.key",
+		defaultModel: "echo",
+		note: "Calls nothing. Speaks the highest-ranked fact verbatim — the control arm."
+	},
 	{
 		id: "gemini-http",
 		label: "Gemini (HTTPS)",
@@ -106,6 +125,9 @@ export const providerById = (id: string): ProviderInfo | undefined =>
  * settings table, because settings round-trip through `GET /api/settings` into the renderer.
  */
 export const providerKey = (p: ProviderInfo): string | null => {
+	// The mock needs nothing and must always be available, or the one path that can be tested
+	// without a bill would itself require a key.
+	if (p.id === "mock") return "mock"
 	const path = `${DATA_DIR}/${p.keyFile}`
 	if (!existsSync(path)) return null
 	const raw = readFileSync(path, "utf8").trim()
@@ -172,6 +194,25 @@ export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult>
 	if (!p) return fail(`no provider called ${req.provider}`)
 	const key = providerKey(p)
 	if (!key) return fail(`no key — put one in data/${p.keyFile}`)
+
+	/*
+	 * The mock answers from the block alone. It reads the first line of the "not looking at" list,
+	 * which is the fact the ranker chose — so it speaks exactly what a model contributing nothing
+	 * would say, and any real arm has to beat that to be worth its latency.
+	 */
+	if (p.id === "mock") {
+		const facts = req.blockText
+			.split("\n")
+			.filter(l => l.startsWith("- "))
+			.map(l => l.slice(2).trim())
+		return {
+			ok: true,
+			text: facts[0] ?? "PASS",
+			model,
+			frameSent: typeof req.frameJpegBase64 === "string" && req.frameJpegBase64.length > 0,
+			latencyMs: Date.now() - started
+		}
+	}
 
 	try {
 		const { generateText } = await import("ai")
