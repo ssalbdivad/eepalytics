@@ -1653,3 +1653,112 @@ export const upsertWatchNote = (n: WatchNote): void => {
 		createdMs: n.createdMs
 	})
 }
+
+/* =============================================================== journal */
+
+/**
+ * The frame journal. Sessions are keyed by session id, never by gameId — see
+ * `daemon/journal.ts` for why the game arrives later, or not at all.
+ */
+
+export interface JournalSessionRow {
+	id: string
+	startedMs: number
+	endedMs: number | null
+	gameId: number | null
+	claim: string
+	championName: string | null
+	riotId: string | null
+	estimatedStartMs: number | null
+	frameCount: number
+}
+
+export const insertJournalSession = (s: {
+	id: string
+	startedMs: number
+	gameId: number | null
+	championName: string | null
+	riotId: string | null
+	estimatedStartMs: number
+	createdMs: number
+}): void => {
+	prep(
+		`INSERT INTO journal_session
+		   (id, startedMs, gameId, claim, championName, riotId, estimatedStartMs, frameCount, createdMs)
+		 VALUES (@id, @startedMs, @gameId, @claim, @championName, @riotId, @estimatedStartMs, 0, @createdMs)`
+	).run({
+		id: s.id,
+		startedMs: s.startedMs,
+		gameId: s.gameId,
+		// The LCU telling us mid-game is the fast path; everything else waits for the matcher.
+		claim: s.gameId === null ? "unclaimed" : "lcu",
+		championName: s.championName,
+		riotId: s.riotId,
+		estimatedStartMs: s.estimatedStartMs,
+		createdMs: s.createdMs
+	})
+}
+
+/** The session still being written to, if any. At most one is open at a time. */
+export const openJournalSessionFor = (): JournalSessionRow | null => {
+	const row = plain(
+		prep("SELECT * FROM journal_session WHERE endedMs IS NULL ORDER BY startedMs DESC LIMIT 1").get()
+	)
+	return row ? (row as unknown as JournalSessionRow) : null
+}
+
+export const closeJournalSession = (id: string, endedMs: number): void => {
+	prep("UPDATE journal_session SET endedMs = ? WHERE id = ?").run(endedMs, id)
+}
+
+export const insertJournalFrame = (f: {
+	id: string
+	sessionId: string
+	tSec: number
+	path: string
+	atMs: number
+	clock: string
+	truthJson: string | null
+	bytes: number
+}): void => {
+	prep(
+		`INSERT INTO journal_frame (id, sessionId, tSec, path, atMs, clock, truthJson, bytes)
+		 VALUES (@id, @sessionId, @tSec, @path, @atMs, @clock, @truthJson, @bytes)
+		 ON CONFLICT(id) DO NOTHING`
+	).run(f)
+}
+
+/** Kept on the session row so the UI can show progress without counting rows every poll. */
+export const touchJournalSession = (id: string): void => {
+	prep(
+		"UPDATE journal_session SET frameCount = (SELECT count(*) FROM journal_frame WHERE sessionId = ?) WHERE id = ?"
+	).run(id, id)
+}
+
+export const countJournalFrames = (sessionId: string): number =>
+	num(plain(prep("SELECT count(*) AS c FROM journal_frame WHERE sessionId = ?").get(sessionId))?.c) ?? 0
+
+/**
+ * Every frame belonging to a game, oldest first.
+ *
+ * Joined through the session because that is where the gameId lives — a frame never carries one,
+ * so a session claimed later brings all of its frames with it at once.
+ */
+export const framesForGame = (gameId: number): { path: string; tSec: number; truthJson: string | null }[] =>
+	prep(
+		`SELECT f.path AS path, f.tSec AS tSec, f.truthJson AS truthJson
+		   FROM journal_frame f
+		   JOIN journal_session s ON s.id = f.sessionId
+		  WHERE s.gameId = ?
+		  ORDER BY f.tSec ASC`
+	).all(gameId) as unknown as { path: string; tSec: number; truthJson: string | null }[]
+
+/** Sessions with no game attached yet — the matcher's input, and the UI's "needs a claim" list. */
+export const unclaimedJournalSessions = (): JournalSessionRow[] =>
+	prep(
+		"SELECT * FROM journal_session WHERE gameId IS NULL AND claim = 'unclaimed' ORDER BY startedMs DESC LIMIT 20"
+	).all() as unknown as JournalSessionRow[]
+
+export const claimJournalSession = (id: string, gameId: number, claim: string): void => {
+	prep("UPDATE journal_session SET gameId = ?, claim = ? WHERE id = ?").run(gameId, claim, id)
+}

@@ -21,7 +21,7 @@
  *     rather than in a doc — a setup step you cannot complete is the same as a broken feature.
  */
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useGeminiLive } from "../lib/geminiLive.ts"
 import { useScreenShare } from "../lib/useScreenShare.ts"
 import "./components.css"
@@ -49,6 +49,16 @@ const isWslElectron = (): boolean => {
 
 /** How often she is invited to speak. She stays quiet unless she has something. */
 const TURN_CHOICES = [10, 20, 40]
+
+/**
+ * How often a frame is written to the journal.
+ *
+ * 5s is chosen against the evidence gate, not against disk: grading needs a frame in most 30s
+ * buckets of the game, so the interval has to be comfortably under a bucket for a few dropped
+ * frames not to open a hole. A 30-minute game is ~360 frames, and all but the handful cited by
+ * the review are pruned afterwards.
+ */
+const JOURNAL_MS = 5000
 
 interface KeyStatus {
 	configured: boolean
@@ -78,6 +88,21 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 
 	/** False once a ground-truth fetch has failed; see `groundTruth` below. */
 	const [truthOk, setTruthOk] = useState(true)
+	/**
+	 * What the journal has actually recorded. Shown, not assumed.
+	 *
+	 * Replay capture — the thing this replaces — ran for the app's entire life without ever
+	 * completing once, and nothing on screen ever said so. A count the player can look at is the
+	 * difference between "it is working" being a number and being a claim.
+	 */
+	const [journal, setJournal] = useState<{ frames: number; sessionId: string | null } | null>(null)
+	/**
+	 * The last ground-truth block the coach fetched, so a journalled frame can be stored beside the
+	 * facts that were true when it was taken. Only ever a copy of something already fetched — the
+	 * journal never polls on its own, because a second poll would consume the announce-once state
+	 * the coach depends on.
+	 */
+	const truthRef = useRef("")
 	const [keyStatus, setKeyStatus] = useState<KeyStatus | null>(null)
 	const [keyInput, setKeyInput] = useState("")
 	const [savingKey, setSavingKey] = useState(false)
@@ -115,6 +140,47 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 		}
 	}
 
+	/*
+	 * The journal: one frame every 5s while the screen is shared.
+	 *
+	 * Deliberately NOT tied to the Gemini coach. Sharing the screen is what earns a graded review
+	 * after the game; the live voice is an optional extra on top. Tying them would mean paying for
+	 * an API to get a review that costs nothing.
+	 *
+	 * The daemon stamps the game clock and refuses anything it cannot place, so this loop needs to
+	 * know nothing about whether a game is running.
+	 */
+	useEffect(() => {
+		if (!share.sharing) return
+		let alive = true
+		let inFlight = false
+		const tick = async () => {
+			if (inFlight || !alive) return
+			const frame = share.grabFrame()
+			if (frame === null) return
+			inFlight = true
+			try {
+				const r = await fetch("/api/live/journal/frame", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ frame, truth: truthRef.current || undefined })
+				})
+				const j = (await r.json()) as { ok?: boolean; sessionId?: string | null }
+				if (alive && j.ok) setJournal(p => ({ frames: (p?.frames ?? 0) + 1, sessionId: j.sessionId ?? null }))
+			} catch {
+				/* a dropped frame is not worth interrupting a game for */
+			} finally {
+				inFlight = false
+			}
+		}
+		const id = setInterval(() => void tick(), JOURNAL_MS)
+		void tick()
+		return () => {
+			alive = false
+			clearInterval(id)
+		}
+	}, [share.sharing, share.grabFrame])
+
 	const gem = useGeminiLive({
 		/*
 		 * Fetched per turn rather than polled.
@@ -128,7 +194,10 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 				const r = await fetch("/api/live/ground-truth", { signal: AbortSignal.timeout(4000) })
 				const j = (await r.json()) as { inGame?: boolean; text?: string }
 				setTruthOk(true)
-				if (j.text) return j.text
+				if (j.text) {
+					truthRef.current = j.text
+					return j.text
+				}
 			} catch {
 				/*
 				 * Surfaced, not swallowed. Without facts the coach is back to guessing from
@@ -309,6 +378,28 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 				<div className="csk-screen__warn">
 					Can't reach the game data right now, so she's going on the picture alone — she'll be
 					vaguer until it comes back.
+				</div>
+			)}
+			{/*
+			  * The journal's own line, shown whenever the screen is shared.
+			  *
+			  * This is the whole difference from the feature it replaces: replay capture ran for
+			  * the app's entire life without ever completing once, and nothing on screen ever said
+			  * so. A frame count is checkable; "it's working" is not.
+			  */}
+			{share.sharing && (
+				<div className={journal && journal.frames > 0 ? "csk-screen__journal on" : "csk-screen__journal"}>
+					{journal && journal.frames > 0 ?
+						<>
+							<b>Recording this game.</b> {journal.frames} frame
+							{journal.frames === 1 ? "" : "s"} saved — enough of them and this game gets graded
+							afterwards.
+						</>
+					:	<>
+							Not recording yet. Frames are only saved during a real game, so nothing is stored
+							in champ select, in a custom, or on your desktop.
+						</>
+					}
 				</div>
 			)}
 			{share.error !== null && <div className="csk-screen__err">{share.error}</div>}

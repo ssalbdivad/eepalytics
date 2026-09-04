@@ -39,6 +39,7 @@ import { LiveResponse } from "../../shared/schema/api.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
+import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
 import {
 	appendTranscript,
@@ -387,6 +388,38 @@ export const createLiveRoute = (): Hono => {
 			"GET /api/live"
 		)
 	})
+
+	/**
+	 * `POST /api/live/journal/frame` — store one frame of the shared screen.
+	 *
+	 * Deliberately independent of the Gemini coach. Sharing the screen is what earns a graded
+	 * review; the live voice is an optional extra on top of it, and costs money, and should not be
+	 * a prerequisite for being coached after the game.
+	 *
+	 * The daemon stamps the game clock itself — see `daemon/journal.ts`. The browser sends pixels
+	 * and, when it has one, the ground-truth block; it never sends a time.
+	 */
+	app.post("/live/journal/frame", async c => {
+		const body = (await c.req.json().catch(() => null)) as {
+			frame?: unknown
+			truth?: unknown
+		} | null
+		const frame = typeof body?.frame === "string" ? body.frame : ""
+		const b64 = frame.replace(/^data:image\/\w+;base64,/, "")
+		if (b64 === "" || b64.length > 12_000_000)
+			return fail(c, 400, "frame must be a base64 image under ~12MB", "bad-frame")
+
+		const result = await writeFrame({
+			jpeg: Buffer.from(b64, "base64"),
+			truth: typeof body?.truth === "string" ? body.truth : null
+		})
+		// 200 either way: a refused frame is a normal outcome (no game, practice tool), not an
+		// error the page should surface as broken.
+		return c.json(result)
+	})
+
+	/** `GET /api/live/journal` — is the journal actually recording? A number, not a claim. */
+	app.get("/live/journal", c => c.json(openSessionStatus()))
 
 	/**
 	 * `GET /api/live/ground-truth` — the computed facts, as the text the coach is given.

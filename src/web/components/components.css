@@ -2105,3 +2105,27 @@ button.csk-chip:focus-visible,
 	color: var(--text);
 	border-color: var(--gold-dim);
 }
+
+/* ===================================== ScreenCoach: the journal line === */
+/*
+ * Shown whenever the screen is shared. Its predecessor — replay capture — ran for the app's whole
+ * life without completing once and never said a word about it on screen, so this deliberately
+ * states a COUNT rather than a status: a number can be wrong in a way you can see.
+ */
+.csk-screen__journal {
+	border: 1px solid var(--line);
+	border-left-width: 3px;
+	border-radius: var(--radius-sm);
+	background: var(--panel);
+	color: var(--dim);
+	padding: 9px 12px;
+	font-size: 12px;
+	line-height: 1.55;
+}
+.csk-screen__journal.on {
+	border-left-color: var(--win);
+	color: var(--text-2);
+}
+.csk-screen__journal b {
+	color: var(--text);
+}
