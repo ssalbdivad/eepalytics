@@ -110,6 +110,10 @@ export const App = () => {
 	 * health poll. It renders before any of that so a 300x420 always-on-top window is not
 	 * mostly chrome, and so it does not poll /api/health every 20s behind a running game.
 	 */
+	/*
+	 * `#/live` is the overlay WINDOW: no nav, no status bar, no health poll, so a 380px
+	 * always-on-top window is not mostly chrome. `#/` is the same coach with the app around it.
+	 */
 	if (route.name === "live") {
 		document.body.classList.add("is-live")
 		return <Live />
@@ -125,11 +129,11 @@ export const App = () => {
 				</div>
 
 				<nav className="nav">
-					<a className={cls(route.name === "games" && "active")} href={href.games}>
-						Games
+					<a className={cls(route.name === "home" && "active")} href={href.home}>
+						Coach
 					</a>
-					<a className={cls(route.name === "replays" && "active")} href={href.replays}>
-						Replays
+					<a className={cls(route.name === "games" && "active")} href={href.games}>
+						History
 					</a>
 					<a className={cls(route.name === "trends" && "active")} href={href.trends}>
 						Trends
@@ -149,14 +153,19 @@ export const App = () => {
 					 * overlay would be a surprise. In a browser there is no second window to open,
 					 * so it falls back to navigating and says so.
 					 */}
+					{/*
+					 * The coach is the page you are already on, so this is not a link to it — it
+					 * pops the same coach out into the small always-on-top window you keep beside
+					 * the game. Labelled for what it does rather than where it goes.
+					 */}
 					<a
 						className="nav-live"
 						href={href.live}
 						target="_blank"
 						rel="noreferrer"
-						title="Open the live coach: a small always-on-top window with objective timers, your farm pace against your own baseline, and your current focus. In the desktop app you can also toggle it with Ctrl+Shift+L."
+						title="Pop the coach out into a small always-on-top window to keep beside the game (Ctrl+Shift+L in the desktop app)."
 					>
-						● Live
+						↗ Overlay
 					</a>
 				</nav>
 
@@ -212,7 +221,9 @@ export const App = () => {
 						<ClientOffline health={h} />
 					</div>
 				)}
-				{route.name === "games" ?
+				{route.name === "home" ?
+					<Live />
+				: route.name === "games" ?
 					<GameList health={h} eventTick={eventTick} />
 				: route.name === "game" ?
 					<GameReview gameId={route.gameId} eventTick={eventTick} health={h} />

@@ -12,6 +12,14 @@ import { errorDetail, errorMessage } from "./api.ts"
 /* =============================================================== router */
 
 export type Route =
+	/**
+	 * The coach, and the app's front door.
+	 *
+	 * Distinct from `live`, which is the SAME content rendered chrome-free for the always-on-top
+	 * overlay window. One component, two shells: the app's home has nav and a status bar, the
+	 * 380px overlay must not.
+	 */
+	| { name: "home" }
 	| { name: "games" }
 	| { name: "game"; gameId: number }
 	| { name: "replays" }
@@ -24,7 +32,9 @@ export type Route =
 export const parseRoute = (hash: string): Route => {
 	const path = hash.replace(/^#/, "").replace(/^\/+/, "")
 	const [head = "", tail = ""] = path.split("/")
-	if (head === "" || head === "games") return { name: "games" }
+	// The coach is the front door now; history is somewhere you go from it, not the other way round.
+	if (head === "") return { name: "home" }
+	if (head === "games") return { name: "games" }
 	if (head === "replays") return { name: "replays" }
 	if (head === "live") return { name: "live" }
 	if (head === "trends") return { name: "trends" }
@@ -38,6 +48,7 @@ export const parseRoute = (hash: string): Route => {
 }
 
 export const href = {
+	home: "#/",
 	games: "#/games",
 	replays: "#/replays",
 	live: "#/live",

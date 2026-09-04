@@ -222,8 +222,11 @@ describe("response validators", () => {
 
 describe("hash router", () => {
 	it("maps every screen", () => {
-		assert.equal(parseRoute("").name, "games")
-		assert.equal(parseRoute("#/").name, "games")
+		// The coach is the front door; history is somewhere you go from it. `live` is the SAME
+		// content rendered chrome-free for the always-on-top overlay window, so both must exist.
+		assert.equal(parseRoute("").name, "home")
+		assert.equal(parseRoute("#/").name, "home")
+		assert.equal(parseRoute("#/live").name, "live")
 		assert.equal(parseRoute("#/games").name, "games")
 		assert.equal(parseRoute("#/trends").name, "trends")
 		assert.equal(parseRoute("#/queue").name, "queue")
