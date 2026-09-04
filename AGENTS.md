@@ -49,16 +49,63 @@ named a champion who was not in the game four times in seven minutes, called a
 teammate a threat, and told a player who was dead on screen to recall. Given a
 block it cannot see past, it stops.
 
-The facts are **computed in TypeScript and ranked there** (`buildUnseen` in
-`src/server/routes/live.ts`); the model may only choose one and phrase it. Asking a
+The facts are **computed in TypeScript and ranked there** (`buildFacts` in
+`src/analysis/live-facts.ts`); the model may only choose one and phrase it. Asking a
 vision model to "be actionable" from a screenshot is how you get *"clear faster,
 you need to use more abilities"* said to someone using abilities on cooldown —
 which happened, and which nothing in the live data could have checked.
 
-Rate-limiting lives in that same function, because a fact that stays true for
-minutes will otherwise be repeated until it is noise: each death is announced once,
-gold once per 800g, farm once per three minutes, and a death may not lead two turns
-running.
+**A fact that is not RANKED does not exist.** Measured: with the enemy jungler's
+CS in the block's prose but not in the ranked list, the coach said nothing in 12
+of 12 turns — the prompt's rule is that an empty list means PASS, and the model
+may only speak from that list. Adding something to the block and expecting it to
+be said is the single most common way to change nothing.
+
+#### What earns a sentence, and what does not
+
+The failure this fought for months was not lying, it was **being true and
+useless**. The block is a snapshot of the client, and the client's facts are
+mostly what the player is already looking at, so a coach restricted to them
+recites his own HUD. Two tests decide every line:
+
+1. **Not visible** — could he have got it by looking at his screen?
+2. **Not generic** — could this sentence have been said in a different game, or
+   five minutes ago in this one?
+
+The lines that pass both compare him to something he cannot see: the **enemy
+jungler**, whose CS, level and completed items are all in `allPlayers` and were
+unused for the app's whole life. His own average encodes his own mistakes, so at
+best it says he is being unusually himself; the counterpart says he is losing a
+race. Then fights (the trade, and whether he was even in it), objective control,
+kill participation, and what the enemy jungler just BOUGHT.
+
+Readouts are gated hard because they otherwise dominate: only the enemy
+*jungler's* death earns a line, gold must have been HELD for minutes and is
+capped per game, and objective timers get a long cooldown. Simulated over a full
+game those three gates moved the coach from a line every 62 seconds — most of
+them things on his screen — to one every 150.
+
+#### Champion knowledge, and the rule that makes it safe
+
+A line has two halves: the NUMBER, from the client, and the ADVICE, which no
+client can supply. Advice comes from `knowledge/champions/*.md` via
+`src/shared/champion-advice.ts`, keyed BY FACT KIND so it only speaks once the
+client has established the situation — prose in a prompt has nothing tying it to
+the moment, which is how you get *"Viego is your jungle counterpart so watch for
+his ganks"*.
+
+**Advice may not contain a digit, and the parser refuses any clause that does.**
+An earlier general "benchmark" mechanism validated a rule's FORM and never its
+SUBJECT, so a rule meaning *"his flash is usually back in thirty seconds"*
+rendered and was spoken aloud. Cooldowns are unknowable. A mechanism that can
+express a number about the game can express a wrong one, so this one cannot
+express a number at all.
+
+Rate-limiting lives in `buildFacts` too, because a fact that stays true for
+minutes will otherwise be repeated until it is noise: each death is announced
+once, gold once per 800g and only after it has been held, farm once per three
+minutes, a death may not lead two turns running, and state-shaped facts (a level
+gap, an objective deficit, the champion's death note) are said once per game.
 
 `pnpm smoke:live` walks the shipped path end to end — key, token, ground truth, socket, one real
 turn — and names the step that failed. Every one of those steps has broken at least once for a
@@ -95,9 +142,14 @@ src/web/      React UI
 The live coach spans those in a way worth naming, since it is the newest thing here:
 
 ```
-src/shared/live-state.ts    the ground-truth block: types + renderer (pure, shared)
-src/shared/live-prompt.ts   the coach's system prompt (shared with the eval)
-src/server/routes/live.ts   buildLiveState / buildUnseen — the facts, computed and ranked
+src/shared/live-state.ts      the ground-truth block: types + renderer (pure, shared)
+src/shared/live-prompt.ts     the coach's system prompt (shared with the eval)
+src/shared/champion-advice.ts champion knowledge, keyed by fact kind, digit-free by construction
+src/shared/dragons.ts         the drakes' real names — the API says "Fire", nobody else does
+src/shared/pronounce.ts       say-it-like-this, from editable markdown
+src/analysis/live-facts.ts    buildFacts — every fact, ranked and rate-limited. THE output surface
+src/analysis/fights.ts        kill clusters: the trade, his participation, what it bought
+src/server/routes/live.ts     buildLiveState — turns the client's JSON into the block
 src/review/gemini-live.ts   holds the API key, mints ephemeral tokens  (NODE ONLY)
 src/web/lib/useScreenShare  the shared screen + frame grabber
 src/web/lib/gameflow.ts     the phase gate: whether anything may be sent at all
