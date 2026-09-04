@@ -212,11 +212,33 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 	})
 
 	const [question, setQuestion] = useState("")
+	/**
+	 * Set when HE stops the coach, so auto-start does not immediately turn it back on.
+	 *
+	 * Without this the stop button is a no-op that flickers, which is worse than not having one.
+	 */
+	const [stoppedByHand, setStoppedByHand] = useState(false)
+
+	/*
+	 * Coaching starts on its own once the screen is shared.
+	 *
+	 * Sharing is already the deliberate act — a second button to press before anything happens is
+	 * a step that exists only because the two things were built separately. It waits on a key that
+	 * actually works, so it can never spend money on a connection that was going to fail.
+	 */
+	useEffect(() => {
+		if (!share.sharing || stoppedByHand) return
+		if (keyStatus === null || !keyStatus.ok) return
+		if (gem.status !== "off") return
+		void gem.start()
+	}, [share.sharing, stoppedByHand, keyStatus, gem])
 
 	// The socket must not outlive the screen share that feeds it.
 	useEffect(() => {
 		if (!share.sharing && gem.status !== "off") gem.stop()
-	}, [share.sharing, gem])
+		// A fresh share is a fresh intention: the last session's stop should not linger.
+		if (!share.sharing && stoppedByHand) setStoppedByHand(false)
+	}, [share.sharing, gem, stoppedByHand])
 
 	const openInWindows = async () => {
 		setOpening(true)
@@ -416,13 +438,22 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 			{share.sharing && (
 				<div className="csk-screen__controls">
 					{gem.status === "live" || gem.status === "reconnecting" ?
-						<button className="btn" onClick={gem.stop}>
+						<button
+							className="btn"
+							onClick={() => {
+								setStoppedByHand(true)
+								gem.stop()
+							}}
+						>
 							Stop coaching
 						</button>
 					:	<button
 							className="btn btn-primary"
 							disabled={gem.status === "connecting"}
-							onClick={() => void gem.start()}
+							onClick={() => {
+								setStoppedByHand(false)
+								void gem.start()
+							}}
 						>
 							{gem.status === "connecting" ? "Connecting…" : "Start coaching"}
 						</button>
