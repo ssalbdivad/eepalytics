@@ -24,7 +24,28 @@ import { fail } from "../respond.ts"
 
 const EXPLORER = "/mnt/c/Windows/explorer.exe"
 
-export const createShellRoutes = (): Hono => {
+/**
+ * How the URL actually gets launched. Injectable, and that is not a nicety.
+ *
+ * This route spawns a real Windows process, and its tests POST to it to check the URL cannot be
+ * redirected — so with the launcher hardcoded, every `pnpm test` opened half a dozen browser
+ * tabs on the developer's machine. It did, repeatedly, until someone noticed a wall of them.
+ *
+ * A route with a side effect on the world outside the process has to let a caller substitute
+ * that effect, or its tests cannot be run.
+ */
+export type Launcher = (url: string) => void
+
+const launchViaExplorer: Launcher = url => {
+	/*
+	 * `explorer.exe <url>` is the reliable way to reach the Windows default browser from WSL.
+	 * It exits non-zero even on success, which is long-standing and harmless, so the exit code
+	 * is deliberately not treated as failure.
+	 */
+	execFile(EXPLORER, [url], { timeout: 8_000 }, () => {})
+}
+
+export const createShellRoutes = (launch: Launcher = launchViaExplorer): Hono => {
 	const app = new Hono()
 
 	app.post("/shell/open-in-windows", async c => {
@@ -42,12 +63,7 @@ export const createShellRoutes = (): Hono => {
 		const hash = typeof body?.hash === "string" ? body.hash.replace(/[^#/a-zA-Z0-9_-]/g, "") : ""
 		const url = `http://localhost:${SERVER_PORT}/${hash.startsWith("#") ? hash : ""}`
 
-		/*
-		 * `explorer.exe <url>` is the reliable way to reach the Windows default browser from WSL.
-		 * It exits non-zero even on success, which is long-standing and harmless, so the exit
-		 * code is deliberately not treated as failure.
-		 */
-		execFile(EXPLORER, [url], { timeout: 8_000 }, () => {})
+		launch(url)
 		return c.json({ ok: true, url })
 	})
 

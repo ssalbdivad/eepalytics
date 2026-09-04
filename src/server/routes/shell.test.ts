@@ -7,8 +7,20 @@ import { ok, strictEqual } from "node:assert/strict"
 import { describe, it } from "node:test"
 import { createShellRoutes } from "./shell.ts"
 
+/**
+ * A spy, never the real launcher.
+ *
+ * These tests exist to prove the URL cannot be redirected, which means POSTing to the route —
+ * and with the launcher hardcoded that opened a real browser tab every run. It went unnoticed
+ * until a screenshot of ~15 stacked tabs arrived. A test must never act on the machine it runs
+ * on.
+ */
+const launched: string[] = []
+
 const post = async (body: unknown) => {
-	const app = createShellRoutes()
+	const app = createShellRoutes(url => {
+		launched.push(url)
+	})
 	const res = await app.request("/shell/open-in-windows", {
 		method: "POST",
 		headers: { "content-type": "application/json" },
@@ -18,6 +30,14 @@ const post = async (body: unknown) => {
 }
 
 describe("open-in-windows", () => {
+	it("launches nothing beyond the URL it reports", async () => {
+		const before = launched.length
+		const r = await post({ hash: "#/live" })
+		if (r.status === 501) return
+		strictEqual(launched.length, before + 1, "exactly one launch per request")
+		strictEqual(launched[launched.length - 1], r.json?.url)
+	})
+
 	it("always targets this app's own origin", async () => {
 		const r = await post({ hash: "#/live" })
 		if (r.status === 501) return // not under WSL; nothing to assert
