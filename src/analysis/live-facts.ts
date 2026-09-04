@@ -46,7 +46,14 @@ export const GOLD_STEP = 800
  * A regex rather than a substring because the wording is deliberately varied — matching on the
  * literal phrase is how the alternation rule silently stopped working the last time it changed.
  */
-export const DEATH_FACT = /^\d+s without /
+export const DEATH_FACT = /^\d+ seconds without /
+
+/*
+ * UNITS ARE SPELLED OUT, EVERY TIME. These strings are the script — the model reads them almost
+ * verbatim and a native-audio voice pronounces what it is given. "52s" came out as "fifty two
+ * seds" and "1334g" as a letter, in a real game, out loud. There is no abbreviation here that is
+ * worth a syllable of nonsense: write "seconds", "gold", "minutes".
+ */
 
 /** Game-clock seconds between farm-pace mentions. */
 export const FARM_COOLDOWN_SEC = 180
@@ -282,8 +289,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 					 * time it was mentioned — otherwise every re-mention reset the clock and said
 					 * "4m" forever, which the player can see is wrong.
 					 */
-					`${Math.round(input.currentGold)}g unspent for ${Math.round((input.nowSec - mem.goldSinceSec) / 60)}m now`
-					:	`${Math.round(input.currentGold)}g sitting unspent`
+					`${Math.round(input.currentGold)} gold unspent for ${Math.round((input.nowSec - mem.goldSinceSec) / 60)} minutes now`
+					:	`${Math.round(input.currentGold)} gold sitting unspent`
 				)
 				mem.lastGoldMentioned = input.currentGold
 				mem.lastGoldAtSec = input.nowSec
@@ -316,8 +323,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 				mem.announcedDeaths.add(key)
 				windows.push(
 					dead > 0 ?
-						`${windowOpen.length} of them are dead — you are up in ${Math.round(dead)}s with about ${Math.round(usable)}s of window left`
-					:	`${windowOpen.length} of them are dead — you have about ${Math.round(shortest)}s`
+						`${windowOpen.length} of them are dead — you are up in ${Math.round(dead)} seconds with about ${Math.round(usable)} seconds of window left`
+					:	`${windowOpen.length} of them are dead — you have about ${Math.round(shortest)} seconds`
 				)
 			}
 		}
@@ -346,7 +353,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		 * saying is what it buys. So the death is the premise of the sentence, not its point.
 		 */
 		deaths.push(
-			`${Math.round(d.respawnSec)}s without ${d.champion} — their side of the map is short one`
+			`${Math.round(d.respawnSec)} seconds without ${d.champion} — their side of the map is short one`
 		)
 	}
 
@@ -360,7 +367,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		const key = `${label}@${Math.round((input.nowSec + sec) / 30)}`
 		if (mem.announcedEvents.has(hash(key))) return
 		mem.announcedEvents.add(hash(key))
-		rest.push(sec <= 5 ? `${label} is up NOW` : `${label} is back in ${Math.round(sec)}s`)
+		rest.push(sec <= 5 ? `${label} is up NOW` : `${label} is back in ${Math.round(sec)} seconds`)
 	}
 	soon("Baron", input.baronBackInSec)
 	soon("Drake", input.drakeBackInSec)

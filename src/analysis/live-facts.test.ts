@@ -150,7 +150,7 @@ describe("buildFacts — rate limiting", () => {
 		)
 		// A different figure: a re-mention needs time AND change, or it is the same sentence twice.
 		const later = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1450 }), mem)
-		ok(later.some(f => f.includes("unspent for 4m")), "four minutes on, it has earned a re-mention")
+		ok(later.some(f => f.includes("unspent for 4 minutes")), "four minutes on, it has earned a re-mention")
 		/*
 		 * States the duration and NOTHING about its cause. The previous phrasing, "4m since you
 		 * last had a chance", was read as "since you last died" and turned into a fabricated
@@ -194,9 +194,9 @@ describe("buildFacts — rate limiting", () => {
 		const mem = newFactMemory()
 		buildFacts(input({ nowSec: 600, currentGold: 1400 }), mem)
 		const later = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1500 }), mem)
-		ok(later.some(f => f.includes("unspent for 4m")), `got: ${later.join(" | ")}`)
+		ok(later.some(f => f.includes("unspent for 4 minutes")), `got: ${later.join(" | ")}`)
 		const later2 = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC * 2, currentGold: 1600 }), mem)
-		ok(later2.some(f => f.includes("unspent for 8m")), `duration must keep growing: ${later2.join(" | ")}`)
+		ok(later2.some(f => f.includes("unspent for 8 minutes")), `duration must keep growing: ${later2.join(" | ")}`)
 	})
 
 	it("says nothing about gold while he is on the respawn screen", () => {
@@ -274,8 +274,8 @@ describe("buildFacts — the window", () => {
 			}),
 			mem
 		)
-		ok(out[0]!.includes("up in 8s"), `must name his own respawn, got: ${out[0]}`)
-		ok(out[0]!.includes("20s of window"), `must subtract it, got: ${out[0]}`)
+		ok(out[0]!.includes("up in 8 seconds"), `must name his own respawn, got: ${out[0]}`)
+		ok(out[0]!.includes("20 seconds of window"), `must subtract it, got: ${out[0]}`)
 	})
 
 	it("says nothing when he respawns after they do", () => {
@@ -319,7 +319,7 @@ describe("buildFacts — the window", () => {
 		)
 		ok(out[0]!.includes("2 of them are dead"), `window should lead, got: ${out[0]}`)
 		// Counted from the SHORTEST timer: the window closes when the first of them is back.
-		ok(out[0]!.includes("18s"), `must use the shortest timer, got: ${out[0]}`)
+		ok(out[0]!.includes("18 seconds"), `must use the shortest timer, got: ${out[0]}`)
 	})
 
 	it("does not call a window when one of them is already walking back", () => {
@@ -397,7 +397,7 @@ describe("buildFacts — objectives", () => {
 	it("calls an objective that is coming back soon", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(input({ baronBackInSec: 40 }), mem)
-		ok(out.some(f => f.includes("Baron is back in 40s")), `got: ${out.join(" | ")}`)
+		ok(out.some(f => f.includes("Baron is back in 40 seconds")), `got: ${out.join(" | ")}`)
 	})
 
 	it("stays quiet about one that is minutes away", () => {
