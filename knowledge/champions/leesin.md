@@ -1,6 +1,6 @@
 patch: 16.17
-sourcedAt: 2026-09-03
-source: op.gg — Lee Sin jungle build and counters pages, both stating patch 16.17, Emerald+ (193,824 games on the primary setup; matchup tables list per-matchup game counts); u.gg — Lee Sin jungle guide, stating patch 16.17, Emerald+, 225,404 games; lolalytics — Lee Sin build page, stating patch 16.17, Emerald+, 225,919 games; jungler.gg — Lee Sin pathing page, which labels itself patch 26.16 (Riot's own numbering; the stat sites' "16.17" corresponds to Riot's "26.17", released 2026-08-25 — the jungler.gg routes are therefore one patch stale and are flagged as such below); leagueoflegends.com — League of Legends Patch 26.17 notes (2026-08-25); ddragon.leagueoflegends.com 16.17.1 — LeeSin.json, for ability roles.
+sourcedAt: 2026-09-04
+source: op.gg — Lee Sin jungle build and counters pages, both stating patch 16.17, Emerald+ (193,824 games on the primary setup; matchup tables list per-matchup game counts); u.gg — Lee Sin jungle guide, stating patch 16.17, Emerald+, 225,404 games; lolalytics — Lee Sin build page, stating patch 16.17, Emerald+, 225,919 games; jungler.gg — Lee Sin pathing page, which labels itself patch 26.16 (Riot's own numbering; the stat sites' "16.17" corresponds to Riot's "26.17", released 2026-08-25 — the jungler.gg routes are therefore one patch stale and are flagged as such below); leagueoflegends.com — League of Legends Patch 26.17 notes (2026-08-25); ddragon.leagueoflegends.com 16.17.1 — LeeSin.json, for ability roles, cast ranges and cooldowns (re-read on 2026-09-04; every cooldown and range stated below matches it).
 ---
 
 # Lee Sin, jungle — patch 16.17
@@ -63,3 +63,25 @@ Treat matchups with only a few hundred games as a hint, not a plan.
 ## The one-line version
 
 Full-clear to six camps, then decide scuttle-or-gank off where the enemy jungler actually is; land Q before you commit anything else; save R for isolating or displacing rather than as a gap-closer; and remember that a death on the wrong side of the map at minute 8 is the single most expensive thing this champion can do.
+## Live triggers
+
+*The block gives levels, deaths, gold, objective timers and the event feed. It does not give
+cooldowns, so nothing here may be keyed on whether an ability is up.*
+
+**When his roster level shows 6 and his own does not** → Dragon's Rage exists on one side only,
+and at rank 1 it is a 110s cooldown. Enemy levels are in the block and not on his screen.
+
+**When Lee Sin is dead with real time on the clock** → this is when his side of the map is
+actually takeable. He is the champion who punishes a cross-map trip hardest, because Q out of a
+bad spot is free for him and is not free for anyone chasing him.
+
+**When an objective timer is inside a minute and Lee Sin is alive** → the kick is the reason not
+to start it alone: his ult is the one ability on the map that removes a smiter from a pit.
+
+**When he is visibly in a fight on screen already** → he has committed. Every entry he owns is a
+dash into melee, so a Lee Sin who is already in is a Lee Sin who cannot leave, which is the one
+moment his own team's follow-up is worth more than usual.
+
+**Never say** "he'll look to Q-flash you" or anything else about what he is about to do. The
+client publishes no cooldowns and no summoner spells' state, and a prediction delivered in a warm
+voice is indistinguishable from a read.
