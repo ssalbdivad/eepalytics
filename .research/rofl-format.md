@@ -5,7 +5,7 @@
 (14,979,193 bytes, patch `16.17.810.4348`, NA1, game 5631300987, 30:49 SR game).
 **Date:** 2026-09-02. **Client at time of analysis:** `16.17.810.4348`.
 
-Working decoder: **`/home/ssalb/coachskaffur/.research/rofl2.mjs`** (Node 25, zero deps —
+Working decoder: **`/home/ssalb/eepalytics/.research/rofl2.mjs`** (Node 25, zero deps —
 uses built-in `node:zlib` zstd). Verified output is reproduced in §8.
 
 > **Sample size caveat.** Only ONE `.rofl` existed on this machine. Every offset and field
@@ -583,11 +583,11 @@ game in progress.
 
 ## 7. Reference implementation
 
-Full working decoder, run and verified: **`/home/ssalb/coachskaffur/.research/rofl2.mjs`**
+Full working decoder, run and verified: **`/home/ssalb/eepalytics/.research/rofl2.mjs`**
 (Node ≥ 23 for `node:zlib` zstd; no npm dependencies).
 
 ```bash
-node /home/ssalb/coachskaffur/.research/rofl2.mjs \
+node /home/ssalb/eepalytics/.research/rofl2.mjs \
   "/mnt/c/Users/ssalb/Documents/League of Legends/Replays/NA1-5631300987.rofl"
 
 # optional: write every decompressed segment payload out for inspection
@@ -644,7 +644,7 @@ u8, but 64 covers every realistic `A.B.C.D` string; bump it to 271 to be exhaust
 ## 8. Verified end-to-end output
 
 ```
-$ node /home/ssalb/coachskaffur/.research/rofl2.mjs "…/Replays/NA1-5631300987.rofl"
+$ node /home/ssalb/eepalytics/.research/rofl2.mjs "…/Replays/NA1-5631300987.rofl"
 {
   platformId: 'NA1',
   gameId: 5631300987,

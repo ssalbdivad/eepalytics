@@ -34,9 +34,9 @@ export const SERVER_HOST = setting("HOST") ?? "127.0.0.1"
  * Everything we write lives on ext4. /mnt/c is read-only territory (26x slower for SQLite).
  *
  * Derived from the process's working directory rather than an absolute path with the app's own
- * name baked into it — that hardcoded path was `/home/ssalb/coachskaffur/data`, so renaming the
- * checkout would have silently pointed the app at a directory that does not exist and looked
- * like total data loss.
+ * name baked into it. It used to be hardcoded to a path containing the project's name, which
+ * meant renaming the checkout silently pointed the app at a directory that does not exist — and
+ * an app that starts with an empty database looks exactly like total data loss.
  */
 export const DATA_DIR =
 	setting("DATA_DIR") ??

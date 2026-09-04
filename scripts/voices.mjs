@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs"
-const KEY = readFileSync("/home/ssalb/coachskaffur/.env","utf8").match(/GEMINI_API_KEY=(.+)/)[1].trim()
+const KEY = readFileSync("/home/ssalb/eepalytics/.env","utf8").match(/GEMINI_API_KEY=(.+)/)[1].trim()
 const img = readFileSync(process.argv[2]).toString("base64")
 const OUT = process.argv[3]
 const LINE = "Two of them are dead — you have about eighteen seconds. Take the drake now, sleepyhead."

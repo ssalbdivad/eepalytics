@@ -330,7 +330,7 @@ describe("WSL <-> Windows paths", () => {
 	})
 
 	it("refuses to mangle a WSL-native path the game cannot reach", () => {
-		assert.equal(toWindowsPath("/home/ssalb/coachskaffur/data"), null)
+		assert.equal(toWindowsPath("/home/ssalb/eepalytics/data"), null)
 		assert.equal(toWslPath("/home/ssalb"), null)
 	})
 
