@@ -36,6 +36,29 @@ export const Trends = ({ eventTick }: TrendsProps) => {
 		[t]
 	)
 	const series = t?.series ?? []
+	/**
+	 * Trend items cite metric SERIES, and FeedbackCard resolves a key to a label only when it is
+	 * handed the metric list. Without it the evidence chip printed the raw identifier —
+	 * "p90OverExtension" — under a heading that says "evidence".
+	 */
+	const metricsForCards = useMemo(
+		() =>
+			series.map(s => ({
+				key: s.key,
+				label: s.label,
+				value: s.mean,
+				unit: "",
+				band: "unknown" as const,
+				vsBaseline: null,
+				confidence: "medium" as const,
+				explain: s.note ?? "",
+				fix: "",
+				impact: "medium" as const,
+				actionability: "medium" as const,
+				priority: 0
+			})),
+		[series]
+	)
 	const trendable = series.filter(s => s.trendable)
 	const noisy = series.filter(s => !s.trendable)
 
@@ -135,7 +158,17 @@ export const Trends = ({ eventTick }: TrendsProps) => {
 					</div>
 					<div className="feedback-list">
 						{items.map(item => (
-							<FeedbackCard key={item.id} item={item} moments={[]} media={[]} onSeek={() => {}} />
+							<FeedbackCard
+										key={item.id}
+										item={item}
+										moments={[]}
+										media={[]}
+										// Without this the card falls back to the raw metric key, so a
+										// trend item's evidence chip read "p90OverExtension" under a
+										// heading that says "evidence". The series already carry labels.
+										metrics={metricsForCards}
+										onSeek={() => {}}
+									/>
 						))}
 					</div>
 				</div>

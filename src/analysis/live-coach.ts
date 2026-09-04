@@ -165,6 +165,42 @@ const objectiveNudges = (live: LiveState): Nudge[] => {
  */
 
 /**
+ * Expected CS at any moment, interpolated across the measured checkpoints.
+ *
+ * The live scoreboard's `creepScore` counts lane minions AND jungle camps, so it must be compared
+ * against a baseline measuring the same thing. `campsPerMin` is NOT that — metrics.ts computes it
+ * from `neutralMinionsKilled` alone, so every lane minion a jungler takes is missing from it.
+ * Comparing the two understated `expected`, and the error fell in the reassuring direction: the
+ * overlay stayed quiet while he was genuinely behind, which is the worst way for a coach to be
+ * wrong.
+ *
+ * `cs@10`, `cs@14` and `cs@20` are all "camps + lane minions". Interpolating between them compares
+ * like with like. A straight line between two checkpoints is an approximation of a curve, which is
+ * why callers still label the result approximate.
+ */
+const expectedCsAt = (baseline: Baseline, tSec: number): number | null => {
+	const pts: { sec: number; cs: number }[] = [{ sec: 0, cs: 0 }]
+	for (const c of CHECKPOINTS) {
+		const stat = baseline[c.key]
+		if (stat && stat.n >= 5 && Number.isFinite(stat.mean)) pts.push({ sec: c.sec, cs: stat.mean })
+	}
+	if (pts.length < 2) return null
+	if (tSec <= 0) return 0
+
+	for (let i = 1; i < pts.length; i++) {
+		const a = pts[i - 1]!
+		const b = pts[i]!
+		if (tSec <= b.sec) {
+			const span = b.sec - a.sec
+			return span <= 0 ? b.cs : a.cs + ((b.cs - a.cs) * (tSec - a.sec)) / span
+		}
+	}
+	// Past the last checkpoint, continue at the rate that checkpoint implies.
+	const last = pts[pts.length - 1]!
+	return last.sec > 0 ? (last.cs / last.sec) * tSec : null
+}
+
+/**
  * A rough farm pace between the checkpoints.
  *
  * `paceNudge` only speaks at 10/14/20 minutes, where a measured baseline exists — which left the
@@ -185,17 +221,15 @@ const roughPaceNudge = (input: LiveCoachInput): Nudge | null => {
 	// Silent near a checkpoint: the measured reading is about to speak and is strictly better.
 	if (CHECKPOINTS.some(c => Math.abs(live.gameTimeSec - c.sec) <= CHECKPOINT_WINDOW_SEC)) return null
 
-	const stat = baseline?.campsPerMin
-	if (!stat || stat.n < 5 || !(stat.mean > 0)) return null
-
-	const expected = (stat.mean * live.gameTimeSec) / 60
-	if (expected <= 0 || live.cs >= expected * ROUGH_PACE_TOLERANCE) return null
+	if (!baseline) return null
+	const expected = expectedCsAt(baseline, live.gameTimeSec)
+	if (expected === null || expected <= 0 || live.cs >= expected * ROUGH_PACE_TOLERANCE) return null
 
 	return {
 		kind: "pace",
-		text: `${live.cs} CS at ${fmt(live.gameTimeSec)} — roughly ${Math.round(expected)} would be your usual rate. Get back on camps.`,
+		text: `${live.cs} CS at ${fmt(live.gameTimeSec)} — you'd usually have about ${Math.round(expected)}. Get back on camps.`,
 		priority: 0.7,
-		source: `extrapolated from campsPerMin ${stat.mean.toFixed(1)}/min over ${stat.n} games — approximate between checkpoints`
+		source: "interpolated between your measured 10/14/20-minute averages — approximate"
 	}
 }
 
@@ -233,13 +267,13 @@ export const paceReading = (input: LiveCoachInput): PaceReading | null => {
 	}
 
 	if (live.gameTimeSec < EARLIEST_PACE_SEC) return null
-	const rate = baseline.campsPerMin
-	if (!rate || rate.n < 5 || !(rate.mean > 0)) return null
+	const expected = expectedCsAt(baseline, live.gameTimeSec)
+	if (expected === null || expected <= 0) return null
 	return {
 		cs: live.cs,
-		expected: Math.round((rate.mean * live.gameTimeSec) / 60),
+		expected: Math.round(expected),
 		exact: false,
-		source: `about ${rate.mean.toFixed(1)}/min over ${rate.n} games`
+		source: "interpolated between your measured 10/14/20-minute averages"
 	}
 }
 

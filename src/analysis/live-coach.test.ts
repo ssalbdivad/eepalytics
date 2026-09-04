@@ -64,14 +64,30 @@ describe("farm pace", () => {
 	/** The approximation must not shout over the measurement it is standing in for. */
 	it("does not run the rough estimate next to a checkpoint", () => {
 		const at10 = run({ gameTimeSec: 600, cs: 10 })
-		strictEqual(at10.filter(n => /roughly/.test(n.text)).length, 0)
+		strictEqual(at10.filter(n => /interpolated/.test(n.source)).length, 0)
 	})
 
 	it("fills the gap between checkpoints, and says it is approximate", () => {
 		const mid = run({ gameTimeSec: 7 * 60, cs: 20 })
-		const rough = mid.find(n => /roughly/.test(n.text))
+		// Matched on the SOURCE, not on a word in the prose — the wording is copy and moves.
+		const rough = mid.find(n => /interpolated/.test(n.source))
 		ok(rough, "expected a rough pace nudge mid-game")
 		ok(/approximate/.test(rough!.source), "the approximation must be declared in the source")
+	})
+
+	/**
+	 * The comparison must measure the same quantity the scoreboard reports.
+	 *
+	 * `live.cs` is creepScore — lane minions AND camps. The baseline used to be `campsPerMin`,
+	 * which counts camps only, so `expected` came out ~20% low (53 against a measured 66 at
+	 * 10:00) and the overlay went quiet exactly when he was behind.
+	 */
+	it("expects camps AND lane minions, not camps alone", () => {
+		const at10 = run({ gameTimeSec: 600, cs: 40 })
+		const pace = at10.find(n => n.kind === "pace")
+		ok(pace, "expected a pace nudge")
+		ok(pace!.text.includes("66"), `must use the measured cs@10 mean: ${pace!.text}`)
+		ok(!pace!.text.includes("53"), "must not use a camps-only rate")
 	})
 
 	it("stays silent in the first four minutes, where the estimate means nothing", () => {

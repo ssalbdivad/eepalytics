@@ -28,7 +28,8 @@ import {
 	roleLabel
 } from "../lib/format.ts"
 import { ChampIcon } from "../components/ChampIcon.tsx"
-import { FormPanel } from "../components/FormPanel.tsx"
+import { FormHeadline, FormPanel } from "../components/FormPanel.tsx"
+import { Glossed } from "../components/Term.tsx"
 import { GradeBadge } from "../components/GradeBadge.tsx"
 import { JobBadge } from "../components/JobBadge.tsx"
 
@@ -149,8 +150,17 @@ export const GameList = ({ health, eventTick }: GameListProps) => {
 			 * Form sits above the list: the standing and the three habits are what he came to
 			 * check, and the individual games are the evidence behind them.
 			 */}
+			{/*
+			 * Layer 0 is one sentence from the coach. The grade, the trend and the full focus
+			 * list are one deliberate click down — see FormPanel. Opening on a graded curve is
+			 * how an app becomes something you avoid, and the reader who most needs this already
+			 * knows he is losing.
+			 */}
 			{form.data && (form.data.rollingAverage !== null || form.data.focus.length > 0) ?
-				<div className="panel panel-pad" style={{ marginBottom: 14 }}>
+				<div style={{ marginBottom: 14 }}>
+					<div style={{ marginBottom: 12 }}>
+						<FormHeadline form={form.data} />
+					</div>
 					<FormPanel form={form.data} />
 				</div>
 			:	null}
@@ -329,7 +339,13 @@ const GameRow = ({ game: g, jobs, headline, now }: GameRowProps) => {
 					</span>
 				</div>
 
-				{headline ? <div className="hook">“{headline}”</div> : null}
+				{/* The coach's own sentence, with its jargon hoverable — this is the line a
+				    beginner actually reads to decide which game to open. */}
+				{headline ?
+					<div className="hook">
+						“<Glossed>{headline}</Glossed>”
+					</div>
+				:	null}
 
 				<div className="badges">
 					{g.hasReview ?

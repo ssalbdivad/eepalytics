@@ -59,6 +59,8 @@ const daemonUrl = `http://${HOST}:${PORT}`
  * which looks like a bug in the app rather than a missing file.
  */
 const ICON_PATH = join(ROOT, "public", "icon.png")
+/** The renderer's allow-listed bridge. Without it the overlay's own buttons do nothing. */
+const PRELOAD = join(HERE, "preload.mjs")
 const windowIcon = () => (existsSync(ICON_PATH) ? { icon: ICON_PATH } : {})
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
@@ -138,7 +140,9 @@ const createWindow = async () => {
 		autoHideMenuBar: true,
 		webPreferences: {
 			// The renderer is the same React app the browser loads and talks to the daemon over
-			// HTTP. It needs no Node access, so it does not get any.
+			// HTTP. It needs no Node access, so it does not get any beyond the two-channel
+			// bridge in preload.mjs.
+			preload: PRELOAD,
 			nodeIntegration: false,
 			contextIsolation: true,
 			sandbox: true
@@ -213,7 +217,12 @@ const createOverlay = async () => {
 		backgroundColor: "#070910",
 		title: "coach",
 		...windowIcon(),
-		webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true }
+		webPreferences: {
+			preload: PRELOAD,
+			nodeIntegration: false,
+			contextIsolation: true,
+			sandbox: true
+		}
 	})
 
 	// Above full-screen game windows, not merely above normal ones.
