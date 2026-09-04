@@ -4,32 +4,38 @@
  * ## Why this is plain JavaScript, not TypeScript
  *
  * Everything else in this repo runs under `node --experimental-strip-types`. Electron's main
- * process runs Electron's OWN bundled Node, whose version is tied to the Electron release, not
- * to the Node on this machine — so type stripping is not guaranteed to be available there. A
- * shell that fails to boot because of a syntax feature is a bad trade for types in ~200 lines.
- * The daemon it launches is still TypeScript, and still type-checked.
+ * process runs Electron's OWN bundled Node, whose version moves with the Electron release rather
+ * than with the Node on this machine. Today that is 24.19.0 and it does strip types (measured —
+ * the daemon is a `.ts` file forked straight into a utility process). What is not guaranteed is
+ * the NEXT Electron bump, and a shell that fails to boot because of a syntax feature takes the
+ * whole app with it, including the window that would have said why. The daemon it launches is
+ * TypeScript, and type-checked; these few hundred lines of window plumbing are not worth that
+ * risk.
  *
- * ## Why the daemon is a CHILD PROCESS and not part of this file
+ * ## Where the daemon lives
  *
- * The daemon must run inside WSL. Every League API call crosses Windows interop (WSL2 cannot
- * reach `127.0.0.1:<lcu port>` on the host), and `src/daemon/gate.ts` owns every side effect on
- * the client. Folding that into Electron's main process would either move it out of WSL or
- * duplicate it. Spawning the existing entry point unchanged keeps one implementation of the
- * gate, one transport, and one set of tests — and `pnpm daemon` still works on its own with no
- * Electron involved.
+ * In its own process, always — but not always the same kind of one. `electron/daemon.mjs` picks
+ * between adopting a daemon that is already listening, forking one into an Electron
+ * `utilityProcess` (what ships), and spawning the plain Node child this file used to hard-code
+ * (what the WSL checkout keeps). The reasoning for each is there rather than here.
+ *
+ * What matters at this level is that it is never THIS process. `node:sqlite` is synchronous, the
+ * daemon's work sits on top of it, and this process is the one painting the window and answering
+ * the live coach's screen-capture requests mid-game.
  *
  * ## Where this runs
  *
- * Under WSLg, which provides a Wayland/X display inside WSL (`/mnt/wslg`, `DISPLAY=:0`). That
- * keeps the window and the daemon on the same side of the filesystem boundary, so the app reads
- * `data/` and the replay folder exactly as it does today.
+ * Two places now, and they differ in one visible way. Under WSLg — a Wayland/X display inside
+ * WSL — the window can only see Linux screens, so the live coach hands off to a Windows browser;
+ * see `src/web/lib/capture-env.ts` and `electron/preload.cjs`. Installed on Windows it is a
+ * Windows process on the same desktop as the game and captures it directly.
  */
 
 import { app, BrowserWindow, dialog, shell } from "electron"
-import { spawn } from "node:child_process"
 import { existsSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { reportDaemonCrash, startDaemonHost, waitForDaemon } from "./daemon.mjs"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(HERE, "..")
@@ -44,6 +50,7 @@ const isDev = (process.env.EEPALYTICS_DEV ?? process.env.CSK_DEV) === "1"
 /** How long to wait for the daemon's own health endpoint before giving up. */
 const DAEMON_BOOT_TIMEOUT_MS = 30_000
 
+/** The daemon we started or adopted — `{ mode, stop }` from `daemon.mjs`. */
 let daemon = null
 let win = null
 /** Set when we are tearing down on purpose, so an expected exit is not reported as a crash. */
@@ -52,77 +59,15 @@ let quitting = false
 const daemonUrl = `http://${HOST}:${PORT}`
 
 /**
- * Window and taskbar icon. Regenerate with `pnpm icon` after editing `public/icon.svg`.
+ * Window and taskbar icon. Regenerate with `pnpm icon` after replacing `public/lillia-art.png`.
  *
- * Electron wants a raster path here — an SVG is silently ignored and you get a blank default,
- * which looks like a bug in the app rather than a missing file.
+ * Electron wants a raster path here — a vector file is silently ignored and you get a blank
+ * default, which looks like a bug in the app rather than a missing file. The packaged Windows
+ * build takes its icon from `public/icon.ico` instead, via `electron-builder.yml`; this one is
+ * what an unpackaged run shows.
  */
 const ICON_PATH = join(ROOT, "public", "icon.png")
 const windowIcon = () => (existsSync(ICON_PATH) ? { icon: ICON_PATH } : {})
-
-const sleep = ms => new Promise(r => setTimeout(r, ms))
-
-/** Is something already answering on the port? Then do not start a second daemon. */
-const daemonAlive = async () => {
-	try {
-		const res = await fetch(`${daemonUrl}/api/health`, {
-			signal: AbortSignal.timeout(2_000)
-		})
-		return res.ok
-	} catch {
-		return false
-	}
-}
-
-const startDaemon = async () => {
-	// A daemon may already be running under systemd, or from `pnpm dev`. Adopting it is both
-	// faster and safer than racing it for the port and the SQLite write lock.
-	if (await daemonAlive()) {
-		console.log("[electron] adopting the daemon already listening on", daemonUrl)
-		return null
-	}
-
-	const entry = join(ROOT, "src", "daemon", "main.ts")
-	if (!existsSync(entry)) throw new Error(`daemon entry point not found at ${entry}`)
-
-	const child = spawn(
-		process.execPath,
-		["--experimental-strip-types", "--no-warnings=ExperimentalWarning", entry],
-		{
-			cwd: ROOT,
-			// ELECTRON_RUN_AS_NODE makes Electron's binary behave as plain Node, so the daemon
-			// runs on the same runtime Electron ships rather than needing a separate install.
-			env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", NODE_ENV: isDev ? "development" : "production" },
-			stdio: ["ignore", "pipe", "pipe"]
-		}
-	)
-
-	child.stdout.on("data", d => process.stdout.write(`[daemon] ${d}`))
-	child.stderr.on("data", d => process.stderr.write(`[daemon] ${d}`))
-	child.on("exit", (code, signal) => {
-		daemon = null
-		if (quitting) return
-		// The daemon dying under us is not something to hide behind a blank window.
-		dialog.showErrorBox(
-			"The eepalytics daemon stopped",
-			`It exited with ${signal ?? `code ${code}`}.\n\n` +
-				`Nothing was lost — reviews, metrics and replays are all on disk. ` +
-				`Close and reopen the app to restart it, or run "pnpm daemon" in a terminal to see why it stopped.`
-		)
-	})
-
-	return child
-}
-
-/** Poll health until the daemon answers, so the window never opens onto a connection error. */
-const waitForDaemon = async () => {
-	const deadline = Date.now() + DAEMON_BOOT_TIMEOUT_MS
-	while (Date.now() < deadline) {
-		if (await daemonAlive()) return true
-		await sleep(400)
-	}
-	return false
-}
 
 /**
  * A splash while the main window loads.
@@ -188,7 +133,14 @@ const createWindow = async () => {
 			// HTTP. It needs no Node access, so it does not get any beyond the two-channel
 			nodeIntegration: false,
 			contextIsolation: true,
-			sandbox: true
+			sandbox: true,
+			/*
+			 * Two read-only strings, no functions — see `preload.cjs`. It exists because the page
+			 * cannot otherwise tell a WSLg window (which can never see the game) from a Windows
+			 * install (which always can), and it used to guess from the user agent and get the
+			 * second one wrong. The sandbox stays on; the preload is CommonJS for that reason.
+			 */
+			preload: join(HERE, "preload.cjs")
 		}
 	})
 
@@ -212,12 +164,17 @@ const createWindow = async () => {
 		return { action: "deny" }
 	})
 
-	const ok = await waitForDaemon()
+	const ok = await waitForDaemon(daemonUrl, DAEMON_BOOT_TIMEOUT_MS)
 	if (!ok) {
 		dialog.showErrorBox(
 			"The daemon did not start",
 			`Nothing answered on ${daemonUrl} within ${DAEMON_BOOT_TIMEOUT_MS / 1000}s.\n\n` +
-				`Run "pnpm daemon" in a terminal to see the error.`
+				// Whatever went wrong was printed by the daemon itself and piped through this
+				// process, so the advice differs by where that output went: a terminal in a
+				// checkout, and nowhere a person can see in an installed app.
+				(daemon?.logPath ?
+					`What it printed on the way down is in:\n${daemon.logPath}`
+				:	`Run "pnpm daemon" in a terminal to see the error.`)
 		)
 		app.quit()
 		return
@@ -236,16 +193,28 @@ const createWindow = async () => {
  * handler is where the choice of WHAT gets shared lives — this picks the primary screen rather
  * than showing a picker, because the alternative is a modal appearing over a running game.
  *
+ * It matches on the display id rather than taking the first source in the list. Under WSLg that
+ * distinction is academic (this window cannot see the game either way, and the page says so).
+ * On a Windows install with a second monitor it is the difference between coaching the game and
+ * narrating a browser: nothing documents the enumeration order, and the game is on the primary
+ * display, which the `screen` module can name.
+ *
  * This is the one place the app can see outside itself, so it is deliberately narrow: video
- * only, no audio, and only ever the screen the game is on.
+ * only, no audio, and only ever one screen.
  */
 const allowScreenCapture = async () => {
-	const { desktopCapturer, session } = await import("electron")
+	const { desktopCapturer, screen, session } = await import("electron")
 	session.defaultSession.setDisplayMediaRequestHandler(
 		(_request, callback) => {
 			void desktopCapturer
 				.getSources({ types: ["screen"] })
-				.then(sources => callback(sources[0] ? { video: sources[0] } : undefined))
+				.then(sources => {
+					const primary = String(screen.getPrimaryDisplay().id)
+					// The fallback is the old behaviour: `display_id` is empty on some platforms,
+					// and a share of the wrong screen still beats a share of nothing.
+					const source = sources.find(s => s.display_id === primary) ?? sources[0]
+					callback(source ? { video: source } : undefined)
+				})
 				.catch(() => callback(undefined))
 		},
 		// Never the microphone or system audio. The feature needs pixels and nothing else.
@@ -261,7 +230,17 @@ app.whenReady().then(async () => {
 	createSplash()
 	await allowScreenCapture()
 	try {
-		daemon = await startDaemon()
+		daemon = await startDaemonHost({
+			root: ROOT,
+			url: daemonUrl,
+			isDev,
+			// Only fires for an exit nobody asked for; a daemon dying under us is not something
+			// to hide behind a blank window.
+			onCrash: (how, logPath) => {
+				daemon = null
+				if (!quitting) reportDaemonCrash(how, logPath)
+			}
+		})
 	} catch (err) {
 		closeSplash()
 		dialog.showErrorBox("eepalytics could not start", String(err))
@@ -286,10 +265,17 @@ app.on("window-all-closed", () => {
  * Stop the daemon we started — and only that one.
  *
  * A daemon we adopted belongs to systemd or to a terminal, and killing it on window close would
- * be a surprising side effect of closing a window. SIGTERM gives the queue a chance to release
- * its leases; `src/daemon/main.ts` already handles it.
+ * be a surprising side effect of closing a window; `stop()` knows which it has.
+ *
+ * The quit is HELD while that happens, which the old SIGTERM-and-exit did not do. Asking a
+ * process to shut down and then immediately exiting out from under it is barely different from
+ * killing it: the queue gets no chance to release its leases and SQLite none to close. `stop()`
+ * carries its own deadline, so this can wait on it without a hung handler being able to make the
+ * app unquittable.
  */
-app.on("before-quit", () => {
+app.on("before-quit", event => {
+	if (quitting || !daemon) return
 	quitting = true
-	if (daemon && !daemon.killed) daemon.kill("SIGTERM")
+	event.preventDefault()
+	void daemon.stop().finally(() => app.quit())
 })

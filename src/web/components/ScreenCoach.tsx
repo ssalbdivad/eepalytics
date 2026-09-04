@@ -37,30 +37,13 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useGeminiLive } from "../lib/geminiLive.ts"
+import { readCaptureEnv } from "../lib/capture-env.ts"
 import { useGameflow, standbyReason } from "../lib/gameflow.ts"
 import { useScreenShare } from "../lib/useScreenShare.ts"
 import "./components.css"
 
 const fmtTime = (ms: number): string =>
 	new Date(ms).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-
-/**
- * Is this the Electron app running inside WSL?
- *
- * Screen sharing cannot work there. Electron runs under WSLg, whose compositor contains only
- * Linux windows — enumerated live, it sees three WSLg virtual screens and exactly one window, its
- * own. League is a Windows process and is simply not visible to it. This is a boundary of where
- * the renderer is running, not a permission that can be granted.
- *
- * A Windows browser is a Windows process and can see Windows pixels; `localhost` is a secure
- * context so `getDisplayMedia` is allowed there, and WSL2 forwards localhost so the page still
- * talks to the same daemon. So the honest thing is to say so and offer the door.
- */
-const isWslElectron = (): boolean => {
-	if (typeof navigator === "undefined") return false
-	const ua = navigator.userAgent
-	return /Electron/i.test(ua) && /Linux/i.test(ua)
-}
 
 /** How often she is invited to speak. She stays quiet unless she has something. */
 const TURN_CHOICES = [10, 20, 40]
@@ -112,7 +95,17 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	 */
 	const gate = useGameflow()
 	const [opening, setOpening] = useState(false)
-	const wsl = isWslElectron()
+	/**
+	 * Whether THIS window can see the game — see `lib/capture-env.ts`.
+	 *
+	 * Read once: it is a property of the shell the page was loaded into and cannot change while
+	 * it is open. It used to be a user-agent sniff that answered "no, go to a browser" for every
+	 * Electron build on Linux, which is right under WSLg and flatly wrong for a Windows install
+	 * of the same app.
+	 */
+	const capture = readCaptureEnv()
+	/** Why the hand-off to a Windows browser failed, when it did. Never swallowed. */
+	const [openError, setOpenError] = useState<string | null>(null)
 
 	/** False once a ground-truth fetch has failed; see `groundTruth` below. */
 	const [truthOk, setTruthOk] = useState(true)
@@ -366,12 +359,29 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 
 	const openInWindows = async () => {
 		setOpening(true)
+		setOpenError(null)
 		try {
-			await fetch("/api/shell/open-in-windows", {
+			const res = await fetch("/api/shell/open-in-windows", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
 				body: JSON.stringify({ hash: "#/live" })
 			})
+			/*
+			 * This route answers 501 when there is no Windows shell to reach, and 429 when it has
+			 * already opened a window seconds ago. Both were previously discarded, so the button
+			 * said "Opening…" and then nothing happened anywhere — which is the same experience as
+			 * a broken feature and gives no clue that the daemon simply cannot do it from here.
+			 */
+			if (!res.ok) {
+				const body = (await res.json().catch(() => null)) as { error?: unknown } | null
+				setOpenError(
+					typeof body?.error === "string" ?
+						body.error
+					:	`the daemon could not open a browser (HTTP ${res.status})`
+				)
+			}
+		} catch {
+			setOpenError("couldn't reach eepalytics to ask it to open a browser")
 		} finally {
 			setOpening(false)
 		}
@@ -459,13 +469,14 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 						 * path behind a paid setup step, which is the first thing a new user hits.
 						 */
 						disabled={opening}
-						// On WSL, sharing here can only ever capture WSL's own windows, so this hands
-						// off to the Windows browser rather than opening a picker that cannot show
-						// League. One press, no second decision.
+						// When this window is on the wrong desktop, sharing here could only capture
+						// screens the game is not on, so the same press hands off to a Windows
+						// browser instead of opening a picker that cannot show League. One press,
+						// no second decision — and on a Windows install it is just the picker.
 						onClick={() => {
 							// A real click, which is the only thing that can start audio output.
 							gem.unlockAudio()
-							void (wsl ? openInWindows() : share.start()).catch(() => {
+							void (capture.offerWindowsBrowser ? openInWindows() : share.start()).catch(() => {
 								/* both set their own error state; this only stops an unhandled rejection */
 							})
 						}}
@@ -538,7 +549,12 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				</div>
 			)}
 
-			{wsl && !share.sharing && (
+			{/*
+			 * Only shown where it is TRUE. On a Windows install this window is a Windows process
+			 * on the same desktop as the game, the picker works, and telling someone to leave for
+			 * a browser would send them away from the app for nothing.
+			 */}
+			{capture.blocked === "wrong-desktop" && !share.sharing && (
 				<div className="csk-screen__blocked">
 					<strong>This will open in your Windows browser.</strong>
 					<p>
@@ -549,7 +565,20 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				</div>
 			)}
 
-			{!wsl && !share.sharing && !needsKey && (
+			{capture.blocked === "no-display-media" && !share.sharing && (
+				<div className="csk-screen__blocked">
+					<strong>This page can't capture a screen at all.</strong>
+					<p>
+						Screen sharing needs a secure origin, so browsers allow it on{" "}
+						<code>localhost</code> and refuse it over a plain-HTTP address. Open eepalytics
+						at <code>http://localhost:7700</code> on the machine you play on.
+					</p>
+				</div>
+			)}
+
+			{openError !== null && <div className="csk-screen__err">{openError}</div>}
+
+			{capture.can && !share.sharing && !needsKey && (
 				<div className="csk-screen__warn">
 					During a game your shared screen is sent to Google once per check-in, and it is
 					billed per frame — the running total shows while it's on. Between games nothing

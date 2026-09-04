@@ -74,7 +74,11 @@ Gemini subscription does not include API access.
 
 **On WSL:** screen sharing cannot work in the Electron window — WSLg's compositor contains only
 Linux windows, so it cannot see League at all. Pressing *Share my screen* there opens the page in
-your Windows browser instead, which can.
+your Windows browser instead, which can. **Installed on Windows** the same window is a Windows
+process on the same desktop as the game, so it captures directly and never mentions a browser.
+The window asks its own shell which desktop it is on rather than guessing from the user agent
+(`src/web/lib/capture-env.ts`), because those two cases used to be told apart by a string that
+could not tell them apart.
 
 ### 2. Games
 
@@ -396,6 +400,11 @@ It writes into two public directories on purpose: Vite serves `src/web/public`, 
 its window icon from the project's own `public/`. Writing to only one of them looks entirely
 successful and changes nothing you can see.
 
+It also writes `public/icon.ico` — the same face at 16, 32, 48, 64, 128 and 256, packed by hand
+into the Windows icon format the installer and Explorer want. That file is built here rather than
+left to the packager because the conversion would otherwise happen inside a Windows build this
+machine cannot run, and a blank icon looks exactly like an app that never had one.
+
 ## Development
 
 ```bash
@@ -404,7 +413,24 @@ pnpm daemon         # daemon only
 pnpm seed --help    # see the flags: --limit, --games, --force, --dry-run, --curl
 pnpm test           # node:test
 pnpm typecheck
+pnpm app            # build the UI and open the Electron window
+pnpm app:utility    # the same, but hosting the daemon the way the shipped app does
+pnpm dist:win       # a Windows installer — run this ON Windows (see electron-builder.yml)
 ```
+
+### Shipping it
+
+The Electron window can host the daemon itself, so the app does not need a checkout, pnpm, or a
+Node on `PATH` to run on somebody else's Windows machine: Electron 44 bundles Node 24.19, which
+has `node:sqlite` and strips TypeScript types with no build step. `electron/daemon.mjs` picks how
+to get one running from what it can observe — adopt whatever is already answering on :7700, fork
+one into an Electron `utilityProcess` (what ships), or spawn the plain Node child a WSL checkout
+has always used. It is never Electron's own main process: `node:sqlite` is synchronous, and the
+process that would block is the one painting the window and answering the live coach's capture
+requests mid-game.
+
+`pnpm build && pnpm dist:win`, run on Windows, produces `release/eepalytics-0.1.0-setup.exe`. It
+has not been built yet — this is a Linux machine — and the config is commented accordingly.
 
 TypeScript runs directly under `node --experimental-strip-types` — there is no server build
 step. That means **type-only syntax only**: no enums, no namespaces, no parameter properties,

@@ -113,9 +113,11 @@ export const App = () => {
 	 * /api/health every 20s behind a running match.
 	 *
 	 * It used to also be a separate always-on-top Electron window. That window is gone: it
-	 * rendered this identical component, and it could never run the screen share the coach
-	 * exists for, because Electron under WSLg sees only Linux windows and never the League
-	 * client. A second UI that structurally cannot do the main thing is not a feature.
+	 * rendered this identical component, and on the machine it was written for — Electron under
+	 * WSLg, which sees only Linux windows and never the League client — it could not run the
+	 * screen share the coach exists for. A second UI that structurally cannot do the main thing
+	 * is not a feature. A Windows install could now run it; that removes the second reason, not
+	 * the first, and duplicating this component into another window is still not worth it.
 	 */
 	if (route.name === "live") {
 		document.body.classList.add("is-live")

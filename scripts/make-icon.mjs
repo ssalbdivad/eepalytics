@@ -71,7 +71,75 @@ const EAR_TIPS = { left: 88, right: 535 }
  */
 const SPLASH_SIZES = [512, 1024]
 
+/**
+ * Sizes inside the Windows `.ico`. Windows picks per surface: 16 in the title bar and the tray,
+ * 32 in the taskbar, 48 in Alt-Tab and the file list, 256 in the large-icon view and on the
+ * installer. 256 is the ceiling the format allows — a width of 0 in a directory entry MEANS 256,
+ * and there is no encoding for 512.
+ */
+const ICO_SIZES = [16, 32, 48, 64, 128, 256]
+
 app.disableHardwareAcceleration()
+
+/**
+ * Pack PNGs into a Windows `.ico`, by hand.
+ *
+ * WHY BY HAND. electron-builder will convert a PNG to an icon for you, and that conversion is
+ * the one step of the Windows build that cannot be checked from Linux — it happens inside a
+ * packaging run this machine cannot do. An icon that comes out blank looks exactly like an app
+ * that has no icon, and the last icon bug in this repo took three attempts to spot. Writing the
+ * file here means it is produced, and readable back, on the machine the art lives on.
+ *
+ * WHY BMP AND NOT PNG ENTRIES. An `.ico` may hold either. PNG-compressed entries are Vista-and-
+ * later, and the installer toolchain is the least modern consumer in the chain, so every entry
+ * here is the classic 32-bit DIB that every version of Windows has read since NT: a
+ * BITMAPINFOHEADER whose height is doubled to cover the AND mask, BGRA rows stored bottom-up,
+ * and an all-zero mask because the alpha channel already carries transparency.
+ *
+ * `nativeImage.toBitmap()` hands back exactly that BGRA byte order, top-down, so the only work
+ * is reversing the rows.
+ */
+const buildIco = images => {
+	const HEADER = 6
+	const ENTRY = 16
+	const dibs = images.map(({ size, bitmap }) => {
+		const stride = size * 4
+		// 1 bit per pixel, each ROW padded to a 4-byte boundary. Zero-filled: fully opaque.
+		const maskBytes = ((size + 31) >> 5) * 4 * size
+		const dib = Buffer.alloc(40 + stride * size + maskBytes)
+		dib.writeUInt32LE(40, 0) // biSize
+		dib.writeInt32LE(size, 4) // biWidth
+		dib.writeInt32LE(size * 2, 8) // biHeight — XOR image plus the AND mask
+		dib.writeUInt16LE(1, 12) // biPlanes
+		dib.writeUInt16LE(32, 14) // biBitCount
+		dib.writeUInt32LE(0, 16) // biCompression = BI_RGB
+		dib.writeUInt32LE(stride * size + maskBytes, 20) // biSizeImage
+		for (let row = 0; row < size; row++)
+			// Bottom-up: the last source row is the first row in the file.
+			bitmap.copy(dib, 40 + row * stride, (size - 1 - row) * stride, (size - row) * stride)
+		return dib
+	})
+
+	const dir = Buffer.alloc(HEADER + ENTRY * images.length)
+	dir.writeUInt16LE(0, 0) // reserved
+	dir.writeUInt16LE(1, 2) // 1 = icon
+	dir.writeUInt16LE(images.length, 4)
+	let offset = dir.length
+	images.forEach(({ size }, i) => {
+		const at = HEADER + ENTRY * i
+		// 0 means 256. The format spends one byte on each dimension and no more.
+		dir.writeUInt8(size >= 256 ? 0 : size, at)
+		dir.writeUInt8(size >= 256 ? 0 : size, at + 1)
+		dir.writeUInt8(0, at + 2) // palette size — none, this is true colour
+		dir.writeUInt8(0, at + 3) // reserved
+		dir.writeUInt16LE(1, at + 4) // colour planes
+		dir.writeUInt16LE(32, at + 6) // bits per pixel
+		dir.writeUInt32LE(dibs[i].length, at + 8)
+		dir.writeUInt32LE(offset, at + 12)
+		offset += dibs[i].length
+	})
+	return Buffer.concat([dir, ...dibs])
+}
 
 /** Write one file into every public directory that needs it. */
 const emit = (rel, buf) => {
@@ -119,6 +187,23 @@ app.whenReady().then(() => {
 
 	// Electron's window/taskbar icon, read straight off disk at launch.
 	emit("icon.png", face.resize({ width: 512, height: 512, quality: "best" }).toPNG())
+
+	/*
+	 * The Windows icon: the app's own, the installer's, and the one Explorer draws on the .exe.
+	 * See `electron-builder.yml`.
+	 *
+	 * The ONE file that is not written to both public directories. The others are, because
+	 * `src/web/public` is what Vite ships to the browser — but nothing in the browser can use an
+	 * `.ico`, and it is a third of a megabyte to serve to nobody.
+	 */
+	const ico = buildIco(
+		ICO_SIZES.map(size => ({
+			size,
+			bitmap: face.resize({ width: size, height: size, quality: "best" }).toBitmap()
+		}))
+	)
+	writeFileSync(join(APP_PUBLIC, "icon.ico"), ico)
+	console.log(`icon.ico  ${(ico.length / 1024).toFixed(1)} KB  ->  1 dir (${ICO_SIZES.join(", ")})`)
 
 	for (const size of SPLASH_SIZES)
 		emit(`splash-${size}.png`, art.resize({ width: size, height: size, quality: "best" }).toPNG())

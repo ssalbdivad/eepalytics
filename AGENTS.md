@@ -133,6 +133,43 @@ renderer. The daemon mints a one-use ephemeral token and the page connects to
 Google with that. There is no "sign in with Google" because no such flow exists for
 this API.
 
+### Two machines it runs on, and the one thing they disagree about
+
+The app is developed on WSL and installs on Windows, and **the WSL path is the one that must
+never regress** — it is the one that is used every day. Everything below is additive.
+
+The Electron window can host the daemon itself, so an install needs no checkout, no pnpm and no
+Node on `PATH`: Electron 44.1.1 bundles Node 24.19.0, which has `node:sqlite` and strips
+TypeScript types with no flag and no build step (both measured). `electron/daemon.mjs` picks
+between three ways of having a daemon, from what it can observe rather than from a flag:
+
+- **adopt** — something already answers on :7700 (systemd, or `pnpm dev`). Racing it for the port
+  and the SQLite write lock is strictly worse than using it.
+- **utility** — `utilityProcess.fork()` of `src/daemon/utility-entry.ts`. What ships, and what a
+  packaged app always uses.
+- **spawn** — the plain Node child, byte for byte what `pnpm daemon` runs. The default in a WSL
+  checkout, so a bug seen in the window reproduces in the terminal.
+
+`EEPALYTICS_DAEMON_MODE` overrides; `pnpm app:utility` exercises the shipped path from a checkout.
+**Never the main process.** `node:sqlite` is synchronous and the daemon's work sits on top of it,
+and the main process is the one painting the window and answering the live coach's screen-capture
+requests *while a game is running*.
+
+`src/daemon/utility-entry.ts` exists for exactly one reason: Windows has no SIGTERM, so the only
+graceful stop available there is a message down Electron's parent port. Keeping that out of
+`main.ts` leaves the systemd unit, the dev loop and the tests looking at the process they always
+have.
+
+The visible difference between the two machines is the live coach. A renderer can only see the
+compositor its own process is in — under WSLg that is three virtual screens and its own window,
+and League is not in it; on Windows it is the desktop the game is on. So the page asks its shell
+(`electron/preload.cjs` → `src/web/lib/capture-env.ts`) instead of sniffing the user agent, which
+answered "go to a browser" for both. **Only say a thing is impossible where it is.**
+
+Packaging is `electron-builder.yml` — `pnpm build && pnpm dist:win`, on Windows. It ships `src/`
+as source because that is what the daemon executes, and `knowledge/` unarchived because those
+notes are meant to be edited after installation.
+
 ### The artwork
 
 One source file, `public/lillia-art.png`, produces everything: `pnpm icon` crops her face for the

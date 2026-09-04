@@ -1,6 +1,9 @@
 {
 	"name": "eepalytics",
 	"private": true,
+	"version": "0.1.0",
+	"description": "A jungle main's League of Legends coach: harvests your games, reviews them against your own baselines, and talks to you while you play.",
+	"author": "David Blass",
 	"type": "module",
 	"engines": {
 		"node": ">=25"
@@ -20,8 +23,11 @@
 		"typecheck": "tsc --noEmit",
 		"test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
 		"app": "pnpm build && electron .",
+		"app:utility": "EEPALYTICS_DAEMON_MODE=utility pnpm app",
 		"app:dev": "concurrently -n web,app -c cyan,green \"pnpm dev:web\" \"CSK_DEV=1 electron .\"",
 		"electron": "electron .",
+		"pack": "pnpm build && electron-builder --dir",
+		"dist:win": "pnpm build && electron-builder --win --x64",
 		"icon": "electron scripts/make-icon.mjs",
 		"shoot": "electron scripts/shoot.mjs",
 		"eval:live": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/eval-live.ts",
@@ -42,6 +48,7 @@
 		"@vitejs/plugin-react": "^6.1.1",
 		"concurrently": "^9",
 		"electron": "^44.1.1",
+		"electron-builder": "^26.0.0",
 		"typescript": "^5.9",
 		"vite": "^8.2.2"
 	},

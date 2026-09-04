@@ -1,11 +1,16 @@
 /**
  * `POST /api/shell/open-in-windows` — hand a URL to the Windows default browser.
  *
- * WHY THIS EXISTS. Screen sharing cannot work from the Electron app: it runs inside WSL under
- * WSLg, whose compositor only contains Linux windows. Enumerated live, Electron sees three WSLg
- * virtual screens and exactly one window — its own. The League client is a Windows process and
- * is not among them, and no amount of permission handling changes that; the renderer would have
- * to be a Windows process to see Windows pixels.
+ * WHY THIS EXISTS. Screen sharing cannot work from the Electron app WHEN IT IS RUNNING IN WSL:
+ * it runs under WSLg, whose compositor only contains Linux windows. Enumerated live, Electron
+ * sees three WSLg virtual screens and exactly one window — its own. The League client is a
+ * Windows process and is not among them, and no amount of permission handling changes that; the
+ * renderer would have to be a Windows process to see Windows pixels.
+ *
+ * The same app installed on Windows IS a Windows process and captures the game directly, so it
+ * never calls this route — and the 501 below is what it would get if it did, since there is no
+ * `explorer.exe` under `/mnt/c` to reach. The page decides which case it is in from the shell
+ * rather than the user agent; see `src/web/lib/capture-env.ts`.
  *
  * A Windows browser IS a Windows process, `localhost` is a secure context so `getDisplayMedia`
  * is permitted there, and WSL2 forwards localhost into the distro so the page still reaches this
