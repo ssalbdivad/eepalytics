@@ -21,7 +21,7 @@ import { createReadStream, statSync } from "node:fs"
 import { Readable } from "node:stream"
 import { extname, resolve, sep } from "node:path"
 import { resolveDataPath } from "../../db/blobs.ts"
-import { getMedia } from "../../db/queries.ts"
+import { getMedia, journalFrameById} from "../../db/queries.ts"
 import { DATA_DIR, MEDIA_DIR } from "../../shared/constants.ts"
 import { fail, notFound } from "../respond.ts"
 import type { Context } from "hono"
@@ -171,6 +171,25 @@ export const createMediaRoutes = (): Hono => {
 
 	app.get("/media/:id", byId)
 	app.on("HEAD", "/media/:id", byId)
+
+	/*
+	 * `GET /api/frames/:id` — one journal frame.
+	 *
+	 * A separate route from `/media/:id` because these are a different kind of thing: media rows
+	 * are output this app produced and curated, journal frames are raw evidence of what was on his
+	 * screen. Same containment check either way — a stored path is not trusted to stay inside the
+	 * data directory just because this app wrote it.
+	 */
+	const frameById = (c: Context) => {
+		const frame = journalFrameById(c.req.param("id") ?? "")
+		if (!frame) return fail(c, 404, "no such frame", "not-found")
+		const abs = resolve(frame.path)
+		if (!isInside(resolve(DATA_DIR), abs))
+			return fail(c, 403, "that frame points outside the data directory", "media-path-escape")
+		return sendFile(c, abs, { contentType: "image/jpeg" })
+	}
+	app.get("/frames/:id", frameById)
+	app.on("HEAD", "/frames/:id", frameById)
 
 	return app
 }

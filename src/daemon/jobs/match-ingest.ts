@@ -38,6 +38,7 @@ import { championName, refreshChampionNames } from "../champions.ts"
 import { fetchGame, fetchTimeline, getCreds } from "../lcu.ts"
 import { enqueueAnalysis, enqueueReplayDownload, replayWindowOpen } from "../queue.ts"
 import type { JobContext, JobOutcome } from "../context.ts"
+import { claimSessionsForGame } from "../claim.ts"
 
 /**
  * Smite is how a jungler is identified: exactly one holder per team in 44/44 team-games. The
@@ -276,6 +277,16 @@ export const runMatchIngest = async (ctx: JobContext): Promise<JobOutcome> => {
 	if (replayWindowOpen(endedAtMs) && needsReplay(gameId))
 		enqueueReplayDownload(gameId, endedAtMs)
 	else ctx.log.debug("replay window closed; skipping download", { gameId })
+
+	/*
+	 * Attach any journal session that recorded this game. The LCU usually told us the id while the
+	 * game was still running, in which case there is nothing to do — this is the fallback for when
+	 * it could not, and it is what makes a recorded game gradeable at all.
+	 */
+	const claim = claimSessionsForGame(gameId)
+	if (claim.claimed > 0) ctx.progress(`attached a screen-share recording to this game`)
+	else if (claim.ambiguous > 0)
+		ctx.log.warn("journal sessions were ambiguous; left unclaimed", { gameId, n: claim.ambiguous })
 
 	if (timeline) enqueueAnalysis(gameId)
 

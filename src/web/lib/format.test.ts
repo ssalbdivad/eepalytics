@@ -136,6 +136,7 @@ describe("response validators", () => {
 				goals: ["Path toward the next objective 45s before it spawns."]
 			},
 			media: [],
+			journalFrames: [],
 			timelineAvailable: true
 		})
 		assert.ok(!(out instanceof type.errors), String(out))
@@ -152,6 +153,7 @@ describe("response validators", () => {
 			moments: [bad],
 			review: null,
 			media: [],
+			journalFrames: [],
 			timelineAvailable: true
 		})
 		assert.ok(out instanceof type.errors, "a moment without evidence must not validate")

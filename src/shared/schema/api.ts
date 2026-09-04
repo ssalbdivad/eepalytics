@@ -130,6 +130,15 @@ export const GameDetailResponse = type({
 	moments: Moment.array(),
 	review: Review.or("null"),
 	media: Media.array(),
+	/**
+	 * Frames from the screen-share journal, oldest first.
+	 *
+	 * Separate from `media` on purpose: media is curated output this app produced, while these are
+	 * raw evidence of what was on his screen. The evidence TIER is computed from these, so putting
+	 * them in the same list as generated map diagrams would let a diagram argue that a game had
+	 * been watched.
+	 */
+	journalFrames: type({ id: "string", tSec: "number" }).array(),
 	timelineAvailable: "boolean"
 })
 export type GameDetailResponse = typeof GameDetailResponse.infer

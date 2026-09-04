@@ -299,7 +299,13 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 					</button>
 				:	<button
 						className="btn btn-primary"
-						disabled={opening || needsKey}
+						/*
+						 * NOT gated on the key. Sharing the screen is the FREE half — it records the
+						 * frames that earn a graded review after the game, and costs nothing. Only
+						 * the live voice needs Google. Disabling this behind the key put the free
+						 * path behind a paid setup step, which is the first thing a new user hits.
+						 */
+						disabled={opening}
 						// On WSL, sharing here can only ever capture WSL's own windows, so this hands
 						// off to the Windows browser rather than opening a picker that cannot show
 						// League. One press, no second decision.

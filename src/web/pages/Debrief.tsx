@@ -56,8 +56,10 @@ export const Debrief = ({ gameId }: { gameId: number }) => {
 	 */
 	const evidence = useMemo(() => {
 		if (!d) return null
-		const frames = d.media.filter(m => m.source === "journal").map(m => m.tSec ?? -1)
-		return evidenceOf({ frameTimesSec: frames, gameDurationSec: d.game.gameDurationSec ?? 0 })
+		return evidenceOf({
+			frameTimesSec: d.journalFrames.map(f => f.tSec),
+			gameDurationSec: d.game.gameDurationSec ?? 0
+		})
 	}, [d])
 
 	if (err !== null) return <div className="notice bad">Couldn't load that game: {err}</div>
@@ -76,10 +78,12 @@ export const Debrief = ({ gameId }: { gameId: number }) => {
 
 	const frameFor = (tSec: number | null): string | null => {
 		if (tSec === null) return null
-		const near = d.media
-			.filter(m => m.source === "journal" && m.tSec !== null)
-			.sort((a, b) => Math.abs((a.tSec ?? 0) - tSec) - Math.abs((b.tSec ?? 0) - tSec))[0]
-		return near && Math.abs((near.tSec ?? 0) - tSec) <= 15 ? `/api/media/${near.id}` : null
+		// The nearest frame within 15s. Further than that and the picture is of a different moment,
+		// which is worse than showing none — it would illustrate a claim with unrelated evidence.
+		const near = [...d.journalFrames].sort(
+			(a, b) => Math.abs(a.tSec - tSec) - Math.abs(b.tSec - tSec)
+		)[0]
+		return near && Math.abs(near.tSec - tSec) <= 15 ? `/api/frames/${near.id}` : null
 	}
 
 	return (

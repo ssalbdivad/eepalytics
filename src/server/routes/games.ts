@@ -31,8 +31,8 @@ import {
 	mediaCounts,
 	momentCounts,
 	reviewHeadlines,
-	visionCounts
-} from "../../db/queries.ts"
+	visionCounts,
+	framesForGame} from "../../db/queries.ts"
 import { GameDetailResponse, GameListResponse } from "../../shared/schema/api.ts"
 import type { GameListItem } from "../../shared/schema/api.ts"
 import { fail, intParam, intQuery, notFound, send } from "../respond.ts"
@@ -84,6 +84,8 @@ export const createGamesRoutes = (): Hono => {
 			media: listMediaForGame(gameId),
 			// The row's own flag AND the blob actually being there. A pruned data dir must not
 			// make the UI promise a minimap it cannot draw.
+			// The raw evidence of what was on his screen. The evidence tier is computed from these.
+			journalFrames: framesForGame(gameId).map(f => ({ id: f.id, tSec: f.tSec })),
 			timelineAvailable: game.hasTimeline && hasBlob(gameId, BLOB_TIMELINE)
 		}
 

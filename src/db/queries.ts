@@ -1744,14 +1744,22 @@ export const countJournalFrames = (sessionId: string): number =>
  * Joined through the session because that is where the gameId lives — a frame never carries one,
  * so a session claimed later brings all of its frames with it at once.
  */
-export const framesForGame = (gameId: number): { path: string; tSec: number; truthJson: string | null }[] =>
+export const framesForGame = (
+	gameId: number
+): { id: string; path: string; tSec: number; truthJson: string | null }[] =>
 	prep(
-		`SELECT f.path AS path, f.tSec AS tSec, f.truthJson AS truthJson
+		`SELECT f.id AS id, f.path AS path, f.tSec AS tSec, f.truthJson AS truthJson
 		   FROM journal_frame f
 		   JOIN journal_session s ON s.id = f.sessionId
 		  WHERE s.gameId = ?
 		  ORDER BY f.tSec ASC`
-	).all(gameId) as unknown as { path: string; tSec: number; truthJson: string | null }[]
+	).all(gameId) as unknown as { id: string; path: string; tSec: number; truthJson: string | null }[]
+
+/** One frame, by id — for serving the picture beside a coaching point. */
+export const journalFrameById = (id: string): { path: string; tSec: number } | null => {
+	const row = plain(prep("SELECT path, tSec FROM journal_frame WHERE id = ?").get(id))
+	return row ? (row as unknown as { path: string; tSec: number }) : null
+}
 
 /** Sessions with no game attached yet — the matcher's input, and the UI's "needs a claim" list. */
 export const unclaimedJournalSessions = (): JournalSessionRow[] =>
