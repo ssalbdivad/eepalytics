@@ -128,7 +128,7 @@ export const GameDigest = type({
 	dataGaps: "string[]",
 	"generatedMs?": "number",
 	"analysisVersion?": "number",
-	/** The user's own rolling baseline, in prose: "20-game median: 18 camps at 8:00". */
+	/** The user's own rolling baseline, in prose: "20-game median: 18 CS at 8:00". */
 	"baseline?": "string[]",
 	"objectives?": DigestObjective.array(),
 	"timeline?": DigestTimelineRow.array(),

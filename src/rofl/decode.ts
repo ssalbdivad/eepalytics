@@ -621,7 +621,7 @@ export const formatScoreboard = (file: RoflFile): string => {
 	if (file.stats.length === 0) return "  (no statsJson in this file)"
 	return file.stats
 		.map(p => {
-			const farm = p.jungleCs > p.cs ? `camps=${p.jungleCs}` : `cs=${p.cs}`
+			const farm = `cs=${p.cs + p.jungleCs}`
 			return (
 				`  ${pad(p.riotId, 24)} ${pad(p.championName, 14)} ` +
 				`team=${p.teamId} ${pad(p.position || "?", 8)} ` +

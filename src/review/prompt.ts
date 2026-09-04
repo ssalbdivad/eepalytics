@@ -370,7 +370,7 @@ changes nothing — a shorter item that lands beats a better item that does not.
 budget and the budgets are enforced:
 
 - **title** — under 70 characters. The claim WITH its number. This is the part he scans, so it
-  carries the wit. "Down 11 camps to Brand at 10:00", not "Pathing issues in the early game".
+  carries the wit. "Down 11 CS to Brand at 10:00", not "Pathing issues in the early game".
 - **fix** — ONE sentence, under 140 characters, imperative. The single thing to do differently.
   No preamble, no "next game:" prefix, no second sentence. If you cannot say it in one sentence,
   you have not worked out what the fix is.
@@ -476,7 +476,7 @@ You are reviewing ONE game. The player is **${ROLE_LABELS[g.role]}** on **${g.ch
 
 - Result: **${g.win ? "WIN" : "LOSS"}** in ${fmtDuration(g.durationSec)}
 - KDA: ${g.kills}/${g.deaths}/${g.assists}
-- CS: ${g.cs + g.jungleCs}${g.role === "JGL" ? ` (${g.jungleCs} camps plus ${g.cs} lane minions)` : ""}
+- CS: ${g.cs + g.jungleCs}
 - Gold: ${g.gold} · Damage to champions: ${g.damageToChampions} · Vision score: ${g.visionScore} · Level ${g.champLevel}${
 		typeof g.teamKills === "number" && typeof g.enemyKills === "number" ?
 			`\n- Team kills ${g.teamKills} vs ${g.enemyKills}`

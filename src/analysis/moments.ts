@@ -534,7 +534,7 @@ export const selectMomentsDetailed = (
 				participantsInvolved: oppId === null ? [userId] : [userId, oppId],
 				costGold: cost,
 				confidence: "medium",
-				evidence: `Metric csDelta@14 = ${csGap.value}, interpolated from the once-per-minute frames. The gold figure converts a camp at a flat 25g and is a rough proxy, not a measurement.`
+				evidence: `Metric csDelta@14 = ${csGap.value}, interpolated from the once-per-minute frames. The gold figure converts a unit of CS at a flat 25g and is a rough proxy, not a measurement.`
 			},
 			kind: "cs_gap",
 			positive: false,

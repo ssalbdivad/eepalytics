@@ -120,7 +120,7 @@ export const METRIC_DEFS: Record<string, MetricDef> = Object.fromEntries(
 		 * which are about where camps were taken and are still camps.
 		 */
 		def("csPerMin", "CS per minute", "/min", true, "stable"),
-		def("enemyJungleShare", "CS taken in enemy jungle", "%", true, "not-trendable", {
+		def("enemyJungleShare", "Share of CS taken in the enemy jungle", "%", true, "not-trendable", {
 			note: "CV 0.82 across 22 games — genuinely noisy, and the half attribution is a heuristic."
 		}),
 		def("kda", "KDA", "", true, "noisy"),
@@ -534,7 +534,7 @@ export const computeMetrics = (
 		"csPerMin",
 		totalCs / durMin,
 		"high",
-		`${totalCs} CS over ${round(durMin, 1)} minutes (${me.neutralMinionsKilled} camps plus ${me.totalMinionsKilled} lane minions), from the end-of-game stat block.`
+		`${totalCs} CS over ${round(durMin, 1)} minutes, from the end-of-game stat block.`
 	)
 	if (split.totalCamps > 0)
 		push(

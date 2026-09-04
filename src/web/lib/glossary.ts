@@ -34,7 +34,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
 			"Creep score — how many minions and jungle monsters you have killed. It is the steadiest source of gold in the game, so it is the clearest measure of whether you are keeping up."
 	},
 	camps: {
-		aliases: ["camp", "jungle camps"],
+		aliases: ["camp", "camps", "jungle camps"],
 		definition:
 			"The groups of monsters in the jungle. They come back on a timer, so a camp you are not killing is gold quietly going to waste."
 	},
@@ -85,7 +85,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
 	"full clear": {
 		aliases: ["full-clear", "clear"],
 		definition:
-			"Killing every camp in your own jungle in one route before doing anything else. It is the safest way to keep your gold and level up with the enemy jungler."
+			"Killing every camp in your own jungle in one route before doing anything else. It counts as CS, like lane minions do. It is the safest way to keep your gold and level up with the enemy jungler."
 	},
 	pathing: {
 		aliases: ["path", "route"],
@@ -119,7 +119,7 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
 	"counter-jungle": {
 		aliases: ["counterjungle", "counter-jungling", "invade", "invading"],
 		definition:
-			"Taking camps in the enemy jungler's half of the map. It is strong when you know where they are and risky when you do not."
+			"Taking CS in the enemy jungler's half of the map. It is strong when you know where they are and risky when you do not."
 	},
 	smite: {
 		definition:

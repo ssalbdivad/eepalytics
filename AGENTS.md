@@ -290,7 +290,7 @@ the data actually supports:
    below). Coach the score and the death locations, not invented ward positions.
 
 Counter-jungling deserves its own note when the data supports it: taking the enemy
-their camps is only correct when you know where their jungler is *and* you are
+taking their camps is only correct when you know where their jungler is *and* you are
 not behind on your own CS. If both of those failed, that is an Oner bit and a real
 fix ("if you can't say where he is, take your own raptors and be full HP for
 drake").

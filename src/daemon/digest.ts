@@ -118,7 +118,7 @@ const digestPlayers = (
 
 /**
  * Per-minute rows, already differenced against the ROLE opponent — for this user that is the
- * enemy jungler, so "cs" means camps and "lane opponent" means the other jungler.
+ * enemy jungler, and "cs" is camps plus lane minions throughout — one quantity, called CS.
  *
  * Returns `null` diffs rather than 0 when there is no opponent to difference against: a
  * missing number and a zero difference are not the same claim.
