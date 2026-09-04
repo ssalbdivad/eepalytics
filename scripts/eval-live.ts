@@ -309,11 +309,24 @@ const runSession = async (
 				return
 			}
 			current = { atSec, state: built.state, sentAt: Date.now() }
-			ws.send(JSON.stringify({ realtimeInput: { video: { mimeType: "image/jpeg", data: frameB64 } } }))
+			/*
+			 * Frame INSIDE the turn, matching the app. Measured over eight turns on one socket:
+			 * streaming it through `realtimeInput.video` took 3.5-5.4s and produced generic advice
+			 * that never referenced the picture, while inline took 0.6-1.7s and read the screen
+			 * correctly. An eval that used the other shape would be scoring a path nothing runs.
+			 */
 			ws.send(
 				JSON.stringify({
 					clientContent: {
-						turns: [{ role: "user", parts: [{ text: renderState(built.state) }] }],
+						turns: [
+							{
+								role: "user",
+								parts: [
+									{ inlineData: { mimeType: "image/jpeg", data: frameB64 } },
+									{ text: renderState(built.state) }
+								]
+							}
+						],
 						turnComplete: true
 					}
 				})

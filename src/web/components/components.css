@@ -2013,3 +2013,51 @@ button.csk-chip:focus-visible,
 	max-height: 320px;
 	overflow: auto;
 }
+
+/* ======================================= ScreenCoach: compact strip === */
+/*
+ * One line, in the small overlay. The panel used to vanish below 700px — which is the width this
+ * window opens at — so the flagship feature was invisible exactly where a new user meets it. A
+ * strip keeps the session visible, and the component mounted, so collapsing does not hang up.
+ */
+/*
+ * Doubled class for specificity: `.csk-screen` in styles.css sets `flex-direction: column` at
+ * equal specificity and loads later, so a single-class override silently lost.
+ */
+.csk-screen.csk-screen--compact {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 10px;
+	border-top: 1px solid var(--line);
+	font-size: 11.5px;
+}
+.csk-screen__compactlabel {
+	flex: 1;
+	color: var(--text-2);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.csk-screen__dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--faint);
+	flex: none;
+}
+.csk-screen__dot[data-state="live"] {
+	background: var(--win);
+}
+.csk-screen__dot[data-state="reconnecting"],
+.csk-screen__dot[data-state="connecting"] {
+	background: var(--warn);
+}
+.csk-screen__dot[data-state="error"] {
+	background: var(--loss);
+}
+.live__bar--idle {
+	justify-content: flex-end;
+	border-bottom: none;
+}

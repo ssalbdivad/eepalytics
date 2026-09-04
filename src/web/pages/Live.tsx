@@ -116,7 +116,19 @@ export const Live = () => {
 	const body =
 		!data ?
 			<div className="live__content">
-				<div className="live__idle">connecting…</div>
+				<div className="live__idle">
+					<strong>connecting…</strong>
+					{/*
+					 * The error used to render only after `data` arrived, so a daemon that was down
+					 * left this screen saying "connecting…" forever with the reason held in state
+					 * and never shown. If the first poll failed, say so here.
+					 */}
+					{err !== null && (
+						<span>
+							Can't reach fawnsei: {err}. Is the daemon running?
+						</span>
+					)}
+				</div>
 			</div>
 		: !data.inGame ?
 			<div className="live__content">
@@ -125,6 +137,26 @@ export const Live = () => {
 				 * monitor showed one paragraph in the top-left corner and 1800px of nothing.
 				 * Idle is most of the time this window is open — it has to be worth looking at.
 				 */}
+				{/*
+				 * Window controls on the idle screen too.
+				 *
+				 * They only existed on the in-game bar, so the screen a new user actually meets
+				 * first — "Not in a game" — offered no way to close the window or grow it, in a
+				 * frameless shell that provides no chrome of its own.
+				 */}
+				<div className="live__bar live__bar--idle">
+					<span className="live__controls">
+						<button
+							onClick={() => sendToShell("overlay:toggle-size")}
+							title="Grow onto a second monitor, or shrink back to a corner window (Ctrl+Shift+F)"
+						>
+							{size === "wide" ? "▾" : "▴"}
+						</button>
+						<button onClick={() => sendToShell("overlay:close")} title="Close (Ctrl+Shift+L)">
+							✕
+						</button>
+					</span>
+				</div>
 				<div className="live__idlewrap">
 					<div className="live__idle">
 						<img className="live__mark" src="/icons/icon-128.png" alt="" width={size === "wide" ? 44 : 22} height={size === "wide" ? 44 : 22} />
@@ -288,9 +320,17 @@ export const Live = () => {
 			 * none` keeps the socket open and the audio playing, which is what you want from a
 			 * voice coach in a 380px window.
 			 */}
-			<div className={`live__coach${size === "wide" ? "" : " live__coach--hidden"}`}>
-				<ScreenCoach />
-				<LiveTranscript />
+			{/*
+			 * Always mounted, at a fixed position in the tree. Compact renders a one-line strip
+			 * rather than nothing: 700px is the width this overlay opens at, and hiding the
+			 * flagship feature at the size a new user first meets it is not a layout decision.
+			 */}
+			<div className="live__coach">
+				<ScreenCoach
+					compact={size !== "wide"}
+					onExpand={size !== "wide" ? () => sendToShell("overlay:toggle-size") : undefined}
+				/>
+				{size === "wide" && <LiveTranscript />}
 			</div>
 
 			{err !== null && <div className="live__err">{err}</div>}

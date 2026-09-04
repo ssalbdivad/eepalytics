@@ -15,13 +15,14 @@
  *
  * ## The three streams
  *
- *   video  — JPEG frames from the shared screen, ~1/s. Google's documented ceiling is 1 FPS.
+ *   turns  — on a timer, each carrying ONE screen frame plus the ground-truth block. This is what
+ *            makes her speak; video alone produces silence, since the model has no reason to take
+ *            a turn.
  *   audio  — the microphone, 16kHz mono PCM, only while push-to-talk is held.
- *   text   — the ground-truth block, sent on a timer, which is what actually triggers a reply.
  *
- * That last one matters. Streaming video alone produces silence: the model has no reason to take
- * a turn. The text turn is the heartbeat that makes it speak, and it carries the facts the
- * picture cannot show — who is dead, for how long, gold unspent.
+ * Frames deliberately ride inside the turn rather than streaming through `realtimeInput.video` —
+ * see `beat()`, where the measurement is. Streamed frames were not reaching the answer, and the
+ * model filled the gap with generic advice that fit any game ever played.
  *
  * ## Why the page talks to Google directly
  *
@@ -34,19 +35,9 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../../shared/live-prompt.ts"
 
 /**
- * How often a frame is streamed, and it is a cost dial as much as a fidelity one.
- *
- * Google documents 1 FPS as the ceiling, but every frame is a billed image: a thirty-minute game
- * at 1 FPS is 1,800 of them. Halving it to one every two seconds is not a halving of what the
- * model can see — the coach speaks on a heartbeat measured in tens of seconds, and between those
- * it needs continuity, not a flipbook.
- *
- * What it must NOT lose is freshness at the moment it decides, so a frame is always pushed
- * immediately before each turn regardless of where the interval lands. Frame SIZE is owned by
- * `useScreenShare`, and is measured there.
+ * How often the coach is prompted to speak. The interval IS the talkativeness — and, now, the
+ * cost, because exactly one frame is sent per turn.
  */
-const FRAME_MS = 2000
-/** How often the coach is prompted to speak. The interval IS the talkativeness. */
 const DEFAULT_TURN_MS = 20_000
 /** Gemini emits 24kHz mono PCM; the mic is expected at 16kHz. */
 const OUT_RATE = 24_000
@@ -238,7 +229,15 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		setError(null)
 		setStatus(isRetry ? "reconnecting" : "connecting")
 		try {
-			const res = await fetch("/api/live/gemini/token", { method: "POST" })
+			const res = await fetch("/api/live/gemini/token", {
+				method: "POST",
+				signal: AbortSignal.timeout(10_000)
+			})
+			if (!res.ok) {
+				setError(`the daemon could not mint a session token (HTTP ${res.status})`)
+				setStatus("error")
+				return
+			}
 			const tok = (await res.json()) as
 				| { ok: true; token: string; model: string; wsUrl: string }
 				| { ok: false; error: string }
@@ -250,6 +249,19 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 
 			const ws = new WebSocket(`${tok.wsUrl}?access_token=${encodeURIComponent(tok.token)}`)
 			wsRef.current = ws
+
+			/*
+			 * A socket that opens and never completes setup is indistinguishable from one that is
+			 * about to work, so it would sit on "connecting…" indefinitely with no way out. Setup
+			 * takes ~250ms in practice; fifteen seconds is generous and still finite.
+			 */
+			const setupGuard = setTimeout(() => {
+				if (wsRef.current === ws && ws.readyState !== WebSocket.CLOSED) {
+					setError("Gemini accepted the connection but never started the session — try again")
+					ws.close()
+				}
+			}, 15_000)
+			const clearGuard = () => clearTimeout(setupGuard)
 
 			ws.onopen = () =>
 				ws.send(
@@ -278,7 +290,9 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					setUsage(u => ({ totalTokens: m.usageMetadata!.totalTokenCount!, turns: u.turns }))
 
 				if (m.setupComplete) {
+					clearGuard()
 					attemptRef.current = 0
+					setError(null)
 					setStatus("live")
 					return
 				}
@@ -368,6 +382,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				// `onclose` always follows, and it carries the reason; retrying is decided there.
 			}
 			ws.onclose = e => {
+				clearGuard()
 				wsRef.current = null
 				if (!wantLiveRef.current) {
 					setStatus("off")
@@ -397,21 +412,6 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 
 	const start = useCallback(() => connect(false), [connect])
 
-	const pushFrame = useCallback(() => {
-		const frame = optsRef.current.grabFrame()
-		if (frame === null) return
-		send({
-			realtimeInput: { video: { mimeType: "image/jpeg", data: frame.replace(/^data:[^,]+,/, "") } }
-		})
-	}, [send])
-
-	/** Stream frames while live, for continuity between turns. */
-	useEffect(() => {
-		if (status !== "live") return
-		const id = setInterval(pushFrame, FRAME_MS)
-		return () => clearInterval(id)
-	}, [status, pushFrame])
-
 	/**
 	 * The heartbeat that makes it speak.
 	 *
@@ -420,19 +420,41 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 */
 	useEffect(() => {
 		if (status !== "live") return
+		/*
+		 * The frame rides INSIDE the turn, rather than being streamed by `realtimeInput.video`.
+		 *
+		 * This is measured, and the difference is not subtle. Eight turns on one socket, same
+		 * image, same model:
+		 *
+		 *   realtimeInput.video + a text turn   3.5-5.4s   "Focus on securing that vision
+		 *                                                   control", "Complete your next item"
+		 *   inlineData inside the turn          0.6-1.7s   "You're dead for seven more seconds"
+		 *
+		 * The streamed frames were not reaching the answer. Told to comment with nothing it could
+		 * actually see, the model produced generic League filler that would fit any game ever
+		 * played — which is exactly what the player reported as "dumb stuff", and exactly the
+		 * failure the ground-truth block was built to stop. It was still happening for the half
+		 * of the input that comes from pixels.
+		 *
+		 * Inline is also ~10x cheaper: one billed image per turn instead of one every two seconds.
+		 * The only thing given up is continuous video the model was demonstrably not using.
+		 */
 		const beat = async () => {
-			// The freshest possible frame at the moment it decides, whatever the interval is doing.
-			pushFrame()
 			const truth = await optsRef.current.groundTruth()
 			truthInFlight.current = truth
-			send({
-				clientContent: { turns: [{ role: "user", parts: [{ text: truth }] }], turnComplete: true }
-			})
+			const frame = optsRef.current.grabFrame()
+			const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = []
+			if (frame !== null)
+				parts.push({
+					inlineData: { mimeType: "image/jpeg", data: frame.replace(/^data:[^,]+,/, "") }
+				})
+			parts.push({ text: truth })
+			send({ clientContent: { turns: [{ role: "user", parts }], turnComplete: true } })
 		}
 		const id = setInterval(() => void beat(), turnMs)
 		void beat()
 		return () => clearInterval(id)
-	}, [status, turnMs, send, pushFrame])
+	}, [status, turnMs, send])
 
 	/** Push-to-talk: hold the mic open and let Gemini's own VAD decide when you stopped. */
 	const setMic = useCallback(

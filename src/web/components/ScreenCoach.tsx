@@ -57,11 +57,27 @@ interface KeyStatus {
 	hint?: string
 }
 
-export const ScreenCoach = () => {
+export interface ScreenCoachProps {
+	/**
+	 * Compact renders a one-line strip instead of the full panel — never nothing.
+	 *
+	 * The panel used to be dropped entirely below 700px, which is the width the overlay window
+	 * opens at, so the app's flagship feature was invisible exactly where a new user first meets
+	 * it. The component stays mounted either way: unmounting closes the socket and stops the
+	 * screen share, so a session must survive being collapsed.
+	 */
+	compact?: boolean
+	/** Ask the shell to grow the overlay. Only meaningful in the Electron window. */
+	onExpand?: () => void
+}
+
+export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => {
 	const share = useScreenShare()
 	const [opening, setOpening] = useState(false)
 	const wsl = isWslElectron()
 
+	/** False once a ground-truth fetch has failed; see `groundTruth` below. */
+	const [truthOk, setTruthOk] = useState(true)
 	const [keyStatus, setKeyStatus] = useState<KeyStatus | null>(null)
 	const [keyInput, setKeyInput] = useState("")
 	const [savingKey, setSavingKey] = useState(false)
@@ -109,11 +125,17 @@ export const ScreenCoach = () => {
 		 */
 		groundTruth: async () => {
 			try {
-				const r = await fetch("/api/live/ground-truth")
-				const j = (await r.json()) as { text?: string }
+				const r = await fetch("/api/live/ground-truth", { signal: AbortSignal.timeout(4000) })
+				const j = (await r.json()) as { inGame?: boolean; text?: string }
+				setTruthOk(true)
 				if (j.text) return j.text
 			} catch {
-				/* the League client being closed is normal, not an error worth surfacing */
+				/*
+				 * Surfaced, not swallowed. Without facts the coach is back to guessing from
+				 * pixels, which is the exact failure this whole path was built to end — so the
+				 * player is told rather than left with a confident-sounding coach running blind.
+				 */
+				setTruthOk(false)
 			}
 			return "No live game data right now — he is not in a game, or the client is closed. Say nothing (PASS) unless the screen clearly shows something worth saying."
 		},
@@ -142,6 +164,29 @@ export const ScreenCoach = () => {
 
 	const needsKey = keyStatus !== null && !keyStatus.ok
 
+	if (compact)
+		return (
+			<div className="csk-screen csk-screen--compact">
+				<span className="csk-screen__dot" data-state={gem.status} />
+				<span className="csk-screen__compactlabel">
+					{gem.status === "live" ?
+						`Coaching · ${gem.usage.turns} check-in${gem.usage.turns === 1 ? "" : "s"}`
+					: gem.status === "reconnecting" ?
+						"Coach reconnecting…"
+					: share.sharing ?
+						"Screen shared — not coaching yet"
+					: needsKey ?
+						"Live coach needs a key"
+					:	"Live coach"}
+				</span>
+				{onExpand && (
+					<button className="btn" onClick={onExpand}>
+						Open
+					</button>
+				)}
+			</div>
+		)
+
 	return (
 		<div className="csk-screen">
 			<div className="csk-screen__head">
@@ -162,7 +207,11 @@ export const ScreenCoach = () => {
 						// On WSL, sharing here can only ever capture WSL's own windows, so this hands
 						// off to the Windows browser rather than opening a picker that cannot show
 						// League. One press, no second decision.
-						onClick={() => void (wsl ? openInWindows() : share.start())}
+						onClick={() => {
+							void (wsl ? openInWindows() : share.start()).catch(() => {
+								/* both set their own error state; this only stops an unhandled rejection */
+							})
+						}}
 					>
 						{opening ? "Opening…" : "Share my screen"}
 					</button>
@@ -250,8 +299,22 @@ export const ScreenCoach = () => {
 				</div>
 			)}
 
+			{!truthOk && gem.status === "live" && (
+				<div className="csk-screen__warn">
+					Can't reach the game data right now, so she's going on the picture alone — she'll be
+					vaguer until it comes back.
+				</div>
+			)}
 			{share.error !== null && <div className="csk-screen__err">{share.error}</div>}
-			{gem.error !== null && <div className="csk-screen__err">{gem.error}</div>}
+			{/*
+			 * A reconnect is expected — the session credential lasts about half an hour and games
+			 * run longer — so it is reported as a status, not in red. Red is for something the
+			 * player has to act on.
+			 */}
+			{gem.error !== null &&
+				(gem.status === "reconnecting" ?
+					<div className="csk-screen__warn">{gem.error}</div>
+				:	<div className="csk-screen__err">{gem.error}</div>)}
 
 			{share.sharing && (
 				<div className="csk-screen__controls">
@@ -296,7 +359,12 @@ export const ScreenCoach = () => {
 					 */}
 					{gem.status === "live" && (
 						<span className="csk-screen__meter">
-							listening · {gem.usage.turns} check-in{gem.usage.turns === 1 ? "" : "s"}
+							{/*
+							 * Not "listening": that sat directly beside "🎙 mic off" and flatly
+							 * contradicted it. She is watching the screen; the mic is a separate
+							 * thing the player controls and can see the state of.
+							 */}
+							watching · {gem.usage.turns} check-in{gem.usage.turns === 1 ? "" : "s"}
 							{gem.usage.totalTokens > 0 ?
 								` · ${Math.round(gem.usage.totalTokens / 1000)}k tokens`
 							:	""}
