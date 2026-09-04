@@ -56,6 +56,25 @@ describe("withAdvice", () => {
 		)
 	})
 
+	it("drops a generic tail rather than stacking two instructions", () => {
+		// The fight module's lines close on their own advice; the champion clause is the better of
+		// the two, and one breath does not hold both.
+		strictEqual(
+			withAdvice(
+				"that fight was 0 for 2 without you, so back off and catch up",
+				"get on the map before the next one starts"
+			),
+			"that fight was 0 for 2 without you — get on the map before the next one starts"
+		)
+	})
+
+	it("keeps a fact that merely contains the word so", () => {
+		strictEqual(
+			withAdvice("Kayn is 23 CS up on you", "finish the route"),
+			"Kayn is 23 CS up on you — finish the route"
+		)
+	})
+
 	it("returns the fact untouched when the champion has no note", () => {
 		strictEqual(withAdvice("Kayn is 23 CS up on you", undefined), "Kayn is 23 CS up on you")
 	})

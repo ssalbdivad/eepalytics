@@ -93,8 +93,18 @@ export const parseChampionAdvice = (markdown: string): ChampionAdvice => {
  */
 export const withAdvice = (fact: string, clause: string | undefined): string => {
 	if (!clause) return fact
-	const trimmed = fact.replace(/[.\s]+$/, "")
-	// The fact strings already end on their own instruction in some cases; a second one would be
-	// two sentences of advice in a line that must stay under a breath.
+	let trimmed = fact.replace(/[.\s]+$/, "")
+	/*
+	 * Some facts already END on a generic instruction — the fight module's lines close with "so
+	 * back off and catch up". Appending champion advice to those gives two instructions in one
+	 * breath: "that fight was 0 for 2 without you, so back off and catch up — your case for
+	 * existing is being somewhere they are not, so get on the map before the next one starts."
+	 *
+	 * The champion clause is the more specific of the two and it is the one worth keeping, so the
+	 * generic tail is dropped when there is something better to put there. The FACT is never
+	 * touched; only an instruction we are about to replace with a better instruction.
+	 */
+	const tail = trimmed.search(/,\s+so\s/)
+	if (tail > 0) trimmed = trimmed.slice(0, tail)
 	return `${trimmed} — ${clause}`
 }
