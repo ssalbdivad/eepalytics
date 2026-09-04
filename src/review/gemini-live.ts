@@ -184,6 +184,14 @@ export interface TranscriptLine {
 	text: string
 	fromUser: boolean
 	gameTimeSec: number | null
+	/**
+	 * The ground-truth block the coach was holding when it said this.
+	 *
+	 * Kept because a line on its own cannot be judged. "Graves is down 22s" is either excellent
+	 * or invented, and the only thing that separates those is what she was told — so the question
+	 * is stored next to the answer.
+	 */
+	groundTruth?: string
 }
 
 export const appendTranscript = (line: TranscriptLine): void => {

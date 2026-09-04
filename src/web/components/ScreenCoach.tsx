@@ -257,7 +257,7 @@ export const ScreenCoach = () => {
 
 			{share.sharing && (
 				<div className="csk-screen__controls">
-					{gem.status === "live" ?
+					{gem.status === "live" || gem.status === "reconnecting" ?
 						<button className="btn" onClick={gem.stop}>
 							Stop coaching
 						</button>
@@ -281,7 +281,7 @@ export const ScreenCoach = () => {
 						</button>
 					))}
 
-					{gem.status === "live" && (
+					{(gem.status === "live" || gem.status === "reconnecting") && (
 						<button
 							className={`csk-screen__int ${gem.micOn ? "on" : ""}`}
 							onClick={() => void gem.setMic(!gem.micOn)}
@@ -291,10 +291,18 @@ export const ScreenCoach = () => {
 						</button>
 					)}
 					{gem.status === "live" && <span className="csk-screen__meter">listening</span>}
+					{/*
+					 * Said plainly, because it is routine: the session credential lasts about
+					 * half an hour and games run longer, so a reconnect mid-game is expected
+					 * rather than a fault.
+					 */}
+					{gem.status === "reconnecting" && (
+						<span className="csk-screen__meter">reconnecting…</span>
+					)}
 				</div>
 			)}
 
-			{gem.status === "live" && (
+			{(gem.status === "live" || gem.status === "reconnecting") && (
 				<form
 					className="csk-screen__ask"
 					onSubmit={e => {

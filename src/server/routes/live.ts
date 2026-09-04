@@ -81,6 +81,28 @@ const findMe = (data: LiveAllGameData) => {
  * so the elapsed time since the take is reported as the fact it is and the inference is left
  * alone.
  */
+/**
+ * A death with less than this left is not worth interrupting for.
+ *
+ * A judge pass over 27 spoken lines found eleven timers under ten seconds: by the time the
+ * sentence is spoken and heard, the enemy is already walking back, so the information is spent
+ * before it arrives. Twelve seconds is roughly "long enough to cross a camp and act on it".
+ */
+const DEATH_WORTH_SAYING_SEC = 12
+
+/**
+ * Deaths already announced this game. Bounded because a 45-minute game has maybe 60 of them.
+ *
+ * Cleared when a game ends — `buildLiveState` returns null with no game, and the next game's
+ * respawn instants start from a fresh clock, so a stale entry could only collide by landing on
+ * the same 2-second bucket for the same champion, which is harmless.
+ */
+const announcedDeaths = new Set<string>()
+
+/** Four minutes of game clock between farm-pace mentions. */
+const FARM_COOLDOWN_SEC = 240
+let lastFarmAtSec = 0
+
 /** Below this, unspent gold is not worth a sentence. */
 const GOLD_FLOOR = 1200
 /** How much more must accumulate before it is news again. */
@@ -101,10 +123,27 @@ const buildUnseen = (
 	 * four-camp difference every twenty seconds is noise, and the reading between checkpoints is
 	 * interpolated, so a small gap is inside its own error bar.
 	 */
-	if (pace && Math.abs(pace.cs - pace.expected) >= 12)
+	/*
+	 * The farm gap is true for the whole game once it opens, so emitting it every turn made the
+	 * coach recite a widening deficit — "57 camps behind", then 60, then 63, three turns running.
+	 * That is nagging, and when the news is bad it is also just grinding someone down.
+	 *
+	 * Once, then not again for FARM_COOLDOWN_SEC of game clock. The prompt says as much in words;
+	 * this is the part that makes it true.
+	 */
+	if (
+		pace &&
+		Math.abs(pace.cs - pace.expected) >= 12 &&
+		(lastFarmAtSec === 0 || nowSec - lastFarmAtSec >= FARM_COOLDOWN_SEC)
+	) {
+		lastFarmAtSec = nowSec
+		const behind = pace.expected - pace.cs
 		out.push(
-			`${pace.cs} CS at ${Math.floor(nowSec / 60)}:${String(Math.floor(nowSec % 60)).padStart(2, "0")} against ${pace.expected} on ${pace.source}${pace.exact ? "" : " (interpolated — approximate)"}`
+			behind > 0 ?
+				`FARM: ${behind} camps behind his own pace (${pace.cs} vs his usual ${pace.expected})${pace.exact ? "" : " — interpolated, approximate"}`
+			:	`FARM: ${-behind} camps AHEAD of his own pace (${pace.cs} vs his usual ${pace.expected})${pace.exact ? "" : " — interpolated, approximate"}`
 		)
+	}
 
 	/*
 	 * Enemies who are dead right now, longest first. This is the highest-value line the coach can
@@ -112,10 +151,26 @@ const buildUnseen = (
 	 * shelf life measured in the seconds it takes to walk somewhere.
 	 */
 	const deadEnemies = (data.allPlayers ?? [])
-		.filter(p => p.team !== me.team && p.isDead && (p.respawnTimer ?? 0) > 1)
+		.filter(p => p.team !== me.team && p.isDead && (p.respawnTimer ?? 0) >= DEATH_WORTH_SAYING_SEC)
 		.sort((a, b) => (b.respawnTimer ?? 0) - (a.respawnTimer ?? 0))
-	for (const p of deadEnemies)
-		out.push(`${p.championName ?? "an enemy"} is DEAD for another ${Math.round(p.respawnTimer ?? 0)}s`)
+	for (const p of deadEnemies) {
+		/*
+		 * Announce each death ONCE.
+		 *
+		 * Without this the same corpse is reported on every poll for its whole respawn, so at a
+		 * 20s heartbeat a 30s death is news twice and a teamfight makes the coach recite a list.
+		 * Measured over 37 turns, nearly every spoken line was "X is DEAD for Ns" — accurate,
+		 * and exhausting.
+		 *
+		 * `respawnTimer` counts down, so nowSec + it is the death's respawn INSTANT, which is
+		 * stable across polls and unique per death. Rounding to 2s absorbs poll jitter without
+		 * merging two separate deaths of the same champion.
+		 */
+		const id = `${p.championName}@${Math.round((nowSec + (p.respawnTimer ?? 0)) / 2)}`
+		if (announcedDeaths.has(id)) continue
+		announcedDeaths.add(id)
+		out.push(`${p.championName ?? "an enemy"} JUST died — down for ${Math.round(p.respawnTimer ?? 0)}s`)
+	}
 
 	/*
 	 * Unspent gold, but only when it has actually changed.
@@ -167,7 +222,13 @@ const buildLiveState = (
 	gameTimeSec: number | null,
 	baseline: ReturnType<typeof baselineFromRows> | null
 ): VisionState | null => {
-	if (!data || !me || !me.championName) return null
+	if (!data || !me || !me.championName) {
+		// Between games: forget what was announced so the next game starts clean.
+		announcedDeaths.clear()
+		lastGoldMentioned = 0
+		lastFarmAtSec = 0
+		return null
+	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
 	const clock = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
 	const mine = me.team
@@ -443,6 +504,7 @@ export const createLiveRoute = (): Hono => {
 			text?: unknown
 			fromUser?: unknown
 			gameTimeSec?: unknown
+			groundTruth?: unknown
 		} | null
 		if (typeof body?.text !== "string" || body.text.trim() === "")
 			return fail(c, 400, "text is required", "bad-line")
@@ -450,7 +512,10 @@ export const createLiveRoute = (): Hono => {
 			atMs: Date.now(),
 			text: body.text.slice(0, 2000),
 			fromUser: body.fromUser === true,
-			gameTimeSec: typeof body.gameTimeSec === "number" ? body.gameTimeSec : null
+			gameTimeSec: typeof body.gameTimeSec === "number" ? body.gameTimeSec : null,
+			...(typeof body.groundTruth === "string" && body.groundTruth !== "" ?
+				{ groundTruth: body.groundTruth.slice(0, 8000) }
+			:	{})
 		})
 		return c.json({ ok: true })
 	})

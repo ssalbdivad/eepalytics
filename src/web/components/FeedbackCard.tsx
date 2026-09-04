@@ -16,6 +16,7 @@ import { API } from "../../shared/schema/api.ts"
 import { fmtClock } from "../../shared/time.ts"
 import { CONFIDENCE_LABEL, confidenceChip } from "../lib/format.ts"
 import { MOMENT_KIND_LABEL, momentColor } from "./MiniMap.tsx"
+import { Glossed } from "./Term.tsx"
 import "./components.css"
 
 export interface FeedbackCardProps {
@@ -97,7 +98,9 @@ export const FeedbackCard = ({
 				<span className="csk-fb__sev" aria-hidden="true" title={SEV_WORD[item.severity]}>
 					{SEV_GLYPH[item.severity]}
 				</span>
-				<h3 className="csk-fb__title">{item.title}</h3>
+				<h3 className="csk-fb__title">
+					<Glossed>{item.title}</Glossed>
+				</h3>
 				{item.category && <span className="csk-fb__cat">{item.category}</span>}
 			</header>
 
@@ -138,8 +141,9 @@ export const FeedbackCard = ({
 
 			{item.fix ?
 				<p className="csk-fb__fix">
+					{/* The tag stays outside so the glossary never scans its own label. */}
 					<span className="csk-fb__fix-tag">Do this</span>
-					{item.fix}
+					<Glossed>{item.fix}</Glossed>
 				</p>
 			:	null}
 
@@ -156,7 +160,7 @@ export const FeedbackCard = ({
 					>
 						👁 watched · {watchedNote.frameCount} frames
 					</div>
-					{watchedNote.text}
+					<Glossed>{watchedNote.text}</Glossed>
 				</div>
 			: watchableFrames > 0 && onWatch ?
 				<button
@@ -172,7 +176,9 @@ export const FeedbackCard = ({
 			{item.body ?
 				<details className="csk-fb__more">
 					<summary>Why</summary>
-					<p className="csk-fb__body">{item.body}</p>
+					<p className="csk-fb__body">
+						<Glossed>{item.body}</Glossed>
+					</p>
 				</details>
 			:	null}
 

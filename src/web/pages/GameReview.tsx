@@ -316,7 +316,11 @@ export const GameReview = ({ gameId, eventTick, health = null }: GameReviewProps
 				<div className="actions">
 					{countdown ? <span className="chip warn">⧗ {countdown}</span> : null}
 					<button onClick={capture.run} disabled={capture.pending || captureJob !== null}>
-						{captureJob ? `Capture ${captureJob.state}` : capture.pending ? "Queuing…" : "Capture clips"}
+						{captureJob ?
+							(CAPTURE_LABEL[captureJob.state] ?? "Clips queued")
+						: capture.pending ?
+							"Queuing…"
+						:	"Capture clips"}
 					</button>
 					<button
 						className="btn-primary"
@@ -700,8 +704,37 @@ const CoachBlock = ({
 }
 
 /**
- * A review in flight is a job, and a job has a state, an attempt count and — when it is
- * stuck — a reason. Printing those is strictly more useful than a spinner.
+ * Plain-language labels for the capture job's queue states.
+ *
+ * The button used to interpolate the state directly, so it read "Capture leased" — a database
+ * word, on a disabled button, which is indistinguishable from broken.
+ */
+const CAPTURE_LABEL: Record<string, string> = {
+	leased: "Capturing clips…",
+	deferred: "Waiting for you to leave the client",
+	queued: "Clips queued"
+}
+
+/**
+ * Turn a deferral reason into something a person can act on.
+ *
+ * The banner printed `job.lastError` raw, so a routine wait appeared as an error string. These
+ * map the reasons `daemon/jobs/review-game.ts` actually produces; anything unrecognised falls
+ * back to a sentence that is honest about not knowing rather than pasting an internal message.
+ */
+const deferredReason = (lastError: string | null): string => {
+	const e = (lastError ?? "").toLowerCase()
+	if (e.includes("ingest") || e.includes("analysis") || e.includes("metric") === false && e.includes("waiting"))
+		return "Still crunching this game's data — the review starts on its own."
+	if (e.includes("no metrics")) return "There isn't enough data in this game to review honestly."
+	if (e.includes("gate") || e.includes("client") || e.includes("game"))
+		return "Waiting until you're out of the League client — it'll start on its own."
+	return "Waiting on something before it can start — it'll go on its own."
+}
+
+/**
+ * A review in flight is a job. What a person needs from that is "is it moving?" and "do I have
+ * to do anything?" — not its id, its attempt count, or its last error string.
  */
 const ReviewProgress = ({ job, now }: { job: Job; now: number }) => {
 	const started = job.state === "leased" ? job.updatedMs : null
@@ -711,22 +744,31 @@ const ReviewProgress = ({ job, now }: { job: Job; now: number }) => {
 			<div>
 				<strong>
 					{job.state === "leased" ?
-						"fawnsei is writing…"
+						"fawnsei is writing your review — usually about 20 seconds."
 					: job.state === "deferred" ?
-						"Review is waiting."
-					:	"Review is queued."}
-				</strong>{" "}
+						deferredReason(job.lastError)
+					: job.notBeforeMs > now ?
+						`Queued — starting in ${Math.ceil((job.notBeforeMs - now) / 1000)}s.`
+					:	"Queued — starting shortly."}
+				</strong>
+				{/*
+				 * Deliberately no attempt counter and no job id.
+				 *
+				 * "attempt 2 of 3" tells someone that failure is imminent and counting down,
+				 * about a retry that is routine and usually invisible. The id is a database key.
+				 * Neither is actionable, and both were sitting above a line of raw `lastError`
+				 * text being used as a status. The elapsed counter stays because it is the one
+				 * thing that answers "is this still going?".
+				 */}
 				{job.state === "leased" && started ?
-					<>running for {Math.max(0, Math.round((now - started) / 1000))}s</>
-				: job.state === "deferred" ?
-					<>{job.lastError ?? "a gate is holding it"}</>
-				: job.notBeforeMs > now ?
-					<>starts in {Math.ceil((job.notBeforeMs - now) / 1000)}s</>
-				:	<>waiting for a worker</>}
-				{job.attempts > 1 ? ` · attempt ${job.attempts} of ${job.maxAttempts}` : ""}
-				<div className="faint" style={{ fontSize: 11.5, marginTop: 4 }}>
-					job #{job.id} · this page updates itself when it lands
-				</div>
+					<div className="faint" style={{ fontSize: 11.5, marginTop: 4 }}>
+						running for {Math.max(0, Math.round((now - started) / 1000))}s · this page updates
+						itself when it lands
+					</div>
+				:	<div className="faint" style={{ fontSize: 11.5, marginTop: 4 }}>
+						this page updates itself when it lands
+					</div>
+				}
 			</div>
 		</div>
 	)
@@ -781,7 +823,14 @@ const MomentList = ({
 								{m.confidence !== "high" ? ` · ${m.confidence} confidence` : ""}
 							</span>
 						</span>
-						<span className="when">{Math.round(m.severity * 100)}</span>
+						{/*
+						 * The 0-100 severity weight used to be printed here, bare and
+						 * right-aligned at the end of a row listing your own deaths. A naked
+						 * two-digit number in that position reads as a rating of *you*, and it
+						 * is not even that — it is an internal ranking weight. The ordering
+						 * already conveys the ranking, and the sub-line already carries the real
+						 * checkable figure it was derived from.
+						 */}
 						<span />
 					</button>
 				))}

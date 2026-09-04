@@ -50,8 +50,12 @@ const RESPAWN_SEC = 28
 
 /** Mirrors the daemon's gold stepping; reset between games by `resetSessionState`. */
 let lastGoldMentioned = 0
+const announcedDeaths = new Set<string>()
+let lastFarmAtSec = 0
 const resetSessionState = () => {
 	lastGoldMentioned = 0
+	lastFarmAtSec = 0
+	announcedDeaths.clear()
 }
 
 const arg = (name: string, fallback: string): string => {
@@ -174,14 +178,29 @@ const stateAt = (
 				focus: []
 			})
 		:	null
-	if (pace && Math.abs(pace.cs - pace.expected) >= 12)
+	// Mirrors the daemon's farm cooldown.
+	if (
+		pace &&
+		Math.abs(pace.cs - pace.expected) >= 12 &&
+		(lastFarmAtSec === 0 || atSec - lastFarmAtSec >= 240)
+	) {
+		lastFarmAtSec = atSec
+		const behind = pace.expected - pace.cs
 		unseen.push(
-			`${pace.cs} CS at ${Math.floor(atSec / 60)}:${String(Math.floor(atSec % 60)).padStart(2, "0")} against ${pace.expected} on ${pace.source}${pace.exact ? "" : " (interpolated — approximate)"}`
+			behind > 0 ?
+				`FARM: ${behind} camps behind his own pace (${pace.cs} vs his usual ${pace.expected})${pace.exact ? "" : " — interpolated, approximate"}`
+			:	`FARM: ${-behind} camps AHEAD of his own pace (${pace.cs} vs his usual ${pace.expected})${pace.exact ? "" : " — interpolated, approximate"}`
 		)
+	}
 
+	// Mirrors the daemon: each death is announced once, and only while it is still worth saying.
 	for (const pid of others.filter(p => roster[p]!.teamId !== myTeam)) {
 		const left = deadFor(pid)
-		if (left !== undefined) unseen.push(`${roster[pid]!.champion} is DEAD for another ${left}s`)
+		if (left === undefined || left < 12) continue
+		const id = `${roster[pid]!.champion}@${Math.round((atSec + left) / 2)}`
+		if (announcedDeaths.has(id)) continue
+		announcedDeaths.add(id)
+		unseen.push(`${roster[pid]!.champion} JUST died — down for ${left}s`)
 	}
 	/*
 	 * Mirrors the stepping in `buildUnseen` (src/server/routes/live.ts). It has to: without it the
@@ -227,6 +246,8 @@ interface Said {
 	text: string
 	ms: number
 	state: VisionState
+	/** Billed tokens for the turn, from Gemini's own usageMetadata. */
+	tokens: { total: number; prompt: number } | null
 }
 
 /**
@@ -258,6 +279,7 @@ const runSession = async (
 		let queue = [...marks]
 		let current: { atSec: number; state: VisionState; sentAt: number } | null = null
 		let partial = ""
+		let lastUsage: { total: number; prompt: number } | null = null
 
 		const next = () => {
 			const atSec = queue.shift()
@@ -324,7 +346,8 @@ const runSession = async (
 						clock: current.state.clock,
 						text: partial.trim(),
 						ms: Date.now() - current.sentAt,
-						state: current.state
+						state: current.state,
+						tokens: lastUsage
 					})
 				partial = ""
 				next()
@@ -524,6 +547,27 @@ const main = async () => {
 	console.log(
 		`median latency      ${all.map(s => s.ms).sort((a, b) => a - b)[Math.floor(n / 2)]}ms`
 	)
+	/*
+	 * Real billed tokens, straight from Gemini's usageMetadata. Reported as tokens rather than
+	 * dollars: the rate is Google's to change and quoting a price from memory is the kind of
+	 * confident-sounding number this whole exercise exists to stamp out.
+	 */
+	const withTokens = all.filter(s => s.tokens)
+	if (withTokens.length > 0) {
+		const totals = withTokens.map(s => s.tokens!.total).sort((a, b) => a - b)
+		console.log(
+			`median tokens/turn  ${totals[Math.floor(totals.length / 2)]} (cumulative session count; the per-turn delta is what is billed)`
+		)
+	}
+
+	/* Variety, which is what a judge pass flagged and the automatic checks could not see. */
+	const spokeTexts = spoke.map(s => s.said.text)
+	const share = (re: RegExp) =>
+		`${Math.round((100 * spokeTexts.filter(t => re.test(t)).length) / (spokeTexts.length || 1))}%`
+	console.log(`\n--- what it talked about (of spoken lines) ---`)
+	console.log(`a death            ${share(/\b(died|dead|down for)\b/i)}`)
+	console.log(`farm vs his pace   ${share(/\bcamps?\b|\bCS\b/i)}`)
+	console.log(`gold               ${share(/\bgold\b|\d+g\b/i)}`)
 
 	const out = arg("out", "")
 	if (out !== "") {

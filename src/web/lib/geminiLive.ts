@@ -51,7 +51,16 @@ export interface GeminiLine {
 	fromUser?: boolean
 }
 
-export type GeminiStatus = "off" | "connecting" | "live" | "error"
+export type GeminiStatus = "off" | "connecting" | "live" | "reconnecting" | "error"
+
+/**
+ * An ephemeral token is good for about thirty minutes, and League games are routinely longer.
+ *
+ * So the socket WILL close mid-game, and the honest handling is to mint a new token and dial
+ * again rather than to go quiet and let the player work out that the coach died. Reconnects are
+ * backed off so a real outage does not become a spin, and capped so it eventually says so.
+ */
+const RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000, 20_000]
 
 const b64ToBytes = (b64: string): Uint8Array => {
 	const bin = atob(b64)
@@ -82,6 +91,12 @@ class PcmPlayer {
 	play(bytes: Uint8Array) {
 		this.#ctx ??= new AudioContext({ sampleRate: OUT_RATE })
 		const ctx = this.#ctx
+		/*
+		 * A context can be created or restored in the "suspended" state — autoplay policy, or the
+		 * tab having been backgrounded. Scheduling into a suspended context succeeds silently and
+		 * plays nothing, which presents as a coach that has stopped talking for no reason.
+		 */
+		if (ctx.state === "suspended") void ctx.resume()
 		const pcm = new Int16Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.byteLength / 2))
 		if (pcm.length === 0) return
 		const buf = ctx.createBuffer(1, pcm.length, OUT_RATE)
@@ -136,6 +151,20 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	const pendingAudio = useRef<Uint8Array[]>([])
 	const turnDecided = useRef<"unknown" | "speak" | "pass">("unknown")
 	const micRef = useRef<{ stream: MediaStream; ctx: AudioContext } | null>(null)
+	/**
+	 * The exact facts that produced the turn now in flight.
+	 *
+	 * Stored at send time rather than read at completion time: by the time she finishes speaking
+	 * the game has moved on, so pairing the line with the *current* ground truth would file the
+	 * answer against the wrong question. This is what makes a transcript reviewable — "she said
+	 * this, and here is precisely what she knew when she said it".
+	 */
+	const truthInFlight = useRef("")
+	/** Non-null while a reconnect is pending, so `stop` can cancel it. */
+	const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+	const attemptRef = useRef(0)
+	/** False once the user has deliberately stopped; suppresses reconnects. */
+	const wantLiveRef = useRef(false)
 
 	/**
 	 * Mirror every line to the daemon.
@@ -144,11 +173,11 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 * that matters. Without this there is no record of the session at all — the first real game
 	 * produced advice worth fixing and not one line of it survived.
 	 */
-	const record = useCallback((text: string, fromUser: boolean) => {
+	const record = useCallback((text: string, fromUser: boolean, groundTruth?: string) => {
 		void fetch("/api/live/gemini/transcript", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ text, fromUser })
+			body: JSON.stringify({ text, fromUser, groundTruth })
 		}).catch(() => {})
 	}, [])
 
@@ -158,6 +187,10 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	}, [])
 
 	const stop = useCallback(() => {
+		wantLiveRef.current = false
+		if (reconnectRef.current) clearTimeout(reconnectRef.current)
+		reconnectRef.current = null
+		attemptRef.current = 0
 		wsRef.current?.close()
 		wsRef.current = null
 		playerRef.current.silence()
@@ -168,9 +201,13 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		setStatus("off")
 	}, [])
 
-	const start = useCallback(async () => {
+	const connect = useCallback(async (isRetry: boolean) => {
+		if (!isRetry) {
+			wantLiveRef.current = true
+			attemptRef.current = 0
+		}
 		setError(null)
-		setStatus("connecting")
+		setStatus(isRetry ? "reconnecting" : "connecting")
 		try {
 			const res = await fetch("/api/live/gemini/token", { method: "POST" })
 			const tok = (await res.json()) as
@@ -209,6 +246,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				}
 
 				if (m.setupComplete) {
+					attemptRef.current = 0
 					setStatus("live")
 					return
 				}
@@ -246,18 +284,37 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			}
 
 			ws.onerror = () => {
-				setError("connection to Gemini failed")
-				setStatus("error")
+				// `onclose` always follows, and it carries the reason; retrying is decided there.
 			}
 			ws.onclose = e => {
-				if (e.code !== 1000 && e.reason) setError(String(e.reason).slice(0, 200))
-				setStatus(s => (s === "off" ? s : e.code === 1000 ? "off" : "error"))
+				wsRef.current = null
+				if (!wantLiveRef.current) {
+					setStatus("off")
+					return
+				}
+				/*
+				 * A clean 1000 mid-game is what token expiry looks like, so it is retried too —
+				 * treating it as "the user is done" is what would leave someone thirty minutes
+				 * into a game wondering why she stopped.
+				 */
+				const delay = RECONNECT_DELAYS_MS[attemptRef.current]
+				if (delay === undefined) {
+					setError("lost the connection to Gemini and could not get it back — press start to retry")
+					setStatus("error")
+					return
+				}
+				attemptRef.current += 1
+				if (e.reason) setError(`reconnecting — ${String(e.reason).slice(0, 160)}`)
+				setStatus("reconnecting")
+				reconnectRef.current = setTimeout(() => void connect(true), delay)
 			}
 		} catch (e) {
 			setError(e instanceof Error ? e.message : String(e))
 			setStatus("error")
 		}
 	}, [])
+
+	const start = useCallback(() => connect(false), [connect])
 
 	/** Stream frames while live. */
 	useEffect(() => {
@@ -280,13 +337,13 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 */
 	useEffect(() => {
 		if (status !== "live") return
-		const beat = () =>
+		const beat = () => {
+			const truth = optsRef.current.groundTruth()
+			truthInFlight.current = truth
 			send({
-				clientContent: {
-					turns: [{ role: "user", parts: [{ text: optsRef.current.groundTruth() }] }],
-					turnComplete: true
-				}
+				clientContent: { turns: [{ role: "user", parts: [{ text: truth }] }], turnComplete: true }
 			})
+		}
 		const id = setInterval(beat, turnMs)
 		beat()
 		return () => clearInterval(id)
