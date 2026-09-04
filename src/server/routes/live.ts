@@ -53,11 +53,13 @@ import { matchupPromptSection } from "../../shared/matchup-prompt.ts"
 import type { EndedGame, JustEnded } from "../../shared/postgame.ts"
 import { LiveResponse, MatchupResponse } from "../../shared/schema/api.ts"
 import { isCoachingPhase } from "../../shared/schema/lcu.ts"
+import { roleOfLivePosition } from "../../shared/schema/live.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
+import { inventoryOf, newItemMemory, resetItemMemory } from "../../analysis/live-items.ts"
 import {
 	appendTranscript,
 	checkGeminiKey,
@@ -106,6 +108,12 @@ const findMe = (data: LiveAllGameData) => {
  * whenever there is no game.
  */
 const factMemory = newFactMemory()
+/*
+ * Inventories are remembered for the same reason and with the same lifetime as the facts: the
+ * only part of a build worth interrupting someone for is the part that CHANGED since the last
+ * look, and a "since" needs somewhere to have been standing.
+ */
+const itemMemory = newItemMemory()
 
 /** Who last killed this player, by riotId, or "" if nothing in the feed says. */
 const lastKillerOf = (data: LiveAllGameData, victim: string): string => {
@@ -154,22 +162,73 @@ const buildLiveState = (
 		factMemory.lastLedWithDeath = false
 		factMemory.lastGoldMentioned = 0
 		factMemory.lastFarmAtSec = 0
+		resetItemMemory(itemMemory)
 		return null
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
 	const clock = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
 	const myName = me.riotId ?? me.summonerName ?? ""
 	const mine = me.team
-	const asPlayer = (p: LivePlayer): VisionStatePlayer => ({
-		champion: p.championName ?? "unknown",
-		level: p.level,
-		k: p.scores?.kills,
-		d: p.scores?.deaths,
-		a: p.scores?.assists,
-		dead: p.isDead,
-		respawnSec: p.respawnTimer
-	})
+	/** Stable across polls, and never the champion name — two players can share one in a mirror. */
+	const keyOf = (p: LivePlayer): string => p.riotId ?? p.summonerName ?? p.championName ?? ""
+	const asPlayer = (p: LivePlayer): VisionStatePlayer => {
+		const role = roleOfLivePosition(p.position ?? "")
+		return {
+			champion: p.championName ?? "unknown",
+			...(role === "UNKNOWN" ? {} : { role }),
+			level: p.level,
+			k: p.scores?.kills,
+			d: p.scores?.deaths,
+			a: p.scores?.assists,
+			cs: p.scores?.creepScore,
+			dead: p.isDead,
+			respawnSec: p.respawnTimer
+		}
+	}
 	const others = (data.allPlayers ?? []).filter(p => p !== me)
+	const enemyPlayers = others.filter(p => p.team !== mine)
+	/*
+	 * The enemy jungler, by `position` — the ONE role field in this app that may be trusted, since
+	 * it comes from the running game rather than from match history's `timeline.lane` (4 junglers
+	 * in 10 labelled JUNGLE, which is why roles are inferred everywhere else).
+	 *
+	 * Smite is the fallback because `position` comes back blank in customs and some queues, and
+	 * "the enemy carrying Smite" is exactly as reliable an identification of a jungler as the
+	 * position field is. If neither answers, there is no counterpart section — the coach loses a
+	 * capability rather than gaining a guess.
+	 */
+	const spellsOf = (p: LivePlayer): string[] =>
+		[p.summonerSpells?.summonerSpellOne?.displayName, p.summonerSpells?.summonerSpellTwo?.displayName]
+			.filter((n): n is string => typeof n === "string" && n !== "")
+	const counterpart =
+		enemyPlayers.find(p => roleOfLivePosition(p.position ?? "") === "JGL") ??
+		enemyPlayers.find(p => spellsOf(p).some(n => /smite/i.test(n))) ??
+		null
+	/*
+	 * Inventories for exactly two players, and the choice is the whole point of the section.
+	 *
+	 * HIS, because a build suggestion that names an item he is already carrying is worse than
+	 * silence, and nothing else in the block could rule that out. The ENEMY JUNGLER's, because he
+	 * is the one opponent whose build decides whether the next scuttle is a fight or a death, and
+	 * reading it costs a scoreboard hover mid-clear that nobody does. The other eight are 90-odd
+	 * tokens a turn of material for a sentence the coach almost never has cause to say.
+	 */
+	const asPlayerWithItems = (p: LivePlayer): VisionStatePlayer => ({
+		...asPlayer(p),
+		items: inventoryOf(
+			keyOf(p),
+			(p.items ?? []).map(i => ({
+				id: i.itemID,
+				name: i.displayName ?? i.rawDisplayName,
+				slot: i.slot,
+				count: i.count
+			})),
+			secs,
+			itemMemory
+		),
+		spells: spellsOf(p),
+		counterpart: true
+	})
 	const stats = data.activePlayer?.championStats
 
 	/*
@@ -195,6 +254,20 @@ const buildLiveState = (
 		clock,
 		me: {
 			champion: me.championName,
+			...(roleOfLivePosition(me.position ?? "") === "UNKNOWN" ?
+				{}
+			:	{ role: roleOfLivePosition(me.position ?? "") }),
+			items: inventoryOf(
+				keyOf(me),
+				(me.items ?? []).map(i => ({
+					id: i.itemID,
+					name: i.displayName ?? i.rawDisplayName,
+					slot: i.slot,
+					count: i.count
+				})),
+				secs,
+				itemMemory
+			),
 			level: me.level,
 			hp: stats?.currentHealth,
 			maxHp: stats?.maxHealth,
@@ -207,7 +280,7 @@ const buildLiveState = (
 			respawnSec: me.respawnTimer
 		},
 		allies: others.filter(p => p.team === mine).map(asPlayer),
-		enemies: others.filter(p => p.team !== mine).map(asPlayer),
+		enemies: enemyPlayers.map(p => (p === counterpart ? asPlayerWithItems(p) : asPlayer(p))),
 		recentEvents,
 		unseen: buildFacts(
 			{
