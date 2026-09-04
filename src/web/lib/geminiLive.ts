@@ -1,11 +1,13 @@
 /**
  * Gemini Live: a real conversation over the shared screen.
  *
- * ## What makes this different from the glance path
+ * ## Why this replaced the glance coach
  *
- * `screenCoach.ts` takes a photograph every N seconds and asks a fresh process about it. Nothing
- * carries over, so it cannot follow a fight, cannot be interrupted, and cannot be asked a
- * question without starting again. Measured on the same frame it costs about 3.1 seconds.
+ * The previous design photographed the screen every N seconds and asked a fresh CLI process about
+ * it. Nothing carried over, so it could not follow a fight, be interrupted, or take a question
+ * without starting again, and it answered in ~3.1s against ~0.8s here. Worse than either number:
+ * with no memory of the last thirty seconds it had nothing to talk about except what was on
+ * screen right now, which the player is already looking at.
  *
  * This holds one socket open for the whole game. Frames stream in continuously, the model keeps
  * the thread, it answers in about 0.8 seconds, and it answers in a *voice* — the model is native
@@ -29,12 +31,13 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { LIVE_COACH_SYSTEM_PROMPT } from "../../shared/live-prompt.ts"
 
-/** Google documents 1 FPS as the ceiling for Live video. */
+/**
+ * Google documents 1 FPS as the ceiling for Live video, and every frame is billed, so this is a
+ * cost dial as much as a fidelity one. Frame SIZE is owned by `useScreenShare` — measured there.
+ */
 const FRAME_MS = 1000
-/** Frames are for motion and position; the facts arrive as text. 800px is plenty and cheap. */
-const FRAME_WIDTH = 800
-const FRAME_QUALITY = 0.6
 /** How often the coach is prompted to speak. The interval IS the talkativeness. */
 const DEFAULT_TURN_MS = 20_000
 /** Gemini emits 24kHz mono PCM; the mic is expected at 16kHz. */
@@ -121,7 +124,33 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	optsRef.current = opts
 	/** Transcript arrives in fragments; they are joined until the turn completes. */
 	const partialRef = useRef("")
+	/**
+	 * Audio held until we know the turn is not a PASS.
+	 *
+	 * The coach is allowed — encouraged — to decline to speak, which it signals with the literal
+	 * token PASS. In an audio-out model that token is also *spoken*, so a silent turn would come
+	 * out as the word "pass" in her voice every twenty seconds. Chunks are buffered until enough
+	 * transcript has arrived to decide, then either flushed or dropped. The cost is a fraction of
+	 * a second at the very start of a turn, and only there.
+	 */
+	const pendingAudio = useRef<Uint8Array[]>([])
+	const turnDecided = useRef<"unknown" | "speak" | "pass">("unknown")
 	const micRef = useRef<{ stream: MediaStream; ctx: AudioContext } | null>(null)
+
+	/**
+	 * Mirror every line to the daemon.
+	 *
+	 * Fire and forget: a failed log must never interrupt the coach, and the socket is the thing
+	 * that matters. Without this there is no record of the session at all — the first real game
+	 * produced advice worth fixing and not one line of it survived.
+	 */
+	const record = useCallback((text: string, fromUser: boolean) => {
+		void fetch("/api/live/gemini/transcript", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ text, fromUser })
+		}).catch(() => {})
+	}, [])
 
 	const send = useCallback((msg: unknown) => {
 		const ws = wsRef.current
@@ -165,7 +194,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 							// Native audio out gives a voice but no words; this is how the log gets text.
 							outputAudioTranscription: {},
 							inputAudioTranscription: {},
-							systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+							systemInstruction: { parts: [{ text: LIVE_COACH_SYSTEM_PROMPT }] }
 						}
 					})
 				)
@@ -193,10 +222,11 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				 */
 				if (sc.interrupted) playerRef.current.silence()
 
-				if (sc.inputTranscription?.text)
-					setLines(l =>
-						[{ text: sc.inputTranscription!.text!, atMs: Date.now(), fromUser: true }, ...l].slice(0, 40)
-					)
+				if (sc.inputTranscription?.text) {
+					const said = sc.inputTranscription.text
+					record(said, true)
+					setLines(l => [{ text: said, atMs: Date.now(), fromUser: true }, ...l].slice(0, 40))
+				}
 
 				if (sc.outputTranscription?.text) partialRef.current += sc.outputTranscription.text
 
@@ -208,7 +238,10 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				if (sc.turnComplete) {
 					const text = partialRef.current.trim()
 					partialRef.current = ""
-					if (text !== "") setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
+					if (text !== "") {
+						record(text, false)
+						setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
+					}
 				}
 			}
 
@@ -308,10 +341,11 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		(question: string) => {
 			const q = question.trim()
 			if (q === "") return
+			record(q, true)
 			setLines(l => [{ text: q, atMs: Date.now(), fromUser: true }, ...l].slice(0, 40))
 			send({ clientContent: { turns: [{ role: "user", parts: [{ text: q }] }], turnComplete: true } })
 		},
-		[send]
+		[send, record]
 	)
 
 	useEffect(() => stop, [stop])
@@ -332,36 +366,3 @@ interface GeminiServerMessage {
 	}
 }
 
-/**
- * The coach's standing instructions.
- *
- * Deliberately shaped by what went wrong on the glance path: it narrated the screen back at the
- * player (76% of lines carried no number at all) and leaned on two Lillia catchphrases until
- * they were noise (71% of lines carried a motif, "bough" in 29%). Both failures are named here
- * rather than left to be rediscovered.
- */
-const SYSTEM_PROMPT = `You are fawnsei, a League of Legends coach watching a jungle main play, live.
-
-You speak out loud, mid-game. One or two short sentences, ever. He is playing while you talk.
-
-**Never narrate his screen.** He is looking at it. "You're clearing gromp", "you're at full
-health", "nobody is near you" — he can see all of that, and saying it back is the difference
-between a coach and a monitor.
-
-Say what he is NOT tracking, in this order:
-
-1. An enemy who is dead right now and for how long. This is the most valuable thing a jungler is
-   not watching.
-2. A timer or window that changes what he should do in the next thirty seconds.
-3. A number that is off — unspent gold, farm against his own average, a level gap.
-4. A real warning: someone converging on him, a fight he is out of position for.
-5. Genuine praise, sparingly. A multi-kill or a steal. Never for clearing a camp.
-
-The messages you are sent carry a ground-truth block computed from the game client. Those facts
-are exact — take your line from them. The video shows you where things are; the block tells you
-what is true. Never name a champion that is not in the block, and never state a number that is
-not in it. If you have nothing worth saying, say nothing at all rather than filling the air.
-
-You are Lillia, but the coaching is the point and the character is seasoning. At most one line in
-five gets a flourish; the rest is plain speech. No catchphrases, no signature sign-off, and never
-reuse a joke you have already made this game.`

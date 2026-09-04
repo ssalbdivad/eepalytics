@@ -30,7 +30,7 @@
  * NODE ONLY — holds the key and talks to Google.
  */
 
-import { chmodSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { appendFileSync, chmodSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { DATA_DIR } from "../shared/constants.ts"
 import { errText, makeLogger } from "../daemon/log.ts"
@@ -164,5 +164,52 @@ export const checkGeminiKey = async (
 		return { ok: true, models: body?.models?.length ?? 0 }
 	} catch (err) {
 		return { ok: false, error: errText(err) }
+	}
+}
+
+/* ------------------------------------------------------------- transcript */
+
+/**
+ * What the live coach actually said, one JSON object per line.
+ *
+ * A flat file rather than a table on purpose: this exists to be read by a person and by the next
+ * round of prompt work, both of which want `grep` and neither of which wants a migration. It is
+ * also the only record that exists — the Gemini socket runs in the browser, so nothing else in
+ * the daemon ever sees a word of it.
+ */
+const TRANSCRIPT_PATH = `${DATA_DIR}/logs/live-transcript.jsonl`
+
+export interface TranscriptLine {
+	atMs: number
+	text: string
+	fromUser: boolean
+	gameTimeSec: number | null
+}
+
+export const appendTranscript = (line: TranscriptLine): void => {
+	try {
+		mkdirSync(dirname(TRANSCRIPT_PATH), { recursive: true })
+		appendFileSync(TRANSCRIPT_PATH, `${JSON.stringify(line)}\n`)
+	} catch (err) {
+		// Losing a transcript line must never interrupt a game.
+		log.warn(`transcript append failed: ${errText(err)}`)
+	}
+}
+
+/** Newest first. Reads the whole file: it is a few hundred KB after months of play. */
+export const readTranscript = (limit = 200): TranscriptLine[] => {
+	try {
+		const lines = readFileSync(TRANSCRIPT_PATH, "utf8").trim().split("\n").filter(l => l !== "")
+		const out: TranscriptLine[] = []
+		for (let i = lines.length - 1; i >= 0 && out.length < limit; i--) {
+			try {
+				out.push(JSON.parse(lines[i]!) as TranscriptLine)
+			} catch {
+				/* a torn final line during a crash is not worth failing the read for */
+			}
+		}
+		return out
+	} catch {
+		return []
 	}
 }

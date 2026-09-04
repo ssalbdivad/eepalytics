@@ -32,10 +32,16 @@ import { getSettings, recentFeedbackItems } from "../../db/queries.ts"
 import { LiveResponse } from "../../shared/schema/api.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { USER_PUUID } from "../../shared/constants.ts"
-import { observeFrame } from "../../review/live-vision.ts"
-import { renderState } from "../../review/live-vision.ts"
-import { checkGeminiKey, geminiKey, mintGeminiToken, setGeminiKey } from "../../review/gemini-live.ts"
-import type { VisionState, VisionStatePlayer } from "../../review/live-vision.ts"
+import { renderState } from "../../shared/live-state.ts"
+import {
+	appendTranscript,
+	checkGeminiKey,
+	geminiKey,
+	mintGeminiToken,
+	readTranscript,
+	setGeminiKey
+} from "../../review/gemini-live.ts"
+import type { VisionState, VisionStatePlayer } from "../../shared/live-state.ts"
 import { fail, send } from "../respond.ts"
 
 /** Event names that mark an objective take we can time a respawn from. */
@@ -75,8 +81,30 @@ const findMe = (data: LiveAllGameData) => {
  * so the elapsed time since the take is reported as the fact it is and the inference is left
  * alone.
  */
-const buildUnseen = (data: LiveAllGameData, me: LivePlayer, nowSec: number): string[] => {
+/** Below this, unspent gold is not worth a sentence. */
+const GOLD_FLOOR = 1200
+/** How much more must accumulate before it is news again. */
+const GOLD_STEP = 800
+let lastGoldMentioned = 0
+
+const buildUnseen = (
+	data: LiveAllGameData,
+	me: LivePlayer,
+	nowSec: number,
+	pace: { cs: number; expected: number; exact: boolean; source: string } | null
+): string[] => {
 	const out: string[] = []
+
+	/*
+	 * Farm against his own history, which is the one comparison here that is genuinely his and
+	 * not a generic benchmark. Only when it is far enough off to matter: a coach announcing a
+	 * four-camp difference every twenty seconds is noise, and the reading between checkpoints is
+	 * interpolated, so a small gap is inside its own error bar.
+	 */
+	if (pace && Math.abs(pace.cs - pace.expected) >= 12)
+		out.push(
+			`${pace.cs} CS at ${Math.floor(nowSec / 60)}:${String(Math.floor(nowSec % 60)).padStart(2, "0")} against ${pace.expected} on ${pace.source}${pace.exact ? "" : " (interpolated — approximate)"}`
+		)
 
 	/*
 	 * Enemies who are dead right now, longest first. This is the highest-value line the coach can
@@ -89,8 +117,26 @@ const buildUnseen = (data: LiveAllGameData, me: LivePlayer, nowSec: number): str
 	for (const p of deadEnemies)
 		out.push(`${p.championName ?? "an enemy"} is DEAD for another ${Math.round(p.respawnTimer ?? 0)}s`)
 
+	/*
+	 * Unspent gold, but only when it has actually changed.
+	 *
+	 * Gold above the threshold stays true for minutes, so emitting it on every glance made the
+	 * coach a nag: measured over nine turns of one game it raised gold five times, and a coach
+	 * repeating itself is one the player stops hearing. It is emitted the first time, and then
+	 * only after a further GOLD_STEP has accumulated — which is roughly "you could buy something
+	 * else now", i.e. the point at which it is news again.
+	 *
+	 * Module-level state is fine here: this is a single-user local daemon with one game at a
+	 * time. It resets when gold drops, which is what a recall looks like.
+	 */
 	const gold = data.activePlayer?.currentGold
-	if (gold !== undefined && gold >= 1200) out.push(`${Math.round(gold)}g sitting unspent`)
+	if (gold !== undefined) {
+		if (gold < GOLD_FLOOR) lastGoldMentioned = 0
+		else if (lastGoldMentioned === 0 || gold - lastGoldMentioned >= GOLD_STEP) {
+			out.push(`${Math.round(gold)}g sitting unspent`)
+			lastGoldMentioned = gold
+		}
+	}
 
 	/*
 	 * Elapsed time since the last objective take, as a fact. Late in a game the event list runs
@@ -118,7 +164,8 @@ const buildUnseen = (data: LiveAllGameData, me: LivePlayer, nowSec: number): str
 const buildLiveState = (
 	data: LiveAllGameData | null,
 	me: ReturnType<typeof findMe>,
-	gameTimeSec: number | null
+	gameTimeSec: number | null,
+	baseline: ReturnType<typeof baselineFromRows> | null
 ): VisionState | null => {
 	if (!data || !me || !me.championName) return null
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
@@ -173,7 +220,27 @@ const buildLiveState = (
 		allies: others.filter(p => p.team === mine).map(asPlayer),
 		enemies: others.filter(p => p.team !== mine).map(asPlayer),
 		recentEvents,
-		unseen: buildUnseen(data, me, secs)
+		unseen: buildUnseen(
+			data,
+			me,
+			secs,
+			baseline ?
+				paceReading({
+					live: {
+						gameTimeSec: secs,
+						championName: me.championName ?? "",
+						cs: me.scores?.creepScore ?? 0,
+						deaths: me.scores?.deaths ?? 0,
+						kills: me.scores?.kills ?? 0,
+						assists: me.scores?.assists ?? 0,
+						level: me.level ?? 0,
+						observed: { dragonSec: null, baronSec: null, heraldSec: null }
+					},
+					baseline,
+					focus: []
+				})
+			:	null
+		)
 	}
 }
 
@@ -201,6 +268,24 @@ export const createLiveRoute = (): Hono => {
 	 * rebuilding them means aggregating every recent feedback item. Cached for a minute so the
 	 * observe path does no SQL at all in the common case.
 	 */
+	/**
+	 * The player's own farm baseline, cached like the focus list.
+	 *
+	 * The live prompt names "farm against his own average" as a legitimate thing to criticise, and
+	 * for its whole life nothing computed one — so the model was invited to make a comparison it
+	 * had no number for, which is exactly how invented coaching starts. Rebuilding it means
+	 * aggregating the whole corpus, far too slow for a per-glance call, and it changes only when a
+	 * game finishes.
+	 */
+	let paceCache: { atMs: number; value: ReturnType<typeof baselineFromRows> } | null = null
+	const cachedBaseline = () => {
+		const now = Date.now()
+		if (paceCache && now - paceCache.atMs < 60_000) return paceCache.value
+		const value = baselineFromRows(perGameMetrics(loadCorpus(getSettings().gamesForTrends)))
+		paceCache = { atMs: now, value }
+		return value
+	}
+
 	let focusCache: { atMs: number; value: ReturnType<typeof standingFocus> } | null = null
 	const cachedFocus = (): ReturnType<typeof standingFocus> => {
 		const now = Date.now()
@@ -297,95 +382,6 @@ export const createLiveRoute = (): Hono => {
 	})
 
 	/**
-	 * `POST /api/live/observe` — one screen frame in, at most one sentence out.
-	 *
-	 * The frame arrives as a data URL from the renderer's screen capture, is written to a
-	 * scratch file for the CLI to read, and is deleted immediately afterwards. Nothing is kept:
-	 * these are screenshots of the user's whole screen, and an app that silently accumulates
-	 * those on disk is doing something the user did not ask for.
-	 */
-	app.post("/live/observe", async c => {
-		const body = (await c.req.json().catch(() => null)) as {
-			frame?: unknown
-			recent?: unknown
-			/** Supplied by the overlay, which already polls for them. Saves an LCU round trip. */
-			championName?: unknown
-			gameTimeSec?: unknown
-			/** A spoken question. Present only when the user actually asked something. */
-			question?: unknown
-		} | null
-
-		const frame = typeof body?.frame === "string" ? body.frame : ""
-		const b64 = frame.replace(/^data:image\/\w+;base64,/, "")
-		if (b64 === "" || b64.length > 12_000_000)
-			return fail(c, 400, "frame must be a base64 image under ~12MB", "bad-frame")
-
-		/*
-		 * The frame goes straight into the model message. It is never written to disk: these are
-		 * screenshots of the user's whole screen, and the previous version's write-then-delete
-		 * was both a privacy surface and a latency cost for no benefit.
-		 */
-		/*
-		 * Context comes from the CALLER when it has it.
-		 *
-		 * This route used to re-read the live client and rebuild the focus list on every glance,
-		 * which put an LCU round trip and a pile of SQL in front of a call whose entire value is
-		 * being fast. The overlay already polls /api/live every few seconds and holds both the
-		 * champion and the clock, so it can simply say what it knows. The LCU read stays as a
-		 * fallback for callers that do not.
-		 */
-		/*
-		 * The live client is read on EVERY glance now, and that is a deliberate reversal.
-		 *
-		 * It was skipped to save a round trip, on the theory that the overlay already knew the
-		 * champion and the clock. But the model then had nothing but pixels, and pixels do not
-		 * contain the roster: League's default HUD shows no champion list at all unless you are
-		 * holding Tab. Asked who was on screen, it guessed — it named Gnar, who was not in the
-		 * game, four times in seven minutes, and called a teammate a threat.
-		 *
-		 * `allgamedata` costs about 30ms against a call that takes 3000ms. Trading 1% of the
-		 * latency for the difference between coaching and fiction is not a close decision.
-		 */
-		const handle = await lcu()
-		const data = handle ? await handle.live.allGameData().catch(() => null) : null
-		const me = data ? findMe(data) : null
-
-		const championName =
-			(typeof body?.championName === "string" ? body.championName : null) ?? me?.championName ?? null
-		const gameTimeSec =
-			(typeof body?.gameTimeSec === "number" ? body.gameTimeSec : null) ??
-			data?.gameData?.gameTime ??
-			null
-
-		const state = buildLiveState(data, me, gameTimeSec)
-
-		const focus = cachedFocus().map(f => f.fix).filter(f => f !== "")
-
-		const result = await observeFrame({
-			imageBase64: b64,
-			mediaType: /^data:(image\/\w+);/.exec(frame)?.[1] ?? "image/jpeg",
-			championName,
-			gameTimeSec,
-			focus,
-			recent:
-				Array.isArray(body?.recent) ?
-					((body.recent as unknown[]).filter(r => typeof r === "string").slice(-4) as string[])
-				:	[],
-			question: typeof body?.question === "string" ? body.question.slice(0, 400) : null,
-			state
-		})
-
-		return c.json({
-			ok: result.ok,
-			text: result.text,
-			costUsd: result.costUsd,
-			durationMs: result.durationMs,
-			...(result.error ? { error: result.error } : {})
-		})
-
-	})
-
-	/**
 	 * `GET /api/live/ground-truth` — the computed facts, as the text the coach is given.
 	 *
 	 * The Gemini path runs in the browser and talks to Google directly, so it cannot call
@@ -396,13 +392,23 @@ export const createLiveRoute = (): Hono => {
 		const handle = await lcu()
 		const data = handle ? await handle.live.allGameData().catch(() => null) : null
 		const me = data ? findMe(data) : null
-		const state = buildLiveState(data, me, data?.gameData?.gameTime ?? null)
+		const state = buildLiveState(data, me, data?.gameData?.gameTime ?? null, cachedBaseline())
 		if (!state) return c.json({ inGame: false, text: "" })
 		const focus = cachedFocus().map(f => f.fix).filter(f => f !== "")
+		/*
+		 * The focus list is appended OUTSIDE the ground-truth block and labelled as coming from
+		 * past reviews. Inside it, under a heading that says "these are FACTS", a criticism from
+		 * a game three days ago reads as something happening right now — which is how a coach
+		 * ends up telling someone to stop doing a thing they are not currently doing.
+		 */
 		return c.json({
 			inGame: true,
 			text: `${renderState(state)}${
-				focus.length > 0 ? `\n\n### What he is working on\n\n${focus.map(f => `- ${f}`).join("\n")}` : ""
+				focus.length > 0 ?
+					`\n\n## From his PAST reviews — not from this game\n\nThese are habits he is working on. Mention one only if THIS game's facts show it happening again.\n\n${focus
+						.map(f => `- ${f}`)
+						.join("\n")}`
+				:	""
 			}`
 		})
 	})
@@ -422,6 +428,37 @@ export const createLiveRoute = (): Hono => {
 		if (!minted.ok) return c.json({ ok: false, error: minted.error }, 200)
 		return c.json({ ok: true, ...minted.value })
 	})
+
+	/**
+	 * `POST /api/live/gemini/transcript` — record what the live coach actually said.
+	 *
+	 * The Gemini path runs in the browser and talks to Google directly, which is what makes it
+	 * fast and also what made it unauditable: the first real session produced advice the user
+	 * called "dumb and overly critical" and there was no record of a single line of it. A coach
+	 * that cannot be reviewed cannot be improved, so every line lands in a JSONL file that both
+	 * the user and the next iteration can read.
+	 */
+	app.post("/live/gemini/transcript", async c => {
+		const body = (await c.req.json().catch(() => null)) as {
+			text?: unknown
+			fromUser?: unknown
+			gameTimeSec?: unknown
+		} | null
+		if (typeof body?.text !== "string" || body.text.trim() === "")
+			return fail(c, 400, "text is required", "bad-line")
+		appendTranscript({
+			atMs: Date.now(),
+			text: body.text.slice(0, 2000),
+			fromUser: body.fromUser === true,
+			gameTimeSec: typeof body.gameTimeSec === "number" ? body.gameTimeSec : null
+		})
+		return c.json({ ok: true })
+	})
+
+	/** `GET /api/live/gemini/transcript` — the last N lines, newest first, for review. */
+	app.get("/live/gemini/transcript", c =>
+		c.json({ lines: readTranscript(Number(c.req.query("limit") ?? 200)) })
+	)
 
 	/**
 	 * `PUT /api/live/gemini/key` — set or clear the key.

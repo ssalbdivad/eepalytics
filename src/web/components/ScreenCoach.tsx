@@ -1,36 +1,30 @@
 /**
- * Live screen coaching controls and output.
+ * The live voice coach — share your screen, and she talks to you while you play.
  *
- * Two things are stated before it starts rather than discovered afterwards:
+ * ## Why there is only one mode now
  *
- *   - **Frames leave the machine.** A screenshot of the shared screen goes to Anthropic on every
- *     glance. Someone should decide that knowingly, not find out later.
- *   - **It costs money per glance.** The interval IS the cost, so the interval is a control and
- *     the running total is on screen while it runs.
+ * There used to be a second: a "glance" coach that photographed the screen every N seconds and
+ * asked the Claude CLI about it. It was deleted after being measured side by side against this
+ * one. It answered in ~3.1s against ~0.8s, it started a fresh process every look so it could not
+ * follow a fight or be interrupted, and its advice was worse for a structural reason — with no
+ * memory of the last thirty seconds it had nothing to say except what was on screen right now,
+ * which the player is already looking at.
  *
- * It is also not continuous, and says so: a vision call takes about three to four seconds, so
- * this glances periodically. Calling it "live analysis" would set an expectation it cannot meet.
+ * Two modes also meant two prompts, two sets of failure modes, and a choice the player had to
+ * make before they could start. Keeping the better one is the whole change.
+ *
+ * ## Three things are stated before it starts, not discovered after
+ *
+ *   - **Frames leave the machine.** The shared screen goes to Google, continuously.
+ *   - **The microphone is off until pressed**, and says so.
+ *   - **It needs a key**, which is free, and the instructions for getting one are right here
+ *     rather than in a doc — a setup step you cannot complete is the same as a broken feature.
  */
 
 import { useEffect, useRef, useState } from "react"
-import { useScreenCoach } from "../lib/screenCoach.ts"
 import { useGeminiLive } from "../lib/geminiLive.ts"
+import { useScreenShare } from "../lib/useScreenShare.ts"
 import "./components.css"
-
-const INTERVALS = [15, 30, 60, 120]
-
-
-/**
- * Pre-start estimate only; the real measured cost replaces it after the first glance.
- *
- * Measured, not guessed: $0.0156–$0.0223 per glance across three consecutive calls on a real
- * 1536px frame with the ground-truth block attached. It went up from $0.009 when the frame did,
- * and that was the right trade — at 1024px the coach said "recall now" to a dead player.
- *
- * Rounded up rather than down: quoting an optimistic number for something that spends money
- * every fifteen seconds is the wrong direction to be wrong in.
- */
-const ESTIMATE_PER_CALL = 0.017
 
 const fmtTime = (ms: number): string =>
 	new Date(ms).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
@@ -39,9 +33,9 @@ const fmtTime = (ms: number): string =>
  * Is this the Electron app running inside WSL?
  *
  * Screen sharing cannot work there. Electron runs under WSLg, whose compositor contains only
- * Linux windows — enumerated live, it sees three WSLg virtual screens and exactly one window,
- * its own. League is a Windows process and is simply not visible to it. This is a boundary of
- * where the renderer is running, not a permission that can be granted.
+ * Linux windows — enumerated live, it sees three WSLg virtual screens and exactly one window, its
+ * own. League is a Windows process and is simply not visible to it. This is a boundary of where
+ * the renderer is running, not a permission that can be granted.
  *
  * A Windows browser is a Windows process and can see Windows pixels; `localhost` is a secure
  * context so `getDisplayMedia` is allowed there, and WSL2 forwards localhost so the page still
@@ -53,29 +47,67 @@ const isWslElectron = (): boolean => {
 	return /Electron/i.test(ua) && /Linux/i.test(ua)
 }
 
-/**
- * Two coaches, one screen share.
- *
- * `glance` photographs the screen every N seconds and asks Claude — cheap, no key needed, and
- * about 3s behind. `live` holds a socket open to Gemini, streams video continuously and answers
- * in a voice in about 0.8s. Measured on the same frame, that is the whole difference, and it is
- * the difference between coaching a fight and describing one that ended.
- */
-type Mode = "glance" | "live"
+/** How often she is invited to speak. She stays quiet unless she has something. */
+const TURN_CHOICES = [10, 20, 40]
+
+interface KeyStatus {
+	configured: boolean
+	ok: boolean
+	error?: string | null
+	hint?: string
+}
 
 export const ScreenCoach = () => {
-	const [mode, setMode] = useState<Mode>("glance")
-	const coach = useScreenCoach(mode === "glance")
+	const share = useScreenShare()
 	const [opening, setOpening] = useState(false)
 	const wsl = isWslElectron()
 
+	const [keyStatus, setKeyStatus] = useState<KeyStatus | null>(null)
+	const [keyInput, setKeyInput] = useState("")
+	const [savingKey, setSavingKey] = useState(false)
+
+	useEffect(() => {
+		void (async () => {
+			try {
+				const r = await fetch("/api/live/gemini/status")
+				setKeyStatus((await r.json()) as KeyStatus)
+			} catch {
+				setKeyStatus({ configured: false, ok: false, error: "could not reach the daemon" })
+			}
+		})()
+	}, [])
+
+	const saveKey = async () => {
+		setSavingKey(true)
+		try {
+			const r = await fetch("/api/live/gemini/key", {
+				method: "PUT",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ key: keyInput })
+			})
+			const j = (await r.json()) as { configured?: boolean; works?: boolean; error?: string | null }
+			setKeyInput("")
+			setKeyStatus({
+				configured: Boolean(j.configured),
+				ok: Boolean(j.works),
+				error: j.error ?? null
+			})
+		} catch (e) {
+			setKeyStatus({ configured: false, ok: false, error: e instanceof Error ? e.message : String(e) })
+		} finally {
+			setSavingKey(false)
+		}
+	}
+
 	/*
-	 * The ground-truth block, polled so the live socket can forward it synchronously. It is the
-	 * same text the glance path builds, from one definition in the daemon.
+	 * The ground-truth block, polled so the socket can forward it synchronously on each turn. It
+	 * is computed by the daemon from the League client — the roster, who is dead and for how long,
+	 * the score, farm against his own average — and it is the reason the coach stopped inventing
+	 * things.
 	 */
 	const truthRef = useRef("")
 	useEffect(() => {
-		if (mode !== "live" || !coach.sharing) return
+		if (!share.sharing) return
 		let alive = true
 		const pull = async () => {
 			try {
@@ -83,7 +115,7 @@ export const ScreenCoach = () => {
 				const j = (await r.json()) as { text?: string }
 				if (alive) truthRef.current = j.text ?? ""
 			} catch {
-				/* the overlay must survive the client being closed */
+				/* the client being closed must not break the page */
 			}
 		}
 		void pull()
@@ -92,22 +124,22 @@ export const ScreenCoach = () => {
 			alive = false
 			clearInterval(id)
 		}
-	}, [mode, coach.sharing])
+	}, [share.sharing])
 
 	const gem = useGeminiLive({
 		groundTruth: () =>
 			truthRef.current === "" ?
-				"No live game data right now — say nothing unless the screen clearly shows something worth saying."
+				"No live game data right now — he is not in a game, or the client is closed. Say nothing (PASS) unless the screen clearly shows something worth saying."
 			:	truthRef.current,
-		grabFrame: () => coach.grabFrame()
+		grabFrame: share.grabFrame
 	})
 
 	const [question, setQuestion] = useState("")
 
-	// Sharing and the socket are separate things; stopping the share must not leave one open.
+	// The socket must not outlive the screen share that feeds it.
 	useEffect(() => {
-		if (!coach.sharing && gem.status !== "off") gem.stop()
-	}, [coach.sharing, gem])
+		if (!share.sharing && gem.status !== "off") gem.stop()
+	}, [share.sharing, gem])
 
 	const openInWindows = async () => {
 		setOpening(true)
@@ -121,200 +153,182 @@ export const ScreenCoach = () => {
 			setOpening(false)
 		}
 	}
-	const perCall = coach.calls > 0 ? coach.spent / coach.calls : ESTIMATE_PER_CALL
-	const perHour = (3600 / coach.intervalSec) * perCall
+
+	const needsKey = keyStatus !== null && !keyStatus.ok
 
 	return (
 		<div className="csk-screen">
 			<div className="csk-screen__head">
 				<div>
-					<strong>Watch my screen</strong>
+					<strong>Coach me while I play</strong>
 					<p>
-						The coach looks at your screen every {coach.intervalSec}s and says something every
-						time — a warning if you need one, hype if you earned it, otherwise whatever it
-						can actually see. Each look takes about 3 seconds, so the interval is the
-						cost.
+						She watches your shared screen and talks to you out loud — about half a second
+						behind. She stays quiet unless she has something worth saying.
 					</p>
 				</div>
-				{coach.sharing ?
-					<button className="btn" onClick={coach.stop}>
-						Stop
+				{share.sharing ?
+					<button className="btn" onClick={share.stop}>
+						Stop sharing
 					</button>
 				:	<button
 						className="btn btn-primary"
-						disabled={opening}
-						// On WSL, sharing here can only ever capture WSL's own windows, so Start
-						// hands off to the Windows browser rather than starting something that
-						// cannot work. One press, no second decision to make.
-						onClick={() => void (wsl ? openInWindows() : coach.start())}
+						disabled={opening || needsKey}
+						// On WSL, sharing here can only ever capture WSL's own windows, so this hands
+						// off to the Windows browser rather than opening a picker that cannot show
+						// League. One press, no second decision.
+						onClick={() => void (wsl ? openInWindows() : share.start())}
 					>
-						{opening ? "Opening…" : "Start"}
+						{opening ? "Opening…" : "Share my screen"}
 					</button>
 				}
 			</div>
 
 			{/*
-			 * Stated before the Start button, because pressing it here would open a picker
-			 * listing only Linux windows and then quietly coach a screenshot of this app.
+			 * The setup step, inline. A free key is a thirty-second errand, but only if you are
+			 * told exactly where to go — otherwise it is indistinguishable from the feature being
+			 * broken.
 			 */}
-			{wsl && (
+			{needsKey && (
+				<div className="csk-screen__setup">
+					<strong>One-time setup: a free Google AI Studio key</strong>
+					<ol>
+						<li>
+							Open{" "}
+							<a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">
+								aistudio.google.com/apikey
+							</a>{" "}
+							and sign in with any Google account.
+						</li>
+						<li>
+							Press <b>Create API key</b>. The free tier is enough to try this.
+						</li>
+						<li>Copy it and paste it below.</li>
+					</ol>
+					<div className="csk-screen__keyrow">
+						<input
+							type="password"
+							autoComplete="off"
+							spellCheck={false}
+							placeholder="paste your key here"
+							value={keyInput}
+							onChange={e => setKeyInput(e.target.value)}
+						/>
+						<button
+							className="btn btn-primary"
+							disabled={keyInput.trim() === "" || savingKey}
+							onClick={() => void saveKey()}
+						>
+							{savingKey ? "Checking…" : "Save"}
+						</button>
+					</div>
+					{keyStatus?.configured && keyStatus.error && (
+						<div className="csk-screen__err">That key did not work: {keyStatus.error}</div>
+					)}
+					<p className="csk-screen__fine">
+						The key stays on this machine. The page never sees it — the app swaps it for a
+						token that works for one session and then expires.
+						<br />
+						There is no "sign in with Google" for this: the live API takes a key, and a
+						Gemini subscription does not include API access.
+					</p>
+				</div>
+			)}
+
+			{wsl && !share.sharing && (
 				<div className="csk-screen__blocked">
-					<strong>Start will open this in your Windows browser.</strong>
+					<strong>This will open in your Windows browser.</strong>
 					<p>
 						This window runs inside WSL, so the only screens it can see are WSL's own — not
 						the Windows desktop, and not the game. Your Windows browser is a Windows app, so
-						it can see the game, and it still talks to this daemon. Pressing Start takes you
-						there instead of opening a picker that couldn't show League.
+						it can see the game, and it still talks to this daemon.
 					</p>
-					{opening && <span className="csk-screen__opening">Opening Windows…</span>}
 				</div>
 			)}
 
-			{mode === "glance" && !wsl && !coach.sharing && (
+			{!wsl && !share.sharing && !needsKey && (
 				<div className="csk-screen__warn">
-					A screenshot of the screen you share is sent to Anthropic on every glance, and the
-					daemon deletes each one straight after. Roughly{" "}
-					<b>${perHour.toFixed(2)}/hour</b> at this interval
-					{coach.calls === 0 ? " (estimated)" : ""}.
+					Your shared screen is sent to Google continuously while this is running, and your
+					microphone is off until you turn it on.
 				</div>
 			)}
 
-			<div className="csk-screen__modes">
-				<button
-					className={`csk-screen__mode ${mode === "glance" ? "on" : ""}`}
-					onClick={() => setMode("glance")}
-				>
-					Glances
-					<em>Claude · ~3s · no key</em>
-				</button>
-				<button
-					className={`csk-screen__mode ${mode === "live" ? "on" : ""}`}
-					onClick={() => setMode("live")}
-				>
-					Live voice
-					<em>Gemini · ~0.8s · speaks</em>
-				</button>
-			</div>
+			{share.error !== null && <div className="csk-screen__err">{share.error}</div>}
+			{gem.error !== null && <div className="csk-screen__err">{gem.error}</div>}
 
-			{mode === "live" && (
-				<div className="csk-screen__live">
-					{gem.error !== null && <div className="csk-screen__err">{gem.error}</div>}
-					<div className="csk-screen__controls">
-						{gem.status === "live" ?
-							<button className="btn" onClick={gem.stop}>
-								Disconnect
-							</button>
-						:	<button
-								className="btn btn-primary"
-								disabled={!coach.sharing || gem.status === "connecting"}
-								onClick={() => void gem.start()}
-							>
-								{gem.status === "connecting" ? "Connecting…" : "Go live"}
-							</button>
-						}
-						<span className="csk-screen__label">Speaks every</span>
-						{[10, 20, 40].map(sec => (
-							<button
-								key={sec}
-								className={`csk-screen__int ${gem.turnMs === sec * 1000 ? "on" : ""}`}
-								onClick={() => gem.setTurnMs(sec * 1000)}
-							>
-								{sec}s
-							</button>
-						))}
-						{gem.status === "live" && (
-							<button
-								className={`csk-screen__int ${gem.micOn ? "on" : ""}`}
-								onClick={() => void gem.setMic(!gem.micOn)}
-								title="Talk to the coach"
-							>
-								{gem.micOn ? "🎙 on" : "🎙 off"}
-							</button>
-						)}
-						{gem.status === "live" && <span className="csk-screen__meter">connected</span>}
-					</div>
-					{gem.status === "live" && (
-						<form
-							className="csk-screen__ask"
-							onSubmit={e => {
-								e.preventDefault()
-								gem.ask(question)
-								setQuestion("")
-							}}
+			{share.sharing && (
+				<div className="csk-screen__controls">
+					{gem.status === "live" ?
+						<button className="btn" onClick={gem.stop}>
+							Stop coaching
+						</button>
+					:	<button
+							className="btn btn-primary"
+							disabled={gem.status === "connecting"}
+							onClick={() => void gem.start()}
 						>
-							<input
-								value={question}
-								onChange={e => setQuestion(e.target.value)}
-								placeholder="Ask the coach something…"
-							/>
-							<button className="btn" type="submit">
-								Ask
-							</button>
-						</form>
+							{gem.status === "connecting" ? "Connecting…" : "Start coaching"}
+						</button>
+					}
+
+					<span className="csk-screen__label">Checks in every</span>
+					{TURN_CHOICES.map(sec => (
+						<button
+							key={sec}
+							className={`csk-screen__int ${gem.turnMs === sec * 1000 ? "on" : ""}`}
+							onClick={() => gem.setTurnMs(sec * 1000)}
+						>
+							{sec}s
+						</button>
+					))}
+
+					{gem.status === "live" && (
+						<button
+							className={`csk-screen__int ${gem.micOn ? "on" : ""}`}
+							onClick={() => void gem.setMic(!gem.micOn)}
+							title={gem.micOn ? "Microphone is on — she can hear you" : "Turn on the mic to talk to her"}
+						>
+							{gem.micOn ? "🎙 mic on" : "🎙 mic off"}
+						</button>
 					)}
-					{gem.lines.length > 0 && (
-						<ul className="csk-screen__log">
-							{gem.lines.map(l => (
-								<li key={`${l.atMs}-${l.text.slice(0, 12)}`}>
-									<span className="t">{fmtTime(l.atMs)}</span>
-									<span className="s">
-										{l.fromUser ? <b>you: </b> : null}
-										{l.text}
-									</span>
-								</li>
-							))}
-						</ul>
-					)}
+					{gem.status === "live" && <span className="csk-screen__meter">listening</span>}
 				</div>
 			)}
 
-			{mode === "glance" && (
-			<div className="csk-screen__controls">
-				<span className="csk-screen__label">Every</span>
-				{INTERVALS.map(sec => (
-					<button
-						key={sec}
-						className={`csk-screen__int ${coach.intervalSec === sec ? "on" : ""}`}
-						onClick={() => coach.setInterval(sec)}
-						title={`About $${(((3600 / sec) * perCall)).toFixed(2)} per hour`}
-					>
-						{sec}s
-					</button>
-				))}
-				<label className="csk-screen__tts">
+			{gem.status === "live" && (
+				<form
+					className="csk-screen__ask"
+					onSubmit={e => {
+						e.preventDefault()
+						gem.ask(question)
+						setQuestion("")
+					}}
+				>
 					<input
-						type="checkbox"
-						checked={coach.speak}
-						onChange={e => coach.setSpeak(e.target.checked)}
+						value={question}
+						onChange={e => setQuestion(e.target.value)}
+						placeholder="Ask her something — “should I take this drake?”"
 					/>
-					Read aloud
-				</label>
-				{coach.sharing && (
-					<span className="csk-screen__meter">
-						{coach.busy ? "looking…" : "watching"} · {coach.calls} glance
-						{coach.calls === 1 ? "" : "s"} · ${coach.spent.toFixed(3)}
-					</span>
-				)}
-			</div>
+					<button className="btn" type="submit">
+						Ask
+					</button>
+				</form>
 			)}
 
-			{coach.error !== null && <div className="csk-screen__err">{coach.error}</div>}
-
-			{/*
-			  * Only ever shown before the first answer lands. The coach speaks on every glance
-			  * now, so an empty log past that point means something is wrong rather than quiet —
-			  * and `coach.error` is what says so.
-			  */}
-			{mode === "glance" && coach.sharing && coach.observations.length === 0 && (
-				<div className="csk-screen__quiet">Looking at your screen…</div>
+			{gem.status === "live" && gem.lines.length === 0 && (
+				<div className="csk-screen__quiet">
+					Listening. She'll speak up when something's worth saying — quiet is normal.
+				</div>
 			)}
 
-			{mode === "glance" && coach.observations.length > 0 && (
+			{gem.lines.length > 0 && (
 				<ul className="csk-screen__log">
-					{coach.observations.map(o => (
-						<li key={o.atMs}>
-							<span className="t">{fmtTime(o.atMs)}</span>
-							<span className="s">{o.text}</span>
+					{gem.lines.map(l => (
+						<li key={`${l.atMs}-${l.text.slice(0, 12)}`}>
+							<span className="t">{fmtTime(l.atMs)}</span>
+							<span className="s">
+								{l.fromUser ? <b>you: </b> : null}
+								{l.text}
+							</span>
 						</li>
 					))}
 				</ul>
