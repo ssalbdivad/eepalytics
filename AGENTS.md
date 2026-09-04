@@ -40,9 +40,17 @@ Three output tiers:
 ### The live coach, and the rule that makes it work
 
 The model gets a screenshot stream AND a **ground-truth block** computed by the
-daemon from the Live Client Data API: the roster, who is dead and for how long,
-the score, gold, and farm against the player's own average. The screenshot is for
-*where things are*; the block is for *what is true*.
+daemon from the Live Client Data API: the roster with each player's position, who
+is dead and for how long, the score, gold, health, farm against the player's own
+average, and the two inventories that decide a jungler's next call — his own and
+the enemy jungler's, item for item, with anything bought since the last turn
+marked. The screenshot is for *where things are*; the block is for *what is true*.
+
+The builds are there so the coach can REASON rather than recite: a gold figure
+becomes "that finishes the item you have the components for", and a fight call is
+weighed against what the man he is fighting is holding. The fence is unchanged —
+the client names every item, so a coach that names one the block does not is
+inventing, exactly as it would be inventing a number.
 
 That split is not decoration, it is the whole design. Given pixels alone the coach
 named a champion who was not in the game four times in seven minutes, called a
@@ -98,11 +106,13 @@ The live coach spans those in a way worth naming, since it is the newest thing h
 src/shared/live-state.ts    the ground-truth block: types + renderer (pure, shared)
 src/shared/live-prompt.ts   the coach's system prompt (shared with the eval)
 src/server/routes/live.ts   buildLiveState / buildUnseen — the facts, computed and ranked
+src/analysis/live-builds.ts items, roles and who the enemy jungler is (pure, tested)
 src/review/gemini-live.ts   holds the API key, mints ephemeral tokens  (NODE ONLY)
 src/web/lib/useScreenShare  the shared screen + frame grabber
 src/web/lib/gameflow.ts     the phase gate: whether anything may be sent at all
 src/web/lib/geminiLive.ts   the WebSocket, audio out, mic in, reconnect
 scripts/eval-live.ts        replays real games through the real socket and scores it
+scripts/probe-live-builds.ts  attacks the build fence with adversarial fixtures
 ```
 
 **The screen share persists across games; what is GATED is what gets sent.** He shares

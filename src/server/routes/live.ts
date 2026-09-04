@@ -58,6 +58,7 @@ import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
+import { inventoryOf, junglerOf, newBuildMemory, roleWord } from "../../analysis/live-builds.ts"
 import {
 	appendTranscript,
 	checkGeminiKey,
@@ -107,6 +108,16 @@ const findMe = (data: LiveAllGameData) => {
  */
 const factMemory = newFactMemory()
 
+/**
+ * What everyone was holding last turn, so a new item can be marked as JUST BOUGHT.
+ *
+ * Same lifetime and same reason as `factMemory`: one local user, one game at a time, cleared
+ * between games. `GET /api/live/ground-truth` is built exactly once per coaching turn (see
+ * `GeminiLiveOptions.groundTruth`), so a purchase is diffed once and shown on the freshest
+ * possible turn rather than being consumed by a background poll the coach never sees.
+ */
+const buildMemory = newBuildMemory()
+
 /** Who last killed this player, by riotId, or "" if nothing in the feed says. */
 const lastKillerOf = (data: LiveAllGameData, victim: string): string => {
 	if (victim === "") return ""
@@ -154,23 +165,53 @@ const buildLiveState = (
 		factMemory.lastLedWithDeath = false
 		factMemory.lastGoldMentioned = 0
 		factMemory.lastFarmAtSec = 0
+		buildMemory.seen.clear()
 		return null
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
 	const clock = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
 	const myName = me.riotId ?? me.summonerName ?? ""
 	const mine = me.team
-	const asPlayer = (p: LivePlayer): VisionStatePlayer => ({
-		champion: p.championName ?? "unknown",
-		level: p.level,
-		k: p.scores?.kills,
-		d: p.scores?.deaths,
-		a: p.scores?.assists,
-		dead: p.isDead,
-		respawnSec: p.respawnTimer
-	})
 	const others = (data.allPlayers ?? []).filter(p => p !== me)
 	const stats = data.activePlayer?.championStats
+
+	/*
+	 * The enemy jungler is the only other player whose inventory is carried.
+	 *
+	 * He is the counterpart a jungler's whole game is played against, and unlike his own build,
+	 * that one is behind the scoreboard key — it is a fact he is genuinely not looking at. Ten
+	 * inventories on every turn would be a wall of text, and a model given a wall of text skims
+	 * it, which costs more than the eight builds are worth.
+	 */
+	const theirJungler = junglerOf(others.filter(p => p.team !== mine))
+	/*
+	 * `junglerOf` falls back to Smite when the queue assigned no position, so the player it picks
+	 * may carry no `position` of his own. Labelling him "jungle" anyway is what makes the builds
+	 * section reachable at all — and it is the same single-Smite inference AGENTS.md prescribes
+	 * for post-game roles, not a guess layered on top of one.
+	 */
+	const myJungler = junglerOf([me, ...others.filter(p => p.team === mine)])
+
+	/** The client's position when it gave one, else "jungle" for a player Smite identified. */
+	const roleOf = (p: LivePlayer) =>
+		roleWord(p.position) ?? (p === theirJungler || p === myJungler ? "jungle" : undefined)
+
+	const asPlayer = (p: LivePlayer): VisionStatePlayer => {
+		const role = roleOf(p)
+		return {
+			champion: p.championName ?? "unknown",
+			// Left undefined rather than guessed when the queue assigned no position.
+			...(role ? { role } : {}),
+			level: p.level,
+			k: p.scores?.kills,
+			d: p.scores?.deaths,
+			a: p.scores?.assists,
+			cs: p.scores?.creepScore,
+			dead: p.isDead,
+			respawnSec: p.respawnTimer,
+			...(p === theirJungler ? { items: inventoryOf(p, buildMemory) } : {})
+		}
+	}
 
 	/*
 	 * Only the last few events, newest last. The whole list runs to hundreds by late game, and
@@ -195,7 +236,9 @@ const buildLiveState = (
 		clock,
 		me: {
 			champion: me.championName,
+			...(roleOf(me) ? { role: roleOf(me) } : {}),
 			level: me.level,
+			items: inventoryOf(me, buildMemory),
 			hp: stats?.currentHealth,
 			maxHp: stats?.maxHealth,
 			gold: data.activePlayer?.currentGold,

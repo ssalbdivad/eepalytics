@@ -27,6 +27,20 @@
  * the frame — scores as a number not in the block, because in this harness it genuinely is not.
  * That is a gap in the fixture, not in the coach; do not "fix" it by tightening the prompt.
  *
+ * ## And a second gap, for the same reason: BUILDS
+ *
+ * `VisionState` now carries his inventory and the enemy jungler's, because a live coach with no
+ * items cannot say a word about a build or a matchup. A post-game LCU timeline carries no
+ * `ITEM_PURCHASED` events at all — checked on the stored blobs, and AGENTS.md lists purchases
+ * among the things it does not have — so states rebuilt here leave `items` UNDEFINED and the
+ * block renders its "no build data this tick" branch. That is deliberate and it must stay that
+ * way: filling it with a plausible build would put a fabricated inventory inside the app's only
+ * real measurement. `scripts/probe-live-builds.ts` attacks the build fence separately, with
+ * fixtures that are labelled as fixtures.
+ *
+ * Same for `position`: the reliable role field belongs to the live client, so a rebuilt state
+ * names no roles and the roster prints none.
+ *
  * ## The other approximation is the respawn clock — the timeline says when someone died, not when
  * they came back, and the real formula is level- and patch-dependent. `RESPAWN_SEC` is a fixture
  * constant, and it is only ever used to decide whether to mark someone dead in a test input. It
