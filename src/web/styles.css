@@ -1369,10 +1369,41 @@ body.is-live {
 	font-size: 14px;
 	min-height: 100vh;
 	box-sizing: border-box;
-	-webkit-user-select: none;
-	user-select: none;
-	/* The whole window is a drag handle — there is no title bar to grab. */
+	/*
+	 * The window background is a drag handle — there is no title bar to grab.
+	 *
+	 * It used to be the WHOLE window, with `user-select: none` alongside. That made every word
+	 * in the overlay unselectable, and in a browser (where `app-region` does nothing but
+	 * `user-select` still applies) it silently made the live page the one page you could not
+	 * copy anything from — coaching lines included, which are exactly the thing worth copying.
+	 *
+	 * Text opts back out below. Drag survives on the empty space around it.
+	 */
 	-webkit-app-region: drag;
+}
+
+/*
+ * Anything with words in it is selectable and not a drag handle.
+ *
+ * `no-drag` is what makes selection work under Electron: a drag region swallows the mousedown
+ * before it can start a selection, so `user-select: text` alone would fix the browser and leave
+ * the app still broken.
+ */
+.live p,
+.live span,
+.live li,
+.live ol,
+.live b,
+.live strong,
+.live em,
+.live h1,
+.live h2,
+.live h3,
+.live__log,
+.csk-screen {
+	-webkit-user-select: text;
+	user-select: text;
+	-webkit-app-region: no-drag;
 }
 .live__bar {
 	display: flex;

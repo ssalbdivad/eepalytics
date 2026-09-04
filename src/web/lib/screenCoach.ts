@@ -44,16 +44,32 @@ export interface ScreenCoachState {
 	listening: boolean
 }
 
-/** JPEG at 0.7 rather than PNG: a screenshot of a game compresses to roughly a tenth the bytes,
- *  and the model is reading a scene, not inspecting pixels. Smaller upload, faster call. */
-const FRAME_QUALITY = 0.65
 /**
- * Downscale before upload. 1024 is still plenty to read a minimap and health bars, and it is a
- * third fewer bytes than 1280 — which matters on a path whose whole value is being fast.
- * Measured across 800/1024/1280 the model's own latency varies more than the size does, so this
- * is the cheap end of a range where quality is unaffected rather than a tuned optimum.
+ * JPEG rather than PNG: a game screenshot compresses to roughly a tenth the bytes.
+ *
+ * 0.72 rather than 0.65 for the same reason the width went up — the HUD text and the small
+ * portraits are exactly what JPEG artefacts eat first, and they are the part worth reading.
  */
-const FRAME_WIDTH = 1024
+const FRAME_QUALITY = 0.72
+/**
+ * Downscale before upload. 1536, and the 512px above 1024 are load-bearing.
+ *
+ * 1024 was chosen for latency on the theory that quality was unaffected. It was not. Measured on
+ * one real frame in which the player is dead with a "BACK IN 7" respawn timer across the middle
+ * of the screen:
+ *
+ *   sonnet-5 @ 1024px  ->  "alive, shopping back at base"   WRONG   2.8s  $0.013
+ *   sonnet-5 @ 1536px  ->  "dead, respawning in 7 seconds"  right   3.1s  $0.010
+ *   sonnet-5 @ 1920px  ->  "dead, waiting to respawn"       right   3.2s  $0.014
+ *
+ * Being wrong about whether the player is alive is not a small error — it produced "recall now,
+ * you're at 411 HP" said to a corpse. The extra pixels cost about 250ms and no money, because a
+ * model that can read the screen stops burning output tokens guessing at it.
+ *
+ * Ally and enemy portraits are ~25px at 1024 and ~38px at 1536, which is the difference between
+ * "unsure" and a name. The coach is told to say "unsure" rather than guess either way.
+ */
+const FRAME_WIDTH = 1536
 
 export const useScreenCoach = () => {
 	const [state, setState] = useState<ScreenCoachState>({

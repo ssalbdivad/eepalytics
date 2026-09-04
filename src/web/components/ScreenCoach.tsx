@@ -22,11 +22,14 @@ const INTERVALS = [15, 30, 60, 120]
 /**
  * Pre-start estimate only; the real measured cost replaces it after the first glance.
  *
- * Measured, not guessed: $0.0090 per glance across four consecutive calls on a real 1024px game
- * frame with this prompt. Rounded up rather than down — quoting an optimistic number for
- * something that spends money every fifteen seconds is the wrong direction to be wrong in.
+ * Measured, not guessed: $0.0156–$0.0223 per glance across three consecutive calls on a real
+ * 1536px frame with the ground-truth block attached. It went up from $0.009 when the frame did,
+ * and that was the right trade — at 1024px the coach said "recall now" to a dead player.
+ *
+ * Rounded up rather than down: quoting an optimistic number for something that spends money
+ * every fifteen seconds is the wrong direction to be wrong in.
  */
-const ESTIMATE_PER_CALL = 0.009
+const ESTIMATE_PER_CALL = 0.017
 
 const fmtTime = (ms: number): string =>
 	new Date(ms).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })

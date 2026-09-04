@@ -62,6 +62,89 @@ export interface LiveObservation {
 	error?: string
 }
 
+/**
+ * Ground truth for the frame, read from the Live Client Data API.
+ *
+ * Named `VisionState` rather than `LiveState`: `analysis/live-coach.ts` already owns that name
+ * for a different thing (the overlay's own view of the game).
+ *
+ * This exists because the coach hallucinated without it. Asked to comment on a 1024px JPEG of a
+ * 1080p screen, it named a champion who was not in the game four times in seven minutes, called
+ * a TEAMMATE a threat, and contradicted itself about Baron three times. Champion portraits in the
+ * HUD are about thirty pixels wide at that scale; the model was guessing, and a guess phrased in
+ * Lillia's voice sounds exactly like a read.
+ *
+ * The fix is not a better model or a bigger image. The League client already serves every one of
+ * those facts locally, in about 30ms — who is in the game, which side they are on, who is dead,
+ * what the score is. So the picture is used for *where things are*, and this is used for *what is
+ * true*. That is the same rule the rest of the app already follows: never derive a fact you can
+ * simply be told.
+ */
+export interface VisionState {
+	/** `mm:ss`. */
+	clock: string
+	me: {
+		champion: string
+		level?: number
+		hp?: number
+		maxHp?: number
+		gold?: number
+		k?: number
+		d?: number
+		a?: number
+		cs?: number
+		dead?: boolean
+		respawnSec?: number
+	}
+	allies: VisionStatePlayer[]
+	enemies: VisionStatePlayer[]
+	/** Most recent objective/kill events, already phrased. Newest last. */
+	recentEvents: string[]
+}
+
+export interface VisionStatePlayer {
+	champion: string
+	level?: number
+	k?: number
+	d?: number
+	a?: number
+	dead?: boolean
+	respawnSec?: number
+}
+
+const line = (p: VisionStatePlayer): string =>
+	`${p.champion}${p.level ? ` lv${p.level}` : ""} ${p.k ?? 0}/${p.d ?? 0}/${p.a ?? 0}${
+		p.dead ? ` DEAD${p.respawnSec ? ` (${Math.round(p.respawnSec)}s)` : ""}` : ""
+	}`
+
+/** The authoritative block. Everything in it came from the client, not from the picture. */
+const renderState = (s: VisionState): string => {
+	const me = s.me
+	const hp = me.hp !== undefined && me.maxHp !== undefined ? `${Math.round(me.hp)}/${Math.round(me.maxHp)} HP` : ""
+	return `## Ground truth (from the game client — these are FACTS, the screenshot is not)
+
+Clock ${s.clock}.
+
+You: ${me.champion}${me.level ? ` lv${me.level}` : ""} ${me.k ?? 0}/${me.d ?? 0}/${me.a ?? 0}${
+		me.cs !== undefined ? `, ${me.cs} CS` : ""
+	}${hp ? `, ${hp}` : ""}${me.gold !== undefined ? `, ${Math.round(me.gold)}g` : ""}${
+		me.dead ? `, DEAD${me.respawnSec ? ` (respawn ${Math.round(me.respawnSec)}s)` : ""}` : ""
+	}
+
+Your team: ${s.allies.map(line).join(" · ") || "unknown"}
+
+Enemy team: ${s.enemies.map(line).join(" · ") || "unknown"}
+${s.recentEvents.length > 0 ? `
+Just happened: ${s.recentEvents.join("; ")}` : ""}
+
+**The ten champions above are the only champions in this game.** Never name any other. Never
+give a number that is not in this block — you cannot read health bars, gold or scores off a
+downscaled screenshot accurately, and you do not need to, because they are right here.
+
+Use the screenshot for **where things are** — positions, who is grouped, what is happening on
+screen. Use this block for **what is true**.`
+}
+
 export interface LiveVisionInput {
 	/** The frame itself, base64. Never written to disk — see the header. */
 	imageBase64: string
@@ -74,6 +157,8 @@ export interface LiveVisionInput {
 	focus?: readonly string[]
 	/** Recent observations, so it does not repeat itself every tick. */
 	recent?: readonly string[]
+	/** Ground truth from the game client. Without it the model invents champions — see `LiveState`. */
+	state?: VisionState | null
 	/**
 	 * A spoken question from the player, when there is one.
 	 *
@@ -106,7 +191,7 @@ clock: ${clock}.`
 	 */
 	if (asked !== "")
 		return `${scene}
-
+${input.state ? `\n${renderState(input.state)}\n` : ""}
 They just asked you, out loud, mid-game:
 
 > ${asked}
@@ -121,7 +206,7 @@ Answer it. Two short sentences at most — it will be read or spoken while they 
 ${working}`
 
 	return `${scene}
-
+${input.state ? `\n${renderState(input.state)}\n` : ""}
 You are their coach, watching over their shoulder. Say exactly ONE short sentence. You speak on
 every glance — there is no option to stay quiet, so always have something.
 
@@ -148,8 +233,16 @@ praise that means nothing when the real moment comes.
 
 ## Rules
 
-- **Only what is legible in this frame.** Not cooldowns you cannot see, not what happened before
-  it, not what they intend. Speaking every time is not permission to invent.
+- **Never name a champion that is not in the ground-truth roster above.** If no roster was given,
+  do not name champions at all — say "their jungler", "the one chasing you". A champion who is
+  not in the game is the single most obvious way to prove you are making things up, and it
+  discredits every true thing you said.
+- **Numbers come from the ground truth, never from reading the screenshot.** You cannot read a
+  health bar or a gold count off a downscaled JPEG, and you do not have to.
+- **Only what is legible in this frame**, for everything else: not cooldowns you cannot see, not
+  what happened before it, not what they intend. Speaking every time is not permission to invent.
+- **If nothing is happening, say that.** "Clearing raptors, nobody near you" is a real and useful
+  observation. Do not manufacture a fight to have something dramatic to say.
 - **One sentence, under 100 characters.** It may be spoken aloud while they are fighting.
 - **Imperative and immediate** for a warning: "Back off, three missing top". For praise, just be
   delighted; there is nothing to instruct.

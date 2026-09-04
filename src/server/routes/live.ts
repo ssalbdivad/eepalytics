@@ -30,9 +30,10 @@ import { loadCorpus } from "../../daemon/corpus.ts"
 import { lcu } from "../../daemon/lcu.ts"
 import { getSettings, recentFeedbackItems } from "../../db/queries.ts"
 import { LiveResponse } from "../../shared/schema/api.ts"
-import type { LiveAllGameData } from "../../shared/schema/live.ts"
+import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { USER_PUUID } from "../../shared/constants.ts"
 import { observeFrame } from "../../review/live-vision.ts"
+import type { VisionState, VisionStatePlayer } from "../../review/live-vision.ts"
 import { fail, send } from "../respond.ts"
 
 /** Event names that mark an objective take we can time a respawn from. */
@@ -50,6 +51,74 @@ const findMe = (data: LiveAllGameData) => {
 	return (
 		data.allPlayers?.find(p => (p.riotId ?? p.summonerName ?? "") === riotId) ?? null
 	)
+}
+
+
+/**
+ * Turn one `allgamedata` read into the ground-truth block the coach is given.
+ *
+ * Returns null when there is no game, which is honest: the prompt then tells the model it has no
+ * roster and must not name champions at all, rather than leaving it free to guess.
+ */
+const buildLiveState = (
+	data: LiveAllGameData | null,
+	me: ReturnType<typeof findMe>,
+	gameTimeSec: number | null
+): VisionState | null => {
+	if (!data || !me || !me.championName) return null
+	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
+	const clock = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
+	const mine = me.team
+	const asPlayer = (p: LivePlayer): VisionStatePlayer => ({
+		champion: p.championName ?? "unknown",
+		level: p.level,
+		k: p.scores?.kills,
+		d: p.scores?.deaths,
+		a: p.scores?.assists,
+		dead: p.isDead,
+		respawnSec: p.respawnTimer
+	})
+	const others = (data.allPlayers ?? []).filter(p => p !== me)
+	const stats = data.activePlayer?.championStats
+
+	/*
+	 * Only the last few events, newest last. The whole list runs to hundreds by late game, and
+	 * the coach is being asked about *this* moment — older events are noise that crowd out the
+	 * roster, which is the part that actually stops the hallucinating.
+	 */
+	const recentEvents = (data.events?.Events ?? [])
+		.slice(-6)
+		.map(e => {
+			if (e.EventName === "DragonKill")
+				return `${e.DragonType ?? ""} dragon taken by ${e.KillerName ?? "someone"}`.trim()
+			if (e.EventName === "BaronKill") return `Baron taken by ${e.KillerName ?? "someone"}`
+			if (e.EventName === "HeraldKill") return `Herald taken by ${e.KillerName ?? "someone"}`
+			if (e.EventName === "TurretKilled") return `turret down (${e.TurretKilled ?? "?"})`
+			if (e.EventName === "ChampionKill")
+				return `${e.KillerName ?? "?"} killed ${e.VictimName ?? "?"}`
+			return ""
+		})
+		.filter(t => t !== "")
+
+	return {
+		clock,
+		me: {
+			champion: me.championName,
+			level: me.level,
+			hp: stats?.currentHealth,
+			maxHp: stats?.maxHealth,
+			gold: data.activePlayer?.currentGold,
+			k: me.scores?.kills,
+			d: me.scores?.deaths,
+			a: me.scores?.assists,
+			cs: me.scores?.creepScore,
+			dead: me.isDead,
+			respawnSec: me.respawnTimer
+		},
+		allies: others.filter(p => p.team === mine).map(asPlayer),
+		enemies: others.filter(p => p.team !== mine).map(asPlayer),
+		recentEvents
+	}
 }
 
 export const createLiveRoute = (): Hono => {
@@ -209,18 +278,30 @@ export const createLiveRoute = (): Hono => {
 		 * champion and the clock, so it can simply say what it knows. The LCU read stays as a
 		 * fallback for callers that do not.
 		 */
-		const givenChampion = typeof body?.championName === "string" ? body.championName : null
-		const givenTime = typeof body?.gameTimeSec === "number" ? body.gameTimeSec : null
+		/*
+		 * The live client is read on EVERY glance now, and that is a deliberate reversal.
+		 *
+		 * It was skipped to save a round trip, on the theory that the overlay already knew the
+		 * champion and the clock. But the model then had nothing but pixels, and pixels do not
+		 * contain the roster: League's default HUD shows no champion list at all unless you are
+		 * holding Tab. Asked who was on screen, it guessed — it named Gnar, who was not in the
+		 * game, four times in seven minutes, and called a teammate a threat.
+		 *
+		 * `allgamedata` costs about 30ms against a call that takes 3000ms. Trading 1% of the
+		 * latency for the difference between coaching and fiction is not a close decision.
+		 */
+		const handle = await lcu()
+		const data = handle ? await handle.live.allGameData().catch(() => null) : null
+		const me = data ? findMe(data) : null
 
-		let championName = givenChampion
-		let gameTimeSec = givenTime
-		if (championName === null || gameTimeSec === null) {
-			const handle = await lcu()
-			const data = handle ? await handle.live.allGameData().catch(() => null) : null
-			const me = data ? findMe(data) : null
-			championName = championName ?? me?.championName ?? null
-			gameTimeSec = gameTimeSec ?? data?.gameData?.gameTime ?? null
-		}
+		const championName =
+			(typeof body?.championName === "string" ? body.championName : null) ?? me?.championName ?? null
+		const gameTimeSec =
+			(typeof body?.gameTimeSec === "number" ? body.gameTimeSec : null) ??
+			data?.gameData?.gameTime ??
+			null
+
+		const state = buildLiveState(data, me, gameTimeSec)
 
 		const focus = cachedFocus().map(f => f.fix).filter(f => f !== "")
 
@@ -234,7 +315,8 @@ export const createLiveRoute = (): Hono => {
 				Array.isArray(body?.recent) ?
 					((body.recent as unknown[]).filter(r => typeof r === "string").slice(-4) as string[])
 				:	[],
-			question: typeof body?.question === "string" ? body.question.slice(0, 400) : null
+			question: typeof body?.question === "string" ? body.question.slice(0, 400) : null,
+			state
 		})
 
 		return c.json({
