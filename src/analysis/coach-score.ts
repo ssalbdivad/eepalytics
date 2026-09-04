@@ -539,6 +539,16 @@ const ACTION: RegExp[] = [
 	/(?:^|[.;,:!?—–-]\s*|\b(?:so|then|now|and|but)\s+)(?:take|go|back|recall|reset|clear|start|come|stay|hold|rotate|collapse|buy|spend|invade|walk|get|be|keep|leave|punish|trade|fight|contest|path|push|dive|group|check|watch|wait|use|finish|shove|drop|swing|head|track|force|play|move|ask|remember|stop|avoid|skip|ignore|don't|dont|do not)\b/i,
 	/\byou\s+(?:can|could|should|want to|need to|have time to|have a window|might want)\b/i,
 	/\b(?:worth\s+(?:taking|going|contesting|forcing)|time to|window to|chance to|this is your (?:window|chance))\b/i,
+	/*
+	 * A verb wrapped in a coaching idiom is still an instruction, and the bare-imperative patterns
+	 * above miss all of these. Measured against real socket output: "focus on finishing your full
+	 * clears", "try kiting them next time", "let's get you clearing camps before the next one" —
+	 * three of four flagged lines were false negatives, which would have sent me tuning the prompt
+	 * against a fault it did not have. A scorer that UNDER-counts misleads exactly as badly as one
+	 * that flatters.
+	 */
+	/\b(?:focus on|try|start|stick to|commit to|look to|aim to|let'?s (?:get|go|have)|prioriti[sz]e)\b/i,
+	/\b\w+ing\s+(?:your|the|those|these|his|their)\b/i,
 	/\?\s*$/
 ]
 

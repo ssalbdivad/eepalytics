@@ -20,6 +20,6 @@ race-ahead: keep the route full and do not give the lead back
 restraint: decline it, a coin-flip you walk away from costs a camp and one you lose costs the game
 fight-lost: reset and come back even rather than forcing the rematch
 fight-absent: be on the map before the fight starts, not after it
-death: the enemy jungle with no vision is where a lead goes to die
+death: check with a ward or an ability before you cross, not after
 build: buy at the end of a clear, not after the next fight
 farm-behind: a full clear beats a gank that is not ready

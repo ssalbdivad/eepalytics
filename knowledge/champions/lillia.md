@@ -59,6 +59,6 @@ race-ahead: keep the route moving, being somewhere they are not is the whole pla
 restraint: you lose the even fight, and declining it is correct play rather than timidity
 fight-lost: you want the long fight with room to kite, not a short trade
 fight-absent: you win by being where they are not, so be there before the next one starts
-death: your escape is movement speed, so once you are committed into a corridor nothing gets you out
+death: your escape is movement speed, so leave before you are committed rather than after
 build: itemise for the fight you actually win, which is the long one
 farm-behind: low farm on you is almost always an interrupted route rather than a slow one

@@ -368,3 +368,33 @@ describe("wilson", () => {
 		strictEqual(separated(wilson(5, 200), wilson(80, 200)), true)
 	})
 })
+
+/**
+ * The action test decides the `no-alternative` fault, which is the difference between coaching and
+ * commentary — so both directions of it are pinned. These lines are verbatim from real socket runs.
+ */
+describe("naming an action, in the idioms a coach actually uses", () => {
+	const has = (line: string): boolean =>
+		!scoreLine({ line, block: BLOCK, roster: ROSTER, champions: CHAMPIONS }).faults.includes(
+			"no-alternative"
+		)
+
+	it("counts a verb wrapped in a coaching idiom", () => {
+		for (const line of [
+			"Kayn is 23 CS up on you — focus on finishing your full clears first",
+			"that fight went 0 for 3, so try kiting them next time",
+			"that fight went 1 for 2 without you, so let's get you clearing camps before the next one",
+			"Kayn is 2 levels up, prioritise your own route"
+		])
+			ok(has(line), line)
+	})
+
+	it("still fails a line that only describes the situation", () => {
+		for (const line of [
+			"once you're committed to a corridor, your movement speed won't get you out",
+			"Kayn is 23 CS up on you",
+			"you are two levels down on Kayn, so declining an even fight with him is smart"
+		])
+			ok(!has(line), line)
+	})
+})
