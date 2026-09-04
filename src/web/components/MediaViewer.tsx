@@ -34,7 +34,8 @@ const KIND_WORD: Record<Media["kind"], string> = {
 
 const SOURCE_WORD: Record<Media["source"], string> = {
 	replay: "Captured from your replay — this is a real frame of your game.",
-	generated: "Drawn by this app from timeline positions. It is a diagram, NOT a screenshot."
+	generated: "Drawn by this app from timeline positions. It is a diagram, NOT a screenshot.",
+	journal: "A real frame of your own screen, saved while you played."
 }
 
 const isVideo = (m: Media): boolean =>

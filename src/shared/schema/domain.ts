@@ -410,7 +410,15 @@ export type Review = typeof Review.infer
 export const MediaKind = type("'screenshot'|'clip'|'map'")
 export type MediaKind = typeof MediaKind.infer
 
-export const MediaSource = type("'replay'|'generated'")
+/**
+ * Where a picture came from, and it is an evidential claim rather than a filing detail.
+ *
+ * `generated` is a diagram this app drew from the timeline — a map with dots on it. `journal` is a
+ * real frame of his own screen, captured while he played, and is the ONLY source that can support
+ * a statement about how a fight actually went. `replay` is the retired capture path, kept so
+ * historical rows still parse.
+ */
+export const MediaSource = type("'replay'|'generated'|'journal'")
 export type MediaSource = typeof MediaSource.infer
 
 export const Media = type({

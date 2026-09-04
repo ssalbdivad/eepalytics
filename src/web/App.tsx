@@ -15,6 +15,7 @@ import { GameList } from "./pages/GameList.tsx"
 import { GameReview } from "./pages/GameReview.tsx"
 import { Live } from "./pages/Live.tsx"
 import { Replays } from "./pages/Replays.tsx"
+import { Debrief } from "./pages/Debrief.tsx"
 import { Trends } from "./pages/Trends.tsx"
 import { Queue } from "./pages/Queue.tsx"
 import { SettingsPage } from "./pages/Settings.tsx"
@@ -223,6 +224,8 @@ export const App = () => {
 				)}
 				{route.name === "home" ?
 					<Live />
+				: route.name === "debrief" ?
+					<Debrief gameId={route.gameId} />
 				: route.name === "games" ?
 					<GameList health={h} eventTick={eventTick} />
 				: route.name === "game" ?

@@ -22,6 +22,8 @@ export type Route =
 	| { name: "home" }
 	| { name: "games" }
 	| { name: "game"; gameId: number }
+	/** The fifteen-seconds-after-a-game screen. `game` is the full review it links to. */
+	| { name: "debrief"; gameId: number }
 	| { name: "replays" }
 	| { name: "live" }
 	| { name: "trends" }
@@ -40,6 +42,10 @@ export const parseRoute = (hash: string): Route => {
 	if (head === "trends") return { name: "trends" }
 	if (head === "queue") return { name: "queue" }
 	if (head === "settings") return { name: "settings" }
+	if (head === "debrief") {
+		const gameId = Number(tail)
+		if (Number.isFinite(gameId) && gameId > 0) return { name: "debrief", gameId }
+	}
 	if (head === "game") {
 		const gameId = Number(tail)
 		if (Number.isFinite(gameId) && gameId > 0) return { name: "game", gameId }
@@ -55,7 +61,8 @@ export const href = {
 	trends: "#/trends",
 	queue: "#/queue",
 	settings: "#/settings",
-	game: (gameId: number) => `#/game/${gameId}`
+	game: (gameId: number) => `#/game/${gameId}`,
+	debrief: (gameId: number) => `#/debrief/${gameId}`
 }
 
 export const navigate = (to: string): void => {
