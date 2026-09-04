@@ -25,6 +25,7 @@ import {
 	getMoments,
 	getParticipants,
 	getReview,
+	latestReviewOutcome,
 	withMomentMedia,
 	listGames,
 	listMediaForGame,
@@ -81,6 +82,12 @@ export const createGamesRoutes = (): Hono => {
 			metrics: getMetrics(gameId),
 			moments: getMoments(gameId),
 			review: withMomentMedia(getReview(gameId)),
+			...(() => {
+				const outcome = latestReviewOutcome(gameId)
+				return outcome?.status === "failed" ?
+						{ reviewFailed: outcome.error === null ? {} : { error: outcome.error } }
+					:	{}
+			})(),
 			media: listMediaForGame(gameId),
 			// The row's own flag AND the blob actually being there. A pruned data dir must not
 			// make the UI promise a minimap it cannot draw.

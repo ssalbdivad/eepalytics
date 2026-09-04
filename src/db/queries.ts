@@ -833,6 +833,22 @@ const loadItems = (reviewId: string): FeedbackItem[] =>
 		.all(reviewId)
 		.map(r => rowToFeedbackItem({ ...(r as Row) }))
 
+/**
+ * The newest review for a game whatever its status — used only to tell "failed" from "not yet".
+ *
+ * Deliberately separate from `getReview`, which promises a review worth SHOWING. Loosening that
+ * one instead would let a failed row reach every caller that renders coaching.
+ */
+export const latestReviewOutcome = (gameId: number): { status: string; error: string | null } | null => {
+	const row = plain(
+		prep(
+			`SELECT status, error FROM review WHERE gameId = ? AND kind = 'game'
+			 ORDER BY createdMs DESC LIMIT 1`
+		).get(gameId)
+	)
+	return row ? { status: str(row.status), error: row.error === null ? null : str(row.error) } : null
+}
+
 /** The newest successful review for a game, with its items. */
 export const getReview = (gameId: number): Review | null => {
 	const row = plain(

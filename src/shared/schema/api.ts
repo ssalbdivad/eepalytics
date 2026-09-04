@@ -140,6 +140,14 @@ export const GameDetailResponse = type({
 	 * been watched.
 	 */
 	journalFrames: type({ id: "string", tSec: "number" }).array(),
+	/**
+	 * Set when the newest review for this game FAILED.
+	 *
+	 * `review` is the newest *successful* one, so a failure arrives there as null — which is
+	 * indistinguishable from "still being written". The debrief polls on that distinction, so
+	 * without this it waits forever for a review that already gave up.
+	 */
+	"reviewFailed?": type({ "error?": "string" }),
 	timelineAvailable: "boolean"
 })
 export type GameDetailResponse = typeof GameDetailResponse.infer
@@ -293,7 +301,15 @@ export const MatchupResponse = type({
 	"reason?": "string",
 	/** The gameflow phase we saw, even when there is no brief to build from it. */
 	"phase?": "string",
-	"brief?": MatchupBrief.or("null")
+	"brief?": MatchupBrief.or("null"),
+	/**
+	 * The brief rendered for the coach, fenced the same way the in-game ground-truth block is.
+	 *
+	 * Rendered here rather than in the browser for the reason the whole live path is built this
+	 * way: the facts are computed and bounded in TypeScript, and the model only gets to phrase
+	 * one. A renderer in the page would be a second copy free to drift from the guard.
+	 */
+	"text?": "string"
 })
 export type MatchupResponse = typeof MatchupResponse.infer
 

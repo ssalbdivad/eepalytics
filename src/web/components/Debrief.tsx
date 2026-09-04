@@ -40,6 +40,7 @@ import {
 } from "../lib/format.ts"
 import { ChampIcon } from "./ChampIcon.tsx"
 import { GradeBadge } from "./GradeBadge.tsx"
+import { evidenceOf, TIER_EXPLAIN, TIER_LABEL } from "../../shared/evidence.ts"
 import "./components.css"
 
 /** How often to look again while the coach is still writing. */
@@ -89,7 +90,30 @@ export const Debrief = ({
 	const detail = useResource(signal => api.game(gameId, signal), [gameId, tick])
 	const d = detail.data
 	const review = d?.review ?? null
-	const written = review !== null && review.status !== "failed"
+
+	/*
+	 * The tier gate, and it outranks everything else on this panel.
+	 *
+	 * A game with frames may be graded and coached. A game without them gets numbers and nothing
+	 * else — no grade, no items, no goals. The full-page debrief already enforces this; without
+	 * the same gate here the two screens would show a grade and no grade for the SAME game, and
+	 * the one that grades is the one he sees first.
+	 */
+	const evidence =
+		d ?
+			evidenceOf({
+				frameTimesSec: d.journalFrames.map(f => f.tSec),
+				gameDurationSec: d.game.gameDurationSec ?? 0
+			})
+		:	null
+	const watched = evidence?.tier === "watched"
+
+	/*
+	 * A failed review arrives as `review: null`, which is the same shape as "not written yet" —
+	 * so without `reviewFailed` this panel polled forever telling him it was seconds away.
+	 */
+	const failed = d?.reviewFailed !== undefined
+	const written = watched && review !== null && review.status !== "failed"
 
 	/*
 	 * Poll only while there is something still to arrive. This is a local SQLite read behind a
@@ -97,10 +121,10 @@ export const Debrief = ({
 	 * has landed is a panel that will still be polling tomorrow morning.
 	 */
 	useEffect(() => {
-		if (written) return
+		if (written || failed || (d !== null && !watched)) return
 		const id = setInterval(() => setTick(t => t + 1), WAITING_POLL_MS)
 		return () => clearInterval(id)
-	}, [written])
+	}, [written, failed, watched, d])
 
 	const generate = useAction(() => api.requestReview(gameId))
 
@@ -135,7 +159,9 @@ export const Debrief = ({
 						:	<span className="dim">game over</span>}
 					</span>
 				</div>
-				{g ? <GradeBadge score={g.gradeScore} rank={g.gradeRank} size={size === "wide" ? "lg" : "sm"} /> : null}
+				{g && watched ?
+					<GradeBadge score={g.gradeScore} rank={g.gradeRank} size={size === "wide" ? "lg" : "sm"} />
+				:	null}
 				{onDismiss ?
 					<button
 						className="csk-debrief__close"
@@ -159,7 +185,17 @@ export const Debrief = ({
 					<button onClick={detail.reload}>Retry</button>
 				</div>
 			:	<>
-					{written ?
+					{!watched ?
+						/*
+						 * Not an error and not a downgrade — it is what the recording supports.
+						 * Worded as a consequence of how the game was recorded, because he did
+						 * nothing wrong by not sharing his screen.
+						 */
+						<div className="csk-debrief__tier">
+							<b>{TIER_LABEL[evidence?.tier ?? "numbers"]}</b>
+							<span>{TIER_EXPLAIN[evidence?.tier ?? "numbers"]}</span>
+						</div>
+					: written ?
 						<>
 							<div className="csk-debrief__headline">{review.headline}</div>
 							{review.encouragement !== "" ?
@@ -167,8 +203,8 @@ export const Debrief = ({
 							:	null}
 						</>
 					:	<PendingCoach
-							failed={review !== null}
-							error={review?.error ?? null}
+							failed={failed}
+							error={d.reviewFailed?.error ?? null}
 							analyzed={d.metrics.length > 0}
 							moments={d.moments.length}
 							onGenerate={generate.run}
@@ -176,10 +212,10 @@ export const Debrief = ({
 						/>
 					}
 
-					{pros.length > 0 ?
+					{watched && pros.length > 0 ?
 						<Section title="Worth keeping" tone="good" items={pros} showBody={size === "wide"} />
 					:	null}
-					{cons.length > 0 ?
+					{watched && cons.length > 0 ?
 						<Section title="Work on this next game" tone="bad" items={cons} showBody={size === "wide"} />
 					:	null}
 
@@ -187,11 +223,11 @@ export const Debrief = ({
 					 * Only while there is no write-up. Once the coach has spoken, repeating the
 					 * raw bands underneath it is noise — the items already cite their numbers.
 					 */}
-					{!written && d.metrics.length > 0 ?
+					{(!written || !watched) && d.metrics.length > 0 ?
 						<MeasuredHighlights metrics={d.metrics} size={size} />
 					:	null}
 
-					{goals.length > 0 ?
+					{watched && goals.length > 0 ?
 						<ol className="csk-debrief__goals">
 							{goals.map((goal, i) => (
 								<li key={i}>

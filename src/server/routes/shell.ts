@@ -20,7 +20,33 @@ import { Hono } from "hono"
 import { execFile } from "node:child_process"
 import { existsSync } from "node:fs"
 import { SERVER_PORT } from "../../shared/constants.ts"
+import { makeLogger } from "../../daemon/log.ts"
 import { fail } from "../respond.ts"
+
+const log = makeLogger("shell")
+
+/**
+ * A launch is a window appearing on top of whatever he is doing, and he plays League on this
+ * machine. So this route is rate-limited HARD, and the limits are about blast radius rather than
+ * about load: opening a browser is not expensive, it is *intrusive*.
+ *
+ * Twice now a runaway has produced a wall of tabs — once from a test with a hardcoded launcher,
+ * and once mid-game from a trigger that was never pinned down. The second time is why these
+ * exist: the first fix removed one cause, and a cause that cannot be reproduced cannot be
+ * removed at all. A cap converts any future runaway, whatever its source, into one tab.
+ */
+const LAUNCH_COOLDOWN_MS = 10_000
+/** Per process lifetime. Legitimate use is one press, occasionally two. Thirty is never real. */
+const LAUNCH_CEILING = 6
+
+let lastLaunchMs = 0
+let launchCount = 0
+
+/** Only for tests — a fresh process is the only thing that resets these in real use. */
+export const resetLaunchLimits = (): void => {
+	lastLaunchMs = 0
+	launchCount = 0
+}
 
 const EXPLORER = "/mnt/c/Windows/explorer.exe"
 
@@ -63,6 +89,32 @@ export const createShellRoutes = (launch: Launcher = launchViaExplorer): Hono =>
 		const hash = typeof body?.hash === "string" ? body.hash.replace(/[^#/a-zA-Z0-9_-]/g, "") : ""
 		const url = `http://localhost:${SERVER_PORT}/${hash.startsWith("#") ? hash : ""}`
 
+		const now = Date.now()
+		if (now - lastLaunchMs < LAUNCH_COOLDOWN_MS) {
+			const waitMs = LAUNCH_COOLDOWN_MS - (now - lastLaunchMs)
+			log.warn(`refusing a second browser launch ${now - lastLaunchMs}ms after the last one`)
+			return fail(
+				c,
+				429,
+				`a window was just opened — wait ${Math.ceil(waitMs / 1000)}s before asking again`,
+				"too-soon"
+			)
+		}
+		if (launchCount >= LAUNCH_CEILING) {
+			log.warn(`refusing browser launch ${launchCount + 1} — ceiling is ${LAUNCH_CEILING}`)
+			return fail(
+				c,
+				429,
+				"this app has opened as many windows as it is ever going to in one run — restart the daemon if you genuinely need another",
+				"launch-ceiling"
+			)
+		}
+
+		lastLaunchMs = now
+		launchCount += 1
+		// Logged EVERY time, with the running count. The last outbreak could not be traced because
+		// nothing recorded that a launch had happened at all.
+		log.info(`opening a Windows browser at ${url} (launch ${launchCount}/${LAUNCH_CEILING})`)
 		launch(url)
 		return c.json({ ok: true, url })
 	})

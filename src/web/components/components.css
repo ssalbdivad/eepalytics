@@ -2269,3 +2269,27 @@ button.csk-chip:focus-visible,
 }
 .csk-debrief__foot a { color: var(--teal); text-decoration: none; }
 .csk-debrief__foot a:hover { text-decoration: underline; }
+/*
+ * The evidence-tier notice on the compact debrief.
+ *
+ * Deliberately calm. It is not an error and not a downgrade — it says what the recording
+ * supports, and he did nothing wrong by not sharing his screen.
+ */
+.csk-debrief__tier {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	padding: 8px 10px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--bg);
+}
+.csk-debrief__tier b {
+	font-size: 12px;
+	letter-spacing: 0.02em;
+}
+.csk-debrief__tier span {
+	font-size: 11.5px;
+	color: var(--dim, #8a8a8a);
+	line-height: 1.35;
+}

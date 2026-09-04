@@ -221,7 +221,11 @@ export const buildMatchupBrief = (input: BuildMatchupInput): MatchupResult => {
 		you.champion !== "" && input.noteFor ? input.noteFor(you.champion) : null
 	if (!championNotes && you.champion !== "")
 		unknowns.push(
-			`There are no champion notes on file for ${you.champion} either. Coach the role and the plan, and improvise nothing about the kit.`
+			// "either" only when the opponent's notes were missing too — this text reaches the
+			// model as well as the reader, and a false "either" implies a gap that is not there.
+			`There are no champion notes on file for ${you.champion}${
+				opponent && opponent.champion !== "" && !opponentNotes ? " either" : ""
+			}. Coach the role and the plan, and improvise nothing about the kit.`
 		)
 
 	const brief: MatchupBrief = {

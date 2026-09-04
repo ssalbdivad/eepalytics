@@ -49,6 +49,7 @@ import { championNote } from "../../knowledge/index.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
 import { dismissDebrief, dismissedDebrief, lastGameEnded } from "../../daemon/postgame.ts"
 import { matchesMarker, postGameDebrief } from "../../shared/postgame.ts"
+import { matchupPromptSection } from "../../shared/matchup-prompt.ts"
 import type { EndedGame, JustEnded } from "../../shared/postgame.ts"
 import { LiveResponse, MatchupResponse } from "../../shared/schema/api.ts"
 import { isCoachingPhase } from "../../shared/schema/lcu.ts"
@@ -71,15 +72,6 @@ import { fail, send } from "../respond.ts"
 
 /** Event names that mark an objective take we can time a respawn from. */
 const OBJECTIVE_EVENTS = new Set(["DragonKill", "BaronKill", "HeraldKill"])
-
-/**
- * Phases in which a matchup brief means anything.
- *
- * `InProgress` and `Reconnect` are included on purpose: the brief is still the truth about who is
- * in the game, and a coach asked "who am I playing against" at 12:00 should answer rather than
- * claim there is no game. `None`/`Lobby`/`Matchmaking` have no rosters to read.
- */
-const PREGAME_PHASES = new Set(["ChampSelect", "GameStart", "InProgress", "Reconnect"])
 
 /**
  * The user's own row in the live player list.
@@ -551,7 +543,8 @@ export const createLiveRoute = (): Hono => {
 				"GET /api/live/matchup"
 			)
 
-		if (!PREGAME_PHASES.has(session.phase))
+		// The same list `/live/phase` arms on — two copies of one phase set will drift apart.
+		if (!isCoachingPhase(session.phase))
 			return send(
 				c,
 				MatchupResponse,
@@ -592,14 +585,15 @@ export const createLiveRoute = (): Hono => {
 			c,
 			MatchupResponse,
 			brief ?
-				{ available: true, phase: session.phase, brief }
+				{ available: true, phase: session.phase, brief, text: matchupPromptSection(brief) }
 			:	{ available: false, phase: session.phase, reason: reason ?? "nothing to brief yet" },
 			"GET /api/live/matchup"
 		)
 	})
 
 	/**
-	 * `POST /api/live/observe` — one screen frame in, at most one sentence out.	 *
+	 * `POST /api/live/journal/frame` — store one frame of the shared screen.
+	 *
 	 * Deliberately independent of the Gemini coach. Sharing the screen is what earns a graded
 	 * review; the live voice is an optional extra on top of it, and costs money, and should not be
 	 * a prerequisite for being coached after the game.

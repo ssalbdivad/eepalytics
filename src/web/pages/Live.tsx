@@ -145,7 +145,19 @@ export const Live = () => {
 	 * the game whose scoreboard he is looking at right now.
 	 */
 	const ended =
-		data?.justEnded && data.justEnded.endedAtMs !== closed ? data.justEnded : null
+		(
+			data?.justEnded &&
+			data.justEnded.endedAtMs !== closed &&
+			/*
+			 * The next game outranks the last one. `inGame` stays false right through queue and
+			 * champion select, and the marker is only replaced when the NEXT game ENDS — so
+			 * without this an un-dismissed debrief owned this screen through the whole of the
+			 * next draft, hiding the champ-select headline for the game he is about to play.
+			 */
+			starting === null
+		) ?
+			data.justEnded
+		:	null
 
 	const body =
 		!data ?
@@ -213,7 +225,11 @@ export const Live = () => {
 						</div>
 					}
 
-					{data.focus && data.focus.length > 0 && (
+					{/*
+					 * The standing focus list is about the last twenty games and can wait; in the
+					 * 380px window it would stack under the debrief and push it off-screen.
+					 */}
+					{data.focus && data.focus.length > 0 && !(ended && size === "compact") && (
 						<div className="live__bigfocus">
 							<div className="live__focus-head">What to work on</div>
 							<ol>

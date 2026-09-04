@@ -133,6 +133,19 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 	 * the coach depends on.
 	 */
 	const truthRef = useRef("")
+
+	/*
+	 * Ground truth does not survive a game boundary.
+	 *
+	 * This component now outlives the game on purpose, so without this the first frames of game N
+	 * were filed with game N-1's FINAL roster, score and gold — stored in `journal_frame.truthJson`
+	 * and read back later as evidence. Unbounded whenever the voice coach is not running, which is
+	 * the free path the panel actively encourages. Wrong facts attached to the right pictures is
+	 * the one failure this journal exists to prevent.
+	 */
+	useEffect(() => {
+		if (!gate.inGame) truthRef.current = ""
+	}, [gate.inGame])
 	const [keyStatus, setKeyStatus] = useState<KeyStatus | null>(null)
 	const [keyInput, setKeyInput] = useState("")
 	const [savingKey, setSavingKey] = useState(false)
@@ -186,7 +199,13 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 	 * Not taking the picture is strictly better than taking it and deleting it.
 	 */
 	useEffect(() => {
-		if (!share.sharing || !gate.armed) return
+		/*
+		 * `inGame`, NOT `armed`. The daemon refuses any frame it cannot place on the game clock,
+		 * and there is no clock during champion select or the loading screen — so arming the
+		 * journal there spent 60-180s of every game encoding his whole monitor, POSTing it, and
+		 * dragging an `allgamedata` round trip behind each one, purely to be rejected.
+		 */
+		if (!share.sharing || !gate.inGame) return
 		let alive = true
 		let inFlight = false
 		const tick = async () => {
@@ -223,7 +242,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 			alive = false
 			clearInterval(id)
 		}
-	}, [share.sharing, gate.armed, share.grabFrame])
+	}, [share.sharing, gate.inGame, share.grabFrame])
 
 	const gem = useGeminiLive({
 		/*

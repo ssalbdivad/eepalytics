@@ -5,7 +5,7 @@
 
 import { ok, strictEqual } from "node:assert/strict"
 import { describe, it } from "node:test"
-import { createShellRoutes } from "./shell.ts"
+import { createShellRoutes, resetLaunchLimits } from "./shell.ts"
 
 /**
  * A spy, never the real launcher.
@@ -17,7 +17,10 @@ import { createShellRoutes } from "./shell.ts"
  */
 const launched: string[] = []
 
-const post = async (body: unknown) => {
+const post = async (body: unknown, keepLimits = false) => {
+	// The route is rate-limited so a runaway cannot produce a wall of tabs; these tests fire many
+	// requests back to back and are asserting the URL, not the limiter.
+	if (!keepLimits) resetLaunchLimits()
 	const app = createShellRoutes(url => {
 		launched.push(url)
 	})
@@ -66,5 +69,34 @@ describe("open-in-windows", () => {
 		const r = await post({ hash: 42 })
 		if (r.status === 501) return
 		strictEqual(r.json?.url, "http://localhost:7700/")
+	})
+})
+
+/**
+ * The limiter is the reason a future runaway is survivable, so it is tested like a safety
+ * interlock rather than like a nicety: the exact thing that went wrong twice is a caller asking
+ * for a launch over and over, and the assertion is that the WORLD only sees one.
+ */
+describe("browser launches are capped", () => {
+	it("refuses a second launch inside the cooldown", async () => {
+		resetLaunchLimits()
+		const before = launched.length
+		const first = await post({ hash: "#/live" }, true)
+		if (first.status === 501) return
+		const second = await post({ hash: "#/live" }, true)
+		strictEqual(second.status, 429, "a launch inside the cooldown must be refused")
+		strictEqual(launched.length, before + 1, "exactly one window reached the world")
+	})
+
+	it("stops launching entirely once the ceiling is reached", async () => {
+		resetLaunchLimits()
+		const before = launched.length
+		// Thirty presses is what the outbreak looked like from the daemon's side.
+		for (let i = 0; i < 30; i++) await post({ hash: "#/live" }, true)
+		if (launched.length === before) return // not under WSL; the route 501s and never launches
+		ok(
+			launched.length - before <= 6,
+			`at most the ceiling may ever launch, got ${launched.length - before}`
+		)
 	})
 })
