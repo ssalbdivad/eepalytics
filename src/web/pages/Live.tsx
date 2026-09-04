@@ -38,9 +38,37 @@ const KIND_ICON: Record<string, string> = {
 const fmtClock = (sec: number): string =>
 	`${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`
 
+/**
+ * Which layout to draw.
+ *
+ * The small window and a second-monitor window want opposite things: one is glanced at for a
+ * second over a running game, the other is looked at properly and has room to breathe. Same
+ * data, genuinely different presentation — so this is a layout decision, not a font-size tweak.
+ */
+const useSize = (): "compact" | "wide" => {
+	const [size, setSize] = useState<"compact" | "wide">(() =>
+		typeof window === "undefined" || window.innerWidth < 700 ? "compact" : "wide"
+	)
+	useEffect(() => {
+		const onResize = () => setSize(window.innerWidth < 700 ? "compact" : "wide")
+		window.addEventListener("resize", onResize)
+		return () => window.removeEventListener("resize", onResize)
+	}, [])
+	return size
+}
+
+/** Frameless window, so the page provides its own controls. */
+const sendToShell = (channel: string): void => {
+	const ipc = (window as { electron?: { ipcRenderer?: { send: (c: string) => void } } }).electron
+	if (ipc?.ipcRenderer) ipc.ipcRenderer.send(channel)
+	// In a browser tab there is no shell to talk to; the buttons simply do nothing rather than
+	// throwing, because the same page is served to both.
+}
+
 export const Live = () => {
 	const [data, setData] = useState<LiveResponse | null>(null)
 	const [err, setErr] = useState<string | null>(null)
+	const size = useSize()
 
 	useEffect(() => {
 		let live = true
@@ -69,14 +97,14 @@ export const Live = () => {
 
 	if (!data)
 		return (
-			<div className="live">
+			<div className={`live live--${size}`}>
 				<div className="live__idle">connecting…</div>
 			</div>
 		)
 
 	if (!data.inGame)
 		return (
-			<div className="live">
+			<div className={`live live--${size}`}>
 				<div className="live__idle">
 					<img className="live__mark" src="/icon.svg" alt="" width={22} height={22} />
 					<strong>Not in a game</strong>
@@ -98,7 +126,7 @@ export const Live = () => {
 		)
 
 	return (
-		<div className="live">
+		<div className={`live live--${size}`}>
 			<div className="live__bar">
 				<img className="live__mark" src="/icon.svg" alt="" width={20} height={20} />
 				<span className="live__clock">{fmtClock(data.gameTimeSec ?? 0)}</span>
@@ -109,32 +137,98 @@ export const Live = () => {
 						<em>{data.score.cs} cs</em>
 					</span>
 				)}
+				<span className="live__controls">
+					<button
+						onClick={() => sendToShell("overlay:toggle-size")}
+						title="Grow onto a second monitor, or shrink back to a corner window (Ctrl+Shift+F)"
+					>
+						{size === "wide" ? "▾" : "▴"}
+					</button>
+					<button onClick={() => sendToShell("overlay:close")} title="Close (Ctrl+Shift+L)">
+						✕
+					</button>
+				</span>
 			</div>
 
-			{data.nudges.length > 0 ?
-				<ul className="live__nudges">
-					{data.nudges.map(n => (
-						<li key={n.text} className={`live__nudge live__nudge--${n.kind}`} title={n.source}>
-							<span className="live__icon">{KIND_ICON[n.kind] ?? "•"}</span>
-							{n.text}
-						</li>
-					))}
-				</ul>
-			:	<div className="live__quiet">
-					{/* Silence is a real answer. See the file header. */}
-					Nothing worth saying right now.
-				</div>
-			}
-
-			{data.focus && data.focus.length > 0 && (
-				<div className="live__focus live__focus--compact">
-					{data.focus.slice(0, 2).map(f => (
-						<div key={f.category}>
-							<b>{f.category}</b> {f.fix}
+			<div className="live__cols">
+				<div className="live__main">
+					{data.nudges.length > 0 ?
+						<ul className="live__nudges">
+							{data.nudges.map(n => (
+								<li
+									key={n.text}
+									className={`live__nudge live__nudge--${n.kind}`}
+									title={n.source}
+								>
+									<span className="live__icon">{KIND_ICON[n.kind] ?? "•"}</span>
+									<span className="live__nudge-text">{n.text}</span>
+									{/* Where it came from, shown rather than hidden in a tooltip once
+									    there is room for it — nothing on screen unattributable. */}
+									{size === "wide" && <span className="live__nudge-src">{n.source}</span>}
+								</li>
+							))}
+						</ul>
+					:	<div className="live__quiet">
+							{/* Silence is a real answer. See the file header. */}
+							{size === "wide" ?
+								"Nothing worth saying right now — that's a good sign. Keep clearing."
+							:	"Nothing worth saying right now."}
 						</div>
-					))}
+					}
+
+					{/*
+					 * Big numbers, wide mode only.
+					 *
+					 * Most of a game has nothing urgent to say, which on a monitor left three
+					 * quarters of the screen empty. These are the figures worth having glanceable
+					 * from across a desk, and they are plain readings — no derived pace estimate
+					 * between the checkpoints where a baseline actually exists.
+					 */}
+					{size === "wide" && data.score && (
+						<div className="live__stats">
+							<div className="live__stat">
+								<span className="v">{data.score.cs}</span>
+								<span className="k">CS</span>
+							</div>
+							<div className="live__stat">
+								<span className={`v ${data.score.deaths >= 3 ? "warn" : ""}`}>
+									{data.score.deaths}
+								</span>
+								<span className="k">deaths</span>
+							</div>
+							<div className="live__stat">
+								<span className="v">{data.score.level}</span>
+								<span className="k">level</span>
+							</div>
+							<div className="live__stat">
+								<span className="v">
+									{data.score.kills}/{data.score.assists}
+								</span>
+								<span className="k">kills / assists</span>
+							</div>
+						</div>
+					)}
 				</div>
-			)}
+
+				{data.focus && data.focus.length > 0 && (
+					<div
+						className={`live__focus ${size === "wide" ? "" : "live__focus--compact"}`}
+					>
+						{size === "wide" && <div className="live__focus-head">Your focus this week</div>}
+						{(size === "wide" ? data.focus : data.focus.slice(0, 2)).map(f => (
+							<div key={f.category} className="live__focus-row">
+								<b>{f.category}</b>
+								<span>{f.fix}</span>
+								{size === "wide" && (
+									<em>
+										{f.games} game{f.games === 1 ? "" : "s"}
+									</em>
+								)}
+							</div>
+						))}
+					</div>
+				)}
+			</div>
 
 			{err !== null && <div className="live__err">{err}</div>}
 		</div>

@@ -170,6 +170,63 @@ const habitNudges = (input: LiveCoachInput): Nudge[] => {
 }
 
 /**
+ * A rough farm pace between the checkpoints.
+ *
+ * `paceNudge` only speaks at 10/14/20 minutes, where a measured baseline exists — which left the
+ * first ten minutes of every game silent, and the first ten minutes are where a jungle game is
+ * usually decided.
+ *
+ * This fills the gap from `campsPerMin`, which IS measured, extrapolated across the clock. That
+ * extrapolation is a real approximation: early clears do not run at a whole-game average rate.
+ * So it is labelled "roughly", it only fires when the gap is large enough that the approximation
+ * cannot explain it, and it never appears alongside the exact checkpoint reading.
+ */
+const ROUGH_PACE_TOLERANCE = 0.75
+const EARLIEST_PACE_SEC = 4 * 60
+
+const roughPaceNudge = (input: LiveCoachInput): Nudge | null => {
+	const { live, baseline } = input
+	if (live.gameTimeSec < EARLIEST_PACE_SEC) return null
+	// Silent near a checkpoint: the measured reading is about to speak and is strictly better.
+	if (CHECKPOINTS.some(c => Math.abs(live.gameTimeSec - c.sec) <= CHECKPOINT_WINDOW_SEC)) return null
+
+	const stat = baseline?.campsPerMin
+	if (!stat || stat.n < 5 || !(stat.mean > 0)) return null
+
+	const expected = (stat.mean * live.gameTimeSec) / 60
+	if (expected <= 0 || live.cs >= expected * ROUGH_PACE_TOLERANCE) return null
+
+	return {
+		kind: "pace",
+		text: `${live.cs} CS at ${fmt(live.gameTimeSec)} — roughly ${Math.round(expected)} would be your usual rate. Get back on camps.`,
+		priority: 0.7,
+		source: `extrapolated from campsPerMin ${stat.mean.toFixed(1)}/min over ${stat.n} games — approximate between checkpoints`
+	}
+}
+
+/**
+ * Dying early, before any of the other signals have data.
+ *
+ * Separate from the habit nudge, which needs two deaths and a pro-rated average. One death in
+ * the first five minutes is already worth naming for someone whose recurring problem is deaths,
+ * and it is the point in the game where saying so can still change the next ten minutes.
+ */
+const earlyDeathNudge = (input: LiveCoachInput): Nudge | null => {
+	const { live, focus } = input
+	if (live.deaths < 1 || live.gameTimeSec > 6 * 60) return null
+	const area = focus.find(f => f.category === "deaths")
+	return {
+		kind: "safety",
+		text:
+			live.deaths === 1 ?
+				`Died once already at ${fmt(live.gameTimeSec)}. Take the safe half of the jungle and get back to even.`
+			:	`${live.deaths} deaths before ${fmt(live.gameTimeSec)}. Farm your own side until you are level 6.`,
+		priority: 0.85,
+		source: area ? `deaths is your #1 focus (${area.games} games)` : "live score"
+	}
+}
+
+/**
  * What to show right now, best first. Empty is a valid answer and a common one — an overlay
  * that always has something to say trains you to stop reading it.
  */
@@ -177,6 +234,8 @@ export const liveNudges = (input: LiveCoachInput, limit = 3): Nudge[] =>
 	[
 		...objectiveNudges(input.live),
 		...(paceNudge(input) ? [paceNudge(input)!] : []),
+		...(roughPaceNudge(input) ? [roughPaceNudge(input)!] : []),
+		...(earlyDeathNudge(input) ? [earlyDeathNudge(input)!] : []),
 		...habitNudges(input)
 	]
 		.sort((a, b) => b.priority - a.priority)

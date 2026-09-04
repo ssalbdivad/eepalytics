@@ -198,12 +198,17 @@ const createOverlay = async () => {
 	overlay = new BrowserWindow({
 		width: 380,
 		height: 300,
-		minWidth: 280,
-		minHeight: 160,
+		minWidth: 260,
+		minHeight: 150,
 		show: false,
 		frame: false,
 		resizable: true,
+		maximizable: true,
+		fullscreenable: true,
 		alwaysOnTop: true,
+		// Kept off the taskbar while it is a small always-on-top corner window; once it is
+		// maximised onto a second monitor it is a window in its own right and should be
+		// switchable to like one.
 		skipTaskbar: true,
 		backgroundColor: "#070910",
 		title: "coach",
@@ -216,6 +221,32 @@ const createOverlay = async () => {
 	overlay.once("ready-to-show", () => overlay?.show())
 	overlay.on("closed", () => {
 		overlay = null
+	})
+
+	/*
+	 * Big mode, for a second monitor.
+	 *
+	 * The small window and the big one want opposite things — one is glanced at over a game, the
+	 * other is looked at properly — so the page renders a different layout at width. Electron's
+	 * job is only to let the window get big and to stop it fighting the desktop when it does:
+	 * "always on top" and "skip taskbar" are right for a 380px corner window and wrong for a
+	 * maximised one, so they are dropped on the way up and restored on the way back down.
+	 */
+	const setBig = big => {
+		if (!overlay || overlay.isDestroyed()) return
+		overlay.setAlwaysOnTop(!big, big ? "normal" : "screen-saver")
+		overlay.setSkipTaskbar(!big)
+		if (big) overlay.maximize()
+		else overlay.unmaximize()
+	}
+	overlay.on("maximize", () => setBig(true))
+	overlay.on("unmaximize", () => setBig(false))
+
+	// The window is frameless, so there is no titlebar to double-click. The page sends this.
+	overlay.webContents.on("ipc-message", (_e, channel) => {
+		if (channel === "overlay:toggle-size")
+			setBig(!overlay?.isMaximized() && !overlay?.isFullScreen())
+		if (channel === "overlay:close") overlay?.close()
 	})
 
 	const base = isDev ? DEV_URL : daemonUrl
@@ -247,6 +278,13 @@ app.whenReady().then(async () => {
 	globalShortcut.register("CommandOrControl+Shift+L", () => {
 		if (overlay && !overlay.isDestroyed()) overlay.close()
 		else void createOverlay()
+	})
+
+	// Grow the coach onto a second monitor without reaching for a frameless window's edges.
+	globalShortcut.register("CommandOrControl+Shift+F", () => {
+		if (!overlay || overlay.isDestroyed()) return
+		if (overlay.isMaximized()) overlay.unmaximize()
+		else overlay.maximize()
 	})
 
 	app.on("activate", () => {

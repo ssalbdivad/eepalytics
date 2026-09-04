@@ -1490,3 +1490,120 @@ body.is-live {
 	.nav { gap: 2px; }
 	.nav a { padding: 6px 7px; font-size: 12px; }
 }
+
+/* ---- live: wide mode, for a second monitor ---- */
+/*
+ * Same data, a genuinely different layout. At 380px the overlay is glanced at over a running
+ * game and must be three lines. Given a monitor it should stop being a stretched postage stamp:
+ * the clock becomes readable across a desk, the nudges get room to be sentences, and the focus
+ * list becomes a column of its own rather than two truncated rows.
+ */
+
+.live--wide {
+	padding: 26px 32px;
+	gap: 20px;
+}
+.live--wide .live__bar { padding-bottom: 14px; }
+.live--wide .live__clock { font-size: 40px; }
+.live--wide .live__champ { font-size: 17px; }
+.live--wide .live__score { font-size: 19px; gap: 12px; }
+.live--wide .live__mark { width: 34px; height: 34px; }
+
+.live__cols { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.live--wide .live__cols {
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 34px;
+}
+.live--wide .live__main { flex: 1 1 auto; min-width: 0; }
+.live--wide .live__focus {
+	flex: 0 0 320px;
+	border-top: none;
+	border-left: 1px solid var(--line-soft);
+	padding: 0 0 0 24px;
+}
+
+.live--wide .live__nudge {
+	font-size: 22px;
+	line-height: 1.4;
+	align-items: baseline;
+	gap: 14px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--line-soft);
+	flex-wrap: wrap;
+}
+.live--wide .live__nudge:last-child { border-bottom: none; }
+.live--wide .live__icon { font-size: 18px; }
+.live__nudge-text { flex: 1 1 auto; min-width: 0; }
+.live__nudge-src {
+	flex-basis: 100%;
+	font-size: 11.5px;
+	color: var(--faint);
+	font-family: var(--mono);
+	padding-left: 32px;
+}
+.live--wide .live__quiet { font-size: 17px; padding: 20px 0; }
+
+.live__focus-row {
+	display: flex;
+	gap: 8px;
+	align-items: baseline;
+	flex-wrap: wrap;
+	margin-bottom: 8px;
+}
+.live__focus-row em {
+	font-style: normal;
+	font-size: 10.5px;
+	color: var(--faint);
+	font-family: var(--mono);
+}
+.live--wide .live__focus-row { display: block; margin-bottom: 15px; }
+.live--wide .live__focus-row b { display: block; margin-bottom: 3px; font-size: 13px; }
+.live--wide .live__focus-row span { display: block; font-size: 13px; line-height: 1.55; }
+/* Own line. Inline it ran straight into the end of the sentence: "...screaming.15 games". */
+.live--wide .live__focus-row em { display: block; margin-top: 3px; }
+
+/* Window controls: a frameless window has no titlebar, so the page supplies them. */
+.live__controls {
+	display: flex;
+	gap: 4px;
+	margin-left: 10px;
+	-webkit-app-region: no-drag;
+}
+.live__controls button {
+	background: none;
+	border: 1px solid var(--line);
+	color: var(--dim);
+	border-radius: 5px;
+	width: 24px;
+	height: 22px;
+	font-size: 11px;
+	line-height: 1;
+	cursor: pointer;
+	padding: 0;
+}
+.live__controls button:hover { color: var(--gold); border-color: var(--gold-dim); }
+
+/* Wide-mode stat strip: the figures worth reading from across a desk. */
+.live__stats {
+	display: flex;
+	gap: 44px;
+	margin-top: 30px;
+	padding-top: 22px;
+	border-top: 1px solid var(--line-soft);
+	flex-wrap: wrap;
+}
+.live__stat { display: flex; flex-direction: column; gap: 4px; }
+.live__stat .v {
+	font-family: var(--mono);
+	font-size: 46px;
+	line-height: 1;
+	color: var(--gold-bright);
+}
+.live__stat .v.warn { color: var(--warn); }
+.live__stat .k {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--dim);
+}
