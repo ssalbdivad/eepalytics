@@ -21,6 +21,7 @@ import type { FactInput } from "./live-facts.ts"
 
 const input = (over: Partial<FactInput> = {}): FactInput => ({
 	nowSec: 600,
+	meDeadForSec: null,
 	deadEnemies: [],
 	currentGold: null,
 	pace: null,
@@ -145,7 +146,14 @@ describe("buildFacts — rate limiting", () => {
 			"a hundred seconds later is still nagging"
 		)
 		const later = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1400 }), mem)
-		ok(later.some(f => f.includes("STILL unspent")), "four minutes on, it has earned a re-mention")
+		ok(later.some(f => f.includes("unspent for 4m")), "four minutes on, it has earned a re-mention")
+		/*
+		 * States the duration and NOTHING about its cause. The previous phrasing, "4m since you
+		 * last had a chance", was read as "since you last died" and turned into a fabricated
+		 * twelve-minutes-ago anchor — an invented number in a system whose whole premise is that
+		 * it never invents numbers.
+		 */
+		for (const f of later) strictEqual(/since you/.test(f), false, `causal anchor in: ${f}`)
 	})
 
 	it("does not restate the farm gap when his CS has not moved", () => {
@@ -216,6 +224,55 @@ describe("buildFacts — rate limiting", () => {
 })
 
 describe("buildFacts — the window", () => {
+	it("subtracts his own respawn from the window he is offered", () => {
+		/*
+		 * Regression: told a corpse "two are down, you have about 14s" while his own respawn was
+		 * 19s — he came back after they did, so the window did not exist. His timer was in the
+		 * block the whole time and was simply never read.
+		 */
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				meDeadForSec: 8,
+				deadEnemies: [
+					{ champion: "Graves", respawnSec: 30 },
+					{ champion: "Jinx", respawnSec: 28 }
+				]
+			}),
+			mem
+		)
+		ok(out[0]!.includes("up in 8s"), `must name his own respawn, got: ${out[0]}`)
+		ok(out[0]!.includes("20s of window"), `must subtract it, got: ${out[0]}`)
+	})
+
+	it("says nothing when he respawns after they do", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				meDeadForSec: 19,
+				deadEnemies: [
+					{ champion: "Graves", respawnSec: 22 },
+					{ champion: "Jinx", respawnSec: 20 }
+				]
+			}),
+			mem
+		)
+		strictEqual(
+			out.some(f => f.includes("of them are dead")),
+			false,
+			"a window he cannot reach is not a window"
+		)
+	})
+
+	it("drops a single death that ends before he is back up", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({ meDeadForSec: 20, deadEnemies: [{ champion: "Graves", respawnSec: 25 }] }),
+			mem
+		)
+		deepStrictEqual(out, [])
+	})
+
 	it("calls two enemies down as a window, not as two deaths", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(

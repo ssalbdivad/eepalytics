@@ -81,6 +81,15 @@ export const newFactMemory = (): FactMemory => ({
 
 export interface FactInput {
 	nowSec: number
+	/**
+	 * How long until HE is back up, when he is dead. Null when alive.
+	 *
+	 * Load-bearing, and it was missing. A judge found three lines telling a corpse "two are down,
+	 * you have about 14s" while his own respawn was 19s — he came back AFTER they did, so the
+	 * window it handed him did not exist. The coach was reading the enemy respawn column and
+	 * never its own player's, and the number was in the block the whole time.
+	 */
+	meDeadForSec: number | null
 	/** Enemies only — an ally's death is on his own HUD. */
 	deadEnemies: { champion: string; respawnSec: number }[]
 	currentGold: number | null
@@ -198,7 +207,12 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 			if (stepped || stale) {
 				money.push(
 					stale && !stepped ?
-						`${Math.round(input.currentGold)}g STILL unspent — ${Math.round((input.nowSec - mem.lastGoldAtSec) / 60)}m since you last had a chance`
+						/*
+					 * "since you last had a chance" was read as "since you last died" and turned
+					 * into a fabricated twelve-minutes-ago anchor. It states the duration and
+					 * nothing about its cause.
+					 */
+					`${Math.round(input.currentGold)}g unspent for ${Math.round((input.nowSec - mem.lastGoldAtSec) / 60)}m now`
 					:	`${Math.round(input.currentGold)}g sitting unspent`
 				)
 				mem.lastGoldMentioned = input.currentGold
@@ -215,15 +229,22 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * Deliberately not subject to the announce-once rule that single deaths use — the window is
 	 * the thing being reported, not the deaths, and it changes as each of them respawns.
 	 */
+	const dead = input.meDeadForSec ?? 0
 	const windowOpen = input.deadEnemies.filter(d => d.respawnSec >= WINDOW_MIN_SEC)
 	if (windowOpen.length >= 2) {
 		const shortest = Math.min(...windowOpen.map(d => d.respawnSec))
-		const key = `${windowOpen.length}@${Math.round((input.nowSec + shortest) / 4)}`
-		if (!mem.announcedDeaths.has(key)) {
-			mem.announcedDeaths.add(key)
-			windows.push(
-				`${windowOpen.length} of them are dead — you have about ${Math.round(shortest)}s`
-			)
+		// What he can actually USE: the window minus however long until he is back on his feet.
+		const usable = shortest - dead
+		if (usable >= WINDOW_MIN_SEC) {
+			const key = `${windowOpen.length}@${Math.round((input.nowSec + shortest) / 4)}`
+			if (!mem.announcedDeaths.has(key)) {
+				mem.announcedDeaths.add(key)
+				windows.push(
+					dead > 0 ?
+						`${windowOpen.length} of them are dead — you are up in ${Math.round(dead)}s with about ${Math.round(usable)}s of window left`
+					:	`${windowOpen.length} of them are dead — you have about ${Math.round(shortest)}s`
+				)
+			}
 		}
 	}
 
@@ -233,7 +254,9 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * deaths of the same champion.
 	 */
 	for (const d of [...input.deadEnemies].sort((a, b) => b.respawnSec - a.respawnSec)) {
-		if (d.respawnSec < DEATH_WORTH_SAYING_SEC) continue
+		// Same rule as the window: a death that ends before he is off the respawn screen is not
+		// a tempo opportunity, it is a fact about someone else's game.
+		if (d.respawnSec - dead < DEATH_WORTH_SAYING_SEC) continue
 		const id = `${d.champion}@${Math.round((input.nowSec + d.respawnSec) / 2)}`
 		if (mem.announcedDeaths.has(id)) continue
 		mem.announcedDeaths.add(id)
@@ -257,7 +280,15 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	soon("Herald", input.heraldBackInSec)
 
 	// A window outranks everything but praise: it is the most actionable thing a jungler gets.
-	const nonDeath = [...praise, ...windows, ...rest, ...farm, ...money]
+	/*
+	 * Windows and objectives outrank praise.
+	 *
+	 * A judge found a turn offering dragon praise, THREE enemies dead with an 18s window, and a
+	 * single death — and it chose to congratulate him on the dragon he was watching happen, then
+	 * dropped the only fact that decided the next thirty seconds. Praise is warm; a window is the
+	 * game.
+	 */
+	const nonDeath = [...windows, ...rest, ...praise, ...money, ...farm]
 
 	/*
 	 * After a death has been offered, deaths are REMOVED from the next turn, not merely demoted.
@@ -273,8 +304,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 */
 	const deathsAllowed = mem.lastLedWithDeath ? [] : deaths.slice(0, 1)
 	const ranked =
-		praise.length > 0 ?
-			[...praise, ...windows, ...rest, ...farm, ...money, ...deathsAllowed]
+		praise.length > 0 || windows.length > 0 || rest.length > 0 ?
+			[...windows, ...rest, ...praise, ...money, ...farm, ...deathsAllowed]
 		:	[...nonDeath, ...deathsAllowed]
 
 	const out = ranked.slice(0, MAX_FACTS)

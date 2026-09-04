@@ -232,6 +232,8 @@ const stateAt = (
 	const finalUnseen = buildFacts(
 		{
 			nowSec: atSec,
+			// His own respawn, from the same reconstruction the enemies' comes from.
+			meDeadForSec: meLeft ?? null,
 			deadEnemies: others
 				.filter(p => roster[p]!.teamId !== myTeam)
 				.map(p => ({ champion: roster[p]!.champion, respawnSec: deadFor(p) ?? 0 }))

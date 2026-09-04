@@ -181,6 +181,8 @@ const buildLiveState = (
 		unseen: buildFacts(
 			{
 				nowSec: secs,
+				// His own respawn — every tempo line has to be reachable by the person hearing it.
+				meDeadForSec: me.isDead ? (me.respawnTimer ?? null) : null,
 				deadEnemies: others
 					.filter(p => p.team !== mine && p.isDead && (p.respawnTimer ?? 0) > 0)
 					.map(p => ({ champion: p.championName ?? "an enemy", respawnSec: p.respawnTimer ?? 0 })),
