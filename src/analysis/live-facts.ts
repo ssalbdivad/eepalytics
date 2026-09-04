@@ -88,6 +88,16 @@ const RACE_MIN_SEC = 5 * 60
  */
 const RESTRAINT_LEVEL_GAP = 2
 
+/**
+ * Between objective calls.
+ *
+ * The timer is on his HUD, so this is a readout with one redeeming feature: it says where to BE
+ * rather than what just happened. Simulated over a full game at a shorter cooldown it was still
+ * half of everything the coach said, which is far too much weight for a number he can read. Seven
+ * minutes puts it at three or four calls a game and leaves room for the facts he cannot see.
+ */
+const OBJECTIVE_CALL_COOLDOWN_SEC = 420
+
 /** An objective is "live" for restraint purposes when it is this close. */
 const OBJECTIVE_SOON_SEC = 45
 
@@ -146,6 +156,18 @@ const FARM_MIN_CS = 70
 /** His CS must have moved at least this much before the farm gap is worth restating. */
 export const FARM_CS_MOVED = 15
 /** Gold still unspent after this long has earned a second mention on its own. */
+/**
+ * Gold must have been unspent this long before it is worth a sentence at all.
+ *
+ * He can read the number; what he cannot feel is that it has been sitting there while recalls went
+ * by. Measured over a simulated game, without this gate gold was two thirds of everything the
+ * coach said.
+ */
+export const GOLD_MIN_HELD_SEC = 150
+
+/** A reminder repeated is a nag. Three in a game is already generous. */
+export const GOLD_MAX_PER_GAME = 3
+
 export const GOLD_NAG_SEC = 240
 /** Both must have at least this long left for a multi-kill window to be worth calling. */
 export const WINDOW_MIN_SEC = 10
@@ -189,6 +211,10 @@ export interface FactMemory {
 	saidSwing: boolean
 	/** The objective deficit is a state, said once. */
 	saidObjectives: boolean
+	/** How many gold reminders this game — hard-capped, because it is the least valuable fact. */
+	goldMentions: number
+	/** When an objective timer was last called out. */
+	lastObjectiveAtSec: number
 	/** His CS when farm was last raised; it must actually move before saying it again. */
 	lastFarmCs: number
 	lastLedWithDeath: boolean
@@ -213,6 +239,8 @@ export const newFactMemory = (): FactMemory => ({
 	saidOwnDeath: false,
 	saidSwing: false,
 	saidObjectives: false,
+	goldMentions: 0,
+	lastObjectiveAtSec: 0,
 	lastFarmCs: 0,
 	lastLedWithDeath: false
 })
@@ -680,8 +708,24 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 			if (mem.goldSinceSec === 0) mem.goldSinceSec = input.nowSec
 		} else {
 			if (mem.goldSinceSec === 0) mem.goldSinceSec = input.nowSec
+			/*
+			 * HELD LONG ENOUGH TO BE NEWS, before anything else is considered.
+			 *
+			 * Simulated across a thirty-minute game, gold was 8 of the coach's 12 lines — the most
+			 * frequent thing it said and the least valuable, because the number is on his HUD. The
+			 * non-obvious part was never the amount, it is the DURATION: he can read "1280 gold",
+			 * he cannot feel that it has been sitting there for three minutes while he walked past
+			 * two recalls.
+			 *
+			 * So a gold line requires time held, always, and there is a hard cap per game. It is a
+			 * reminder, and a reminder repeated is a nag.
+			 */
+			const heldLongEnough = input.nowSec - mem.goldSinceSec >= GOLD_MIN_HELD_SEC
+			const underCap = mem.goldMentions < GOLD_MAX_PER_GAME
 			const stepped =
-				mem.lastGoldMentioned === 0 || input.currentGold - mem.lastGoldMentioned >= GOLD_STEP
+				heldLongEnough &&
+				underCap &&
+				(mem.lastGoldMentioned === 0 || input.currentGold - mem.lastGoldMentioned >= GOLD_STEP)
 			/*
 			 * A re-mention needs time AND change. Without the second condition it repeated the
 			 * same sentence word for word into a game state that had not moved a point in four
@@ -689,6 +733,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 			 * how someone learns to tune the coach out.
 			 */
 			const stale =
+				heldLongEnough &&
+				underCap &&
 				mem.lastGoldAtSec > 0 &&
 				input.nowSec - mem.lastGoldAtSec >= GOLD_NAG_SEC &&
 				input.currentGold !== mem.lastGoldMentioned
@@ -710,6 +756,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 				)
 				mem.lastGoldMentioned = input.currentGold
 				mem.lastGoldAtSec = input.nowSec
+				mem.goldMentions += 1
 			}
 		}
 	}
@@ -776,11 +823,19 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		 * dying is the only death that reliably does, and it is the only one worth that sentence.
 		 * One template applied to ten champions is how a coach stops sounding like it is watching.
 		 */
-		deaths.push(
-			d.isJungler ?
-				`their jungler is down ${Math.round(d.respawnSec)} seconds — their camps are free`
-			:	`${d.champion} is down ${Math.round(d.respawnSec)} seconds`
-		)
+		/*
+		 * ONLY the enemy jungler's death earns a sentence.
+		 *
+		 * Simulated over a full game, "X is down 28 seconds" was six of the coach's lines — and it
+		 * is a readout: the kill feed announced it, the scoreboard shows the timer. What it is NOT
+		 * is a decision, for any of the four who are not racing him. The jungler's death is the one
+		 * that changes what he should do next, because it is the one that frees a jungle.
+		 *
+		 * The others still count toward a WINDOW ("two of them are dead"), which is a different
+		 * fact about a number he cannot see at a glance. They just no longer each get a line.
+		 */
+		if (!d.isJungler) continue
+		deaths.push(`${d.champion} is down ${Math.round(d.respawnSec)} seconds — their camps are free`)
 	}
 
 	/*
@@ -793,6 +848,13 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		const key = `${label}@${Math.round((input.nowSec + sec) / 30)}`
 		if (mem.announcedEvents.has(hash(key))) return
 		mem.announcedEvents.add(hash(key))
+		/*
+		 * Objective timers are on his HUD, so they are rate-limited hard. Five drake calls in one
+		 * game was measured, and a timer he can read is the definition of a readout — it earns a
+		 * line when it is about to matter, not every time it comes round.
+		 */
+		if (input.nowSec - mem.lastObjectiveAtSec < OBJECTIVE_CALL_COOLDOWN_SEC) return
+		mem.lastObjectiveAtSec = input.nowSec
 		rest.push(sec <= 5 ? `${label} is up NOW` : `${label} is back in ${Math.round(sec)} seconds`)
 	}
 	soon("Baron", input.baronBackInSec)

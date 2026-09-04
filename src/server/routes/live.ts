@@ -184,6 +184,8 @@ const buildLiveState = (
 		factMemory.saidOwnDeath = false
 		factMemory.saidSwing = false
 		factMemory.saidObjectives = false
+		factMemory.goldMentions = 0
+		factMemory.lastObjectiveAtSec = 0
 		factMemory.sawCounterpartBuild = false
 		factMemory.seenCounterpartItems.clear()
 		factMemory.lastLedWithDeath = false

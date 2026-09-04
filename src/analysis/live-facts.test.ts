@@ -12,13 +12,26 @@ import { describe, it } from "node:test"
 import {
 	buildFacts,
 	DEATH_FACT,
+	GOLD_MIN_HELD_SEC,
 	newFactMemory,
 	FARM_COOLDOWN_SEC,
 	GOLD_NAG_SEC,
 	GOLD_STEP,
 	MAX_FACTS
 } from "./live-facts.ts"
-import type { FactInput } from "./live-facts.ts"
+import type { FactInput, FactMemory } from "./live-facts.ts"
+
+/**
+ * Let gold sit long enough to be worth saying, then return the tick at which it is.
+ *
+ * Gold requires GOLD_MIN_HELD_SEC of holding before it is ever mentioned — the amount is on his
+ * HUD and only the duration is news. Tests that use a gold line as "some other fact" have to
+ * respect that, so they prime through this rather than each inventing its own timeline.
+ */
+const holdGold = (mem: FactMemory, gold: number, crossedAt: number): number => {
+	buildFacts(input({ nowSec: crossedAt, currentGold: gold }), mem)
+	return crossedAt + GOLD_MIN_HELD_SEC
+}
 
 const input = (over: Partial<FactInput> = {}): FactInput => ({
 	nowSec: 600,
@@ -40,13 +53,13 @@ const input = (over: Partial<FactInput> = {}): FactInput => ({
 describe("buildFacts — deaths", () => {
 	it("announces a death once, not on every poll", () => {
 		const mem = newFactMemory()
-		const dead = [{ champion: "Graves", respawnSec: 30 }]
+		const dead = [{ champion: "Graves", respawnSec: 30, isJungler: true }]
 		const first = buildFacts(input({ nowSec: 600, deadEnemies: dead }), mem)
 		ok(first.some(f => f.includes("Graves")), "first sighting should be announced")
 
 		// Five seconds later the same corpse has 25s left — the SAME death, not a new one.
 		const second = buildFacts(
-			input({ nowSec: 605, deadEnemies: [{ champion: "Graves", respawnSec: 25 }] }),
+			input({ nowSec: 605, deadEnemies: [{ champion: "Graves", respawnSec: 25, isJungler: true }] }),
 			mem
 		)
 		strictEqual(
@@ -58,12 +71,12 @@ describe("buildFacts — deaths", () => {
 
 	it("treats a second death of the same champion as new", () => {
 		const mem = newFactMemory()
-		buildFacts(input({ nowSec: 600, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }), mem)
+		buildFacts(input({ nowSec: 600, deadEnemies: [{ champion: "Graves", respawnSec: 30, isJungler: true }] }), mem)
 		// A quiet turn in between: deaths alternate, and silence clears the alternation.
 		deepStrictEqual(buildFacts(input({ nowSec: 700 }), mem), [])
 		// Much later, a different death: the respawn instant is far from the first one.
 		const later = buildFacts(
-			input({ nowSec: 900, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }),
+			input({ nowSec: 900, deadEnemies: [{ champion: "Graves", respawnSec: 30, isJungler: true }] }),
 			mem
 		)
 		ok(later.some(f => f.includes("Graves")), "a genuinely new death must be announced")
@@ -71,23 +84,35 @@ describe("buildFacts — deaths", () => {
 
 	it("ignores a death that will be over before it can be said", () => {
 		const mem = newFactMemory()
-		const out = buildFacts(input({ deadEnemies: [{ champion: "Jinx", respawnSec: 5 }] }), mem)
+		const out = buildFacts(input({ deadEnemies: [{ champion: "Jinx", respawnSec: 5, isJungler: true }] }), mem)
 		deepStrictEqual(out, [])
 	})
 
 	it("drops deaths entirely from the turn after one was offered", () => {
 		const mem = newFactMemory()
+		holdGold(mem, 1500, 400)
 		const first = buildFacts(
-			input({ nowSec: 600, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }),
+			// Gold stays present across both turns; dropping it would reset the hold clock.
+			input({
+				nowSec: 600,
+				currentGold: 1500,
+				deadEnemies: [{ champion: "Graves", respawnSec: 30, isJungler: true }]
+			}),
 			mem
 		)
-		ok(DEATH_FACT.test(first[0]!), "nothing else was on offer, so the death leads")
+		// Asserts PRESENCE, not position: gold is primed here so the next turn has an alternative,
+		// and which of the two ranks higher is a different test's business.
+		ok(first.some(f => DEATH_FACT.test(f)), `the death should be offered: ${first.join(" | ")}`)
 
 		const second = buildFacts(
 			input({
 				nowSec: 640,
-				deadEnemies: [{ champion: "Jinx", respawnSec: 30 }],
-				currentGold: 1500
+				deadEnemies: [{ champion: "Jinx", respawnSec: 30, isJungler: true }],
+				currentGold: 1500,
+				// A counterpart gap rather than gold: gold correctly will not re-fire forty seconds
+				// after it was said, so it cannot serve as the alternative any more.
+				counterpart: { champion: "Kayn", cs: 100 },
+				pace: { cs: 80, expected: 90, exact: true }
 			}),
 			mem
 		)
@@ -96,11 +121,11 @@ describe("buildFacts — deaths", () => {
 			false,
 			"a death was offered last turn, so none may be offered this turn — demoting was not enough"
 		)
-		ok(second.some(f => f.includes("unspent")), "the other fact is still offered")
+		ok(second.some(f => f.includes("Kayn")), `the other fact is still offered: ${second.join(" | ")}`)
 
 		// And the turn after that, deaths are available again.
 		const third = buildFacts(
-			input({ nowSec: 700, deadEnemies: [{ champion: "Karma", respawnSec: 30 }] }),
+			input({ nowSec: 700, deadEnemies: [{ champion: "Karma", respawnSec: 30, isJungler: true }] }),
 			mem
 		)
 		ok(third.some(f => DEATH_FACT.test(f)), "alternation, not suppression")
@@ -112,10 +137,10 @@ describe("buildFacts — deaths", () => {
 		 * nothing else to report would never mention another.
 		 */
 		const mem = newFactMemory()
-		buildFacts(input({ nowSec: 600, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }), mem)
+		buildFacts(input({ nowSec: 600, deadEnemies: [{ champion: "Graves", respawnSec: 30, isJungler: true }] }), mem)
 		deepStrictEqual(buildFacts(input({ nowSec: 640 }), mem), [], "nothing to say")
 		const after = buildFacts(
-			input({ nowSec: 700, deadEnemies: [{ champion: "Jinx", respawnSec: 30 }] }),
+			input({ nowSec: 700, deadEnemies: [{ champion: "Jinx", respawnSec: 30, isJungler: true }] }),
 			mem
 		)
 		ok(after.some(f => DEATH_FACT.test(f)), "silence must clear the alternation")
@@ -123,16 +148,40 @@ describe("buildFacts — deaths", () => {
 })
 
 describe("buildFacts — rate limiting", () => {
-	it("mentions gold once, then only after another step", () => {
+	it("says nothing about gold until it has actually been sitting there", () => {
+		/*
+		 * Simulated across a full game, gold was 8 of the coach's 12 lines — the most frequent
+		 * thing it said and the least valuable, because the amount is on his HUD. What is NOT on
+		 * his HUD is that it has been there for minutes, so duration is now the gate.
+		 */
 		const mem = newFactMemory()
-		ok(buildFacts(input({ currentGold: 1300 }), mem).some(f => f.includes("unspent")))
 		strictEqual(
-			buildFacts(input({ currentGold: 1400 }), mem).some(f => f.includes("unspent")),
+			buildFacts(input({ nowSec: 300, currentGold: 1300 }), mem).some(f => f.includes("unspent")),
+			false,
+			"crossing the threshold is not news; sitting on it is"
+		)
+	})
+
+	it("mentions gold once it has been held, then only after another step", () => {
+		const mem = newFactMemory()
+		// Crossing starts the clock; the mention comes once it has been held long enough.
+		buildFacts(input({ nowSec: 300, currentGold: 1300 }), mem)
+		ok(
+			buildFacts(input({ nowSec: 300 + GOLD_MIN_HELD_SEC, currentGold: 1300 }), mem).some(f =>
+				f.includes("unspent")
+			)
+		)
+		strictEqual(
+			buildFacts(input({ nowSec: 300 + GOLD_MIN_HELD_SEC, currentGold: 1400 }), mem).some(f =>
+				f.includes("unspent")
+			),
 			false,
 			"a hundred more gold is not news"
 		)
 		ok(
-			buildFacts(input({ currentGold: 1300 + GOLD_STEP }), mem).some(f => f.includes("unspent")),
+			buildFacts(input({ nowSec: 300 + GOLD_MIN_HELD_SEC, currentGold: 1300 + GOLD_STEP }), mem).some(
+				f => f.includes("unspent")
+			),
 			"a full step later it is news again"
 		)
 	})
@@ -144,15 +193,30 @@ describe("buildFacts — rate limiting", () => {
 		 * one-shot, which is backwards — the longer it sits, the more it is worth saying.
 		 */
 		const mem = newFactMemory()
-		ok(buildFacts(input({ nowSec: 600, currentGold: 1400 }), mem).some(f => f.includes("unspent")))
+		// It CROSSES here, which starts the duration clock; the first mention waits for the hold.
+		const crossed = 600
+		buildFacts(input({ nowSec: crossed, currentGold: 1400 }), mem)
+		ok(
+			buildFacts(input({ nowSec: crossed + GOLD_MIN_HELD_SEC, currentGold: 1400 }), mem).some(f =>
+				f.includes("unspent")
+			)
+		)
 		strictEqual(
-			buildFacts(input({ nowSec: 700, currentGold: 1400 }), mem).some(f => f.includes("unspent")),
+			buildFacts(input({ nowSec: crossed + GOLD_MIN_HELD_SEC + 100, currentGold: 1400 }), mem).some(
+				f => f.includes("unspent")
+			),
 			false,
 			"a hundred seconds later is still nagging"
 		)
 		// A different figure: a re-mention needs time AND change, or it is the same sentence twice.
-		const later = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1450 }), mem)
-		ok(later.some(f => f.includes("unspent for 4 minutes")), "four minutes on, it has earned a re-mention")
+		const at = crossed + GOLD_MIN_HELD_SEC + GOLD_NAG_SEC
+		const later = buildFacts(input({ nowSec: at, currentGold: 1450 }), mem)
+		// Computed, not hardcoded: the point is that it counts from the CROSSING, not the mention.
+		const expectMin = Math.round((at - crossed) / 60)
+		ok(
+			later.some(f => f.includes(`unspent for ${expectMin} minutes`)),
+			`should count from the crossing: ${later.join(" | ")}`
+		)
 		/*
 		 * States the duration and NOTHING about its cause. The previous phrasing, "4m since you
 		 * last had a chance", was read as "since you last died" and turned into a fabricated
@@ -194,11 +258,21 @@ describe("buildFacts — rate limiting", () => {
 		 * again at 27:20, into a game state that had not moved. The player can see that is wrong.
 		 */
 		const mem = newFactMemory()
-		buildFacts(input({ nowSec: 600, currentGold: 1400 }), mem)
-		const later = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1500 }), mem)
-		ok(later.some(f => f.includes("unspent for 4 minutes")), `got: ${later.join(" | ")}`)
-		const later2 = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC * 2, currentGold: 1600 }), mem)
-		ok(later2.some(f => f.includes("unspent for 8 minutes")), `duration must keep growing: ${later2.join(" | ")}`)
+		const crossed = 600
+		buildFacts(input({ nowSec: crossed, currentGold: 1400 }), mem)
+		buildFacts(input({ nowSec: crossed + GOLD_MIN_HELD_SEC, currentGold: 1400 }), mem)
+		const at1 = crossed + GOLD_MIN_HELD_SEC + GOLD_NAG_SEC
+		const later = buildFacts(input({ nowSec: at1, currentGold: 1500 }), mem)
+		ok(
+			later.some(f => f.includes(`unspent for ${Math.round((at1 - crossed) / 60)} minutes`)),
+			`got: ${later.join(" | ")}`
+		)
+		const at2 = at1 + GOLD_NAG_SEC
+		const later2 = buildFacts(input({ nowSec: at2, currentGold: 1600 }), mem)
+		ok(
+			later2.some(f => f.includes(`unspent for ${Math.round((at2 - crossed) / 60)} minutes`)),
+			`duration must keep growing: ${later2.join(" | ")}`
+		)
 	})
 
 	it("says nothing about gold while he is on the respawn screen", () => {
@@ -209,6 +283,7 @@ describe("buildFacts — rate limiting", () => {
 
 	it("does not repeat the gold line when nothing has changed", () => {
 		const mem = newFactMemory()
+		buildFacts(input({ nowSec: 600 - GOLD_MIN_HELD_SEC, currentGold: 1400 }), mem)
 		buildFacts(input({ nowSec: 600, currentGold: 1400 }), mem)
 		deepStrictEqual(
 			buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1400 }), mem),
@@ -219,10 +294,15 @@ describe("buildFacts — rate limiting", () => {
 
 	it("forgets gold after a recall", () => {
 		const mem = newFactMemory()
-		buildFacts(input({ currentGold: 1500 }), mem)
-		buildFacts(input({ currentGold: 200 }), mem) // spent it
+		buildFacts(input({ nowSec: holdGold(mem, 1500, 300), currentGold: 1500 }), mem)
+		const spentAt = 300 + GOLD_MIN_HELD_SEC + 60
+		buildFacts(input({ nowSec: spentAt, currentGold: 200 }), mem) // spent it
+		// Accumulating again starts a NEW hold, which must also be respected.
 		ok(
-			buildFacts(input({ currentGold: 1300 }), mem).some(f => f.includes("unspent")),
+			buildFacts(
+				input({ nowSec: holdGold(mem, 1300, spentAt + 60), currentGold: 1300 }),
+				mem
+			).some(f => f.includes("unspent")),
 			"after spending, the next accumulation is news"
 		)
 	})
@@ -270,8 +350,8 @@ describe("buildFacts — the window", () => {
 			input({
 				meDeadForSec: 8,
 				deadEnemies: [
-					{ champion: "Graves", respawnSec: 30 },
-					{ champion: "Jinx", respawnSec: 28 }
+					{ champion: "Graves", respawnSec: 30, isJungler: true },
+					{ champion: "Jinx", respawnSec: 28, isJungler: true }
 				]
 			}),
 			mem
@@ -286,8 +366,8 @@ describe("buildFacts — the window", () => {
 			input({
 				meDeadForSec: 19,
 				deadEnemies: [
-					{ champion: "Graves", respawnSec: 22 },
-					{ champion: "Jinx", respawnSec: 20 }
+					{ champion: "Graves", respawnSec: 22, isJungler: true },
+					{ champion: "Jinx", respawnSec: 20, isJungler: true }
 				]
 			}),
 			mem
@@ -302,7 +382,7 @@ describe("buildFacts — the window", () => {
 	it("drops a single death that ends before he is back up", () => {
 		const mem = newFactMemory()
 		const out = buildFacts(
-			input({ meDeadForSec: 20, deadEnemies: [{ champion: "Graves", respawnSec: 25 }] }),
+			input({ meDeadForSec: 20, deadEnemies: [{ champion: "Graves", respawnSec: 25, isJungler: true }] }),
 			mem
 		)
 		deepStrictEqual(out, [])
@@ -313,8 +393,8 @@ describe("buildFacts — the window", () => {
 		const out = buildFacts(
 			input({
 				deadEnemies: [
-					{ champion: "Graves", respawnSec: 30 },
-					{ champion: "Jinx", respawnSec: 18 }
+					{ champion: "Graves", respawnSec: 30, isJungler: true },
+					{ champion: "Jinx", respawnSec: 18, isJungler: true }
 				]
 			}),
 			mem
@@ -329,8 +409,8 @@ describe("buildFacts — the window", () => {
 		const out = buildFacts(
 			input({
 				deadEnemies: [
-					{ champion: "Graves", respawnSec: 30 },
-					{ champion: "Jinx", respawnSec: 4 }
+					{ champion: "Graves", respawnSec: 30, isJungler: true },
+					{ champion: "Jinx", respawnSec: 4, isJungler: true }
 				]
 			}),
 			mem
@@ -343,8 +423,8 @@ describe("buildFacts — the window", () => {
 		const out = buildFacts(
 			input({
 				deadEnemies: [
-					{ champion: "Graves", respawnSec: 25 },
-					{ champion: "Jinx", respawnSec: 22 }
+					{ champion: "Graves", respawnSec: 25, isJungler: true },
+					{ champion: "Jinx", respawnSec: 22, isJungler: true }
 				],
 				currentGold: 3000,
 				pace: { cs: 100, expected: 140, exact: true }
@@ -367,7 +447,7 @@ describe("buildFacts — outnumbered", () => {
 			input({
 				alliesAlive: 1,
 				enemiesAlive: 4,
-				deadEnemies: [{ champion: "Graves", respawnSec: 21 }]
+				deadEnemies: [{ champion: "Graves", respawnSec: 21, isJungler: true }]
 			}),
 			mem
 		)
@@ -380,7 +460,7 @@ describe("buildFacts — outnumbered", () => {
 			input({
 				alliesAlive: 4,
 				enemiesAlive: 4,
-				deadEnemies: [{ champion: "Graves", respawnSec: 21 }]
+				deadEnemies: [{ champion: "Graves", respawnSec: 21, isJungler: true }]
 			}),
 			mem
 		)
@@ -390,8 +470,9 @@ describe("buildFacts — outnumbered", () => {
 	it("still says the things he can act on alone", () => {
 		// Being outnumbered does not make his unspent gold less true.
 		const mem = newFactMemory()
-		const out = buildFacts(input({ alliesAlive: 1, enemiesAlive: 4, currentGold: 2000 }), mem)
-		ok(out.some(f => f.includes("unspent")))
+		const at = holdGold(mem, 2000, 400)
+		const out = buildFacts(input({ nowSec: at, alliesAlive: 1, enemiesAlive: 4, currentGold: 2000 }), mem)
+		ok(out.some(f => f.includes("unspent")), `got: ${out.join(" | ")}`)
 	})
 })
 
@@ -446,9 +527,9 @@ describe("buildFacts — every string is a script", () => {
 		const out = [
 			...buildFacts(input({ myEvents: [{ id: 1, name: "DragonKill", stolen: true }] }), mem),
 			...buildFacts(input({ nowSec: 700, pace: { cs: 193, expected: 169, exact: false } }), mem),
-			...buildFacts(input({ nowSec: 800, currentGold: 2000 }), mem),
+			...buildFacts(input({ nowSec: holdGold(mem, 2000, 800), currentGold: 2000 }), mem),
 			...buildFacts(
-				input({ nowSec: 900, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }),
+				input({ nowSec: 900, deadEnemies: [{ champion: "Graves", respawnSec: 30, isJungler: true }] }),
 				mem
 			)
 		]
@@ -539,8 +620,8 @@ describe("buildFacts — ranking", () => {
 		const out = buildFacts(
 			input({
 				deadEnemies: [
-					{ champion: "Graves", respawnSec: 30 },
-					{ champion: "Jinx", respawnSec: 28 },
+					{ champion: "Graves", respawnSec: 30, isJungler: true },
+					{ champion: "Jinx", respawnSec: 28, isJungler: true },
 					{ champion: "Karma", respawnSec: 25 },
 					{ champion: "Katarina", respawnSec: 22 }
 				]
@@ -563,7 +644,7 @@ describe("buildFacts — ranking", () => {
 				myEvents: [{ id: 1, name: "ChampionKill", killStreak: 2 }],
 				pace: { cs: 100, expected: 140, exact: true },
 				currentGold: 3000,
-				deadEnemies: [{ champion: "Graves", respawnSec: 30 }],
+				deadEnemies: [{ champion: "Graves", respawnSec: 30, isJungler: true }],
 				drakeBackInSec: 40,
 				baronBackInSec: 55,
 				heraldBackInSec: null
@@ -627,7 +708,7 @@ describe("buildFacts — losing an objective", () => {
 				enemyObjectives: [baron(1490)],
 				deadEnemies: [
 					{ champion: "Jhin", respawnSec: 30 },
-					{ champion: "Ashe", respawnSec: 28 }
+					{ champion: "Ashe", respawnSec: 28, isJungler: true }
 				],
 				alliesAlive: 5,
 				enemiesAlive: 3
@@ -640,12 +721,10 @@ describe("buildFacts — losing an objective", () => {
 	it("lets normal facts back once the loss is old news", () => {
 		const mem = newFactMemory()
 		buildFacts(input({ nowSec: 1500, enemyObjectives: [baron(1490)] }), mem)
+		// The blackout is a window, not a mute button — but gold still needs its own hold.
+		const at = holdGold(mem, 3000, 1490 + 120)
 		const later = buildFacts(
-			input({
-				nowSec: 1490 + 200,
-				enemyObjectives: [baron(1490)],
-				currentGold: 3000
-			}),
+			input({ nowSec: at, enemyObjectives: [baron(1490)], currentGold: 3000 }),
 			mem
 		)
 		ok(later.length > 0, "the blackout is a window, not a mute button")
