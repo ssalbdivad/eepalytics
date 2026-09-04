@@ -200,6 +200,50 @@ const roughPaceNudge = (input: LiveCoachInput): Nudge | null => {
 }
 
 /**
+ * Farm pace as a NUMBER PAIR, for display rather than as a nudge.
+ *
+ * The nudge only speaks when something is wrong; a glanceable overlay should show the
+ * comparison continuously so it can be read at a glance from another monitor. Same honesty
+ * rules: exact at the checkpoints where a baseline was measured, and explicitly approximate
+ * between them.
+ */
+export interface PaceReading {
+	cs: number
+	/** What his own history says he would usually have by now. */
+	expected: number
+	/** True at 10/14/20 minutes, where a real baseline exists. */
+	exact: boolean
+	source: string
+}
+
+export const paceReading = (input: LiveCoachInput): PaceReading | null => {
+	const { live, baseline } = input
+	if (!baseline) return null
+
+	const mark = CHECKPOINTS.find(c => Math.abs(live.gameTimeSec - c.sec) <= CHECKPOINT_WINDOW_SEC)
+	if (mark) {
+		const stat = baseline[mark.key]
+		if (stat && stat.n >= 5)
+			return {
+				cs: live.cs,
+				expected: Math.round(stat.mean),
+				exact: true,
+				source: `your ${mark.label} average over ${stat.n} games`
+			}
+	}
+
+	if (live.gameTimeSec < EARLIEST_PACE_SEC) return null
+	const rate = baseline.campsPerMin
+	if (!rate || rate.n < 5 || !(rate.mean > 0)) return null
+	return {
+		cs: live.cs,
+		expected: Math.round((rate.mean * live.gameTimeSec) / 60),
+		exact: false,
+		source: `about ${rate.mean.toFixed(1)}/min over ${rate.n} games`
+	}
+}
+
+/**
  * What to show right now, best first. Empty is a valid answer and a common one — an overlay
  * that always has something to say trains you to stop reading it.
  */

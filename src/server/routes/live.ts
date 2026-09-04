@@ -24,7 +24,7 @@
 import { Hono } from "hono"
 import { mkdir, rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { liveNudges } from "../../analysis/live-coach.ts"
+import { liveNudges, paceReading } from "../../analysis/live-coach.ts"
 import type { LiveState } from "../../analysis/live-coach.ts"
 import { baselineFromRows, perGameMetrics } from "../../analysis/index.ts"
 import { focusAreas } from "../../analysis/focus.ts"
@@ -151,6 +151,7 @@ export const createLiveRoute = (): Hono => {
 				championName: live.championName,
 				score: { kills: live.kills, deaths: live.deaths, assists: live.assists, cs: live.cs, level: live.level },
 				nudges: liveNudges({ live, baseline, focus }),
+				pace: paceReading({ live, baseline, focus }),
 				// Always sent, so the overlay has something useful even in a quiet minute.
 				focus: focus.map(f => ({ category: f.category, games: f.games, fix: f.fixes[0] ?? "" }))
 			},

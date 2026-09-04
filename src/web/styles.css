@@ -1,5 +1,5 @@
 /*
- * coachskaffur — dark, dense, League-adjacent.
+ * fawnsei — dark, dense, League-adjacent.
  *
  * Palette notes: the golds are the client's own (#c8aa6e / #f0e6d2), the teal is hextech,
  * and the surface stack is deliberately near-black so that champion art and the minimap
@@ -1659,3 +1659,92 @@ body.is-live {
 .csk-screen__log li { display: flex; gap: 10px; align-items: baseline; font-size: 13.5px; line-height: 1.45; }
 .csk-screen__log .t { font-family: var(--mono); font-size: 10.5px; color: var(--faint); flex: none; }
 .csk-screen__log .s { color: var(--text); }
+
+/* ---- live: idle, and the always-on pace comparison ---- */
+/*
+ * Idle is most of the time this window is open. It used to render one small paragraph at any
+ * size, so a second monitor showed a corner of text and nothing else.
+ */
+.live__idlewrap { display: flex; flex-direction: column; gap: 20px; }
+.live--wide .live__idlewrap { gap: 34px; padding: 26px 0; }
+.live--wide .live__idle { flex-direction: row; align-items: center; gap: 14px; }
+.live--wide .live__idle strong { font-size: 26px; }
+.live--wide .live__idle span { font-size: 14px; }
+
+.live__bigfocus { border-top: 1px solid var(--line-soft); padding-top: 16px; }
+.live__bigfocus ol {
+	list-style: none; margin: 12px 0 0; padding: 0;
+	display: flex; flex-direction: column; gap: 14px;
+}
+.live--wide .live__bigfocus ol {
+	flex-direction: row; gap: 26px;
+}
+.live__bigfocus li {
+	border-left: 3px solid var(--gold-dim);
+	padding-left: 14px;
+	flex: 1 1 0;
+	min-width: 0;
+}
+.live__bigfocus b {
+	display: block; color: var(--gold); text-transform: capitalize;
+	font-size: 14px; margin-bottom: 5px;
+}
+.live--wide .live__bigfocus b { font-size: 19px; margin-bottom: 8px; }
+.live__bigfocus span { display: block; color: var(--text); font-size: 13px; line-height: 1.55; }
+.live--wide .live__bigfocus span { font-size: 16px; line-height: 1.5; }
+.live__bigfocus em {
+	display: block; margin-top: 6px; font-style: normal;
+	font-size: 11px; color: var(--faint); font-family: var(--mono);
+}
+
+/*
+ * The pace pair. Large enough to read from across a room, which is the whole point of putting
+ * this window on a second monitor.
+ */
+.live__pace {
+	display: flex; align-items: baseline; gap: 18px;
+	margin-top: 26px; padding-top: 20px;
+	border-top: 1px solid var(--line-soft);
+}
+.live__pace-nums { display: flex; align-items: baseline; gap: 8px; font-family: var(--mono); }
+.live__pace-nums .now { font-size: 66px; line-height: 1; color: var(--gold-bright); }
+.live__pace-nums .sep { font-size: 34px; color: var(--faint); }
+.live__pace-nums .exp { font-size: 40px; color: var(--dim); }
+.live__pace.behind .now { color: var(--warn); }
+.live__pace-label { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+.live__pace-label em {
+	display: block; font-style: normal; font-size: 11px;
+	color: var(--faint); font-family: var(--mono); cursor: help; margin-top: 3px;
+}
+
+/* ---- live wide: actually fill a monitor ---- */
+/*
+ * Sized for reading across a desk, not for a browser tab. The previous wide layout used the
+ * width but not the height, leaving the bottom half of a 1900x900 window empty while the
+ * numbers stayed browser-sized.
+ */
+.live--wide { min-height: 100vh; }
+.live--wide .live__cols { flex: 1 1 auto; }
+.live--wide .live__main { display: flex; flex-direction: column; }
+
+.live--wide .live__stats {
+	gap: 0;
+	margin-top: auto;          /* push the numbers to the bottom of the available space */
+	padding-top: 26px;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+}
+.live--wide .live__stat .v { font-size: 78px; letter-spacing: -0.02em; }
+.live--wide .live__stat .k { font-size: 12px; letter-spacing: 0.09em; }
+
+/* An objective timer is the one thing worth shouting about — it is time-critical and cheap to
+   act on, unlike everything else here. */
+.live--wide .live__nudge--objective {
+	font-size: 30px;
+	font-weight: 600;
+	color: var(--teal);
+	border-bottom: none;
+	padding: 16px 0;
+}
+.live--wide .live__nudge--objective .live__icon { font-size: 26px; }
+.live--wide .live__nudge--objective .live__nudge-src { padding-left: 42px; }

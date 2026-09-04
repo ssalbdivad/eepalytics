@@ -1,4 +1,4 @@
--- coachskaffur schema v1.
+-- fawnsei schema v1.
 --
 -- Conventions, all deliberate:
 --   * Column names are camelCase and match the domain types in src/shared/schema/domain.ts

@@ -475,7 +475,7 @@ export const launchReplay = async (
 	const watchReply = await clients.lcu.request(
 		"POST",
 		`/lol-replays/v1/rofls/${gameId}/watch`,
-		{ componentType: opts.componentType ?? "coachskaffur" }
+		{ componentType: opts.componentType ?? "fawnsei" }
 	)
 	if (watchReply.status >= 400) {
 		step({ kind: "watch-failed" }, `client refused the watch (HTTP ${watchReply.status})`)

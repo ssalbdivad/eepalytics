@@ -3,7 +3,7 @@
  *
  * The daemon runs under `systemd --user` with `StandardOutput=journal`, so stdout IS the log
  * file. One line per event, prefixed with a wall clock and a scope, so `journalctl --user -u
- * coachskaffur -f` is readable without any extra tooling.
+ * fawnsei -f` is readable without any extra tooling.
  *
  * NODE ONLY.
  */
@@ -13,7 +13,7 @@ export type LogLevel = "debug" | "info" | "warn" | "error"
 const LEVELS: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 }
 
 const envLevel = (): LogLevel => {
-	const raw = (process.env.CSK_LOG_LEVEL ?? "info").toLowerCase()
+	const raw = ((process.env.FAWNSEI_LOG_LEVEL ?? process.env.CSK_LOG_LEVEL) ?? "info").toLowerCase()
 	return raw in LEVELS ? (raw as LogLevel) : "info"
 }
 

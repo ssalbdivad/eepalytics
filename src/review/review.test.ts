@@ -186,7 +186,7 @@ test("the real AGENTS.md yields a persona from its markers, with no warnings", (
 	assert.equal(p.source, "markers", `expected marker extraction from ${PERSONA_PATH}`)
 	assert.deepEqual(p.warnings, [])
 	assert.ok(p.text.length > 2000, "the persona should be substantial")
-	assert.match(p.text, /coachskaffur/)
+	assert.match(p.text, /fawnsei/)
 	assert.match(p.text, /Faker/)
 	assert.ok(!p.text.includes("## Part 1"), "Part 1 must not leak into the system prompt")
 })
@@ -216,7 +216,7 @@ test("a missing marker pair falls back to the heading, then to the built-in pers
 
 	const none = extractPersona("# Doc\n\nnothing here", "test.md")
 	assert.equal(none.source, "fallback")
-	assert.match(none.text, /coachskaffur/)
+	assert.match(none.text, /fawnsei/)
 	assert.ok(none.warnings.length > 0)
 })
 
@@ -236,7 +236,7 @@ test("the game prompt prints every citable id, plus the data gaps", () => {
 	for (const m of digest.metrics) assert.ok(built.user.includes(m.key), `metric key ${m.key} missing from prompt`)
 	for (const gap of digest.dataGaps) assert.ok(built.user.includes(gap), `data gap "${gap}" missing from prompt`)
 	assert.match(built.user, /once per 60 seconds/)
-	assert.ok(built.system.includes("coachskaffur"))
+	assert.ok(built.system.includes("fawnsei"))
 })
 
 test("the prompt names map zones rather than raw coordinates", () => {
@@ -550,13 +550,13 @@ ${bodyJs}
 }
 
 const withStub = async <T>(bin: string, fn: () => Promise<T>): Promise<T> => {
-	const prev = process.env.CSK_CLAUDE_BIN
-	process.env.CSK_CLAUDE_BIN = bin
+	const prev = (process.env.FAWNSEI_CLAUDE_BIN ?? process.env.CSK_CLAUDE_BIN)
+	process.env.FAWNSEI_CLAUDE_BIN = bin
 	try {
 		return await fn()
 	} finally {
-		if (prev === undefined) delete process.env.CSK_CLAUDE_BIN
-		else process.env.CSK_CLAUDE_BIN = prev
+		if (prev === undefined) delete process.env.FAWNSEI_CLAUDE_BIN
+		else process.env.FAWNSEI_CLAUDE_BIN = prev
 	}
 }
 
@@ -564,7 +564,7 @@ const call = (over: Record<string, unknown> = {}) =>
 	runCoach({ system: "sys", user: "usr", model: "test-model", schema: { type: "object" }, label: "test", ...over })
 
 // Never write data/logs/coach.jsonl from the test suite.
-process.env.CSK_COACH_LOG = "0"
+process.env.FAWNSEI_COACH_LOG = "0"
 
 test("runCoach parses a good CLI response and records usage", async () => {
 	const good = stubCli(

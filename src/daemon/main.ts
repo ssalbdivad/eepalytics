@@ -1,5 +1,5 @@
 /**
- * coachskaffur daemon — the entry point.
+ * fawnsei daemon — the entry point.
  *
  * One process. It owns SQLite, the job queue, the League-client connection and the HTTP+SSE
  * server, because the daemon has to run whether or not a browser tab is open and a Hono app is
@@ -64,7 +64,8 @@ const KV_LAST_SYNC = "lastSyncMs"
  * meant to run, so the kernel release string is the detection that actually works there.
  */
 const serverHost = (): string => {
-	if (process.env.CSK_HOST) return process.env.CSK_HOST
+	const configured = process.env.FAWNSEI_HOST ?? process.env.CSK_HOST
+	if (configured) return configured
 	let osRelease = ""
 	try {
 		osRelease = readFileSync("/proc/sys/kernel/osrelease", "utf8")
@@ -100,8 +101,8 @@ const warnings = (): string[] => {
 
 export const startDaemon = async (): Promise<DaemonContext> => {
 	const startedMs = Date.now()
-	setLogLevel((process.env.CSK_LOG_LEVEL as "info") ?? "info")
-	log.info("coachskaffur daemon starting", {
+	setLogLevel(((process.env.FAWNSEI_LOG_LEVEL ?? process.env.CSK_LOG_LEVEL) as "info") ?? "info")
+	log.info("fawnsei daemon starting", {
 		version: DAEMON_VERSION,
 		node: process.version,
 		db: DB_PATH

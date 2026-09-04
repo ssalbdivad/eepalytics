@@ -404,7 +404,7 @@ const EmptyState = ({
 						<ol>
 							<li>
 								Start it: <code className="mono">pnpm daemon</code> (or{" "}
-								<code className="mono">systemctl --user start coachskaffur</code>)
+								<code className="mono">systemctl --user start fawnsei</code>)
 							</li>
 							<li>
 								Check it: <code className="mono">pnpm doctor</code>

@@ -186,7 +186,7 @@ export interface ResearchResult {
 	durationMs: number
 }
 
-const CLI_TIMEOUT_MS = Number(process.env.CSK_RESEARCH_TIMEOUT_MS ?? 300_000)
+const CLI_TIMEOUT_MS = Number((process.env.FAWNSEI_RESEARCH_TIMEOUT_MS ?? process.env.CSK_RESEARCH_TIMEOUT_MS) ?? 300_000)
 
 /**
  * Run one research pass. Never throws — champion context is an enhancement, and a review must
@@ -219,7 +219,7 @@ export const researchChampion = async (
 		clearKnowledgeCache()
 	}
 
-	const bin = process.env.CSK_CLAUDE_BIN ?? "claude"
+	const bin = (process.env.FAWNSEI_CLAUDE_BIN ?? process.env.CSK_CLAUDE_BIN) ?? "claude"
 	const args = [
 		"--print",
 		"--output-format",

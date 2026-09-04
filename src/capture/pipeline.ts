@@ -351,10 +351,35 @@ const captureOne = async (
 			)
 	}
 
-	/** Re-applied after every seek, because a seek moves the camera. */
+	/**
+	 * Re-applied after every seek, because a seek moves the camera — and READ BACK, because
+	 * this has now been wrong twice in ways a write-only call could not reveal.
+	 *
+	 * The engine silently ignores fields it does not accept, so "we sent it" proves nothing.
+	 * Comparing what comes back turns the next failure into evidence instead of another guess.
+	 */
 	const aim = async (): Promise<void> => {
-		await session.setRender(frameMoment(moment, { cal: o.cal, selectionName }))
+		const want = frameMoment(moment, { cal: o.cal, selectionName })
+		await session.setRender(want)
 		await sleep(CAMERA_SETTLE_MS, o.signal)
+
+		if (!selectionName) return
+		const got = await session.getRender().catch(() => null)
+		if (got === null) {
+			o.onNote?.("could not read the render state back to confirm the camera lock")
+			return
+		}
+		const stuck: string[] = []
+		const gotSelection = typeof got.selectionName === "string" ? got.selectionName : ""
+		if (gotSelection.toLowerCase() !== selectionName.toLowerCase())
+			stuck.push(`selectionName=${JSON.stringify(got.selectionName ?? null)}`)
+		if (got.cameraMode !== want.cameraMode) stuck.push(`cameraMode=${JSON.stringify(got.cameraMode)}`)
+		if (got.cameraAttached !== true) stuck.push(`cameraAttached=${JSON.stringify(got.cameraAttached)}`)
+		if (stuck.length > 0)
+			o.onNote?.(
+				`camera did not take: asked for selectionName=${selectionName} ` +
+					`cameraMode=${want.cameraMode} cameraAttached=true, engine reports ${stuck.join(" ")}`
+			)
 	}
 
 	await aim()

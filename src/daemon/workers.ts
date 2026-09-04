@@ -192,7 +192,9 @@ export const startWorkers = (opts: { normal?: number } = {}): WorkerPool => {
 			const roflPath =
 				game?.replayPath ?? (game ? roflPathFor(game.gameId, game.platformId) : null)
 
-			const verdict = await canRunIntrusive(settings, roflPath)
+			const requestedByUser =
+				(next.payload as { requestedByUser?: unknown } | null)?.requestedByUser === true
+			const verdict = await canRunIntrusive(settings, roflPath, undefined, requestedByUser)
 			lastGateReason = verdict.ok ? null : verdict.reason
 			if (!verdict.ok) {
 				const claimed = claim({
@@ -249,6 +251,22 @@ export const startWorkers = (opts: { normal?: number } = {}): WorkerPool => {
 	// Anything a previous run was holding when it died comes back now.
 	sweep()
 
+	/*
+	 * ...and every 30s thereafter, which the sweep docstring always claimed but nothing did.
+	 *
+	 * `sweep()` was called on boot only. A job whose hard deadline passed therefore stayed in
+	 * `deferred` for the life of the daemon: `claim()` correctly refuses to run it, but nothing
+	 * moved it to `expired`. On the Queue screen that read as a row filed under "Waiting" whose
+	 * own status line ended in "expired" — a contradiction the user reasonably found baffling.
+	 */
+	const sweepTimer = setInterval(() => {
+		if (stopping) return
+		const result = sweep()
+		if (result.expired > 0 || result.reclaimed > 0)
+			log.info("swept", { expired: result.expired, reclaimed: result.reclaimed })
+	}, 30_000)
+	sweepTimer.unref?.()
+
 	for (let i = 0; i < normalCount; i++) loops.push(normalLoop(i + 1))
 	loops.push(intrusiveLoop())
 	log.info("worker pool started", { normal: normalCount, intrusive: 1 })
@@ -268,6 +286,7 @@ export const startWorkers = (opts: { normal?: number } = {}): WorkerPool => {
 		stop: async (graceMs = 5_000) => {
 			if (stopping) return
 			stopping = true
+			clearInterval(sweepTimer)
 			log.info("worker pool stopping", { inFlight: inFlight.size })
 			shutdown.abort()
 			const deadline = Date.now() + graceMs

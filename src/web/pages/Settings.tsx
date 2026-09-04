@@ -446,7 +446,7 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 					:	null}
 
 					<div className="faint" style={{ fontSize: 11.5, marginTop: 12 }}>
-						Logs: <code className="mono">journalctl --user -u coachskaffur -f</code> · doctor:{" "}
+						Logs: <code className="mono">journalctl --user -u fawnsei -f</code> · doctor:{" "}
 						<code className="mono">pnpm doctor</code>
 					</div>
 				</div>

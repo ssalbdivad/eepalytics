@@ -1,4 +1,4 @@
-# coachskaffur — Stack & Background Daemon
+# fawnsei — Stack & Background Daemon
 
 Research phase deliverable. Every number below was measured on this machine on 2026-09-02.
 Anything I could not run is explicitly labelled **UNVERIFIED**.
@@ -530,7 +530,7 @@ raw dd 200MB: ext4 855 MB/s   |   9p 118 MB/s
 
 **SQLite on `/mnt/c` is 26x slower** for transactional writes; raw throughput is 7x worse.
 
-**Rule: all application data lives on ext4 under `~/.local/share/coachskaffur/`. `/mnt/c` is
+**Rule: all application data lives on ext4 under `~/.local/share/fawnsei/`. `/mnt/c` is
 read-only territory** — we only ever read the lockfile and copy `.rofl` files out of it.
 
 ### 6.2 SQLite vs plain JSON files — decision: **both, split by role**
@@ -594,7 +594,7 @@ delete. Track deletion in the DB so the UI can show "replay expired" rather than
 ### 6.3 On-disk layout
 
 ```
-~/.local/share/coachskaffur/
+~/.local/share/fawnsei/
 ├── csk.db                  # SQLite (WAL mode)
 ├── csk.db-wal
 ├── csk.db-shm
@@ -819,7 +819,7 @@ does not force a re-review, and changing the prompt does not force re-parsing ti
 
 ```
  systemd --user
-   └── coachskaffur.service            [WSL, ext4, Node 25]
+   └── fawnsei.service            [WSL, ext4, Node 25]
         │  owns: SQLite, job queue, HTTP+SSE on 127.0.0.1:7700, static UI
         │
         └── spawns: node.exe bridge    [Windows, C:\Program Files\nodejs\node.exe]
@@ -862,28 +862,28 @@ restarts=13 newPID=13886 active=active
 enabled** (`/var/lib/systemd/linger/ssalb` exists), so the unit starts without an interactive
 login. Cleaned up afterwards.
 
-**Recommended unit** (`~/.config/systemd/user/coachskaffur.service`):
+**Recommended unit** (`~/.config/systemd/user/fawnsei.service`):
 
 ```ini
 [Unit]
-Description=coachskaffur — League coaching daemon
+Description=fawnsei — League coaching daemon
 After=default.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/coachskaffur
+WorkingDirectory=%h/fawnsei
 # Do NOT hardcode the nvm path — it breaks on the next `nvm install`.
-ExecStart=%h/coachskaffur/scripts/run-daemon.sh
+ExecStart=%h/fawnsei/scripts/run-daemon.sh
 Restart=always
 RestartSec=3
 # Do not spin if it is crash-looping on a real bug.
 StartLimitIntervalSec=120
 StartLimitBurst=6
 Environment=NODE_ENV=production
-Environment=CSK_DATA_DIR=%h/.local/share/coachskaffur
+Environment=CSK_DATA_DIR=%h/.local/share/fawnsei
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=coachskaffur
+SyslogIdentifier=fawnsei
 
 [Install]
 WantedBy=default.target
@@ -898,8 +898,8 @@ export NVM_DIR="$HOME/.nvm"
 exec node --experimental-strip-types --no-warnings=ExperimentalWarning src/daemon/main.ts
 ```
 
-Install: `systemctl --user enable --now coachskaffur`.
-Logs: `journalctl --user -u coachskaffur -f`.
+Install: `systemctl --user enable --now fawnsei`.
+Logs: `journalctl --user -u fawnsei -f`.
 
 **Why systemd over pm2:** pm2 is not installed, would be a new global dependency, and duplicates
 what systemd already does correctly here. Verified working beats one more supervisor.
@@ -1158,7 +1158,7 @@ Do **not** poll `tasklist.exe` (230 ms) on any interval; use it only on state tr
 ## 9. Repo layout
 
 ```
-coachskaffur/
+fawnsei/
 ├── AGENTS.md                          # shared agent guidance (Codex/Cursor/Claude all read this)
 ├── CLAUDE.md                          # one line: @AGENTS.md
 ├── README.md                          # setup, systemd install, troubleshooting
@@ -1175,7 +1175,7 @@ coachskaffur/
 │   └── doctor.ts                      # preflight: lockfile, bridge, node.exe, ffmpeg, disk, DB
 │
 ├── systemd/
-│   └── coachskaffur.service           # unit template installed to ~/.config/systemd/user/
+│   └── fawnsei.service           # unit template installed to ~/.config/systemd/user/
 │
 ├── src/
 │   ├── shared/                        # imported by BOTH daemon and web — no Node-only imports
@@ -1282,7 +1282,7 @@ coachskaffur/
 
 ```jsonc
 {
-  "name": "coachskaffur",
+  "name": "fawnsei",
   "private": true,
   "type": "module",
   "engines": { "node": ">=25" },
@@ -1297,8 +1297,8 @@ coachskaffur/
     "db:migrate": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/db/index.ts --migrate",
     "service:install": "bash scripts/install-service.sh",
     "service:uninstall": "bash scripts/uninstall-service.sh",
-    "service:logs": "journalctl --user -u coachskaffur -f",
-    "service:restart": "systemctl --user restart coachskaffur",
+    "service:logs": "journalctl --user -u fawnsei -f",
+    "service:restart": "systemctl --user restart fawnsei",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test src/**/*.test.ts"
   },
@@ -1331,7 +1331,7 @@ bounce a running capture.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
-│ coachskaffur          ● LCU connected   ● 2 jobs running      [Settings] [Queue]│
+│ fawnsei          ● LCU connected   ● 2 jobs running      [Settings] [Queue]│
 ├────────────────────────────────────────────────────────────────────────────────┤
 │  Filter: [All ▾] [Ranked Solo ▾] [Last 30 days ▾]          Search: [________]  │
 ├────────────────────────────────────────────────────────────────────────────────┤
@@ -1452,7 +1452,7 @@ This screen exists mainly to make deferral legible. `gate_reason` rendered verba
 │  Focus areas      [x] laning [x] vision [x] macro [ ] mechanics                │
 │                                                                                │
 │ DATA                                                                           │
-│  Data directory   ~/.local/share/coachskaffur          17 MB json · 1 replay   │
+│  Data directory   ~/.local/share/fawnsei          17 MB json · 1 replay   │
 │  Keep replays for [14] days                            [Prune now]             │
 │  Telemetry        [x] sample live game data (adds item build timings)          │
 │                                                                                │

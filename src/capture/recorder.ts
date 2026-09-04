@@ -25,8 +25,8 @@ import { CaptureError, type ReplayCodec, type ReplayRecording } from "./types.ts
 /* ================================================================= paths */
 
 /** Staging area on the Windows side. The game writes here; we read and then delete. */
-export const STAGE_WIN = "C:\\Users\\ssalb\\coachskaffur-captures"
-export const STAGE_WSL = "/mnt/c/Users/ssalb/coachskaffur-captures"
+export const STAGE_WIN = "C:\\Users\\ssalb\\fawnsei-captures"
+export const STAGE_WSL = "/mnt/c/Users/ssalb/fawnsei-captures"
 
 /**
  * `/mnt/c/Users/x` -> `C:\Users\x`. Pure, so it is testable; exact for the `/mnt/<drive>/`

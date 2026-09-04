@@ -94,6 +94,8 @@ export interface GateState {
 	settings: Pick<Settings, "captureEnabled" | "idleGraceMs">
 	/** G8 */
 	otherIntrusiveRunning: boolean
+	/** True when a human clicked "capture" for this job, which satisfies G5 on its own. */
+	userRequested?: boolean
 	/** G9 */
 	roflOnDisk: boolean
 	/** Whether the client answered at all. */
@@ -145,7 +147,16 @@ export const evaluateGate = (s: GateState): GateVerdict => {
 			failed.push("G4")
 			reasons.push("the in-game API on port 2999 is answering")
 		}
-		if (isIdlePhase(s.phase) && s.idleForMs < s.settings.idleGraceMs) {
+		/*
+		 * G5 exists to prove a capture is not hijacking an unattended client — that the user
+		 * really has stopped playing rather than being between two actions. A DELIBERATE CLICK
+		 * is that proof, so a user-requested capture skips the wait entirely.
+		 *
+		 * Every other gate still applies: in a game, a replay already open, the in-game API
+		 * answering, no .rofl on disk. Those are about whether capture CAN run safely; G5 is
+		 * only about whether the user meant it, and here they said so.
+		 */
+		if (!s.userRequested && isIdlePhase(s.phase) && s.idleForMs < s.settings.idleGraceMs) {
 			failed.push("G5")
 			reasons.push(
 				`only idle for ${Math.round(s.idleForMs / 1000)}s of the required ${Math.round(
@@ -186,7 +197,8 @@ export const evaluateGate = (s: GateState): GateVerdict => {
 export const readGateState = async (
 	settings: Settings,
 	roflPath: string | null,
-	exceptJobId?: number
+	exceptJobId?: number,
+	userRequested = false
 ): Promise<GateState> => {
 	let snapshot = {
 		phase: null as string | null,
@@ -227,6 +239,7 @@ export const readGateState = async (
 			idleGraceMs: settings.idleGraceMs
 		},
 		otherIntrusiveRunning: intrusiveJobRunning(exceptJobId),
+		userRequested,
 		roflOnDisk: roflExistsOnDisk(roflPath),
 		reachable: snapshot.reachable
 	}
@@ -246,8 +259,10 @@ export const readGateState = async (
 export const canRunIntrusive = async (
 	settings: Settings,
 	roflPath: string | null,
-	exceptJobId?: number
-): Promise<GateVerdict> => evaluateGate(await readGateState(settings, roflPath, exceptJobId))
+	exceptJobId?: number,
+	userRequested = false
+): Promise<GateVerdict> =>
+	evaluateGate(await readGateState(settings, roflPath, exceptJobId, userRequested))
 
 /* =============================================================== aborts */
 

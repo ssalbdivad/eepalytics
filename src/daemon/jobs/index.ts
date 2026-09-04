@@ -51,7 +51,8 @@ const runReplayCapture = async (ctx: JobContext): Promise<JobOutcome> => {
 				const verdict = await canRunIntrusive(
 					getSettings(),
 					game?.replayPath ?? roflPathFor(gameId, game?.platformId),
-					ctx.job.id
+					ctx.job.id,
+					(ctx.job.payload as { requestedByUser?: unknown } | null)?.requestedByUser === true
 				)
 				return { allowed: verdict.ok, reason: verdict.reason }
 			}

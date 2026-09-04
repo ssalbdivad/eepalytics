@@ -6,6 +6,17 @@
 const env: Record<string, string | undefined> =
 	typeof process !== "undefined" && process.env ? process.env : {}
 
+/**
+ * Read a `FAWNSEI_*` setting, falling back to the old `CSK_*` name.
+ *
+ * The app was called fawnsei and its environment variables still carry that abbreviation.
+ * Renaming them outright would silently ignore any value a user already has exported — the
+ * variable would simply stop being read, with no error — so both spellings are accepted and the
+ * new one wins. The old names can be dropped once nothing sets them.
+ */
+const setting = (name: string): string | undefined =>
+	env[`FAWNSEI_${name}`] ?? env[`CSK_${name}`]
+
 /** Bump to invalidate derived metrics + moments for every game. */
 export const ANALYSIS_VERSION = 3
 
@@ -16,11 +27,26 @@ export const REVIEW_VERSION = 6
 export const SCHEMA_VERSION = 7
 
 /** Hono listens here; vite dev proxies /api + /media to it. */
-export const SERVER_PORT = Number(env.CSK_PORT ?? 7700)
-export const SERVER_HOST = env.CSK_HOST ?? "127.0.0.1"
+export const SERVER_PORT = Number(setting("PORT") ?? 7700)
+export const SERVER_HOST = setting("HOST") ?? "127.0.0.1"
 
-/** Everything we write lives on ext4. /mnt/c is read-only territory (26x slower for SQLite). */
-export const DATA_DIR = env.CSK_DATA_DIR ?? "/home/ssalb/coachskaffur/data"
+/**
+ * Everything we write lives on ext4. /mnt/c is read-only territory (26x slower for SQLite).
+ *
+ * Derived from the process's working directory rather than an absolute path with the app's own
+ * name baked into it — that hardcoded path was `/home/ssalb/coachskaffur/data`, so renaming the
+ * checkout would have silently pointed the app at a directory that does not exist and looked
+ * like total data loss.
+ */
+export const DATA_DIR =
+	setting("DATA_DIR") ??
+	(typeof process !== "undefined" && process.cwd ? `${process.cwd()}/data` : "data")
+
+/**
+ * Still `csk.db`. Renaming the file would orphan an existing database for no user-visible gain —
+ * nobody sees this filename — and a rename while the daemon holds the handle open is a real risk
+ * for a purely cosmetic change.
+ */
 export const DB_PATH = `${DATA_DIR}/csk.db`
 export const BLOBS_DIR = `${DATA_DIR}/blobs`
 export const MEDIA_DIR = `${DATA_DIR}/media`
@@ -28,7 +54,7 @@ export const REPLAYS_DIR = `${DATA_DIR}/replays`
 export const LOGS_DIR = `${DATA_DIR}/logs`
 
 /** League install (Windows, reached through /mnt/c). */
-export const LEAGUE_DIR = env.CSK_LEAGUE_DIR ?? "/mnt/c/Games/Riot Games/League of Legends"
+export const LEAGUE_DIR = setting("LEAGUE_DIR") ?? "/mnt/c/Games/Riot Games/League of Legends"
 /** NOTE: this file has NO trailing newline. `name:pid:PORT:PASSWORD:https` */
 export const LOCKFILE_PATH = `${LEAGUE_DIR}/lockfile`
 
@@ -50,8 +76,8 @@ export const LIVE_CLIENT_PORT = 2999
 export const LIVE_CLIENT_ORIGIN = `https://127.0.0.1:${LIVE_CLIENT_PORT}`
 
 /** The user. Verified this session. */
-export const USER_PUUID = env.CSK_PUUID ?? "188dee22-18d6-5752-ba7f-b69cf3d2506e"
-export const USER_RIOT_ID = env.CSK_RIOT_ID ?? "Gooskaffur#NA1"
+export const USER_PUUID = setting("PUUID") ?? "188dee22-18d6-5752-ba7f-b69cf3d2506e"
+export const USER_RIOT_ID = setting("RIOT_ID") ?? "Gooskaffur#NA1"
 export const USER_GAME_NAME = "Gooskaffur"
 export const USER_TAG_LINE = "NA1"
 export const USER_SUMMONER_ID = 122474706

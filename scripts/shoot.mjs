@@ -18,7 +18,7 @@ import { app, BrowserWindow } from "electron"
 import { writeFileSync } from "node:fs"
 
 const [out = "/tmp/shot.png", route = "#/games", w = "1500", h = "1000"] = process.argv.slice(2)
-const BASE = process.env.CSK_SHOT_BASE ?? "http://127.0.0.1:7700"
+const BASE = (process.env.FAWNSEI_SHOT_BASE ?? process.env.CSK_SHOT_BASE) ?? "http://127.0.0.1:7700"
 
 app.disableHardwareAcceleration()
 

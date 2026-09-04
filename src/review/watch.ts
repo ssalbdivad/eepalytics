@@ -36,7 +36,7 @@ import { errText, makeLogger } from "../daemon/log.ts"
 
 const log = makeLogger("watch")
 
-const CLI_TIMEOUT_MS = Number(process.env.CSK_WATCH_TIMEOUT_MS ?? 300_000)
+const CLI_TIMEOUT_MS = Number((process.env.FAWNSEI_WATCH_TIMEOUT_MS ?? process.env.CSK_WATCH_TIMEOUT_MS) ?? 300_000)
 
 export interface WatchFrame {
 	/** Absolute path the CLI will Read. */
@@ -126,8 +126,8 @@ frames genuinely show nothing worth coaching, say that in one sentence instead o
  */
 export const watchMoment = async (input: WatchInput, signal?: AbortSignal): Promise<WatchResult> => {
 	const started = Date.now()
-	const bin = process.env.CSK_CLAUDE_BIN ?? "claude"
-	const model = process.env.CSK_COACH_MODEL ?? "claude-sonnet-5"
+	const bin = (process.env.FAWNSEI_CLAUDE_BIN ?? process.env.CSK_CLAUDE_BIN) ?? "claude"
+	const model = (process.env.FAWNSEI_COACH_MODEL ?? process.env.CSK_COACH_MODEL) ?? "claude-sonnet-5"
 
 	if (input.frames.length === 0)
 		return { ok: false, text: "", error: "no frames to look at", durationMs: 0 }

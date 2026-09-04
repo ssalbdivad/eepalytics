@@ -105,7 +105,7 @@ export interface LcuBridgeOptions {
 export const findWindowsNode = async (override?: string): Promise<string | null> => {
 	const candidates = [
 		override,
-		process.env.CSK_WIN_NODE,
+		(process.env.FAWNSEI_WIN_NODE ?? process.env.CSK_WIN_NODE),
 		...WIN_NODE_CANDIDATES
 	].filter((c): c is string => typeof c === "string" && c.length > 0)
 	for (const candidate of candidates) {
@@ -308,7 +308,7 @@ export class LcuBridge extends EventEmitter implements LcuTransport {
 			"--live-port",
 			String(LIVE_CLIENT_PORT)
 		]
-		if (process.env.CSK_BRIDGE_DEBUG === "1") args.push("--debug")
+		if (process.env.FAWNSEI_BRIDGE_DEBUG === "1") args.push("--debug")
 
 		let child: ChildProcessWithoutNullStreams
 		try {

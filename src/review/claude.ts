@@ -154,15 +154,15 @@ export type CoachResult =
 
 /* ========================================================== constants */
 
-const DEFAULT_MODEL = process.env.CSK_COACH_MODEL ?? "claude-sonnet-5"
-const DEFAULT_TIMEOUT_MS = Number(process.env.CSK_COACH_TIMEOUT_MS ?? 240_000)
-const DEFAULT_EFFORT = (process.env.CSK_COACH_EFFORT ?? "medium") as CoachEffort
-const DEFAULT_SCHEMA_MODE = (process.env.CSK_COACH_SCHEMA_MODE ?? "on-retry") as SchemaMode
+const DEFAULT_MODEL = (process.env.FAWNSEI_COACH_MODEL ?? process.env.CSK_COACH_MODEL) ?? "claude-sonnet-5"
+const DEFAULT_TIMEOUT_MS = Number((process.env.FAWNSEI_COACH_TIMEOUT_MS ?? process.env.CSK_COACH_TIMEOUT_MS) ?? 240_000)
+const DEFAULT_EFFORT = ((process.env.FAWNSEI_COACH_EFFORT ?? process.env.CSK_COACH_EFFORT) ?? "medium") as CoachEffort
+const DEFAULT_SCHEMA_MODE = ((process.env.FAWNSEI_COACH_SCHEMA_MODE ?? process.env.CSK_COACH_SCHEMA_MODE) ?? "on-retry") as SchemaMode
 const DEFAULT_MAX_ATTEMPTS = 2
 /** Read per call, not at module load, so a test or a setting can redirect it. */
-const cliBin = (): string => process.env.CSK_CLAUDE_BIN ?? "claude"
+const cliBin = (): string => (process.env.FAWNSEI_CLAUDE_BIN ?? process.env.CSK_CLAUDE_BIN) ?? "claude"
 /** `CSK_COACH_LOG=0` silences both the console line and the JSONL file (used by the tests). */
-const logEnabled = (): boolean => process.env.CSK_COACH_LOG !== "0"
+const logEnabled = (): boolean => (process.env.FAWNSEI_COACH_LOG ?? process.env.CSK_COACH_LOG) !== "0"
 const LOG_PATH = `${LOGS_DIR}/coach.jsonl`
 const ANTHROPIC_VERSION = "2023-06-01"
 

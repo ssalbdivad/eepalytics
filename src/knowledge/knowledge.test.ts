@@ -18,7 +18,7 @@ const withKnowledge = (files: Record<string, string>) => {
 	mkdirSync(join(root, "champions"), { recursive: true })
 	for (const [name, body] of Object.entries(files))
 		writeFileSync(join(root, "champions", name), body)
-	process.env.CSK_KNOWLEDGE_DIR = root
+	process.env.FAWNSEI_KNOWLEDGE_DIR = root
 	return root
 }
 
@@ -31,7 +31,7 @@ const freshModule = async () => {
 
 afterEach(() => {
 	for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true })
-	delete process.env.CSK_KNOWLEDGE_DIR
+	delete process.env.FAWNSEI_KNOWLEDGE_DIR
 })
 
 describe("championKey", () => {
@@ -66,7 +66,7 @@ describe("championNote", () => {
 	})
 
 	it("returns null when there is no knowledge directory at all", async () => {
-		process.env.CSK_KNOWLEDGE_DIR = join(tmpdir(), "csk-does-not-exist-ever")
+		process.env.FAWNSEI_KNOWLEDGE_DIR = join(tmpdir(), "fawnsei-does-not-exist-ever")
 		const { championNote } = await freshModule()
 		strictEqual(championNote("Lillia"), null)
 	})

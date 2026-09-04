@@ -1,5 +1,5 @@
 {
-  "name": "coachskaffur",
+  "name": "fawnsei",
   "private": true,
   "type": "module",
   "engines": {
@@ -16,7 +16,7 @@
     "seed": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/dev-seed.ts",
     "rofl": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/rofl/decode.ts",
     "service:install": "bash scripts/install-service.sh",
-    "service:logs": "journalctl --user -u coachskaffur -f",
+    "service:logs": "journalctl --user -u fawnsei -f",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
     "app": "pnpm build && electron .",

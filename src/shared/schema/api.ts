@@ -167,7 +167,12 @@ export const LiveResponse = type({
 		level: "number"
 	}),
 	nudges: LiveNudge.array(),
-	"focus?": type({ category: "string", games: "number", fix: "string" }).array()
+	"focus?": type({ category: "string", games: "number", fix: "string" }).array(),
+	/**
+	 * Farm against his own history, for continuous display rather than as an alert.
+	 * `exact` is false between the checkpoints where a baseline was actually measured.
+	 */
+	"pace?": type({ cs: "number", expected: "number", exact: "boolean", source: "string" }).or("null")
 })
 export type LiveResponse = typeof LiveResponse.infer
 

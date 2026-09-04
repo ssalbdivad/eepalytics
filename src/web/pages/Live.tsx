@@ -112,23 +112,35 @@ export const Live = () => {
 	if (!data.inGame)
 		return (
 			<div className={`live live--${size}`}>
-				<div className="live__idle">
-					<img className="live__mark" src="/icons/icon-128.png" alt="" width={22} height={22} />
-					<strong>Not in a game</strong>
-					<span>{data.reason ?? "waiting"}</span>
-				</div>
-				{data.focus && data.focus.length > 0 && (
-					<div className="live__focus">
-						<div className="live__focus-head">This week's focus</div>
-						<ol>
-							{data.focus.map(f => (
-								<li key={f.category}>
-									<b>{f.category}</b> {f.fix}
-								</li>
-							))}
-						</ol>
+				{/*
+				 * The idle screen used to render the same tiny block at every size, so a second
+				 * monitor showed one paragraph in the top-left corner and 1800px of nothing.
+				 * Idle is most of the time this window is open — it has to be worth looking at.
+				 */}
+				<div className="live__idlewrap">
+					<div className="live__idle">
+						<img className="live__mark" src="/icons/icon-128.png" alt="" width={size === "wide" ? 44 : 22} height={size === "wide" ? 44 : 22} />
+						<strong>Not in a game</strong>
+						<span>{data.reason ?? "waiting"}</span>
 					</div>
-				)}
+
+					{data.focus && data.focus.length > 0 && (
+						<div className="live__bigfocus">
+							<div className="live__focus-head">What to work on</div>
+							<ol>
+								{data.focus.map(f => (
+									<li key={f.category}>
+										<b>{f.category}</b>
+										<span>{f.fix}</span>
+										<em>seen in {f.games} of your recent games</em>
+									</li>
+								))}
+							</ol>
+						</div>
+					)}
+				</div>
+
+				{size === "wide" && <ScreenCoach />}
 			</div>
 		)
 
@@ -191,6 +203,29 @@ export const Live = () => {
 					 * from across a desk, and they are plain readings — no derived pace estimate
 					 * between the checkpoints where a baseline actually exists.
 					 */}
+					{/*
+					 * Farm against his own history, always on screen rather than only when it is
+					 * bad enough to trigger an alert — this is the number he wants to glance at
+					 * from another monitor. `exact` is false between the checkpoints where a
+					 * baseline was actually measured, and the label says so rather than
+					 * presenting an extrapolation as a reading.
+					 */}
+					{size === "wide" && data.pace && (
+						<div className={`live__pace ${data.pace.cs < data.pace.expected * 0.85 ? "behind" : ""}`}>
+							<div className="live__pace-nums">
+								<span className="now">{data.pace.cs}</span>
+								<span className="sep">/</span>
+								<span className="exp">{data.pace.expected}</span>
+							</div>
+							<div className="live__pace-label">
+								CS · you vs {data.pace.exact ? "your average here" : "your usual rate"}
+								<em title={data.pace.source}>
+									{data.pace.exact ? "measured at this minute" : "approximate between checkpoints"}
+								</em>
+							</div>
+						</div>
+					)}
+
 					{data.score && (
 						<div className="live__stats">
 							<div className="live__stat">

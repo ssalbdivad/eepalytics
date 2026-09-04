@@ -104,6 +104,9 @@ export const createReviewRoutes = (deps: ServerDeps): Hono => {
 			kind: "replay-capture",
 			gameId,
 			intrusive: true,
+			// A deliberate click satisfies G5 on its own — see `evaluateGate`. Anything queued
+			// automatically still serves out the idle wait.
+			payload: { requestedByUser: true },
 			...(ttlMin > 0 ? { deadlineMs: Date.now() + ttlMin * 60_000 } : {})
 		})
 		publish("job", { id: jobId, kind: "replay-capture", gameId, state: "queued" }, gameId)

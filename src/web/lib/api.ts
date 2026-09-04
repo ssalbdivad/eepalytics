@@ -113,7 +113,7 @@ const request = async <t>(
 		if (options.signal?.aborted) throw e
 		throw new ApiError(
 			"network",
-			"can't reach the coachskaffur daemon",
+			"can't reach the fawnsei daemon",
 			0,
 			`${options.method ?? "GET"} ${url} — ${errorMessage(e)}`
 		)

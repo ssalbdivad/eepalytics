@@ -26,15 +26,42 @@ import {
 import { JobBadge } from "../components/JobBadge.tsx"
 
 const GROUPS: { state: JobState[]; title: string; blurb: string }[] = [
-	{ state: ["leased"], title: "Running", blurb: "a worker holds these right now" },
-	{
-		state: ["deferred"],
-		title: "Waiting",
-		blurb: "a gate said no — the reason is printed exactly as the daemon recorded it"
-	},
-	{ state: ["queued"], title: "Queued", blurb: "runnable as soon as a worker is free" },
-	{ state: ["done", "failed", "expired"], title: "Recent", blurb: "finished, one way or another" }
+	{ state: ["leased"], title: "Running now", blurb: "" },
+	{ state: ["deferred"], title: "Waiting", blurb: "these can't start yet — the reason is on each row" },
+	{ state: ["queued"], title: "Up next", blurb: "" },
+	{ state: ["done", "failed", "expired"], title: "Finished", blurb: "" }
 ]
+
+/**
+ * Turn the daemon's gate verdict into something a person can act on.
+ *
+ * The raw string is `gate G1+G2+G4: client is in InProgress, not None/Lobby; a game is in
+ * progress; the in-game API on port 2999 is answering` — three restatements of one fact, led by
+ * codes that mean nothing outside this repo. The codes stay in the logs where they are useful.
+ */
+const humanReason = (reason: string | null): string | null => {
+	if (!reason) return null
+	const body = reason.replace(/^gate\s+G[\d+G]*:\s*/i, "")
+
+	if (/a game is in progress|client is in (InProgress|ChampSelect|Matchmaking|ReadyCheck)/i.test(body))
+		return "You're in a game — this will start once you're back at the lobby."
+	if (/a replay is already playing/i.test(body))
+		return "A replay is already open in League. Close it and this will start."
+	if (/not running|client is not running/i.test(body))
+		return "League isn't open. Start it and this will begin on its own."
+	if (/switched off in Settings/i.test(body))
+		return "Replay capture is switched off in Settings."
+	if (/\.rofl file is not on disk/i.test(body))
+		return "The replay file for this game isn't on disk, so it can't be captured."
+	if (/another capture already holds/i.test(body))
+		return "Another capture is using League right now. This one is next."
+	if (/only idle for/i.test(body))
+		return "Waiting for League to sit idle for a moment first."
+	if (/deadline passed/i.test(body))
+		return "Timed out waiting for a chance to run. Ask for it again when you're at the lobby."
+	// Unknown reasons pass through rather than being swallowed — a mystery is better than a lie.
+	return body
+}
 
 export interface QueueProps {
 	health: HealthResponse | null

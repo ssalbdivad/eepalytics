@@ -1,5 +1,5 @@
 /**
- * Electron shell for coachskaffur.
+ * Electron shell for fawnsei.
  *
  * ## Why this is plain JavaScript, not TypeScript
  *
@@ -35,11 +35,11 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(HERE, "..")
 
 /** Must match `SERVER_PORT` in src/shared/constants.ts. */
-const PORT = Number(process.env.CSK_PORT ?? 7700)
+const PORT = Number((process.env.FAWNSEI_PORT ?? process.env.CSK_PORT) ?? 7700)
 const HOST = "127.0.0.1"
 // Must match `server.port` in vite.config.ts.
-const DEV_URL = process.env.CSK_DEV_URL ?? "http://127.0.0.1:7701"
-const isDev = process.env.CSK_DEV === "1"
+const DEV_URL = (process.env.FAWNSEI_DEV_URL ?? process.env.CSK_DEV_URL) ?? "http://127.0.0.1:7701"
+const isDev = (process.env.FAWNSEI_DEV ?? process.env.CSK_DEV) === "1"
 
 /** How long to wait for the daemon's own health endpoint before giving up. */
 const DAEMON_BOOT_TIMEOUT_MS = 30_000
@@ -105,7 +105,7 @@ const startDaemon = async () => {
 		if (quitting) return
 		// The daemon dying under us is not something to hide behind a blank window.
 		dialog.showErrorBox(
-			"The coachskaffur daemon stopped",
+			"The fawnsei daemon stopped",
 			`It exited with ${signal ?? `code ${code}`}.\n\n` +
 				`Nothing was lost — reviews, metrics and replays are all on disk. ` +
 				`Close and reopen the app to restart it, or run "pnpm daemon" in a terminal to see why it stopped.`
@@ -133,7 +133,7 @@ const createWindow = async () => {
 		minHeight: 600,
 		show: false,
 		backgroundColor: "#07090e",
-		title: "coachskaffur",
+		title: "fawnsei",
 		...windowIcon(),
 		autoHideMenuBar: true,
 		webPreferences: {
@@ -282,11 +282,11 @@ app.whenReady().then(async () => {
 	try {
 		daemon = await startDaemon()
 	} catch (err) {
-		dialog.showErrorBox("coachskaffur could not start", String(err))
+		dialog.showErrorBox("fawnsei could not start", String(err))
 		app.quit()
 		return
 	}
-	if (process.env.CSK_OVERLAY === "1") {
+	if ((process.env.FAWNSEI_OVERLAY ?? process.env.CSK_OVERLAY) === "1") {
 		// Overlay-only mode still needs the daemon up before it can poll anything.
 		if (!(await waitForDaemon())) {
 			dialog.showErrorBox("The daemon did not start", `Nothing answered on ${daemonUrl}.`)

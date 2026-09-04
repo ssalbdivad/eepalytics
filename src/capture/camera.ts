@@ -300,6 +300,18 @@ export const frameMoment = (
 	if (opts.selectionName) {
 		return {
 			cameraMode: "focus",
+			/*
+			 * `cameraAttached` is what BINDS the camera to the selected object — Riot's own
+			 * description is "True if the camera is attached to an object in the game". Without
+			 * it, `selectionName` selects a champion but the camera is left in the replay's
+			 * director mode, which follows the action and switches between champions on its own.
+			 * That is exactly what the captured frames showed: the right champion selected, and
+			 * a camera wandering between other people.
+			 *
+			 * `cameraMode: "focus"` is verified valid (extracted from the client binary), so the
+			 * mode was never the problem — the missing attachment was.
+			 */
+			cameraAttached: true,
 			selectionName: opts.selectionName,
 			selectionOffset: selectionOffsetFor(height, cal),
 			fieldOfView: cal.fieldOfView,

@@ -34,7 +34,7 @@ import { errText, makeLogger } from "../daemon/log.ts"
 const log = makeLogger("live-vision")
 
 /** Short: a stale observation is worse than none, and the caller is on a timer. */
-const CLI_TIMEOUT_MS = Number(process.env.CSK_LIVE_VISION_TIMEOUT_MS ?? 45_000)
+const CLI_TIMEOUT_MS = Number((process.env.FAWNSEI_LIVE_VISION_TIMEOUT_MS ?? process.env.CSK_LIVE_VISION_TIMEOUT_MS) ?? 45_000)
 
 /** The model says this when there is nothing worth saying. Cheaper than a sentence about nothing. */
 export const NOTHING = "PASS"
@@ -138,10 +138,10 @@ export const observeFrame = async (
 	signal?: AbortSignal
 ): Promise<LiveObservation> => {
 	const started = Date.now()
-	const bin = process.env.CSK_CLAUDE_BIN ?? "claude"
+	const bin = (process.env.FAWNSEI_CLAUDE_BIN ?? process.env.CSK_CLAUDE_BIN) ?? "claude"
 	// Deliberately the small model: this runs every N seconds and the task is "look and mostly
 	// say nothing", which does not need the expensive one.
-	const model = process.env.CSK_LIVE_VISION_MODEL ?? "claude-haiku-4-5-20251001"
+	const model = (process.env.FAWNSEI_LIVE_VISION_MODEL ?? process.env.CSK_LIVE_VISION_MODEL) ?? "claude-haiku-4-5-20251001"
 
 	return await new Promise<LiveObservation>(resolve => {
 		let proc

@@ -640,7 +640,7 @@ const CoachBlock = ({
 	if (r && r.status !== "failed")
 		return (
 			<div className="coach">
-				<div className="who">coachskaffur</div>
+				<div className="who">fawnsei</div>
 				<div className="headline">{r.headline}</div>
 				{r.encouragement ? <div className="encouragement">{r.encouragement}</div> : null}
 				{r.goals.length > 0 ?
@@ -711,7 +711,7 @@ const ReviewProgress = ({ job, now }: { job: Job; now: number }) => {
 			<div>
 				<strong>
 					{job.state === "leased" ?
-						"coachskaffur is writing…"
+						"fawnsei is writing…"
 					: job.state === "deferred" ?
 						"Review is waiting."
 					:	"Review is queued."}

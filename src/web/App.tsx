@@ -37,7 +37,7 @@ class ErrorBoundary extends Component<BoundaryProps, BoundaryState> {
 	}
 
 	componentDidCatch(error: Error, info: ErrorInfo): void {
-		console.error("coachskaffur: render failed", error, info.componentStack)
+		console.error("fawnsei: render failed", error, info.componentStack)
 	}
 
 	componentDidUpdate(prev: BoundaryProps): void {
@@ -52,7 +52,7 @@ class ErrorBoundary extends Component<BoundaryProps, BoundaryState> {
 				<div className="notice bad">
 					<span className="icon">✗</span>
 					<div>
-						<strong>This screen crashed.</strong> That is a bug in coachskaffur, not in your
+						<strong>This screen crashed.</strong> That is a bug in fawnsei, not in your
 						data — nothing was lost.
 						<pre>{error.stack ?? error.message}</pre>
 						<div style={{ marginTop: 10, display: "flex", gap: 8 }}>
@@ -121,7 +121,7 @@ export const App = () => {
 			<header className="topbar">
 				<div className="brand">
 					<img className="brand__mark" src="/icons/icon-128.png" alt="" width={26} height={26} />
-					coachskaffur <small>Gooskaffur#NA1</small>
+					fawnsei <small>Gooskaffur#NA1</small>
 				</div>
 
 				<nav className="nav">

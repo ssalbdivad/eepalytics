@@ -644,7 +644,7 @@ LolGameflowGameflowPhase ENUM: None, Lobby, Matchmaking, ReadyCheck, ChampSelect
 
 `componentType` is **telemetry only** — the client logs `"Plugin handling Replay '%llu' player action, WATCH,
 componentType=%s"` and never branches on it. Any non-empty string works. **[VERIFIED-BINARY]** (from
-`LeagueClient.exe` strings). Suggested value: `"coachskaffur"`.
+`LeagueClient.exe` strings). Suggested value: `"fawnsei"`.
 
 ## 4.3 How the game itself is told it's a replay
 
@@ -674,7 +674,7 @@ It also changes its working directory for a replay. `POST /lol-gameflow/v1/watch
 
 **Two launch paths, in order of preference:**
 
-1. **`POST /lol-replays/v1/rofls/{gameId}/watch`** with body `{"componentType":"coachskaffur"}`.
+1. **`POST /lol-replays/v1/rofls/{gameId}/watch`** with body `{"componentType":"fawnsei"}`.
    Let the client build the args. Safest, matches what the UI does, gets you the client's own guard rails and
    error reporting. **Use this by default.**
 2. **`POST /lol-gameflow/v1/watch/launch`** with a hand-built `["<abs windows path>.rofl", "-GameBaseDir=...",
@@ -863,7 +863,7 @@ IDLE
                     incompatible, unsupported,
                     error)                        -> FAIL (see 6.5)
  READY
- └─ POST /lol-replays/v1/rofls/{gameId}/watch  {"componentType":"coachskaffur"}
+ └─ POST /lol-replays/v1/rofls/{gameId}/watch  {"componentType":"fawnsei"}
         -> LAUNCHING
  LAUNCHING
  └─ poll GET /lol-gameflow/v1/watch  every 500 ms
@@ -929,7 +929,7 @@ list by ascending timestamp** so every seek is a short forward scrub instead of 
 ```json
 POST /replay/recording
 { "codec": "png",
-  "path": "C:\\Users\\ssalb\\coachskaffur-captures\\g5631300987\\t104058",
+  "path": "C:\\Users\\ssalb\\fawnsei-captures\\g5631300987\\t104058",
   "startTime": 104.058, "endTime": 104.09,
   "framesPerSecond": 30, "replaySpeed": 1.0,
   "enforceFrameRate": true, "lossless": true,
@@ -943,7 +943,7 @@ single (or first) `.png` out of it. Whether `startTime == endTime` produces zero
 ```json
 POST /replay/recording
 { "codec": "webm",
-  "path": "C:\\Users\\ssalb\\coachskaffur-captures\\g5631300987\\fight-1732.webm",
+  "path": "C:\\Users\\ssalb\\fawnsei-captures\\g5631300987\\fight-1732.webm",
   "startTime": 98.0, "endTime": 110.0,
   "framesPerSecond": 30, "replaySpeed": 1.0,
   "enforceFrameRate": true, "lossless": false }
@@ -1026,7 +1026,7 @@ config     : <install>/Config/Game.cfg, Input.ini, PersistedSettings.json
 
 `Recording.path` is "File path or directory where the recording should be saved" — **you supply it**, so the
 default location is mostly irrelevant. **Recommendation: always pass an explicit absolute Windows path** under a
-directory the app owns (e.g. `C:\Users\ssalb\coachskaffur\captures\<gameId>\<timestamp>`), created from WSL first
+directory the app owns (e.g. `C:\Users\ssalb\fawnsei\captures\<gameId>\<timestamp>`), created from WSL first
 via the `/mnt/c` mount, then converted with `wslpath -w`. Then read the results back at `/mnt/c/...`. This
 sidesteps the missing `Highlights` dir entirely and keeps captures out of the user's personal folders.
 
@@ -1161,7 +1161,7 @@ The whole point of this document is that the next phase should not re-derive any
 *must* do, and roughly nothing else:
 
 1. Confirm idle: `isPlayingGame:false`, `isPlayingReplay:false`, `gameflow-phase == "None"`, `watch == "None"`.
-2. `POST /lol-replays/v1/rofls/5631300987/watch {"componentType":"coachskaffur"}`. **Start a stopwatch.**
+2. `POST /lol-replays/v1/rofls/5631300987/watch {"componentType":"fawnsei"}`. **Start a stopwatch.**
 3. Poll `/lol-gameflow/v1/watch` and `https://127.0.0.1:2999/replay/game`. **Record the time to first 200.**
 4. `curl.exe -sk https://127.0.0.1:2999/swagger/v3/openapi.json > .research/replay-openapi.json` and
    `.../swagger/v1/api-docs`. **Commit both.** This resolves every UNVERIFIED schema question at once.

@@ -666,13 +666,13 @@ const checkDaemon = async (): Promise<void> => {
 		label: "HTTP server",
 		level: listening ? "ok" : "info",
 		detail: `${SERVER_HOST}:${SERVER_PORT} ${listening ? "listening" : "not listening"}`,
-		fix: listening ? undefined : "`pnpm dev`, or `systemctl --user start coachskaffur`."
+		fix: listening ? undefined : "`pnpm dev`, or `systemctl --user start fawnsei`."
 	})
 
-	const unit = join(process.env.HOME ?? "", ".config/systemd/user/coachskaffur.service")
+	const unit = join(process.env.HOME ?? "", ".config/systemd/user/fawnsei.service")
 	const installed = existsSync(unit)
-	const active = run("systemctl", ["--user", "is-active", "coachskaffur"], 8000).stdout
-	const enabled = run("systemctl", ["--user", "is-enabled", "coachskaffur"], 8000).stdout
+	const active = run("systemctl", ["--user", "is-active", "fawnsei"], 8000).stdout
+	const enabled = run("systemctl", ["--user", "is-enabled", "fawnsei"], 8000).stdout
 	add({
 		section,
 		label: "systemd unit",
@@ -683,7 +683,7 @@ const checkDaemon = async (): Promise<void> => {
 		detail: installed ? `${active || "unknown"} · ${enabled || "not enabled"}` : "not installed",
 		fix:
 			!installed ? "`pnpm service:install` — optional; `pnpm dev` runs it in the foreground."
-			: active !== "active" ? "systemctl --user start coachskaffur && pnpm service:logs"
+			: active !== "active" ? "systemctl --user start fawnsei && pnpm service:logs"
 			: undefined
 	})
 
@@ -708,7 +708,7 @@ const main = async (): Promise<void> => {
 	const json = process.argv.includes("--json")
 
 	if (!json) {
-		console.log(`\n${bold("coachskaffur doctor")}`)
+		console.log(`\n${bold("fawnsei doctor")}`)
 		console.log(dim("  read-only preflight — safe to run while you are in a game"))
 	}
 

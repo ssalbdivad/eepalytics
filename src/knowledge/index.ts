@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url"
 const HERE = dirname(fileURLToPath(import.meta.url))
 
 /** Overridable so tests do not depend on the repo's own `knowledge/` contents. */
-export const KNOWLEDGE_DIR = process.env.CSK_KNOWLEDGE_DIR ?? resolve(HERE, "../../knowledge")
+export const KNOWLEDGE_DIR = (process.env.FAWNSEI_KNOWLEDGE_DIR ?? process.env.CSK_KNOWLEDGE_DIR) ?? resolve(HERE, "../../knowledge")
 
 export interface ChampionNote {
 	/** The lookup key: champion name, lowercased, non-letters stripped. */
