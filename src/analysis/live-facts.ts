@@ -40,13 +40,15 @@ export const DEATH_WORTH_SAYING_SEC = 12
 export const GOLD_FLOOR = 1200
 /** How much more must accumulate before unspent gold is news again. */
 export const GOLD_STEP = 800
+import { dragonPhrase } from "../shared/dragons.ts"
+
 /**
  * Recognises a death-window fact in a rendered line, for the "never lead twice running" rule.
  *
  * A regex rather than a substring because the wording is deliberately varied — matching on the
  * literal phrase is how the alternation rule silently stopped working the last time it changed.
  */
-export const DEATH_FACT = /^\d+ seconds without /
+export const DEATH_FACT = / is down \d+ seconds/
 
 /*
  * UNITS ARE SPELLED OUT, EVERY TIME. These strings are the script — the model reads them almost
@@ -71,6 +73,19 @@ const DISASTER_QUIET_SEC = 90
 
 /** Game-clock seconds between farm-pace mentions. */
 export const FARM_COOLDOWN_SEC = 180
+/**
+ * How big the gap must be before it is worth a sentence.
+ *
+ * Was 12, which fired at "20 against your usual 32" — four minutes in, a two-camp difference, and
+ * he heard about it five times in eleven minutes. Early gaps are noise: the expected curve is
+ * steep, one slow camp swings it, and there is nothing to DO about being two camps down at four
+ * minutes. Raised, and floored by an absolute CS count so the early game stays quiet.
+ */
+const FARM_MIN_GAP = 20
+
+/** Below this much farm the comparison is arithmetic on a small number, not a coaching point. */
+const FARM_MIN_CS = 70
+
 /** His CS must have moved at least this much before the farm gap is worth restating. */
 export const FARM_CS_MOVED = 15
 /** Gold still unspent after this long has earned a second mention on its own. */
@@ -136,7 +151,7 @@ export interface FactInput {
 	 * back to him as scouting: his score went 5/0/5 to 6/0/5 on the same tick Renekton died, and
 	 * it announced "Renekton just died, down for 14s" as though it were news.
 	 */
-	deadEnemies: { champion: string; respawnSec: number; killedByMe?: boolean }[]
+	deadEnemies: { champion: string; respawnSec: number; killedByMe?: boolean; isJungler?: boolean }[]
 	currentGold: number | null
 	/** Non-null only when it is far enough off his own average to be worth a sentence. */
 	pace: { cs: number; expected: number; exact: boolean } | null
@@ -223,7 +238,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 			)
 		else if (e.name === "HeraldKill") lost.push(`they have Herald and a free tower charge`)
 		else if (e.name === "DragonKill")
-			lost.push(`they took the ${e.dragonType ? `${e.dragonType.toLowerCase()} ` : ""}dragon`.replace(/\s+/g, " "))
+			lost.push(`they took ${dragonPhrase(e.dragonType)}`)
 	}
 
 	/*
@@ -251,7 +266,7 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		if (e.name === "ChampionKill" && (e.killStreak ?? 0) >= 2)
 			line = `you just got a ${MULTI[e.killStreak!] ?? `${e.killStreak}-kill`}`
 		else if (e.name === "DragonKill")
-			line = e.stolen ? `you stole the ${e.dragonType ?? ""} dragon`.trim() : "you secured the dragon"
+			line = e.stolen ? `you stole ${dragonPhrase(e.dragonType)}` : `you secured ${dragonPhrase(e.dragonType)}`
 		else if (e.name === "BaronKill") line = e.stolen ? "you stole Baron" : "you secured Baron"
 		else if (e.name === "HeraldKill") line = "you secured Herald"
 		if (line === "") continue
@@ -277,7 +292,8 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	const gap = input.pace ? Math.abs(input.pace.cs - input.pace.expected) : 0
 	if (
 		input.pace &&
-		gap >= 12 &&
+		gap >= FARM_MIN_GAP &&
+		input.pace.cs >= FARM_MIN_CS &&
 		(mem.lastFarmAtSec === 0 || input.nowSec - mem.lastFarmAtSec >= FARM_COOLDOWN_SEC) &&
 		(mem.lastFarmCs === 0 || Math.abs(input.pace.cs - mem.lastFarmCs) >= FARM_CS_MOVED)
 	) {
@@ -301,10 +317,15 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		 * error this app exists to not make.
 		 */
 		const hedge = input.pace.exact ? "" : "roughly "
+		/*
+		 * A gap with no instruction is a scold. He knows he is behind; the question a coach answers
+		 * is what to do in the next thirty seconds, and for a jungler that is nearly always "take
+		 * the camps that are up instead of walking to a lane".
+		 */
 		farm.push(
 			behind > 0 ?
-				`you're ${hedge}${behind} CS behind your usual pace, ${input.pace.cs} against your usual ${input.pace.expected}`
-			:	`you're ${hedge}${-behind} CS ahead of your usual pace, ${input.pace.cs} against your usual ${input.pace.expected}`
+				`you're ${hedge}${behind} CS down on your own pace — full clear before you look at a lane`
+			:	`you're ${hedge}${-behind} CS up on your own pace, ${input.pace.cs} against ${input.pace.expected} — keep taking the free camps`
 		)
 	}
 
@@ -420,8 +441,18 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		 * The part he cannot see without holding TAB is how long it lasts, and the part worth
 		 * saying is what it buys. So the death is the premise of the sentence, not its point.
 		 */
+		/*
+		 * Phrased by ROLE, because the same sentence is not true of everyone.
+		 *
+		 * "20 seconds without Seraphine — their side of the map is short one" was said out loud
+		 * about an enemy SUPPORT. A support dying does not open their jungle; the enemy jungler
+		 * dying is the only death that reliably does, and it is the only one worth that sentence.
+		 * One template applied to ten champions is how a coach stops sounding like it is watching.
+		 */
 		deaths.push(
-			`${Math.round(d.respawnSec)} seconds without ${d.champion} — their side of the map is short one`
+			d.isJungler ?
+				`their jungler is down ${Math.round(d.respawnSec)} seconds — their camps are free`
+			:	`${d.champion} is down ${Math.round(d.respawnSec)} seconds`
 		)
 	}
 

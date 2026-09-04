@@ -170,7 +170,7 @@ describe("buildFacts — rate limiting", () => {
 		const mem = newFactMemory()
 		ok(
 			buildFacts(input({ nowSec: 600, pace: { cs: 100, expected: 130, exact: true } }), mem).some(
-				f => /CS (behind|ahead)/.test(f)
+				f => /CS (down|up) on your own pace/.test(f)
 			)
 		)
 		const frozen = buildFacts(
@@ -178,13 +178,13 @@ describe("buildFacts — rate limiting", () => {
 			input({ nowSec: 600 + FARM_COOLDOWN_SEC * 2, pace: { cs: 100, expected: 160, exact: true } }),
 			mem
 		)
-		strictEqual(frozen.some(f => /CS (behind|ahead)/.test(f)), false, "same CS, so nothing new to say")
+		strictEqual(frozen.some(f => /CS (down|up) on your own pace/.test(f)), false, "same CS, so nothing new to say")
 
 		const moved = buildFacts(
 			input({ nowSec: 600 + FARM_COOLDOWN_SEC * 2, pace: { cs: 130, expected: 175, exact: true } }),
 			mem
 		)
-		ok(moved.some(f => /CS (behind|ahead)/.test(f)), "once he has actually farmed, the gap is news again")
+		ok(moved.some(f => /CS (down|up) on your own pace/.test(f)), "once he has actually farmed, the gap is news again")
 	})
 
 	it("counts the unspent duration from when it crossed, not from the last mention", () => {
@@ -229,9 +229,9 @@ describe("buildFacts — rate limiting", () => {
 	it("mentions the farm gap once, then not for minutes", () => {
 		const mem = newFactMemory()
 		const pace = { cs: 100, expected: 130, exact: true }
-		ok(buildFacts(input({ nowSec: 600, pace }), mem).some(f => /CS (behind|ahead)/.test(f)))
+		ok(buildFacts(input({ nowSec: 600, pace }), mem).some(f => /CS (down|up) on your own pace/.test(f)))
 		strictEqual(
-			buildFacts(input({ nowSec: 660, pace }), mem).some(f => /CS (behind|ahead)/.test(f)),
+			buildFacts(input({ nowSec: 660, pace }), mem).some(f => /CS (down|up) on your own pace/.test(f)),
 			false,
 			"a minute later is nagging"
 		)
@@ -240,7 +240,7 @@ describe("buildFacts — rate limiting", () => {
 				// Past the cooldown AND he has actually farmed since — both are required.
 				input({ nowSec: 600 + FARM_COOLDOWN_SEC, pace: { cs: 130, expected: 165, exact: true } }),
 				mem
-			).some(f => /CS (behind|ahead)/.test(f)),
+			).some(f => /CS (down|up) on your own pace/.test(f)),
 			"after the cooldown, with real progress, it has earned a second mention"
 		)
 	})
@@ -444,7 +444,7 @@ describe("buildFacts — every string is a script", () => {
 		const mem = newFactMemory()
 		const out = [
 			...buildFacts(input({ myEvents: [{ id: 1, name: "DragonKill", stolen: true }] }), mem),
-			...buildFacts(input({ nowSec: 700, pace: { cs: 193, expected: 179, exact: false } }), mem),
+			...buildFacts(input({ nowSec: 700, pace: { cs: 193, expected: 169, exact: false } }), mem),
 			...buildFacts(input({ nowSec: 800, currentGold: 2000 }), mem),
 			...buildFacts(
 				input({ nowSec: 900, deadEnemies: [{ champion: "Graves", respawnSec: 30 }] }),

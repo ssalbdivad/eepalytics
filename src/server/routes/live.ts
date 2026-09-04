@@ -264,7 +264,10 @@ const buildLiveState = (
 						 * is a readback, not scouting. Only the most recent kill of that victim
 						 * matters, which is the one still on the respawn clock.
 						 */
-						killedByMe: lastKillerOf(data, p.riotId ?? p.summonerName ?? "") === myName
+						killedByMe: lastKillerOf(data, p.riotId ?? p.summonerName ?? "") === myName,
+						// `position` is reliable in the LIVE api (unlike match history), so the
+						// jungler is known rather than inferred.
+						isJungler: (p.position ?? "").toUpperCase() === "JUNGLE"
 					})),
 				/*
 				 * Objectives the ENEMY took. `myEvents` is filtered to his own name, so before this
