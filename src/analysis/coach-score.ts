@@ -536,9 +536,15 @@ const READBACK: RegExp[] = [
  * to over-report one.
  */
 const ACTION: RegExp[] = [
-	/(?:^|[.;,:!?—–-]\s*|\b(?:so|then|now|and|but)\s+)(?:take|go|back|recall|reset|clear|start|come|stay|hold|rotate|collapse|buy|spend|invade|walk|get|be|keep|leave|punish|trade|fight|contest|path|push|dive|group|check|watch|wait|use|finish|shove|drop|swing|head|track|force|play|move|ask|remember|stop|avoid|skip|ignore|don't|dont|do not)\b/i,
+	/(?:^|[.;,:!?—–-]\s*|\b(?:so|then|now|and|but)\s+)(?:take|go|back|recall|reset|clear|start|come|stay|hold|rotate|collapse|buy|spend|invade|walk|get|be|keep|leave|punish|trade|fight|contest|path|push|dive|group|check|watch|wait|use|finish|shove|drop|swing|head|track|force|play|move|ask|remember|stop|avoid|skip|ignore|retreat|disengage|kite|peel|poke|farm|gank|chase|shop|base|ward|commit|answer|match|mirror|itemi[sz]e|build|don't|dont|do not)\b/i,
 	/\byou\s+(?:can|could|should|want to|need to|have time to|have a window|might want)\b/i,
 	/\b(?:worth\s+(?:taking|going|contesting|forcing)|time to|window to|chance to|this is your (?:window|chance))\b/i,
+	/*
+	 * A softener in front of an imperative does not stop it being one. "just keep pathing", "maybe
+	 * think about spending it", "simply take the camps" are all instructions, and were all scored
+	 * as observations.
+	 */
+	/\b(?:just|maybe|simply|perhaps|really|honestly)\s+(?:\w+\s+)?(?:take|keep|clear|go|get|finish|farm|reset|back|stop|think about|look)\b/i,
 	/*
 	 * A verb wrapped in a coaching idiom is still an instruction, and the bare-imperative patterns
 	 * above miss all of these. Measured against real socket output: "focus on finishing your full
