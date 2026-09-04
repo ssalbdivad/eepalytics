@@ -29,6 +29,9 @@
  * true*. That is the same rule the rest of the app already follows: never derive a fact you can
  * simply be told.
  */
+import { renderPronunciations } from "./pronounce.ts"
+import type { Pronunciation } from "./pronounce.ts"
+
 export interface VisionState {
 	/** `mm:ss`. */
 	clock: string
@@ -57,6 +60,14 @@ export interface VisionState {
 	 * a fact it can repeat, and repeating a fact is the one thing it does reliably.
 	 */
 	pace: { cs: number; expected: number; exact: boolean; source: string } | null
+	/**
+	 * Say-it-like-this entries for the champions in THIS game, and only the ones said wrongly.
+	 *
+	 * The audio model pronounces what it produces, and champion names are invented words it gets
+	 * badly wrong — badly enough that the player cannot tell who a sentence is about. Empty is the
+	 * normal case for a roster it already handles.
+	 */
+	pronounce: Pronunciation[]
 	allies: VisionStatePlayer[]
 	enemies: VisionStatePlayer[]
 	/** Most recent objective/kill events, already phrased. Newest last. */
@@ -114,7 +125,11 @@ You: ${me.champion}${me.level ? ` lv${me.level}` : ""} ${me.k ?? 0}/${me.d ?? 0}
 		me.dead ? `, DEAD${me.respawnSec ? ` (respawn in ${Math.round(me.respawnSec)} seconds)` : ""}` : ""
 	}
 
-Farm baseline: ${
+${
+		renderPronunciations(s.pronounce) === "" ? "" : `${renderPronunciations(s.pronounce)}
+
+`
+	}Farm baseline: ${
 		s.pace ?
 			`${s.pace.cs} CS against ${s.pace.expected}, ${s.pace.source}${s.pace.exact ? "" : " (approximate)"}`
 		:	"NONE — you have no average to compare his farm against right now, so do not say whether it is ahead, behind, on pace, or what he usually gets. Say the CS and say you cannot compare it."

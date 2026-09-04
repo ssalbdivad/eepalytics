@@ -15,6 +15,8 @@
  */
 
 import { readFileSync, readdirSync } from "node:fs"
+import { parsePronunciations } from "../shared/pronounce.ts"
+import type { Pronunciation } from "../shared/pronounce.ts"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -69,7 +71,10 @@ const parseNote = (key: string, raw: string, isDefault: boolean): ChampionNote =
 const cache = new Map<string, ChampionNote | null>()
 
 /** Test seam — `clearKnowledgeCache()` after editing files on disk. */
-export const clearKnowledgeCache = (): void => cache.clear()
+export const clearKnowledgeCache = (): void => {
+	cache.clear()
+	pronCache = null
+}
 
 /**
  * The note for a champion, or the `_default` note, or `null` when neither exists.
@@ -120,3 +125,26 @@ export const stalenessWarning = (note: ChampionNote, gamePatch: string): string 
 		null
 	:	`These notes were written for patch ${note.patch} and this game is patch ${gamePatch}. ` +
 		`Treat anything that could have been tuned as uncertain, and say so rather than asserting it.`
+
+/**
+ * The say-it-like-this table, from `knowledge/pronunciations.md`.
+ *
+ * Cached like the champion notes, and cleared by the same `clearKnowledgeCache`, so correcting a
+ * respelling that sounded wrong is an edit to a markdown file rather than a code change — which is
+ * the whole point of it living in `knowledge/`.
+ *
+ * A missing or unreadable file yields an empty table and the coach simply says the names the way it
+ * always did. Pronunciation is a polish feature; it must never be able to stop a game being
+ * coached.
+ */
+let pronCache: Pronunciation[] | null = null
+
+export const pronunciationTable = (): Pronunciation[] => {
+	if (pronCache) return pronCache
+	try {
+		pronCache = parsePronunciations(readFileSync(join(KNOWLEDGE_DIR, "pronunciations.md"), "utf8"))
+	} catch {
+		pronCache = []
+	}
+	return pronCache
+}

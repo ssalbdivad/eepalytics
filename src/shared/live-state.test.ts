@@ -18,6 +18,7 @@ const base = (over: Partial<VisionState> = {}): VisionState => ({
 	clock: "14:30",
 	me: { champion: "Lillia", level: 11, k: 3, d: 2, a: 4, cs: 120, gold: 1450 },
 	pace: null,
+	pronounce: [],
 	allies: [{ champion: "Darius", level: 12, k: 4, d: 3, a: 2 }],
 	enemies: [{ champion: "Graves", level: 12, k: 6, d: 3, a: 3, dead: true, respawnSec: 22 }],
 	recentEvents: [],

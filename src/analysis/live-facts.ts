@@ -232,11 +232,18 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		 * the hedge is a word inside the sentence and there is nothing in them a person would not
 		 * say out loud.
 		 */
+		/*
+		 * "CS", never "camps". The figure is the live client's `creepScore` and the baseline is the
+		 * metric defined as "Camps + CS @10" — BOTH are camps plus lane minions, so the comparison
+		 * is sound and the old wording was not. A jungler who soaked two waves is not "27 camps
+		 * behind"; saying so is a false statement about what was measured, which is the one kind of
+		 * error this app exists to not make.
+		 */
 		const hedge = input.pace.exact ? "" : "roughly "
 		farm.push(
 			behind > 0 ?
-				`you're ${hedge}${behind} camps behind your usual pace, ${input.pace.cs} against your usual ${input.pace.expected}`
-			:	`you're ${hedge}${-behind} camps ahead of your usual pace, ${input.pace.cs} against your usual ${input.pace.expected}`
+				`you're ${hedge}${behind} CS behind your usual pace, ${input.pace.cs} against your usual ${input.pace.expected}`
+			:	`you're ${hedge}${-behind} CS ahead of your usual pace, ${input.pace.cs} against your usual ${input.pace.expected}`
 		)
 	}
 

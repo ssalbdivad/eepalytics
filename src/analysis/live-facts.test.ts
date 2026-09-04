@@ -169,7 +169,7 @@ describe("buildFacts — rate limiting", () => {
 		const mem = newFactMemory()
 		ok(
 			buildFacts(input({ nowSec: 600, pace: { cs: 100, expected: 130, exact: true } }), mem).some(
-				f => /camps (behind|ahead)/.test(f)
+				f => /CS (behind|ahead)/.test(f)
 			)
 		)
 		const frozen = buildFacts(
@@ -177,13 +177,13 @@ describe("buildFacts — rate limiting", () => {
 			input({ nowSec: 600 + FARM_COOLDOWN_SEC * 2, pace: { cs: 100, expected: 160, exact: true } }),
 			mem
 		)
-		strictEqual(frozen.some(f => /camps (behind|ahead)/.test(f)), false, "same CS, so nothing new to say")
+		strictEqual(frozen.some(f => /CS (behind|ahead)/.test(f)), false, "same CS, so nothing new to say")
 
 		const moved = buildFacts(
 			input({ nowSec: 600 + FARM_COOLDOWN_SEC * 2, pace: { cs: 130, expected: 175, exact: true } }),
 			mem
 		)
-		ok(moved.some(f => /camps (behind|ahead)/.test(f)), "once he has actually farmed, the gap is news again")
+		ok(moved.some(f => /CS (behind|ahead)/.test(f)), "once he has actually farmed, the gap is news again")
 	})
 
 	it("counts the unspent duration from when it crossed, not from the last mention", () => {
@@ -228,9 +228,9 @@ describe("buildFacts — rate limiting", () => {
 	it("mentions the farm gap once, then not for minutes", () => {
 		const mem = newFactMemory()
 		const pace = { cs: 100, expected: 130, exact: true }
-		ok(buildFacts(input({ nowSec: 600, pace }), mem).some(f => /camps (behind|ahead)/.test(f)))
+		ok(buildFacts(input({ nowSec: 600, pace }), mem).some(f => /CS (behind|ahead)/.test(f)))
 		strictEqual(
-			buildFacts(input({ nowSec: 660, pace }), mem).some(f => /camps (behind|ahead)/.test(f)),
+			buildFacts(input({ nowSec: 660, pace }), mem).some(f => /CS (behind|ahead)/.test(f)),
 			false,
 			"a minute later is nagging"
 		)
@@ -239,7 +239,7 @@ describe("buildFacts — rate limiting", () => {
 				// Past the cooldown AND he has actually farmed since — both are required.
 				input({ nowSec: 600 + FARM_COOLDOWN_SEC, pace: { cs: 130, expected: 165, exact: true } }),
 				mem
-			).some(f => /camps (behind|ahead)/.test(f)),
+			).some(f => /CS (behind|ahead)/.test(f)),
 			"after the cooldown, with real progress, it has earned a second mention"
 		)
 	})
@@ -482,7 +482,7 @@ describe("buildFacts — ranking", () => {
 		 * A dragon, a baron and a multi-kill are announced by the game itself — banner and sound —
 		 * so praising them adds no information. Their value is warmth, and warmth must not cost a
 		 * fact: a judge found the coach congratulating him on a banner he was watching on a tick
-		 * that also carried "12 camps behind your own pace", the one thing he could not see.
+		 * that also carried "12 CS behind your own pace", the one thing he could not see.
 		 */
 		const mem = newFactMemory()
 		const out = buildFacts(

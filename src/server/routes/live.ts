@@ -45,7 +45,8 @@ import { loadCorpus } from "../../daemon/corpus.ts"
 import { championName, refreshChampionNames } from "../../daemon/champions.ts"
 import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
-import { championNote } from "../../knowledge/index.ts"
+import { championNote, pronunciationTable } from "../../knowledge/index.ts"
+import { pronunciationsFor } from "../../shared/pronounce.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
 import { dismissDebrief, dismissedDebrief, lastGameEnded } from "../../daemon/postgame.ts"
 import { matchesMarker, postGameDebrief } from "../../shared/postgame.ts"
@@ -230,6 +231,15 @@ const buildLiveState = (
 			respawnSec: me.respawnTimer
 		},
 		pace,
+		/*
+		 * Only the champions in THIS game, and only those the model says wrongly. The table has a
+		 * hundred rows and this block is rebuilt every turn, so sending all of it would cost a
+		 * hundred lines per turn to fix at most ten names.
+		 */
+		pronounce: pronunciationsFor(
+			[me.championName ?? "", ...others.map(p => p.championName ?? "")].filter(n => n !== ""),
+			pronunciationTable()
+		),
 		allies: others.filter(p => p.team === mine).map(asPlayer),
 		enemies: others.filter(p => p.team !== mine).map(asPlayer),
 		recentEvents,
