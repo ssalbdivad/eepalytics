@@ -17,14 +17,21 @@
  * both ears, and clipped both; the numbers are written down here so the next person checks them
  * against the art instead of trusting the sentence.
  *
- * `AVATAR` satisfies two constraints at once:
+ * `AVATAR` is the SMALLEST square that still contains both ears with visible margin, and that is
+ * a deliberate ceiling rather than a preference. The geometry is fixed and worth writing down,
+ * because the three obvious goals cannot all be had:
  *
- *   - both ears complete, with margin — they are the most recognisable thing about her at 32px;
- *   - the library still behind her. Starting near x=0 keeps the bookshelves at the left edge and
- *     the arched ceiling along the top, so the icon reads as a person in a room rather than a
- *     head floating on a cream field.
+ *   ear tips at 88 and 535  ->  the crop can never be narrower than ~455px
+ *   the library at x < 45   ->  costs another ~55px of width on top of that
+ *   a big face              ->  wants the crop as narrow as possible
  *
- * Candidates were rendered at 16, 32, 64 and 128px before choosing, because an icon that only
+ * Measured as a share of the crop, her face is 48% of a 330px crop (which clips both ears), 35%
+ * at 455, 32% at 500 (the narrowest that catches the shelves) and 29% at 560. So keeping the
+ * library costs roughly a fifth of her face at icon sizes — and at 16 and 32px, where this thing
+ * mostly lives, that is the difference between a character and a smudge. Ears win, the room does
+ * not, and the full illustration carries the room on the splash instead.
+ *
+ * Candidates were rendered at 16, 32, 48, 64 and 128px before choosing, because an icon that only
  * works at 512 is not an icon.
  *
  * Run: pnpm icon
@@ -53,7 +60,7 @@ const TARGETS = [WEB_PUBLIC, APP_PUBLIC]
 const SIZES = [16, 32, 64, 128, 256, 512]
 
 /** The avatar crop, in source pixels. See the header for how these were found. */
-const AVATAR = { x: 5, y: 5, width: 560, height: 560 }
+const AVATAR = { x: 75, y: 185, width: 470, height: 470 }
 
 /** Ear tips in source pixels — asserted below so a future crop cannot silently clip them again. */
 const EAR_TIPS = { left: 88, right: 535 }
