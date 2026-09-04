@@ -238,6 +238,23 @@ class PcmPlayer {
 	}
 }
 
+/**
+ * What one turn is built from: this instant's facts, plus — the first time only — the champion
+ * knowledge for the game.
+ *
+ * The knowledge is static for a whole game and about 1.3k tokens. A Live session bills the
+ * accumulated context every turn, so sending it on the 20s heartbeat would compound for text that
+ * cannot change; sending it once puts it in the thread the model already keeps. See
+ * `shared/live-knowledge.ts` for the three placements considered and why the system prompt could
+ * not hold it (the socket opens at champion select, before either champion is known).
+ */
+export interface GroundTruthTurn {
+	/** The facts block. Empty string means "do not take this turn at all" — see `beat()`. */
+	text: string
+	/** Champion notes for this game, or null when there are none on file. */
+	knowledge?: { key: string; text: string } | null
+}
+
 export interface GeminiLiveOptions {
 	/**
 	 * Fetches the current ground-truth block. Called once per turn, and ONLY per turn.
@@ -248,9 +265,9 @@ export interface GeminiLiveOptions {
 	 * before the coach ever saw one. Computing it at the moment it is used makes those the same
 	 * event.
 	 *
-	 * **An empty string means "do not take this turn at all"** — see `beat()`.
+	 * **An empty `text` means "do not take this turn at all"** — see `beat()`.
 	 */
-	groundTruth: () => Promise<string>
+	groundTruth: () => Promise<GroundTruthTurn>
 	/** Supplies a JPEG data URL of the shared screen, or null when not sharing. */
 	grabFrame: () => string | null
 }
@@ -309,6 +326,14 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 * this, and here is precisely what she knew when she said it".
 	 */
 	const truthInFlight = useRef("")
+	/**
+	 * Which champion-notes primer this SOCKET has already been given, or "".
+	 *
+	 * Per socket, not per game: a session that dropped and came back has no memory of anything
+	 * said to the old one, so the key is cleared on `setupComplete` and the notes are re-sent on
+	 * the first turn of the new session.
+	 */
+	const knowledgeSent = useRef("")
 	/** Non-null while a reconnect is pending, so `stop` can cancel it. */
 	const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const attemptRef = useRef(0)
@@ -478,6 +503,8 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 
 				if (m.setupComplete) {
 					clearGuard()
+					// A fresh session knows nothing the old one was told, champion notes included.
+					knowledgeSent.current = ""
 					attemptRef.current = 0
 					setError(null)
 					setStatus("live")
@@ -643,7 +670,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		 * the silence was never here (it was the output path — see `PcmPlayer.unlock`).
 		 */
 		const beat = async () => {
-			const truth = await optsRef.current.groundTruth()
+			const { text: truth, knowledge } = await optsRef.current.groundTruth()
 			/*
 			 * NO FACTS, NO TURN.
 			 *
@@ -666,6 +693,25 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				parts.push({
 					inlineData: { mimeType: "image/jpeg", data: frame.replace(/^data:[^,]+,/, "") }
 				})
+			/*
+			 * Champion knowledge goes in ONCE per session, on the first turn that has a game.
+			 *
+			 * Not the system prompt: this socket opens at champion select, before :2999 answers,
+			 * and Gemini Live cannot amend a system instruction after `setup`. Not every turn
+			 * either — it is ~1.3k tokens of text that cannot change, and a Live session bills the
+			 * accumulated context, so the heartbeat would compound it for nothing.
+			 *
+			 * Ahead of the facts in the same turn, so the model reads the background before the
+			 * state it applies to, and so a mid-game reconnect (which clears the key on
+			 * `setupComplete`) re-establishes it on its very first turn rather than a minute in.
+			 *
+			 * It is NOT recorded as the turn's ground truth: the transcript stores what was
+			 * measured, and this is explicitly the unmeasured half.
+			 */
+			if (knowledge && knowledge.key !== knowledgeSent.current) {
+				knowledgeSent.current = knowledge.key
+				parts.push({ text: knowledge.text })
+			}
 			parts.push({ text: truth })
 			send({ clientContent: { turns: [{ role: "user", parts }], turnComplete: true } })
 		}

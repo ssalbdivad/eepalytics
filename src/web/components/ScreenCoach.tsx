@@ -253,11 +253,20 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 		groundTruth: async () => {
 			try {
 				const r = await fetch("/api/live/ground-truth", { signal: AbortSignal.timeout(4000) })
-				const j = (await r.json()) as { inGame?: boolean; text?: string }
+				const j = (await r.json()) as {
+					inGame?: boolean
+					text?: string
+					/*
+					 * The champion notes for this game, which the socket sends once. Passed
+					 * straight through: only `geminiLive` knows whether the session it holds has
+					 * already been told, and only it knows when a reconnect wiped that.
+					 */
+					knowledge?: { key: string; text: string } | null
+				}
 				setTruthOk(true)
 				if (j.text) {
 					truthRef.current = j.text
-					return j.text
+					return { text: j.text, knowledge: j.knowledge ?? null }
 				}
 			} catch {
 				/*
@@ -277,7 +286,7 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 			 * on every beat of champion select and the loading screen, where there is no :2999 data
 			 * by definition. Going quiet costs one turn and cannot be wrong.
 			 */
-			return ""
+			return { text: "", knowledge: null }
 		},
 		grabFrame: share.grabFrame
 	})

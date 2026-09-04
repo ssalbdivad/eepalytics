@@ -45,7 +45,7 @@ import { loadCorpus } from "../../daemon/corpus.ts"
 import { championName, refreshChampionNames } from "../../daemon/champions.ts"
 import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
-import { championNote } from "../../knowledge/index.ts"
+import { championKey, championNote } from "../../knowledge/index.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
 import { dismissDebrief, dismissedDebrief, lastGameEnded } from "../../daemon/postgame.ts"
 import { matchesMarker, postGameDebrief } from "../../shared/postgame.ts"
@@ -55,7 +55,8 @@ import { LiveResponse, MatchupResponse } from "../../shared/schema/api.ts"
 import { isCoachingPhase } from "../../shared/schema/lcu.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
-import { renderState } from "../../shared/live-state.ts"
+import { RECENT_EVENT_WINDOW_SEC, renderState } from "../../shared/live-state.ts"
+import { enemyJungler, renderKnowledgePrimer, spokenRole } from "../../shared/live-knowledge.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
 import {
@@ -162,6 +163,12 @@ const buildLiveState = (
 	const mine = me.team
 	const asPlayer = (p: LivePlayer): VisionStatePlayer => ({
 		champion: p.championName ?? "unknown",
+		/*
+		 * From the client's own `position`, never inferred. `shared/schema/live.ts` marks this
+		 * field reliable, unlike match history's `timeline.lane` — and it is undefined in queues
+		 * where nobody declares one, which is exactly when the coach must not name a lane.
+		 */
+		role: spokenRole(p.position),
 		level: p.level,
 		k: p.scores?.kills,
 		d: p.scores?.deaths,
@@ -170,6 +177,13 @@ const buildLiveState = (
 		respawnSec: p.respawnTimer
 	})
 	const others = (data.allPlayers ?? []).filter(p => p !== me)
+	const enemyPlayers = others.filter(p => p.team !== mine)
+	/*
+	 * Their jungler is the one enemy he is actually racing, and until now the coach was forbidden
+	 * from naming any role at all — so every matchup thought it had was unsayable. This is the
+	 * state half of the champion notes: who he is against, what level, what score.
+	 */
+	const counterpart = enemyJungler(enemyPlayers)
 	const stats = data.activePlayer?.championStats
 
 	/*
@@ -177,16 +191,49 @@ const buildLiveState = (
 	 * the coach is being asked about *this* moment — older events are noise that crowd out the
 	 * roster, which is the part that actually stops the hallucinating.
 	 */
+	/*
+	 * Events name RIOT IDS, and the coach is told the champions are the only names in the game.
+	 *
+	 * So "Just happened: SomeGuy#NA1 killed OtherGuy#EUW" handed it a pair of proper nouns it was
+	 * simultaneously forbidden to say — the fight was in the block and unusable. Resolving them
+	 * against the roster is the difference between an event feed and something that can be
+	 * spoken; his own name becomes "you", because that is how a person says it.
+	 */
+	const who = (riotId: string | undefined): string => {
+		if (riotId === undefined || riotId === "") return "someone"
+		if (riotId === myName) return "you"
+		const found = (data.allPlayers ?? []).find(p => (p.riotId ?? p.summonerName ?? "") === riotId)
+		return found?.championName ?? "someone"
+	}
+
 	const recentEvents = (data.events?.Events ?? [])
+		/*
+		 * Bounded by AGE first, then by count.
+		 *
+		 * This was the last six events full stop, printed under a heading that says "Just
+		 * happened" — so through a quiet stretch it offered a four-minute-old kill as news. The
+		 * count bound still matters (a teamfight is six events in three seconds and would crowd
+		 * out the roster), but it was never the one that made the heading true.
+		 */
+		.filter(e => e.EventTime === undefined || secs - e.EventTime <= RECENT_EVENT_WINDOW_SEC)
 		.slice(-6)
 		.map(e => {
 			if (e.EventName === "DragonKill")
-				return `${e.DragonType ?? ""} dragon taken by ${e.KillerName ?? "someone"}`.trim()
-			if (e.EventName === "BaronKill") return `Baron taken by ${e.KillerName ?? "someone"}`
-			if (e.EventName === "HeraldKill") return `Herald taken by ${e.KillerName ?? "someone"}`
+				return `${e.DragonType ?? ""} dragon taken by ${who(e.KillerName)}`.trim()
+			if (e.EventName === "BaronKill") return `Baron taken by ${who(e.KillerName)}`
+			if (e.EventName === "HeraldKill") return `Herald taken by ${who(e.KillerName)}`
 			if (e.EventName === "TurretKilled") return `turret down (${e.TurretKilled ?? "?"})`
 			if (e.EventName === "ChampionKill")
-				return `${e.KillerName ?? "?"} killed ${e.VictimName ?? "?"}`
+				/*
+				 * Assisters included, because "who was in that fight" is the question. A kill with
+				 * three names on it is a teamfight; the same kill with none is a pick, and the
+				 * coach cannot tell those apart from a scoreline that only moves by one.
+				 */
+				return `${who(e.KillerName)} killed ${who(e.VictimName)}${
+					(e.Assisters ?? []).length > 0 ?
+						` (with ${(e.Assisters ?? []).map(who).join(", ")})`
+					:	""
+				}`
 			return ""
 		})
 		.filter(t => t !== "")
@@ -207,8 +254,19 @@ const buildLiveState = (
 			respawnSec: me.respawnTimer
 		},
 		allies: others.filter(p => p.team === mine).map(asPlayer),
-		enemies: others.filter(p => p.team !== mine).map(asPlayer),
+		enemies: enemyPlayers.map(asPlayer),
 		recentEvents,
+		counterpart:
+			counterpart ?
+				{
+					champion: counterpart.player.championName ?? "unknown",
+					basis: counterpart.basis,
+					level: counterpart.player.level,
+					k: counterpart.player.scores?.kills,
+					d: counterpart.player.scores?.deaths,
+					a: counterpart.player.scores?.assists
+				}
+			:	null,
 		unseen: buildFacts(
 			{
 				nowSec: secs,
@@ -267,6 +325,36 @@ const buildLiveState = (
 			},
 			factMemory
 		)
+	}
+}
+
+/**
+ * The champion notes for this game, rendered once, or null when there is nothing on file.
+ *
+ * `_default.md` counts as NO notes on both sides, the same rule the champ-select brief already
+ * applies: it does not describe a champion, it tells the coach to stop talking about the
+ * champion, and passing it through as context invites exactly the improvisation it exists to
+ * prevent. The primer says the same thing in its own words when a side is missing.
+ *
+ * `key` is what the browser dedupes on. Champions cannot change mid-game, so it changes only
+ * between games — and a reconnect re-sends regardless, because a new session has no memory of
+ * the old one.
+ */
+const knowledgeFor = (state: VisionState): { key: string; text: string } | null => {
+	const noteFor = (champion: string) => {
+		const note = championNote(champion)
+		return note && !note.isDefault ? { champion, text: note.text } : null
+	}
+	const cp = state.counterpart
+	const cpNote = cp ? noteFor(cp.champion) : null
+	const text = renderKnowledgePrimer({
+		me: noteFor(state.me.champion),
+		counterpart: cpNote ? { ...cpNote, basis: cp!.basis } : null
+	})
+	if (text === "") return null
+	return {
+		key: `${championKey(state.me.champion)}-vs-${cp ? championKey(cp.champion) : "unknown"}`,
+		text
 	}
 }
 
@@ -629,6 +717,13 @@ export const createLiveRoute = (): Hono => {
 	 * The Gemini path runs in the browser and talks to Google directly, so it cannot call
 	 * `buildLiveState` itself. It polls this instead and forwards the block verbatim, which
 	 * keeps exactly one definition of "what is true" for both coaching paths.
+	 *
+	 * `knowledge` rides along beside the block rather than inside it, and the browser sends it
+	 * ONCE per socket (`geminiLive.ts`). It is static for a whole game and about 1.3k tokens, so
+	 * repeating it on a 20s heartbeat would grow the billed context every turn for text that
+	 * cannot change — the reasoning is in `shared/live-knowledge.ts`. Keeping it out of the block
+	 * also keeps the block what it says it is: measured facts, and nothing unmeasured under a
+	 * heading that says FACTS.
 	 */
 	app.get("/live/ground-truth", async c => {
 		const handle = await lcu()
@@ -643,8 +738,10 @@ export const createLiveRoute = (): Hono => {
 		 * a game three days ago reads as something happening right now — which is how a coach
 		 * ends up telling someone to stop doing a thing they are not currently doing.
 		 */
+		const knowledge = knowledgeFor(state)
 		return c.json({
 			inGame: true,
+			...(knowledge ? { knowledge } : {}),
 			text: `${renderState(state)}${
 				focus.length > 0 ?
 					`\n\n## From his PAST reviews — not from this game\n\nThese are habits he is working on. Mention one only if THIS game's facts show it happening again.\n\n${focus

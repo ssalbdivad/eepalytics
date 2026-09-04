@@ -35,9 +35,11 @@
  * ## Usage
  *
  *   node --env-file-if-exists=.env --experimental-strip-types scripts/eval-live.ts \
- *     [--games 3] [--marks 8,14,20,26] [--frame path.jpg] [--judge] [--out report.json]
+ *     [--games 3] [--marks 8,14,20,26] [--frame path.jpg] [--judge] [--out report.json] \
+ *     [--no-knowledge]
  *
- * `--marks` is in MINUTES of game clock.
+ * `--marks` is in MINUTES of game clock. `--no-knowledge` withholds the champion notes the app
+ * sends once per session, which is the A/B for whether they are earning their tokens.
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
@@ -45,8 +47,10 @@ import { gunzipSync } from "node:zlib"
 import { spawn } from "node:child_process"
 import { DatabaseSync } from "node:sqlite"
 import { DATA_DIR, DB_PATH, USER_PUUID } from "../src/shared/constants.ts"
-import { renderState } from "../src/shared/live-state.ts"
+import { RECENT_EVENT_WINDOW_SEC, renderState } from "../src/shared/live-state.ts"
 import type { VisionState, VisionStatePlayer } from "../src/shared/live-state.ts"
+import { renderKnowledgePrimer } from "../src/shared/live-knowledge.ts"
+import { championNote } from "../src/knowledge/index.ts"
 import { geminiKey, GEMINI_LIVE_MODEL } from "../src/review/gemini-live.ts"
 import { baselineFromRows, perGameMetrics } from "../src/analysis/index.ts"
 import { buildFacts, newFactMemory } from "../src/analysis/live-facts.ts"
@@ -78,7 +82,31 @@ const flag = (name: string): boolean => process.argv.includes(`--${name}`)
 /* ------------------------------------------------------- state rebuilding */
 
 interface Roster {
-	[participantId: number]: { champion: string; teamId: number; puuid: string; isUser: boolean }
+	[participantId: number]: {
+		champion: string
+		teamId: number
+		puuid: string
+		isUser: boolean
+		/** `TOP|JGL|MID|ADC|SUP|UNKNOWN`, as `analysis/roles.ts` inferred it at ingest. */
+		role: string
+	}
+}
+
+/**
+ * The stored role vocabulary, as a coach would say it.
+ *
+ * Production reads the LIVE client's `position` field, which the client publishes directly. This
+ * harness has no such field — the timeline has none — so it falls back to the role the ingest
+ * already inferred, which for the jungler is the Smite holder. That is why every reconstructed
+ * state reports the counterpart with basis `smite` and never `declared`: it is the honest label
+ * for how the fixture knows, and it exercises the hedge that a real undeclared queue would need.
+ */
+const SPOKEN_ROLE: Record<string, string | undefined> = {
+	TOP: "top",
+	JGL: "jungle",
+	MID: "mid",
+	ADC: "bot",
+	SUP: "support"
 }
 
 /**
@@ -95,13 +123,21 @@ const loadGame = (db: DatabaseSync, gameId: string) => {
 	)
 	const roster: Roster = {}
 	for (const r of db
-		.prepare("SELECT participantId, teamId, puuid, championName, isUser FROM participant WHERE gameId = ?")
-		.all(gameId) as { participantId: number; teamId: number; puuid: string; championName: string; isUser: number }[])
+		.prepare("SELECT participantId, teamId, puuid, championName, role, isUser FROM participant WHERE gameId = ?")
+		.all(gameId) as {
+		participantId: number
+		teamId: number
+		puuid: string
+		championName: string
+		role: string
+		isUser: number
+	}[])
 		roster[r.participantId] = {
 			champion: r.championName,
 			teamId: r.teamId,
 			puuid: r.puuid,
-			isUser: r.isUser === 1
+			isUser: r.isUser === 1,
+			role: r.role
 		}
 	return { roster, frames: (timeline.info ?? timeline).frames ?? [] }
 }
@@ -154,6 +190,7 @@ const stateAt = (
 		const left = deadFor(pid)
 		return {
 			champion: roster[pid]!.champion,
+			role: SPOKEN_ROLE[roster[pid]!.role],
 			level: f.level,
 			k: kda[pid]!.k,
 			d: kda[pid]!.d,
@@ -283,10 +320,58 @@ const stateAt = (
 		mem
 	)
 
+	/*
+	 * "Just happened", reconstructed — the fixture used to send an empty list, so every judged
+	 * transcript was scored against a coach that had never been shown a fight. Production reads
+	 * these from the live event feed; here they come from the timeline's own events, phrased the
+	 * same way, resolved to champion names and bounded by the same window.
+	 */
+	const recentEvents: string[] = []
+	for (const f of frames)
+		for (const e of f.events ?? []) {
+			const at = e.timestamp / 1000
+			if (at > atSec || atSec - at > RECENT_EVENT_WINDOW_SEC) continue
+			const name = (pid: number): string =>
+				pid === mePid ? "you" : (roster[pid]?.champion ?? "someone")
+			if (e.type === "CHAMPION_KILL")
+				recentEvents.push(
+					`${name(e.killerId)} killed ${name(e.victimId)}${
+						(e.assistingParticipantIds ?? []).length > 0 ?
+							` (with ${(e.assistingParticipantIds as number[]).map(name).join(", ")})`
+						:	""
+					}`
+				)
+			else if (e.type === "ELITE_MONSTER_KILL")
+				recentEvents.push(
+					`${
+						e.monsterType === "DRAGON" ? `${String(e.monsterSubType ?? "").toLowerCase().replace(/_dragon$/, "")} dragon`
+						: e.monsterType === "BARON_NASHOR" ? "Baron"
+						: "Herald"
+					} taken by ${name(e.killerId)}`.replace(/^ /, "")
+				)
+			else if (e.type === "BUILDING_KILL") recentEvents.push("turret down")
+		}
+
+	const counterpartPid = others.find(
+		p => roster[p]!.teamId !== myTeam && roster[p]!.role === "JGL"
+	)
+
 	return {
 		mePid,
 		state: {
 			clock: `${Math.floor(atSec / 60)}:${String(Math.floor(atSec % 60)).padStart(2, "0")}`,
+			counterpart:
+				counterpartPid === undefined ?
+					null
+				:	{
+						champion: roster[counterpartPid]!.champion,
+						// See SPOKEN_ROLE: the fixture knows this the way `roles.ts` does, by Smite.
+						basis: "smite" as const,
+						level: pf(counterpartPid).level,
+						k: kda[counterpartPid]!.k,
+						d: kda[counterpartPid]!.d,
+						a: kda[counterpartPid]!.a
+					},
 			me: {
 				champion: roster[mePid]!.champion,
 				level: mf.level,
@@ -300,7 +385,7 @@ const stateAt = (
 			},
 			allies: others.filter(p => roster[p]!.teamId === myTeam).map(player),
 			enemies: others.filter(p => roster[p]!.teamId !== myTeam).map(player),
-			recentEvents: [],
+			recentEvents,
 			unseen: finalUnseen
 		}
 	}
@@ -323,12 +408,38 @@ interface Said {
  * One Gemini Live session per game, so the "do not repeat yourself" instruction is exercised the
  * way it is in a real game rather than reset between every prompt.
  */
+/**
+ * The champion notes for one game, exactly as the daemon assembles them.
+ *
+ * `_default.md` counts as no notes on both sides — the same rule `routes/live.ts` and the
+ * champ-select brief already apply, because that file does not describe a champion, it tells the
+ * coach to stop talking about the champion.
+ */
+const knowledgeFor = (game: ReturnType<typeof loadGame>): string => {
+	const rows = Object.values(game.roster)
+	const me = rows.find(r => r.isUser)
+	if (!me) return ""
+	const opp = rows.find(r => r.teamId !== me.teamId && r.role === "JGL")
+	const noteFor = (champion: string | undefined) => {
+		if (champion === undefined) return null
+		const note = championNote(champion)
+		return note && !note.isDefault ? { champion, text: note.text } : null
+	}
+	const cp = noteFor(opp?.champion)
+	return renderKnowledgePrimer({
+		me: noteFor(me.champion),
+		counterpart: cp ? { ...cp, basis: "smite" } : null
+	})
+}
+
 const runSession = async (
 	gameId: string,
 	marks: number[],
 	game: ReturnType<typeof loadGame>,
 	frameB64: string,
-	baseline: ReturnType<typeof baselineFromRows> | null
+	baseline: ReturnType<typeof baselineFromRows> | null,
+	/** Sent once, on the first turn, exactly as `geminiLive.ts` does it. "" sends nothing. */
+	knowledge: string
 ): Promise<Said[]> => {
 	const key = geminiKey()
 	if (key === "") throw new Error("no Gemini key — set one in the app or GEMINI_API_KEY")
@@ -348,6 +459,8 @@ const runSession = async (
 		let queue = [...marks]
 		let current: { atSec: number; state: VisionState; sentAt: number } | null = null
 		let partial = ""
+		/** One socket is one session, and the notes go in once inside it — as the app does. */
+		let knowledgeSent = false
 		let lastUsage: { total: number; prompt: number } | null = null
 
 		const next = () => {
@@ -371,20 +484,23 @@ const runSession = async (
 			 * that never referenced the picture, while inline took 0.6-1.7s and read the screen
 			 * correctly. An eval that used the other shape would be scoring a path nothing runs.
 			 */
+			/*
+			 * Champion notes ride on the FIRST turn only, which is what the app does — see
+			 * `beat()` in `web/lib/geminiLive.ts` and the placement argument in
+			 * `shared/live-knowledge.ts`. Sending them every turn here would score a path nothing
+			 * runs, which is the one thing an eval must never do.
+			 */
+			const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [
+				{ inlineData: { mimeType: "image/jpeg", data: frameB64 } }
+			]
+			if (knowledge !== "" && !knowledgeSent) {
+				knowledgeSent = true
+				parts.push({ text: knowledge })
+			}
+			parts.push({ text: renderState(built.state) })
 			ws.send(
 				JSON.stringify({
-					clientContent: {
-						turns: [
-							{
-								role: "user",
-								parts: [
-									{ inlineData: { mimeType: "image/jpeg", data: frameB64 } },
-									{ text: renderState(built.state) }
-								]
-							}
-						],
-						turnComplete: true
-					}
+					clientContent: { turns: [{ role: "user", parts }], turnComplete: true }
 				})
 			)
 		}
@@ -459,7 +575,28 @@ const runSession = async (
  */
 const FORBIDDEN: { label: string; re: RegExp }[] = [
 	{ label: "ability usage / cooldowns", re: /\b(cooldown|abilit(y|ies)|your (q|w|e|r)\b|spell rotation|combo)\b/i },
-	{ label: "ward placement", re: /\b(ward(s|ing)?|deep ward|control ward|pink)\b/i },
+	/*
+	 * "Vision" as a thing to take, steal, deny or contest.
+	 *
+	 * Added after a run where the coach said "steal his topside vision" and "move now to contest
+	 * the vision" on the same pass. The block carries no vision data at all — not a ward, not a
+	 * score — so those are instructions with nothing behind them, and the word is exactly what a
+	 * model reaches for when it wants to sound tactical and has nothing to be tactical about.
+	 * `ward` alone did not catch either one.
+	 */
+	{
+		label: "ward / vision control",
+		re: /\b(ward(s|ing)?|deep ward|control ward|pink|(take|steal|deny|contest|get|set up|setting up)( the| his| her| their)? vision|vision (control|game))\b/i
+	},
+	/*
+	 * A claim about what an enemy is doing right now. The client publishes who they are, their
+	 * level, their score and whether they are alive — never an activity. Measured: "gank bot while
+	 * he is busy", which is a position and an intention in four words.
+	 */
+	{
+		label: "enemy activity / intent",
+		re: /\b(while (he|she|they)('s| is| are)? (busy|farming|clearing|recalling|backing)|(he|she|they)('s| is| are) (coming|farming topside|farming botside|on his way|rotating))\b/i
+	},
 	/*
 	 * Build JUDGEMENT, not the verb "buy".
 	 *
@@ -475,6 +612,19 @@ const FORBIDDEN: { label: string; re: RegExp }[] = [
 	},
 	{ label: "summoner spells", re: /\b(flash|ignite|smite is (up|down)|summoner spell)\b/i },
 	{ label: "clear speed judgement", re: /\b(clear faster|clearing too slow|speed up your clear|slow clear)\b/i },
+	/*
+	 * Summing or summarising a fight, which arrived the moment the block started showing fights.
+	 *
+	 * "Three of yours just died", "they just aced three of you", "your team's gone" — all three
+	 * said in one run, none supported. The kill lines are a 45-second history and say nothing
+	 * about who is standing NOW; "Alive right now" is the only count of the living in the block.
+	 * "N of them are dead" is deliberately not matched: that one IS a computed fact from the
+	 * ranked list.
+	 */
+	{
+		label: "counted or summarised a fight",
+		re: /\b((two|three|four|five|\d+) of (yours|your team|your teammates|you)\b|aced?\b|your team('s| is| was)? (gone|dead|wiped)|wiped you)/i
+	},
 	{ label: "unseeable enemy position", re: /\b(their jungler is (in|at|near)|enemy jungler is (in|at|near))\b/i }
 ]
 
@@ -491,6 +641,20 @@ const scoreLine = (s: Said, championNames: Set<string>) => {
 	)
 	const forbidden = FORBIDDEN.filter(f => f.re.test(s.text)).map(f => f.label)
 	const block = renderState(s.state)
+	/*
+	 * TEST 2 from the prompt, automated as far as a regex honestly can: could this exact sentence
+	 * have been said in a different game?
+	 *
+	 * The proxy is that a line anchored to THIS game names something from it — a number that
+	 * appears in the block, or a champion on this roster. "Viego is your jungle counterpart so
+	 * watch for his ganks" names a champion, so it would slip past this; "focus on your farm and
+	 * take objectives" names nothing at all and is caught. It is a floor, not a ceiling — a judge
+	 * pass is still what catches a generic line wearing a real champion's name.
+	 */
+	const generic =
+		!/^pass\b/i.test(s.text) &&
+		!/\d/.test(s.text) &&
+		![...roster].some(c => new RegExp(`\\b${c.replace(/[^\w]/g, ".")}\\b`, "i").test(s.text))
 	// Numbers above 3 are specific enough that inventing one is a real claim; 1-3 are counts.
 	const nums = [...s.text.matchAll(/\b(\d{2,})\b/g)].map(m => m[1]!)
 	const unbacked = nums.filter(n => !block.includes(n))
@@ -520,6 +684,7 @@ const scoreLine = (s: Said, championNames: Set<string>) => {
 		forbidden,
 		unbacked,
 		inventedDeath,
+		generic,
 		motif: MOTIFS.test(s.text),
 		hasNumber: /\d/.test(s.text),
 		chars: s.text.length
@@ -607,10 +772,21 @@ const main = async () => {
 		:	arg("marks", "6,11,16,22,28").split(",").map(m => Number(m) * 60)
 
 	const baseline = baselineFromRows(perGameMetrics(loadCorpus(40)))
-	const games = db
-		.prepare("SELECT gameId FROM game WHERE timelineBlob IS NOT NULL ORDER BY endedAtMs DESC LIMIT ?")
-		.all(wanted)
-		.map(r => String((r as { gameId: number | bigint }).gameId))
+	/*
+	 * `--game <id>[,<id>]` pins the games instead of taking the newest N.
+	 *
+	 * A before/after has to be run over the SAME states — the fact memory is stateful across
+	 * marks, so a different game or a different mark set is a different experiment — and the
+	 * newest-N default silently changes every time a game is played.
+	 */
+	const pinned = arg("game", "")
+	const games =
+		pinned !== "" ?
+			pinned.split(",").map(g => g.trim())
+		:	db
+				.prepare("SELECT gameId FROM game WHERE timelineBlob IS NOT NULL ORDER BY endedAtMs DESC LIMIT ?")
+				.all(wanted)
+				.map(r => String((r as { gameId: number | bigint }).gameId))
 
 	const frameB64 = readFileSync(arg("frame", `${DATA_DIR}/eval/frame.jpg`)).toString("base64")
 
@@ -624,6 +800,8 @@ const main = async () => {
 			resetSessionState()
 			const game = loadGame(db, gameId)
 			console.log(`\n########## game ${gameId} ##########`)
+			const primer = flag("no-knowledge") ? "" : knowledgeFor(game)
+			if (primer !== "") console.log(`\n----- champion notes, sent once -----\n${primer}`)
 			for (const atSec of marks) {
 				const built = stateAt(game, atSec, baseline)
 				if (!built) continue
@@ -651,7 +829,15 @@ const main = async () => {
 			try {
 				resetSessionState()
 				const game = loadGame(db, gameId)
-				const said = await runSession(gameId, marks, game, frameB64, baseline)
+				const said = await runSession(
+					gameId,
+					marks,
+					game,
+					frameB64,
+					baseline,
+					// `--no-knowledge` is the A/B: same states, same prompt, notes withheld.
+					flag("no-knowledge") ? "" : knowledgeFor(game)
+				)
 				all.push(...said)
 				process.stderr.write(`${said.length} lines\n`)
 				break
@@ -685,7 +871,8 @@ const main = async () => {
 			score.invented.length > 0 ? `INVENTED:${score.invented.join(",")}` : "",
 			score.forbidden.length > 0 ? `UNSUPPORTABLE:${score.forbidden.join("|")}` : "",
 			score.unbacked.length > 0 ? `UNBACKED#:${score.unbacked.join(",")}` : "",
-			score.inventedDeath ? "INVENTED-DEATH" : ""
+			score.inventedDeath ? "INVENTED-DEATH" : "",
+			score.generic ? "GENERIC" : ""
 		]
 			.filter(Boolean)
 			.join(" ")
@@ -700,6 +887,9 @@ const main = async () => {
 	console.log(`unsupportable claim ${pct(scored.filter(s => s.score.forbidden.length > 0).length)}`)
 	console.log(`invented a death    ${pct(scored.filter(s => s.score.inventedDeath).length)}`)
 	console.log(`number not in block ${pct(scored.filter(s => s.score.unbacked.length > 0).length)}`)
+	console.log(
+		`generic (TEST 2)    ${pct(scored.filter(s => s.score.generic).length)}  — names nothing from this game`
+	)
 	const spoke = scored.filter(s => !/^pass\b/i.test(s.said.text))
 	const spokeN = spoke.length || 1
 	console.log(
@@ -733,6 +923,12 @@ const main = async () => {
 	console.log(`a death            ${share(/\b(died|dead|down for)\b/i)}`)
 	console.log(`farm vs his pace   ${share(/\bcamps?\b|\bCS\b/i)}`)
 	console.log(`gold               ${share(/\bgold\b|\d+g\b/i)}`)
+	/*
+	 * Fights, which the coach never once mentioned before this was measured — the ordered list in
+	 * the prompt had camps, gold and objective timers in it and nothing about whether to commit,
+	 * walk away, or go at all. The player asked for this directly.
+	 */
+	console.log(`a fight or a trade ${share(/\b(fight|fought|trade|traded|ace|killed|kill|dive|collapse|commit)\b/i)}`)
 
 	const out = arg("out", "")
 	if (out !== "") {
