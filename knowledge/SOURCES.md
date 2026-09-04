@@ -42,12 +42,22 @@ Even from a sanctioned source, `knowledge/champions/*.md` holds only material th
 fence in `knowledge/README.md`: things that shape **the fix**. Specifically —
 
 - **Yes:** clear routes and their frequency, clear times, power-spike levels, what the champion
-  wants from a fight, where the champion is vulnerable, matchup shape against a specific enemy
+  wants from a fight, when to commit to a fight and when to leave, when to contest an objective
+  and when to trade it, where the champion is vulnerable, matchup shape against a specific enemy
   jungler.
-- **No:** item builds, rune pages, skill order as a *grading* criterion. The LCU timeline has
-  none of those, so the coach could never check what the user actually did — advice about them
-  would float free of evidence, which is the exact failure this app exists to prevent. (Skill
-  and ability *roles* are fine; "he should have maxed W" is not.)
+- **Yes, but live only and keyed to a state:** what the *next item* has to buy, given what the
+  enemy inventories show. The live client publishes every player's items; the post-game timeline
+  publishes none, so this material is marked live-only in the file and is never a grading
+  criterion. Write the property ("the burn line keeps paying into stacked health"), not a build
+  path, because item names move every patch and the property does not. See `knowledge/README.md`
+  for the three conditions a build rule has to meet.
+- **No:** rune pages, skill order as a *grading* criterion, and any build claim in a review. The
+  LCU timeline has none of those, so the coach could never check what the user actually did —
+  advice about them would float free of evidence, which is the exact failure this app exists to
+  prevent. (Skill and ability *roles* are fine; "he should have maxed W" is not.)
+- **Note for whoever edits `src/knowledge/research.ts`:** its `RULES` prompt still bans item
+  advice outright, so a research refresh will strip the build rules out of any file it
+  regenerates. That prompt and this list have to be changed together.
 - **No numbers that could be mistaken for measurements of his game.** A champion's base clear
   time is context. It is never a stat about him.
 
