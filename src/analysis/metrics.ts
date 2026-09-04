@@ -459,7 +459,7 @@ export const computeMetrics = (
 			`cs@${mark}`,
 			mine,
 			"medium",
-			`${round(mine)} camps + lane minions by ${mark}:00, interpolated from the once-per-minute frames.`
+			`${round(mine)} CS by ${mark}:00, interpolated from the once-per-minute frames.`
 		)
 		if (oppId !== null) {
 			const theirs = csAt(frames, oppId, mark)
@@ -541,7 +541,7 @@ export const computeMetrics = (
 			"enemyJungleShare",
 			split.enemyShare * 100,
 			"low",
-			`${split.enemyHalfCamps} of ${split.totalCamps} camps finished while you were in the enemy half (${split.ownHalfCamps} own half, ${split.neutralBandCamps} in the neutral river band). Attribution assigns each camp to your position at the NEXT frame, so it is approximate.`
+			`${split.enemyHalfCamps} of ${split.totalCamps} jungle CS finished while you were in the enemy half (${split.ownHalfCamps} own half, ${split.neutralBandCamps} in the neutral river band). Attribution uses your position at the NEXT frame, so it is approximate.`
 		)
 
 	/* --------------------------------------------------------- fighting */
