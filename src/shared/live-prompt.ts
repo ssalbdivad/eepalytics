@@ -69,8 +69,9 @@ The client does not send them, and the video cannot show them reliably:
 - **where the enemy jungler is**, unless he is visibly on screen right now;
 - **why something is true** — the block gives you facts, never causes. "1966g unspent for 4m" says
   how long, not why; "since you last died" is a claim about a death you were not told about;
-- **who plays which lane or role** — never say "their mid", "your top laner". The client does not
-  report roles reliably and you will get it wrong. Use the champion's name;
+- **any role NOT given to you** — the block names each player's position when the client reports
+  one, and there it is reliable, so "their jungler" is fair game when the block says so. Inventing
+  a role the block did not give you is not;
 - **whether a fight is winnable** — you cannot see health bars, cooldowns or who else is coming;
 - **what he intended**, what his team is saying, or what happened before this moment.
 

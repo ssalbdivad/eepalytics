@@ -47,6 +47,7 @@ import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spell
 import { lcu } from "../../daemon/lcu.ts"
 import { championNote, pronunciationTable } from "../../knowledge/index.ts"
 import { pronunciationsFor } from "../../shared/pronounce.ts"
+import { dragonPhrase } from "../../shared/dragons.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
 import { dismissDebrief, dismissedDebrief, lastGameEnded } from "../../daemon/postgame.ts"
 import { matchesMarker, postGameDebrief } from "../../shared/postgame.ts"
@@ -179,16 +180,30 @@ const buildLiveState = (
 	 * the coach is being asked about *this* moment — older events are noise that crowd out the
 	 * roster, which is the part that actually stops the hallucinating.
 	 */
+	/*
+	 * Champion names, never riotIds.
+	 *
+	 * The event feed names people by summoner name, and this rendered them straight into a block
+	 * whose every other line is champions. The coach then spoke them as champions: "You got Baron
+	 * with Electrician" reached the player out loud, about a Baron he did not take, while he was
+	 * dead. It reads as a hallucination and it is a namespace leak - the model was repeating
+	 * exactly what it was handed.
+	 */
+	const championOf = (who: string | undefined): string => {
+		if (!who) return "someone"
+		const p = (data.allPlayers ?? []).find(x => (x.riotId ?? x.summonerName) === who)
+		return p?.championName ?? who
+	}
 	const recentEvents = (data.events?.Events ?? [])
 		.slice(-6)
 		.map(e => {
 			if (e.EventName === "DragonKill")
-				return `${e.DragonType ?? ""} dragon taken by ${e.KillerName ?? "someone"}`.trim()
-			if (e.EventName === "BaronKill") return `Baron taken by ${e.KillerName ?? "someone"}`
-			if (e.EventName === "HeraldKill") return `Herald taken by ${e.KillerName ?? "someone"}`
+				return `${dragonPhrase(e.DragonType)} taken by ${championOf(e.KillerName)}`
+			if (e.EventName === "BaronKill") return `Baron taken by ${championOf(e.KillerName)}`
+			if (e.EventName === "HeraldKill") return `Herald taken by ${championOf(e.KillerName)}`
 			if (e.EventName === "TurretKilled") return `turret down (${e.TurretKilled ?? "?"})`
 			if (e.EventName === "ChampionKill")
-				return `${e.KillerName ?? "?"} killed ${e.VictimName ?? "?"}`
+				return `${championOf(e.KillerName)} killed ${championOf(e.VictimName)}`
 			return ""
 		})
 		.filter(t => t !== "")
