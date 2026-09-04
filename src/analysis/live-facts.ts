@@ -66,6 +66,8 @@ export interface FactMemory {
 	lastGoldMentioned: number
 	/** When gold was last raised, so persistent unspent gold can earn a second mention. */
 	lastGoldAtSec: number
+	/** When it first crossed the threshold — the duration is measured from here, not the mention. */
+	goldSinceSec: number
 	lastFarmAtSec: number
 	/** His CS when farm was last raised; it must actually move before saying it again. */
 	lastFarmCs: number
@@ -78,6 +80,7 @@ export const newFactMemory = (): FactMemory => ({
 	praiseSaid: new Set(),
 	lastGoldMentioned: 0,
 	lastGoldAtSec: 0,
+	goldSinceSec: 0,
 	lastFarmAtSec: 0,
 	lastFarmCs: 0,
 	lastLedWithDeath: false
@@ -152,6 +155,8 @@ const hash = (s: string): number => {
  * The ranked, rate-limited list. Mutates `mem`, which is the point — it is the memory.
  */
 export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
+	/** Seconds until he is back on the map; 0 when he is already on it. */
+	const dead = input.meDeadForSec ?? 0
 	const praise: string[] = []
 	const farm: string[] = []
 	const money: string[] = []
@@ -235,10 +240,27 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 		if (input.currentGold < GOLD_FLOOR) {
 			mem.lastGoldMentioned = 0
 			mem.lastGoldAtSec = 0
+			mem.goldSinceSec = 0
+		} else if (dead > 0) {
+			/*
+			 * He is on the respawn screen with the shop open. Telling him his gold is unspent
+			 * there is telling him about the thing he is looking at, and it reads as a scold.
+			 */
+			if (mem.goldSinceSec === 0) mem.goldSinceSec = input.nowSec
 		} else {
+			if (mem.goldSinceSec === 0) mem.goldSinceSec = input.nowSec
 			const stepped =
 				mem.lastGoldMentioned === 0 || input.currentGold - mem.lastGoldMentioned >= GOLD_STEP
-			const stale = mem.lastGoldAtSec > 0 && input.nowSec - mem.lastGoldAtSec >= GOLD_NAG_SEC
+			/*
+			 * A re-mention needs time AND change. Without the second condition it repeated the
+			 * same sentence word for word into a game state that had not moved a point in four
+			 * minutes — an unchanged criticism restated because a timer fired, which is precisely
+			 * how someone learns to tune the coach out.
+			 */
+			const stale =
+				mem.lastGoldAtSec > 0 &&
+				input.nowSec - mem.lastGoldAtSec >= GOLD_NAG_SEC &&
+				input.currentGold !== mem.lastGoldMentioned
 			if (stepped || stale) {
 				money.push(
 					stale && !stepped ?
@@ -247,7 +269,12 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 					 * into a fabricated twelve-minutes-ago anchor. It states the duration and
 					 * nothing about its cause.
 					 */
-					`${Math.round(input.currentGold)}g unspent for ${Math.round((input.nowSec - mem.lastGoldAtSec) / 60)}m now`
+					/*
+					 * Counted from when the gold FIRST crossed the threshold, not from the last
+					 * time it was mentioned — otherwise every re-mention reset the clock and said
+					 * "4m" forever, which the player can see is wrong.
+					 */
+					`${Math.round(input.currentGold)}g unspent for ${Math.round((input.nowSec - mem.goldSinceSec) / 60)}m now`
 					:	`${Math.round(input.currentGold)}g sitting unspent`
 				)
 				mem.lastGoldMentioned = input.currentGold
@@ -264,7 +291,6 @@ export const buildFacts = (input: FactInput, mem: FactMemory): string[] => {
 	 * Deliberately not subject to the announce-once rule that single deaths use — the window is
 	 * the thing being reported, not the deaths, and it changes as each of them respawns.
 	 */
-	const dead = input.meDeadForSec ?? 0
 	/*
 	 * Outnumbered: any "go take something" fact is worse than silence. He is not getting a free
 	 * objective 1v4, and being told he has a window is how someone walks into four people.

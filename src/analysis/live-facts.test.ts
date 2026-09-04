@@ -147,7 +147,8 @@ describe("buildFacts — rate limiting", () => {
 			false,
 			"a hundred seconds later is still nagging"
 		)
-		const later = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1400 }), mem)
+		// A different figure: a re-mention needs time AND change, or it is the same sentence twice.
+		const later = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1450 }), mem)
 		ok(later.some(f => f.includes("unspent for 4m")), "four minutes on, it has earned a re-mention")
 		/*
 		 * States the duration and NOTHING about its cause. The previous phrasing, "4m since you
@@ -182,6 +183,35 @@ describe("buildFacts — rate limiting", () => {
 			mem
 		)
 		ok(moved.some(f => /camps (behind|ahead)/.test(f)), "once he has actually farmed, the gap is news again")
+	})
+
+	it("counts the unspent duration from when it crossed, not from the last mention", () => {
+		/*
+		 * Regression: every re-mention reset the clock, so it said "4m" forever — at 23:20 and
+		 * again at 27:20, into a game state that had not moved. The player can see that is wrong.
+		 */
+		const mem = newFactMemory()
+		buildFacts(input({ nowSec: 600, currentGold: 1400 }), mem)
+		const later = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1500 }), mem)
+		ok(later.some(f => f.includes("unspent for 4m")), `got: ${later.join(" | ")}`)
+		const later2 = buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC * 2, currentGold: 1600 }), mem)
+		ok(later2.some(f => f.includes("unspent for 8m")), `duration must keep growing: ${later2.join(" | ")}`)
+	})
+
+	it("says nothing about gold while he is on the respawn screen", () => {
+		// He is looking at the shop. Telling him his gold is unspent there reads as a scold.
+		const mem = newFactMemory()
+		deepStrictEqual(buildFacts(input({ meDeadForSec: 15, currentGold: 3000 }), mem), [])
+	})
+
+	it("does not repeat the gold line when nothing has changed", () => {
+		const mem = newFactMemory()
+		buildFacts(input({ nowSec: 600, currentGold: 1400 }), mem)
+		deepStrictEqual(
+			buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1400 }), mem),
+			[],
+			"same gold, same sentence — say nothing"
+		)
 	})
 
 	it("forgets gold after a recall", () => {
