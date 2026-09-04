@@ -221,6 +221,23 @@ export const GameList = ({ health, eventTick }: GameListProps) => {
 						{all.length} game{all.length === 1 ? "" : "s"} stored, none of them fit these
 						filters.
 					</p>
+					{/*
+					 * A way out, in the place where you need it.
+					 *
+					 * A dead end that only says what is wrong reads as "this is broken" — especially
+					 * when the filters that caused it are persisted, so they survive a reload and the
+					 * obvious escape does nothing.
+					 */}
+					<button
+						className="btn"
+						onClick={() => {
+							setResult("all")
+							setQueue("all")
+							setSearch("")
+						}}
+					>
+						Clear the filters
+					</button>
 				</div>
 			:	<div className="game-rows">
 					{shown.map(g => (

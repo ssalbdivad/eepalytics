@@ -191,10 +191,15 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 		<div className="csk-screen">
 			<div className="csk-screen__head">
 				<div>
-					<strong>Coach me while I play</strong>
+					{/*
+					 * She had no name anywhere on screen — she was only ever "she", which is a
+					 * strange way to meet someone who is about to start talking to you.
+					 */}
+					<strong>fawnsei will coach you out loud</strong>
 					<p>
-						She watches your shared screen and talks to you out loud — about half a second
-						behind. She stays quiet unless she has something worth saying.
+						Share your screen and she watches it while you play, talking to you about a
+						second behind. She stays quiet unless she has something worth saying — most of
+						the time she says nothing, and that is on purpose.
 					</p>
 				</div>
 				{share.sharing ?
@@ -232,7 +237,8 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 							<a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">
 								aistudio.google.com/apikey
 							</a>{" "}
-							and sign in with any Google account.
+							and sign in with any Google account. This is Google's page, not ours — it gives
+							you a password that lets fawnsei talk to their voice model.
 						</li>
 						<li>
 							Press <b>Create API key</b>. The free tier is enough to try this.
@@ -271,11 +277,11 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 						</div>
 					)}
 					<p className="csk-screen__fine">
-						The key stays on this machine. The page never sees it — the app swaps it for a
-						token that works for one session and then expires.
+						Your key stays on this computer — this page never sees it. fawnsei swaps it for a
+						pass that works for one session and then stops working.
 						<br />
-						There is no "sign in with Google" for this: the live API takes a key, and a
-						Gemini subscription does not include API access.
+						There is no "sign in with Google" button because Google does not offer one for
+						this; a paid Gemini subscription does not include it either.
 					</p>
 				</div>
 			)}
@@ -284,9 +290,9 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 				<div className="csk-screen__blocked">
 					<strong>This will open in your Windows browser.</strong>
 					<p>
-						This window runs inside WSL, so the only screens it can see are WSL's own — not
-						the Windows desktop, and not the game. Your Windows browser is a Windows app, so
-						it can see the game, and it still talks to this daemon.
+						This window can only see its own Linux screens, not the Windows desktop and not
+						the game. Your Windows browser can see the game, and it still talks to the same
+						fawnsei running here — so nothing is lost by moving over.
 					</p>
 				</div>
 			)}
@@ -393,7 +399,7 @@ export const ScreenCoach = ({ compact = false, onExpand }: ScreenCoachProps) => 
 					<input
 						value={question}
 						onChange={e => setQuestion(e.target.value)}
-						placeholder="Ask her something — “should I take this drake?”"
+						placeholder="Ask her anything — “what should I be doing right now?”"
 					/>
 					<button className="btn" type="submit">
 						Ask

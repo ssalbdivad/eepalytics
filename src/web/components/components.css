@@ -1999,13 +1999,27 @@ button.csk-chip:focus-visible,
 .csk-transcript li.me .s {
 	color: var(--dim);
 }
+/*
+ * Marked as an expander rather than left as a hover-only affordance — a touch or keyboard user
+ * had no way to know the evidence was there at all.
+ */
 .csk-transcript__truth > summary {
 	cursor: pointer;
 	list-style: none;
-	font-size: 10.5px;
-	color: var(--faint);
-	padding: 2px 0 2px 0;
+	font-size: 11.5px;
+	color: var(--dim);
+	padding: 3px 0;
 	margin-left: calc(11ch + 10px);
+}
+.csk-transcript__truth > summary::before {
+	content: "▸ ";
+	color: var(--faint);
+}
+.csk-transcript__truth[open] > summary::before {
+	content: "▾ ";
+}
+.csk-transcript__truth > summary:hover {
+	color: var(--text);
 }
 .csk-transcript__truth pre {
 	margin: 4px 0 0 calc(11ch + 10px);

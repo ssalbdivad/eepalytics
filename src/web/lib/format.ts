@@ -184,3 +184,28 @@ export const fmtKda = (k: number, d: number, a: number): string => `${k}/${d}/${
 
 export const fmtKdaRatio = (k: number, d: number, a: number): string =>
 	d === 0 ? "Perfect" : ((k + a) / d).toFixed(2)
+
+
+/**
+ * Coaching categories, in words rather than as the enum key.
+ *
+ * These are rendered on the two screens someone sees first — the live overlay's "what to work on"
+ * and the games list — and they were printed raw: "tempo", "objectives", "pathing". Those are
+ * fine for a jungle main and mean nothing to the beginner the app is also built for, who cannot
+ * look up a word he does not know is a word.
+ *
+ * The key is kept alongside for anyone who does know it, rather than replaced.
+ */
+export const CATEGORY_LABEL: Record<string, string> = {
+	pathing: "Where you walk",
+	tempo: "Keeping busy",
+	objectives: "Dragons & barons",
+	vision: "Seeing the map",
+	farming: "Farming camps",
+	teamfight: "Team fights",
+	deaths: "Staying alive",
+	praise: "Doing well"
+}
+
+/** The friendly label when there is one, the raw key when there is not. */
+export const categoryLabel = (key: string): string => CATEGORY_LABEL[key] ?? key

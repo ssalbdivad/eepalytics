@@ -67,6 +67,25 @@ export interface GeminiUsage {
  */
 const RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000, 20_000]
 
+/**
+ * Google's own wording, rewritten for the person reading it mid-game.
+ *
+ * Its strings are accurate and useless here — "Request had invalid authentication credentials.
+ * Expected OAuth 2 access token, login cookie or other valid authentication credential" told a
+ * player who had just pasted a key nothing he could act on. Anything unrecognised falls through
+ * unchanged rather than being flattened, because a wrong specific message is worse than a raw one.
+ */
+const humanise = (reason: string): string => {
+	const r = reason.toLowerCase()
+	if (r.includes("quota") || r.includes("resource has been exhausted") || r.includes("429"))
+		return "Google is rate-limiting the key — this usually clears in a minute"
+	if (r.includes("api key not valid") || r.includes("invalid authentication"))
+		return "that key isn't being accepted any more — check it in Settings"
+	if (r.includes("internal error")) return "Google hiccupped — reconnecting"
+	if (r.includes("deadline") || r.includes("timeout")) return "the connection timed out — reconnecting"
+	return reason
+}
+
 const b64ToBytes = (b64: string): Uint8Array => {
 	const bin = atob(b64)
 	const out = new Uint8Array(bin.length)
@@ -400,7 +419,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					return
 				}
 				attemptRef.current += 1
-				if (e.reason) setError(`reconnecting — ${String(e.reason).slice(0, 160)}`)
+				if (e.reason) setError(`reconnecting — ${humanise(String(e.reason)).slice(0, 160)}`)
 				setStatus("reconnecting")
 				reconnectRef.current = setTimeout(() => void connect(true), delay)
 			}

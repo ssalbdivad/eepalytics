@@ -31,6 +31,7 @@
 import { useEffect, useState } from "react"
 import type { LiveResponse } from "../../shared/schema/api.ts"
 import { api } from "../lib/api.ts"
+import { categoryLabel } from "../lib/format.ts"
 import { ScreenCoach } from "../components/ScreenCoach.tsx"
 import { LiveTranscript } from "../components/LiveTranscript.tsx"
 
@@ -170,7 +171,7 @@ export const Live = () => {
 							<ol>
 								{data.focus.map(f => (
 									<li key={f.category}>
-										<b>{f.category}</b>
+										<b>{categoryLabel(f.category)}</b>
 										<span>{f.fix}</span>
 										<em>seen in {f.games} of your recent games</em>
 									</li>
@@ -294,7 +295,7 @@ export const Live = () => {
 						{size === "wide" && <div className="live__focus-head">Your focus this week</div>}
 						{(size === "wide" ? data.focus : data.focus.slice(0, 2)).map(f => (
 							<div key={f.category} className="live__focus-row">
-								<b>{f.category}</b>
+								<b>{categoryLabel(f.category)}</b>
 								<span>{f.fix}</span>
 								{size === "wide" && (
 									<em>
