@@ -64,20 +64,41 @@ be said is the single most common way to change nothing.
 #### What earns a sentence, and what does not
 
 The failure this fought for months was not lying, it was **being true and
-useless**. The block is a snapshot of the client, and the client's facts are
-mostly what the player is already looking at, so a coach restricted to them
-recites his own HUD. Two tests decide every line:
+useless**. Two tests were written to decide every line, and ONE OF THEM HAS SINCE
+BEEN MEASURED AND IS WRONG:
 
-1. **Not visible** — could he have got it by looking at his screen?
+1. ~~**Not visible** — could he have got it by looking at his screen?~~ **This is
+   inverted.** Pooled over 554 lines judged blind (`data/eval/why-shallow.md`),
+   lines about something plainly on his screen were useful 45% of the time
+   against 27% for invisible ones, and the best quadrant in the corpus is
+   **visible AND specific, 67% over 205 lines**. Naming which of the things he
+   can already see the next thirty seconds are for is the best move available,
+   and this rule forbade it. `live-prompt.ts` still carries it, which is one of
+   the reasons the `fenced` mode is no longer the default.
 2. **Not generic** — could this sentence have been said in a different game, or
-   five minutes ago in this one?
+   five minutes ago in this one? **This one survives, and it is the whole test:**
+   generic 14% useful against 55% for specific.
 
-The lines that pass both compare him to something he cannot see: the **enemy
-jungler**, whose CS, level and completed items are all in `allPlayers` and were
-unused for the app's whole life. His own average encodes his own mistakes, so at
-best it says he is being unusually himself; the counterpart says he is losing a
-race. Then fights (the trade, and whether he was even in it), objective control,
-kill participation, and what the enemy jungler just BOUGHT.
+The invisible facts this app fought hardest to compute are precisely the ones
+that are true in every game and every minute. The **enemy jungler's CS** is the
+clearest case: it is exact, it is invisible, it took real work to surface — and
+across 88 states of his own games the block's race verdict read *"he is behind
+you"* in 82 and *"ahead"* in none, while farm, CS, clearing and routing produced
+**3 useful lines out of 84** judged. A comparison whose answer never changes
+cannot drive a decision. It is still in the block, at the bottom.
+
+What replaced it at the top is the **objective schedule** — what is up, how long
+it has stood there untaken, what spawns next and in how many seconds
+(`objectiveSchedule` in `shared/live-state.ts`). Same model, same states, same
+citation rule: the shipped block scored 29% useful, the block plus the schedule
+55% (p = 0.0009). Ninety seconds of exactly-computed history scored 30%
+(p = 0.94), and his measured career habits added nothing on top of the schedule.
+Telling the model to prefer objectives WITHOUT giving it the timers reached 37%
+and invented dragons that had not spawned yet. **Prompting picks the subject;
+only data makes the sentence true.**
+
+Then fights (the trade, and whether he was even in it), objective control, kill
+participation, and what the enemy jungler just BOUGHT.
 
 Readouts are gated hard because they otherwise dominate: only the enemy
 *jungler's* death earns a line, gold must have been HELD for minutes and is

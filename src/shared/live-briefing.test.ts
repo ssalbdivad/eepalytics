@@ -141,6 +141,28 @@ test("durations are written the way they are said", () => {
 	assert.equal(renderSchedule(objectiveSchedule([], 0)).includes("in 5 minutes."), true)
 })
 
+/*
+ * The schedule counts SIDES and never names a killer, and that is a hard rule rather than an
+ * omission. The event feed names people by bare summoner name while both roster id fields carry
+ * the tag, so a one-sided lookup resolved 0 of 37 event names in a real capture and rendered raw
+ * proper nouns into a block whose every other line is champions — "You got Baron with Electrician"
+ * reached the player out loud. A name that cannot be resolved to a champion is never spoken here
+ * because no name is spoken here at all.
+ */
+test("the schedule carries sides and clocks, never a person", () => {
+	const ev: ObjectiveEvent[] = [
+		{ kind: "dragon", tSec: 365, side: "theirs" },
+		{ kind: "grub", tSec: 523, side: "mine" },
+		{ kind: "grub", tSec: 561, side: null }
+	]
+	const out = renderSchedule(objectiveSchedule(ev, 600))
+	for (const word of ["killed", "taken by", "Gooskaffur", "someone"])
+		assert.equal(out.includes(word), false, `the schedule named somebody: ${out}`)
+	// An unresolved killer counts for neither side rather than being guessed onto one.
+	const grubs = objectiveSchedule(ev, 600).find(o => o.name === "Void grubs")
+	assert.deepEqual(grubs?.taken, { mine: 1, theirs: 0 })
+})
+
 /* ------------------------------------------------------------- the briefing */
 
 test("the schedule leads the briefing, and the farm comparison is below the board", () => {
