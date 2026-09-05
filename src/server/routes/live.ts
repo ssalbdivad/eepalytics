@@ -61,6 +61,7 @@ import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
+import { sampleLive } from "../../daemon/live-sampler.ts"
 import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
 import { newFightMemory, readFight, resetFightMemory } from "../../analysis/fights.ts"
 import {
@@ -866,6 +867,23 @@ export const createLiveRoute = (): Hono => {
 		const handle = await lcu()
 		const data = handle ? await handle.live.allGameData().catch(() => null) : null
 		const me = data ? findMe(data) : null
+		/*
+		 * Sample here, on the read the coach already makes.
+		 *
+		 * A separate poll would double the traffic to the client during a game for data that is
+		 * identical to what this call just fetched. `sampleLive` rate-limits itself on the game
+		 * clock, so calling it every turn costs one comparison.
+		 */
+		/*
+		 * Keyed on the JOURNAL's session id, not a gameId — the in-game API on :2999 does not
+		 * report one. That is better than a workaround: it ties a sample to the frames captured
+		 * beside it, so an eval can replay a real state next to the picture the coach was holding.
+		 */
+		sampleLive({
+			gameId: openSessionStatus().sessionId,
+			gameTimeSec: data?.gameData?.gameTime ?? NaN,
+			data
+		})
 		const state = buildLiveState(data, me, data?.gameData?.gameTime ?? null, cachedBaseline())
 		if (!state) return c.json({ inGame: false, text: "" })
 		const focus = cachedFocus().map(f => f.fix).filter(f => f !== "")

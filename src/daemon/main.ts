@@ -15,6 +15,7 @@
  * NODE ONLY.
  */
 
+import { pruneSamples } from "./live-sampler.ts"
 import {
 	DB_PATH,
 	REPLAY_DIR_WSL,
@@ -103,6 +104,7 @@ const warnings = (): string[] => {
 export const startDaemon = async (): Promise<DaemonContext> => {
 	const startedMs = Date.now()
 	setLogLevel(((process.env.EEPALYTICS_LOG_LEVEL ?? process.env.CSK_LOG_LEVEL) as "info") ?? "info")
+	pruneSamples()
 	log.info("eepalytics daemon starting", {
 		version: DAEMON_VERSION,
 		node: process.version,
