@@ -158,8 +158,8 @@ export const HABITS: readonly Habit[] = [
 			"A slow first clear is his commonest repeated mistake and it is never made up: he is under 31 camps at 5:00 in 21 of 66 games, and that gap widens for the rest of the game.",
 		n: 66,
 		evidence:
-			"camps at 4:00 are 27.2 in wins and 24.9 in losses (Welch d = 0.71, p = 0.0045, p about 0.027 corrected over the six checkpoints examined). The gap runs 8.6 camps at 5:00, 11.2 at 10:00, 12.2 at 15:00, 15.6 at 20:00; 1 of 20 slow starts reaches the normal-start median by 10:00. Not bought with a gank (0.86 early kills against 0.64, p = 0.36) and not an effect of losing (team gold lead -214 against +146, r = 0.185). Replicates in both date halves.",
-		figures: [30, 40, 66, 21, 11]
+			"camps at 4:00 are 27.2 in wins and 24.9 in losses (Welch d = 0.71, p = 0.0045, p about 0.027 corrected over the six checkpoints examined). Split the way the cue splits — late to 30 CS, past 270 seconds — 21 of 65 games qualify and 6 were won, against 29 of 44; the camp gap runs 6.8 at 5:00, 11.2 at 10:00, 15.5 at 15:00, 18.2 at 20:00, and 0 of those 21 games reach the on-time median camp count by 10:00. Not bought with a gank (0.86 early kills against 0.64, p = 0.36) and not an effect of losing (team gold lead -214 against +146, r = 0.185). Replicates in both date halves.",
+		figures: [6, 10, 11, 21, 30, 40, 66]
 	},
 	{
 		key: "grub-window",
@@ -169,7 +169,7 @@ export const HABITS: readonly Habit[] = [
 		n: 65,
 		evidence:
 			"within 3000 units of the pit at 8:00: him 12 of 65, counterpart 31 of 65 (z = -3.54, p = 0.0004). He is there more at 6:00 and back at 9:00; the first grub goes at a median of 9:00 and he arrives a median of 54 seconds after the enemy takes it.",
-		figures: [8, 66, 12, 31]
+		figures: [8, 12, 31, 65]
 	},
 	{
 		key: "topside-conceded",
@@ -370,7 +370,7 @@ export const habitCues = (input: HabitInput): HabitCue[] => {
 			key: h.key,
 			subject: h.subject,
 			tier: "expiring",
-			text: `Grubs are still up. At 8 minutes across your last 66 games he is standing on that pit 31 times and you are 12 — go now, not after your next camp.`,
+			text: `Grubs are still up. At 8 minutes across 65 recorded games he is standing on that pit 31 times and you are 12 — go now, not after your next camp.`,
 			because: h.evidence
 		})
 	}

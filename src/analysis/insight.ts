@@ -131,11 +131,19 @@ const MARKERS: { need: ContextNeed; label: string; re: RegExp }[] = [
 	{ need: "H-series", label: "span", re: /\b\d+ (?:second|minute)s of\b/ },
 	{ need: "H-series", label: "span", re: /\b(?:all game|the whole game|so far)\b/ },
 	{ need: "H-series", label: "stall", re: /\b(?:has|have|had) not\b|\b(?:hasn't|haven't|hadn't)\b/ },
-	{ need: "H-series", label: "stall", re: /\bstill\b/ },
+	// "still" only counts when it continues a MEASURED state. "the route's still hot" is a mood.
+	{ need: "H-series", label: "stall", re: /\bstill (?:has|have|had|is|are|on|at|under|over|below|above|only|no|not|hasn't|haven't)\b/ },
 	{ need: "H-series", label: "stall", re: /\b(?:not moved|unchanged|untouched|standing)\b/ },
 	{ need: "H-event", label: "count", re: /\b(?:twice|again)\b/ },
 	{ need: "H-event", label: "count", re: /\b\d+ times\b/ },
-	{ need: "H-event", label: "count", re: /\b\d+ of (?:your|his|her|their|the|those|them)\b/ },
+	/*
+	 * "of them" is excluded and that exclusion is measured: "all five of them are alive" and "four
+	 * of them are down thirty seconds" are ROSTER counts, straight off the instant. Only a tally
+	 * against a possessed noun — "three of your five deaths" — needs a history.
+	 */
+	{ need: "H-event", label: "count", re: /\b\d+ of (?:your|his|her|their)\b/ },
+	/* An objective's assisters are a roll-call of where the enemy team was. The block drops them. */
+	{ need: "H-event", label: "roll-call", re: /\b(?:showed up for|were on|was on|were all on|all over)\b/ },
 	{ need: "H-event", label: "count", re: /\b(?:every|both|each) time\b/ },
 	{ need: "H-event", label: "count", re: /\b(?:second|third|fourth|fifth) (?:time|drake|dragon|one|kill|death)\b/ },
 	{ need: "F-schedule", label: "schedule", re: /\b(?:spawns?|respawns?)\b/ },
@@ -236,6 +244,15 @@ const IMPERATIVES = [
 	"end"
 ]
 
+/**
+ * Words a clause may open on before the instruction starts.
+ *
+ * `split` leaves "so" and "then" at the head of the clause after a comma, and "full clear" is a
+ * jungle verb whose first word is an adjective. Neither should hide an instruction from the axis.
+ */
+const CONNECTIVES = ["so", "then", "and", "but", "or", "instead"]
+const LEADING_FILLER = [...CONNECTIVES, "now", "just", "full", "please", "maybe"]
+
 /** Openings that negate rather than command, and are still a decision. */
 const NEGATIVE_IMPERATIVES = ["don't", "dont", "do not", "never", "no"]
 
@@ -334,16 +351,21 @@ const clauses = (text: string): string[] =>
  */
 const actionClause = (text: string): string | null => {
 	for (const c of clauses(text)) {
-		const ws = words(c)
+		const ws = words(c).filter((w, i) => !(i === 0 && LEADING_FILLER.includes(w)))
 		if (ws.length === 0) continue
-		const head = ws[0]!
-		if (IMPERATIVES.includes(head)) return c
-		if (NEGATIVE_IMPERATIVES.includes(head)) return c
-		// "do not chase" splits as ["do","not",…]; "don't" survives the apostrophe rule above.
-		if (head === "do" && ws[1] === "not") return c
+		// The first TWO tokens, because "full clear your blue" and "so go take his raptors" are both
+		// instructions and neither opens on the verb.
+		for (const head of ws.slice(0, 2)) {
+			if (IMPERATIVES.includes(head) || NEGATIVE_IMPERATIVES.includes(head)) return tidy(c)
+		}
+		if (ws[0] === "do" && ws[1] === "not") return tidy(c)
 	}
 	return null
 }
+
+/** The clause as it should be quoted back: connective and terminal punctuation trimmed. */
+const tidy = (clause: string): string =>
+	clause.replace(new RegExp(`^(?:${CONNECTIVES.join("|")})\\s+`), "").replace(/[.!?]+$/, "").trim()
 
 /**
  * The DIRECTIVE, stripped of everything that varies between turns.
@@ -464,9 +486,18 @@ export const scoreInsight = (input: InsightInput): InsightScore => {
 	}
 
 	const score = [beyondInstant, fresh, decides, grounded].filter(a => a.pass).length
+	/*
+	 * `insight` requires ALL FOUR, and three of the 23 hand-written targets fall short of it on
+	 * purpose. Two of them are good lines whose depth comes from a PRIOR rather than from history
+	 * ("a team that just took an uncontested objective is standing on it") and one is praise, which
+	 * is not information and does not need to be. Relaxing the rule to three-of-four to admit them
+	 * also admits "the Prance stacks decay the moment the route stops" and "go straight into the
+	 * next camp", which are the exact lines this instrument exists to reject — so the boundary is
+	 * drawn here and the three targets are reported honestly as readouts.
+	 */
 	const verdict: InsightVerdict =
 		!fresh.pass ? "repeat"
-		: score >= 3 ? "insight"
+		: score === 4 ? "insight"
 		: !decides.pass ? "filler"
 		: "readout"
 
