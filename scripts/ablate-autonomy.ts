@@ -131,8 +131,28 @@ const OUT = arg("out", `${DATA_DIR}/eval/ablation-${stamp}.json`)
  */
 const FRAME_SKEW_GATE_SEC = 3
 
-/** Game-clock spacing for the LATE set. Samples arrive every ~6s; every one of them is not a turn. */
-const LATE_SPACING_SEC = 30
+/**
+ * Game-clock spacing for the LATE set. Samples arrive every ~6s; every one of them is not a turn.
+ *
+ * Overridable because the pace sweep needs a UNIFORM grid. The default 30s was chosen to keep the
+ * autonomy run affordable; a cadence question cannot be answered on a corpus whose own cadence
+ * changes halfway through the game, so `--late-spacing 20 --late-from 0 --no-paired` re-records the
+ * whole game on the shipped twenty-second turn instead.
+ */
+const LATE_SPACING_SEC = Number(arg("late-spacing", "30"))
+/** Game clock the LATE set starts from. Defaults to "after the last paired frame". */
+const LATE_FROM_SEC = Number(arg("late-from", "-1"))
+const RUN_PAIRED = !flag("no-paired")
+/**
+ * Snap the LATE set to the grid instead of walking forward from the last one taken.
+ *
+ * The default walk takes the first sample at least `--late-spacing` after the previous turn, and
+ * samples arrive every ~6.1 seconds — so asking for 20 gets 24.4, every time, and a sweep of speak
+ * FLOORS run on a 24.4-second grid reports a 60-second floor delivering a line every 73 seconds.
+ * A cadence measured on the wrong cadence is not a small error. `--late-grid` picks the sample
+ * NEAREST each mark instead, which lands within 3 seconds of a true twenty-second turn.
+ */
+const LATE_GRID = flag("late-grid")
 
 /* ================================================================== the states */
 
@@ -312,15 +332,34 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 		usedLines.add(best.line)
 	}
 
-	const lastFrameSec = paired.length > 0 ? paired[paired.length - 1]!.tSec : 0
+	const lastFrameSec = LATE_FROM_SEC >= 0 ? LATE_FROM_SEC : paired.length > 0 ? paired[paired.length - 1]!.tSec : 0
 	const late: AblationState[] = []
-	let lastAt = -Infinity
-	for (const b of built) {
-		if (b.tSec <= lastFrameSec) continue
-		if (usedLines.has(b.line)) continue
-		if (b.tSec - lastAt < LATE_SPACING_SEC) continue
-		lastAt = b.tSec
-		late.push(make(b, `late-${String(Math.round(b.tSec)).padStart(4, "0")}`, null, null))
+	const eligible = built.filter(b => b.tSec > lastFrameSec && !(RUN_PAIRED && usedLines.has(b.line)))
+	if (LATE_GRID) {
+		const taken = new Set<number>()
+		const end = eligible.length > 0 ? eligible[eligible.length - 1]!.tSec : 0
+		for (let mark = lastFrameSec + LATE_SPACING_SEC; mark <= end + LATE_SPACING_SEC / 2; mark += LATE_SPACING_SEC) {
+			let best: Built | null = null
+			let bestSkew = Infinity
+			for (const b of eligible) {
+				if (taken.has(b.line)) continue
+				const skew = Math.abs(b.tSec - mark)
+				if (skew < bestSkew) {
+					bestSkew = skew
+					best = b
+				}
+			}
+			if (!best || bestSkew > LATE_SPACING_SEC / 2) continue
+			taken.add(best.line)
+			late.push(make(best, `late-${String(Math.round(best.tSec)).padStart(4, "0")}`, null, null))
+		}
+	} else {
+		let lastAt = -Infinity
+		for (const b of eligible) {
+			if (b.tSec - lastAt < LATE_SPACING_SEC) continue
+			lastAt = b.tSec
+			late.push(make(b, `late-${String(Math.round(b.tSec)).padStart(4, "0")}`, null, null))
+		}
 	}
 
 	return {
@@ -898,7 +937,7 @@ const main = async (): Promise<void> => {
 	const arms = ARMS.filter(a => armIds.includes(a.id))
 	if (arms.length === 0) throw new Error(`no arms matched ${armIds.join(",")}`)
 
-	const pairedStates = LIMIT > 0 ? paired.slice(0, LIMIT) : paired
+	const pairedStates = !RUN_PAIRED ? [] : LIMIT > 0 ? paired.slice(0, LIMIT) : paired
 	const lateStates = RUN_LATE ? (LIMIT > 0 ? late.slice(0, LIMIT) : late) : []
 
 	const span = (s: AblationState[]): number =>
