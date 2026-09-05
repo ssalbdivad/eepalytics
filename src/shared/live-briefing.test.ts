@@ -161,6 +161,8 @@ test("Baron enters the schedule three minutes before it exists, and not before",
 /* Spoken aloud, so a timer is words. "in 446 seconds" is not a sentence anybody says. */
 test("durations are written the way they are said", () => {
 	assert.equal(spokenDuration(45), "45 seconds")
+	/* Said aloud. claude-opus-5 read *"Dragon spawns in 1 seconds"* out of a real block. */
+	assert.equal(spokenDuration(1), "1 second")
 	assert.equal(spokenDuration(60), "1 minute")
 	assert.equal(spokenDuration(150), "2 minutes 30 seconds")
 	assert.equal(renderSchedule(objectiveSchedule([], 0)).includes("in 5 minutes."), true)

@@ -322,7 +322,13 @@ export const objectiveSchedule = (events: readonly ObjectiveEvent[], tSec: numbe
 
 /** Seconds, said the way a person says them out loud. */
 export const spokenDuration = (sec: number): string => {
-	if (sec < 60) return `${sec} seconds`
+	/*
+	 * The singular is not pedantry here — it is spoken aloud. `claude-opus-5` read the schedule back
+	 * verbatim at 35:42 of game 5635467422: *"Dragon spawns in 1 seconds and they are one drake from
+	 * soul"* (`data/eval/opus-briefing/ab-opus-late.json`). The prompt tells it to say the timer as
+	 * given, so a grammar mistake in this function is a grammar mistake in his ear.
+	 */
+	if (sec < 60) return `${sec} second${sec === 1 ? "" : "s"}`
 	const m = Math.floor(sec / 60)
 	const s = sec % 60
 	const mins = `${m} minute${m === 1 ? "" : "s"}`
