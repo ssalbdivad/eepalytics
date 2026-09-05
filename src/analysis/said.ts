@@ -93,8 +93,31 @@ import { fmtClock } from "../shared/time.ts"
 import { normalizeNumbers } from "./coach-score.ts"
 import type { FactSubject } from "./live-facts.ts"
 
+/**
+ * WHAT A LINE IS ABOUT, in the ranker's own vocabulary.
+ *
+ * `FactSubject` rather than a fresh partition, and that is the load-bearing choice. `live-facts.ts`
+ * already decided that his own farm, the race against the enemy jungler and the comeback line are
+ * ONE subject with one budget — "three generators, one subject" — and that decision is exactly what
+ * this needs: 30 of the 38 lines Opus 5 spoke are that single subject wearing different numbers. A
+ * separate vocabulary here would have counted them as two topics and let the coach alternate
+ * between them forever. It also means a subject this module records as spent names the same thing
+ * the ranker would have offered next.
+ *
+ * `other` is the one addition, and it is a bucket rather than a subject — see `judgeSaid`, which
+ * gives it no budget for that reason.
+ */
 export type SaidSubject = FactSubject | "other"
 
+/**
+ * First match wins, so this is a partition and the order is the specificity order.
+ *
+ * Two of these regexes are narrower than they look, each because a wider one was measured doing
+ * damage. `downed` no longer matches a bare "is dead": it read *"Race is dead even"* as a respawn
+ * timer, which handed a pure repetition the once-per-game novelty exemption below. `build` no
+ * longer matches "item": *"buy your jungle item"* is the first-back instruction, not a completed
+ * build, and it took the same exemption.
+ */
 export const SAID_SUBJECTS: { id: SaidSubject; re: RegExp }[] = [
 	{ id: "your-death", re: /\b(you (?:are |'re )?dead|you die|respawn in|you spawn|back up in)\b/i },
 	{ id: "downed", re: /\b(is down|are down|down for|dead for|respawn)\b/i },
@@ -109,6 +132,7 @@ export const SAID_SUBJECTS: { id: SaidSubject; re: RegExp }[] = [
 	{ id: "praise", re: /\b(nice|great|lovely|beautiful|well done|love (?:it|that)|proud|there we go)\b/i }
 ]
 
+/** Words that carry no subject, so two lines sharing them are not sharing anything. */
 const STOPWORDS = new Set(
 	`a an and are as at be been before but by can cant cannot could did do does doing dont for from
 	 get go got had has have he her here him his how i if in into is it its just like me more most
@@ -119,6 +143,14 @@ const STOPWORDS = new Set(
 		.filter(Boolean)
 )
 
+/**
+ * One spelling per figure and one dash, so "eleven" and "11" are the same word.
+ *
+ * `normalizeNumbers` is borrowed from `coach-score.ts` rather than rewritten because the models
+ * genuinely mix the two in one transcript: Opus said "at least 11 CS behind" at 3:57 and "at least
+ * eleven CS behind" at 4:03, and a comparison that treats those as different words would have
+ * scored the second as a new line.
+ */
 const clean = (line: string): string =>
 	normalizeNumbers(line).toLowerCase().replace(/[’']/g, "'").replace(/[—–]/g, " — ")
 
@@ -128,6 +160,14 @@ export const contentWords = (line: string): string[] => [
 	...new Set(words(clean(line)).filter(w => !STOPWORDS.has(w.replace(/'s$/, "")) && !/^\d+$/.test(w)))
 ]
 
+/*
+ * Where the CLAIM stops and the INSTRUCTION starts.
+ *
+ * Every line this coach produces is the same two-part shape the rest of the repo uses — the number
+ * and the fix — joined by a dash, a comma or "so". Splitting there is what lets the two halves be
+ * remembered separately, which matters because they go stale at different rates: the enemy
+ * jungler's CS changes every minute and "keep clearing" does not change all game.
+ */
 const CLAUSE_BREAK = /\s+—\s+|\s*[,;:.]\s+|\s+so\s+|\s+then\s+|\s+but\s+|\s+while\s+/
 
 const IMPERATIVES = `take start keep go get walk push back recall buy spend clear finish full stop
@@ -138,7 +178,12 @@ const IMPERATIVES = `take start keep go get walk push back recall buy spend clea
 
 const LEADING_FILLER = ["so", "then", "and", "but", "or", "instead", "now", "just", "please", "maybe"]
 
-/** The clause he is meant to ACT on: the first that opens on an instruction. */
+/**
+ * The clause he is meant to ACT on: the FIRST that opens on an instruction.
+ *
+ * First rather than last, because these lines routinely stack two ("recall, buy, and restart the
+ * route") and the first is the decision — the rest is elaboration on it.
+ */
 export const actionClause = (line: string): string | null => {
 	for (const c of clean(line).split(CLAUSE_BREAK)) {
 		const ws = words(c).filter((w, i) => !(i === 0 && LEADING_FILLER.includes(w)))
@@ -206,6 +251,15 @@ export const DIRECTIVE_INTENTS: { id: string; re: RegExp }[] = [
 	{ id: "keep-clearing", re: /\b(route|clear|camps?|farm|jungle|raptors|gromp|krugs|wolves|buff|leash)\b/i },
 	{ id: "reposition", re: /\b(walk|guard|cover|hover|entrance|river|lane|mid|top|bot|side)\b/i },
 	{ id: "fight", re: /\b(fight|trade|group|engage|take the|contest)\b/i },
+	/*
+	 * LAST, because a negation is a modifier and not a decision.
+	 *
+	 * Ordered above `keep-clearing` it split the catchphrase family in two: "Full route from here and
+	 * don't stop it" filed as `avoid` while "Keep the route rolling" filed as `keep-clearing`, so the
+	 * budget that exists to stop one instruction being repeated was spending two. A clause with any
+	 * positive intent in it is that intent; `avoid` is what is left when the whole instruction is to
+	 * not do something.
+	 */
 	{ id: "avoid", re: /\b(don'?t|do not|never|stop|avoid|stay (?:out|away|home)|leave (?:him|her|it) alone)\b/i }
 ]
 
