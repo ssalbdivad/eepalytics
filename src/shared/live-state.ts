@@ -167,15 +167,6 @@ export interface ScheduledObjective {
 	atSec: number
 	/** Seconds it has been up, or seconds until it spawns. Always non-negative. */
 	sec: number
-	/**
-	 * Is the thing this line refers to still standing there?
-	 *
-	 * True for everything computed FROM a kill — the next drake, the next Baron — because the
-	 * spawn was derived from the last one being taken, so nobody has touched this one. False for
-	 * grubs once any have gone, where the feed says a cluster was worked and cannot say what is
-	 * left of it.
-	 */
-	untaken: boolean
 	/** Who has taken this kind of objective so far, when the count is worth carrying. */
 	taken?: { mine: number; theirs: number }
 }
@@ -256,9 +247,17 @@ export const objectiveSchedule = (events: readonly ObjectiveEvent[], tSec: numbe
 		return out
 	}
 	const out: ScheduledObjective[] = []
+	/*
+	 * EVERYTHING IN THIS LIST IS UNTAKEN, and that invariant is what makes it safe to speak from.
+	 *
+	 * Each entry is either a first spawn nobody has killed yet or a respawn computed FROM the last
+	 * kill, so by construction the thing it names is still standing there. The schedule is a list
+	 * of places to be; an entry that might already be empty does not belong in it. See the grubs
+	 * below, which is where that rule was learned.
+	 */
 	const add = (name: string, atSec: number, taken?: { mine: number; theirs: number }): void => {
-		if (atSec <= tSec) out.push({ name, state: "up", atSec, sec: Math.round(tSec - atSec), untaken: true, taken })
-		else out.push({ name, state: "coming", atSec, sec: Math.round(atSec - tSec), untaken: true, taken })
+		if (atSec <= tSec) out.push({ name, state: "up", atSec, sec: Math.round(tSec - atSec), taken })
+		else out.push({ name, state: "coming", atSec, sec: Math.round(atSec - tSec), taken })
 	}
 
 	const drakes = count("dragon")
@@ -286,19 +285,25 @@ export const objectiveSchedule = (events: readonly ObjectiveEvent[], tSec: numbe
 			drakes
 		)
 
-	if (tSec < OBJECTIVE_SPAWN.grubsDespawnSec) {
-		const grubs = count("grub")
-		if (grubs.mine + grubs.theirs === 0) add("Void grubs", OBJECTIVE_SPAWN.grubsSpawnSec)
-		else if (tSec >= OBJECTIVE_SPAWN.grubsSpawnSec)
-			out.push({
-				name: "Void grubs",
-				state: "up",
-				atSec: OBJECTIVE_SPAWN.grubsSpawnSec,
-				sec: Math.round(tSec - OBJECTIVE_SPAWN.grubsSpawnSec),
-				untaken: false,
-				taken: grubs
-			})
-	}
+	/*
+	 * The grubs leave the schedule the moment ANY have been taken, and this was measured on the
+	 * coach rather than reasoned about.
+	 *
+	 * An earlier version kept the pit in the list once it had been worked, phrased so that it only
+	 * asserted the spawn time and the tally — no claim about what was left. The model supplied the
+	 * claim anyway, because a place in a schedule is a place to go: at 09:08, 11:29 and 12:10 of
+	 * game 5635467422, with all three of that game's grubs already dead, it said *"Void grubs have
+	 * been open 3 minutes 8 seconds, so go finish the pit"* and two rewordings of it. That is a
+	 * jungler walking across the map to an empty camp on the strength of a true sentence.
+	 *
+	 * The count cannot rescue it: the patch note says six, the four recorded games contain exactly
+	 * three `HordeKill` events each and never a second cluster, so nothing here can say whether one
+	 * is left. Unknowable and off the list beats unknowable and on it. The topside tally he
+	 * actually needs is a career fact and reaches him through `analysis/habits.ts`, not through a
+	 * list of places to walk to.
+	 */
+	if (tSec < OBJECTIVE_SPAWN.grubsDespawnSec && count("grub").mine + count("grub").theirs === 0)
+		add("Void grubs", OBJECTIVE_SPAWN.grubsSpawnSec)
 
 	if (lastOf("herald") === null && tSec >= HERALD_VISIBLE_FROM_SEC && tSec < OBJECTIVE_SPAWN.heraldGoneSec)
 		add("Rift Herald", OBJECTIVE_SPAWN.heraldSpawnSec)
@@ -341,18 +346,8 @@ export const renderSchedule = (list: readonly ScheduledObjective[]): string => {
 			o.taken && o.taken.mine + o.taken.theirs > 0 ?
 				` Taken so far this game: ${o.taken.mine} by you, ${o.taken.theirs} by them.`
 			:	""
-		/*
-		 * A cluster that has been WORKED never claims to still be standing there.
-		 *
-		 * The feed says three grubs were taken in each of the four recorded games and never a
-		 * second cluster; the patch note number is six. Subtracting one from the other is a count
-		 * nobody measured, and "grubs are up" said over an empty pit is a fabrication with a place
-		 * attached. So once any have gone, the line asserts only the spawn time and the tally.
-		 */
 		return o.state === "up" ?
-				o.untaken ?
-					`- ${o.name}: UP and untaken since ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
-				:	`- ${o.name}: the pit opened at ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
+				`- ${o.name}: UP and untaken since ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
 			:	`- ${o.name} spawns at ${mmss(o.atSec)} — in ${spokenDuration(o.sec)}.${took}`
 	})
 	return `### What is coming (the map's clock, worked out from the event feed)\n\n${lines.join("\n")}`

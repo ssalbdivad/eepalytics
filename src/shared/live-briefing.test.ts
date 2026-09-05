@@ -92,23 +92,48 @@ test("once a side has soul the next spawn is named Elder and timed as Elder", ()
 })
 
 /*
- * The count that is not in the client. Six is the patch-note number; the four recorded games
- * contain exactly three `HordeKill` events each and never a second cluster. A remaining-grub count
- * would therefore be arithmetic on a number nobody here measured, and it would be spoken as a
- * place to walk to.
+ * The grubs leave the schedule as soon as any are taken, and this is the one rule here that was
+ * measured on the coach rather than on the data. Kept in the list after the pit had been worked —
+ * phrased to assert only the spawn time and the tally — the model supplied the missing claim
+ * itself: with all three of game 5635467422's grubs already dead it said "Void grubs have been
+ * open 3 minutes 8 seconds, so go finish the pit" and two rewordings of it, at 09:08, 11:29 and
+ * 12:10. A place in a schedule is a place to go.
+ *
+ * Six is the patch-note number and the four recorded games contain exactly three HordeKill events
+ * each, so nothing here can say whether one is left. Off the list beats a guess on it.
  */
-test("the grubs never claim how many are left, and stop claiming to be standing once any are taken", () => {
+test("the grubs are a place to go only while nobody has touched them", () => {
 	const fresh = renderSchedule(objectiveSchedule([], 400))
 	assert.match(fresh, /Void grubs: UP and untaken since 6:00/)
-	const worked = renderSchedule(objectiveSchedule([{ kind: "grub", tSec: 380, side: "mine" }], 400))
-	assert.match(worked, /Void grubs: the pit opened at 6:00/)
-	assert.equal(/UP and untaken/.test(worked.split("\n").find(l => l.includes("grubs"))!), false)
-	for (const out of [fresh, worked]) {
-		assert.equal(/left|remain|still up|of the six|unclaimed|six/i.test(out), false, out)
-		// The only digits on a grub line are the spawn clock and the tally of what was taken.
-		const grubLine = out.split("\n").find(l => l.includes("grubs"))!
-		assert.equal(/\b6\b(?!:)/.test(grubLine), false, `a grub count reached the block: ${grubLine}`)
-	}
+	const worked = objectiveSchedule([{ kind: "grub", tSec: 380, side: "mine" }], 400)
+	assert.equal(worked.some(o => o.name === "Void grubs"), false, "a worked pit is still being offered")
+	// And no count of what is left, ever, in either state.
+	assert.equal(/left|remain|of the six|unclaimed|six/i.test(fresh), false, fresh)
+	const grubLine = fresh.split("\n").find(l => l.includes("grubs"))!
+	assert.equal(/\b6\b(?!:)/.test(grubLine), false, `a grub count reached the block: ${grubLine}`)
+})
+
+/*
+ * The invariant the whole section rests on: everything in the schedule is either a first spawn
+ * nobody has killed or a respawn computed from the last kill, so it is still standing there.
+ */
+test("nothing reaches the schedule that might already be empty", () => {
+	const ev: ObjectiveEvent[] = [
+		{ kind: "dragon", tSec: 365, side: "theirs" },
+		{ kind: "grub", tSec: 523, side: "mine" },
+		{ kind: "herald", tSec: 934, side: "theirs" },
+		{ kind: "baron", tSec: 1341, side: "mine" }
+	]
+	const kindOf = (name: string) =>
+		name.includes("Dragon") ? "dragon"
+		: name.includes("grubs") ? "grub"
+		: name.includes("Herald") ? "herald"
+		: "baron"
+	for (const t of [400, 700, 1000, 1400, 1800])
+		for (const o of objectiveSchedule(ev, t).filter(x => x.state === "up")) {
+			const takenSince = ev.filter(e => e.kind === kindOf(o.name) && e.tSec >= o.atSec)
+			assert.equal(takenSince.length, 0, `${o.name} is offered as up at ${t}, but one was taken after ${o.atSec}`)
+		}
 })
 
 /*
@@ -152,15 +177,14 @@ test("durations are written the way they are said", () => {
 test("the schedule carries sides and clocks, never a person", () => {
 	const ev: ObjectiveEvent[] = [
 		{ kind: "dragon", tSec: 365, side: "theirs" },
-		{ kind: "grub", tSec: 523, side: "mine" },
-		{ kind: "grub", tSec: 561, side: null }
+		{ kind: "dragon", tSec: 700, side: null },
+		{ kind: "grub", tSec: 523, side: "mine" }
 	]
-	const out = renderSchedule(objectiveSchedule(ev, 600))
+	const out = renderSchedule(objectiveSchedule(ev, 800))
 	for (const word of ["killed", "taken by", "Gooskaffur", "someone"])
 		assert.equal(out.includes(word), false, `the schedule named somebody: ${out}`)
 	// An unresolved killer counts for neither side rather than being guessed onto one.
-	const grubs = objectiveSchedule(ev, 600).find(o => o.name === "Void grubs")
-	assert.deepEqual(grubs?.taken, { mine: 1, theirs: 0 })
+	assert.deepEqual(objectiveSchedule(ev, 800).find(o => o.name === "Dragon")?.taken, { mine: 0, theirs: 1 })
 })
 
 /* ------------------------------------------------------------- the briefing */
