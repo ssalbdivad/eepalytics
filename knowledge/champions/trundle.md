@@ -53,7 +53,7 @@ fight-lost: the ult wants the biggest body in the fight, so drain the tank and n
 
 fight-absent: your window is early, so start walking to the next one before it starts
 fight-absent: go and make the next one uneven instead of being the last body into this one
-fight-absent: take the objective they left open, the fight you want comes to you later
+fight-absent: you want the fight you chose, so go take a camp of his and make him come
 
 death: you have no dash, only a wall, so the pillar goes down before you commit rather than after.
 death: your field is where you win, so take the fight at your camp instead of walking into theirs.

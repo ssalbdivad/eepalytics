@@ -104,6 +104,11 @@
  *     --concurrency N        turns in flight (default 3). 1 when a provider rate-limits.
  *     --out <path>           default data/eval/run-<stamp>.json
  *     --verbose              print every line as it lands, not only at the end
+ *     --allow-block-drift    run even though a block no longer re-renders to what the fixture
+ *                            froze. Default is to REFUSE: a drifted block means the app changed
+ *                            under the fixture, and a run that quietly used the new one would be
+ *                            incomparable with every earlier run. Rebuild the fixture instead
+ *                            whenever the change was intentional.
  *
  *     --summarize <path>     re-print the summary of a run already on disk, calling nothing
  *     --judge <path|latest>  score an existing run file against the labels and stop
@@ -855,11 +860,13 @@ const main = async (): Promise<void> => {
 		}
 
 	const vocab = championVocabulary()
-	const frameCache = new Map<string, string>()
-	const b64 = (path: string): string => {
+	/** One read per JPEG however many arms and repeats use it, and the true byte count with it. */
+	const frameCache = new Map<string, { b64: string; bytes: number }>()
+	const frame = (path: string): { b64: string; bytes: number } => {
 		const hit = frameCache.get(path)
 		if (hit !== undefined) return hit
-		const enc = readFileSync(path).toString("base64")
+		const buf = readFileSync(path)
+		const enc = { b64: buf.toString("base64"), bytes: buf.byteLength }
 		frameCache.set(path, enc)
 		return enc
 	}
@@ -884,7 +891,7 @@ const main = async (): Promise<void> => {
 		const r = await coachTurn({
 			provider: provId,
 			model,
-			...(sendFrame ? { frameJpegBase64: b64(j.c.framePath!) } : {}),
+			...(sendFrame ? { frameJpegBase64: frame(j.c.framePath!).b64 } : {}),
 			blockText: rep.block
 		})
 		const text = r.text ?? ""
@@ -902,7 +909,7 @@ const main = async (): Promise<void> => {
 			frameSent: r.frameSent,
 			framePath: sendFrame ? j.c.framePath : null,
 			frameSkewSec: sendFrame ? j.c.frameSkewSec : null,
-			frameBytes: sendFrame ? Math.round((b64(j.c.framePath!).length * 3) / 4) : null,
+			frameBytes: sendFrame ? frame(j.c.framePath!).bytes : null,
 			block: rep.block,
 			blockMatchesFixture: rep.block === j.c.block,
 			facts: rep.facts,

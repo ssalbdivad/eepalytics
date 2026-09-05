@@ -24,7 +24,7 @@ something he can DO in the next thirty seconds.
 race-behind: take the camps that are up before you take the fight, you win that race more reliably
 race-behind: answer farm with farm, and gank only the lane that can turn it into a plate
 race-behind: cross for his camps when yours are dead, not instead of yours
-race-behind: he is somewhere, so ward the entrance before you decide he is not there
+race-behind: ward the entrance before you cross, rather than assuming he is elsewhere
 
 race-ahead: spend the lead on an objective rather than a duel, the objective is the part you keep
 race-ahead: you are ahead on tempo, so be at the next timer before he can be

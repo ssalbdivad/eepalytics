@@ -6,6 +6,10 @@ Bel'Veth is a **scaling skirmisher** built around stacking. She wants repeated f
 objective takes that feed her, and she gets stronger the longer the game runs and the more she
 has eaten. This makes her the opposite of a champion you coach toward safety.
 
+**Her attack-speed stacks are permanent and they survive her death.** Nothing about being
+behind, or about dying, takes power back off her — which is exactly why the fix on her is always
+"go and take something" and never "win this one back".
+
 **Her early clear is not fast and her early duel is not free.** The first few minutes are the
 weakest part of her game; forcing an early invade or a coin-flip fight before she has stacks is
 the most common way the game is lost outright.
@@ -28,7 +32,7 @@ every time that kind fires, and sameness is what made him stop listening. Each o
 something he can DO in the next thirty seconds.
 
 race-behind: you get paid for the long game, so take the camps and stop trading tempo for a coin flip
-race-behind: the route that finishes is worth more than the gank that might not, so run it
+race-behind: your clear speeds up as the stacks build, so finish the early routes
 race-behind: you cannot out-duel him yet, so farm the side he is not on and wait for true form
 
 race-ahead: turn it into an epic monster, the coral is the part of the lead you keep

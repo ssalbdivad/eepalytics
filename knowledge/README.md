@@ -58,6 +58,34 @@ source: model-knowledge | <url> | <author>
 power spikes, what the champion is for. Those survive patches. Anything that *doesn't* survive
 a patch does not belong in this directory at all.
 
+## The `## Live coaching` section
+
+A champion file may end with a `## Live coaching` section, and that section is a **different
+thing from the prose above it**. The prose is sent to the post-game reviewer; these lines are
+spoken out loud, mid-game, attached to a number the live client just proved
+(`src/shared/champion-advice.ts`).
+
+The format is `<fact kind>: <clause>`, one per line, and the rules are hard:
+
+- **Keyed by fact kind**, so a clause can only be said once the client has established the
+  situation it is about. Unknown keys are ignored rather than trusted.
+- **No digits.** A clause with a number in it is refused at load time, and a spelled-out number
+  used as a game fact is the same fabrication with the fence walked around.
+- **A clause completes a sentence the client started** — "Kayn is 23 CS up on you — *your clear
+  only gets faster while it keeps running, so finish the whole route*". `death` is the exception
+  and stands alone.
+- **Three or more clauses per kind**, different in content rather than in phrasing. One clause per
+  kind means the identical half-sentence every time that kind fires, and sameness is what makes a
+  coach stop being listened to.
+- **Under 110 characters, and shorter on a long fact.** The whole spoken line is one breath about
+  a second behind the game; `farm-behind` and `fight-absent` already spend forty and thirty-four
+  characters before the clause starts, so their clauses are the shortest in the file.
+- **Every clause ends on something he can do in the next thirty seconds.** An observation is not
+  advice, however true it is.
+- **A clause that would read identically on another champion belongs in `_default.md`.** That is
+  the whole test for whether champion knowledge is earning its place; `_default.md` carries the
+  role version of every kind.
+
 ## Staleness
 
 `patch` is compared against the game's patch. When they differ the prompt says so and tells the

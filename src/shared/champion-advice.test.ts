@@ -414,6 +414,52 @@ describe("the shipped champion files", () => {
 			ok((roleDefault[kind]?.length ?? 0) > 0, `_default.md has no clause for "${kind}"`)
 	})
 
+	it("rotates the SHIPPED Lillia clauses through the real ranker, merged as production merges them", () => {
+		/*
+		 * The production configuration end to end: `_default.md` under `lillia.md`, merged per
+		 * kind, rotated on the firing count, driven by the real `buildFacts` over the same
+		 * thirty-minute game. This is the composition `routes/live.ts` builds every turn, and it is
+		 * the one the player hears — the synthetic simulation above proves the mechanism, this
+		 * proves the thing actually shipping.
+		 */
+		const clauses = mergeClauses(
+			parseChampionClauses(readFileSync(join(CHAMPIONS, "_default.md"), "utf8")),
+			parseChampionClauses(readFileSync(join(CHAMPIONS, "lillia.md"), "utf8"))
+		)
+		const mem = newFactMemory()
+		const cursor = newAdviceCursor()
+		const said: string[] = []
+		for (let t = 8 * 60; t <= 30 * 60; t += 5) {
+			const cs = 70 + Math.round(((t - 8 * 60) / 60) * 7)
+			for (const line of buildFacts(
+				{
+					nowSec: t,
+					meDeadForSec: null,
+					deadEnemies: [],
+					currentGold: null,
+					pace: { cs, expected: cs + 25, exact: true },
+					counterpart: null,
+					advice: rotatingAdvice(clauses, cursor),
+					enemyObjectives: [],
+					myEvents: [],
+					alliesAlive: 5,
+					enemiesAlive: 5,
+					drakeBackInSec: null,
+					baronBackInSec: null,
+					heraldBackInSec: null
+				},
+				mem
+			))
+				if (/ CS down on your own pace/.test(line)) said.push(line)
+		}
+		ok(said.length >= 3, `only ${said.length} farm lines in a thirty-minute game`)
+		strictEqual(
+			new Set(said.slice(0, 3)).size,
+			Math.min(3, clauses["farm-behind"]!.length),
+			`the first three farm lines repeated:\n${said.slice(0, 3).join("\n")}`
+		)
+	})
+
 	it("rotates the shipped clauses rather than repeating one", () => {
 		// Whatever the files hold, a kind with several clauses must actually cycle through them.
 		const cursor = newAdviceCursor()

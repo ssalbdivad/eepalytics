@@ -65,18 +65,18 @@ race-behind: roll a Swirlseed into his side and take whatever it tells you is sa
 
 race-ahead: you are ahead because the route never stopped, so do not stop it to go find him
 race-ahead: keep the clear running toward his camps while the speed is stacked
-race-ahead: you still lose the even fight, so spend this on the pit rather than on him
+race-ahead: no burst means you cannot cash a lead in a duel, so cash it on a drake
 
 restraint: you have no burst and no dash, so that fight is his to leave, take your camps instead
 restraint: get the level back off a full clear, then contest it with the ult up
-restraint: being passive here is correct play, so path away and be full for that timer
+restraint: your speed is for leaving, not for winning that, so path away and take camps
 
 fight-lost: your damage arrives over time, so take the long fights with room to kite
 fight-lost: the ult only sleeps someone already covered in dust, so hit them before you cast it
 fight-lost: a corridor takes away the speed that is your only exit, pull them into open ground
 
 fight-absent: your value is being where they are not, so take the far camps while that settles
-fight-absent: you cannot arrive late and change it, so pick the objective on the other side
+fight-absent: arriving late with no dash only feeds it, take the far objective instead
 fight-absent: start walking to the next timer, your speed only pays in transit
 
 death: you have no dash out of there, so the leaving has to happen before you are committed.
@@ -86,7 +86,7 @@ death: a pit or a corridor is where your escape stops existing, so fight at the 
 
 build: if that shortens the fight, stop taking the fight and go take something instead
 build: you win the long one, so ask whether he can still be outlasted before you contest
-build: he spiked and you scale, so trade the duel for a camp and come back a level up
+build: you do not out-trade an item, you out-run it, so take camps and skip the duel
 
 farm-behind: that is an interrupted route, not a slow one, so finish the next
 farm-behind: a camp skipped mid-route costs the speed for all the ones after

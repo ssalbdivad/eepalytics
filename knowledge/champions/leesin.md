@@ -79,7 +79,7 @@ race-behind: you catch up on a landed Q with an ally nearby, not on a faster rou
 race-behind: take his camps while your Q is up, and leave the moment it is not
 
 race-ahead: you are an early champion, so turn this into a tower rather than sitting on it
-race-ahead: spend it now, the lead is worth less every minute he spends scaling
+race-ahead: your lead is a kill threat rather than a stat check, so find a lane to follow up
 race-ahead: path to the lane that can take a plate off the next gank
 
 restraint: levels down you can arrive but not finish, so take your camps and come back with R
@@ -91,12 +91,12 @@ fight-lost: the recast hurts most on someone already low, so pick the damaged ta
 fight-lost: R is for removing someone or kicking them into your team, not for closing a gap
 
 fight-absent: your kit is choosing the fight, so choose the next one and be early
-fight-absent: go where the map still has something to decide, that one is already spent
+fight-absent: you need an angle and a target already low, so set the next one up from the side
 fight-absent: drop a ward on the next objective now, it is vision and it is your way in
 
 death: everything you own starts with a landed Q, so do not cross while it is down.
 death: put the ward down before you enter, so leaving is a button rather than a walk.
-death: with R down, take the camp instead of the fight, that kick is your team's only displacement.
+death: with R down you have no way to break a fight open, so take the camp instead.
 death: melee means the way out has to exist first, so check there is an ally to jump to.
 
 build: you win the phase before his items land, so force something before he finishes the next
@@ -105,4 +105,4 @@ build: once he beats your carry, kick him away from the fight rather than into i
 
 farm-behind: full clear first, then deviate on purpose rather than on impulse
 farm-behind: make the next detour buy a kill or a plate, or do not take it
-farm-behind: your camps come back either way, take them on the way to the lane
+farm-behind: the level that makes your gank a kill comes off camps, so clear first
