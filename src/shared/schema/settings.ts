@@ -75,9 +75,18 @@ export const Settings = type({
 	/**
 	 * Which ARCHITECTURE the live coach runs on. See `shared/live-coach-mode.ts` for the run.
 	 *
-	 * `cite-or-quiet` gives her the whole ground-truth block, the frame and the persona under one
-	 * rule — cite it or say nothing. `fenced` is the old shape, where `analysis/live-facts.ts`
-	 * ranks every candidate line in TypeScript and she may only pick from that list.
+	 * `briefing` is the default. Same citation rule, but the block is rebuilt around what was
+	 * measured to help: the map's own clock first — what objective is up and how long it has stood
+	 * there untaken, what spawns next and in how many seconds — then the board, then the arc and
+	 * his career habits, with the jungle race and the farm comparison at the BOTTOM. Over 88 real
+	 * states judged blind, the schedule took useful lines from 29% to 55% (p = 0.0009) while ninety
+	 * seconds of exactly-computed history took it to 30% (p = 0.94). Farm, CS and routing — the
+	 * subject the ranker puts first — produced 3 useful lines out of 84.
+	 *
+	 * `cite-or-quiet` is that same rule over the SNAPSHOT block, which is what shipped before.
+	 * `fenced` is the old shape, where `analysis/live-facts.ts` ranks every candidate line in
+	 * TypeScript and she may only pick from that list. Both stay selectable so the comparison the
+	 * default rests on can still be run.
 	 *
 	 * Measured across 363 real samples from four games, judged blind: the fence spoke on 11 of 102
 	 * turns and cite-or-quiet on 94, with fabrication 0 in both — 81 useful lines a game against 6.
