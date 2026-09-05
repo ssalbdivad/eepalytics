@@ -1060,3 +1060,22 @@ export const createLiveRoute = (): Hono => {
 
 	return app
 }
+
+/**
+ * Rebuild a block from a recorded `allgamedata` sample, for the benchmark.
+ *
+ * Exported so `scripts/bench-providers.ts` replays states through the SAME code the daemon runs,
+ * rather than a second reconstruction that could quietly drift from it. A comparison whose harness
+ * builds a different block from the coach's is measuring a different thing.
+ *
+ * Returns null for a sample that cannot produce a state — the loading screen, a torn line — so a
+ * replay skips it rather than inventing one.
+ */
+export const buildLiveStateForBench = (raw: unknown, gameTimeSec: number): VisionState | null => {
+	const data = raw as LiveAllGameData | null
+	const me = findMe(data ?? ({} as LiveAllGameData))
+	if (!data || !me) return null
+	// No baseline: a replay is about the client's facts, and his rolling average is not in the
+	// sample. `pace` is null, exactly as it is early in a real game.
+	return buildLiveState(data, me, gameTimeSec, null)
+}

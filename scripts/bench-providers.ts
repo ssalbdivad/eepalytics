@@ -87,6 +87,39 @@ import {
 import type { CoachFault, Interval, LineScore } from "../src/analysis/coach-score.ts"
 import { coachTurn, providerById as sharedProvider } from "../src/review/live-providers.ts"
 
+/* =============================================================== live samples */
+
+/**
+ * Build bench states from a real game's recorded `allgamedata`.
+ *
+ * Deliberately goes through the daemon's own `buildLiveState`, so what is replayed is the block the
+ * coach actually held rather than a second reconstruction that could drift from it. A sample that
+ * cannot produce a state — the loading screen, a torn line — is skipped rather than faked.
+ */
+const loadSampledStates = async (gameId: string): Promise<BenchState[]> => {
+	const { readSamples, sampledGames } = await import("../src/daemon/live-sampler.ts")
+	const id =
+		gameId === "latest" ? (sampledGames()[0]?.gameId ?? "") : gameId
+	if (id === "") throw new Error("no live samples on disk yet — play a game with the daemon running")
+	const rows = readSamples(id)
+	if (rows.length === 0) throw new Error(`no samples for ${id}`)
+
+	const { buildLiveStateForBench } = await import("../src/server/routes/live.ts")
+	const out: BenchState[] = []
+	for (const row of rows) {
+		const st = buildLiveStateForBench(row.data, row.gameTime)
+		if (!st) continue
+		out.push({
+			gameId: id,
+			atSec: row.gameTime,
+			state: st,
+			block: renderState(st),
+			roster: [st.me.champion, ...st.allies.map(p => p.champion), ...st.enemies.map(p => p.champion)]
+		})
+	}
+	return out
+}
+
 /* ================================================================= arguments */
 
 const argv = process.argv.slice(2)
@@ -1315,8 +1348,23 @@ const main = async () => {
 	}
 
 	/* -------------------------------------------------------- the fixture */
-	const statesPath = arg("states", `${DATA_DIR}/eval/confirm.json`)
-	const all = loadStates(statesPath)
+	/*
+	 * `--from-samples` replays what the client ACTUALLY said during a real game.
+	 *
+	 * The default fixture reconstructs states from the post-game timeline, which has no enemy CS,
+	 * no items and no roles — so it starves the coach of exactly the facts it was rebuilt around,
+	 * and measured 40% "named no action" against roughly 11% on states carrying a counterpart.
+	 * A model comparison run on starved states measures improvisation, not coaching.
+	 *
+	 * `src/daemon/live-sampler.ts` records the raw allgamedata every few seconds of a live game.
+	 * This turns those samples into the same `BenchState` shape through the SAME `buildLiveState`
+	 * and `renderState` the daemon uses, so a replayed block is byte-identical to the one the coach
+	 * was actually holding.
+	 */
+	const fromSamples = arg("from-samples", "")
+	const all =
+		fromSamples !== "" ? await loadSampledStates(fromSamples) : loadStates(arg("states", `${DATA_DIR}/eval/confirm.json`))
+	const statesPath = fromSamples !== "" ? `live samples ${fromSamples}` : arg("states", `${DATA_DIR}/eval/confirm.json`)
 	if (all.length === 0) throw new Error(`no usable states in ${statesPath}`)
 	const states = spread(all, Number(arg("turns", "12")))
 
