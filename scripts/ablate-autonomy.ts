@@ -87,9 +87,20 @@ import { baselineFromRows, perGameMetrics } from "../src/analysis/index.ts"
 import { loadCorpus } from "../src/daemon/corpus.ts"
 import { buildLiveStateForBench } from "../src/server/routes/live.ts"
 import { readSamples } from "../src/daemon/live-sampler.ts"
-import { FABRICATION_FAULTS, isEmpty, scoreLine, separated, wilson } from "../src/analysis/coach-score.ts"
+import {
+	FABRICATION_FAULTS,
+	MIN_SIGNIFICANT,
+	blockNumbers,
+	isEmpty,
+	numbersIn,
+	scoreLine,
+	separated,
+	wilson
+} from "../src/analysis/coach-score.ts"
 import type { CoachFault, Interval, LineScore } from "../src/analysis/coach-score.ts"
 import { modelHandleFor, providerById, providerKey } from "../src/review/live-providers.ts"
+import { mayspeak, newPaceMemory, noteSpoken } from "../src/analysis/speak-pace.ts"
+import type { PaceTier } from "../src/analysis/speak-pace.ts"
 
 /* ================================================================= arguments */
 
@@ -1153,4 +1164,397 @@ const main = async (): Promise<void> => {
 
 }
 
-if (import.meta.main) await main()
+
+/* ================================================================ pace sweep */
+
+/**
+ * `--pace-sweep` — how often should she actually SPEAK?
+ *
+ * The autonomy ablation above answers "may she say this"; it says nothing about "may she say
+ * anything right now". Under the fence those were one question, because the ranked list was both
+ * the vocabulary and the rate limit. `shared/live-coach-mode.ts` demoted the list to a hint, which
+ * is worth 13.5x the useful output and which also removed every rate limit the coach had.
+ *
+ * This mode spends nothing. It replays a stored run of THIS script — the real lines, in order, with
+ * their real game clocks — applies each candidate policy from `analysis/speak-pace.ts`, and reports
+ * what he would hear and what he would stop hearing.
+ *
+ *     node --experimental-strip-types scripts/ablate-autonomy.ts --pace-sweep <run.json>
+ *       --pace-arm <id>        which arm's transcript to pace, default `shipped`
+ *       --pace-verdicts <f>    a blind-judge verdicts file, joined through its key file
+ *       --pace-key <f>         the key that maps line ids back to states
+ *       --pace-out <path>      default data/eval/pace-sweep-<stamp>.json
+ */
+
+/**
+ * The tier of a ranked fact, recovered from its own text.
+ *
+ * `buildFacts` returns `string[]`; the `tier` it assigns is thrown away at the boundary. Shipping
+ * the tier out of that function is a one-line change and belongs to whoever owns that file, so this
+ * table recovers it from the templates instead — every entry copied from the generator that writes
+ * it, with the line it was copied from. `paceTierUnmatched` in the output counts anything this
+ * table failed to classify, so a template that moves shows up as a number rather than as silence.
+ */
+export const TIER_TEMPLATES: { tier: PaceTier; re: RegExp; from: string }[] = [
+	// live-facts.ts: `subject: "fight", tier: "interrupt"`
+	{ tier: "interrupt", re: /^that fight was /, from: "fight" },
+	// live-facts.ts: Baron and Herald interrupt; a dragon does not.
+	{ tier: "interrupt", re: /^they have Baron/, from: "objective-lost (BaronKill)" },
+	{ tier: "interrupt", re: /^they have Herald/, from: "objective-lost (HeraldKill)" },
+	{ tier: "expiring", re: /^they took /, from: "objective-lost (DragonKill)" },
+	{ tier: "expiring", re: /^you're \d+ levels? down on /, from: "levels (restraint)" },
+	{ tier: "expiring", re: /of them are dead — you have about /, from: "downed (window)" },
+	{ tier: "expiring", re: / is down \d+ seconds — their camps are free/, from: "downed (single)" },
+	{ tier: "expiring", re: / is back in \d+ seconds/, from: "objectives (timer)" },
+	{ tier: "expiring", re: / is up NOW/, from: "objectives (up now)" }
+]
+
+export const tierOfFact = (text: string): PaceTier | null =>
+	TIER_TEMPLATES.find(t => t.re.test(text))?.tier ?? null
+
+/** The loudest tier on offer this turn. A turn with no ranked fact is `standing`. */
+export const turnTier = (facts: readonly string[]): { tier: PaceTier; unmatched: string[] } => {
+	const unmatched: string[] = []
+	let best: PaceTier = "standing"
+	for (const f of facts) {
+		const t = tierOfFact(f)
+		if (t === null) {
+			unmatched.push(f)
+			continue
+		}
+		if (t === "interrupt") best = "interrupt"
+		else if (t === "expiring" && best !== "interrupt") best = "expiring"
+	}
+	return { tier: best, unmatched }
+}
+
+/**
+ * The ranked facts and the block for every sample of the game, replayed in order.
+ *
+ * In order and from the first sample, because `buildFacts` carries memory: what may be offered now
+ * depends on everything offered before it. Starting the replay at the first state the sweep cares
+ * about would produce a fact list no game ever showed.
+ */
+const replayFacts = (): Map<number, { facts: string[]; block: string }> => {
+	const db = new DatabaseSync(DB_PATH, { readOnly: true })
+	const createdMs = Number(
+		(db.prepare("SELECT gameCreationMs FROM game WHERE gameId = ?").get(Number(GAME_ID)) as
+			| { gameCreationMs: number | bigint }
+			| undefined)?.gameCreationMs ?? 0
+	)
+	db.close()
+	const corpus = loadCorpus(200)
+		.filter(e => createdMs === 0 || Number(e.row.gameCreationMs) < createdMs)
+		.slice(0, 20)
+	const baseline = corpus.length > 0 ? baselineFromRows(perGameMetrics(corpus)) : null
+	const out = new Map<number, { facts: string[]; block: string }>()
+	for (const s of readSamples(SAMPLE_FILE)) {
+		const st = buildLiveStateForBench(s.data, s.gameTime, baseline)
+		if (!st) continue
+		out.set(Math.round(s.gameTime), { facts: st.unseen ?? [], block: renderBlockForMode(st, "cite-or-quiet") })
+	}
+	return out
+}
+
+export interface PaceTurn {
+	tSec: number
+	clock: string
+	stateId: string
+	line: string
+	silent: boolean
+	useful: boolean
+	specific: boolean
+	verdict: string | null
+	tier: PaceTier
+	facts: string[]
+	block: string
+}
+
+export interface PacePolicy {
+	id: string
+	label: string
+	/** `null` means no floor at all — the measured arm. */
+	floorSec: number | null
+	/** An `interrupt`-tier turn may cut the floor to this. */
+	interruptFloorSec?: number
+	/** A turn carrying an `expiring` OR `interrupt` fact uses this floor instead. */
+	busyFloorSec?: number
+	/** At most `lines` in any `windowSec`, on top of the floor. Lets a quiet stretch bank. */
+	budget?: { lines: number; windowSec: number }
+}
+
+export interface PaceResult {
+	policy: PacePolicy
+	spoke: number
+	suppressed: number
+	linesPerMin: number
+	busiest4Min: number
+	minGapSec: number
+	medianGapSec: number
+	keptUseful: number
+	droppedUseful: number
+	keptVerdicts: Record<string, number>
+	droppedVerdicts: Record<string, number>
+	spokenAt: number[]
+	dropped: { tSec: number; clock: string; line: string; useful: boolean; verdict: string | null; tier: PaceTier }[]
+}
+
+/** Most lines inside any `windowSec` window that starts on a spoken line. */
+export const busiestWindow = (spokenAt: readonly number[], windowSec: number): number => {
+	let best = 0
+	for (let i = 0; i < spokenAt.length; i++) {
+		let n = 0
+		for (let j = i; j < spokenAt.length && spokenAt[j]! - spokenAt[i]! < windowSec; j++) n++
+		if (n > best) best = n
+	}
+	return best
+}
+
+export const runPolicy = (turns: readonly PaceTurn[], policy: PacePolicy): PaceResult => {
+	const mem = newPaceMemory()
+	const spokenAt: number[] = []
+	const dropped: PaceResult["dropped"] = []
+	let keptUseful = 0
+	let droppedUseful = 0
+	const keptVerdicts: Record<string, number> = {}
+	const droppedVerdicts: Record<string, number> = {}
+	for (const t of turns) {
+		if (t.silent) continue
+		let speak = true
+		if (policy.floorSec !== null) {
+			const busy = policy.busyFloorSec !== undefined && (t.tier === "interrupt" || t.tier === "expiring")
+			const floorSec = busy ? policy.busyFloorSec! : policy.floorSec
+			speak = mayspeak(mem, t.tSec, t.tier, {
+				floorSec,
+				interruptFloorSec: policy.interruptFloorSec ?? floorSec
+			}).speak
+			if (speak && policy.budget) {
+				const inWindow = spokenAt.filter(s => t.tSec - s < policy.budget!.windowSec).length
+				if (inWindow >= policy.budget.lines) speak = false
+			}
+		}
+		if (speak) {
+			spokenAt.push(t.tSec)
+			noteSpoken(mem, t.tSec)
+			if (t.useful) keptUseful++
+			if (t.verdict) keptVerdicts[t.verdict] = (keptVerdicts[t.verdict] ?? 0) + 1
+		} else {
+			dropped.push({ tSec: t.tSec, clock: t.clock, line: t.line, useful: t.useful, verdict: t.verdict, tier: t.tier })
+			if (t.useful) droppedUseful++
+			if (t.verdict) droppedVerdicts[t.verdict] = (droppedVerdicts[t.verdict] ?? 0) + 1
+		}
+	}
+	const gaps: number[] = []
+	for (let i = 1; i < spokenAt.length; i++) gaps.push(spokenAt[i]! - spokenAt[i - 1]!)
+	const span = (turns[turns.length - 1]!.tSec - turns[0]!.tSec) / 60
+	return {
+		policy,
+		spoke: spokenAt.length,
+		suppressed: dropped.length,
+		linesPerMin: spokenAt.length / span,
+		busiest4Min: busiestWindow(spokenAt, 240),
+		minGapSec: gaps.length > 0 ? Math.min(...gaps) : 0,
+		medianGapSec: gaps.length > 0 ? median(gaps) : 0,
+		keptUseful,
+		droppedUseful,
+		keptVerdicts,
+		droppedVerdicts,
+		spokenAt,
+		dropped
+	}
+}
+
+/**
+ * QUEUE the suppressed line instead of dropping it, and see what arrives.
+ *
+ * The queue holds the MOST RECENT suppressed line, not the oldest — a FIFO of a whole quiet minute
+ * is indefensible on its face and nobody would ship it. At the next turn the floor clears, the held
+ * line is spoken instead of the fresh one, and three things are recorded: how old it is by then,
+ * whether every figure in it still appears in the block at DELIVERY (if it does not, speaking it
+ * breaks the app's own citation rule), and whether the fresh line it displaced was itself useful.
+ */
+export interface QueueResult {
+	delivered: number
+	medianAgeSec: number
+	maxAgeSec: number
+	citationsBroken: number
+	displacedUseful: number
+	deliveredUseful: number
+	examples: { heldAt: string; deliveredAt: string; ageSec: number; line: string; lostNumbers: number[]; displaced: string }[]
+}
+
+export const runQueue = (turns: readonly PaceTurn[], floorSec: number): QueueResult => {
+	const mem = newPaceMemory()
+	let held: PaceTurn | null = null
+	const r: QueueResult = {
+		delivered: 0,
+		medianAgeSec: 0,
+		maxAgeSec: 0,
+		citationsBroken: 0,
+		displacedUseful: 0,
+		deliveredUseful: 0,
+		examples: []
+	}
+	const ages: number[] = []
+	for (const t of turns) {
+		if (t.silent) continue
+		if (mayspeak(mem, t.tSec, "standing", { floorSec, interruptFloorSec: floorSec }).speak) {
+			const say = held ?? t
+			noteSpoken(mem, t.tSec)
+			if (held) {
+				const age = t.tSec - held.tSec
+				ages.push(age)
+				r.delivered++
+				r.maxAgeSec = Math.max(r.maxAgeSec, age)
+				if (held.useful) r.deliveredUseful++
+				if (t.useful) r.displacedUseful++
+				const now = blockNumbers(t.block)
+				const lost = numbersIn(held.line).filter(n => n >= MIN_SIGNIFICANT && !now.has(n))
+				if (lost.length > 0) r.citationsBroken++
+				if (r.examples.length < 12)
+					r.examples.push({
+						heldAt: held.clock,
+						deliveredAt: t.clock,
+						ageSec: age,
+						line: held.line,
+						lostNumbers: lost,
+						displaced: t.line
+					})
+			}
+			held = null
+			void say
+		} else held = t
+	}
+	r.medianAgeSec = ages.length > 0 ? median(ages) : 0
+	return r
+}
+
+const paceSweep = (): void => {
+	const runPath = arg("pace-sweep", "")
+	if (runPath === "") throw new Error("--pace-sweep needs a run json")
+	const run = JSON.parse(readFileSync(runPath, "utf8")) as { cells: Cell[] }
+	const armId = arg("pace-arm", "shipped")
+	const cells = run.cells.filter(c => c.arm === armId && (c.set === "late" || c.withFrame))
+	if (cells.length === 0) throw new Error(`no cells for arm ${armId}`)
+
+	const verdictPath = arg("pace-verdicts", "")
+	const keyPath = arg("pace-key", "")
+	const verdictOf = new Map<string, string>()
+	if (verdictPath !== "" && keyPath !== "") {
+		const verdicts = JSON.parse(readFileSync(verdictPath, "utf8")) as Record<string, string>
+		const key = JSON.parse(readFileSync(keyPath, "utf8")) as { rows: { id: string; arm: string; stateId: string }[] }
+		for (const row of key.rows) if (row.arm === armId && verdicts[row.id]) verdictOf.set(row.stateId, verdicts[row.id]!)
+	}
+
+	const replay = replayFacts()
+	const unmatched = new Set<string>()
+	const seen = new Set<number>()
+	const turns: PaceTurn[] = []
+	for (const c of cells)
+		for (const t of c.turns) {
+			// Two journal frames landing on one sample produced two turns at one game clock. A real
+			// game has one turn there, and counting both would inflate every rate in this sweep.
+			if (seen.has(t.tSec)) continue
+			seen.add(t.tSec)
+			const r = replay.get(t.tSec)
+			const tt = turnTier(r?.facts ?? [])
+			for (const u of tt.unmatched) unmatched.add(u)
+			turns.push({
+				tSec: t.tSec,
+				clock: t.clock,
+				stateId: t.stateId,
+				line: t.line,
+				silent: t.silent || isEmpty(t.line),
+				useful: t.useful,
+				specific: t.specific,
+				verdict: verdictOf.get(t.stateId) ?? null,
+				tier: tt.tier,
+				facts: r?.facts ?? [],
+				block: r?.block ?? ""
+			})
+		}
+	turns.sort((a, b) => a.tSec - b.tSec)
+
+	const POLICIES: PacePolicy[] = [
+		{ id: "none", label: "no floor (the measured arm)", floorSec: null },
+		{ id: "flat-30", label: "flat 30s", floorSec: 30 },
+		{ id: "flat-45", label: "flat 45s", floorSec: 45 },
+		{ id: "flat-60", label: "flat 60s", floorSec: 60 },
+		{ id: "flat-75", label: "flat 75s", floorSec: 75 },
+		{ id: "flat-90", label: "flat 90s", floorSec: 90 },
+		{ id: "flat-120", label: "flat 120s", floorSec: 120 },
+		{ id: "flat-150", label: "flat 150s", floorSec: 150 },
+		{ id: "tier-60", label: "60s, interrupt cuts to 20s", floorSec: 60, interruptFloorSec: 20 },
+		{ id: "tier-90", label: "90s, interrupt cuts to 20s", floorSec: 90, interruptFloorSec: 20 },
+		{ id: "adaptive-90-45", label: "90s quiet / 45s when something is expiring", floorSec: 90, busyFloorSec: 45 },
+		{ id: "adaptive-120-45", label: "120s quiet / 45s when something is expiring", floorSec: 120, busyFloorSec: 45 },
+		{ id: "budget-4-240", label: "4 per 4 min, min gap 20s (bunching allowed)", floorSec: 20, budget: { lines: 4, windowSec: 240 } },
+		{ id: "budget-6-240", label: "6 per 4 min, min gap 20s (bunching allowed)", floorSec: 20, budget: { lines: 6, windowSec: 240 } }
+	]
+
+	const results = POLICIES.map(p => runPolicy(turns, p))
+	const queue = [45, 60, 90].map(f => ({ floorSec: f, ...runQueue(turns, f) }))
+
+	const spoke = turns.filter(t => !t.silent).length
+	const span = (turns[turns.length - 1]!.tSec - turns[0]!.tSec) / 60
+	const out = {
+		kind: "pace-sweep",
+		built: Date.now(),
+		run: runPath,
+		arm: armId,
+		game: GAME_ID,
+		turns: turns.length,
+		spoke,
+		spanMin: Math.round(span * 10) / 10,
+		verdictsJoined: turns.filter(t => t.verdict).length,
+		tierUnmatched: [...unmatched],
+		tierMix: turns.reduce<Record<string, number>>((m, t) => ({ ...m, [t.tier]: (m[t.tier] ?? 0) + 1 }), {}),
+		results,
+		queue
+	}
+	const outPath = arg("pace-out", `${DATA_DIR}/eval/pace-sweep-${stamp}.json`)
+	mkdirSync(`${DATA_DIR}/eval`, { recursive: true })
+	writeFileSync(outPath, JSON.stringify(out, null, 2))
+
+	const say = (s: string): void => console.log(s)
+	say(`pace-sweep — how often may she speak, measured on what she actually said`)
+	say(`  run          ${runPath}`)
+	say(`  arm          ${armId}, game ${GAME_ID}`)
+	say(`  turns        ${turns.length} over ${span.toFixed(1)} min; she spoke on ${spoke} (${Math.round((spoke / turns.length) * 100)}%)`)
+	say(`  turn spacing recorded, not shipped: ~9s to 6:42 and 30s after, against DEFAULT_TURN_MS of 20s`)
+	say(`  verdicts     ${out.verdictsJoined} of ${spoke} spoken lines carry a blind verdict`)
+	say(`  tier mix     ${Object.entries(out.tierMix).map(([k, v]) => `${k}:${v}`).join(" ")}`)
+	if (unmatched.size > 0) say(`  UNMATCHED    ${unmatched.size} fact templates this sweep could not tier`)
+	say("")
+	say("=== CADENCE ============================================================")
+	say("policy             lines  /min   busy4  minGap  medGap  useful kept/dropped")
+	for (const r of results)
+		say(
+			`${r.policy.id.padEnd(18)} ${String(r.spoke).padStart(5)}  ${r.linesPerMin.toFixed(2).padStart(4)}  ` +
+				`${String(r.busiest4Min).padStart(5)}  ${String(Math.round(r.minGapSec)).padStart(6)}  ` +
+				`${String(Math.round(r.medianGapSec)).padStart(6)}  ${r.keptUseful}/${r.droppedUseful}`
+		)
+	say("")
+	say("=== WHAT THE BLIND JUDGE SAID ABOUT WHAT SURVIVED =======================")
+	say("policy             kept verdicts                    dropped verdicts")
+	const fmt = (v: Record<string, number>): string =>
+		Object.entries(v).sort().map(([k, n]) => `${k}:${n}`).join(" ") || "-"
+	for (const r of results) say(`${r.policy.id.padEnd(18)} ${fmt(r.keptVerdicts).padEnd(32)} ${fmt(r.droppedVerdicts)}`)
+	say("")
+	say("=== QUEUE INSTEAD OF DROP ==============================================")
+	say("floor  delivered  medAge  maxAge  citations broken  displaced-useful  delivered-useful")
+	for (const q of queue)
+		say(
+			`${String(q.floorSec).padStart(5)}  ${String(q.delivered).padStart(9)}  ${String(Math.round(q.medianAgeSec)).padStart(6)}  ` +
+				`${String(Math.round(q.maxAgeSec)).padStart(6)}  ${String(q.citationsBroken).padStart(16)}  ` +
+				`${String(q.displacedUseful).padStart(16)}  ${String(q.deliveredUseful).padStart(16)}`
+		)
+	say("")
+	say(`written ${outPath}`)
+}
+
+
+if (import.meta.main) {
+	if (arg("pace-sweep", "") !== "") paceSweep()
+	else await main()
+}
