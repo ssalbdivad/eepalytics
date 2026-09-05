@@ -619,6 +619,44 @@ const ownerOf = (mentions: { owner: string; index: number }[], at: number): stri
 }
 
 /**
+ * The comparative shape, where the left-bias is exactly backwards.
+ *
+ * "You lead Briar 140 CS to 50" puts BOTH numbers to the right of both names, so the plain rule
+ * gives 140 to Briar — the nearest name on its left — and the sentence is scored as a
+ * misattribution when it is perfectly correct. Measured on a real ablation run: 5 of 94 lines
+ * flagged, and all five were this, so the arm's true fabrication rate was 0 and the instrument
+ * said otherwise. An instrument that cries wolf on the shape this coach uses most is worse than
+ * no instrument, because the whole product decision rests on that rate.
+ *
+ * English orders a score pair to match the order the entities were named: the first figure belongs
+ * to whoever was mentioned first. So when two figures are joined by "to" (or "against", or a dash)
+ * and two different entities were named before them, split them in order.
+ *
+ * Deliberately narrow. It fires only with exactly two entities and a joined pair, because a rule
+ * that guesses at three names is a rule that invents attributions of its own.
+ */
+const COMPARATIVE_PAIR = /(\d+)\s*(?:[A-Za-z]+\s+)?(?:to|against|[-–])\s*(\d+)/g
+
+const comparativeOwners = (
+	line: string,
+	mentions: { owner: string; index: number }[]
+): Map<number, string> => {
+	const out = new Map<number, string>()
+	for (const m of line.matchAll(COMPARATIVE_PAIR)) {
+		if (m.index === undefined) continue
+		const named = mentions.filter(x => x.index < m.index)
+		const distinct: string[] = []
+		for (const x of named) if (!distinct.includes(x.owner)) distinct.push(x.owner)
+		if (distinct.length !== 2) continue
+		const firstAt = m.index + m[0].indexOf(m[1])
+		const secondAt = m.index + m[0].lastIndexOf(m[2])
+		out.set(firstAt, distinct[0] as string)
+		out.set(secondAt, distinct[1] as string)
+	}
+	return out
+}
+
+/**
  * Score one line. Pure: same inputs, same verdict, forever.
  *
  * Order matters in one place only — a champion who is not on the roster is reported as
@@ -653,6 +691,7 @@ export const scoreLine = (input: ScoreInput): LineScore => {
 		if (m.index !== undefined) mentions.push({ owner: "you", index: m.index })
 	mentions.sort((a, b) => a.index - b.index)
 
+	const comparative = comparativeOwners(norm, mentions)
 	const unbacked: number[] = []
 	const misattributed: Misattribution[] = []
 	for (const m of norm.matchAll(/\d+/g)) {
@@ -664,7 +703,7 @@ export const scoreLine = (input: ScoreInput): LineScore => {
 			continue
 		}
 		// The number is real. Did it end up on the right player?
-		const owner = ownerOf(mentions, m.index)
+		const owner = comparative.get(m.index) ?? ownerOf(mentions, m.index)
 		if (owner === null) continue
 		if (!segments.some(s => s.owners.includes(owner) && s.values.has(value)))
 			misattributed.push({ value, claimedOwner: owner })
