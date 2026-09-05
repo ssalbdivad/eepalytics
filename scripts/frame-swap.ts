@@ -43,6 +43,11 @@ for (const id of ids) {
 		["none", null]
 	] as const) {
 		const r = await coachTurn({
+			// Pinned, not inherited: a harness that takes the PRODUCT default silently re-points
+			// itself the day that default moves. It did — five harnesses swapped baseline from
+			// fenced to cite-or-quiet with nothing failing. Every number this script has ever
+			// printed was measured against the fenced block, so that is what it keeps measuring.
+			mode: "fenced" as const,
 			provider: "gemini-http",
 			blockText: c.block,
 			...(path ? { frameJpegBase64: b64(path) } : {})

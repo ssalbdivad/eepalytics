@@ -84,6 +84,15 @@
  *
  * DO NOT run this while a game is in progress. It touches no League API and no LCU endpoint, but
  * it spends the Gemini HTTPS quota, which bills separately from the Live socket the coach uses.
+ *
+ * CHECK WHICH DATABASE YOU ARE POINTED AT before spending anything. `DATA_DIR` follows the working
+ * directory, and a worktree with its own empty `data/csk.db` has no game history and no journal
+ * frames — so every block comes out with `Farm baseline: NONE` and every state comes out text-only,
+ * and the run LOOKS fine. That happened, cost 330 calls, and the run is kept as
+ * `data/eval/paced-grid20-arms-INVALID-no-baseline-no-frames.json` rather than deleted, because the
+ * failure is invisible in the printed table and only shows up by diffing the stored blocks. Set
+ * `EEPALYTICS_DATA_DIR` at the checkout that actually holds the games, and pass an absolute `--out`
+ * so the results still land in the tree you are working in.
  */
 
 import { createHash } from "node:crypto"

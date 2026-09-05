@@ -997,6 +997,11 @@ const runViaSdk = async (arm: Arm, ctx: RunContext): Promise<Turn[]> => {
 	let index = 0
 	for (const state of ctx.states) {
 		const r = await coachTurn({
+			// Pinned, not inherited: a harness that takes the PRODUCT default silently re-points
+			// itself the day that default moves. It did — five harnesses swapped baseline from
+			// fenced to cite-or-quiet with nothing failing. Every number this script has ever
+			// printed was measured against the fenced block, so that is what it keeps measuring.
+			mode: "fenced" as const,
 			provider: arm.provider.id as never,
 			model: arm.model,
 			blockText: state.block,

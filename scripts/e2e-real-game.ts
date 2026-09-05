@@ -889,6 +889,11 @@ const main = async (): Promise<void> => {
 		const rep = replayed.get(j.c.sampleLine)!
 		const sendFrame = j.arm === "frame"
 		const r = await coachTurn({
+			// Pinned, not inherited: a harness that takes the PRODUCT default silently re-points
+			// itself the day that default moves. It did — five harnesses swapped baseline from
+			// fenced to cite-or-quiet with nothing failing. Every number this script has ever
+			// printed was measured against the fenced block, so that is what it keeps measuring.
+			mode: "fenced" as const,
 			provider: provId,
 			model,
 			...(sendFrame ? { frameJpegBase64: frame(j.c.framePath!).b64 } : {}),

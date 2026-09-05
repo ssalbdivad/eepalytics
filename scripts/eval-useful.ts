@@ -477,6 +477,11 @@ const main = async (): Promise<void> => {
 	let failures = 0
 	for (const [n, t] of toSend.entries()) {
 		const r = await coachTurn({
+			// Pinned, not inherited: a harness that takes the PRODUCT default silently re-points
+			// itself the day that default moves. It did — five harnesses swapped baseline from
+			// fenced to cite-or-quiet with nothing failing. Every number this script has ever
+			// printed was measured against the fenced block, so that is what it keeps measuring.
+			mode: "fenced" as const,
 			provider,
 			...(model === "" ? {} : { model }),
 			...(frame === undefined ? {} : { frameJpegBase64: frame }),

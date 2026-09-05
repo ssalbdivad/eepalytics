@@ -360,6 +360,11 @@ const generateLines = async (cards: readonly StateCard[], n: number): Promise<Li
 	const out: LineUnderTest[] = []
 	for (const c of picked) {
 		const r = await coachTurn({
+			// Pinned, not inherited: a harness that takes the PRODUCT default silently re-points
+			// itself the day that default moves. It did — five harnesses swapped baseline from
+			// fenced to cite-or-quiet with nothing failing. Every number this script has ever
+			// printed was measured against the fenced block, so that is what it keeps measuring.
+			mode: "fenced" as const,
 			provider: "gemini-http",
 			...(COACH_MODEL ? { model: COACH_MODEL } : {}),
 			blockText: c.block
