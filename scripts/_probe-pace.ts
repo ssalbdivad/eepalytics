@@ -12,15 +12,11 @@ const createdMs = Number(
 db.close()
 const corpus = loadCorpus(200).filter(e => createdMs === 0 || Number(e.row.gameCreationMs) < createdMs).slice(0, 20)
 const baseline = corpus.length > 0 ? baselineFromRows(perGameMetrics(corpus)) : null
-console.log("corpus", corpus.length, "baseline", baseline ? "yes" : "no")
 
 const samples = readSamples("split-03")
-console.log("samples", samples.length)
-const out: { tSec: number; unseen: string[] }[] = []
 for (const s of samples) {
 	const st = buildLiveStateForBench(s.data, s.gameTime, baseline)
 	if (!st) continue
-	out.push({ tSec: Math.round(s.gameTime), unseen: st.unseen ?? [] })
+	const t = Math.round(s.gameTime)
+	if (t >= 340 && t <= 430) console.log(t, s.gameTime, (st.unseen ?? []).length, JSON.stringify(st.unseen ?? []))
 }
-console.log("states", out.length, "with facts", out.filter(o => o.unseen.length > 0).length)
-for (const o of out) if (o.unseen.length > 0) console.log(o.tSec, JSON.stringify(o.unseen))
