@@ -151,8 +151,32 @@ interface AblationState {
  * alone is repaired, and the substitution is recorded in the run output.
  */
 export const LIST_HEADINGS = ["### What he is NOT looking at", "### Nothing he is missing right now"]
-export const DANGLING = "and take every timer from the list below rather than\ninferring one"
-export const REPAIRED = "and never infer a timer you were not given"
+
+/**
+ * The two places `renderState` points at the list from OUTSIDE it.
+ *
+ * Both were found by a test rather than by reading, and the second one matters more than the
+ * first. `Farm baseline (CONTEXT ONLY — never say this unless it also appears in the list below)`
+ * sits in the middle of the ground truth and is not ground truth at all: it is the fence, telling
+ * the model it may not use the one number in the block that compares him to himself. Leaving it in
+ * would have gagged the unfenced arms on farm while the run reported them as unfenced, which is
+ * the quiet kind of confound that makes a whole measurement worthless.
+ *
+ * Both repairs keep the FACT and drop only the instruction, and both are recorded in the run
+ * output so the surgery can be checked by eye.
+ */
+export const REPAIRS: { from: string; to: string; why: string }[] = [
+	{
+		from: "and take every timer from the list below rather than\ninferring one",
+		to: "and never infer a timer you were not given",
+		why: "a pointer at a list that is no longer there tells the model something was withheld"
+	},
+	{
+		from: "Farm baseline (CONTEXT ONLY — never say this unless it also appears in the list below):",
+		to: "Farm baseline:",
+		why: "this is the fence gating the farm comparison, not a fact — the figure itself is untouched"
+	}
+]
 
 export const stripRankedList = (block: string): string => {
 	const tail = block.indexOf("**The ten champions above")
@@ -162,8 +186,9 @@ export const stripRankedList = (block: string): string => {
 		const at = block.indexOf(h)
 		if (at >= 0 && (head < 0 || at < head)) head = at
 	}
-	const out = head < 0 ? block : `${block.slice(0, head)}${block.slice(tail)}`
-	return out.replace(DANGLING, REPAIRED)
+	let out = head < 0 ? block : `${block.slice(0, head)}${block.slice(tail)}`
+	for (const r of REPAIRS) out = out.replace(r.from, r.to)
+	return out
 }
 
 export const countRankedFacts = (block: string): number =>
@@ -980,8 +1005,8 @@ const main = async (): Promise<void> => {
 			what: "Arms 3 and 4 see the block with the fence's own output removed — the 'What he is NOT looking at' list, or the explicit empty-case paragraph that stands in for it. Every other byte of ground truth is identical.",
 			removedFrom: LIST_HEADINGS,
 			removedTo: "**The ten champions above",
-			repaired: { from: DANGLING, to: REPAIRED },
-			why: "A dangling pointer at a list that is no longer there is not neutral: it tells the model something was withheld."
+			repaired: REPAIRS,
+			why: "A dangling pointer at a list that is no longer there is not neutral: it tells the model something was withheld. The farm-baseline parenthetical is worse than dangling — it is the fence gating a fact, sitting inside the ground truth, so removing the list without it would have gagged the unfenced arms on farm."
 		},
 		arms: arms.map(a => ({
 			id: a.id,
