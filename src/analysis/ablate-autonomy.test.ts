@@ -64,8 +64,11 @@ test("stripRankedList removes the ranked list and nothing above it", () => {
 	let head = FULL.slice(0, FULL.indexOf("### What he is NOT looking at"))
 	for (const r of REPAIRS) head = head.replace(r.from, r.to)
 	assert.equal(cut.startsWith(head), true)
-	assert.equal(cut.includes("Enemy jungler right now: Briar, 111 CS, level 9"), true)
-	assert.equal(cut.includes("You: Lillia lv8 2/1/3, 88 CS"), true)
+	// "at least", because the client reports creepScore floored to a multiple of ten (1221 samples,
+	// not one non-multiple) and the block now says so instead of speaking a number that is
+	// understated by up to nine against the HUD he is looking at.
+	assert.equal(cut.includes("Enemy jungler right now: Briar, at least 111 CS, level 9"), true)
+	assert.equal(cut.includes("You: Lillia lv8 2/1/3, at least 88 CS"), true)
 	assert.equal(cut.includes("**The ten champions above"), true)
 })
 
@@ -91,8 +94,8 @@ test("the farm baseline survives the surgery as a FACT, with only the gate remov
 	// The fence tells the model not to say this unless the ranker offered it. That instruction is
 	// not ground truth, and leaving it in would have gagged the unfenced arms on the one number
 	// that compares him to himself.
-	assert.match(FULL, /Farm baseline \(CONTEXT ONLY — never say this unless it also appears in the list below\): 88 CS against 96/)
-	assert.match(stripRankedList(FULL), /Farm baseline: 88 CS against 96/)
+	assert.match(FULL, /Farm baseline \(CONTEXT ONLY — never say this unless it also appears in the list below\): at least 88 CS against 96/)
+	assert.match(stripRankedList(FULL), /Farm baseline: at least 88 CS against 96/)
 })
 
 test("stripRankedList is idempotent, so a double-stripped block is not a different experiment", () => {
