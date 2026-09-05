@@ -1,6 +1,6 @@
 patch: 16.17
-sourcedAt: 2026-09-03
-source: op.gg — Lee Sin jungle build and counters pages, both stating patch 16.17, Emerald+ (193,824 games on the primary setup; matchup tables list per-matchup game counts); u.gg — Lee Sin jungle guide, stating patch 16.17, Emerald+, 225,404 games; lolalytics — Lee Sin build page, stating patch 16.17, Emerald+, 225,919 games; jungler.gg — Lee Sin pathing page, which labels itself patch 26.16 (Riot's own numbering; the stat sites' "16.17" corresponds to Riot's "26.17", released 2026-08-25 — the jungler.gg routes are therefore one patch stale and are flagged as such below); leagueoflegends.com — League of Legends Patch 26.17 notes (2026-08-25); ddragon.leagueoflegends.com 16.17.1 — LeeSin.json, for ability roles.
+sourcedAt: 2026-09-05
+source: op.gg — Lee Sin jungle build and counters pages, both stating patch 16.17, Emerald+ (193,824 games on the primary setup; matchup tables list per-matchup game counts); u.gg — Lee Sin jungle guide, stating patch 16.17, Emerald+, 225,404 games; lolalytics — Lee Sin build page, stating patch 16.17, Emerald+, 225,919 games; jungler.gg — Lee Sin pathing page, which labels itself patch 26.16 (Riot's own numbering; the stat sites' "16.17" corresponds to Riot's "26.17", released 2026-08-26 — the jungler.gg routes are therefore one patch stale and are flagged as such below); leagueoflegends.com — League of Legends Patch 26.17 notes (2026-08-26); ddragon.leagueoflegends.com 16.17.1 — LeeSin.json, for ability roles.
 ---
 
 # Lee Sin, jungle — patch 16.17
@@ -9,7 +9,7 @@ source: op.gg — Lee Sin jungle build and counters pages, both stating patch 16
 
 Riot did not touch Lee Sin in the 26.17 notes, and did not touch jungle monsters, Smite, or any objective (Baron, Atakhan, Rift Herald, drakes, Voidgrubs). Nothing about his clear or his objective math changed from the previous patch — if a habit worked last patch, it still works, and if it didn't, the patch is not the reason.
 
-He is one of the most-contested junglers in the pool: op.gg has him at 13.71% pick and 17.03% ban across its 16.17 Emerald+ sample, u.gg at 13.6% pick and 16.75% ban across 225,404 games. His win rate sits near even — 49.25% on op.gg, 50.93% on u.gg and lolalytics, against a 51.73% Emerald+ average win rate. Read that as: he is played constantly and wins about as often as a coin flip, so the gap between a good Lee Sin game and a bad one is almost entirely in decisions, not in the champion. Do not let "Lee Sin is a carry jungler" excuse a game spent on low-value plays.
+He is one of the most-contested junglers in the pool: op.gg has him at 13.71% pick and 17.03% ban across its 16.17 Emerald+ sample, u.gg at 13.6% pick and 16.75% ban across 225,404 games. His win rate sits near even — 49.25% on op.gg, 50.93% on u.gg and lolalytics. Read that as: he is played constantly and wins about as often as a coin flip, so the gap between a good Lee Sin game and a bad one is almost entirely in decisions, not in the champion. Do not let "Lee Sin is a carry jungler" excuse a game spent on low-value plays.
 
 ## What the kit wants (roles only)
 
@@ -46,7 +46,7 @@ What he wants from a fight: **to arrive from an angle the enemy is not facing, o
 - **He is an early-game champion holding a near-even win rate**, meaning the games where he doesn't convert early tempo are the ones dragging the average down. Deaths in the first ten minutes are unusually expensive for him specifically: they cost the clear *and* the gank *and* the objective he was pathing toward, and unlike a scaling jungler he has no later phase that automatically returns the tempo.
 - **Deaths on the enemy side of the map, mid-clear, are the worst kind.** He counter-jungles well because he can Q out, but a Lee Sin caught in the enemy jungle with Q on cooldown has no disengage at all. Check that the enemy jungler is accounted for before you cross, not after.
 - **Deaths after a whiffed R** compound: the kick is his only hard displacement, and dying with it on a 110-second cooldown means the next two minutes of your team's fights happen without it.
-- lolalytics' Emerald+ 16.17 data shows Lee Sin games trending toward wins when the team takes first tower (first tower obtained in 69.17% of his wins). His ganks are worth the most when they convert into a tower rather than just a kill — a successful bot gank that ends with everyone walking away is a fraction of the value of one that ends with a plate or a tower.
+- His ganks are worth the most when they convert into a tower rather than just a kill — a successful bot gank that ends with everyone walking away is worth a fraction of one that ends with a plate or a tower. That is a judgment about what a gank buys, not a measurement.
 
 ## Matchups against other junglers
 
@@ -55,8 +55,6 @@ All three stat sites agree on the direction at 16.17, Emerald+:
 **Hardest:** Rek'Sai (Lee Sin at 45.66% over 1,879 games on op.gg), Taliyah (45.75%, 1,130 games), Aatrox (45.56%, 935 games). u.gg and lolalytics independently name the same three as his worst. The common thread is junglers who either match his mobility and win the melee trade outright, or who can contest from range without ever letting him close. Against these, the level-3 skirmish you'd normally take is the losing version of the coin flip — path away from them and take the camps they aren't at.
 
 **Favored:** Zed (52.45% over 2,551 games on op.gg), Ambessa (54.17%, 864 games), and Viego, all three named by u.gg and lolalytics as well. These are matchups where forcing early contact is correct — the win rate edge lives in the phase before they've scaled.
-
-Also on the favorable side of op.gg's 16.17 table with usable samples: Warwick (Lee Sin favored, 2,331 games) and Trundle (748 games). On the unfavorable side with smaller samples: Karthus (1,066 games) and Pantheon (1,057 games).
 
 Treat matchups with only a few hundred games as a hint, not a plan.
 
@@ -74,7 +72,11 @@ Several clauses per key is intentional: a fixed clause per kind means the identi
 every time that kind fires, and sameness is what made him stop listening. Each one has to end on
 something he can DO in the next thirty seconds.
 
-race-behind: your clear does not out-farm him, so make the next deviation buy a kill or a plate
+Every clause below is pinned in `src/knowledge/champion-claims.test.ts`: each one names the
+mechanic it is betting on and where that mechanic was checked. Add a clause and the test fails
+until you write down what it depends on.
+
+race-behind: your clear is unremarkable, so make the next deviation buy a kill or a plate
 race-behind: you catch up on a landed Q with an ally nearby, not on a faster route
 race-behind: take his camps while your Q is up, and leave the moment it is not
 
