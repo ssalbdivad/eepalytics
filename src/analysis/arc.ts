@@ -854,6 +854,15 @@ export const LEVEL_MOVE_MIN = 2
  *
  * Nothing here decides whether the line is SAID. That is `live-facts.ts`'s job, and it holds the
  * rate limits, the alternation rule and the pass rule.
+ *
+ * These are TEMPLATES and they must be re-phrased before they are spoken. Scored on
+ * `analysis/insight.ts` — the other track's instrument, thresholded without seeing this file — 287
+ * of 289 distinct arc lines pass its `beyondInstant` axis, against 0 of the 144 lines two real
+ * models produced from the block. But a second firing of the same KIND scores as a `repeat`,
+ * because the wording is fixed, and none reaches `insight` on its own: two of that instrument's
+ * four axes ask for an ACTION, and an arc line is a premise by design. Appending one flips the
+ * verdict — "…at most 9 CS in 3:21" scores 2/4 filler, and the same sentence ending "take your own
+ * raptors and finish the route before you cross river again" scores 4/4 insight.
  */
 export const arcLines = (a: Arc): ArcLine[] => {
 	const out: ArcLine[] = []
@@ -870,6 +879,13 @@ export const arcLines = (a: Arc): ArcLine[] => {
 			sinceSec: a.stall.sinceSec
 		})
 
+	/*
+	 * RANK THIS LOW, and the corpus is why. Across all four recorded games the certain race gap moved
+	 * 54 times and every single one of them was in his favour — he out-farms his counterpart about
+	 * 2:1 in every game on record. So this line can only ever congratulate him, and a coach built on
+	 * the CS race spends the game reinforcing the one thing he is already best at in the lobby. The
+	 * "closing" branch is real, tested and has never once fired on his own games.
+	 */
 	if (a.race?.moved && a.farm)
 		out.push({
 			kind: "race-move",

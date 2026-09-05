@@ -29,12 +29,15 @@
  *   --window <sec>  the derivative window (default `ARC_WINDOW_SEC`)
  *   --lines         print every line as it would have been spoken, with its clock
  *   --every <n>     evaluate one tick in n (default 1 — the whole stream)
+ *   --insight       score every distinct arc line on `analysis/insight.ts`, the OTHER track's
+ *                   instrument, which was built and thresholded without seeing this file
  */
 
 import fs from "node:fs"
 import path from "node:path"
 import { ARC_WINDOW_SEC, arcLines, buildArc } from "../src/analysis/arc.ts"
 import type { Arc, ArcLine, ArcLineKind, ArcSample } from "../src/analysis/arc.ts"
+import { scoreInsight } from "../src/analysis/insight.ts"
 import type { LiveAllGameData } from "../src/shared/schema/live.ts"
 
 const flag = (name: string, fallback: string): string => {
@@ -196,6 +199,56 @@ for (const r of reports)
 		console.log(
 			`  ${r.game}  flat from ${mmss(st.sinceSec)}, seen at ${mmss(st.atSec)} after ${st.forSec}s, during ${st.during}  ${st.explained ? "VETOED" : "spoken"}`
 		)
+
+if (has("insight")) {
+	/*
+	 * The cross-check that matters, on an instrument this file did not write.
+	 *
+	 * `analysis/insight.ts` scores a spoken line on four axes and reports that ZERO of the 144 lines
+	 * two real models produced from the ground-truth block had a premise that left the instant. Every
+	 * distinct line below passes that axis — which is the thesis, measured by somebody else's ruler.
+	 *
+	 * It does NOT reach `insight`, and that is the correct result rather than a disappointment: the
+	 * instrument's other two axes ask for an ACTION ("take your own raptors"), and an arc line is a
+	 * premise on purpose. Appending one flips the verdict — measured, on the stall line:
+	 *
+	 *     "...at most 9 CS in 3:21."                                    2/4  filler
+	 *     "...at most 9 CS in 3:21. Take your own raptors and finish
+	 *      the route before you cross river again."                     4/4  INSIGHT
+	 *
+	 * The `repeat` verdicts are also real and are a warning to the consumer, not a defect in the
+	 * fact: these are templates, so a second firing of the same kind reads as the same sentence. The
+	 * arc supplies the premise; the model phrases it and `live-facts.ts` decides when it may be said
+	 * at all.
+	 */
+	console.log(`\n## Scored on analysis/insight.ts — the other track's instrument\n`)
+	console.log(pad("game", 10) + padl("lines", 7) + padl("beyond-instant", 16) + padl("mean /4", 9) + "  needs")
+	for (const r of reports) {
+		const all = load(r.game)
+		const champions = (all[all.length - 1]?.data.allPlayers ?? []).map(p => p.championName ?? "")
+		const seen = new Set<string>()
+		const texts: string[] = []
+		for (let i = 0; i < all.length; i += EVERY) {
+			const arc = buildArc(all.slice(0, i + 1), { windowSec: WINDOW })
+			if (!arc) continue
+			for (const l of arcLines(arc))
+				if (!seen.has(l.text)) {
+					seen.add(l.text)
+					texts.push(l.text)
+				}
+		}
+		const scored = texts.map(line => scoreInsight({ line, champions, earlier: [] }))
+		const beyond = scored.filter(s => s.beyondInstant.pass).length
+		const needs = new Set(scored.flatMap(s => s.needs))
+		console.log(
+			pad(r.game, 10) +
+				padl(String(scored.length), 7) +
+				padl(`${beyond}/${scored.length}`, 16) +
+				padl((scored.reduce((a, s) => a + s.score, 0) / Math.max(1, scored.length)).toFixed(2), 9) +
+				`  ${[...needs].join(", ")}`
+		)
+	}
+}
 
 console.log(`\n## First firing of each line, per game\n`)
 for (const r of reports) {

@@ -203,10 +203,10 @@ export const DIRECTIVE_INTENTS: { id: string; re: RegExp }[] = [
 	{ id: "ward", re: /\b(ward|vision|sweep|trinket)\b/i },
 	{ id: "gank", re: /\b(gank|dive|collapse|rotate|go help|come (?:to|for)|pressure (?:top|mid|bot))\b/i },
 	{ id: "counter-jungle", re: /\b(his|her|their|enemy)\b.{0,16}\b(jungle|camps?|blue|red|raptors|gromp|krugs|wolves)\b|\bcounter[- ]?jungle\b/i },
-	{ id: "avoid", re: /\b(don'?t|do not|never|stop|avoid|stay (?:out|away|home)|leave (?:him|her|it) alone)\b/i },
 	{ id: "keep-clearing", re: /\b(route|clear|camps?|farm|jungle|raptors|gromp|krugs|wolves|buff|leash)\b/i },
 	{ id: "reposition", re: /\b(walk|guard|cover|hover|entrance|river|lane|mid|top|bot|side)\b/i },
-	{ id: "fight", re: /\b(fight|trade|group|engage|take the|contest)\b/i }
+	{ id: "fight", re: /\b(fight|trade|group|engage|take the|contest)\b/i },
+	{ id: "avoid", re: /\b(don'?t|do not|never|stop|avoid|stay (?:out|away|home)|leave (?:him|her|it) alone)\b/i }
 ]
 
 /**
