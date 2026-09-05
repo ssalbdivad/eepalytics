@@ -12,7 +12,7 @@ export type SaidSubject = FactSubject | "other"
 export const SAID_SUBJECTS: { id: SaidSubject; re: RegExp }[] = [
 	{ id: "your-death", re: /\b(you (?:are |'re )?dead|you die|respawn in|you spawn|back up in)\b/i },
 	{ id: "downed", re: /\b(is down|are down|down for|dead for|respawn)\b/i },
-	{ id: "objective-lost", re: /\b(they took|enemy took|just took|gone|lost the)\b.{0,24}\b(drake|dragon|baron|herald|grub|tower|turret)\b/i },
+	{ id: "objective-lost", re: /\b(they|enemy|he|she) (?:just )?took\b|\b(?:drake|dragon|baron|nashor|herald|grubs?|tower|turret)\b(?:'s)?\s+(?:is |are |has )?(?:gone|taken|down|dead)\b|\blost (?:the |a )?(?:drake|dragon|baron|herald|grubs?|tower)\b/i },
 	{ id: "objectives", re: /\b(drake|dragon|baron|nashor|herald|grub|scuttle|tower|turret|inhibitor|plate|pit)\b/i },
 	{ id: "fight", re: /\b(fight|trade|skirmish|teamfight|duel|collapse|dive|kill(?:ed|ing|s)?|first blood|die[ds]?)\b/i },
 	{ id: "gold", re: /\bgold\b|\b(recall|back and buy|shop|spend)\b/i },
@@ -146,6 +146,7 @@ export interface SaidLimits {
 	wordingLookbackSec: number
 	directiveCooldownSec: number
 	directiveBudget: number
+	directiveWindowSec: number
 	subjectBudget: number
 	subjectWindowSec: number
 	subjectCooldownSec: number
@@ -154,10 +155,11 @@ export interface SaidLimits {
 }
 
 export const SAID_LIMITS: SaidLimits = {
-	wordingOverlap: 0.5,
+	wordingOverlap: 0.45,
 	wordingLookbackSec: 240,
-	directiveCooldownSec: 300,
-	directiveBudget: 2,
+	directiveCooldownSec: 90,
+	directiveBudget: 3,
+	directiveWindowSec: 300,
 	subjectBudget: 3,
 	subjectWindowSec: 300,
 	subjectCooldownSec: 90,
@@ -211,6 +213,21 @@ const overlap = (a: readonly string[], b: readonly string[]): number => {
 
 export type SaidRepeat = "wording" | "directive" | "subject-spent" | null
 
+/**
+ * What the WORLD has done since the coach last spoke, supplied by the caller.
+ *
+ * The memory can tell whether a sentence has been said; only the state can tell whether the thing
+ * it was about has changed. Measured on the hand-written targets in `data/eval/target-lines.md`:
+ * M06 at 5:41 says *go start the drake*, and M07 at 6:05 says *leave the pit, drake's gone*. Those
+ * are 24 seconds and one event apart, and every rule in this file reads the second as a
+ * restatement of the first. It is the opposite instruction, and it is the one line in the set that
+ * a coach must be able to interrupt itself with. A subject named here is news, and news is never a
+ * repeat.
+ */
+export interface SaidContext {
+	news?: readonly SaidSubject[]
+}
+
 export interface SaidVerdict {
 	repeat: boolean
 	reason: SaidRepeat
@@ -233,7 +250,8 @@ export const judgeSaid = (
 	mem: SaidMemory,
 	line: string,
 	tSec: number,
-	limits: SaidLimits = SAID_LIMITS
+	limits: SaidLimits = SAID_LIMITS,
+	context: SaidContext = {}
 ): SaidVerdict => {
 	if (isSilent(line)) return { repeat: false, reason: null, of: null, why: "said nothing" }
 	const now = analyseSaid(mem, line, tSec)
@@ -249,6 +267,10 @@ export const judgeSaid = (
 		}
 	}
 	const verbatim = worst >= limits.verbatimOverlap && worstOf !== null
+	const news = now.touched.filter(t => context.news?.includes(t))
+	if (news.length > 0 && !verbatim)
+		return { repeat: false, reason: null, of: null, why: `${news.join(", ")} changed since the last line` }
+
 	const heard = new Set(mem.lines.flatMap(p => p.touched))
 	const fresh = now.touched.filter(t => !heard.has(t) && NOVEL_SUBJECTS.includes(t))
 	if (fresh.length > 0 && !verbatim)
@@ -272,14 +294,25 @@ export const judgeSaid = (
 				of: last,
 				why: `he was told "${now.directive}" ${Math.round(tSec - last.tSec)} seconds ago`
 			}
-		if (same.length >= limits.directiveBudget)
+		const recentSame = same.filter(p => tSec - p.tSec <= limits.directiveWindowSec)
+		if (recentSame.length >= limits.directiveBudget)
 			return {
 				repeat: true,
 				reason: "directive",
-				of: same.at(-1) ?? null,
-				why: `he has been told "${now.directive}" ${same.length} times this game`
+				of: recentSame.at(-1) ?? null,
+				why: `he has been told "${now.directive}" ${recentSame.length} times in the last ${Math.round(limits.directiveWindowSec / 60)} minutes`
 			}
 	}
+
+	/*
+	 * "other" is the bucket, not a subject, so it gets no budget and no cooldown.
+	 *
+	 * Measured on the targets: three of the fifteen classify as `other` — "take all three now, you
+	 * have thirteen seconds" and "stop taking that fight without Braum" among them — and treating
+	 * the bucket as a topic made the second a restatement of the first thirty-one seconds later.
+	 * Two lines are not about the same thing because neither matched a regex.
+	 */
+	if (now.subject === "other") return { repeat: false, reason: null, of: null, why: "new" }
 
 	const sameSubject = mem.lines.filter(p => p.subject === now.subject)
 	const recent = sameSubject.filter(p => tSec - p.tSec <= limits.subjectWindowSec)
