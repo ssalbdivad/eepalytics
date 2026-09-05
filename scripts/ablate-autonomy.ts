@@ -68,7 +68,17 @@
  *       --limit N             cap states per set, for a dry run
  *       --arms a,b            subset of fenced,fenced-see,cite-or-quiet,free
  *       --no-late             skip the LATE set
+ *       --no-paired           skip the PAIRED set (no frames; use with --late-from 0)
+ *       --late-spacing N      game-clock seconds between LATE turns, default 30
+ *       --late-from N         game clock the LATE set starts at, default "after the last frame"
+ *       --late-grid           snap LATE turns to the spacing instead of walking forward from the
+ *                             last one taken — required for anything measuring CADENCE, see below
  *       --out <path>          default data/eval/ablation-<stamp>.json
+ *
+ * and one mode that spends nothing, replaying a stored run of this script instead of calling a
+ * model — see `paceSweep` at the bottom of this file:
+ *
+ *     node --experimental-strip-types scripts/ablate-autonomy.ts --pace-sweep <run.json>
  *
  * DO NOT run this while a game is in progress. It touches no League API and no LCU endpoint, but
  * it spends the Gemini HTTPS quota, which bills separately from the Live socket the coach uses.
@@ -1634,7 +1644,18 @@ const paceSweep = (): void => {
 	say(`  run          ${runPath}`)
 	say(`  arm          ${armId}, game ${GAME_ID}`)
 	say(`  turns        ${turns.length} over ${span.toFixed(1)} min; she spoke on ${spoke} (${Math.round((spoke / turns.length) * 100)}%)`)
-	say(`  turn spacing recorded, not shipped: ~9s to 6:42 and 30s after, against DEFAULT_TURN_MS of 20s`)
+	const spacings: number[] = []
+	for (let i = 1; i < turns.length; i++) spacings.push(turns[i]!.tSec - turns[i - 1]!.tSec)
+	/*
+	 * PRINTED, because it is the sweep's largest confound. A floor is rounded up to the next turn,
+	 * so a corpus recorded on a 30-second grid reports a 45-second floor delivering a line every 60
+	 * seconds and cannot tell 45 apart from 60 at all. Record the corpus with `--late-grid
+	 * --late-spacing 20 --late-from 0 --no-paired` before believing any number in this table.
+	 */
+	say(
+		`  turn spacing median ${Math.round(median(spacings))}s (${Math.min(...spacings)}–${Math.max(...spacings)}s), ` +
+			`against DEFAULT_TURN_MS of 20s`
+	)
 	say(`  verdicts     ${out.verdictsJoined} of ${spoke} spoken lines carry a blind verdict`)
 	say(`  tier mix     ${Object.entries(out.tierMix).map(([k, v]) => `${k}:${v}`).join(" ")}`)
 	if (unmatched.size > 0) say(`  UNMATCHED    ${unmatched.size} fact templates this sweep could not tier`)
