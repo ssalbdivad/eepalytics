@@ -61,6 +61,14 @@ of 12 turns — the prompt's rule is that an empty list means PASS, and the mode
 may only speak from that list. Adding something to the block and expecting it to
 be said is the single most common way to change nothing.
 
+**That describes the `fenced` mode, which is no longer the default.** Three
+architectures now ship behind one setting (`shared/live-coach-mode.ts`), and the
+paragraphs above are the history of the first: `fenced` (speak only from the
+ranked list — 14 lines in 576 turns), `cite-or-quiet` (the whole block, one rule:
+cite it or say nothing — 13.5x the volume at the same zero fabrication), and
+`briefing`, the default, which keeps that rule and rebuilds the block around what
+was measured to help. All three stay reachable so the comparison stays checkable.
+
 #### What earns a sentence, and what does not
 
 The failure this fought for months was not lying, it was **being true and
@@ -200,8 +208,9 @@ src/web/      React UI
 The live coach spans those in a way worth naming, since it is the newest thing here:
 
 ```
-src/shared/live-state.ts      the ground-truth block: types + renderer (pure, shared)
-src/shared/live-prompt.ts     the coach's system prompt (shared with the eval)
+src/shared/live-state.ts      the block AND the briefing: types, the objective schedule, renderers
+src/shared/live-coach-mode.ts  the three architectures and the text that makes each one what it is
+src/shared/live-prompt.ts     the FENCED coach's system prompt (shared with the eval)
 src/shared/champion-advice.ts champion knowledge, keyed by fact kind, digit-free by construction
 src/shared/dragons.ts         the drakes' real names — the API says "Fire", nobody else does
 src/shared/pronounce.ts       say-it-like-this, from editable markdown
