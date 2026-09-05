@@ -54,10 +54,20 @@
  * the coach already do every few seconds.
  */
 
+import { minimapRect } from "../../review/frame-read.ts"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 /** See the header — this is the measured floor for reading a League HUD, not a tuned optimum. */
 const FRAME_WIDTH = 1536
+
+/**
+ * The crop is sent at 1152px, four times the 288px the minimap occupies in a 1536px frame.
+ *
+ * Upscaling the same pixels measurably helps — the model reads a bigger picture of them better —
+ * and costs nothing, because the tile budget is already padded. Asking it to POINT at a spot rather
+ * than name a zone was worth more still: 39% to 83% on his own zone, same crop, same model.
+ */
+const MINIMAP_READ_PX = 1152
 /** JPEG artefacts eat small HUD text and portraits first, which is exactly what must survive. */
 const FRAME_QUALITY = 0.72
 
@@ -160,6 +170,8 @@ export interface ScreenShare {
 	stop: () => void
 	/** A JPEG data URL of the current frame, or null when not sharing. */
 	grabFrame: () => string | null
+	/** The minimap alone, cropped and upscaled for a reader. Null whenever `grabFrame` would be. */
+	grabMinimap: () => string | null
 	/** What the last few grabs actually produced. See {@link ScreenShareHealth}. */
 	health: ScreenShareHealth
 }
@@ -327,7 +339,40 @@ export const useScreenShare = (): ScreenShare => {
 		return canvas.toDataURL("image/jpeg", FRAME_QUALITY)
 	}, [endedByItself, noteHealth])
 
+	/**
+	 * The MINIMAP alone, cropped from the same video and upscaled.
+	 *
+	 * Measured over 20 frames from five real games, three reads each: from the whole 1536px frame a
+	 * model asked where he is lands 43% of the map width away — a randomly chosen point — and agrees
+	 * with its own previous answer on 5 of 60 pairs of the SAME picture. From this crop at 4x the
+	 * median error is 3% and his own half of the map is right 94% of the time.
+	 *
+	 * And it is free: 1,089 image tokens against the whole frame's 1,100, because a small image is
+	 * padded to the same tile budget. There is no accuracy-against-cost trade to weigh, which is why
+	 * this is a second picture rather than a bigger first one. Raising `FRAME_WIDTH` would spend more
+	 * tokens and still leave the minimap a tiny fraction of the tile grid.
+	 *
+	 * Health is deliberately NOT counted here. The coach calls `grabFrame` in the same turn and that
+	 * call owns the counters; counting twice would report two faults for one dead share.
+	 */
+	const grabMinimap = useCallback((): string | null => {
+		const video = videoRef.current
+		const track = streamRef.current?.getVideoTracks()[0]
+		if (!video || video.videoWidth === 0) return null
+		if ((track?.readyState ?? null) === "ended") return null
+
+		const r = minimapRect(video.videoWidth, video.videoHeight)
+		const canvas = document.createElement("canvas")
+		canvas.width = MINIMAP_READ_PX
+		canvas.height = MINIMAP_READ_PX
+		const ctx = canvas.getContext("2d")
+		if (!ctx) return null
+		ctx.imageSmoothingQuality = "high"
+		ctx.drawImage(video, r.x, r.y, r.w, r.h, 0, 0, canvas.width, canvas.height)
+		return canvas.toDataURL("image/jpeg", FRAME_QUALITY)
+	}, [])
+
 	useEffect(() => teardown, [teardown])
 
-	return { sharing, error, ended, start, stop, grabFrame, health }
+	return { sharing, error, ended, start, stop, grabFrame, grabMinimap, health }
 }

@@ -53,7 +53,7 @@ import {
 	frameReadSchemaXY,
 	parseFrameReadXY
 } from "./frame-read.ts"
-import type { FrameRead, FrameTruth } from "./frame-read.ts"
+import type { FrameRead, FrameReadFault, FrameTruth } from "./frame-read.ts"
 
 /**
  * The fast model, and the reason it is the fast one.
@@ -69,7 +69,7 @@ export const MINIMAP_TIMEOUT_MS = 6000
 
 export type MinimapOutcome =
 	| { read: FrameRead; faults: null; ms: number }
-	| { read: null; faults: string[] | null; reason: string; ms: number }
+	| { read: null; faults: FrameReadFault[] | null; reason: string; ms: number }
 
 /**
  * Read one minimap crop.

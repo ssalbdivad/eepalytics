@@ -80,6 +80,7 @@ import {
 	parseFrameReadXY,
 	truthFromState
 } from "../../review/frame-read.ts"
+import { readMinimap } from "../../review/read-minimap.ts"
 import type { Coarse, FrameRead, FrameTruth } from "../../review/frame-read.ts"
 import { newFightMemory, readFight, resetFightMemory } from "../../analysis/fights.ts"
 import {
@@ -1157,7 +1158,10 @@ export const createLiveRoute = (): Hono => {
 	 * quiet: `frameRead` simply returns to null and `buildFacts` says exactly what it says today.
 	 */
 	app.post("/live/frame-read", async c => {
-		const body = (await c.req.json().catch(() => null)) as { read?: unknown } | null
+		const body = (await c.req.json().catch(() => null)) as {
+			read?: unknown
+			crop?: unknown
+		} | null
 		const cached = lastTruth
 		/*
 		 * No game, or no poll since the last one ended. There is nothing to fence against, and an
@@ -1167,6 +1171,40 @@ export const createLiveRoute = (): Hono => {
 		const ctx = {
 			myChampion: cached.truth.myChampion,
 			enemyChampions: cached.truth.enemyChampions
+		}
+		/*
+		 * A CROP instead of a read, because the browser cannot make the model call.
+		 *
+		 * This route was written to take a read the browser had already made — the picture is in
+		 * the browser and a second upload per turn is latency. The credential does not exist: the
+		 * page holds a `uses: 1` ephemeral token accepted only by the Constrained WebSocket
+		 * endpoint, `generateContent` refuses it, and a raw key in the page is the one thing this
+		 * app will not do. So the seam sat built and unreachable, which is why the screenshot still
+		 * had nowhere to land.
+		 *
+		 * The latency argument does not survive its own number either: measured on a real journal
+		 * frame the minimap crop is 17,122 bytes against the whole frame's 152,742, sent to
+		 * 127.0.0.1 by a page that already uploads the whole frame here every five seconds for the
+		 * journal. The `read` form is kept — scripts and the probes use it — and a crop simply
+		 * takes the extra step of asking.
+		 */
+		if (typeof body?.crop === "string" && body.crop !== "") {
+			const b64 = body.crop.replace(/^data:image\/\w+;base64,/, "")
+			if (b64.length > 4_000_000) return c.json({ accepted: false, reason: "crop-too-big" })
+			const out = await readMinimap({ jpegBase64: b64, truth: cached.truth })
+			if (!out.read) {
+				frameRead = null
+				return c.json({
+					accepted: false,
+					reason: out.reason,
+					ms: out.ms,
+					...(out.faults ? { faults: out.faults.map(f => `${f.code} (${f.detail})`) } : {})
+				})
+			}
+			const seen = observationFrom(out.read, lastFrameSide, cached.atSec)
+			lastFrameSide = { where: seen.where, atSec: seen.atSec }
+			frameRead = seen
+			return c.json({ accepted: true, where: seen.where, confidence: seen.confidence, ms: out.ms })
 		}
 		// The coordinate form first, because it measured best. `RawFrameReadXY` refuses the
 		// zone-name form on shape alone, so the fallback is a decode and never a guess.
