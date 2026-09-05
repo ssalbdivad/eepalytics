@@ -85,6 +85,43 @@ capped per game, and objective timers get a long cooldown. Simulated over a full
 game those three gates moved the coach from a line every 62 seconds — most of
 them things on his screen — to one every 150.
 
+#### More than one model, and how to tell them apart
+
+There are TWO SHAPES and flattening them would be a lie. **Gemini Live** is a socket: native audio,
+continuous frames, barge-in, a thread the model keeps, about a second. **Everything else** —
+Anthropic, OpenAI, Kimi, GLM, and Gemini over plain HTTPS — is a TURN: send a frame and a block,
+get text, and the browser speaks it with `speechSynthesis`. That is several seconds slower and
+cannot be usefully interrupted, because the sentence was written and paid for before the first
+syllable. The settings screen says so where he chooses.
+
+Turn-based providers all go through `coachTurn` in `src/review/live-providers.ts`, on the Vercel AI
+SDK. One path is not a convenience, it is the point: **the system prompt is not a parameter there**,
+so a comparison between two models cannot accidentally have varied the prompt as well. Keys follow
+the Gemini rule exactly — a file per provider at 0600 under `data/`, never the settings table.
+
+Model ids are FREE TEXT, and this is not laziness: a default written during this work was refused
+as "no longer available to new users" within a minute. A dropdown is a bug that looks like a
+limitation.
+
+Two things measured that will otherwise mislead a comparison. A tight `maxOutputTokens` does not
+shorten a reasoning model, it TRUNCATES it — at 200 tokens one answered "Kayn is 2" and stopped
+mid-number. And provider-specific thinking options are not ignored when unknown: setting Google's
+`thinkingBudget` to 0 made every turn fail with an invalid-argument error, which for twenty minutes
+looked exactly like a model producing nothing.
+
+#### Evaluate against real games, not reconstructions
+
+`eval-live` and `bench-providers` used to rebuild states from the POST-GAME timeline, which has no
+enemy CS, no items and no roles — the exact facts the coach was rebuilt around. Measured, that
+starved harness reported the coach naming no action in 50% of its lines against roughly 11% on
+states carrying a counterpart. **A model comparison run on starved states measures improvisation,
+not coaching.**
+
+So `src/daemon/live-sampler.ts` records the raw `allgamedata` every five seconds of game clock from
+the SUPERVISOR's poll — not the browser's, because a game played with the page closed is the one an
+evaluation most wants. `bench-providers --from-samples latest` replays it through the daemon's own
+`buildLiveState`, so the block under test is byte-identical to the one the coach held.
+
 #### Champion knowledge, and the rule that makes it safe
 
 A line has two halves: the NUMBER, from the client, and the ADVICE, which no
@@ -148,6 +185,10 @@ src/shared/champion-advice.ts champion knowledge, keyed by fact kind, digit-free
 src/shared/dragons.ts         the drakes' real names — the API says "Fire", nobody else does
 src/shared/pronounce.ts       say-it-like-this, from editable markdown
 src/analysis/live-facts.ts    buildFacts — every fact, ranked and rate-limited. THE output surface
+src/analysis/coach-score.ts   scores a spoken line for fabrication, mechanically
+src/review/live-providers.ts  every non-socket model, through one AI SDK path  (NODE ONLY)
+src/daemon/live-sampler.ts    records raw allgamedata during a game, so evals replay reality
+scripts/bench-providers.ts    replays fixed states through every model and scores them
 src/analysis/fights.ts        kill clusters: the trade, his participation, what it bought
 src/server/routes/live.ts     buildLiveState — turns the client's JSON into the block
 src/review/gemini-live.ts   holds the API key, mints ephemeral tokens  (NODE ONLY)
