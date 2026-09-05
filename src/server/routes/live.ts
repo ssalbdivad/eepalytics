@@ -46,9 +46,10 @@ import { championName, refreshChampionNames } from "../../daemon/champions.ts"
 import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
 import { championNote, pronunciationTable } from "../../knowledge/index.ts"
-import { parseChampionAdvice } from "../../shared/champion-advice.ts"
+import { championAdvice } from "../../shared/champion-advice.ts"
 import { pronunciationsFor } from "../../shared/pronounce.ts"
 import { dragonPhrase } from "../../shared/dragons.ts"
+import { hasSmite } from "../../shared/smite.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
 import { dismissDebrief, dismissedDebrief, lastGameEnded } from "../../daemon/postgame.ts"
 import { matchesMarker, postGameDebrief } from "../../shared/postgame.ts"
@@ -61,7 +62,17 @@ import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { renderState } from "../../shared/live-state.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
-import { buildFacts, newFactMemory } from "../../analysis/live-facts.ts"
+import { buildFacts, FRAME_FRESH_SEC, newFactMemory, resetFactMemory } from "../../analysis/live-facts.ts"
+import type { FrameObservation } from "../../analysis/live-facts.ts"
+import {
+	asFrameRead,
+	coarseOf,
+	frameReadFaults,
+	parseFrameRead,
+	parseFrameReadXY,
+	truthFromState
+} from "../../review/frame-read.ts"
+import type { Coarse, FrameRead, FrameTruth } from "../../review/frame-read.ts"
 import { newFightMemory, readFight, resetFightMemory } from "../../analysis/fights.ts"
 import {
 	appendTranscript,
@@ -122,6 +133,76 @@ const findMe = (data: LiveAllGameData) => {
 const factMemory = newFactMemory()
 const fightMemory = newFightMemory()
 
+/*
+ * WHERE THE PICTURE ENTERS. Three variables, and the reason each of them exists.
+ *
+ * The coach may only speak from the ranked list `buildFacts` returns, and until now every candidate
+ * in that list was computed from the game client. Measured: two coaching arms of 14 turns, identical
+ * blocks and prompt, differing only in whether the frame was attached, made the same speak-or-PASS
+ * call on 13 of 14 turns — while the same model read the clock off those same frames 6 times in 6.
+ * The screenshot was being looked at and had nowhere to land. `POST /api/live/frame-read` is the
+ * landing, `buildFacts` decides what if anything it is worth, and these hold the one observation in
+ * between.
+ *
+ * Module-level for the same reason `factMemory` is: one local user, one game at a time, one process.
+ */
+
+/** The last read that survived the client's fence, or null. Handed to `buildFacts` as `frame`. */
+let frameRead: FrameObservation | null = null
+
+/**
+ * The half of the map the PREVIOUS accepted read named, which is the whole of the confidence test.
+ *
+ * MEASURED: two reads of one picture agreed about the half on 56 of 60 pairs. So a disagreement
+ * between two reads taken seconds apart is the 7% showing itself — one of them is wrong, or he is
+ * standing on a boundary — and either way there is nothing here worth building a sentence on. Marked
+ * `low` rather than dropped so the fact stays legible; `buildFacts` treats `low` as no read at all,
+ * for a sentence AND for a gate. Direction of failure is silence, which is the cheap direction.
+ */
+let lastFrameSide: { where: Coarse | null; atSec: number } | null = null
+
+/**
+ * What the client last established, cached off the poll the coach already makes.
+ *
+ * A frame read has to be fenced against the client before any of it is believed — more enemies than
+ * are alive, his icon on the map while he is on the respawn screen, his own champion read as
+ * somebody else — and re-polling the LCU inside the frame-read handler would double the traffic
+ * during a game for data the ground-truth poll fetched a moment ago. `atSec` doubles as the stamp
+ * on the read itself: the browser grabs its frame from the same screen it is polling this route
+ * about, so the last poll's clock is the closest honest time the picture has. It is an
+ * approximation of a few seconds and `FRAME_FRESH_SEC` is sized to absorb it.
+ */
+let lastTruth: { truth: FrameTruth; atSec: number } | null = null
+
+/**
+ * A fenced read, plus the previous one, into the single observation `buildFacts` is handed.
+ *
+ * Exported and pure so the two rules in it can be pinned by a test rather than living inside a
+ * handler that needs a running game to reach.
+ *
+ * COARSENED HERE, and nothing finer is ever stored. The zone the reader answered was right on 15 of
+ * 18 hand-scored reads; the HALF was right on 17 of 18, and the half is the granularity a jungler's
+ * decision actually turns on — "he is topside" changes whether to take drake, "he is on raptors
+ * rather than wolves" does not. Throwing the precision away at the door means no later caller can
+ * be tempted by it.
+ *
+ * DOUBTED WHEN TWO READS DISAGREE. Measured: two reads of one picture agreed about the half on 56
+ * of 60 pairs, so a disagreement between reads taken seconds apart is that 7% showing itself — one
+ * of them is wrong, or he is standing on a boundary, and either way there is nothing here to build
+ * a sentence on. `buildFacts` treats `low` as no read at all, for a gate as well as for a sentence,
+ * so the direction of failure is silence.
+ */
+export const observationFrom = (
+	read: FrameRead,
+	previous: { where: Coarse | null; atSec: number } | null,
+	atSec: number
+): FrameObservation => {
+	const where = read.you === null ? null : coarseOf(read.you)
+	const doubted =
+		previous !== null && atSec - previous.atSec <= FRAME_FRESH_SEC && previous.where !== where
+	return { where, atSec, confidence: doubted ? "low" : "medium" }
+}
+
 /** Who last killed this player, by riotId, or "" if nothing in the feed says. */
 const lastKillerOf = (data: LiveAllGameData, victim: string): string => {
 	if (victim === "") return ""
@@ -162,36 +243,26 @@ const buildLiveState = (
 	baseline: ReturnType<typeof baselineFromRows> | null
 ): VisionState | null => {
 	if (!data || !me || !me.championName) {
-		// Between games: forget what was announced so the next game starts clean.
-		// Between games: forget everything, so the next game starts clean.
-		factMemory.announcedDeaths.clear()
-		factMemory.announcedEvents.clear()
-		factMemory.announcedLosses.clear()
+		/*
+		 * Between games: forget everything, in ONE call.
+		 *
+		 * This block used to name the fields by hand, and a hand-written list is right until the
+		 * next field is added. Counted against the interface at the time it was replaced it named 22
+		 * of 26, and the four it missed — `lastOfferedAtSec`, `lastSubjects`, `lastSeenSec`,
+		 * `lastFarmBehind` — were the global speech budget itself, so game two would open believing
+		 * the coach had just spoken. `resetFactMemory` cannot go stale that way.
+		 */
+		resetFactMemory(factMemory)
 		resetFightMemory(fightMemory)
 		/*
-		 * Every field, not five of them. `praiseSaid`, `lastGoldAtSec`, `goldSinceSec` and
-		 * `lastFarmCs` were carrying into the next game, so a gold reminder or a praise line could
-		 * be suppressed in game two by something that happened in game one.
+		 * And forget the picture. A frame read belongs to the game it was taken in, and carrying one
+		 * across is the same class of bug as a socket spanning two games: the roster changes, the
+		 * clock restarts, and a half of the map from the last game would gate a real objective call
+		 * in the first minute of the next one.
 		 */
-		factMemory.lastFarmCs = 0
-		factMemory.lastGoldAtSec = 0
-		factMemory.goldSinceSec = 0
-		factMemory.praiseSaid.clear()
-		factMemory.lastRaceAtSec = 0
-		factMemory.lastRaceGap = 0
-		factMemory.saidRestraint = false
-		factMemory.saidLevelGap = false
-		factMemory.saidKillShare = false
-		factMemory.saidOwnDeath = false
-		factMemory.saidSwing = false
-		factMemory.saidObjectives = false
-		factMemory.goldMentions = 0
-		factMemory.lastObjectiveAtSec = 0
-		factMemory.sawCounterpartBuild = false
-		factMemory.seenCounterpartItems.clear()
-		factMemory.lastLedWithDeath = false
-		factMemory.lastGoldMentioned = 0
-		factMemory.lastFarmAtSec = 0
+		frameRead = null
+		lastFrameSide = null
+		lastTruth = null
 		return null
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
@@ -256,6 +327,13 @@ const buildLiveState = (
 	 * `Farm baseline:` line in the block. It used to feed only the first, so between farm mentions
 	 * the block carried a CS with nothing to compare it to — and a gap is where the model invents.
 	 */
+	/*
+	 * `creepScore` is FLOORED to a multiple of ten by the client (`CS_QUANTUM` in
+	 * `shared/live-state.ts`, where it is measured), and `expected` here is an exact mean over
+	 * finished games. They are handed on as they are, unaltered — adding anything back would be
+	 * inventing a digit — and every consumer is responsible for comparing them as an interval
+	 * rather than a subtraction. `renderState` does; `analysis/live-facts.ts` still subtracts.
+	 */
 	const pace =
 		baseline ?
 			paceReading({
@@ -277,15 +355,17 @@ const buildLiveState = (
 	const counterpart = (() => {
 			const enemies = others.filter(p => p.team !== mine)
 			const byRole = enemies.find(p => (p.position ?? "").toUpperCase() === "JUNGLE")
-			const bySmite =
-				byRole ??
-				enemies.find(p =>
-					[p.summonerSpells?.summonerSpellOne?.displayName, p.summonerSpells?.summonerSpellTwo?.displayName]
-						.some(n => (n ?? "").toLowerCase() === "smite")
-				)
+			/*
+			 * `hasSmite` rather than a name check here: Smite is RENAMED when it upgrades, and an
+			 * equality test on "Smite" recognised 18.5% of the ones the client actually sent. See
+			 * `shared/smite.ts` for the counts.
+			 */
+			const bySmite = byRole ?? enemies.find(hasSmite)
 			if (!bySmite) return null
 			return {
 				champion: bySmite.championName ?? "their jungler",
+				// Floored the same way his own is, so the gap between the two is a multiple of ten and
+				// is worth ±9 less than it looks. `renderState` states the part that survives.
 				...(bySmite.scores?.creepScore !== undefined ? { cs: bySmite.scores.creepScore } : {}),
 				...(bySmite.level !== undefined ? { level: bySmite.level } : {}),
 				/*
@@ -310,7 +390,7 @@ const buildLiveState = (
 			}
 	})()
 
-	return {
+	const state: VisionState = {
 		clock,
 		me: {
 			champion: me.championName,
@@ -385,7 +465,22 @@ const buildLiveState = (
 				 */
 				advice: (() => {
 					const note = championNote(me.championName ?? "")
-					return note ? parseChampionAdvice(note.text) : undefined
+					/*
+					 * The role default is merged in PER KIND, not used as a whole-file fallback.
+					 * `championNote` only reaches `_default.md` when no file matches at all, so a
+					 * champion file that covers five of the eight kinds used to leave the other
+					 * three silent while the generic clause for them sat unreachable — and a
+					 * champion file with no `## Live coaching` section at all (leesin, trundle,
+					 * belveth, until today) turned champion knowledge off entirely.
+					 */
+					const role = note?.isDefault ? null : championNote("_default")
+					/*
+					 * The rotation index. Notes carry several clauses per kind and this picks
+					 * between them, so a kind that fires three times in a game does not end on the
+					 * same half-sentence three times — the sameness he actually quit on. Minutes,
+					 * because the rate limits in `buildFacts` are measured in minutes too.
+					 */
+					return championAdvice(note?.text, role?.text, Math.floor(secs / 60))
 				})(),
 				meLevel: me.level,
 				objectiveCount: (() => {
@@ -495,11 +590,27 @@ const buildLiveState = (
 					})),
 				drakeBackInSec: backInSec(data, "DragonKill", DRAGON_RESPAWN_SEC, secs),
 				baronBackInSec: backInSec(data, "BaronKill", BARON_RESPAWN_SEC, secs),
-				heraldBackInSec: backInSec(data, "HeraldKill", HERALD_RESPAWN_SEC, secs)
+				heraldBackInSec: backInSec(data, "HeraldKill", HERALD_RESPAWN_SEC, secs),
+				/*
+				 * The picture's one observation, or nothing at all.
+				 *
+				 * Passed as-is: staleness, doubt and a read that could not place him are all decided
+				 * inside `buildFacts`, because that is where the rules about what may be said live
+				 * and a producer that decides for itself is a second copy of a rule that drifts.
+				 */
+				...(frameRead ? { frame: frameRead } : {})
 			},
 			factMemory
 		)
 	}
+	/*
+	 * The fence's ground truth, cached off this poll rather than fetched again by the frame-read
+	 * handler. Narrowed through `truthFromState` so the daemon and `scripts/probe-minimap.ts` fence
+	 * against the same five fields — a fence only one caller can build is a fence only one caller
+	 * uses.
+	 */
+	lastTruth = { truth: truthFromState(state), atSec: secs }
+	return state
 }
 
 export const createLiveRoute = (): Hono => {
@@ -854,6 +965,80 @@ export const createLiveRoute = (): Hono => {
 
 	/** `GET /api/live/journal` — is the journal actually recording? A number, not a claim. */
 	app.get("/live/journal", c => c.json(openSessionStatus()))
+
+	/**
+	 * `POST /api/live/frame-read` — one reading of the minimap, from whoever took it.
+	 *
+	 * ## What this is for
+	 *
+	 * It is the seam the screenshot has never had. `analysis/live-facts.ts` computes and ranks every
+	 * line the coach may speak, an empty list means PASS, and every candidate in that list was
+	 * computed from the game client — so measured, a coaching turn with the JPEG attached and one
+	 * without made the same speak-or-PASS decision on 13 of 14 turns and paraphrased each other where
+	 * both spoke. The frame was being looked at and had nowhere to land. It lands here.
+	 *
+	 * ## What it accepts, and why it is a POST rather than a model call
+	 *
+	 * A reader — the browser, which already holds the frame and can crop `MINIMAP_REGION` out of it
+	 * without a round trip, or a script — sends the reader's raw JSON in `read`. Either shape from
+	 * `review/frame-read.ts` is understood: the coordinate form measured best (his own half right on
+	 * 17 of 18 hand-scored reads, against 14 of 18 for the zone-name form) and is tried first, and
+	 * the zone-name form is the fallback. The daemon deliberately does not make the model call
+	 * itself: the picture is in the browser, a second upload of it per turn is the latency this
+	 * feature exists to avoid, and a key-holding call on the coach's own thread is a way for a slow
+	 * pre-pass to eat the turn it is supposed to precede — 12.3 seconds a read, measured, on the
+	 * larger model.
+	 *
+	 * ## Nothing is believed before the client has had a say
+	 *
+	 * `frameReadFaults` is run against the truth this route cached on its own last poll, and a read
+	 * that trips ANY of it is thrown away WHOLE rather than repaired — more icons than there are
+	 * living players, his icon placed while he is on the respawn screen, or his own champion read as
+	 * somebody else. Those are five facts the client settles for free without anyone having looked at
+	 * the picture, and a read that contradicts them is not a hard read, it is a wrong one. The
+	 * canary earns its place: with the answer set sorted so the first entry carried no hint, the
+	 * reader named his own champion — the easiest portrait on the map — wrong 12 times in 60.
+	 *
+	 * ## And a refused read is a normal outcome
+	 *
+	 * 200 either way, with the reason. Vision failing must cost the coach a clause and never a line,
+	 * so there is nothing here for the caller to treat as broken and nothing that makes the coach go
+	 * quiet: `frameRead` simply returns to null and `buildFacts` says exactly what it says today.
+	 */
+	app.post("/live/frame-read", async c => {
+		const body = (await c.req.json().catch(() => null)) as { read?: unknown } | null
+		const cached = lastTruth
+		/*
+		 * No game, or no poll since the last one ended. There is nothing to fence against, and an
+		 * unfenced read is precisely the thing this design refuses to hold.
+		 */
+		if (!cached) return c.json({ accepted: false, reason: "no-truth" })
+		const ctx = {
+			myChampion: cached.truth.myChampion,
+			enemyChampions: cached.truth.enemyChampions
+		}
+		// The coordinate form first, because it measured best. `RawFrameReadXY` refuses the
+		// zone-name form on shape alone, so the fallback is a decode and never a guess.
+		const xy = parseFrameReadXY(body?.read ?? null, ctx)
+		const parsed = xy.read ? { read: asFrameRead(xy.read), rejected: null } : parseFrameRead(body?.read ?? null, ctx)
+		if (!parsed.read) {
+			frameRead = null
+			return c.json({ accepted: false, reason: parsed.rejected ?? "schema" })
+		}
+		const faults = frameReadFaults(parsed.read, cached.truth)
+		if (faults.length > 0) {
+			frameRead = null
+			return c.json({
+				accepted: false,
+				reason: "fenced",
+				faults: faults.map(f => `${f.code} (${f.detail})`)
+			})
+		}
+		const observation = observationFrom(parsed.read, lastFrameSide, cached.atSec)
+		lastFrameSide = { where: observation.where, atSec: observation.atSec }
+		frameRead = observation
+		return c.json({ accepted: true, where: observation.where, confidence: observation.confidence })
+	})
 
 	/**
 	 * `GET /api/live/ground-truth` — the computed facts, as the text the coach is given.

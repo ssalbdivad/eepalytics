@@ -54,14 +54,20 @@ export type ChampionAdvice = Partial<Record<AdviceKind, string>>
 const HAS_DIGIT = /\d/
 
 /**
- * Read the `## Live coaching` block out of a champion note.
+ * Every clause a note offers, per kind, in file order. Variants are what stop the second half of
+ * a sentence being the part he can predict — see `parseChampionAdvice`.
+ */
+export type ChampionAdviceVariants = Partial<Record<AdviceKind, string[]>>
+
+/**
+ * Read the `## Live coaching` block out of a champion note, keeping EVERY clause per kind.
  *
  * Forgiving by design — the file is edited by hand between games — but strict about the one thing
  * that matters. A malformed line costs one clause; a clause with a number costs nothing because it
  * never loads.
  */
-export const parseChampionAdvice = (markdown: string): ChampionAdvice => {
-	const out: ChampionAdvice = {}
+export const parseAdviceVariants = (markdown: string): ChampionAdviceVariants => {
+	const out: ChampionAdviceVariants = {}
 	const start = markdown.indexOf("## Live coaching")
 	if (start < 0) return out
 	const rest = markdown.slice(start)
@@ -78,7 +84,59 @@ export const parseChampionAdvice = (markdown: string): ChampionAdvice => {
 		const clause = line.slice(at + 1).trim()
 		if (!ADVICE_KINDS.includes(key)) continue
 		if (clause === "" || HAS_DIGIT.test(clause)) continue
-		if (out[key] === undefined) out[key] = clause
+		const had = out[key]
+		if (had) had.push(clause)
+		else out[key] = [clause]
+	}
+	return out
+}
+
+/** A rotation index is a clock, and a clock can be negative, fractional or absent. */
+const rotate = (variants: string[], pick: number): string =>
+	variants[(Number.isFinite(pick) ? Math.abs(Math.trunc(pick)) : 0) % variants.length]!
+
+/**
+ * One clause per kind, which is what a fact can carry.
+ *
+ * `pick` rotates between the variants a file offers. It exists because the complaint that started
+ * this work was SAMENESS — nine lines in four minutes, six of them about farm — and a fixed clause
+ * per kind guarantees that every repeat of a kind ends on the identical half-sentence. The caller
+ * passes something that moves (the game clock in minutes), so two firings of `farm-behind` three
+ * minutes apart do not rhyme. Omitted, it is the first clause in the file, which is what every
+ * existing caller and every existing note already got.
+ */
+export const parseChampionAdvice = (markdown: string, pick = 0): ChampionAdvice => {
+	const out: ChampionAdvice = {}
+	const variants = parseAdviceVariants(markdown)
+	for (const kind of ADVICE_KINDS) {
+		const v = variants[kind]
+		if (v && v.length > 0) out[kind] = rotate(v, pick)
+	}
+	return out
+}
+
+/**
+ * The champion's note over the role default, kind by kind.
+ *
+ * `championNote()` falls back to `_default.md` only when there is no file for the champion AT ALL,
+ * so before this a champion file that covered five kinds silently had three bare ones — and the
+ * generic clause that would have filled them was sitting in `_default.md`, unreachable. Measured
+ * on the shipped files: `leesin.md`, `trundle.md` and `belveth.md` each existed, so each turned
+ * the live coach's champion knowledge OFF entirely rather than falling back to the role.
+ *
+ * Per-KIND, not per-file: the specific clause wins wherever there is one, and the role clause
+ * fills the rest. Both halves are parsed with the same digit rule, because the fence does not care
+ * which file a sentence came from.
+ */
+export const championAdvice = (
+	note: string | null | undefined,
+	roleDefault: string | null | undefined,
+	pick = 0
+): ChampionAdvice => {
+	const out: ChampionAdvice = roleDefault ? parseChampionAdvice(roleDefault, pick) : {}
+	if (note) {
+		for (const [kind, clause] of Object.entries(parseChampionAdvice(note, pick)))
+			out[kind as AdviceKind] = clause
 	}
 	return out
 }

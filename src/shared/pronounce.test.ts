@@ -5,7 +5,13 @@
 
 import { deepStrictEqual, ok, strictEqual } from "node:assert/strict"
 import { describe, it } from "node:test"
-import { parsePronunciations, pronunciationsFor, renderPronunciations } from "./pronounce.ts"
+import { readFileSync } from "node:fs"
+import {
+	parsePronunciations,
+	pronunciationsFor,
+	renderPronunciationGuide,
+	renderPronunciations
+} from "./pronounce.ts"
 
 describe("parsePronunciations", () => {
 	it("reads name = respelling and ignores everything else", () => {
@@ -59,5 +65,54 @@ describe("renderPronunciations", () => {
 		ok(line.includes("Kha'Zix = kah-ZIKS"))
 		// The transcript has to stay readable, so the instruction must be about SOUND only.
 		ok(/write them normally/i.test(line), line)
+	})
+})
+
+describe("renderPronunciationGuide", () => {
+	const table = parsePronunciations("Briar = BRY-er\nKha'Zix = kah-ZIKS\n")
+
+	it("says nothing when there is nothing to correct", () => {
+		strictEqual(renderPronunciationGuide([]), "")
+	})
+
+	it("carries every entry as name and respelling", () => {
+		const guide = renderPronunciationGuide(table)
+		ok(guide.includes("Briar — say BRY-er"))
+		ok(guide.includes("Kha'Zix — say kah-ZIKS"))
+	})
+
+	it("frames itself as voice, not as ground truth", () => {
+		/*
+		 * The regression this replaces was not a wording problem, it was a HOME problem — but the
+		 * wording is the second line of defence, so it is asserted rather than left to drift. The
+		 * failure it names: a respelling read aloud as if it were a champion's name.
+		 */
+		const guide = renderPronunciationGuide(table)
+		ok(/VOICE/.test(guide), "must say it is about the voice")
+		ok(/not a fact/i.test(guide), "must say the list is not a fact")
+		ok(/Never speak a respelling/i.test(guide))
+	})
+
+	it("contains no digit, so nothing in it can be heard as a game figure", () => {
+		/*
+		 * Same fence as `champion-advice.ts`: a mechanism that cannot express a number about the
+		 * game cannot express a wrong one. The only digits allowed are the ones inside the fixed
+		 * prose example, so this asserts over the ENTRIES rather than the whole string.
+		 */
+		const bad = parsePronunciations("Jarvan IV = JAR-van the 4th\n")
+		const entries = renderPronunciationGuide(bad).split("\n").filter(l => l.includes(" — say "))
+		strictEqual(entries.length, 1)
+		ok(/\d/.test(entries[0]!), "this fixture is meant to be the bad case")
+	})
+
+	it("renders the shipped table without a stray digit in any entry", () => {
+		const shipped = parsePronunciations(
+			readFileSync(new URL("../../knowledge/pronunciations.md", import.meta.url), "utf8")
+		)
+		ok(shipped.length > 50, `only ${shipped.length} entries parsed`)
+		const withDigits = renderPronunciationGuide(shipped)
+			.split("\n")
+			.filter(l => l.includes(" — say ") && /\d/.test(l))
+		strictEqual(withDigits.join(" | "), "")
 	})
 })

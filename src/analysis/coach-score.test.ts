@@ -207,6 +207,33 @@ describe("misattributed-number", () => {
 		deepStrictEqual(s.faults.sort(), ["invented-champion"])
 	})
 
+	it("does not reach across a clause to find an owner", () => {
+		/*
+		 * Measured on a real baseline run over split-03. The coach said the ranked fact verbatim —
+		 * *"Drake is back in fifty-five seconds — clear your camps and prepare for it"* — and was
+		 * charged with fabrication, because 55 has no owner to its left and the rightward reach
+		 * found the "your" of the NEXT clause nineteen characters later. An objective timer is a
+		 * fact about the map; there is no player it could have been given to wrongly.
+		 */
+		const timerBlock = renderState({
+			...state,
+			unseen: ["Drake is back in 55 seconds"]
+		})
+		const s = scoreLine({
+			line: "Drake is back in fifty-five seconds — clear your camps and prepare for it.",
+			block: timerBlock,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		deepStrictEqual(s.faults, [])
+	})
+
+	it("still reaches right inside one clause", () => {
+		// The clause rule must not become a blanket amnesty. 88 is his CS; handing it to Kayn with
+		// the owner named after the figure is the same failure with the words in the other order.
+		ok(has("that is 88 CS for Kayn, go take gromp", "misattributed-number"))
+	})
+
 	it("flags a level lifted from the wrong player", () => {
 		// Renekton is lv7; 8 is the player's level. Both digits are in the block.
 		const s = score("Renekton is level 8 now, so take their raptors")

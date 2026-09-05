@@ -12,8 +12,25 @@ cannot tell who is being talked about, which makes an otherwise correct sentence
 
 **This file is the fix, and it is meant to be edited.** If a name still sounds wrong in game, change
 the respelling here and it takes effect on the next game with no code change. Only names that are
-actually spoken wrongly need an entry; anything absent is left alone, and a short list keeps the
-prompt cheap.
+actually spoken wrongly need an entry; anything absent is left alone.
+
+## Where this goes, and where it must never go
+
+It goes in the **system prompt**, as a rule about the coach's voice, rendered by
+`renderPronunciationGuide` in `src/shared/pronounce.ts`.
+
+It went in the **per-turn ground-truth block** once, and the model read the respellings out loud —
+*"BRY-er is still at 0 CS"*, to the player, in a real game, repeatedly. That was not disobedience.
+The block is CONTENT: every other line in it is a fact the coach may speak, so a line shaped like
+data was treated as data. An instruction about how to say something cannot live in the content.
+
+The turn-based providers do not use this list in a prompt at all. They return text, the browser
+speaks it with `speechSynthesis`, and `respellForSpeech` in `src/web/lib/turnCoach.ts` swaps the
+respelling in during the last milliseconds before the speaker — after the transcript is written, so
+the log keeps the normal spelling and no prompt can ever see a respelling.
+
+Whole file, every game: the guide is sent once per socket and cached, so filtering it to the roster
+would save nothing and would need a roster at champ select, before the client reports one.
 
 ## Format
 

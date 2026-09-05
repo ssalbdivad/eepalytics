@@ -88,7 +88,62 @@ export const pronunciationsFor = (
 	return out
 }
 
-/** The line that goes in the block. Empty when every name in the game is already said correctly. */
+/**
+ * The guide as a SYSTEM-PROMPT section — the only place it may go.
+ *
+ * ## The bug this shape exists to prevent
+ *
+ * The first version of this feature put the table in the per-turn ground-truth block, introduced
+ * as "write them normally, just pronounce them this way". The model read the respelling out loud:
+ * *"BRY-er is still at 0 CS"*, to the player, in a real game, repeatedly. It was not disobeying —
+ * the block is CONTENT, every other line in it is a fact that may be spoken, and a line shaped
+ * like data was treated as data.
+ *
+ * So the fix is not better wording inside the block, it is a different HOME. This text goes into
+ * the system instruction, next to the other rules about how to behave, where the model has never
+ * once tried to read a rule aloud. Three things do the work:
+ *
+ *   - it sits under a heading that is plainly about HIS VOICE, not about the game;
+ *   - it says outright that the list is not a fact and never a thing to say;
+ *   - it names the failure, because every other rule in that prompt that survived does the same.
+ *
+ * ## Send the whole table, not the roster's half
+ *
+ * `pronunciationsFor` exists because the block is rebuilt every turn and a hundred lines per turn
+ * to fix ten names is a bad trade. A system instruction is sent ONCE per socket and cached, so
+ * that trade reverses: the whole table is about 1.2k tokens paid once a game, and filtering it
+ * would need the roster at setup time — which is CHAMP SELECT, before the live client reports any
+ * champion at all. A guide that is empty exactly when the socket opens is a guide that never runs.
+ */
+export const renderPronunciationGuide = (entries: readonly Pronunciation[]): string =>
+	entries.length === 0 ?
+		""
+	:	`## How to pronounce the names — this is about your VOICE, not about the game
+
+Champion names are invented words and you say a lot of them wrongly. A name he cannot recognise
+makes an otherwise correct sentence useless, because he does not know who it is about.
+
+Below, each name is followed by how to SAY it; capitals mark the stressed syllable.
+
+**This list is not a fact, and nothing in it is ever a thing to say.** It does not describe this
+game, it contains no numbers, and it is not part of the ground truth. **Never speak a respelling,
+never read an entry out, never mention that you have a list.** Write and say the name the normal
+way — "Kha'Zix", never "kah-ZIKS" — and simply let the sound come out as written here. This has
+gone wrong: a version of this list lived in the per-turn block and the coach said "BRY-er is still
+at 0 CS" out loud, which is worse than any mispronunciation.
+
+A name that is not below is one you already say correctly. Leave it alone.
+
+${entries.map(p => `${p.name} — say ${p.say}`).join("\n")}`
+
+/**
+ * The old block line. **Do not put this back in the block.**
+ *
+ * Kept, tested and exported because it is the exhibit: this exact string, in the per-turn ground
+ * truth, is what produced "BRY-er is still at 0 CS" out loud. `renderPronunciationGuide` above is
+ * the replacement, and the difference between them is not wording — it is which message they go
+ * in. Anything that renders this into content is reintroducing a measured, shipped regression.
+ */
 export const renderPronunciations = (entries: readonly Pronunciation[]): string =>
 	entries.length === 0 ?
 		""

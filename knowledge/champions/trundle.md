@@ -24,3 +24,32 @@ it is against most junglers. "Know where he is before you start it" is the execu
 **He falls off relative to the field.** His case is early pressure converted into something
 permanent. A game where nothing early goes his way is a game he has to win on someone else's
 terms — which is the whole argument for farming through the phase where he is strongest.
+
+## Live coaching
+
+One clause per situation, appended to a number the client proved. **No digits** — refused at load
+time. Several clauses per key is intentional; the app rotates through them on the game clock.
+
+race-behind: your power is now rather than later, so the camps worth taking are the ones that put you next to him
+race-behind: he is buying time and you are the one who does not have any, so shorten the route and force contact
+
+race-ahead: you fall off relative to the field, so turn this into a tower or an objective before it stops being a lead
+race-ahead: the lead is a clock, spend it while the phase you are strongest in is still running
+
+restraint: even is your fight and levels down is not, so take the level back off your own camps first
+restraint: decline it, you get a better version of this fight in a minute and he does not
+
+fight-lost: you want that beside a camp or a wave where the passive keeps healing you, not in open ground
+fight-lost: the pillar is the fight, so it goes down to cut them off rather than after you have already committed
+
+fight-absent: your window is early, which makes being late to a fight cost you more than it costs most junglers
+fight-absent: go and be the reason the next one is uneven instead of the fourth body in this one
+
+death: you have no escape at all, only a wall, so the pillar has to go down before you commit rather than after
+death: pits and tri-brush are where your kit is best and where it strands you, so pick which one it is before you walk in
+
+build: you steal stats rather than out-scale them, so read that as a reason to force something now
+build: the longer this goes the less of it you win, so let that item be the clock rather than the fight
+
+farm-behind: your case is early pressure, and a broken clear costs you the exact phase you are strongest in
+farm-behind: a duel you are too low a level to win is not pressure, so take the camps that fix the level

@@ -25,7 +25,8 @@
 		"icon": "electron scripts/make-icon.mjs",
 		"shoot": "electron scripts/shoot.mjs",
 		"eval:live": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/eval-live.ts",
-		"smoke:live": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/smoke-live.ts"
+		"smoke:live": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/smoke-live.ts",
+		"probe:vision": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/probe-vision.ts --check bare,blind"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "^4.0.49",

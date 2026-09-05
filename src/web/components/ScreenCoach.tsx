@@ -38,6 +38,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useGeminiLive } from "../lib/geminiLive.ts"
 import { useGameflow, standbyReason } from "../lib/gameflow.ts"
+import { liveFaults, topFault } from "../lib/liveFaults.ts"
 import { useScreenShare } from "../lib/useScreenShare.ts"
 import "./components.css"
 
@@ -84,6 +85,16 @@ const JOURNAL_MS = 5000
  */
 const POST_GAME_LINGER_MS = 8000
 
+/**
+ * How late a journal tick has to be before the browser is obviously throttling this tab.
+ *
+ * Three times the interval. Normal jitter on a busy machine running a game is tens of milliseconds
+ * and an occasional slow POST costs a fraction of a second; background throttling costs an ORDER
+ * of magnitude — a 5s interval becomes roughly a minute — so anything in between is not something
+ * this needs to distinguish.
+ */
+const SLOW_TICK_FACTOR = 3
+
 interface KeyStatus {
 	configured: boolean
 	ok: boolean
@@ -114,10 +125,34 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	 */
 	const gate = useGameflow()
 	const [opening, setOpening] = useState(false)
+	/** Why the hand-off to the Windows browser failed. See `openInWindows`. */
+	const [openError, setOpenError] = useState<string | null>(null)
 	const wsl = isWslElectron()
 
-	/** False once a ground-truth fetch has failed; see `groundTruth` below. */
-	const [truthOk, setTruthOk] = useState(true)
+	/**
+	 * Consecutive failed ground-truth reads; see `groundTruth` below.
+	 *
+	 * A count rather than a flag, because one failure and eleven failures are different events with
+	 * different sentences. One costs a single skipped check-in and is the design working; a run of
+	 * them is a coach that has gone quiet for minutes, which is a state he has already read as
+	 * "broken" once. `lib/liveFaults.ts` holds the threshold.
+	 */
+	const [truthFails, setTruthFails] = useState(0)
+	/**
+	 * Consecutive journal POSTs that did not store a frame, and the daemon's own reason.
+	 *
+	 * The journal's failure path was a bare `catch` with a comment saying a dropped frame is not
+	 * worth interrupting a game for — true of one frame, false of sixty, and sixty is what happens
+	 * when the daemon has stopped or the frame is being refused every time. This is the number that
+	 * decides whether the game gets graded afterwards, so it is never inferred from silence.
+	 */
+	const [journalFails, setJournalFails] = useState<{ n: number; reason: string | null }>({
+		n: 0,
+		reason: null
+	})
+	/** Consecutive journal ticks that arrived far later than they were scheduled to. */
+	const [throttled, setThrottled] = useState(0)
+	const lastTickRef = useRef(0)
 	/**
 	 * What the journal has actually recorded. Shown, not assumed.
 	 *
@@ -150,16 +185,49 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	const [keyInput, setKeyInput] = useState("")
 	const [savingKey, setSavingKey] = useState(false)
 
+	/**
+	 * True when the key could not be CHECKED, which is not the same as there being no key.
+	 *
+	 * With the daemon down the probe failed and the panel rendered the whole "One-time setup: get a
+	 * free Google AI Studio key" flow — a thirty-second errand aimed at someone who already had a
+	 * key, for a problem that was not his. The two states now say different things.
+	 */
+	const [keyProbeFails, setKeyProbeFails] = useState(0)
+
+	/*
+	 * Re-probed, not asked once at mount.
+	 *
+	 * The page is routinely open before the daemon is (and survives it restarting), and a single
+	 * probe at mount meant one unlucky moment left the voice coach looking permanently unconfigured
+	 * for the rest of the session — with a setup form on screen as the explanation. It stops once
+	 * the answer is a working key, because that answer cannot go stale on its own.
+	 */
 	useEffect(() => {
-		void (async () => {
+		let alive = true
+		const probe = async () => {
 			try {
-				const r = await fetch("/api/live/gemini/status")
-				setKeyStatus((await r.json()) as KeyStatus)
+				const r = await fetch("/api/live/gemini/status", { signal: AbortSignal.timeout(4000) })
+				if (!r.ok) throw new Error(`HTTP ${r.status}`)
+				const j = (await r.json()) as KeyStatus
+				if (!alive) return
+				setKeyProbeFails(0)
+				setKeyStatus(j)
 			} catch {
-				setKeyStatus({ configured: false, ok: false, error: "could not reach the daemon" })
+				if (!alive) return
+				// Deliberately NOT a KeyStatus of `{configured:false}`: that is a claim about his
+				// key, and this is an admission about our own reachability.
+				setKeyProbeFails(n => n + 1)
 			}
-		})()
-	}, [])
+		}
+		void probe()
+		// A working key cannot go stale on its own, so the retry stops the moment there is one.
+		if (keyStatus?.ok === true) return () => void (alive = false)
+		const id = setInterval(() => void probe(), 10_000)
+		return () => {
+			alive = false
+			clearInterval(id)
+		}
+	}, [keyStatus?.ok])
 
 	const saveKey = async () => {
 		setSavingKey(true)
@@ -210,6 +278,24 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 		let inFlight = false
 		const tick = async () => {
 			if (inFlight || !alive) return
+			/*
+			 * How late this tick actually is.
+			 *
+			 * Browsers throttle timers in a background tab hard — a 5s interval becomes about a
+			 * minute — and this window spends every game behind the game. Nothing errors: frames
+			 * are still saved, just twelve times fewer of them, and the panel goes on saying
+			 * "Recording this game" while the evidence needed to grade it quietly stops arriving.
+			 * The tick's own lateness is the only honest measurement of that, and it costs a
+			 * subtraction.
+			 */
+			const now = Date.now()
+			if (lastTickRef.current > 0)
+				setThrottled(n =>
+					now - lastTickRef.current > JOURNAL_MS * SLOW_TICK_FACTOR ? n + 1 : 0
+				)
+			lastTickRef.current = now
+
+			// A null frame is already counted by the share's own health — see `useScreenShare`.
 			const frame = share.grabFrame()
 			if (frame === null) return
 			inFlight = true
@@ -219,19 +305,42 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 					headers: { "content-type": "application/json" },
 					body: JSON.stringify({ frame, truth: truthRef.current || undefined })
 				})
-				const j = (await r.json()) as { ok?: boolean; sessionId?: string | null }
-				if (alive && j.ok)
-					setJournal(p =>
-						// Counted PER GAME, not per browser session. The share now spans games, so a
-						// running total would tell him "412 frames" about a game that recorded 180 —
-						// a number that looks like evidence and is not one. The daemon rolls the
-						// session id on a backwards clock jump; that roll resets the count.
-						p && p.sessionId === (j.sessionId ?? null) ?
-							{ frames: p.frames + 1, sessionId: p.sessionId }
-						:	{ frames: 1, sessionId: j.sessionId ?? null }
-					)
+				if (!r.ok) throw new Error(`HTTP ${r.status}`)
+				const j = (await r.json()) as {
+					ok?: boolean
+					sessionId?: string | null
+					reason?: string | null
+				}
+				if (!alive) return
+				/*
+				 * A refusal is a 200 with `ok: false` — the daemon is right to answer that way, since
+				 * "no game clock yet" is a normal outcome rather than a server error. But the page
+				 * used to read only the success branch, so a frame refused every five seconds for a
+				 * whole game left the panel saying "Recording — the first frames are on their way"
+				 * forever. The reason travels with the count so the sentence can name the cause.
+				 */
+				if (!j.ok) {
+					setJournalFails(p => ({ n: p.n + 1, reason: j.reason ?? null }))
+					return
+				}
+				setJournalFails({ n: 0, reason: null })
+				setJournal(p =>
+					// Counted PER GAME, not per browser session. The share now spans games, so a
+					// running total would tell him "412 frames" about a game that recorded 180 —
+					// a number that looks like evidence and is not one. The daemon rolls the
+					// session id on a backwards clock jump; that roll resets the count.
+					p && p.sessionId === (j.sessionId ?? null) ?
+						{ frames: p.frames + 1, sessionId: p.sessionId }
+					:	{ frames: 1, sessionId: j.sessionId ?? null }
+				)
 			} catch {
-				/* a dropped frame is not worth interrupting a game for */
+				/*
+				 * ONE dropped frame is not worth interrupting a game for. Sixty of them is the
+				 * recording being off, and that is the whole difference this counter exists to
+				 * make — the comment that used to sit here, alone, is exactly the pattern he
+				 * complained about.
+				 */
+				if (alive) setJournalFails(p => ({ n: p.n + 1, reason: "eepalytics didn't answer" }))
 			} finally {
 				inFlight = false
 			}
@@ -265,8 +374,15 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 		groundTruth: async () => {
 			try {
 				const r = await fetch("/api/live/ground-truth", { signal: AbortSignal.timeout(4000) })
+				/*
+				 * A 500 RESOLVES. It does not throw, so the old code fell through to `j.text` being
+				 * undefined and returned "" with the failure flag still reading OK — a daemon that
+				 * was erroring on every read was indistinguishable, on screen, from not being in a
+				 * game. Status first, then the body.
+				 */
+				if (!r.ok) throw new Error(`HTTP ${r.status}`)
 				const j = (await r.json()) as { inGame?: boolean; text?: string }
-				setTruthOk(true)
+				setTruthFails(0)
 				if (j.text) {
 					truthRef.current = j.text
 					return j.text
@@ -276,8 +392,11 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				 * Surfaced, not swallowed. Without facts the coach is back to guessing from
 				 * pixels, which is the exact failure this whole path was built to end — so the
 				 * player is told rather than left with a confident-sounding coach running blind.
+				 *
+				 * Counted rather than flagged: the first failure costs one check-in and says
+				 * nothing, a run of them says so out loud. See `lib/liveFaults.ts`.
 				 */
-				setTruthOk(false)
+				setTruthFails(n => n + 1)
 			}
 			/*
 			 * Empty means the turn is NOT SENT — see `beat()` in `lib/geminiLive.ts`.
@@ -376,20 +495,69 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 		return () => clearTimeout(id)
 	}, [share.sharing, gate.armed, gem, stoppedByHand])
 
+	/**
+	 * Hand off to the Windows browser — the only path that can share a screen from WSL.
+	 *
+	 * The failure here was total and silent: with the daemon unreachable the POST rejected, the
+	 * caller's `.catch` discarded it on the grounds that "both set their own error state", and this
+	 * function set none. Pressing the app's primary button did nothing at all, forever, with no
+	 * message. It is the first button a new user presses.
+	 */
 	const openInWindows = async () => {
 		setOpening(true)
 		try {
-			await fetch("/api/shell/open-in-windows", {
+			const r = await fetch("/api/shell/open-in-windows", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
 				body: JSON.stringify({ hash: "#/live" })
 			})
+			if (!r.ok) throw new Error(`HTTP ${r.status}`)
+			setOpenError(null)
+		} catch {
+			// The origin comes from the page, not from a constant: this app's port is configurable,
+			// and an address that is wrong is worse than no address at all when it is the one
+			// instruction he has left.
+			setOpenError(
+				`Couldn't ask eepalytics to open your Windows browser. Check the daemon is running, or open ${location.origin}/#/live over there yourself.`
+			)
 		} finally {
 			setOpening(false)
 		}
 	}
 
 	const needsKey = keyStatus !== null && !keyStatus.ok
+	/**
+	 * Everything currently wrong, in one list, most severe first.
+	 *
+	 * Assembled here rather than rendered from a dozen scattered conditions so that the panel and
+	 * the one-line strip cannot disagree about whether the feature is working — the strip is what
+	 * he sees while the game has the screen, and it used to say "In a game — coach arming" over a
+	 * coach that had given up entirely.
+	 */
+	const faults = liveFaults({
+		sharing: share.sharing,
+		shareEnded: share.ended,
+		shareError: share.error ?? openError,
+		framesMissed: share.health.missed,
+		framesStale: share.health.stale,
+		blindTurns: gem.blindTurns,
+		truthFails,
+		throttledTicks: throttled,
+		journalFails: journalFails.n,
+		journalReason: journalFails.reason,
+		droppedTurns: gem.droppedTurns,
+		unsaved: gem.unsaved,
+		daemonReachable: gate.reachable,
+		keyProbeFails,
+		coachStatus: gem.status,
+		coachError: gem.error,
+		voice: gem.voice,
+		// Hers, not his: a question he typed is not evidence that her audio is reaching the speakers.
+		spokenLines: gem.lines.filter(l => l.fromUser !== true).length,
+		audioPlayed: gem.audioPlayed,
+		audioBlocked: gem.audioBlocked
+	})
+	const worst = topFault(faults)
 	/**
 	 * Why nothing is being sent, or null when the gate is open.
 	 *
@@ -407,10 +575,23 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 					className="csk-screen__dot"
 					// Sharing-but-idle is its own state, not an off one. Without this the dot is the
 					// same grey in "waiting for your next game" as in "you never pressed share".
-					data-state={standby !== null && gem.status === "off" ? "standby" : gem.status}
+					// A live fault outranks both: a green dot over a broken coach is the single most
+					// misleading thing this strip can show, and it showed exactly that.
+					data-state={
+						worst?.level === "error" ? "error"
+						: standby !== null && gem.status === "off" ? "standby"
+						: gem.status
+					}
 				/>
-				<span className="csk-screen__compactlabel">
-					{gem.status === "live" ?
+				<span className="csk-screen__compactlabel" title={worst?.text ?? undefined}>
+					{/*
+					 * The strip is what he can see while the game owns the screen, so a fault has to
+					 * reach it. It said "In a game — coach arming" over a coach that had given up
+					 * and over a share that had ended — both indistinguishable from working.
+					 */}
+					{worst?.level === "error" ?
+						worst.short
+					: gem.status === "live" ?
 						`Coaching · ${gem.usage.turns} check-in${gem.usage.turns === 1 ? "" : "s"}`
 					: gem.status === "reconnecting" ?
 						"Coach reconnecting…"
@@ -486,6 +667,25 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 					</button>
 				}
 			</div>
+
+			{/*
+			 * Everything that is currently wrong, in one place and in his words.
+			 *
+			 * This used to be four conditions scattered down the panel — ground truth, unsaved
+			 * lines, blind check-ins, the socket error — with the other eight failure paths saying
+			 * nothing at all. One list means a new failure has an obvious home, and it means the
+			 * player has ONE place to look when the coach starts sounding thin.
+			 *
+			 * Persistent, not a toast. Every line here describes something true right now and
+			 * disappears when it stops being true; the failures worth reporting last for minutes,
+			 * and he is looking at the game, not at this panel, at the instant one starts.
+			 */}
+			{faults.map(f => (
+				<div key={f.id} className={f.level === "error" ? "csk-screen__err" : "csk-screen__warn"}>
+					{f.text}
+					{f.fix !== null && <> {f.fix}</>}
+				</div>
+			))}
 
 			{/*
 			 * The setup step, inline. A free key is a thirty-second errand, but only if you are
@@ -569,32 +769,6 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				</div>
 			)}
 
-			{!truthOk && (gem.status === "live" || gem.status === "reconnecting") && (
-				<div className="csk-screen__warn">
-					{/*
-					 * She now HOLDS OFF rather than carrying on from the picture, so this line no
-					 * longer promises a vaguer coach — it explains a silent one. Saying "she'll be
-					 * vaguer" about a coach that has stopped talking is the kind of small lie that
-					 * makes someone stop trusting the rest of the panel.
-					 */}
-					Can't reach the game data right now, so she's holding off rather than guessing from
-					the picture. She'll pick straight back up when it returns.
-				</div>
-			)}
-			{/*
-			 * The other half of "What she said, earlier" being empty.
-			 *
-			 * That panel can tell you it failed to READ. Only this side knows whether the lines were
-			 * ever WRITTEN, and this list is the only copy of them until they are — so a lost line is
-			 * said out loud rather than left to be discovered as a blank transcript after the game.
-			 */}
-			{gem.unsaved > 0 && (
-				<div className="csk-screen__warn">
-					<b>{gem.unsaved}</b> line{gem.unsaved === 1 ? "" : "s"} couldn't be saved to eepalytics,
-					so {gem.unsaved === 1 ? "it is" : "they are"} only here — they won't appear in "What
-					she said, earlier" after the game. Check the daemon is still running.
-				</div>
-			)}
 			{/*
 			  * The journal's own line, shown whenever the screen is shared.
 			  * ONE line for what is happening right now, shown whenever the screen is shared.
@@ -626,16 +800,19 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 					}
 				</div>
 			)}
-			{share.error !== null && <div className="csk-screen__err">{share.error}</div>}
 			{/*
 			 * A reconnect is expected — the session credential lasts about half an hour and games
 			 * run longer — so it is reported as a status, not in red. Red is for something the
 			 * player has to act on.
+			 *
+			 * `error` status is excluded because the fault list above already renders that message
+			 * with the thing to do about it; printing it twice reads as two problems.
 			 */}
-			{gem.error !== null &&
-				(gem.status === "reconnecting" ?
-					<div className="csk-screen__warn">{gem.error}</div>
-				:	<div className="csk-screen__err">{gem.error}</div>)}
+			{gem.error !== null && gem.status !== "error" && (
+				<div className={gem.status === "reconnecting" ? "csk-screen__warn" : "csk-screen__err"}>
+					{gem.error}
+				</div>
+			)}
 
 			{share.sharing && (
 				<div className="csk-screen__controls">
@@ -678,18 +855,12 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 					}
 
 					{/*
-			 * A coach that cannot see is the failure that looks most like success: it still speaks,
-			 * fluently, from the block alone. The player reported exactly that and read it, fairly,
-			 * as "it is not looking at the frames at all". It must never be silent again.
-			 */}
-			{gem.blindTurns > 0 && (
-				<div className="csk-screen__warn">
-					<b>{gem.blindTurns}</b> check-in{gem.blindTurns === 1 ? " was" : "s were"} sent with{" "}
-					<b>no picture</b> — she was coaching from the numbers alone. The screen share is not
-					producing frames. Re-share your screen, and pick a display rather than a window.
-				</div>
-			)}
-			{gem.audioBlocked && (
+					 * The blind-check-in count moved UP into the fault list, beside the frozen-stream
+					 * and dead-stream counts it belongs with — it was the only one of the three that
+					 * had a message, and reading it alone made a stopped share look like a coach
+					 * that had merely lost sight of the game for a moment.
+					 */}
+					{gem.audioBlocked && (
 						<button className="csk-screen__unmute" onClick={() => gem.unlockAudio()}>
 							🔇 Your browser is holding the sound back — click to let her talk
 						</button>

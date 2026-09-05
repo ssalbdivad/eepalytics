@@ -63,3 +63,32 @@ Treat matchups with only a few hundred games as a hint, not a plan.
 ## The one-line version
 
 Full-clear to six camps, then decide scuttle-or-gank off where the enemy jungler actually is; land Q before you commit anything else; save R for isolating or displacing rather than as a gap-closer; and remember that a death on the wrong side of the map at minute 8 is the single most expensive thing this champion can do.
+
+## Live coaching
+
+One clause per situation, appended to a number the client proved. **No digits** — refused at load
+time. Several clauses per key is intentional; the app rotates through them on the game clock.
+
+race-behind: your clear is unremarkable and your early kill threat is not, so make the deviation buy something
+race-behind: he is out-farming you while you look for a play, so take the full clear and choose after the last camp
+
+race-ahead: you are an early-game champion, so turn this into a tower rather than sitting on the lead
+race-ahead: your ganks are worth the most when they end on structure, so path to the lane that can take a plate
+
+restraint: you need to arrive from an angle they are not facing, and levels down means arriving is all you do
+restraint: decline it and go take your own camps, there is no version of this where the even trade is yours
+
+fight-lost: you are committed the moment you dash, so the entry needs a second target or an ally to get back out to
+fight-lost: the ult is for isolating someone or knocking them into your team, not for closing a gap you already lost
+
+fight-absent: your whole kit is choosing the fight, so being the last one there is the version that does not work
+fight-absent: go where the map still has something to decide, the fight behind you does not
+
+death: everything you own runs through a landed skillshot, and crossing with it down leaves you no way back out
+death: dying with the ult down means the next several fights happen without the only hard displacement your team has
+
+build: you win the phase before he finishes his items, so read that as a clock rather than as a fight
+build: that makes the duel worse, so pick a target that is already damaged instead of the one who just spiked
+
+farm-behind: the full clear to six camps is the standard, and abandoning it for a coin flip is how the even win rate happens
+farm-behind: a deviation that trades a camp for nothing is the expensive one, so run the route and deviate on purpose

@@ -11,7 +11,7 @@
 
 import { ok, strictEqual } from "node:assert/strict"
 import { describe, it } from "node:test"
-import { renderState } from "../shared/live-state.ts"
+import { csGap, csGapWorthSaying, csPhrase, renderState } from "../shared/live-state.ts"
 import type { VisionState } from "../shared/live-state.ts"
 
 const base = (over: Partial<VisionState> = {}): VisionState => ({
@@ -103,5 +103,120 @@ describe("the enemy jungler line", () => {
 
 	it("says nothing at all when there is no counterpart", () => {
 		strictEqual(renderState(base({ counterpart: null })).includes("Enemy jungler right now"), false)
+	})
+})
+
+/**
+ * The client reports CS in tens and rounds DOWN — 12210 readings across four real games, not one
+ * of them a non-multiple of ten, and two journal frames settle the direction (HUD 16 against a
+ * block of 10 at 02:42, HUD 46 against a block of 40 at 06:43). Every test below is about the
+ * consequence: a reported figure is a floor, and the app may say only what a floor supports.
+ */
+describe("the CS quantum", () => {
+	it("says a floored figure as a lower bound, never as the number", () => {
+		strictEqual(csPhrase(120), "at least 120 CS")
+	})
+
+	it("gives zero its own wording, because that is the one that was said out loud", () => {
+		// "BRY-er is still at 0 CS" reached the player about a jungler who had up to nine.
+		strictEqual(csPhrase(0), "under 10 CS")
+	})
+
+	it("refuses to call him behind when the whole gap fits inside the rounding", () => {
+		/*
+		 * The bias that produced the farm nagging: a floored live figure minus an exact historical
+		 * mean is understated by up to nine, always in the same direction. Measured over the 107
+		 * baseline-carrying checkpoints of fixture-5635467422, 104 read as behind and 21 of those
+		 * had a gap of nine or less — states where he may have been level or ahead.
+		 */
+		const g = csGap(40, 46, false)
+		strictEqual(g.direction, "level")
+		strictEqual(g.certain, 0)
+		strictEqual(csGapWorthSaying(g), false)
+	})
+
+	it("keeps only the part of a baseline gap that survives the rounding", () => {
+		const g = csGap(120, 141, false)
+		strictEqual(g.direction, "behind")
+		strictEqual(g.certain, 12, "21 reported, but nine of it is rounding")
+		strictEqual(csGapWorthSaying(g), true)
+	})
+
+	it("widens the interval at both ends when the other figure is floored too", () => {
+		// Both junglers come off the same client, so a reported 20 is a true 11 to 29.
+		const g = csGap(120, 140, true)
+		strictEqual(g.low, -29)
+		strictEqual(g.high, -11)
+		strictEqual(g.certain, 11)
+	})
+
+	it("treats a one-quantum lead as not worth a sentence", () => {
+		/*
+		 * A reported ten-CS gap between the two junglers is a true gap of one to nineteen, so the
+		 * certain part of it is ONE. Saying that is the four-CS farm nag with a new subject, which
+		 * is what RACE_MIN_GAP exists to suppress — and on 612 real blocks every reported race gap
+		 * was a multiple of ten, so this is the smallest gap that can ever be reported at all.
+		 */
+		const g = csGap(110, 100, true)
+		strictEqual(g.direction, "ahead")
+		strictEqual(g.certain, 1)
+		strictEqual(csGapWorthSaying(g), false)
+	})
+})
+
+describe("the block never states a CS it cannot support", () => {
+	const withFarm = (over: Partial<VisionState> = {}): string =>
+		renderState(
+			base({
+				me: { champion: "Lillia", level: 11, k: 3, d: 2, a: 4, cs: 120, gold: 1450 },
+				...over
+			})
+		)
+
+	it("renders his own farm as a floor", () => {
+		const out = withFarm()
+		const you = out.split("\n").find(l => l.startsWith("You: ")) ?? ""
+		ok(you.includes("at least 120 CS"), "his CS must be hedged as the floor it is")
+		strictEqual(you.includes(", 120 CS"), false, "no bare CS count on the You line")
+	})
+
+	it("renders the enemy jungler's farm as a floor as well", () => {
+		const out = withFarm({ counterpart: { champion: "Briar", cs: 0 } })
+		ok(out.includes("Briar, under 10 CS"), "a jungler at a reported zero has up to nine")
+	})
+
+	it("works the race out itself rather than leaving two floors to be subtracted", () => {
+		const out = withFarm({ counterpart: { champion: "Briar", cs: 140, level: 12 } })
+		ok(/at least 11 CS AHEAD of you/.test(out), out.slice(0, 900))
+		strictEqual(out.includes("20 CS AHEAD"), false, "the reported gap is not the gap")
+	})
+
+	it("says who is ahead is unknowable when the two junglers are inside one quantum", () => {
+		const out = withFarm({ counterpart: { champion: "Briar", cs: 130, level: 12 } })
+		ok(/nobody can say who is ahead/.test(out))
+	})
+
+	it("states the certain part of the pace gap, not the reported one", () => {
+		const out = withFarm({
+			pace: { cs: 120, expected: 141, exact: true, source: "your 14-minute average over 20 games" }
+		})
+		ok(out.includes("at least 12 CS BEHIND his own average"), out.slice(0, 900))
+		strictEqual(out.includes("21 CS"), false, "the biased subtraction must not appear anywhere")
+	})
+
+	it("refuses to call him off his pace when the gap is inside the rounding", () => {
+		/*
+		 * The single most valuable line here. This is the state the coach used to scold him in, and
+		 * a fifth of the baseline-carrying states measured were this state.
+		 */
+		const out = withFarm({
+			pace: { cs: 120, expected: 126, exact: true, source: "your 14-minute average over 20 games" }
+		})
+		ok(/neither measurably ahead nor behind/.test(out))
+		ok(/Do not say he is either/.test(out))
+	})
+
+	it("tells the model the grain, since it is the model that has to phrase it", () => {
+		ok(/Every CS figure above is a FLOOR/.test(withFarm()))
 	})
 })

@@ -599,14 +599,35 @@ const isSilent = (line: string): boolean =>
 	line.replace(/[^A-Za-z]/g, "").toLowerCase() === "pass"
 
 /**
+ * A clause boundary, which the RIGHTWARD reach below may not cross.
+ *
+ * Measured on a real baseline run over split-03: *"Drake is back in 55 seconds — clear your camps
+ * and prepare for it"* is the ranked fact said verbatim, and it was charged with fabrication,
+ * because 55 has no owner to its left and the reach to its right found the "your" of a completely
+ * different clause nineteen characters later. English does not attach a figure to a possessive in
+ * the next clause, and a false fabrication flag is the most expensive kind this project can emit —
+ * correctness was already at ceiling, so every point it loses is noise in the one column that had
+ * none.
+ *
+ * LEFT reach is deliberately not restricted this way: *"Kayn is 1180 gold and level 9 to your 8"*
+ * is one clause, and the sentence that established this rule must keep working.
+ */
+const CLAUSE_BREAK = /[—–,;:.!?]|\bso\b|\bthen\b/
+
+/**
  * Who a figure belongs to in the spoken sentence: the nearest entity to its LEFT within 60
- * characters, or the nearest to its right within 25 if nothing precedes it.
+ * characters, or the nearest to its right within 25 if nothing precedes it and no clause boundary
+ * sits between them.
  *
  * Left-biased because English attaches a number to the subject that came before it: in *"Kayn is
  * 1180 gold and level 9 to your 8"* the 1180 and the 9 belong to Kayn, and the 8 — which follows
  * "your" — belongs to him. Getting that one sentence right is the whole reason this rule exists.
  */
-const ownerOf = (mentions: { owner: string; index: number }[], at: number): string | null => {
+const ownerOf = (
+	mentions: { owner: string; index: number }[],
+	at: number,
+	text = ""
+): string | null => {
 	let before: { owner: string; index: number } | null = null
 	let after: { owner: string; index: number } | null = null
 	for (const m of mentions) {
@@ -614,7 +635,8 @@ const ownerOf = (mentions: { owner: string; index: number }[], at: number): stri
 		else if (after === null) after = m
 	}
 	if (before && at - before.index <= 60) return before.owner
-	if (after && after.index - at <= 25) return after.owner
+	if (after && after.index - at <= 25 && !CLAUSE_BREAK.test(text.slice(at, after.index)))
+		return after.owner
 	return null
 }
 
@@ -664,7 +686,7 @@ export const scoreLine = (input: ScoreInput): LineScore => {
 			continue
 		}
 		// The number is real. Did it end up on the right player?
-		const owner = ownerOf(mentions, m.index)
+		const owner = ownerOf(mentions, m.index, norm)
 		if (owner === null) continue
 		if (!segments.some(s => s.owners.includes(owner) && s.values.has(value)))
 			misattributed.push({ value, claimedOwner: owner })

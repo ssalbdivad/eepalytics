@@ -58,6 +58,47 @@ source: model-knowledge | <url> | <author>
 power spikes, what the champion is for. Those survive patches. Anything that *doesn't* survive
 a patch does not belong in this directory at all.
 
+## The `## Live coaching` section — the only part the live coach reads
+
+The prose above is sent to the post-game reviewer, the watch review and the champ-select brief.
+**The live voice coach reads none of it.** It speaks one sentence mid-game, and prose in a prompt
+has nothing tying it to the moment — which is how you get "Viego is your jungle counterpart so
+watch for his ganks" said about a game with no Viego in it.
+
+So a note reaches the live coach through one section only, at the end of the file:
+
+```
+## Live coaching
+
+race-behind: your clear only gets faster the longer it runs, so finish the route
+race-behind: he took that lead while you were standing somewhere
+death: you have no dash and no blink, so leaving is a decision you make before you are committed
+```
+
+The rules, all of them enforced by `src/shared/champion-advice.ts` and its tests:
+
+- **Keys are a closed set.** `race-behind`, `race-ahead`, `restraint`, `fight-lost`,
+  `fight-absent`, `death`, `build`, `farm-behind`. Anything else is ignored silently, so check the
+  spelling. Each key names a situation the *client* has already established; the clause is the
+  half no client can supply.
+- **No digits. At all.** A clause containing a number is refused at load time. A mechanism that
+  can express a number about the game can express a wrong one, and every figure he hears has to
+  come from the block. `src/shared/champion-advice.ts` has the full story.
+- **Write several clauses per key.** The app rotates through them on the game clock, so a kind
+  that fires three times in a game does not end on the same half-sentence three times. A single
+  clause per key is the sameness the coach gets muted for, and a test fails on it.
+- **A clause completes a sentence the client started.** `race-behind` is appended to
+  "Kayn is 23 CS up on you — …". `death` is the exception: it is spoken alone on the respawn
+  screen, so it has to stand up as a whole sentence by itself.
+- **`_default.md`'s clauses are merged in per KIND**, so a champion file only needs the clauses
+  where it has something more specific than the role to say. A champion file with no
+  `## Live coaching` section at all still gets the role clauses — but a champion the user actually
+  plays deserves its own.
+
+The test that decides whether a clause earns its place: **would it change what he does?**
+"Lillia is a scaling jungler" changes nothing. "Your clear accelerates as it chains, so stopping
+mid-route costs more than it looks like" changes a decision. Cut the first kind ruthlessly.
+
 ## Staleness
 
 `patch` is compared against the game's patch. When they differ the prompt says so and tells the

@@ -134,6 +134,21 @@ class PcmPlayer {
 	#live = new Set<AudioBufferSourceNode>()
 	/** Chunks actually handed to the hardware. The number that makes "no sound" diagnosable. */
 	played = 0
+
+	/**
+	 * Forget last game's chunks, so "she spoke and nothing came out" stays answerable.
+	 *
+	 * `played` is the whole evidence for the silent-speakers fault, and it is a property of a
+	 * SESSION, not of the page: the player object outlives every game (it holds the AudioContext,
+	 * which is expensive to get back and may need another click to unlock). Left alone, one chunk
+	 * played in game one would suppress the fault for every game after it — the exact shape of the
+	 * bug this file's other counters were reset to avoid.
+	 */
+	forgetPlayed() {
+		if (this.played === 0) return
+		this.played = 0
+		this.#note()
+	}
 	/**
 	 * True when the browser is refusing to start audio until the page is clicked.
 	 *
@@ -293,6 +308,15 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 */
 	const [blindTurns, setBlindTurns] = useState(0)
 	/**
+	 * Turns the socket threw away because it was not open when the timer fired.
+	 *
+	 * `send` used to drop a message on a closed socket without a word, which is the same shape of
+	 * failure as the blind turn above: from the outside a coach whose heartbeat is firing into a
+	 * dead socket is indistinguishable from a coach who has nothing to say. One of these is a
+	 * reconnect landing badly and is not worth a sentence; a run of them is the feature being off.
+	 */
+	const [droppedTurns, setDroppedTurns] = useState(0)
+	/**
 	 * Lines the daemon refused or never received.
 	 *
 	 * Surfaced, not swallowed. "What she said, earlier" reading empty is ambiguous on its own —
@@ -384,9 +408,18 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		})()
 	}, [])
 
-	const send = useCallback((msg: unknown) => {
+	/**
+	 * Put something on the socket, and say so when it could not go.
+	 *
+	 * Returns whether it was actually sent. The caller has to know: a heartbeat that never leaves
+	 * the page produces exactly the same silence as a heartbeat the model declined to answer, and
+	 * only one of those is the design working.
+	 */
+	const send = useCallback((msg: unknown): boolean => {
 		const ws = wsRef.current
-		if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg))
+		if (ws?.readyState !== WebSocket.OPEN) return false
+		ws.send(JSON.stringify(msg))
+		return true
 	}, [])
 
 	/**
@@ -449,6 +482,16 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 */
 			setLines([])
 			setUsage({ totalTokens: 0, turns: 0 })
+			/*
+			 * The fault counters belong to the session too. Carrying "11 blind check-ins" into a
+			 * game that has not started yet is the same lie as carrying the check-in count: a
+			 * number about the last game, rendered as a statement about this one.
+			 */
+			setBlindTurns(0)
+			setDroppedTurns(0)
+			setUnsaved(0)
+			// The player outlives the game; its chunk count must not. See `forgetPlayed`.
+			player.forgetPlayed()
 		}
 		setError(null)
 		setStatus(isRetry ? "reconnecting" : "connecting")
@@ -479,8 +522,16 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 * about to work, so it would sit on "connecting…" indefinitely with no way out. Setup
 			 * takes ~250ms in practice; fifteen seconds is generous and still finite.
 			 */
+			/*
+			 * Recorded, because `onclose` runs straight afterwards and used to OVERWRITE this
+			 * message with the generic "reconnecting — ..." line. A socket that opens and never
+			 * completes setup is a specific, actionable failure (usually a rejected token) and it
+			 * was the one message that could not survive to be read.
+			 */
+			let guardTripped = false
 			const setupGuard = setTimeout(() => {
 				if (wsRef.current === ws && ws.readyState !== WebSocket.CLOSED) {
+					guardTripped = true
 					setError("Gemini accepted the connection but never started the session — try again")
 					ws.close()
 				}
@@ -637,7 +688,16 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					return
 				}
 				attemptRef.current += 1
-				if (e.reason) setError(`reconnecting — ${humanise(String(e.reason)).slice(0, 160)}`)
+				if (guardTripped)
+					setError("Gemini never started the session — retrying, but if this repeats the key is the usual cause")
+				else if (e.reason) setError(`reconnecting — ${humanise(String(e.reason)).slice(0, 160)}`)
+				/*
+				 * A close with NO reason is the common shape of a rejected token, and it used to
+				 * leave `error` at null for the whole ladder — up to 38 seconds of "reconnecting…"
+				 * with nothing said about why. Saying the attempt number is not a diagnosis, but it
+				 * is the difference between a feature working on itself and a feature that has hung.
+				 */
+				else setError(`reconnecting to Gemini (attempt ${attemptRef.current} of ${RECONNECT_DELAYS_MS.length})`)
 				setStatus("reconnecting")
 				reconnectRef.current = setTimeout(() => void connect(true), delay)
 			}
@@ -707,6 +767,12 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		if (!turnBased) return connect(false)
 		// No socket to open: mark it live and let the loop above start on the next render.
 		wantLiveRef.current = true
+		// Same reset the socket path does in `connect`: last game's fault counts are not this
+		// game's, and a stale "9 blind check-ins" reads as a measurement of the game on screen.
+		setBlindTurns(0)
+		setDroppedTurns(0)
+		setUnsaved(0)
+		player.forgetPlayed()
 		setStatus("live")
 		return undefined
 	}, [turnBased, connect])
@@ -781,7 +847,15 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			// Counted, not swallowed. A turn with no picture is a coach reading the block aloud.
 			else setBlindTurns(n => n + 1)
 			parts.push({ text: truth })
-			send({ clientContent: { turns: [{ role: "user", parts }], turnComplete: true } })
+			/*
+			 * And counted when it never leaves the page at all. `send` returns false on a socket
+			 * that is not open — which happens between a close and the reconnect landing — and the
+			 * turn simply vanished, taking with it the announce-once facts the block had already
+			 * consumed to build it. A skipped turn is not a crisis; a run of them is the coach
+			 * being off while the panel says "live".
+			 */
+			if (!send({ clientContent: { turns: [{ role: "user", parts }], turnComplete: true } }))
+				setDroppedTurns(n => n + 1)
 		}
 		const id = setInterval(() => void beat(), turnMs)
 		void beat()
@@ -845,7 +919,16 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 */
 			answering.current = true
 			player.silence()
-			send({ clientContent: { turns: [{ role: "user", parts: [{ text: q }] }], turnComplete: true } })
+			/*
+			 * A question that never left the page must say so. A heartbeat may go unanswered — that
+			 * is the design — but he typed this one and watched it appear in the log, so silence
+			 * reads as "she ignored me" rather than "the socket was closed". Same reasoning as the
+			 * `answering` exemption from PASS directly above.
+			 */
+			if (!send({ clientContent: { turns: [{ role: "user", parts: [{ text: q }] }], turnComplete: true } })) {
+				answering.current = false
+				setError("that question didn't send — the connection isn't open right now")
+			}
 		},
 		[send, record, player]
 	)
@@ -868,6 +951,10 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		unsaved,
 		/** Turns sent with no picture attached. Non-zero means she is coaching from text alone. */
 		blindTurns,
+		/** Turns that never left the page because the socket was not open. */
+		droppedTurns,
+		/** How her voice is produced, which decides whether "no sound played" is diagnosable. */
+		voice: turnBased ? ("system" as const) : ("socket" as const),
 		unlockAudio,
 		/** True when the browser is holding the sound back until the page is clicked. */
 		audioBlocked: audio.blocked,
