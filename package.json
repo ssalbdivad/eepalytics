@@ -8,7 +8,7 @@
 	"scripts": {
 		"dev": "concurrently -n web,daemon -c cyan,magenta \"pnpm dev:web\" \"pnpm dev:daemon\"",
 		"dev:web": "vite",
-		"dev:daemon": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning --watch-path=src/daemon --watch-path=src/lcu src/daemon/main.ts",
+		"dev:daemon": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning --watch-path=src/daemon --watch-path=src/lcu --watch-path=src/server --watch-path=src/shared --watch-path=src/analysis --watch-path=src/review src/daemon/main.ts",
 		"daemon": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning src/daemon/main.ts",
 		"build": "vite build",
 		"start": "NODE_ENV=production pnpm daemon",

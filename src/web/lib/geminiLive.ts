@@ -621,6 +621,22 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					})
 				)
 
+			/*
+			 * The fallback above is safe and WRONG, so it must not be silent.
+			 *
+			 * A daemon that predates the coach-mode work mints a token with no `systemPrompt`, and
+			 * the page then connects with the fenced prompt while the settings screen says
+			 * cite-or-quiet. That is the coach running a different architecture from the one he
+			 * chose, with nothing on screen saying so — the exact shape of silence he asked to be
+			 * rid of. `pnpm dev` now watches `src/server` too, so the stale-daemon case should be
+			 * rare; when it happens he is told which coach he actually got.
+			 */
+			if (tok.systemPrompt === undefined || tok.systemPrompt === "")
+				setError(
+					"The daemon did not send a coach prompt, so she is running the older fenced coach " +
+						"rather than the mode in Settings. Restart the daemon to pick it up."
+				)
+
 			ws.onmessage = async ev => {
 				const raw = typeof ev.data === "string" ? ev.data : await (ev.data as Blob).text()
 				let m: GeminiServerMessage
