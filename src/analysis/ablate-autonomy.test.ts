@@ -26,14 +26,18 @@ import type { VisionState } from "../shared/live-state.ts"
 import {
 	ARMS,
 	REPAIRS,
+	REPEAT_GATE,
 	armTurns,
 	championKnowledge,
+	containment,
+	contentOf,
 	countRankedFacts,
 	isSpecific,
 	median,
 	pacedRow,
 	picturePhrases,
 	quantile,
+	repeatFlags,
 	statsFor,
 	stripRankedList,
 	subjectOf
@@ -352,3 +356,57 @@ test("armTurns takes one turn per game clock, prefers the frame-bearing cell, an
 	assert.deepEqual(t.map(x => x.tSec), [40, 60, 80])
 	assert.equal(t[0]!.line, "with picture", "the blind copy of a paired state is a second condition, not a second turn")
 })
+
+/* ============================================================== repetition */
+
+test("contentOf keeps the subject and the figure and drops the scaffolding", () => {
+	const c = contentOf("Finish this camp clean, you're right on pace with Briar at 20 CS.")
+	assert.equal(c.has("finish"), true)
+	assert.equal(c.has("briar"), true)
+	assert.equal(c.has("#20"), true)
+	/* "you're" and "with" carry no subject; if they counted, every line would overlap every line. */
+	assert.equal(c.has("you"), false)
+	assert.equal(c.has("with"), false)
+})
+
+test("containment scores the restatement, not the padding", () => {
+	/* The two lines Opus 5 said 6 seconds apart in the run that started this work. */
+	const a = contentOf("Leave the fountain now — your clear only gets faster while it keeps running, so start the route.")
+	const b = contentOf("Start it now and don't stop — your clear only gets faster while it keeps running.")
+	assert.equal(containment(a, b) >= REPEAT_GATE, true)
+})
+
+test("two lines about different objectives are not a repeat, however alike they sound", () => {
+	const a = contentOf("Dragon's up in 44 seconds, path there now.")
+	const b = contentOf("Grubs spawn in 31 seconds, get there first.")
+	assert.equal(containment(a, b) >= REPEAT_GATE, false)
+})
+
+test("a repeat is a relation to an EARLIER line, so the first of a pair is never flagged", () => {
+	const turns = [
+		{ line: "Finish the whole clear now, the route only pays off if it keeps moving.", silent: false, ok: true, tSec: 48 },
+		{ line: "Finish clearing this camp, the route only pays off if it keeps moving.", silent: false, ok: true, tSec: 139 }
+	]
+	const flags = repeatFlags(turns)
+	assert.equal(flags[0]!.repeat, false)
+	assert.equal(flags[1]!.repeat, true)
+	assert.equal(flags[1]!.ofTSec, 48)
+})
+
+test("the lookback window is game clock, so a restatement half a game later is not a recent one", () => {
+	const turns = [
+		{ line: "Take your own raptors while Briar is topside.", silent: false, ok: true, tSec: 100 },
+		{ line: "Take your own raptors while Briar is topside.", silent: false, ok: true, tSec: 900 }
+	]
+	assert.equal(repeatFlags(turns)[1]!.repeat, true)
+	assert.equal(repeatFlags(turns, 180)[1]!.repeat, false)
+})
+
+test("a silence is not a line, so it neither repeats nor can be repeated", () => {
+	const turns = [
+		{ line: "PASS", silent: true, ok: true, tSec: 10 },
+		{ line: "PASS", silent: true, ok: true, tSec: 40 }
+	]
+	assert.deepEqual(repeatFlags(turns).map(f => f.repeat), [false, false])
+})
+

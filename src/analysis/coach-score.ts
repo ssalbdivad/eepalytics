@@ -727,6 +727,45 @@ const CLAUSE_SPLIT = /,|;|—|–|\bso\b|\band\b|\bbut\b|\bwhile\b|\bthen\b/g
  */
 const PLAYER_UNIT = /^\s*(?:cs|gold|kills?|deaths?|assists?|hp|health|level)\b/i
 
+/**
+ * The same doctrine as `PLAYER_UNIT`, from the other side: units that make a figure the MAP'S.
+ *
+ * `PLAYER_UNIT` is only consulted on the one branch where nothing was named before the figure, so
+ * a timer in a sentence that happens to mention somebody got an owner anyway and was charged as a
+ * misattribution. That was invisible while the block was a snapshot, because a snapshot states
+ * almost no timers. The briefing states nothing else at the top — its whole first section is the
+ * map's clock — and it made the instrument cry wolf on the arm under test.
+ *
+ * Measured on `data/eval/opus-briefing/ab-opus-frames.json`, claude-opus-5 over the 42 frame-bearing
+ * states of game 5635467422: the briefing arm was scored at 13% fabrication and FOUR of its five
+ * flags were this, every figure written verbatim in the block's own schedule —
+ *
+ *   "…dragon is 1 minute 39 seconds out"     block: "Dragon spawns at 5:00 — in 1 minute 39 seconds."
+ *   "Briar is down and dragon spawns in 56 seconds"          block: "— in 56 seconds."
+ *
+ * Deliberately narrow: it fires only on an explicit time unit or a clock, so the sentences this
+ * rule was built on are untouched. "Kayn is 1180 gold and level 9 to your 8" carries no time unit
+ * and is still a misattribution; "You lead Briar 140 CS to 50" still goes through the comparative
+ * rule.
+ */
+const MAP_UNIT = /^\s*(?:seconds?|secs?|s\b|minutes?|mins?)\b/i
+
+/** `2:34`, `5:00` — a clock, whichever half of it the figure is. */
+const CLOCK_BEFORE = /:$/
+const CLOCK_AFTER = /^:\d/
+
+/**
+ * Does this figure belong to the map rather than to anybody standing on it?
+ *
+ * A timer, a spawn time or a clock. Nothing on the map's clock can be misattributed, because there
+ * is no player to have taken it from.
+ */
+export const isMapFigure = (text: string, at: number, length: number): boolean => {
+	const after = text.slice(at + length)
+	const before = text.slice(Math.max(0, at - 2), at)
+	return MAP_UNIT.test(after) || CLOCK_AFTER.test(after) || CLOCK_BEFORE.test(before)
+}
+
 const clauseOwner = (
 	line: string,
 	mentions: { owner: string; index: number }[],
@@ -816,6 +855,8 @@ export const scoreLine = (input: ScoreInput): LineScore => {
 			continue
 		}
 		// The number is real. Did it end up on the right player?
+		// A figure on the map's clock has no player to be taken from — see `isMapFigure`.
+		if (isMapFigure(norm, m.index, m[0].length)) continue
 		const owner = comparative.get(m.index) ?? clauseOwner(norm, mentions, m.index)
 		if (owner === null) continue
 		if (!segments.some(s => s.owners.includes(owner) && s.values.has(value)))

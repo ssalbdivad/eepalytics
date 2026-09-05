@@ -522,3 +522,56 @@ describe("the comparative shape", () => {
 		)
 	})
 })
+
+/* ------------------------------------------------ the map's clock has no owner */
+
+/**
+ * A timer is not somebody's number, so it cannot be on the wrong somebody.
+ *
+ * All four of these are real claude-opus-5 lines from `data/eval/opus-briefing/ab-opus-frames.json`
+ * over the frame-bearing states of game 5635467422, every figure written verbatim in the block's
+ * own schedule, and every one of them scored `misattributed-number` before `isMapFigure` existed.
+ * Four of the briefing arm's five fabrication flags were this one bug, which is the difference
+ * between a reported 13% and a hand-audited 0%.
+ */
+describe("map figures", () => {
+	const block = `Clock 3:20. You: Lillia lv4 0/0/0, at least 20 CS, 133/883 HP, 881 gold
+
+### What is coming (the map's clock, worked out from the event feed)
+
+- Dragon spawns at 5:00 — in 1 minute 39 seconds.
+- Void grubs spawns at 6:00 — in 2 minutes 39 seconds.
+
+Enemy jungler: Briar, under 10 CS, level 3.`
+	const roster = ["Lillia", "Briar"]
+	const score = (line: string) => scoreLine({ line, block, roster, champions: roster })
+
+	it("a spawn timer spoken after a champion's name is not misattributed", () => {
+		const s = score("Briar is down and dragon spawns in 56 seconds — finish this camp.")
+		deepStrictEqual(s.misattributed, [])
+	})
+
+	it("a timer said in words is not misattributed to the person addressed", () => {
+		const s = score("At 133 HP with 881 gold, back now — dragon is 1 minute 39 seconds out.")
+		deepStrictEqual(s.misattributed, [])
+	})
+
+	it("a clock is not misattributed", () => {
+		const s = score("Two levels up on Briar already — be at the pit for dragon in 2:34.")
+		deepStrictEqual(s.misattributed, [])
+	})
+
+	it("the exemption is a TIME unit and nothing else — a player's figure still binds", () => {
+		/*
+		 * The sentence the misattribution rule was built on. If the map exemption ever swallowed
+		 * this, the rule would be an amnesty rather than a correction.
+		 */
+		const s = scoreLine({
+			line: "Briar is 881 gold and level 4 to your 3.",
+			block,
+			roster,
+			champions: roster
+		})
+		ok(s.misattributed.some(m => m.value === 881 && m.claimedOwner === "Briar"))
+	})
+})
