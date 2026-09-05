@@ -398,3 +398,32 @@ describe("naming an action, in the idioms a coach actually uses", () => {
 			ok(!has(line), line)
 	})
 })
+
+/**
+ * Praise is a legitimate line with no instruction in it — the owner asked for "insights or
+ * encouragement" and the prompt sanctions a warm word after something he actually did. The
+ * exemption is narrow on purpose, so it cannot become a way to dodge the action requirement.
+ */
+describe("praise is allowed to name no action", () => {
+	const noAction = (line: string): boolean =>
+		scoreLine({ line, block: BLOCK, roster: ROSTER, champions: CHAMPIONS }).faults.includes(
+			"no-alternative"
+		)
+
+	it("exempts a warm line about something he did", () => {
+		// Verbatim from a real bench run, where it was scored a fault.
+		ok(!noAction("You secured the Herald, great work!"))
+		ok(!noAction("Nice, you just got a double kill"))
+		ok(!noAction("lovely, you're ahead of Kayn now"))
+	})
+
+	it("does NOT exempt a suggestion dressed as praise", () => {
+		// Requires a PAST-TENSE achievement, so an instruction cannot hide behind a nice word.
+		ok(noAction("it would be great to secure the Herald"))
+		ok(noAction("Herald is a great objective for you here"))
+	})
+
+	it("does not exempt a plain observation with no warmth", () => {
+		ok(noAction("Kayn has more farm than you right now"))
+	})
+})

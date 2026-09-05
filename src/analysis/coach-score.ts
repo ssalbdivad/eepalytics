@@ -560,6 +560,24 @@ const ACTION: RegExp[] = [
 
 const namesAnAction = (text: string): boolean => ACTION.some(re => re.test(text))
 
+/**
+ * Praise, which is allowed to name no action.
+ *
+ * Measured: "You secured the Herald, great work!" was scored `no-alternative`, and it is not a
+ * fault — the owner asked for "insights or encouragement", the prompt sanctions a warm line after
+ * something he actually did, and telling him what to do next about a Herald he has already taken
+ * would be worse writing, not better coaching.
+ *
+ * Deliberately NARROW so it cannot become a loophole. It requires a congratulatory phrase AND a
+ * past-tense achievement, so "you should take Herald" is not praise and still needs an action. The
+ * facts that produce praise are all anchored to a real event — a multikill, an objective he took,
+ * a deficit he closed — so a model cannot reach this exemption by inventing something nice.
+ */
+const PRAISE = /\b(great|nice|lovely|beautiful|well done|good (work|job|stuff)|love (it|that)|excellent|perfect|brilliant|there we go|that'?s it|proud)\b/i
+const DID_SOMETHING = /\b(you (secured|stole|took|got|caught|closed|pulled|landed|won)|just (got|secured|stole|took)|you'?re (ahead|up)\b)/i
+
+const isPraise = (text: string): boolean => PRAISE.test(text) && DID_SOMETHING.test(text)
+
 /* ============================================================== the entry point */
 
 /**
@@ -664,7 +682,8 @@ export const scoreLine = (input: ScoreInput): LineScore => {
 
 	/* -- the two weaknesses ------------------------------------------------- */
 	const action = namesAnAction(norm)
-	if (!action) faults.push("no-alternative")
+	// Praise is exempt: a warm line about something he already did needs no instruction.
+	if (!action && !isPraise(norm)) faults.push("no-alternative")
 
 	const unseen = unseenNumbers(input.block)
 	const carriesUnseenFact = numbersIn(norm).some(n => unseen.has(n))
