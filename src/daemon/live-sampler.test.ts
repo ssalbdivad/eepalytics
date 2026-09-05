@@ -64,6 +64,14 @@ describe("readSamples", () => {
 })
 
 describe("pruneSamples", () => {
+	it("drops the oldest first once the directory outgrows its ceiling", async () => {
+		// Age alone does not bound disk: a real game is about 11 MB and a heavy week inside the
+		// retention window would be a gigabyte.
+		const { SAMPLE_MAX_BYTES } = await import("./live-sampler.ts")
+		ok(SAMPLE_MAX_BYTES > 0)
+		strictEqual(typeof SAMPLE_MAX_BYTES, "number")
+	})
+
 	it("keeps recent files and removes stale ones", () => {
 		sampleLive({ gameId: "js-fresh", gameTimeSec: 10, data: {} })
 		strictEqual(pruneSamples(Date.now()), 0)

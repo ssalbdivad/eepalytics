@@ -47,6 +47,15 @@ export const SAMPLE_EVERY_SEC = 5
 /** Games older than this are pruned. Samples are a debugging and evaluation aid, not history. */
 export const SAMPLE_KEEP_DAYS = 7
 
+/**
+ * A ceiling on the whole directory, because age alone does not bound disk.
+ *
+ * Measured on a real game: 16 samples took 516 KB, so a thirty-minute game is about 11 MB. A
+ * heavy day inside the retention window is a gigabyte, on a machine whose SQLite database — the
+ * thing that actually matters — is seven. Oldest games go first once the ceiling is crossed.
+ */
+export const SAMPLE_MAX_BYTES = 600 * 1024 * 1024
+
 export interface SamplerState {
 	gameId: string
 	lastAtSec: number
@@ -155,21 +164,46 @@ export const readSamples = (gameId: string): { atMs: number; gameTime: number; d
 	return out
 }
 
-/** Drop sample files older than the retention window. Called on daemon start. */
+/**
+ * Drop stale sample files, by age and then by total size. Called on daemon start.
+ *
+ * Two bounds because one is not enough: age alone leaves a heavy week unbounded, and size alone
+ * would keep a month-old game forever if he stopped playing. Age first, then oldest-first until
+ * the directory fits.
+ */
 export const pruneSamples = (now = Date.now()): number => {
 	if (!existsSync(SAMPLE_DIR)) return 0
 	let gone = 0
-	for (const f of readdirSync(SAMPLE_DIR)) {
-		const p = `${SAMPLE_DIR}/${f}`
+	const drop = (p: string): void => {
 		try {
-			if (now - statSync(p).mtimeMs > SAMPLE_KEEP_DAYS * 86_400_000) {
-				unlinkSync(p)
-				gone += 1
-			}
+			unlinkSync(p)
+			gone += 1
 		} catch {
 			// A file that vanished under us is already what we wanted.
 		}
 	}
+
+	const live: { path: string; mtime: number; size: number }[] = []
+	for (const f of readdirSync(SAMPLE_DIR)) {
+		const p = `${SAMPLE_DIR}/${f}`
+		try {
+			const st = statSync(p)
+			if (now - st.mtimeMs > SAMPLE_KEEP_DAYS * 86_400_000) drop(p)
+			else live.push({ path: p, mtime: st.mtimeMs, size: st.size })
+		} catch {
+			// Raced with something else; nothing to do.
+		}
+	}
+
+	let total = live.reduce((n, f) => n + f.size, 0)
+	// Oldest first, so the game he just played is the last thing to go.
+	live.sort((a, b) => a.mtime - b.mtime)
+	for (const f of live) {
+		if (total <= SAMPLE_MAX_BYTES) break
+		drop(f.path)
+		total -= f.size
+	}
+
 	if (gone > 0) log.info(`pruned ${gone} live-sample file${gone === 1 ? "" : "s"}`)
 	return gone
 }
