@@ -264,13 +264,27 @@ export const objectiveSchedule = (events: readonly ObjectiveEvent[], tSec: numbe
 	const drakes = count("dragon")
 	const lastDrake = lastOf("dragon")
 	const soul = Math.max(drakes.mine, drakes.theirs) >= OBJECTIVE_SPAWN.soulAt
-	add(
-		soul ? "Elder Dragon" : "Dragon",
-		lastDrake === null ? OBJECTIVE_SPAWN.dragonFirstSec
-		: soul ? lastDrake + OBJECTIVE_SPAWN.elderRespawnSec
-		: lastDrake + OBJECTIVE_SPAWN.dragonRespawnSec,
-		drakes
-	)
+	/*
+	 * Both the NAME and the TIMER of the next dragon depend on whether soul is decided, and soul is
+	 * a per-side count. An unresolved killer therefore does not merely lose a tally entry: with
+	 * enough drakes on the board it makes the difference between "Dragon in five minutes" and
+	 * "Elder in six", and the wrong one of those sends him to an empty pit early with a confident
+	 * voice behind him. So when the counts cannot settle it, the dragon line is withheld.
+	 *
+	 * It should never fire in practice — `championOf` resolves the event feed's bare game names
+	 * against `riotIdGameName`, which matched 37 of 37 in a real capture once that field was
+	 * consulted — and it exists because the failure it guards against is silent.
+	 */
+	const unsided = of("dragon").filter(e => e.side === null).length
+	const soulUnknowable = !soul && unsided > 0 && Math.max(drakes.mine, drakes.theirs) + unsided >= OBJECTIVE_SPAWN.soulAt
+	if (!soulUnknowable)
+		add(
+			soul ? "Elder Dragon" : "Dragon",
+			lastDrake === null ? OBJECTIVE_SPAWN.dragonFirstSec
+			: soul ? lastDrake + OBJECTIVE_SPAWN.elderRespawnSec
+			: lastDrake + OBJECTIVE_SPAWN.dragonRespawnSec,
+			drakes
+		)
 
 	if (tSec < OBJECTIVE_SPAWN.grubsDespawnSec) {
 		const grubs = count("grub")

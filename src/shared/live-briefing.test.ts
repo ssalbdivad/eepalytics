@@ -273,3 +273,21 @@ test("the hint reverses the visibility rule rather than restating it", () => {
 	assert.match(BRIEFING_HINT, /You are NOT forbidden from talking about what is on his screen/)
 	assert.match(BRIEFING_HINT, /would have been equally\s+true five minutes ago/)
 })
+
+/*
+ * The guard on the one branch whose NAME and TIMER both hang on a count that could be wrong.
+ * Never observed — the event feed has resolved every killer since `riotIdGameName` was consulted —
+ * and pinned because its failure mode is a confident timer for the wrong monster.
+ */
+test("an unresolvable killer withholds the dragon line rather than guessing at soul", () => {
+	const ev: ObjectiveEvent[] = [
+		{ kind: "dragon", tSec: 300, side: "theirs" },
+		{ kind: "dragon", tSec: 700, side: "theirs" },
+		{ kind: "dragon", tSec: 1100, side: "theirs" },
+		{ kind: "dragon", tSec: 1500, side: null }
+	]
+	assert.equal(objectiveSchedule(ev, 1600).some(o => o.name.includes("Dragon")), false)
+	// Resolve that last one and the line comes back, named for what it actually is.
+	const resolved = ev.map(e => (e.side === null ? { ...e, side: "theirs" as const } : e))
+	assert.equal(objectiveSchedule(resolved, 1600).find(o => o.name.includes("Dragon"))?.name, "Elder Dragon")
+})
