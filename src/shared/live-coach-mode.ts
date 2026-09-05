@@ -23,6 +23,36 @@
  * the list while keeping that rule multiplied useful output 13.5-fold with a fabrication interval
  * TIGHTER than the fenced baseline's — tighter because it finally said enough to measure.
  *
+ * ## What actually ships is PACED, and these are its numbers
+ *
+ * That table is the architecture with no rate limit, and it is not what he hears. `SPEAK_FLOOR_SEC`
+ * in `analysis/speak-pace.ts` puts 45 game-clock seconds between spoken lines, because unpaced this
+ * coach is chattier than the one he switched off. Both arms were re-run on ONE uniform 20-second
+ * grid over the whole of game 5635467422 — 110 turns, the real journal frames attached for the
+ * thirteen marks that have one — and the floor applied exactly as the socket applies it, before the
+ * turn (`data/eval/paced-grid20-arms.json`, read by `--paced`):
+ *
+ *     arm                     spoke      lines/min   busiest 4 min   useful lines   fabrication
+ *     FENCED       unpaced    12 of 110    0.33            3               7         0% [0-24] n=12
+ *     FENCED       45s floor  10 of  91    0.28            2               5         0% [0-28] n=10
+ *     SHIPPED      unpaced   105 of 110    2.89           13              99         1% [0-5]  n=105
+ *     SHIPPED      45s floor  36 of  39    0.99            5              34         0% [0-10] n=36
+ *
+ * Paced, cite-or-quiet says FIVE times what the fence does — 34 useful lines against 7 — and does
+ * it at a line a minute, five in its busiest four minutes, against the NINE IN FOUR MINUTES he
+ * switched the old coach off at. That is the whole case for the default, and both halves of it had
+ * to be true: the fence is not quiet enough to be safe by itself and it was never quiet by choice.
+ *
+ * The cost is repetition, and it is measured rather than denied: 13 of those 36 lines restate
+ * something he heard in the previous three minutes, 18 of 36 contain the word "camps" and 12 tell
+ * him to recall and spend. A floor keeps the EARLIEST line in each window, never the freshest, so
+ * it cannot fix this. What can: dropping a line that restates one from the last three minutes takes
+ * the 36 to 29 with the cadence unchanged and every restatement gone (simulated on the same
+ * transcript). It is not shipped here because these are stateless HTTPS turns — the coach in this
+ * harness CANNOT remember she said it, while the shipped Gemini Live socket keeps a thread and the
+ * prompt already forbids repeating. 36% is therefore an upper bound on the socket's repetition and
+ * an estimate for the turn-based providers, which are as memoryless as the harness.
+ *
  * ## What the fence is, so that removing it is a specific act
  *
  * FENCED means `analysis/live-facts.ts` computes and ranks every candidate line in TypeScript and
@@ -73,7 +103,7 @@ export const LIVE_COACH_MODES: {
 		blurb:
 			"She reads the whole ground-truth block and the screenshot and decides for herself what is worth saying, under one hard rule: every number and every champion name must appear in this turn's block, and anything she cannot cite that way she does not say.",
 		evidence:
-			"363 real samples, four games, judged blind: spoke on 94 of 102 turns against the fence's 11, with fabrication still 0 (95% CI 0-3%, n=132) — about 81 useful lines a game against 6."
+			"363 real samples, four games, judged blind: spoke on 94 of 102 turns against the fence's 11, with fabrication still 0 (95% CI 0-3%, n=132). Paced to one line every 45 seconds, as it ships, that is 34 useful lines in a 36-minute game against the fence's 7, five of them in its busiest four minutes."
 	},
 	{
 		id: "fenced",
@@ -81,7 +111,7 @@ export const LIVE_COACH_MODES: {
 		blurb:
 			"She may only speak lines this app computed and ranked in TypeScript first, and an empty list means she stays quiet. Nothing she says can be wrong, because she is choosing from a menu the app already checked.",
 		evidence:
-			"Same run: 0 fabrications, but 14 lines in 576 turns — six of them in the whole first seven minutes, which is where a jungler decides his route."
+			"Same run: 0 fabrications, but 14 lines in 576 turns — six of them in the whole first seven minutes, which is where a jungler decides his route. Re-measured over one whole game it said 12 things, the first of them at 8:37."
 	}
 ]
 

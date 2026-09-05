@@ -100,6 +100,27 @@
  *     37. It spends its whole budget in a burst and then goes quiet, which is precisely the shape
  *     he quit over, at the same daily volume. Bunching is the failure mode, not the feature.
  *
+ * ## Re-measured with the floor actually applied, against the fence it replaces
+ *
+ * The sweep above pages through floors on one arm. The question that decides the DEFAULT is
+ * whether the paced coach still beats the fence, and both arms were therefore re-run on the same
+ * 110-turn grid with the real frames attached and the floor applied before the turn, as the socket
+ * applies it (`data/eval/paced-grid20-arms.json`, the table in `shared/live-coach-mode.ts`). Paced,
+ * cite-or-quiet says 34 useful lines in the game against the fence's 7, at five lines in its
+ * busiest four minutes against the nine he quit over. The fence's own first sentence of that game
+ * arrives at 8:37.
+ *
+ * The floor's cost showed up in the transcript rather than in any rate: 13 of the 36 lines he hears
+ * restate something from the previous three minutes, 18 of 36 say "camps" and 12 say recall. That
+ * is the predicted consequence of keeping the EARLIEST line in each window — the standing farm and
+ * gold facts are true on every turn, so they win every window. Dropping a line that restates one
+ * from the last three minutes takes 36 to 29 with the cadence untouched (min gap 54s, median 61s)
+ * and reads far better. It is not in this file because a floor is a clock and cannot know what she
+ * is about to say: a novelty gate has to run AFTER the turn, which the turn-based path can do and
+ * the Live socket, which speaks the audio itself, cannot. The socket's own thread and the prompt's
+ * do-not-repeat rule are what fight this there, and neither exists in the stateless harness these
+ * 36% came from, so 36% is an upper bound and not a measurement of the shipped socket.
+ *
  * ## What the floor does NOT do
  *
  * It does not improve what she says. It keeps the EARLIEST line in each window, never the best one:

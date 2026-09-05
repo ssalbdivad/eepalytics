@@ -26,10 +26,12 @@ import type { VisionState } from "../shared/live-state.ts"
 import {
 	ARMS,
 	REPAIRS,
+	armTurns,
 	championKnowledge,
 	countRankedFacts,
 	isSpecific,
 	median,
+	pacedRow,
 	picturePhrases,
 	quantile,
 	statsFor,
@@ -271,4 +273,82 @@ test("median and quantile survive an empty sample", () => {
 	assert.equal(quantile([], 0.9), 0)
 	assert.equal(median([3, 1, 2]), 2)
 	assert.equal(quantile([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 0.9), 10)
+})
+
+/* ------------------------------------------------------- the paced re-read */
+
+/**
+ * `--paced` re-reads a stored run with the speak floor applied, and it decides the DEFAULT, so the
+ * two things it could get wrong quietly are worth pinning: which turn a floor lets through, and
+ * what the denominator means once some turns are never asked.
+ */
+
+const pacedTurn = (tSec: number, over: Partial<CellTurn> = {}): CellTurn => ({
+	stateId: `s-${tSec}`,
+	tSec,
+	clock: `${Math.floor(tSec / 60)}:${String(tSec % 60).padStart(2, "0")}`,
+	rankedFacts: 0,
+	framePath: null,
+	line: "a line",
+	ok: true,
+	ms: 1,
+	silent: false,
+	faults: [],
+	fabricated: false,
+	inventedChampions: [],
+	unbackedNumbers: [],
+	misattributed: [],
+	movement: [],
+	subject: "farm",
+	picturePhrases: [],
+	specific: true,
+	useful: true,
+	...over
+})
+
+test("the floor keeps the EARLIEST line in its window, never the best one", () => {
+	const turns = [0, 20, 40, 60, 80].map(t => pacedTurn(t))
+	const r = pacedRow("x", turns, 45)
+	// 0 speaks; 20 and 40 are inside the floor; 60 is the next one asked at all.
+	assert.deepEqual(r.spokenAt, [0, 60])
+	assert.equal(r.asked, 2, "a suppressed turn is never sent to the model")
+	assert.equal(r.offered, 5)
+})
+
+test("PASS costs nothing — a silent turn does not start the floor running", () => {
+	const turns = [pacedTurn(0, { silent: true, useful: false }), pacedTurn(20)]
+	const r = pacedRow("x", turns, 45)
+	assert.deepEqual(r.spokenAt, [20], "the PASS at 0 must not have blocked the line at 20")
+	assert.equal(r.asked, 2)
+	assert.equal(r.spoke, 1)
+})
+
+test("a paced rate is out of the turns actually ASKED, not the whole grid", () => {
+	const turns = [0, 20, 40, 60].map(t => pacedTurn(t, t === 60 ? { silent: true, useful: false } : {}))
+	const r = pacedRow("x", turns, 45)
+	assert.equal(r.offered, 4)
+	assert.equal(r.asked, 2)
+	assert.equal(r.spokeRate.n, 2, "the 20s and 40s turns were never sent, so they are not PASSes")
+	assert.equal(r.spokeRate.p, 0.5)
+})
+
+test("the unpaced row is the same transcript with no floor", () => {
+	const turns = [0, 20, 40].map(t => pacedTurn(t))
+	const r = pacedRow("x", turns, null)
+	assert.equal(r.paced, false)
+	assert.equal(r.spoke, 3)
+	assert.equal(r.asked, 3)
+	assert.equal(r.usefulLines, 3)
+})
+
+test("armTurns takes one turn per game clock, prefers the frame-bearing cell, and sorts", () => {
+	const cells: Cell[] = [
+		{ set: "paired", arm: "a", withFrame: true, turns: [pacedTurn(40, { line: "with picture" })] },
+		{ set: "paired", arm: "a", withFrame: false, turns: [pacedTurn(40, { line: "blind" })] },
+		{ set: "late", arm: "a", withFrame: false, turns: [pacedTurn(80), pacedTurn(60)] },
+		{ set: "late", arm: "b", withFrame: false, turns: [pacedTurn(10, { line: "other arm" })] }
+	]
+	const t = armTurns(cells, "a")
+	assert.deepEqual(t.map(x => x.tSec), [40, 60, 80])
+	assert.equal(t[0]!.line, "with picture", "the blind copy of a paired state is a second condition, not a second turn")
 })
