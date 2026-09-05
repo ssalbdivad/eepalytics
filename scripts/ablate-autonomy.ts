@@ -80,6 +80,8 @@ import { DatabaseSync } from "node:sqlite"
 import { DATA_DIR, DB_PATH } from "../src/shared/constants.ts"
 import { renderState } from "../src/shared/live-state.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../src/shared/live-prompt.ts"
+import { liveCoachSystemPrompt, renderBlockForMode } from "../src/shared/live-coach-mode.ts"
+import { liveChampionKnowledge } from "../src/review/live-coach-knowledge.ts"
 import { parseChampionClauses } from "../src/shared/champion-advice.ts"
 import { baselineFromRows, perGameMetrics } from "../src/analysis/index.ts"
 import { loadCorpus } from "../src/daemon/corpus.ts"
@@ -134,6 +136,16 @@ interface AblationState {
 	block: string
 	/** What arms 3 and 4 see: the same block with the fence's ranked list cut out. */
 	blockNoList: string
+	/**
+	 * What the SHIPPED cite-or-quiet mode sees: `renderBlockForMode(state, "cite-or-quiet")`.
+	 *
+	 * Not the same thing as `blockNoList`, and the difference is the whole point of the fifth arm.
+	 * The measured arm had the ranked list CUT OUT; the shipped mode keeps it, demotes its heading
+	 * to a hint, rewrites the empty-list paragraph so it no longer reads as an order to be silent,
+	 * and splices in the `Down right now` line that names who is dead. Every one of those is a
+	 * change the run below has to price, because none of them was in the run that justified them.
+	 */
+	blockShipped: string
 	/** How many ranked facts the fence offered here. Zero means the fenced arm must PASS. */
 	rankedFacts: number
 	roster: string[]
@@ -231,6 +243,7 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 		atMs: number
 		tSec: number
 		block: string
+		blockShipped: string
 		roster: string[]
 	}
 	const built: Built[] = []
@@ -244,6 +257,7 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 			atMs: s.atMs,
 			tSec: s.gameTime,
 			block: renderState(st),
+			blockShipped: renderBlockForMode(st, "cite-or-quiet"),
 			roster: [st.me.champion, ...st.allies.map(p => p.champion), ...st.enemies.map(p => p.champion)]
 		})
 	}
@@ -259,6 +273,7 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 		frameSkewSec: skew,
 		block: b.block,
 		blockNoList: stripRankedList(b.block),
+		blockShipped: b.blockShipped,
 		rankedFacts: countRankedFacts(b.block),
 		roster: b.roster
 	})
@@ -426,6 +441,15 @@ export interface Arm {
 	label: string
 	/** Does this arm see the fence's ranked list? */
 	seesList: boolean
+	/**
+	 * Which of the three blocks this arm is handed.
+	 *
+	 * `full` is `renderState` verbatim, `stripped` is the measured surgery, and `shipped` is
+	 * `renderBlockForMode(state, "cite-or-quiet")` — the real function the app would call. A
+	 * separate field rather than a second boolean because the shipped block both KEEPS the list and
+	 * is not the fenced block, which no boolean can say.
+	 */
+	blockKind: "full" | "stripped" | "shipped"
 	system: (champion: string) => string
 	why: string
 }
@@ -433,8 +457,9 @@ export interface Arm {
 export const ARMS: Arm[] = [
 	{
 		id: "fenced",
-		label: "FENCED — exactly what ships",
+		label: "FENCED — the old fence",
 		seesList: true,
+		blockKind: "full",
 		system: () => LIVE_COACH_SYSTEM_PROMPT,
 		why: "The baseline. `shared/live-prompt.ts` verbatim, `renderState` verbatim."
 	},
@@ -442,6 +467,7 @@ export const ARMS: Arm[] = [
 		id: "fenced-see",
 		label: "FENCED+SEE — the list, plus permission to speak about the picture",
 		seesList: true,
+		blockKind: "full",
 		system: () => `${LIVE_COACH_SYSTEM_PROMPT}${SEE_SUPPLEMENT}`,
 		why: "Byte-identical block to `fenced`. The cheapest possible test of whether the fence alone is what silences the frame."
 	},
@@ -449,6 +475,7 @@ export const ARMS: Arm[] = [
 		id: "cite-or-quiet",
 		label: "CITE-OR-QUIET — no ranked list, one citation rule",
 		seesList: false,
+		blockKind: "stripped",
 		system: champ => `${PERSONA}${CITE_RULE}${championKnowledge(champ)}`,
 		why: "The fence's ranked list is cut from the block. Persona, raw ground truth, the picture, the champion's digit-free clauses, and one rule."
 	},
@@ -456,8 +483,34 @@ export const ARMS: Arm[] = [
 		id: "free",
 		label: "FREE — full autonomy",
 		seesList: false,
+		blockKind: "stripped",
 		system: champ => `${PERSONA}${FREE_RULE}${championKnowledge(champ)}`,
 		why: "Byte-identical stripped block to `cite-or-quiet`. The upper bound on usefulness and, presumably, on fabrication."
+	},
+	{
+		id: "shipped",
+		label: "SHIPPED — what `liveCoachMode: cite-or-quiet` actually sends",
+		seesList: true,
+		blockKind: "shipped",
+		/*
+		 * Not a paraphrase of the winning arm — the functions themselves.
+		 *
+		 * `liveCoachSystemPrompt` and `renderBlockForMode` are what the app calls once the three
+		 * wiring patches land, and `liveChampionKnowledge` is the door the champion clauses come
+		 * through. Reimplementing any of them here would measure a copy, and the copy is exactly
+		 * where a shipped regression hides.
+		 *
+		 * It differs from `cite-or-quiet` in three ways, all of them additions made AFTER the run
+		 * that justified the architecture, and none of them measured until now: the `LIST_HINT`
+		 * section (the ranked list demoted from allowlist to hint, plus two prohibitions the blind
+		 * judge wrote up), the ranked list left IN the block rather than cut out, and the
+		 * `Down right now` line naming who is dead. Two of those exist to close judge-found faults
+		 * and one exists to keep the ranker's work; all three add text, and added text is how a
+		 * coach gets quiet again.
+		 */
+		system: champ =>
+			liveCoachSystemPrompt({ mode: "cite-or-quiet", championKnowledge: liveChampionKnowledge(champ) }),
+		why: "The real shipped functions, on the real shipped block. The only arm here that is not a reconstruction."
 	}
 ]
 
@@ -685,7 +738,10 @@ const runCell = async (
 	vocabulary: readonly string[]
 ): Promise<Cell> => {
 	const turns = await pool(states, CONCURRENCY, async state => {
-		const block = arm.seesList ? state.block : state.blockNoList
+		const block =
+			arm.blockKind === "shipped" ? state.blockShipped
+			: arm.blockKind === "stripped" ? state.blockNoList
+			: state.block
 		const frame = withFrame && state.framePath ? frameBase64(state.framePath) : null
 		const r = await runTurn(arm.system(state.roster[0] ?? ""), block, frame)
 		const line = r.text
@@ -1012,6 +1068,7 @@ const main = async (): Promise<void> => {
 			id: a.id,
 			label: a.label,
 			seesRankedList: a.seesList,
+			blockKind: a.blockKind,
 			why: a.why,
 			systemPromptSha: sha(a.system("Lillia")),
 			systemPromptChars: a.system("Lillia").length,
@@ -1027,7 +1084,8 @@ const main = async (): Promise<void> => {
 				rankedFacts: s.rankedFacts,
 				roster: s.roster,
 				block: s.block,
-				blockNoList: s.blockNoList
+				blockNoList: s.blockNoList,
+				blockShipped: s.blockShipped
 			})),
 			late: lateStates.map(s => ({
 				id: s.id,
@@ -1036,7 +1094,8 @@ const main = async (): Promise<void> => {
 				rankedFacts: s.rankedFacts,
 				roster: s.roster,
 				block: s.block,
-				blockNoList: s.blockNoList
+				blockNoList: s.blockNoList,
+				blockShipped: s.blockShipped
 			}))
 		},
 		cells,

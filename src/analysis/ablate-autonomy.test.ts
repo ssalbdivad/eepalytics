@@ -18,6 +18,8 @@
 
 import assert from "node:assert/strict"
 import { test } from "node:test"
+import { liveCoachSystemPrompt } from "../shared/live-coach-mode.ts"
+import { liveChampionKnowledge } from "../review/live-coach-knowledge.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../shared/live-prompt.ts"
 import { renderState } from "../shared/live-state.ts"
 import type { VisionState } from "../shared/live-state.ts"
@@ -137,6 +139,32 @@ test("cite-or-quiet and free share a persona and differ only in the rule", () =>
 
 test("every arm names the PASS escape, or a silence cannot be read as a decision", () => {
 	for (const arm of ARMS) assert.match(arm.system("Lillia"), /PASS/)
+})
+
+/*
+ * The fifth arm is the only one that is not a reconstruction, and that is the whole reason it is
+ * worth its share of the bill. `cite-or-quiet` measured an architecture; `shipped` measures the
+ * code. If someone reimplements the prompt here rather than calling the app's own function, the
+ * run silently starts measuring a copy — which is exactly where a shipped regression hides.
+ */
+test("the shipped arm calls the app's own prompt builder rather than restating it", () => {
+	const shipped = ARMS.find(a => a.id === "shipped")!
+	assert.equal(
+		shipped.system("Lillia"),
+		liveCoachSystemPrompt({ mode: "cite-or-quiet", championKnowledge: liveChampionKnowledge("Lillia") })
+	)
+	assert.equal(shipped.blockKind, "shipped")
+	// It keeps the ranked list, unlike the arm it descends from — that is the difference under test.
+	assert.equal(shipped.seesList, true)
+})
+
+test("the shipped arm is the measured arm plus the list hint, not a rewrite of it", () => {
+	const cite = ARMS.find(a => a.id === "cite-or-quiet")!.system("Lillia")
+	const shipped = ARMS.find(a => a.id === "shipped")!.system("Lillia")
+	// Champion knowledge is appended last in both, so compare the part before it.
+	const head = cite.slice(0, cite.indexOf("\n\n## What a one-trick"))
+	assert.equal(shipped.startsWith(head), true, "the shipped prompt no longer opens on the measured text")
+	assert.match(shipped, /a HINT, not a menu/)
 })
 
 /* ---------------------------------------------------------- champion knowledge */
