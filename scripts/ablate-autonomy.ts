@@ -62,6 +62,7 @@
  * ## Usage
  *
  *     node --experimental-strip-types scripts/ablate-autonomy.ts
+ *       --provider <id>       gemini-http | anthropic | openai | kimi | glm
  *       --model <id>          default gemini-3.6-flash
  *       --temperature X       default 0, held on every arm
  *       --concurrency N       default 6
@@ -133,6 +134,7 @@ const arg = (name: string, fallback: string): string => {
 const flag = (name: string): boolean => argv.includes(`--${name}`)
 
 const MODEL = arg("model", "gemini-3.6-flash")
+const PROVIDER = arg("provider", "gemini-http")
 const TEMPERATURE = Number(arg("temperature", "0"))
 const CONCURRENCY = Math.max(1, Number(arg("concurrency", "6")))
 const LIMIT = Number(arg("limit", "0"))
@@ -687,14 +689,26 @@ type GenerateText = typeof import("ai").generateText
 let generateText: GenerateText | null = null
 let handle: Awaited<ReturnType<typeof modelHandleFor>> | null = null
 
+/*
+ * The provider is a FLAG now, and that changes what this instrument can answer.
+ *
+ * It was pinned to `gemini-http` because that was the only key on the machine, so the ablation
+ * could vary the architecture and nothing else. With anthropic and openai keys present it can vary
+ * the MODEL too — and that question got much more interesting once the fence came off. Under the
+ * fence the model only phrased a sentence TypeScript had already written, so model quality barely
+ * mattered; under cite-or-quiet it is reasoning from the block and the picture, which is exactly
+ * where a stronger model should show up if it is going to.
+ *
+ * Hold one axis at a time. Comparing models across different ARMS measures nothing.
+ */
 const openTransport = async (): Promise<void> => {
-	const provider = providerById("gemini-http")
-	if (!provider) throw new Error("gemini-http provider missing")
+	const provider = providerById(PROVIDER)
+	if (!provider) throw new Error(`unknown provider "${PROVIDER}"`)
 	const key = providerKey(provider)
 	if (!key) {
-		console.error("No key in data/gemini.key. This ablation cannot run without it, and it is the")
-		console.error("ONLY key on this machine — anthropic.key, openai.key, kimi.key and glm.key are")
-		console.error("all absent, which is why this varies the architecture and not the model.")
+		console.error(`No key for "${PROVIDER}". Put one in data/${PROVIDER.replace("-http", "")}.key`)
+		console.error("at 0600, the same way the Gemini key lives there — never in the settings table,")
+		console.error("which round-trips through GET /api/settings into the renderer.")
 		process.exit(1)
 	}
 	generateText = (await import("ai")).generateText
