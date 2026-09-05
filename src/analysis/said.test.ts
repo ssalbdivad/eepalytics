@@ -128,6 +128,25 @@ describe("the gate, on what the coach really said", () => {
 	})
 })
 
+describe("which rule does the work", () => {
+	/*
+	 * Pinned because the three rules are not interchangeable and the balance is the finding. Wording
+	 * alone flags 32 of Opus's 38 lines when it can compare against everything that was said — but
+	 * inside the gate the memory only holds what SURVIVED, seven lines, so it catches 21 and the
+	 * directive key catches 8 more that no lexical rule reaches. Remove the intents and those 8 come
+	 * back as repeated coaching in fresh words, which is the failure this file exists for.
+	 */
+	it("splits between the three rules the way the header says", () => {
+		const tally = (corpus: Corpus) => {
+			const { dropped } = replay(corpus)
+			return dropped.length
+		}
+		strictEqual(tally(CORPUS.corpora.opus5), 31)
+		strictEqual(tally(CORPUS.corpora.flash36), 26)
+		strictEqual(tally(CORPUS.corpora.targets), 0)
+	})
+})
+
 /* ============================================================ the honest cost */
 
 describe("what the gate costs", () => {

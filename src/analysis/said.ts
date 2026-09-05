@@ -281,6 +281,25 @@ export const directiveKey = (line: string, champions: readonly string[] = []): s
 	return [head, ...rest.slice(0, 2)].join(" ")
 }
 
+/**
+ * The thresholds, and how they were chosen.
+ *
+ * Swept over the three corpora together — Opus's 38 lines, Gemini's 35, and the 15 hand-written
+ * targets — at every combination of wording overlap 0.35/0.4/0.45/0.5, directive cooldown
+ * 60/90/120/150s and subject cooldown 60/90/120s. 48 cells, and the surface is flat: targets kept
+ * ranged 14-15 of 15 and leaked repeats 0-3. Two corners are defensible and they trade against
+ * each other — (0.4, 150s, 90s) leaks nothing and kills one target; (0.45, 90s, 90s) keeps all
+ * fifteen targets and leaks two.
+ *
+ * The second is shipped, because the two errors are not symmetrical. A leaked repeat is one
+ * repeated line. A killed target is a line like *"Briar has not moved off zero CS in four minutes —
+ * go take his raptors and his blue"* never being said at all, which is the failure the owner
+ * actually reported. When in doubt this gate speaks.
+ *
+ * Everything is a ROLLING window rather than a per-game total, and that too is a correction: a
+ * whole-game budget of three retired the subject `farm` by 3:08 of a 36-minute game, which is the
+ * fence with extra steps.
+ */
 export interface SaidLimits {
 	wordingOverlap: number
 	wordingLookbackSec: number
@@ -306,14 +325,22 @@ export const SAID_LIMITS: SaidLimits = {
 	verbatimOverlap: 0.8
 }
 
+/**
+ * The client numbers as they stood when a line was spoken, so the loop can be closed later.
+ *
+ * GOLD ONLY, and the absences are deliberate. Gold is exact, it moves when he does the thing, and
+ * it moves one way — see `followUp`. CS is floored to tens, so a delta between two stored floors is
+ * worth nine in either direction and needs the interval arithmetic in `live-state.ts`; level and
+ * deaths are trajectory questions. All three belong to whoever builds the briefing, not to the
+ * transcript, and a field kept here "for later" is a field that goes stale unread.
+ */
 export interface SaidSnapshot {
 	gold?: number
-	cs?: number
-	level?: number
-	deaths?: number
 }
 
+/** One thing he heard, with both of its keys already derived. */
 export interface SaidLine {
+	/** Game clock in seconds, so every window in this file is game time and never wall time. */
 	tSec: number
 	line: string
 	subject: SaidSubject
@@ -324,8 +351,17 @@ export interface SaidLine {
 	at: SaidSnapshot
 }
 
+/**
+ * Everything he has heard this game. SPOKEN lines only.
+ *
+ * A refused line is not in here, and that is the definition rather than an optimisation: the
+ * question every rule in this file asks is "has he heard this", and he did not hear the one the
+ * gate stopped. It also means the memory grows at the gated rate — about seven lines in seven
+ * minutes — rather than at the model's.
+ */
 export interface SaidMemory {
 	lines: SaidLine[]
+	/** The ten in this game, used to strip names out of a directive key. */
 	champions: string[]
 }
 
@@ -334,15 +370,39 @@ export const newSaidMemory = (champions: readonly string[] = []): SaidMemory => 
 	champions: [...champions]
 })
 
+/**
+ * Forget everything, IN PLACE, between games.
+ *
+ * In place because the daemon holds one memory for the process, exactly as `resetFactMemory` does
+ * in `live-facts.ts`, and for the same reason the socket is closed at the end of a game rather than
+ * kept for the session: a transcript that spans two games tells the coach it has already said
+ * things it has not.
+ */
 export const resetSaidMemory = (mem: SaidMemory, champions: readonly string[] = []): void => {
 	Object.assign(mem, newSaidMemory(champions))
 }
 
+/**
+ * True when the line says nothing — a PASS, or blank.
+ *
+ * PASS is never remembered and never judged: it is the correct answer on most turns, and a memory
+ * that recorded it would count silence as a subject and then refuse to be silent again.
+ */
 export const isSilent = (line: string): boolean => {
 	const t = line.trim()
 	return t === "" || /^pass\b/i.test(t)
 }
 
+/**
+ * CONTAINMENT, not Jaccard: shared words over the SHORTER line.
+ *
+ * A model that says the same thing twice usually says it shorter the second time — "Your clear only
+ * gets faster while it keeps running, so finish the whole route" against "Stand by your buff and
+ * start your route because your clear only gets faster while it keeps running". Jaccard divides by
+ * the union and scores that pair 0.50; containment asks the question that matters, which is whether
+ * the shorter line is inside the longer one, and scores the same pair 0.75. Both of those lines are
+ * from the Gemini run, 25 seconds apart.
+ */
 const overlap = (a: readonly string[], b: readonly string[]): number => {
 	if (a.length === 0 || b.length === 0) return 0
 	const set = new Set(b)
@@ -351,6 +411,24 @@ const overlap = (a: readonly string[], b: readonly string[]): number => {
 	return shared / Math.min(a.length, b.length)
 }
 
+/**
+ * Which rule refused the line, so a drop can be argued with rather than trusted.
+ *
+ * Which rule fires how often, on the two real transcripts replayed through the gate:
+ *
+ *     corpus     wording   directive   subject-spent   survived
+ *     opus5           21           8               2          7
+ *     flash36         20           5               1          9
+ *     targets          0           0               0         15
+ *
+ * - `wording` — he has heard this sentence. Does the bulk of the work and cannot do it alone: the
+ *   memory only holds what SURVIVED, so as the gate gets better the pool it compares against gets
+ *   smaller. Against the full ungated Opus transcript this rule alone flags 32 of 38; inside the
+ *   gate it has seven lines to compare with and needs the other two.
+ * - `directive` — he has been told to do this. The instruction stays true for minutes while the
+ *   numbers around it move, so this is the rule that catches the same advice in a new sentence.
+ * - `subject-spent` — this topic has had its share of the last five minutes.
+ */
 export type SaidRepeat = "wording" | "directive" | "subject-spent" | null
 
 /**
@@ -376,6 +454,7 @@ export interface SaidVerdict {
 	why: string
 }
 
+/** Derive both keys and the content words for one line, without recording it. */
 export const analyseSaid = (mem: SaidMemory, line: string, tSec: number): SaidLine => ({
 	tSec,
 	line: line.trim(),
@@ -386,6 +465,17 @@ export const analyseSaid = (mem: SaidMemory, line: string, tSec: number): SaidLi
 	at: {}
 })
 
+/**
+ * MAY HE HEAR THIS? The refusal, in rule order.
+ *
+ * Order is the argument. The two exemptions run FIRST, because a line the world has made new is not
+ * a repeat however it is worded — except when it is word for word, which is the `verbatimOverlap`
+ * guard on both of them. Then the three refusals, cheapest and most certain first.
+ *
+ * Enforceable only where the sentence exists as text before it is spoken, i.e. the turn-based
+ * providers. On the Gemini Live socket the audio is already playing when the transcription arrives,
+ * so there this is an instrument and `renderSaid` is the mechanism. See the header.
+ */
 export const judgeSaid = (
 	mem: SaidMemory,
 	line: string,
@@ -475,6 +565,13 @@ export const judgeSaid = (
 	return { repeat: false, reason: null, of: null, why: "new" }
 }
 
+/**
+ * Record what he actually heard, with the numbers that were true when he heard it.
+ *
+ * Called on the line that SPOKE — after `judgeSaid` cleared it on the turn path, and from the
+ * socket's `outputTranscription` handler on the socket path, where nothing cleared it and the
+ * transcript is all there is.
+ */
 export const rememberSaid = (
 	mem: SaidMemory,
 	line: string,
