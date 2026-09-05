@@ -46,7 +46,7 @@ race-behind: you get paid for the long game, so take the camps and stop trading 
 race-behind: your clear speeds up as the stacks build, so finish the early routes
 race-behind: you have no true form yet, so farm the side he is not on until the pit comes up
 
-race-ahead: an epic monster leaves an enhanced coral, so go and take one while you are ahead
+race-ahead: baron and herald leave the coral that matters, so line one up while you are ahead
 race-ahead: your stacks are the part that stays, so keep the takedowns coming and skip the duel
 race-ahead: every large monster is another permanent stack, so keep the route full and take his camps
 
@@ -55,7 +55,7 @@ restraint: every camp adds a stack you keep, so farm the level back and come aga
 restraint: a level down your dashes are your exit and not your entry, so walk away and clear
 
 fight-lost: your dashes need room, so pull it into open ground rather than a corridor
-fight-lost: the tail knock-up refunds a dash in that direction, so land it before you commit
+fight-lost: the tail refunds that dash only when it lands on a champion, so aim it at one
 fight-lost: hold the spin while their damage is on you, not while you are chasing someone
 
 fight-absent: that one was decided before you could reach it, so go and set up the epic monster
@@ -71,5 +71,5 @@ build: if that makes the duel worse, go and stack somewhere he is not standing
 build: his item is a clock on the phase you are weak in, so farm through it rather than test it
 
 farm-behind: every camp you finish is a permanent stack, so run the route out rather than cut it
-farm-behind: an unfinished route costs gold and tempo both, take the last camp
-farm-behind: put the next camps between you and the drake pit
+farm-behind: each dash direction has its own timer, so clear with one still pointed at the way out
+farm-behind: stacks are the only thing you keep through a death, so bank them before contesting

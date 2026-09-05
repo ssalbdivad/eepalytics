@@ -110,7 +110,7 @@ const LILLIA_FACTS = {
 	},
 	"lillia.w-is-her-only-hop": {
 		says: "Watch Out! Eep! dashes a short distance toward the target location and cannot pass through terrain, and it is the ONLY dash, blink or leap in the kit — which is why 'she has no dash' is wrong and 'the hop will not carry her over a wall' is right.",
-		checked: `wiki.leagueoflegends.com/en-us/Lillia (W, 150 units, not through terrain) + ddragon 16.17.1 Lillia.json for the rest of the kit, ${CHECKED_ON}`
+		checked: `wiki.leagueoflegends.com/en-us/Lillia (W, 500 target range and a 350 dash, not through terrain) + ddragon 16.17.1 Lillia.json for the rest of the kit, ${CHECKED_ON}`
 	},
 	"lillia.e-reveals-what-it-hits": {
 		says: "Swirlseed rolls until it meets a wall or a target; what it lands on is damaged, slowed and revealed briefly. It reveals what it HITS — it does not light up the ground it rolled over.",
@@ -298,14 +298,14 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["you get paid for the long game, so take the camps and stop trading tempo for a coin flip", ["belveth.stacks-are-permanent", "role.judgment"]],
 		["your clear speeds up as the stacks build, so finish the early routes", ["belveth.stacks-are-permanent"]],
 		["you have no true form yet, so farm the side he is not on until the pit comes up", ["belveth.true-form-needs-a-coral", "belveth.judgment.weak-early"]],
-		["an epic monster leaves an enhanced coral, so go and take one while you are ahead", ["belveth.coral-from-takedowns"]],
+		["baron and herald leave the coral that matters, so line one up while you are ahead", ["belveth.coral-from-takedowns"]],
 		["your stacks are the part that stays, so keep the takedowns coming and skip the duel", ["belveth.stacks-are-permanent"]],
 		["every large monster is another permanent stack, so keep the route full and take his camps", ["belveth.stacks-are-permanent", "role.camps-respawn"]],
 		["without a coral you have no true form, so go and take camps until you can get one", ["belveth.true-form-needs-a-coral", "belveth.coral-from-takedowns"]],
 		["every camp adds a stack you keep, so farm the level back and come again", ["belveth.stacks-are-permanent", "role.camps-are-gold-and-xp"]],
 		["a level down your dashes are your exit and not your entry, so walk away and clear", ["belveth.q-per-direction-cooldown", "belveth.judgment.weak-early"]],
 		["your dashes need room, so pull it into open ground rather than a corridor", ["belveth.q-per-direction-cooldown"]],
-		["the tail knock-up refunds a dash in that direction, so land it before you commit", ["belveth.w-refunds-a-dash"]],
+		["the tail refunds that dash only when it lands on a champion, so aim it at one", ["belveth.w-refunds-a-dash"]],
 		["hold the spin while their damage is on you, not while you are chasing someone", ["belveth.e-pays-while-damaged"]],
 		["that one was decided before you could reach it, so go and set up the epic monster", ["role.objective-timers"]],
 		["an epic monster leaves a coral and stacks, so go take one instead of chasing this", ["belveth.coral-from-takedowns", "belveth.stacks-are-permanent"]],
@@ -317,7 +317,7 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["if that makes the duel worse, go and stack somewhere he is not standing", ["role.items-change-a-duel", "belveth.stacks-are-permanent"]],
 		["his item is a clock on the phase you are weak in, so farm through it rather than test it", ["role.items-change-a-duel", "belveth.judgment.weak-early"]],
 		["every camp you finish is a permanent stack, so run the route out rather than cut it", ["belveth.stacks-are-permanent"]],
-		["an unfinished route costs gold and tempo both, take the last camp", ["role.camps-are-gold-and-xp"]],
+		["each dash direction has its own timer, so clear with one still pointed at the way out", ["belveth.q-per-direction-cooldown", "role.camps-are-gold-and-xp"]],
 		["put the next camps between you and the drake pit", ["role.objective-timers", "role.camps-are-gold-and-xp"]]
 	],
 	"trundle.md": [
@@ -345,7 +345,7 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["a broken clear costs you the exact phase you are strongest in, so finish the route", ["trundle.judgment.early-power"]],
 		["you cannot duel a level down, take the camps that fix the level", ["role.camps-are-gold-and-xp", "trundle.judgment.early-power"]],
 		["clear toward him, your farm and your fight are the same walk", ["trundle.judgment.early-power", "role.camps-are-gold-and-xp"]],
-		["your passive heals off every unit that dies near you, so clear through rather than back", ["trundle.passive-heals-off-deaths"]]
+		["enemies dying near you heal you, so clear through the camp rather than backing", ["trundle.passive-heals-off-deaths"]]
 	],
 	"leesin.md": [
 		["your clear is unremarkable, so make the next deviation buy a kill or a plate", ["leesin.judgment.early-champion", "role.plates"]],

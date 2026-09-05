@@ -60,7 +60,7 @@ fight-lost: the pillar goes down to cut them apart before you commit, not once y
 fight-lost: the ult wants the biggest body in the fight, so drain the tank and not the carry
 
 fight-absent: your window is early, so start walking to the next one before it starts
-fight-absent: go and make the next one uneven instead of being the last body into this one
+fight-absent: without the pillar down first you are just another body, so set the next one up
 fight-absent: you want the fight you chose, so go take a camp of his and make him come
 
 death: you have no dash, only a wall, so the pillar goes down before you commit rather than after.
@@ -74,4 +74,4 @@ build: if that made him tankier there is more for the ult to take, so look for h
 farm-behind: a broken clear costs you the exact phase you are strongest in, so finish the route
 farm-behind: you cannot duel a level down, take the camps that fix the level
 farm-behind: clear toward him, your farm and your fight are the same walk
-farm-behind: your passive heals off every unit that dies near you, so clear through rather than back
+farm-behind: enemies dying near you heal you, so clear through the camp rather than backing

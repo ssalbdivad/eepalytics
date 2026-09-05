@@ -82,7 +82,7 @@ race-behind: take his camps while your Q is up, and leave the moment it is not
 
 race-ahead: you are an early champion, so turn this into a tower rather than sitting on it
 race-ahead: your lead is a kill threat rather than a stat check, so find a lane to follow up
-race-ahead: path to the lane that can take a plate off the next gank
+race-ahead: the ward hop is the reach nobody else has, so pick the lane with a wall to cross
 
 restraint: levels down you can arrive but not finish, so take your camps and come back with R
 restraint: a Q you land into a fight you still lose is the worst version of this, so walk away
@@ -105,6 +105,6 @@ build: you win the phase before his items land, so force something before he fin
 build: that makes the melee trade worse, so pick a target that is already damaged instead
 build: once he beats your carry, kick him away from the fight rather than into it
 
-farm-behind: full clear first, then deviate on purpose rather than on impulse
+farm-behind: your strong window is burning while you walk, so take the camps on the way to it
 farm-behind: make the next detour buy a kill or a plate, or do not take it
 farm-behind: the level that makes your gank a kill comes off camps, so clear first
