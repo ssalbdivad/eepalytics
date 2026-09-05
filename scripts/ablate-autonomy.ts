@@ -111,7 +111,7 @@ import {
 } from "../src/analysis/coach-score.ts"
 import type { CoachFault, Interval, LineScore } from "../src/analysis/coach-score.ts"
 import { modelHandleFor, providerById, providerKey } from "../src/review/live-providers.ts"
-import { mayspeak, newPaceMemory, noteSpoken } from "../src/analysis/speak-pace.ts"
+import { SPEAK_FLOOR_SEC, mayspeak, newPaceMemory, noteSpoken } from "../src/analysis/speak-pace.ts"
 import type { PaceTier } from "../src/analysis/speak-pace.ts"
 
 /* ================================================================= arguments */
@@ -1737,7 +1737,257 @@ const paceSweep = (): void => {
 }
 
 
+/* =============================================================== paced report */
+
+/**
+ * `--paced` — the ablation's own rows, re-read with the speak floor applied.
+ *
+ * `--pace-sweep` above answers "which floor", on one arm. This answers the question that decides
+ * the DEFAULT: with `SPEAK_FLOOR_SEC` applied, does cite-or-quiet still beat the fence on
+ * usefulness, and is what he hears comfortably under the nine-lines-in-four-minutes he switched the
+ * old coach off at? It re-reads a stored run and spends nothing.
+ *
+ * The gate is applied exactly as `web/lib/geminiLive.ts` wires it: `mayspeak` BEFORE the turn is
+ * sent, `noteSpoken` only when a line actually comes back. A suppressed turn is therefore never
+ * asked, which is why the paced `spoke` denominator is smaller than the grid — that is the shipped
+ * behaviour and not a bookkeeping choice. Because these are stateless HTTPS turns with no thread,
+ * a turn's line depends only on its own state, so applying the gate to a recorded transcript is
+ * arithmetically identical to having run it gated, at no cost. The socket keeps a thread and would
+ * not be identical; that is stated as a limit rather than papered over.
+ *
+ *     node --experimental-strip-types scripts/ablate-autonomy.ts --paced <run.json>
+ *       --floor N          floor in game-clock seconds, default SPEAK_FLOOR_SEC
+ *       --paced-out <path> default data/eval/paced-<stamp>.json
+ */
+
+export interface PacedRow {
+	arm: string
+	paced: boolean
+	/** Grid turns in the corpus. Constant across arms and policies. */
+	offered: number
+	/** Turns actually sent to the model — the floor suppresses the rest before the call. */
+	asked: number
+	spoke: number
+	spokeRate: Interval
+	linesPerMin: number
+	busiest4Min: number
+	usefulLines: number
+	fabricated: number
+	fabrication: Interval
+	misattributedLines: number
+	misattributed: Interval
+	minGapSec: number
+	medianGapSec: number
+	spokenAt: number[]
+}
+
+/** One arm's transcript over the corpus, deduped by game clock and in order. */
+export const armTurns = (cells: readonly Cell[], armId: string): CellTurn[] => {
+	const seen = new Set<number>()
+	const out: CellTurn[] = []
+	for (const c of cells) {
+		if (c.arm !== armId) continue
+		if (c.set === "paired" && !c.withFrame) continue
+		for (const t of c.turns) {
+			if (seen.has(t.tSec)) continue
+			seen.add(t.tSec)
+			out.push(t)
+		}
+	}
+	return out.sort((a, b) => a.tSec - b.tSec)
+}
+
+export const pacedRow = (arm: string, turns: readonly CellTurn[], floorSec: number | null): PacedRow => {
+	const mem = newPaceMemory()
+	const spokenAt: number[] = []
+	let asked = 0
+	let useful = 0
+	let fabricated = 0
+	let misattributed = 0
+	for (const t of turns) {
+		if (!t.ok) continue
+		if (floorSec !== null && !mayspeak(mem, t.tSec, "standing", { floorSec }).speak) continue
+		asked++
+		if (t.silent) continue
+		spokenAt.push(t.tSec)
+		noteSpoken(mem, t.tSec)
+		if (t.useful) useful++
+		if (t.fabricated) fabricated++
+		if (t.misattributed.length > 0) misattributed++
+	}
+	const gaps: number[] = []
+	for (let i = 1; i < spokenAt.length; i++) gaps.push(spokenAt[i]! - spokenAt[i - 1]!)
+	const span = turns.length > 1 ? (turns[turns.length - 1]!.tSec - turns[0]!.tSec) / 60 : 0
+	return {
+		arm,
+		paced: floorSec !== null,
+		offered: turns.length,
+		asked,
+		spoke: spokenAt.length,
+		spokeRate: wilson(spokenAt.length, asked),
+		linesPerMin: span > 0 ? spokenAt.length / span : 0,
+		busiest4Min: busiestWindow(spokenAt, 240),
+		usefulLines: useful,
+		fabricated,
+		fabrication: wilson(fabricated, spokenAt.length),
+		misattributedLines: misattributed,
+		misattributed: wilson(misattributed, spokenAt.length),
+		minGapSec: gaps.length > 0 ? Math.min(...gaps) : 0,
+		medianGapSec: gaps.length > 0 ? median(gaps) : 0,
+		spokenAt
+	}
+}
+
+/**
+ * Frame sensitivity, with and without the floor.
+ *
+ * The floor is a clock and cannot know whether a picture was attached, so pacing has no mechanism
+ * by which to change what the picture is worth. It is computed both ways anyway, because "it cannot
+ * have moved" is an argument and this is a measurement.
+ */
+export interface PacedFrameSensitivity {
+	arm: string
+	paced: boolean
+	states: number
+	agree: number
+	decisionAgreement: Interval
+	bothSpoke: number
+	identical: number
+	spokeWithFrame: number
+	spokeNoFrame: number
+}
+
+export const pacedSensitivity = (
+	cells: readonly Cell[],
+	armId: string,
+	floorSec: number | null
+): PacedFrameSensitivity | null => {
+	const withC = cells.find(c => c.set === "paired" && c.arm === armId && c.withFrame)
+	const noC = cells.find(c => c.set === "paired" && c.arm === armId && !c.withFrame)
+	if (!withC || !noC) return null
+	const memA = newPaceMemory()
+	const memB = newPaceMemory()
+	const norm = (x: string): string => x.toLowerCase().replace(/[^a-z0-9]/g, "")
+	let states = 0
+	let agree = 0
+	let both = 0
+	let identical = 0
+	let spokeA = 0
+	let spokeB = 0
+	for (let i = 0; i < withC.turns.length; i++) {
+		const a = withC.turns[i]!
+		const b = noC.turns[i]!
+		if (!a.ok || !b.ok) continue
+		const askA = floorSec === null || mayspeak(memA, a.tSec, "standing", { floorSec }).speak
+		const askB = floorSec === null || mayspeak(memB, b.tSec, "standing", { floorSec }).speak
+		if (!askA && !askB) continue
+		states++
+		const sa = askA && !a.silent
+		const sb = askB && !b.silent
+		if (sa) {
+			noteSpoken(memA, a.tSec)
+			spokeA++
+		}
+		if (sb) {
+			noteSpoken(memB, b.tSec)
+			spokeB++
+		}
+		if (sa === sb) agree++
+		if (sa && sb) {
+			both++
+			if (norm(a.line) === norm(b.line)) identical++
+		}
+	}
+	return {
+		arm: armId,
+		paced: floorSec !== null,
+		states,
+		agree,
+		decisionAgreement: wilson(agree, states),
+		bothSpoke: both,
+		identical,
+		spokeWithFrame: spokeA,
+		spokeNoFrame: spokeB
+	}
+}
+
+const pacedReport = (): void => {
+	const runPath = arg("paced", "")
+	if (runPath === "") throw new Error("--paced needs a run json")
+	const run = JSON.parse(readFileSync(runPath, "utf8")) as {
+		cells: Cell[]
+		config?: { model?: string; lateSpacingSec?: number }
+	}
+	const floor = Number(arg("floor", String(SPEAK_FLOOR_SEC)))
+	const armIds = [...new Set(run.cells.map(c => c.arm))]
+
+	const rows: PacedRow[] = []
+	const sens: PacedFrameSensitivity[] = []
+	const kept: Record<string, { clock: string; line: string; useful: boolean; faults: CoachFault[]; frame: boolean }[]> =
+		{}
+	for (const id of armIds) {
+		const turns = armTurns(run.cells, id)
+		rows.push(pacedRow(id, turns, null))
+		rows.push(pacedRow(id, turns, floor))
+		for (const f of [null, floor]) {
+			const s = pacedSensitivity(run.cells, id, f)
+			if (s) sens.push(s)
+		}
+		const mem = newPaceMemory()
+		kept[id] = []
+		for (const t of turns) {
+			if (!t.ok || !mayspeak(mem, t.tSec, "standing", { floorSec: floor }).speak || t.silent) continue
+			noteSpoken(mem, t.tSec)
+			kept[id]!.push({
+				clock: t.clock,
+				line: t.line,
+				useful: t.useful,
+				faults: t.faults,
+				frame: t.framePath !== null
+			})
+		}
+	}
+
+	const outPath = arg("paced-out", `${DATA_DIR}/eval/paced-${stamp}.json`)
+	mkdirSync(`${DATA_DIR}/eval`, { recursive: true })
+	writeFileSync(outPath, `${JSON.stringify({ kind: "paced-report", run: runPath, floorSec: floor, rows, frameSensitivity: sens, kept }, null, 1)}\n`)
+
+	const say = (x: string): void => console.log(x)
+	say(`paced — the ablation rows with the ${floor}s speak floor applied`)
+	say(`  run    ${runPath}`)
+	say(`  model  ${run.config?.model ?? "?"}, grid ${run.config?.lateSpacingSec ?? "?"}s`)
+	say("")
+	say("=== SPOKE / CADENCE / USEFULNESS / FABRICATION =========================")
+	say("arm         pace     asked  spoke  spoke%        /min  busy4  minGap  medGap  useful  fabrication   misattributed")
+	for (const r of rows)
+		say(
+			`${r.arm.padEnd(11)} ${(r.paced ? `${floor}s` : "none").padEnd(7)} ${String(r.asked).padStart(5)}  ` +
+				`${String(r.spoke).padStart(5)}  ${pct(r.spokeRate).padEnd(12)}  ${r.linesPerMin.toFixed(2).padStart(4)}  ` +
+				`${String(r.busiest4Min).padStart(5)}  ${String(Math.round(r.minGapSec)).padStart(6)}  ` +
+				`${String(Math.round(r.medianGapSec)).padStart(6)}  ${String(r.usefulLines).padStart(6)}  ` +
+				`${pct(r.fabrication).padEnd(12)}  ${pct(r.misattributed)}`
+		)
+	say("")
+	say("=== FRAME SENSITIVITY (PAIRED, picture against blind) ==================")
+	say("arm         pace     states  same speak/PASS  both spoke  identical  spoke with  spoke blind")
+	for (const f of sens)
+		say(
+			`${f.arm.padEnd(11)} ${(f.paced ? `${floor}s` : "none").padEnd(7)} ${String(f.states).padStart(6)}  ` +
+				`${pct(f.decisionAgreement).padEnd(15)}  ${String(f.bothSpoke).padStart(10)}  ${String(f.identical).padStart(9)}  ` +
+				`${String(f.spokeWithFrame).padStart(10)}  ${String(f.spokeNoFrame).padStart(11)}`
+		)
+	say("")
+	for (const id of armIds) {
+		say(`=== WHAT HE HEARS — ${id}, ${floor}s floor (${kept[id]!.length} lines) ===`)
+		for (const k of kept[id]!)
+			say(`${k.clock.padStart(6)} ${k.useful ? " " : "*"} ${k.frame ? "[f]" : "   "} ${k.line}`)
+		say("")
+	}
+	say(`written ${outPath}`)
+}
+
 if (import.meta.main) {
-	if (arg("pace-sweep", "") !== "") paceSweep()
+	if (arg("paced", "") !== "") pacedReport()
+	else if (arg("pace-sweep", "") !== "") paceSweep()
 	else await main()
 }
