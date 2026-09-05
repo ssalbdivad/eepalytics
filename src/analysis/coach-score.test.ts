@@ -467,6 +467,25 @@ describe("the comparative shape", () => {
 		)
 	})
 
+	it("STILL catches a subject-carryover that puts the wrong figure on him", () => {
+		/*
+		 * The clause rule makes "You killed Garen and have 140 gold" resolve to HIM rather than to
+		 * Garen. That is only a fix if the check survives it: a figure that is genuinely someone
+		 * else's, carried onto him by the same shape, must still be caught. A rule that only ever
+		 * removes faults is indistinguishable from deleting the rule.
+		 */
+		const r = scoreLine({
+			line: "You killed Garen and have 50 CS, so keep the route running.",
+			block,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		ok(
+			r.faults.includes("misattributed-number"),
+			`50 is Garen's CS, not his — should be caught: ${JSON.stringify(r.faults)}`
+		)
+	})
+
 	it("leaves the plain left-biased case alone", () => {
 		// "Briar is 50 CS" — one entity, no pair, so the ordinary rule still owns it.
 		const r = scoreLine({ line: "Garen is on 50 CS, so take the far camps now.", block, roster, champions: CHAMPIONS })
