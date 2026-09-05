@@ -34,7 +34,9 @@
 
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { DATA_DIR } from "../shared/constants.ts"
-import { LIVE_COACH_SYSTEM_PROMPT } from "../shared/live-prompt.ts"
+import { DEFAULT_LIVE_COACH_MODE, liveCoachSystemPrompt } from "../shared/live-coach-mode.ts"
+import type { LiveCoachMode } from "../shared/live-coach-mode.ts"
+import { liveChampionKnowledge } from "./live-coach-knowledge.ts"
 
 export type ProviderId = "gemini-http" | "anthropic" | "openai" | "kimi" | "glm" | "mock"
 
@@ -140,8 +142,28 @@ export interface CoachTurnRequest {
 	model?: string
 	/** Base64 JPEG of his screen. Omitted for a text-only control run. */
 	frameJpegBase64?: string
-	/** The ground-truth block, exactly as `renderState` produced it. */
+	/** The ground-truth block, exactly as `renderBlockForMode` produced it for the same mode. */
 	blockText: string
+	/**
+	 * Which ARCHITECTURE to coach under. A closed set of two, never prompt text.
+	 *
+	 * This is the whole of the concession made to varying what the model is told, and the shape is
+	 * the point: `coachTurn`'s invariant is that a caller cannot vary the WORDING, so a comparison
+	 * between two models cannot accidentally have varied the prompt as well. A mode names an arm
+	 * that was measured; a string would name nothing.
+	 *
+	 * Defaults to `DEFAULT_LIVE_COACH_MODE`, so an old caller gets the shipped coach rather than
+	 * whichever arm happened to be first in the union.
+	 */
+	mode?: LiveCoachMode
+	/**
+	 * Who he is playing, for the champion clauses. A NAME, for the same reason `mode` is a mode.
+	 *
+	 * The clauses themselves are looked up here from `knowledge/champions/*.md` and are digit-free
+	 * by construction (`parseChampionClauses` refuses any clause carrying a number), so nothing
+	 * arriving this way can become a statistic. Unknown or empty is normal and means no clauses.
+	 */
+	champion?: string
 }
 
 export interface CoachTurnResult {
@@ -184,9 +206,11 @@ export const modelHandleFor = async (p: ProviderInfo, key: string, model: string
  * Run one turn. Never throws: this is called from a live game and a provider outage must not be
  * able to interrupt one.
  *
- * The system prompt comes from `shared/live-prompt.ts` and is NOT a parameter, so every provider
- * is asked exactly the same thing by construction. A caller cannot accidentally run a comparison
- * in which the prompt was also a variable.
+ * The system prompt is BUILT here, from a mode out of a closed set and a champion name, and is
+ * still not a parameter — the invariant survives the mode picker. Every provider asked with the
+ * same mode and champion is asked exactly the same words by construction, so a model comparison
+ * cannot accidentally have varied the prompt; and the one axis a caller can move is an arm that
+ * `scripts/ablate-autonomy.ts` measured rather than a sentence somebody typed.
  */
 export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult> => {
 	const started = Date.now()
@@ -229,7 +253,10 @@ export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult>
 		const frameSent = typeof req.frameJpegBase64 === "string" && req.frameJpegBase64.length > 0
 		const result = await generateText({
 			model: handle,
-			system: LIVE_COACH_SYSTEM_PROMPT,
+			system: liveCoachSystemPrompt({
+				mode: req.mode ?? DEFAULT_LIVE_COACH_MODE,
+				championKnowledge: liveChampionKnowledge(req.champion ?? "")
+			}),
 			messages: [
 				{
 					role: "user",

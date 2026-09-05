@@ -33,6 +33,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { mayspeak, newPaceMemory, noteSpoken, SPEAK_FLOOR_SEC } from "../../analysis/speak-pace.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../../shared/live-prompt.ts"
 import { runCoachTurn, SystemVoice } from "./turnCoach.ts"
 
@@ -44,6 +45,40 @@ const DEFAULT_TURN_MS = 20_000
 /** Gemini emits 24kHz mono PCM; the mic is expected at 16kHz. */
 const OUT_RATE = 24_000
 const IN_RATE = 16_000
+
+/**
+ * The floor between two spoken lines, and the reason the turn timer is no longer the cadence.
+ *
+ * `analysis/live-facts.ts` used to hold this for free: under the fenced architecture the ranked
+ * list was the coach's whole vocabulary, so rate-limiting the LIST rate-limited the speech.
+ * `shared/live-coach-mode.ts` demoted the list to a hint — measured at 13.5x the useful output —
+ * and in doing so removed every rate limit this coach had. Replayed over game 5635467422 at this
+ * same twenty-second turn, the unpaced cite-or-quiet coach spoke on 103 of 110 turns: 2.84 lines a
+ * minute, thirteen in its busiest four minutes. **He switched the previous coach off at nine lines
+ * in four minutes.** The volume gain is the point of the change and it cannot be given back through
+ * the prompt, so it is given back here, on a clock, as one number.
+ *
+ * `SPEAK_FLOOR_SEC` is 45, swept in `analysis/speak-pace.ts` (`--pace-sweep`): 35 lines in a
+ * 36-minute game, five in the busiest four minutes, and the least original material lost of any
+ * floor that stays under his own quit rate.
+ *
+ * ## Why the gate is here, BEFORE the ground-truth fetch, and on the wall clock
+ *
+ * `speak-pace.ts` reasons in GAME seconds, and the only place this page can read a game clock is
+ * inside the block it is about to fetch. Fetching first would cost the thing `beat()` already warns
+ * about: `GET /api/live/ground-truth` builds the ranked list, and an announce-once fact consumed to
+ * build a turn that is then dropped is a fact he never hears. So the floor runs on the wall clock,
+ * which differs from the game clock only across pauses and loading screens — and across those the
+ * socket is either closed or sending no turns at all, because a block-less turn is never sent.
+ *
+ * The suppressed line is DROPPED, never queued, and that was measured rather than assumed: at this
+ * floor a queue delivered 34 lines of median age 19 seconds, and 17 of the 34 quoted a figure the
+ * block no longer carried by the time it would have been spoken. See `analysis/speak-pace.ts`.
+ */
+const paceFloorSec = SPEAK_FLOOR_SEC
+
+/** The wall clock, in seconds, for the pace floor. See `paceFloorSec` for why it is not game time. */
+const nowSec = (): number => Date.now() / 1000
 
 export interface GeminiLine {
 	text: string
@@ -372,6 +407,13 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 * this, and here is precisely what she knew when she said it".
 	 */
 	const truthInFlight = useRef("")
+	/**
+	 * When she last actually SPOKE, so `paceFloorSec` can be applied.
+	 *
+	 * A ref rather than state: nothing renders it, and a re-render between the decision and the
+	 * send would be a way for two turns to pass the same floor.
+	 */
+	const paceRef = useRef(newPaceMemory())
 	/** Non-null while a reconnect is pending, so `stop` can cancel it. */
 	const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const attemptRef = useRef(0)
@@ -492,6 +534,12 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			setUnsaved(0)
 			// The player outlives the game; its chunk count must not. See `forgetPlayed`.
 			player.forgetPlayed()
+			/*
+			 * One socket, one game, so one pace memory per game. Carried over, a line spoken in the
+			 * last thirty seconds of the previous game would gag the first line of this one — and
+			 * the opening minutes are where a jungler decides his route.
+			 */
+			paceRef.current = newPaceMemory()
 		}
 		setError(null)
 		setStatus(isRetry ? "reconnecting" : "connecting")
@@ -506,7 +554,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				return
 			}
 			const tok = (await res.json()) as
-				| { ok: true; token: string; model: string; wsUrl: string }
+				| { ok: true; token: string; model: string; wsUrl: string; systemPrompt?: string }
 				| { ok: false; error: string }
 			if (!tok.ok) {
 				setError(tok.error)
@@ -550,7 +598,25 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 							// Native audio out gives a voice but no words; this is how the log gets text.
 							outputAudioTranscription: {},
 							inputAudioTranscription: {},
-							systemInstruction: { parts: [{ text: LIVE_COACH_SYSTEM_PROMPT }] }
+							/*
+							 * The prompt comes from the DAEMON, because only the daemon can build it.
+							 *
+							 * It carries the coach mode (a setting) and the champion clauses (from
+							 * `knowledge/champions/*.md`, a filesystem this page cannot read). While
+							 * this line was a hardcoded constant the mode picker in Settings moved
+							 * the block and not the standing instructions — under `cite-or-quiet`
+							 * that is a coach told to speak only from a ranked list, reading a block
+							 * that no longer presents one as a menu.
+							 *
+							 * The fallback is the fenced prompt on purpose: a daemon too old to send
+							 * `systemPrompt` gets the coach it has always had, which is wrong for the
+							 * setting and still safe. Connecting with NO system prompt is the one
+							 * outcome that must not happen — that is the pixels-only coach that named
+							 * champions who were not in the game.
+							 */
+							systemInstruction: {
+								parts: [{ text: tok.systemPrompt ?? LIVE_COACH_SYSTEM_PROMPT }]
+							}
 						}
 					})
 				)
@@ -660,6 +726,15 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 					turnDecided.current = "unknown"
 					setUsage(u => ({ ...u, turns: u.turns + 1 }))
 					if (text !== "" && !declined) {
+						/*
+						 * The floor starts running from the line he HEARD, not from the turn that
+						 * was sent. A PASS costs him nothing and must not buy twenty seconds of
+						 * silence, and a turn that is still in flight has not been heard yet.
+						 *
+						 * An answer to a typed question counts too: he asked, she replied out loud,
+						 * and the next thing he hears should still be a floor away.
+						 */
+						noteSpoken(paceRef.current, nowSec())
 						record(text, false, truthInFlight.current)
 						setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
 					}
@@ -722,6 +797,8 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		let inFlight = false
 		const tick = async () => {
 			if (!alive || inFlight) return
+			// The same floor the socket applies, for the same reason and before the same fetch.
+			if (!mayspeak(paceRef.current, nowSec(), "standing", { floorSec: paceFloorSec }).speak) return
 			const truth = await optsRef.current.groundTruth()
 			// The same rule the socket path follows: no facts, no turn. Without it the coach is
 			// back to reading pixels, which is the failure the block exists to prevent.
@@ -746,6 +823,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				setUsage(u => ({ ...u, turns: u.turns + 1 }))
 				// PASS means it judged the moment and declined, exactly as on the socket.
 				if (text === "" || /^pass\b/i.test(text)) return
+				noteSpoken(paceRef.current, nowSec())
 				record(text, false, truth)
 				setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
 				voiceRef.current?.silence()
@@ -773,6 +851,8 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		setDroppedTurns(0)
 		setUnsaved(0)
 		player.forgetPlayed()
+		// One game, one pace memory — the same reset `connect` does for the socket path.
+		paceRef.current = newPaceMemory()
 		setStatus("live")
 		return undefined
 	}, [turnBased, connect])
@@ -821,6 +901,15 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		 * the silence was never here (it was the output path — see `PcmPlayer.unlock`).
 		 */
 		const beat = async () => {
+			/*
+			 * THE FLOOR, before anything is fetched or sent. See `paceFloorSec`.
+			 *
+			 * The tier argument is left at its default: the loudest ranked fact's tier is a property
+			 * of the block, which has not been fetched yet — and the exemption it would feed is
+			 * measured inert (one extra line in a 36-minute game) and refused in
+			 * `analysis/speak-pace.ts` anyway.
+			 */
+			if (!mayspeak(paceRef.current, nowSec(), "standing", { floorSec: paceFloorSec }).speak) return
 			const truth = await optsRef.current.groundTruth()
 			/*
 			 * NO FACTS, NO TURN.
