@@ -170,9 +170,9 @@ test("the fenced block never grows a down line", () => {
 
 /* ----------------------------------------------------------------- the setting */
 
-test("cite-or-quiet is the default and both modes are accepted by the schema", () => {
-	assert.equal(DEFAULT_LIVE_COACH_MODE, "cite-or-quiet")
-	assert.equal(DEFAULT_SETTINGS.liveCoachMode, "cite-or-quiet")
+test("the briefing is the default and every mode is accepted by the schema", () => {
+	assert.equal(DEFAULT_LIVE_COACH_MODE, "briefing")
+	assert.equal(DEFAULT_SETTINGS.liveCoachMode, "briefing")
 	for (const m of LIVE_COACH_MODES) {
 		const patch = SettingsPatch({ liveCoachMode: m.id })
 		assert.equal(patch instanceof type.errors, false, `the schema rejects a mode the picker offers: ${m.id}`)
@@ -188,5 +188,5 @@ test("every mode in the picker carries its own number", () => {
 		assert.equal(m.blurb.length > 40, true)
 		assert.equal(/[0-9]/.test(m.evidence), true, `${m.id} claims something with no figure behind it`)
 	}
-	assert.deepEqual(LIVE_COACH_MODES.map(m => m.id).sort(), ["cite-or-quiet", "fenced"])
+	assert.deepEqual(LIVE_COACH_MODES.map(m => m.id).sort(), ["briefing", "cite-or-quiet", "fenced"])
 })

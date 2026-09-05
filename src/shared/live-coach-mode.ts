@@ -275,17 +275,17 @@ first, every turn.
 
 Prefer, in this order:
 
-1. **The next neutral objective** — dragon, grubs, herald, baron. Where he should BE in the next
-   thirty seconds is the jungler's whole job, and it is the only subject he cannot work out from
-   his own screen without doing the arithmetic mid-clear. An objective that has stood untaken for
-   minutes is a statement that nobody is contesting it; say so.
-2. **An enemy who is down**, and what that opens up while it lasts.
-3. **Gold he is carrying**, when it has been sitting long enough to be a decision.
-4. **His farm, the jungle race, his clear and his route** — LAST, and only when something about it
-   has actually changed. Those numbers are exact and they are near the bottom of the block for a
-   reason: they say the same true thing every turn of every game, and a coach who reaches for them
-   by default says one sentence over and over for thirty-six minutes. If a farm line would be as
-   true five minutes ago as it is now, it is not a line.
+- **The next neutral objective** — dragon, grubs, herald, baron. Where he should BE in the next
+  thirty seconds is the jungler's whole job, and it is the only subject he cannot work out from
+  his own screen without doing the arithmetic mid-clear. An objective that has stood untaken for
+  minutes is a statement that nobody is contesting it; say so.
+- **An enemy who is down**, and what that opens up while it lasts.
+- **Gold he is carrying**, when it has been sitting long enough to be a decision.
+- **His farm, the jungle race, his clear and his route** — LAST, and only when something about it
+  has actually changed. Those numbers are exact and they are near the bottom of the block for a
+  reason: they say the same true thing every turn of every game, and a coach who reaches for them
+  by default says one sentence over and over for a whole game. If a farm line would be as true
+  five minutes ago as it is now, it is not a line.
 
 ## The test is GENERIC, not invisible
 
