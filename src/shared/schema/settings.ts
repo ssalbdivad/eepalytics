@@ -5,6 +5,7 @@
  */
 
 import { type } from "arktype"
+import { DEFAULT_LIVE_COACH_MODE } from "../live-coach-mode.ts"
 
 export const Settings = type({
 	/**
@@ -72,6 +73,21 @@ export const Settings = type({
 	liveModel: "string",
 
 	/**
+	 * Which ARCHITECTURE the live coach runs on. See `shared/live-coach-mode.ts` for the run.
+	 *
+	 * `cite-or-quiet` gives her the whole ground-truth block, the frame and the persona under one
+	 * rule — cite it or say nothing. `fenced` is the old shape, where `analysis/live-facts.ts`
+	 * ranks every candidate line in TypeScript and she may only pick from that list.
+	 *
+	 * Measured across 363 real samples from four games, judged blind: the fence spoke on 11 of 102
+	 * turns and cite-or-quiet on 94, with fabrication 0 in both — 81 useful lines a game against 6.
+	 * The fence was never buying the honesty; the citation rule was. It stays selectable because it
+	 * is a measured arm and because a coach that says almost nothing is the right coach for someone
+	 * who wants almost nothing said.
+	 */
+	liveCoachMode: "'cite-or-quiet'|'fenced'",
+
+	/**
 	 * How we reach the League client across the WSL2 boundary. `bridge` is a long-lived
 	 * Windows-side node.exe over stdio (p50 2.3 ms); `curl` shells out to curl.exe (~88 ms).
 	 * The daemon falls back to curl on its own if the bridge will not start.
@@ -108,6 +124,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	coachIntensity: 0.8,
 	liveProvider: "gemini-live",
 	liveModel: "",
+	liveCoachMode: DEFAULT_LIVE_COACH_MODE,
 	transport: "bridge",
 	pollIdleMs: 5_000,
 	pollInGameMs: 2_000,
@@ -130,6 +147,7 @@ export const SettingsPatch = type({
 	"coachIntensity?": "0<=number<=1",
 	"liveProvider?": "string",
 	"liveModel?": "string",
+	"liveCoachMode?": "'cite-or-quiet'|'fenced'",
 	"transport?": "'bridge'|'curl'",
 	"pollIdleMs?": "number",
 	"pollInGameMs?": "number",

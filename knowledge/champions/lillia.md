@@ -1,114 +1,100 @@
 patch: 16.17
 sourcedAt: 2026-09-05
-source: ddragon.leagueoflegends.com 16.17.1 — Lillia.json, for ability ROLES only (what each spell is for; no cast ranges, no cooldowns, no tuning); op.gg — Lillia jungle-paths, patch 16.17 Emerald+, for which route families are actually played; jungler.gg (labelled 26.16, one patch behind) for the shape of the red-side split. Deliberately NOT written down here: shop prices, per-route win rates, and matchup tables — the first two are numbers a review cannot check against the digest, and on 2026-09-04 op.gg and lolalytics returned contradictory Lillia matchup tables, so there is no defensible figure to record.
+source: op.gg jungle-paths (patch 16.17; blue-side best path 34,502 games, re-read 2026-09-05) + jungler.gg (26.16) + wiki.leagueoflegends.com V26.17 patch notes + ddragon 16.17.1 Lillia.json and wiki.leagueoflegends.com/en-us/Lillia for ability roles
 ---
+Lillia is a **tempo jungler**, not a duelist. Her case for existing is that she clears fast,
+moves fast, and is somewhere on the map you are not. Pull coaching toward "did the clear keep
+moving" rather than "did the fight go well".
 
-# Lillia, jungle
+**The standard full clear, on either side, is: Blue → Gromp → Wolves → Raptors → Red →
+Scuttle.** That is the most-played route by a wide margin at this patch. The common alternative
+is a leashless **Raptors → Krugs → Red → Wolves → Gromp → Blue**, which starts on the side of
+the map she wants to end on. If his CS at ten is low, the question to ask is which of these he
+abandoned halfway, not whether he clears slowly. (No clear *time* is written down here on
+purpose: neither of the sources above publishes one, and a remembered one would be a number
+with nothing behind it.)
 
-Lillia is a **tempo jungler**, not a duelist. Her case for existing is that she clears fast, moves
-fast, and is somewhere on the map the enemy jungler is not. Pull coaching toward *did the clear
-keep moving* rather than *did the fight go well*.
+**Her clear accelerates as it chains.** Blooming Blows (Q) stacks Prance movement speed, so the
+back half of a route is faster than the front, and the correct clear *kites the camp toward the
+next camp* while killing it rather than standing still. This is why a *broken* clear costs her
+more than it costs a flat-rate jungler: stopping mid-route to hover a lane throws away the speed
+she already paid for. A low CS per minute on Lillia is usually an interrupted route, not a slow
+one. Watch Out! Eep! (W) is the damage centre of the clear and wants the camp stacked up.
 
-## The kit, in the only terms that change a decision
+**She is weak in an early even fight and that is correct play.** She is a scaling jungler: avoid
+early duels with the enemy jungler, farm, and take the free kills rather than the coin-flip ones.
+Punished early greed is worth naming as a pattern; being "passive" early on Lillia usually is not
+a mistake.
 
-Roles only. Nothing here is a cooldown, a range or a threshold, because none of those can be
-checked against anything this app measures.
+**Level 6 is the real spike.** The ultimate is what turns her from a farming champion into a pick
+threat, and it wants her passive already applied — so it rewards poking a target first rather
+than opening with it. After scuttle, her best ganks are mid against something immobile, or a
+side-lane skirmish where the AoE gets multiple targets. "Get to 6 on time" beats almost any
+individual early skirmish.
 
-- **Q, Blooming Blows** — the spin. Hitting anything with it stacks Prance movement speed, which
-  is why her clear gets faster the longer it runs and why she is the champion most punished by
-  standing still. The speed decays when she stops.
-- **W, Watch Out! Eep!** — the damage centre of every camp, and the thing that paces the route.
-  Walking a long way between camps wastes a W that was already back.
-- **E, Swirlseed** — thrown, and it *keeps rolling* until it hits a unit or a wall, slowing and
-  revealing what it hits. This is her longest-ranged tool and it is the honest substitute for ward
-  coaching in an app that can never see wards: **check the entry with it, then walk in.**
-- **R, Lilting Lullaby** — it only drowsies enemies who are already carrying **Dream Dust**, her
-  passive, applied by hitting them with a spell. An ult thrown at someone she has not touched is
-  the cooldown spent for some damage. And the drowsy has to be allowed to become *sleep* — hitting
-  the target too early wakes them and spends the ult for a fraction of what it was worth.
-- **She has no dash and no blink.** Her escape is the movement speed she is currently stacking,
-  which means the decision to leave has to be made before she is committed, not after.
+**Her E is a scouting tool, not just poke.** Swirlseed travels a long way and reveals what it
+hits. On a champion whose ward data this app cannot see, "check it with E before you walk in" is
+advice he can actually execute, and it is the honest substitute for ward coaching.
 
-## The clear, and what a broken one looks like
+**Where she dies.** The only reposition in the kit is the short hop built into Watch Out! Eep!
+(W) — it carries her a step toward where she aimed it and it will not cross terrain, so it is a
+way of landing the damage, not a way out. Everything else about leaving is the movement speed
+she has already stacked. Once she is committed into a corridor, a pit or a tri-brush, neither of
+those saves her. A death in the enemy jungle costs her more than it costs a mobile jungler, and
+"you had no way out of there" is a fair champion-specific read on her death locations.
 
-The dominant route on both sides of the map is the **six-camp full clear** — blue side runs
-Blue → Gromp → Wolves → Raptors → Red → Scuttle. The main alternative is the family of
-**Raptors-first** clears, which start on the side of the map she wants to finish on. Off a red
-start it is the Raptors-first ordering that performs; the plain mirror of the blue route is the
-one that does not.
+**What she wants from a fight.** Sustained damage over a long fight with room to kite, not a
+short burst trade. The fights she wins are the long ones — worth crediting when the data shows a
+strong extended fight, and worth naming when she dies early in a short one.
 
-**The clear accelerates as it chains.** Two consequences, and they are the two most useful things
-in this file:
-
-- A camp skipped in the middle of a route is not one camp, it is the speed for everything after
-  it. A *broken* clear costs her more than it costs a flat-rate jungler.
-- Low CS on Lillia is almost always an **interrupted** route rather than a slow one. The question
-  is which clear she abandoned halfway, not whether she clears slowly.
-
-Hovering a lane while a camp is up is the specific way this champion loses tempo: standing still
-is when the movement speed decays and the cooldown comes back with nothing to hit.
-
-## Fights — the ones she wins and the ones she is offered
-
-She has no burst, no dash, and damage that arrives over time. **The even early fight is the
-category she is worst at, and declining it is correct play rather than timidity** — being
-"passive" early on Lillia is usually not a mistake, and punished early greed is.
-
-- The fights she wins are the **long** ones with room to kite. A short trade in a corridor is her
-  worst case, because terrain deletes the only exit she owns. An enemy who can wall or pull —
-  Trundle's pillar is the exact case — turns a fight she was winning into one she cannot leave.
-- Once she is in it, the kit wants the long version: keep landing spells, both for the speed and
-  because the ult needs Dream Dust on the targets first.
-- She is a poor late-smite contester: no dash to steal over a wall, no burst, and damage that
-  arrives as a tick rather than a hit. A pit she starts alone is a pit she loses. The executable
-  version is *start it only with someone else already there.*
-
-## Where she dies
-
-In a corridor, a pit, or a tri-brush — anywhere speed stops being an exit. A death in the enemy
-jungle costs her more than it costs a mobile jungler, and "you had no way out of there" is a fair
-champion-specific read on her death locations.
-
-## Do not say
-
-True in every Lillia game ever played, which is what makes them noise: *she scales, so farm.* *Your
-ult is your big spike.* *Watch out for the enemy jungler.* *Use your speed to rotate.* Anything
-about how well he executed a clear, which ability he used, or when he bought something — the
-client does not send it and the video does not show it.
+**Patch context (26.17, live 2026-08-26):** Lillia is not in the 26.17 notes and neither are
+jungle monsters, Smite or any objective. If a habit worked last patch it still works, and the
+patch is not the reason for a number either way.
 
 ## Live coaching
 
-One clause per situation, said out loud after the number the client proved. **No digits** — a
-figure here would be a claim about the game, and every figure he hears must come from the client.
-Anything with a number in it is refused at load time, deliberately.
+Half-sentences, said out loud after a number the client has already proved. **No digits** —
+a figure here would be a claim about the game, and every figure he hears must come from the
+client. Anything with a number in it is refused at load time, deliberately.
 
-Several clauses per key is intentional: the app rotates through them on the game clock, so a kind
-that fires three times in a game does not end on the same half-sentence three times.
+Several clauses per key is intentional: a fixed clause per kind means the identical half-sentence
+every time that kind fires, and sameness is what made him stop listening. Each one has to end on
+something he can DO in the next thirty seconds.
 
-race-behind: your clear only gets faster the longer it runs, so the fix is finishing the route rather than hurrying it
-race-behind: he took that lead while you were standing somewhere, and standing still is the one thing your kit cannot afford
-race-behind: take the camps between you and him instead of the fight, you win that race and not that duel
+Every clause below is pinned in `src/knowledge/champion-claims.test.ts`: each one names the
+mechanic it is betting on and where that mechanic was checked. Add a clause and the test fails
+until you write down what it depends on.
 
-race-ahead: keep the route running toward his side, being where he is not is the whole plan
-race-ahead: spend the lead on the next objective rather than on a duel you would still lose
+race-behind: your clear only gets faster while it keeps running, so finish the whole route
+race-behind: you do not win the straight early duel, so win the race on route speed instead
+race-behind: the Prance stacks decay once you stop hitting things, so keep the route moving
+race-behind: roll a Swirlseed down his entrance, it reveals whoever it rolls into
 
-restraint: you have no burst and no dash, so an even fight is his to leave and yours to lose
-restraint: declining that is correct play rather than timidity, take your own camps and be full for the objective
+race-ahead: you are ahead because the route never stopped, so do not stop it to go find him
+race-ahead: keep the clear running toward his camps while the speed is stacked
+race-ahead: no burst means you cannot cash a lead in a duel, so cash it on a drake
 
-fight-lost: your damage arrives over time, so the fights you win are the long ones with room to kite
-fight-lost: never open the ult on someone you have not hit yet, it only puts them under if your passive is already on them
-fight-lost: a corridor or a pit takes away the movement speed that is your only exit, so make them come to open ground
+restraint: you have no burst to end it early, so take your own camps and come back with the ult
+restraint: get the level back off a full clear, then contest it with the ult up
+restraint: your speed is for leaving, not for winning that, so path away and take camps
 
-fight-absent: you win by being somewhere they are not, so take the far camps while that resolves
-fight-absent: that one was decided before you could reach it, the objective on the other side was not
+fight-lost: your damage arrives over time, so take the long fights with room to kite
+fight-lost: the ult only sleeps someone already covered in dust, so hit them before you cast it
+fight-lost: a corridor takes away the speed that is your real exit, pull them into open ground
 
-death: you have no dash and no blink, so leaving has to be a decision you make before you are committed rather than after
-death: roll a Swirlseed in ahead of you next time, it keeps going until it hits something and it shows you what is waiting
-death: speed is your only exit, so it has to still be stacking when you need it, not something you go looking for in a corridor
+fight-absent: your value is being where they are not, so take the far camps while that settles
+fight-absent: arriving late on foot only feeds it, take the far objective instead
+fight-absent: start walking to the next timer, your speed only pays in transit
 
-build: read that as what it does to a long fight, because the long one is the only kind you win
-build: if that makes him shorter and sharper, stop planning the duel and go take something instead
+death: the W hop is a step and not an escape, so the leaving has to start before you commit.
+death: roll a Swirlseed in ahead of you next time, it reveals whoever it rolls into.
+death: speed only saves you when it is already stacked, so start moving before you need it.
+death: a pit or a corridor is where your escape stops existing, so fight at the entrance to it.
 
-farm-behind: that is almost always an interrupted route rather than a slow clear, so finish the next one before you look at a lane
-farm-behind: a camp skipped in the middle is not one camp, it is the speed for everything after it
-farm-behind: hovering a lane while a camp is up is exactly how this champion loses tempo, so path to the camp
+build: if that shortens the fight, stop taking the fight and go take something instead
+build: you win the long one, so ask whether he can still be outlasted before you contest
+build: you do not out-trade an item, you out-run it, so take camps and skip the duel
+
+farm-behind: that is an interrupted route, not a slow one, so finish the next
+farm-behind: a camp skipped mid-route costs the speed for all the ones after, so take it now
+farm-behind: stop hovering the lane, the camp that is already up is the tempo

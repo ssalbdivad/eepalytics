@@ -641,6 +641,100 @@ const ownerOf = (
 }
 
 /**
+ * The comparative shape, where the left-bias is exactly backwards.
+ *
+ * "You lead Briar 140 CS to 50" puts BOTH numbers to the right of both names, so the plain rule
+ * gives 140 to Briar — the nearest name on its left — and the sentence is scored as a
+ * misattribution when it is perfectly correct. Measured on a real ablation run: 5 of 94 lines
+ * flagged, and all five were this, so the arm's true fabrication rate was 0 and the instrument
+ * said otherwise. An instrument that cries wolf on the shape this coach uses most is worse than
+ * no instrument, because the whole product decision rests on that rate.
+ *
+ * English orders a score pair to match the order the entities were named: the first figure belongs
+ * to whoever was mentioned first. So when two figures are joined by "to" (or "against", or a dash)
+ * and two different entities were named before them, split them in order.
+ *
+ * Deliberately narrow. It fires only with exactly two entities and a joined pair, because a rule
+ * that guesses at three names is a rule that invents attributions of its own.
+ */
+const COMPARATIVE_PAIR = /(\d+)\s*(?:[A-Za-z]+\s+)?(?:to|against|[-–])\s*(\d+)/g
+
+const comparativeOwners = (
+	line: string,
+	mentions: { owner: string; index: number }[]
+): Map<number, string> => {
+	const out = new Map<number, string>()
+	for (const m of line.matchAll(COMPARATIVE_PAIR)) {
+		const at = m.index
+		const a = m[1]
+		const b = m[2]
+		if (at === undefined || a === undefined || b === undefined) continue
+		const named = mentions.filter(x => x.index < at)
+		const distinct: string[] = []
+		for (const x of named) if (!distinct.includes(x.owner)) distinct.push(x.owner)
+		if (distinct.length !== 2) continue
+		const first = distinct[0]
+		const second = distinct[1]
+		if (first === undefined || second === undefined) continue
+		out.set(at + m[0].indexOf(a), first)
+		out.set(at + m[0].lastIndexOf(b), second)
+	}
+	return out
+}
+
+/**
+ * Attribution that follows the CLAUSE, because the nearest noun is not the subject.
+ *
+ * The plain left-biased rule is right for "Kayn is 1180 gold" and wrong for every shape where the
+ * figure belongs to the sentence subject rather than to the last noun before it. All three of
+ * these are correctly-written lines from a real ablation run that the old rule called
+ * misattributions:
+ *
+ *   "You killed Briar and have 1020 gold"      1020 is HIS; Briar is merely the nearer noun
+ *   "With 190 CS to Briar's 70 CS, push mid"   190 has no owner before it at all
+ *   "You lead Briar 140 CS to 50"              handled by `comparativeOwners`
+ *
+ * Together with the pair rule these were the entire misattribution count of the arm the product
+ * decision rests on — reported 5, actually 0. So the order below matters more than it looks:
+ *
+ *   1. an explicit possessive binds ("Briar's 70");
+ *   2. nothing named before it at all means it is HIS — the coach is talking to one person, and
+ *      an unattributed figure in a sentence addressed to him is his;
+ *   3. otherwise the nearest mention INSIDE the same clause;
+ *   4. otherwise the sentence subject, which is the first thing the sentence named.
+ *
+ * Rule 4 is what fixes the compound predicate: "and have 1020 gold" is a clause with no noun in
+ * it, so the subject carries over, exactly as it does in English.
+ */
+const CLAUSE_SPLIT = /,|;|\bso\b|\band\b|\bbut\b|\bwhile\b|\bthen\b/g
+
+const clauseOwner = (
+	line: string,
+	mentions: { owner: string; index: number }[],
+	at: number
+): string | null => {
+	const before = mentions.filter(m => m.index < at)
+	// 1. A possessive binds the figure that follows it.
+	const possessive = before.at(-1)
+	if (possessive !== undefined) {
+		const between = line.slice(possessive.index, at)
+		if (/^\S*['\u2019]s\s+\S{0,4}$/.test(between)) return possessive.owner
+	}
+	// 2. Nobody named before it: the sentence is addressed to him, so the figure is his.
+	if (before.length === 0) return "you"
+	// 3. The nearest mention inside the same clause.
+	let clauseStart = 0
+	for (const m of line.matchAll(CLAUSE_SPLIT)) {
+		if (m.index !== undefined && m.index < at) clauseStart = m.index + m[0].length
+	}
+	const inClause = before.filter(m => m.index >= clauseStart)
+	const nearest = inClause.at(-1)
+	if (nearest !== undefined) return nearest.owner
+	// 4. No noun in this clause, so the subject carries over from the start of the sentence.
+	return before[0]?.owner ?? null
+}
+
+/**
  * Score one line. Pure: same inputs, same verdict, forever.
  *
  * Order matters in one place only — a champion who is not on the roster is reported as
@@ -675,6 +769,7 @@ export const scoreLine = (input: ScoreInput): LineScore => {
 		if (m.index !== undefined) mentions.push({ owner: "you", index: m.index })
 	mentions.sort((a, b) => a.index - b.index)
 
+	const comparative = comparativeOwners(norm, mentions)
 	const unbacked: number[] = []
 	const misattributed: Misattribution[] = []
 	for (const m of norm.matchAll(/\d+/g)) {
@@ -686,7 +781,7 @@ export const scoreLine = (input: ScoreInput): LineScore => {
 			continue
 		}
 		// The number is real. Did it end up on the right player?
-		const owner = ownerOf(mentions, m.index, norm)
+		const owner = comparative.get(m.index) ?? clauseOwner(norm, mentions, m.index)
 		if (owner === null) continue
 		if (!segments.some(s => s.owners.includes(owner) && s.values.has(value)))
 			misattributed.push({ value, claimedOwner: owner })

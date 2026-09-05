@@ -58,46 +58,53 @@ source: model-knowledge | <url> | <author>
 power spikes, what the champion is for. Those survive patches. Anything that *doesn't* survive
 a patch does not belong in this directory at all.
 
-## The `## Live coaching` section — the only part the live coach reads
+## The `## Live coaching` section
 
-The prose above is sent to the post-game reviewer, the watch review and the champ-select brief.
-**The live voice coach reads none of it.** It speaks one sentence mid-game, and prose in a prompt
-has nothing tying it to the moment — which is how you get "Viego is your jungle counterpart so
-watch for his ganks" said about a game with no Viego in it.
+A champion file may end with a `## Live coaching` section, and that section is a **different
+thing from the prose above it**. The prose is sent to the post-game reviewer; these lines are
+spoken out loud, mid-game, attached to a number the live client just proved
+(`src/shared/champion-advice.ts`).
 
-So a note reaches the live coach through one section only, at the end of the file:
+The format is `<fact kind>: <clause>`, one per line, and the rules are hard:
 
-```
-## Live coaching
+- **Keyed by fact kind**, so a clause can only be said once the client has established the
+  situation it is about. Unknown keys are ignored rather than trusted.
+- **No digits.** A clause with a number in it is refused at load time, and a spelled-out number
+  used as a game fact is the same fabrication with the fence walked around.
+- **A clause completes a sentence the client started** — "Kayn is 23 CS up on you — *your clear
+  only gets faster while it keeps running, so finish the whole route*". `death` is the exception
+  and stands alone.
+- **Three or more clauses per kind**, different in content rather than in phrasing. One clause per
+  kind means the identical half-sentence every time that kind fires, and sameness is what makes a
+  coach stop being listened to.
+- **Under 110 characters, and shorter on a long fact.** The whole spoken line is one breath about
+  a second behind the game; `farm-behind` and `fight-absent` already spend forty and thirty-four
+  characters before the clause starts, so their clauses are the shortest in the file.
+- **Every clause ends on something he can do in the next thirty seconds.** An observation is not
+  advice, however true it is.
+- **A clause that would read identically on another champion belongs in `_default.md`.** That is
+  the whole test for whether champion knowledge is earning its place; `_default.md` carries the
+  role version of every kind.
+- **Every clause is pinned in `src/knowledge/champion-claims.test.ts`.** Add one, reword one or
+  move one and that test goes red until the mechanic it leans on is written down there, with
+  where that mechanic was checked. See below.
 
-race-behind: your clear only gets faster the longer it runs, so finish the route
-race-behind: he took that lead while you were standing somewhere
-death: you have no dash and no blink, so leaving is a decision you make before you are committed
-```
+## What the digit fence does NOT do
 
-The rules, all of them enforced by `src/shared/champion-advice.ts` and its tests:
+The parser refuses a clause with a number in it, which kills every benchmark, price and cooldown
+at load time. It validates the FORM of a clause and never its SUBJECT — a digit-free sentence can
+still be flatly false about the champion.
 
-- **Keys are a closed set.** `race-behind`, `race-ahead`, `restraint`, `fight-lost`,
-  `fight-absent`, `death`, `build`, `farm-behind`. Anything else is ignored silently, so check the
-  spelling. Each key names a situation the *client* has already established; the clause is the
-  half no client can supply.
-- **No digits. At all.** A clause containing a number is refused at load time. A mechanism that
-  can express a number about the game can express a wrong one, and every figure he hears has to
-  come from the block. `src/shared/champion-advice.ts` has the full story.
-- **Write several clauses per key.** The app rotates through them on the game clock, so a kind
-  that fires three times in a game does not end on the same half-sentence three times. A single
-  clause per key is the sameness the coach gets muted for, and a test fails on it.
-- **A clause completes a sentence the client started.** `race-behind` is appended to
-  "Kayn is 23 CS up on you — …". `death` is the exception: it is spoken alone on the respawn
-  screen, so it has to stand up as a whole sentence by itself.
-- **`_default.md`'s clauses are merged in per KIND**, so a champion file only needs the clauses
-  where it has something more specific than the role to say. A champion file with no
-  `## Live coaching` section at all still gets the role clauses — but a champion the user actually
-  plays deserves its own.
+It has already been walked through. `belveth.md` shipped `death: your stacks die with you`. Death
+in Lavender stacks are permanent and survive death, and the same file said so two paragraphs
+earlier. Nothing caught it, because nothing in the repo knew what the clause depended on.
 
-The test that decides whether a clause earns its place: **would it change what he does?**
-"Lillia is a scaling jungler" changes nothing. "Your clear accelerates as it chains, so stopping
-mid-route costs more than it looks like" changes a decision. Cut the first kind ruthlessly.
+So `src/knowledge/champion-claims.test.ts` is a **bet register**: every shipped clause cites one
+or more entries in a `FACTS` table, and every fact carries the mechanic in one sentence plus where
+it was checked (a source from `SOURCES.md`, or an explicit "community consensus" that must also
+say `judgment` in its own id). It cannot verify truth — no test can, the game is patched and the
+test is a string. What it can do is make the bet explicit: when a patch changes a champion, that
+table is where you find out which clauses just became false.
 
 ## Staleness
 

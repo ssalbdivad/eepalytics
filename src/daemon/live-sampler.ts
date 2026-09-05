@@ -58,9 +58,20 @@ export const SAMPLE_MAX_BYTES = 600 * 1024 * 1024
 
 export interface SamplerState {
 	gameId: string
+	/** The file this game is actually appending to — `gameId` plus a per-game stamp. */
+	key: string
 	lastAtSec: number
 	count: number
 }
+
+/**
+ * A stamp that is constant within one game and different for the next.
+ *
+ * The wall-clock instant the game clock read zero, to the minute. Two games cannot start in the
+ * same minute on one machine, and every sample of one game agrees on it.
+ */
+const gameStamp = (gameTimeSec: number): string =>
+	`t${Math.round((Date.now() - gameTimeSec * 1000) / 60_000)}`
 
 let current: SamplerState | null = null
 
@@ -80,13 +91,28 @@ export const sampleLive = (input: {
 	try {
 		if (!input.gameId || !Number.isFinite(input.gameTimeSec)) return false
 		// A backwards clock is a new game, the same signal the frame journal rolls sessions on.
+		/*
+		 * The FILE must roll with the game, not with the caller's id.
+		 *
+		 * The caller passes the journal session id, and a journal session outlives a game — he
+		 * leaves the coach page open all evening. So four consecutive games appended to one
+		 * file: measured, 1221 lines under a single key holding four distinct rosters. Anything
+		 * scored from that file was scored against a roster from a different game, which is the
+		 * exact confusion this app exists to prevent. Rolling the key on the backwards clock
+		 * (the same signal the frame journal uses) keeps one file per game.
+		 */
 		if (!current || current.gameId !== input.gameId || input.gameTimeSec < current.lastAtSec - 30)
-			current = { gameId: input.gameId, lastAtSec: -Infinity, count: 0 }
+			current = {
+				gameId: input.gameId,
+				key: `${input.gameId}-${gameStamp(input.gameTimeSec)}`,
+				lastAtSec: -Infinity,
+				count: 0
+			}
 		if (input.gameTimeSec - current.lastAtSec < SAMPLE_EVERY_SEC) return false
 
 		mkdirSync(SAMPLE_DIR, { recursive: true })
 		appendFileSync(
-			pathFor(input.gameId),
+			pathFor(current.key),
 			`${JSON.stringify({ atMs: Date.now(), gameTime: input.gameTimeSec, data: input.data })}\n`
 		)
 		current.lastAtSec = input.gameTimeSec
@@ -124,12 +150,26 @@ export const sampleDue = (nowSec?: number): boolean => {
 export const currentSampleKey = (gameTimeSec: number): string =>
 	`g-${Math.round((Date.now() - gameTimeSec * 1000) / 60_000)}`
 
-/** How many samples exist for a game — the number that makes "it is recording" checkable. */
-export const sampleCount = (gameId: string): number => {
-	const p = pathFor(gameId)
-	if (!existsSync(p)) return 0
-	return readFileSync(p, "utf8").split("\n").filter(l => l.trim() !== "").length
+/**
+ * Every file belonging to a key: the key itself, plus every per-game roll of it.
+ *
+ * A caller holds a JOURNAL SESSION id, which can span an evening of games, while a file now holds
+ * exactly one game. Resolution lives here so callers keep saying "this session" and still get one
+ * game's data rather than four games concatenated.
+ */
+const filesFor = (gameId: string): string[] => {
+	if (!existsSync(SAMPLE_DIR)) return []
+	const exact = `${gameId}.ndjson`
+	return readdirSync(SAMPLE_DIR)
+		.filter(f => f.endsWith(".ndjson") && (f === exact || f.startsWith(`${gameId}-`)))
+		.sort()
 }
+
+/** How many samples exist for a game — the number that makes "it is recording" checkable. */
+export const sampleCount = (gameId: string): number =>
+	filesFor(gameId)
+		.map(f => readFileSync(`${SAMPLE_DIR}/${f}`, "utf8").split("\n").filter(l => l.trim() !== "").length)
+		.reduce((a, b) => a + b, 0)
 
 /** Every game with samples on disk, newest first. */
 export const sampledGames = (): { gameId: string; samples: number; bytes: number }[] => {
@@ -150,8 +190,17 @@ export const sampledGames = (): { gameId: string; samples: number; bytes: number
  * truncated sample must not cost the whole game's evaluation data.
  */
 export const readSamples = (gameId: string): { atMs: number; gameTime: number; data: unknown }[] => {
-	const p = pathFor(gameId)
-	if (!existsSync(p)) return []
+	/*
+	 * The NEWEST single game, never a concatenation.
+	 *
+	 * A session id can name several games. Returning all of them looks like more data and is
+	 * worse than none: it was measured once, 1221 samples under one key carrying four different
+	 * rosters, and anything scored against it compared a screenshot to another game's team. Use
+	 * `sampledGames()` and pass a per-game key to choose a specific one.
+	 */
+	const files = filesFor(gameId)
+	if (files.length === 0) return []
+	const p = `${SAMPLE_DIR}/${files[files.length - 1]}`
 	const out: { atMs: number; gameTime: number; data: unknown }[] = []
 	for (const line of readFileSync(p, "utf8").split("\n")) {
 		if (line.trim() === "") continue

@@ -68,6 +68,8 @@ const parseNote = (key: string, raw: string, isDefault: boolean): ChampionNote =
 	}
 }
 
+const DEFAULT_KEY = "_default"
+
 const cache = new Map<string, ChampionNote | null>()
 
 /** Test seam — `clearKnowledgeCache()` after editing files on disk. */
@@ -98,6 +100,35 @@ export const championNote = (championName: string): ChampionNote | null => {
 
 	const note = read(`${key}.md`, false) ?? read("_default.md", true)
 	cache.set(key, note)
+	return note
+}
+
+/**
+ * The role-default note itself, whichever champion is being coached.
+ *
+ * `championNote()` only reaches `_default.md` when NO champion file matches, which made having a
+ * champion file strictly worse than having none for anything that layers on the default — a file
+ * with no `## Live coaching` section turned live champion advice off for that champion entirely.
+ * The live coach merges the two per fact kind (`shared/champion-advice.ts`), and it needs the
+ * default separately to do that.
+ *
+ * Cached under a key that no `championKey()` can produce — it strips non-letters, so nothing else
+ * is ever called `_default`.
+ */
+export const defaultNote = (): ChampionNote | null => {
+	const hit = cache.get(DEFAULT_KEY)
+	if (hit !== undefined) return hit
+	let note: ChampionNote | null = null
+	try {
+		note = parseNote(
+			DEFAULT_KEY,
+			readFileSync(join(KNOWLEDGE_DIR, "champions", "_default.md"), "utf8"),
+			true
+		)
+	} catch {
+		note = null
+	}
+	cache.set(DEFAULT_KEY, note)
 	return note
 }
 

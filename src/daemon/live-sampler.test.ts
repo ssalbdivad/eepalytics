@@ -3,7 +3,7 @@
  * rate-limits itself, it survives being killed mid-append, and it never throws.
  */
 
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { ok, strictEqual } from "node:assert/strict"
@@ -12,8 +12,15 @@ import { describe, it } from "node:test"
 const dir = mkdtempSync(join(tmpdir(), "eepalytics-samples-"))
 process.env.EEPALYTICS_DATA_DIR = dir
 
-const { SAMPLE_DIR, SAMPLE_EVERY_SEC, pruneSamples, readSamples, sampleCount, sampleLive } =
-	await import("./live-sampler.ts")
+const {
+	SAMPLE_DIR,
+	SAMPLE_EVERY_SEC,
+	pruneSamples,
+	readSamples,
+	sampleCount,
+	sampleLive,
+	sampledGames
+} = await import("./live-sampler.ts")
 
 describe("sampleLive", () => {
 	it("writes the first sample and then rate-limits on the GAME clock", () => {
@@ -26,10 +33,31 @@ describe("sampleLive", () => {
 	})
 
 	it("starts a new file when the clock jumps backwards, because that is a new game", () => {
+		/*
+		 * This test used to assert only that the second write RETURNED true, and it passed for
+		 * months while every game of an evening appended to one file: measured, 1221 samples
+		 * under one key holding four different rosters. Returning true was never the claim - a
+		 * separate file was. Assert the file.
+		 */
 		const g = "js-roll"
-		sampleLive({ gameId: g, gameTimeSec: 900, data: {} })
+		sampleLive({ gameId: g, gameTimeSec: 900, data: { game: "one" } })
+		const afterFirst = sampledGames().filter(x => x.gameId.startsWith(g)).length
 		// A backwards clock is the earliest reliable "new game" signal, same as the frame journal.
-		strictEqual(sampleLive({ gameId: g, gameTimeSec: 5, data: {} }), true)
+		strictEqual(sampleLive({ gameId: g, gameTimeSec: 5, data: { game: "two" } }), true)
+		strictEqual(sampledGames().filter(x => x.gameId.startsWith(g)).length, afterFirst + 1)
+	})
+
+	it("hands back ONE game for a session id that spans several", () => {
+		// Concatenating games is worse than having none: it compares a frame to another game's
+		// roster, which is the confusion this whole app exists to prevent.
+		const g = "js-span"
+		sampleLive({ gameId: g, gameTimeSec: 900, data: { game: "one" } })
+		sampleLive({ gameId: g, gameTimeSec: 5, data: { game: "two" } })
+		const back = readSamples(g)
+		strictEqual(back.length, 1)
+		strictEqual((back[0]?.data as { game: string }).game, "two")
+		// The count still answers "is it recording?" across the whole session.
+		strictEqual(sampleCount(g), 2)
 	})
 
 	it("refuses a sample it cannot place: no session, or no clock", () => {
@@ -53,7 +81,10 @@ describe("readSamples", () => {
 		// evaluation data.
 		const g = "js-torn"
 		sampleLive({ gameId: g, gameTimeSec: 10, data: { ok: true } })
-		writeFileSync(join(SAMPLE_DIR, `${g}.ndjson`), `${readFileSync(join(SAMPLE_DIR, `${g}.ndjson`), "utf8")}{"atMs":1,"gam`)
+		// The file carries a per-game stamp now, so find it rather than assuming the bare name.
+		const f = readdirSync(SAMPLE_DIR).find(x => x.startsWith(g))
+		ok(f, "expected a sample file for the session")
+		writeFileSync(join(SAMPLE_DIR, f), `${readFileSync(join(SAMPLE_DIR, f), "utf8")}{"atMs":1,"gam`)
 		strictEqual(readSamples(g).length, 1)
 	})
 

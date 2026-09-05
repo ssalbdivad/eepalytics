@@ -1,6 +1,6 @@
 patch: 16.17
-sourcedAt: 2026-09-03
-source: op.gg — Lee Sin jungle build and counters pages, both stating patch 16.17, Emerald+ (193,824 games on the primary setup; matchup tables list per-matchup game counts); u.gg — Lee Sin jungle guide, stating patch 16.17, Emerald+, 225,404 games; lolalytics — Lee Sin build page, stating patch 16.17, Emerald+, 225,919 games; jungler.gg — Lee Sin pathing page, which labels itself patch 26.16 (Riot's own numbering; the stat sites' "16.17" corresponds to Riot's "26.17", released 2026-08-25 — the jungler.gg routes are therefore one patch stale and are flagged as such below); leagueoflegends.com — League of Legends Patch 26.17 notes (2026-08-25); ddragon.leagueoflegends.com 16.17.1 — LeeSin.json, for ability roles.
+sourcedAt: 2026-09-05
+source: op.gg — Lee Sin jungle build and counters pages, both stating patch 16.17, Emerald+ (193,824 games on the primary setup; matchup tables list per-matchup game counts); u.gg — Lee Sin jungle guide, stating patch 16.17, Emerald+, 225,404 games; lolalytics — Lee Sin build page, stating patch 16.17, Emerald+, 225,919 games; jungler.gg — Lee Sin pathing page, which labels itself patch 26.16 (Riot's own numbering; the stat sites' "16.17" corresponds to Riot's "26.17", released 2026-08-26 — the jungler.gg routes are therefore one patch stale and are flagged as such below); leagueoflegends.com — League of Legends Patch 26.17 notes (2026-08-26); ddragon.leagueoflegends.com 16.17.1 — LeeSin.json, for ability roles.
 ---
 
 # Lee Sin, jungle — patch 16.17
@@ -9,7 +9,7 @@ source: op.gg — Lee Sin jungle build and counters pages, both stating patch 16
 
 Riot did not touch Lee Sin in the 26.17 notes, and did not touch jungle monsters, Smite, or any objective (Baron, Atakhan, Rift Herald, drakes, Voidgrubs). Nothing about his clear or his objective math changed from the previous patch — if a habit worked last patch, it still works, and if it didn't, the patch is not the reason.
 
-He is one of the most-contested junglers in the pool: op.gg has him at 13.71% pick and 17.03% ban across its 16.17 Emerald+ sample, u.gg at 13.6% pick and 16.75% ban across 225,404 games. His win rate sits near even — 49.25% on op.gg, 50.93% on u.gg and lolalytics, against a 51.73% Emerald+ average win rate. Read that as: he is played constantly and wins about as often as a coin flip, so the gap between a good Lee Sin game and a bad one is almost entirely in decisions, not in the champion. Do not let "Lee Sin is a carry jungler" excuse a game spent on low-value plays.
+He is one of the most-contested junglers in the pool: op.gg has him at 13.71% pick and 17.03% ban across its 16.17 Emerald+ sample, u.gg at 13.6% pick and 16.75% ban across 225,404 games. His win rate sits near even — 49.25% on op.gg, 50.93% on u.gg and lolalytics. Read that as: he is played constantly and wins about as often as a coin flip, so the gap between a good Lee Sin game and a bad one is almost entirely in decisions, not in the champion. Do not let "Lee Sin is a carry jungler" excuse a game spent on low-value plays.
 
 ## What the kit wants (roles only)
 
@@ -46,7 +46,7 @@ What he wants from a fight: **to arrive from an angle the enemy is not facing, o
 - **He is an early-game champion holding a near-even win rate**, meaning the games where he doesn't convert early tempo are the ones dragging the average down. Deaths in the first ten minutes are unusually expensive for him specifically: they cost the clear *and* the gank *and* the objective he was pathing toward, and unlike a scaling jungler he has no later phase that automatically returns the tempo.
 - **Deaths on the enemy side of the map, mid-clear, are the worst kind.** He counter-jungles well because he can Q out, but a Lee Sin caught in the enemy jungle with Q on cooldown has no disengage at all. Check that the enemy jungler is accounted for before you cross, not after.
 - **Deaths after a whiffed R** compound: the kick is his only hard displacement, and dying with it on a 110-second cooldown means the next two minutes of your team's fights happen without it.
-- lolalytics' Emerald+ 16.17 data shows Lee Sin games trending toward wins when the team takes first tower (first tower obtained in 69.17% of his wins). His ganks are worth the most when they convert into a tower rather than just a kill — a successful bot gank that ends with everyone walking away is a fraction of the value of one that ends with a plate or a tower.
+- His ganks are worth the most when they convert into a tower rather than just a kill — a successful bot gank that ends with everyone walking away is worth a fraction of one that ends with a plate or a tower. That is a judgment about what a gank buys, not a measurement.
 
 ## Matchups against other junglers
 
@@ -56,8 +56,6 @@ All three stat sites agree on the direction at 16.17, Emerald+:
 
 **Favored:** Zed (52.45% over 2,551 games on op.gg), Ambessa (54.17%, 864 games), and Viego, all three named by u.gg and lolalytics as well. These are matchups where forcing early contact is correct — the win rate edge lives in the phase before they've scaled.
 
-Also on the favorable side of op.gg's 16.17 table with usable samples: Warwick (Lee Sin favored, 2,331 games) and Trundle (748 games). On the unfavorable side with smaller samples: Karthus (1,066 games) and Pantheon (1,057 games).
-
 Treat matchups with only a few hundred games as a hint, not a plan.
 
 ## The one-line version
@@ -66,29 +64,47 @@ Full-clear to six camps, then decide scuttle-or-gank off where the enemy jungler
 
 ## Live coaching
 
-One clause per situation, appended to a number the client proved. **No digits** — refused at load
-time. Several clauses per key is intentional; the app rotates through them on the game clock.
+Half-sentences, said out loud after a number the client has already proved. **No digits** —
+a figure here would be a claim about the game, and every figure he hears must come from the
+client. Anything with a number in it is refused at load time, deliberately.
 
-race-behind: your clear is unremarkable and your early kill threat is not, so make the deviation buy something
-race-behind: he is out-farming you while you look for a play, so take the full clear and choose after the last camp
+Several clauses per key is intentional: a fixed clause per kind means the identical half-sentence
+every time that kind fires, and sameness is what made him stop listening. Each one has to end on
+something he can DO in the next thirty seconds.
 
-race-ahead: you are an early-game champion, so turn this into a tower rather than sitting on the lead
-race-ahead: your ganks are worth the most when they end on structure, so path to the lane that can take a plate
+Every clause below is pinned in `src/knowledge/champion-claims.test.ts`: each one names the
+mechanic it is betting on and where that mechanic was checked. Add a clause and the test fails
+until you write down what it depends on.
 
-restraint: you need to arrive from an angle they are not facing, and levels down means arriving is all you do
-restraint: decline it and go take your own camps, there is no version of this where the even trade is yours
+race-behind: your clear is unremarkable, so make the next deviation buy a kill or a plate
+race-behind: you catch up on a landed Q with an ally nearby, not on a faster route
+race-behind: take his camps while your Q is up, and leave the moment it is not
 
-fight-lost: you are committed the moment you dash, so the entry needs a second target or an ally to get back out to
-fight-lost: the ult is for isolating someone or knocking them into your team, not for closing a gap you already lost
+race-ahead: you are an early champion, so turn this into a tower rather than sitting on it
+race-ahead: your lead is a kill threat rather than a stat check, so find a lane to follow up
+race-ahead: the ward hop is the reach nobody else has, so pick the lane with a wall to cross
 
-fight-absent: your whole kit is choosing the fight, so being the last one there is the version that does not work
-fight-absent: go where the map still has something to decide, the fight behind you does not
+restraint: levels down you can arrive but not finish, so take your camps and come back with R
+restraint: a Q you land into a fight you still lose is the worst version of this, so walk away
+restraint: put a ward in first, then come back for the fight with something to hop out to
 
-death: everything you own runs through a landed skillshot, and crossing with it down leaves you no way back out
-death: dying with the ult down means the next several fights happen without the only hard displacement your team has
+fight-lost: you are committed the moment you dash, so leave a ward behind you to get back out
+fight-lost: the recast hurts most on someone already low, so pick the damaged target
+fight-lost: R is for removing someone or kicking them into your team, not for closing a gap
 
-build: you win the phase before he finishes his items, so read that as a clock rather than as a fight
-build: that makes the duel worse, so pick a target that is already damaged instead of the one who just spiked
+fight-absent: your kit is choosing the fight, so choose the next one and be early
+fight-absent: you need an angle and a target already low, so set the next one up from the side
+fight-absent: drop a ward on the next objective now, it is vision and it is your way in
 
-farm-behind: the full clear to six camps is the standard, and abandoning it for a coin flip is how the even win rate happens
-farm-behind: a deviation that trades a camp for nothing is the expensive one, so run the route and deviate on purpose
+death: everything you own starts with a landed Q, so do not cross while it is down.
+death: put the ward down before you enter, so leaving is a button rather than a walk.
+death: with R down you have no way to break a fight open, so take the camp instead.
+death: melee means the way out has to exist first, so check there is an ally to jump to.
+
+build: you win the phase before his items land, so force something before he finishes the next
+build: that makes the melee trade worse, so pick a target that is already damaged instead
+build: once he beats your carry, kick him away from the fight rather than into it
+
+farm-behind: your strong window is burning while you walk, so take the camps on the way to it
+farm-behind: make the next detour buy a kill or a plate, or do not take it
+farm-behind: the level that makes your gank a kill comes off camps, so clear first

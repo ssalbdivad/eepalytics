@@ -45,8 +45,14 @@ import { loadCorpus } from "../../daemon/corpus.ts"
 import { championName, refreshChampionNames } from "../../daemon/champions.ts"
 import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
-import { championNote, pronunciationTable } from "../../knowledge/index.ts"
-import { championAdvice } from "../../shared/champion-advice.ts"
+import { championNote, defaultNote, pronunciationTable } from "../../knowledge/index.ts"
+import {
+	mergeClauses,
+	newAdviceCursor,
+	parseChampionClauses,
+	resetAdviceCursor,
+	rotatingAdvice
+} from "../../shared/champion-advice.ts"
 import { pronunciationsFor } from "../../shared/pronounce.ts"
 import { dragonPhrase } from "../../shared/dragons.ts"
 import { hasSmite } from "../../shared/smite.ts"
@@ -132,6 +138,15 @@ const findMe = (data: LiveAllGameData) => {
  */
 const factMemory = newFactMemory()
 const fightMemory = newFightMemory()
+/**
+ * Where each fact kind is up to in its champion-advice rotation.
+ *
+ * Beside `factMemory` and reset on the same boundary, because it is the same kind of thing: state
+ * that exists to stop the coach saying one sentence over and over, and that must not survive into
+ * the next game. Counting FIRINGS rather than reading the clock is load-bearing — a clock index
+ * shares a factor with the cooldowns and lands every firing of a kind on the same clause.
+ */
+const adviceCursor = newAdviceCursor()
 
 /*
  * WHERE THE PICTURE ENTERS. Three variables, and the reason each of them exists.
@@ -263,11 +278,51 @@ const buildLiveState = (
 		frameRead = null
 		lastFrameSide = null
 		lastTruth = null
+		factMemory.lastFarmCs = 0
+		factMemory.lastGoldAtSec = 0
+		factMemory.goldSinceSec = 0
+		factMemory.praiseSaid.clear()
+		factMemory.lastRaceAtSec = 0
+		factMemory.lastRaceGap = 0
+		factMemory.saidRestraint = false
+		factMemory.saidLevelGap = false
+		factMemory.saidKillShare = false
+		factMemory.saidOwnDeath = false
+		factMemory.saidSwing = false
+		factMemory.saidObjectives = false
+		factMemory.goldMentions = 0
+		factMemory.lastObjectiveAtSec = 0
+		factMemory.sawCounterpartBuild = false
+		factMemory.seenCounterpartItems.clear()
+		factMemory.lastLedWithDeath = false
+		factMemory.lastGoldMentioned = 0
+		factMemory.lastFarmAtSec = 0
+		resetAdviceCursor(adviceCursor)
 		return null
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
 	const clock = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
-	const myName = me.riotId ?? me.summonerName ?? ""
+	/*
+	 * The EVENT feed names people by BARE game name; the roster's `riotId` and `summonerName`
+	 * both carry the tag. Matching on the tagged fields therefore never matches, and every one
+	 * of these sites silently fell through.
+	 *
+	 * Measured on a real recorded game, one paragraph apart in the SAME block: the prose said
+	 * "Baron taken by Lillia" while the ranked list — the only thing the model is permitted to
+	 * speak — said "they have Baron, do not take a fight in the open". Four seconds after he
+	 * soloed Baron. `myEvents` was empty for the whole game, so "you secured Baron" could never
+	 * fire, and `objectiveCount` returned {mine: 0, theirs: 0} in every block of a 36-minute
+	 * game with three drakes, a herald and a baron in it.
+	 */
+	const nameOf = (p: LivePlayer | undefined): string =>
+		p?.riotIdGameName ?? p?.riotId ?? p?.summonerName ?? ""
+	const playerNamed = (who: string | undefined): LivePlayer | undefined =>
+		who === undefined ? undefined : (
+			(data.allPlayers ?? []).find(
+				x => x.riotIdGameName === who || x.riotId === who || x.summonerName === who
+			)
+		)
+	const myName = nameOf(me)
 	const mine = me.team
 	const asPlayer = (p: LivePlayer): VisionStatePlayer => ({
 		champion: p.championName ?? "unknown",
@@ -305,8 +360,29 @@ const buildLiveState = (
 		 * reached the player in a block whose every other line is champions. Half-fixing this was
 		 * worse than not fixing it, because the remaining misses look exactly like hallucination.
 		 */
-		const p = (data.allPlayers ?? []).find(x => x.riotId === who || x.summonerName === who)
-		return p?.championName ?? who
+		const p = (data.allPlayers ?? []).find(
+			x => x.riotIdGameName === who || x.riotId === who || x.summonerName === who
+		)
+		/*
+		 * NEVER fall through to the raw name.
+		 *
+		 * It did, and this was measured on a real capture (data/live-samples): matching on
+		 * `riotId`/`summonerName` resolved 0 of 37 event names, because the event feed sends the
+		 * BARE game name ("Gooskaffur") while both of those fields carry the tag
+		 * ("Gooskaffur#NA1"). `riotIdGameName` is the one that joins, and it was the one field
+		 * not being consulted.
+		 *
+		 * The cost was not cosmetic. Every kill in the block arrived as an unmappable proper
+		 * noun, in a block that also says "these ten champions are the only champions in this
+		 * game" - so the single richest signal available, who killed whom, was noise the model
+		 * could not use, and it fell back on the only clean numbers left. Six of nine lines in
+		 * one real transcript were about CS.
+		 *
+		 * Returning the sentinel keeps an unresolved name OUT of the block entirely, which is
+		 * the only safe direction: a name we cannot tie to a champion is indistinguishable from
+		 * a hallucination once it has been spoken.
+		 */
+		return p?.championName ?? "someone"
 	}
 	const recentEvents = (data.events?.Events ?? [])
 		.slice(-6)
@@ -316,8 +392,16 @@ const buildLiveState = (
 			if (e.EventName === "BaronKill") return `Baron taken by ${championOf(e.KillerName)}`
 			if (e.EventName === "HeraldKill") return `Herald taken by ${championOf(e.KillerName)}`
 			if (e.EventName === "TurretKilled") return `turret down (${e.TurretKilled ?? "?"})`
-			if (e.EventName === "ChampionKill")
-				return `${championOf(e.KillerName)} killed ${championOf(e.VictimName)}`
+			if (e.EventName === "ChampionKill") {
+				/*
+				 * Drop the event when NEITHER side resolves. "someone killed someone" is not a
+				 * fact, it is a line of filler that pushes a real one out of the six-event window.
+				 * One resolved side is still worth saying.
+				 */
+				const k = championOf(e.KillerName)
+				const v = championOf(e.VictimName)
+				return k === "someone" && v === "someone" ? "" : `${k} killed ${v}`
+			}
 			return ""
 		})
 		.filter(t => t !== "")
@@ -447,7 +531,7 @@ const buildLiveState = (
 						 * is a readback, not scouting. Only the most recent kill of that victim
 						 * matters, which is the one still on the respawn clock.
 						 */
-						killedByMe: lastKillerOf(data, p.riotId ?? p.summonerName ?? "") === myName,
+						killedByMe: lastKillerOf(data, nameOf(p)) === myName,
 						// `position` is reliable in the LIVE api (unlike match history), so the
 						// jungler is known rather than inferred.
 						isJungler: (p.position ?? "").toUpperCase() === "JUNGLE"
@@ -465,22 +549,30 @@ const buildLiveState = (
 				 */
 				advice: (() => {
 					const note = championNote(me.championName ?? "")
+					if (!note) return undefined
 					/*
-					 * The role default is merged in PER KIND, not used as a whole-file fallback.
-					 * `championNote` only reaches `_default.md` when no file matches at all, so a
-					 * champion file that covers five of the eight kinds used to leave the other
-					 * three silent while the generic clause for them sat unreachable — and a
-					 * champion file with no `## Live coaching` section at all (leesin, trundle,
-					 * belveth, until today) turned champion knowledge off entirely.
+					 * The role defaults UNDER the champion's own clauses, merged per fact kind.
+					 *
+					 * `championNote` only falls back to `_default.md` when no champion file exists
+					 * at all, so a champion file that says nothing about deaths used to leave the
+					 * coach with nothing to say about deaths — having a file was strictly worse
+					 * than having none. Merging per kind means a file overrides only where it has
+					 * something better, and every kind still has a clause.
 					 */
-					const role = note?.isDefault ? null : championNote("_default")
+					const clauses =
+						note.isDefault ?
+							parseChampionClauses(note.text)
+						:	mergeClauses(
+								parseChampionClauses(defaultNote()?.text ?? ""),
+								parseChampionClauses(note.text)
+							)
 					/*
-					 * The rotation index. Notes carry several clauses per kind and this picks
-					 * between them, so a kind that fires three times in a game does not end on the
-					 * same half-sentence three times — the sameness he actually quit on. Minutes,
-					 * because the rate limits in `buildFacts` are measured in minutes too.
+					 * A fresh view per turn over a cursor that outlives the turn. Reading a kind is
+					 * what advances it, and `buildFacts` reads a kind exactly when it renders a
+					 * fact of that kind — so the rotation index is the count of firings, which is
+					 * the only thing the cooldowns cannot collide with.
 					 */
-					return championAdvice(note?.text, role?.text, Math.floor(secs / 60))
+					return rotatingAdvice(clauses, adviceCursor)
 				})(),
 				meLevel: me.level,
 				objectiveCount: (() => {
@@ -488,9 +580,7 @@ const buildLiveState = (
 					let theirs = 0
 					for (const e of data.events?.Events ?? []) {
 						if (!OBJECTIVE_EVENTS.has(e.EventName)) continue
-						const k = (data.allPlayers ?? []).find(
-							p => p.riotId === e.KillerName || p.summonerName === e.KillerName
-						)
+						const k = playerNamed(e.KillerName)
 						// An unresolvable killer counts for nobody rather than for the enemy.
 						if (!k) continue
 						if (k.team === mine) mineN += 1
@@ -536,9 +626,7 @@ const buildLiveState = (
 									// KNOWN to be theirs, never assumed. An unresolvable killer arrives
 									// as false, because a lookup miss must not become an accusation.
 									byEnemy: (() => {
-										const k = (data.allPlayers ?? []).find(
-											p => (p.riotId ?? p.summonerName) === e.KillerName
-										)
+										const k = playerNamed(e.KillerName)
 										return k ? k.team !== mine : false
 									})()
 								})),
@@ -567,9 +655,7 @@ const buildLiveState = (
 					.filter(e => {
 						// A take by one of HIS team is not a loss. Team membership comes from the
 						// roster, since the event feed gives only a name.
-						const killer = (data.allPlayers ?? []).find(
-							p => (p.riotId ?? p.summonerName) === e.KillerName
-						)
+						const killer = playerNamed(e.KillerName)
 						return killer ? killer.team !== mine : true
 					})
 					.map(e => ({
@@ -1245,11 +1331,26 @@ export const createLiveRoute = (): Hono => {
  * Returns null for a sample that cannot produce a state — the loading screen, a torn line — so a
  * replay skips it rather than inventing one.
  */
-export const buildLiveStateForBench = (raw: unknown, gameTimeSec: number): VisionState | null => {
+export const buildLiveStateForBench = (
+	raw: unknown,
+	gameTimeSec: number,
+	/*
+	 * His rolling farm average, when the caller has one.
+	 *
+	 * Omitted, `pace` is null and the block says so — honest, but NOT what a real game looks
+	 * like: the daemon always has a baseline from `loadCorpus`, and the `Farm baseline:` line is
+	 * where several of the measured inventions came from ("ahead of your usual pace of 85"). A
+	 * fixture meant to be 1:1 with a real game has to be able to carry it, so
+	 * `scripts/build-fixture.ts` passes the corpus baseline with the replayed game EXCLUDED —
+	 * including it would let the game being replayed set its own average.
+	 *
+	 * Defaulting to null keeps `scripts/bench-providers.ts` byte-identical to what it replayed
+	 * before.
+	 */
+	baseline: ReturnType<typeof baselineFromRows> | null = null
+): VisionState | null => {
 	const data = raw as LiveAllGameData | null
 	const me = findMe(data ?? ({} as LiveAllGameData))
 	if (!data || !me) return null
-	// No baseline: a replay is about the client's facts, and his rolling average is not in the
-	// sample. `pace` is null, exactly as it is early in a real game.
-	return buildLiveState(data, me, gameTimeSec, null)
+	return buildLiveState(data, me, gameTimeSec, baseline)
 }
