@@ -415,6 +415,44 @@ describe("the shipped champion files", () => {
 					)
 			})
 
+			it("keeps the SPOKEN line sayable, which is the quantity he actually hears", () => {
+				/*
+				 * The cap above measures the clause. He hears the whole sentence — the fact stem the
+				 * client proved, then the clause. Measuring only the clause let the spoken line grow
+				 * without anything noticing: 32 of 126 rendered lines were over the cap, longest 132,
+				 * while every clause passed.
+				 *
+				 * The budget is per KIND, because the stems differ enormously. `farm-behind` spends
+				 * about forty characters ("you're roughly 18 CS down on your own pace") before the
+				 * clause even starts, and it is the most frequently fired kind, so its clauses have
+				 * to be the shortest in every file.
+				 *
+				 * Speech, not characters, is the real constraint: measured on real TTS this session,
+				 * a line runs 1.18 + 0.189 x syllables seconds. A 140-character sentence is about
+				 * six seconds, said by a coach specified to speak roughly one second behind the game.
+				 */
+				const STEM: Record<string, string> = {
+					"race-behind": "Briar is roughly 18 CS up on you",
+					"race-ahead": "you're roughly 18 CS up on Briar",
+					restraint: "you're 2 levels down on Briar",
+					"fight-lost": "that fight was 1 for 3",
+					"fight-absent": "that fight was 0 for 2 without you",
+					death: "",
+					build: "Briar just finished Stridebreaker",
+					"farm-behind": "you're roughly 18 CS down on your own pace"
+				}
+				const MAX_SPOKEN_CHARS = 140
+				const over: string[] = []
+				for (const m of lines) {
+					const kind = m[1]!.trim()
+					const stem = STEM[kind]
+					if (stem === undefined) continue
+					const spoken = withAdvice(stem, m[2]!.trim())
+					if (spoken.length > MAX_SPOKEN_CHARS) over.push(`${spoken.length}: ${spoken}`)
+				}
+				ok(over.length === 0, `over ${MAX_SPOKEN_CHARS} chars spoken:\n${over.join("\n")}`)
+			})
+
 			it("still has something to say for every kind once merged with the role default", () => {
 				/*
 				 * The real surface is the merge, not the file — which is what makes a champion file
