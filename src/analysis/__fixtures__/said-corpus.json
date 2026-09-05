@@ -1,0 +1,502 @@
+{
+	"note": "Verbatim spoken lines, extracted from the runs named in . PASS turns are dropped, order preserved.",
+	"roster": [
+		"Lillia",
+		"Urgot",
+		"Taliyah",
+		"Smolder",
+		"Braum",
+		"Ornn",
+		"Briar",
+		"Lissandra",
+		"Jhin",
+		"Senna"
+	],
+	"gameId": 5635467422,
+	"corpora": {
+		"opus5": {
+			"source": "data/eval/model-opus5.json (arm cite-or-quiet, withFrame, claude-opus-5)",
+			"lines": [
+				{
+					"tSec": 6,
+					"clock": "0:05",
+					"line": "Spend that 500 gold before you walk out — the whole route runs faster with a starter in hand."
+				},
+				{
+					"tSec": 12,
+					"clock": "0:11",
+					"line": "Grab the leash and commit to the whole route — your clear only gets faster while it keeps running."
+				},
+				{
+					"tSec": 30,
+					"clock": "0:30",
+					"line": "Get out of base and start the route now — your clear only gets faster while it keeps running."
+				},
+				{
+					"tSec": 36,
+					"clock": "0:36",
+					"line": "Leave the fountain now — your clear only gets faster while it keeps running, so start the route."
+				},
+				{
+					"tSec": 42,
+					"clock": "0:42",
+					"line": "Full route from here and don't stop it — your clear only gets faster while it keeps running."
+				},
+				{
+					"tSec": 49,
+					"clock": "0:48",
+					"line": "Start it now and don't stop — your clear only gets faster while it keeps running, so route the whole side."
+				},
+				{
+					"tSec": 55,
+					"clock": "0:54",
+					"line": "Full clear start to finish — your speed only stacks while the route keeps running."
+				},
+				{
+					"tSec": 61,
+					"clock": "1:00",
+					"line": "Start the route and don't stop it — your clear only gets faster the longer it keeps running."
+				},
+				{
+					"tSec": 61,
+					"clock": "1:00",
+					"line": "Take every camp on the way without pausing — your clear only gets faster while the route keeps running."
+				},
+				{
+					"tSec": 67,
+					"clock": "1:06",
+					"line": "Race is dead even at least-ten CS each, so just keep the route running — your clear only speeds up."
+				},
+				{
+					"tSec": 73,
+					"clock": "1:12",
+					"line": "You and Briar are dead even on clear, so just keep the route running — your speed only builds while it does."
+				},
+				{
+					"tSec": 79,
+					"clock": "1:19",
+					"line": "Level one and the route is just starting — keep it unbroken, your clear only speeds up while it runs."
+				},
+				{
+					"tSec": 85,
+					"clock": "1:25",
+					"line": "Level two and the route's still hot — go straight into the next camp, your clear only speeds up while it runs."
+				},
+				{
+					"tSec": 85,
+					"clock": "1:25",
+					"line": "Keep hitting through the raptors without pausing — the Prance stacks decay the moment the route stops."
+				},
+				{
+					"tSec": 91,
+					"clock": "1:31",
+					"line": "Keep the route rolling straight into the next camp — your clear only gets faster while it keeps running."
+				},
+				{
+					"tSec": 97,
+					"clock": "1:37",
+					"line": "Level two already — keep the route rolling straight into the next camp, your clear only speeds up as it runs."
+				},
+				{
+					"tSec": 103,
+					"clock": "1:43",
+					"line": "Race is dead even right now — keep the route running, your clear only gets faster while it never stops."
+				},
+				{
+					"tSec": 110,
+					"clock": "1:49",
+					"line": "Keep the route rolling straight into the next camp — your clear only gets faster while it never stops."
+				},
+				{
+					"tSec": 140,
+					"clock": "2:19",
+					"line": "Keep the route rolling straight into your next camp — your clear only gets faster while it keeps running."
+				},
+				{
+					"tSec": 146,
+					"clock": "2:26",
+					"line": "Keep the route rolling straight into your next camp — the speed only stacks while you keep hitting things."
+				},
+				{
+					"tSec": 164,
+					"clock": "2:44",
+					"line": "Briar got first blood on Taliyah — don't go hunting him, keep the route running and take your next camp."
+				},
+				{
+					"tSec": 183,
+					"clock": "3:02",
+					"line": "Briar's under ten CS and you're level 4 — don't stop the route to avenge Taliyah, keep the clear running."
+				},
+				{
+					"tSec": 189,
+					"clock": "3:08",
+					"line": "Briar's at least 11 CS behind you — keep the route running, don't go hunt him over that Taliyah kill."
+				},
+				{
+					"tSec": 201,
+					"clock": "3:20",
+					"line": "You're on 133 HP with 881 gold — back, buy, and restart the route; arriving late on foot only feeds it."
+				},
+				{
+					"tSec": 201,
+					"clock": "3:20",
+					"line": "133 HP with 881 gold in your pocket — recall now and restart the route clean, you're already ahead."
+				},
+				{
+					"tSec": 213,
+					"clock": "3:33",
+					"line": "Take the back with 906 gold, then straight back onto camps — you're already 11 CS ahead, don't go find Briar."
+				},
+				{
+					"tSec": 225,
+					"clock": "3:45",
+					"line": "Briar's under ten CS and a level down — don't go answer that, keep the route running to the next camp."
+				},
+				{
+					"tSec": 237,
+					"clock": "3:57",
+					"line": "Briar's at least eleven CS behind you — keep the route running to your next camp, speed only stacks while you clear."
+				},
+				{
+					"tSec": 244,
+					"clock": "4:03",
+					"line": "Briar's at least 11 CS behind you — keep the route running to the next camp, don't stop to go find him."
+				},
+				{
+					"tSec": 256,
+					"clock": "4:15",
+					"line": "You're at least eleven CS up on Briar — keep the route running to the next camp, don't stop to find him."
+				},
+				{
+					"tSec": 256,
+					"clock": "4:15",
+					"line": "Briar's at least eleven CS behind you — don't go hunting, just buy and run the next full route."
+				},
+				{
+					"tSec": 274,
+					"clock": "4:34",
+					"line": "You're at least 21 CS up on Briar because the route never stopped — finish this camp and keep rolling."
+				},
+				{
+					"tSec": 292,
+					"clock": "4:52",
+					"line": "Briar is at least twenty-one CS behind you — keep the route running through this camp and the next."
+				},
+				{
+					"tSec": 329,
+					"clock": "5:28",
+					"line": "Briar's still level 3 and at least 31 CS behind — keep the route running into his camps, don't go hunt him."
+				},
+				{
+					"tSec": 335,
+					"clock": "5:35",
+					"line": "Briar is level 3 and at least 31 CS behind you — keep the route running into his camps, don't go hunt him."
+				},
+				{
+					"tSec": 365,
+					"clock": "6:05",
+					"line": "Briar's at least 21 CS behind you — drake's gone, so keep the route rolling to the next camp instead."
+				},
+				{
+					"tSec": 378,
+					"clock": "6:17",
+					"line": "You're at least 21 CS up on Briar — use these 12 seconds to pick a full clear route, not a fight."
+				},
+				{
+					"tSec": 402,
+					"clock": "6:42",
+					"line": "You're at least 21 CS ahead of Briar, so walk out into a full camp route and don't detour to lanes."
+				}
+			],
+			"labelledNew": [
+				1,
+				2,
+				10,
+				21,
+				24,
+				36
+			],
+			"labelledBorderline": [
+				14,
+				23,
+				32,
+				34,
+				37
+			]
+		},
+		"flash36": {
+			"source": "data/eval/model-36flash.json (arm cite-or-quiet, withFrame, gemini-3.6-flash)",
+			"lines": [
+				{
+					"tSec": 12,
+					"clock": "0:11",
+					"line": "Spend your 500 gold and head to your first camp to start the clear."
+				},
+				{
+					"tSec": 18,
+					"clock": "0:17",
+					"line": "Spend your 500 gold and head out to guard your jungle entrance."
+				},
+				{
+					"tSec": 24,
+					"clock": "0:24",
+					"line": "Grab your pet with your 500 gold and head to your buff so the clear starts clean."
+				},
+				{
+					"tSec": 30,
+					"clock": "0:30",
+					"line": "Buy your jungle item and walk out to cover an entrance."
+				},
+				{
+					"tSec": 36,
+					"clock": "0:36",
+					"line": "Walk out to guard your river entrance now to protect your level 1."
+				},
+				{
+					"tSec": 61,
+					"clock": "1:00",
+					"line": "Stand by your buff and start your route because your clear only gets faster while it keeps running."
+				},
+				{
+					"tSec": 67,
+					"clock": "1:06",
+					"line": "Briar clears fast too, so keep your route moving and finish this first full clear."
+				},
+				{
+					"tSec": 79,
+					"clock": "1:19",
+					"line": "Briar is level 1 with under 10 CS, so keep your clear running and finish the route."
+				},
+				{
+					"tSec": 85,
+					"clock": "1:25",
+					"line": "Your clear only gets faster while it keeps running, so finish the whole route."
+				},
+				{
+					"tSec": 85,
+					"clock": "1:25",
+					"line": "Briar is level 1, so keep your clear running and move straight to your next camp."
+				},
+				{
+					"tSec": 97,
+					"clock": "1:37",
+					"line": "Your clear only gets faster while it keeps running, so finish the full route."
+				},
+				{
+					"tSec": 103,
+					"clock": "1:43",
+					"line": "Your clear only gets faster while it keeps running, so finish the whole route."
+				},
+				{
+					"tSec": 110,
+					"clock": "1:49",
+					"line": "Briar is level 1, so keep your clear moving and finish your full route."
+				},
+				{
+					"tSec": 140,
+					"clock": "2:19",
+					"line": "Briar is level 1, so keep the route moving and clear through your camps."
+				},
+				{
+					"tSec": 146,
+					"clock": "2:26",
+					"line": "Briar is under 10 CS, so finish this route and keep your Prance stacks moving."
+				},
+				{
+					"tSec": 164,
+					"clock": "2:44",
+					"line": "Briar is level 3 after killing Taliyah, so finish Krugs and keep your route moving."
+				},
+				{
+					"tSec": 183,
+					"clock": "3:02",
+					"line": "Briar is at least 11 CS behind you, so finish the clear and take your camps on spawn."
+				},
+				{
+					"tSec": 189,
+					"clock": "3:08",
+					"line": "Briar is at least 11 CS behind, so take camps and keep your route running."
+				},
+				{
+					"tSec": 201,
+					"clock": "3:20",
+					"line": "You have 881 gold, so recall now to spend it and keep your lead over Briar."
+				},
+				{
+					"tSec": 201,
+					"clock": "3:20",
+					"line": "Recall now with your eight hundred eighty-one gold, your speed is for leaving when you are low."
+				},
+				{
+					"tSec": 213,
+					"clock": "3:33",
+					"line": "Briar is at least 11 CS behind, so spend your 906 gold and get right back to clearing."
+				},
+				{
+					"tSec": 225,
+					"clock": "3:45",
+					"line": "Briar is at least 11 CS behind you, so keep the clear running toward her camps."
+				},
+				{
+					"tSec": 237,
+					"clock": "3:57",
+					"line": "Briar is under 10 CS, so keep the route running toward her camps."
+				},
+				{
+					"tSec": 244,
+					"clock": "4:03",
+					"line": "Briar is level 3 while you have at least 20 CS, so keep your route running."
+				},
+				{
+					"tSec": 256,
+					"clock": "4:15",
+					"line": "Briar is level 3, so keep the route moving toward her top camps."
+				},
+				{
+					"tSec": 256,
+					"clock": "4:15",
+					"line": "Briar is at least 11 CS behind you, so keep the clear running toward camps while the speed is stacked."
+				},
+				{
+					"tSec": 262,
+					"clock": "4:21",
+					"line": "Briar is at least 11 CS behind you, so stop hovering mid and clear your own camps."
+				},
+				{
+					"tSec": 274,
+					"clock": "4:34",
+					"line": "Briar is at least 21 CS behind you, so finish this mid wave and keep your clear running."
+				},
+				{
+					"tSec": 292,
+					"clock": "4:52",
+					"line": "You are at least 21 CS ahead of Briar, so keep clearing your camps."
+				},
+				{
+					"tSec": 323,
+					"clock": "5:22",
+					"line": "Briar is at least 31 CS behind you, so keep your clear running through your camps."
+				},
+				{
+					"tSec": 329,
+					"clock": "5:28",
+					"line": "Briar is at least 31 CS behind you, so finish this camp and keep your clear running."
+				},
+				{
+					"tSec": 335,
+					"clock": "5:35",
+					"line": "Briar is under 10 CS, so clear into her jungle while your speed is stacked."
+				},
+				{
+					"tSec": 365,
+					"clock": "6:05",
+					"line": "Briar is at least 21 CS behind you, so keep the route running and take your camps."
+				},
+				{
+					"tSec": 378,
+					"clock": "6:17",
+					"line": "You spawn in 12 seconds with 808 gold, so spend it and run straight to your camps."
+				},
+				{
+					"tSec": 402,
+					"clock": "6:42",
+					"line": "Briar is at least 21 CS behind you, so take your full clear route now."
+				}
+			],
+			"labelledNew": [
+				1,
+				7,
+				16,
+				19,
+				34
+			],
+			"labelledBorderline": [
+				6,
+				8,
+				15,
+				17,
+				27
+			]
+		},
+		"targets": {
+			"source": "data/eval/target-lines.md, moments M02-M24 of the same game - hand-written by the insight track from the raw samples and the journal frames",
+			"lines": [
+				{
+					"id": "M02",
+					"tSec": 162,
+					"line": "Briar was mid ten seconds ago and still has under ten CS — go take his blue side, all of it is standing."
+				},
+				{
+					"id": "M04",
+					"tSec": 255,
+					"line": "Briar has not moved off zero CS in four minutes — go take his raptors and his blue, nothing there is dead."
+				},
+				{
+					"id": "M06",
+					"tSec": 341,
+					"line": "First drake has been up since five and nobody has taken it — Briar is two levels down, go start it with Smolder."
+				},
+				{
+					"id": "M07",
+					"tSec": 365,
+					"line": "Drake's gone and all five of them are alive — leave the pit, their raptors are the free thing here."
+				},
+				{
+					"id": "M08",
+					"tSec": 377,
+					"line": "He took drake at six oh four then killed you eleven seconds later — be at the next drake before it starts."
+				},
+				{
+					"id": "M11",
+					"tSec": 499,
+					"line": "Briar and Ornn are both down and the grubs are untouched — take all three now, you have thirteen seconds."
+				},
+				{
+					"id": "M12",
+					"tSec": 530,
+					"line": "Briar has been back up for twenty seconds and you're at forty one percent — finish the grub and get out, don't fight for it."
+				},
+				{
+					"id": "M13",
+					"tSec": 554,
+					"line": "You've been carrying twelve hundred gold since eight twenty — spend every coin before you leave the fountain."
+				},
+				{
+					"id": "M15",
+					"tSec": 637,
+					"line": "Briar has killed you twice and is still under thirty CS — take his blue and his gromp on the way to every lane."
+				},
+				{
+					"id": "M18",
+					"tSec": 804,
+					"line": "Briar has killed Taliyah four times — when you're back, ward mid river before you take a single camp."
+				},
+				{
+					"id": "M19",
+					"tSec": 853,
+					"line": "You've gained under ten CS since nine o'clock — five minutes of nothing, so full clear from your blue right through his raptors."
+				},
+				{
+					"id": "M20",
+					"tSec": 940,
+					"line": "Four of them showed up for that Herald — their jungle was empty for it, so go take Briar's blue side now."
+				},
+				{
+					"id": "M21",
+					"tSec": 980,
+					"line": "Three of your five deaths are Briar — he beats you straight up, so stop taking that fight without Braum."
+				},
+				{
+					"id": "M22",
+					"tSec": 1175,
+					"line": "Third drake to them — the next one is soul, so start walking to that pit before it spawns, not after."
+				},
+				{
+					"id": "M24",
+					"tSec": 1341,
+					"line": "Four of them are down thirty seconds and Baron has been up since twenty — go start Baron."
+				}
+			]
+		}
+	}
+}

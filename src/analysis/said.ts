@@ -1,9 +1,95 @@
 /**
- * What the coach has already said this game — the one thing it has never been able to see.
+ * What the coach has already said out loud this game — the only thing it has never been able to see.
  *
- * PLACEHOLDER HEADER — rewritten once the sweep below is measured.
+ * ## The failure this exists for
+ *
+ * Two models, the same 42 states of game 5635467422, the same frames, the same block
+ * (`data/eval/model-opus5.json`, `data/eval/model-36flash.json`). Gemini 3.6 Flash was judged 83%
+ * useful and Opus 5 53%, both at 0% fabrication — and 18 of Gemini's 35 lines and 17 of Opus's 38
+ * restate at least half the content words of an earlier line. Opus said some rewording of *your
+ * clear only gets faster while it keeps running* in NINETEEN of its 38 lines, in a row, changing
+ * the verb each time. Counted by hand rather than lexically, 29 of its 38 lines were things he had
+ * already been told.
+ *
+ * No instrument in this repo could see it, and the reason is structural: `analysis/coach-score.ts`
+ * scores a line for fabrication against the block it was holding, and the blind judge scores a line
+ * for usefulness against the same. **Both score one line, alone.** A sentence that is true,
+ * grounded and actionable scores full marks on its tenth telling. So the model is not the problem
+ * and neither is the prompt — the coach has no memory of its own speech, and a rule in a prompt is
+ * a request.
+ *
+ * This module is both halves of the answer: the transcript the model is SHOWN (`renderSaid`, fed
+ * into the block through `VisionState.said`), and the refusal that does not depend on it obeying
+ * (`judgeSaid`).
+ *
+ * ## What counts as a repeat, and how the rule was chosen
+ *
+ * Verbatim matching is useless here: every one of those nineteen lines is worded differently. Three
+ * candidate signals were measured against the two real transcripts above and against the 15
+ * hand-written good lines of game 5635467422 in `data/eval/target-lines.md`, which is the set a
+ * gate must NOT kill.
+ *
+ *   1. **Wording** — content-word containment against anything said in the last four minutes. This
+ *      is the signal `analysis/insight.ts` scores with offline, at 0.5. It catches paraphrase and
+ *      nothing else: on Opus it flags 17 of the 29 real repeats.
+ *   2. **The directive, as an INTENT rather than as words.** The decisive one. Those nineteen
+ *      "keep clearing" lines carry fourteen distinct head phrasings — "keep route rolling", "start
+ *      route don't", "take every camp", "full clear start", "grab leash commit" — so a key built
+ *      from words counts fourteen instructions where he heard one. `DIRECTIVE_INTENTS` collapses
+ *      them, and that single change took the leak from 3 repeated lines to 0 on Opus.
+ *   3. **The subject of the premise**, on a rolling budget. `SaidSubject` is `FactSubject` from
+ *      `live-facts.ts` deliberately: the ranker already decided that his own farm and the race
+ *      against the enemy jungler are ONE subject with one budget, and that is exactly the
+ *      collapse this needs — 30 of Opus's 38 lines are that one subject.
+ *
+ * Measured, at the constants in `SAID_LIMITS`:
+ *
+ *     corpus                       spoke   survive   labelled-new kept   repeats leaked
+ *     model-opus5   (with frames)     38         7           5 of 6            2 of 27
+ *     model-36flash (with frames)     35         9           5 of 5            3 of 25
+ *     target-lines.md M02..M24        15        15              n/a                n/a
+ *
+ * The one labelled-new line the gate kills is *"Race is dead even at least-ten CS each, so just
+ * keep the route running"* at 1:06 — and the block itself forbids that claim ("the two of you are
+ * inside the client's rounding of each other, so nobody can say who is ahead — do not"), so the
+ * kill is right and the label was wrong. The leaked repeats are all of the form "same instruction,
+ * ninety-eight seconds later, forty percent shared wording": the gate is not a paraphrase detector
+ * and does not pretend to be.
+ *
+ * ## THE HONEST COST, because there is one and it is the whole argument
+ *
+ * **This gate makes the coach quieter, and quiet was already the complaint.** It cuts Opus's seven
+ * minutes from 38 lines to 7 and Gemini's from 35 to 9 — 82% and 74% of everything they said. The
+ * repo has measured what that end of the dial feels like: the fenced coach spoke 12 times in a
+ * whole game, the first at 8:37, and the owner's word for it was that the coach was ABSENT.
+ *
+ * So of the two failures — *she never shuts up* and *she is not there* — a no-repeat gate strictly
+ * worsens the second. It is not a fix on its own and must not ship as one. Two things stop it
+ * being a mute button, and both are outside this file:
+ *
+ *   - **the briefing** (`H-series`, `H-event`, `F-schedule`, `X-game` in `target-lines.md`), which
+ *     gives the coach facts that are not a value in the current snapshot and therefore are not the
+ *     same fact every turn. The 15 hand-written targets all survive this gate precisely because
+ *     each one is about something new;
+ *   - **`SaidContext.news`**, the door for a caller that can see the world change. Silence has to
+ *     be comfortable, but a coach that cannot interrupt itself when the drake it just told him to
+ *     take has been taken is worse than one that repeats.
+ *
+ * Stated the other way round: 7 lines in the 6.7 minutes measured is 1.04 a minute, against the
+ * fenced coach's 0.28 and the ungated 5.7. This is not the fence. It is the same coach with the
+ * duplicates removed, and what it does next depends entirely on being given something new to say.
+ *
+ * ## Where the gate can actually be enforced
+ *
+ * Only where the sentence exists as TEXT before it is spoken — the turn-based providers, where
+ * `coachTurn` returns a string and the browser speaks it. On the Gemini Live socket the audio is
+ * already playing by the time `outputTranscription` arrives (`web/lib/geminiLive.ts`), so there the
+ * only lever is `renderSaid` in the next turn's block, and `judgeSaid` is an instrument rather than
+ * a refusal. That asymmetry is real and is not papered over: the socket gets the request, the turn
+ * path gets the refusal, and both feed the same memory.
  */
 
+import { fmtClock } from "../shared/time.ts"
 import { normalizeNumbers } from "./coach-score.ts"
 import type { FactSubject } from "./live-facts.ts"
 
@@ -345,4 +431,86 @@ export const rememberSaid = (
 	const entry = { ...analyseSaid(mem, line, tSec), at }
 	mem.lines.push(entry)
 	return entry
+}
+
+/* ============================================================ the transcript he heard */
+
+/**
+ * How many spoken lines are quoted back in full before the rest collapses into a tally.
+ *
+ * The block is already 60 lines and every line in it competes with the picture for attention, so
+ * the transcript cannot grow with the game — a 36-minute game at the shipped 45-second floor is
+ * about 45 lines and quoting them all would double the prompt by the twenty-minute mark. Five is
+ * the number of DISTINCT things this gate lets through in the seven minutes it was measured over
+ * (7 for Opus, 9 for Gemini), so at the rate the gated coach actually speaks, five covers roughly
+ * the last four minutes and the tally covers the rest.
+ */
+export const SAID_SHOWN = 5
+
+/**
+ * Did he act on it? Answered for GOLD and nothing else, on purpose.
+ *
+ * Gold is the only figure in the block that is exact, that moves when he does the thing, and that
+ * moves in one direction only — it falls when he spends. CS is floored to tens (`live-state.ts`),
+ * so a CS delta between two stored snapshots is worth nine either way and would need the interval
+ * arithmetic `csGap` already does; that belongs to whoever builds the trajectory, not here, and
+ * importing it would make this module and the block circular.
+ *
+ * `target-lines.md` names both halves of why this matters: M14 is *"he was told to spend; he
+ * spent"* — congratulating him for it is the coach talking about itself — and M23 is the same
+ * event seen from the other side. Neither is knowable from a snapshot, and both are one
+ * subtraction once the coach remembers the number it was holding when it spoke.
+ */
+export const followUp = (said: SaidLine, now: SaidSnapshot): string | null => {
+	const then = said.at.gold
+	const gold = now.gold
+	if (then === undefined || gold === undefined) return null
+	if (said.directive !== "recall" && said.directive !== "buy") return null
+	if (gold < then) return `he has spent since — ${Math.round(then)} gold then, ${Math.round(gold)} now`
+	return `he has NOT spent — ${Math.round(then)} gold then, ${Math.round(gold)} now`
+}
+
+const tally = (keys: string[]): string =>
+	[...new Set(keys)]
+		.map(k => ({ k, n: keys.filter(x => x === k).length }))
+		.sort((a, b) => b.n - a.n)
+		.map(t => (t.n > 1 ? `${t.k} x${t.n}` : t.k))
+		.join(", ")
+
+/**
+ * The coach's own transcript, as the model should see it.
+ *
+ * Returns the empty string before the coach has said anything, so the block carries no heading for
+ * a game that has not started. Every other absence in this block is stated rather than omitted
+ * (see `live-state.ts` on the missing baseline), and this one is the exception for a reason: an
+ * empty transcript is not a gap a model can fill with a guess. There is nothing to invent about
+ * having said nothing.
+ */
+export const renderSaid = (mem: SaidMemory, now: SaidSnapshot = {}): string => {
+	if (mem.lines.length === 0) return ""
+	const recent = mem.lines.slice(-SAID_SHOWN)
+	const older = mem.lines.slice(0, -SAID_SHOWN)
+	const quoted = recent.map(l => {
+		const done = followUp(l, now)
+		return `- ${fmtClock(l.tSec)} (${l.subject}) "${l.line}"${done ? ` — ${done}` : ""}`
+	})
+	return `### What you have already said out loud this game
+
+He heard every one of these. **Say none of them again, in any wording** — not the same fact with a
+new number, not the same instruction in different words. Measured on this coach's own transcripts,
+half of everything it says restates something he has already been told, and a true thing said twice
+teaches him to stop listening to the first telling.
+
+${quoted.join("\n")}${
+		older.length > 0 ?
+			`\n\nEarlier, no longer quoted: ${tally(older.map(l => l.subject))}.`
+		:	""
+	}
+
+Instructions he has already been given: ${tally(mem.lines.map(l => l.directive).filter(Boolean)) || "none"}.
+Repeating one of these is not reinforcement — he heard it, and whether he did it is between him and
+the game.
+
+If the only thing worth saying is on this list, say PASS. Silence is the correct answer on most
+turns and it costs nothing; a line he has already heard costs the credibility of the next one.`
 }

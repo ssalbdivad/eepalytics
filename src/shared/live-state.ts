@@ -214,6 +214,27 @@ export interface VisionState {
 	 * checkable.
 	 */
 	unseen: string[]
+	/**
+	 * THE COACH'S OWN TRANSCRIPT — what it has already said out loud this game.
+	 *
+	 * The one fact about the conversation that no client and no screenshot can supply, and the
+	 * only one that was missing. Measured on two models over the same 42 states of game
+	 * 5635467422 (`data/eval/model-opus5.json`, `model-36flash.json`): Opus said some rewording of
+	 * *your clear only gets faster while it keeps running* in 19 of its 38 lines, and Gemini
+	 * reached 83% "useful" while repeating itself in 18 of 35. Both instruments that scored those
+	 * runs scored one line at a time against the block it was holding, so neither could see it. A
+	 * sentence that is true, grounded and actionable gets full marks on its tenth telling.
+	 *
+	 * Already RENDERED rather than structured, exactly as `championKnowledge` is in
+	 * `live-coach-mode.ts`: the memory and its no-repeat gate live in `analysis/said.ts`, and
+	 * `shared/` may not import `analysis/`. `renderSaid` produces this string; the daemon feeds it
+	 * back in on the next turn.
+	 *
+	 * Optional because a game that has not been spoken into has no transcript, and because every
+	 * `VisionState` in this repo's fixtures predates it. Absent means the coach has said nothing —
+	 * which, unlike a missing baseline, is not a gap a model can fill with a guess.
+	 */
+	said?: string
 }
 
 export interface VisionStatePlayer {
@@ -346,7 +367,7 @@ There is no fact worth interrupting him for at this instant. Unless the video sh
 plain and urgent, the correct answer is PASS.`
 	}
 
-**The ten champions above are the only champions in this game.** Never name any other. Never
+${s.said ? `${s.said}\n\n` : ""}**The ten champions above are the only champions in this game.** Never name any other. Never
 give a number that is not in this block, and take every timer from the list below rather than
 inferring one — you cannot read health bars, gold or scores off a
 downscaled screenshot accurately, and you do not need to, because they are right here.
