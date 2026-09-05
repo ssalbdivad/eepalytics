@@ -72,11 +72,31 @@ describe("readMinimap", () => {
 		ok(out.faults && out.faults.length > 0, "expected the fault to be named")
 	})
 
-	it("drops a read claiming more allies than are alive", async () => {
+	it("drops a read claiming more allies than are ALIVE, not merely than exist", async () => {
+		/*
+		 * Two stages, and they are not the same bound. The parser clamps the count to four — the
+		 * structural maximum, since he is not one of his own allies — and the fence then compares
+		 * what survives against how many are actually alive. A test written with four allies alive
+		 * cannot tell the two apart, because the clamp lands exactly on the fence.
+		 */
 		stub(JSON.stringify({ ...READ, alliesOnMinimap: 9 }))
-		const out = await readMinimap({ jpegBase64: "x", truth: TRUTH })
+		const out = await readMinimap({ jpegBase64: "x", truth: { ...TRUTH, alliesAlive: 2 } })
 		strictEqual(out.read, null)
 		strictEqual(out.reason, "fenced")
+		ok(
+			out.faults?.some(f => f.code === "more-allies-than-alive"),
+			`expected the ally count to be the fault: ${JSON.stringify(out.faults)}`
+		)
+	})
+
+	it("clamps an impossible count rather than inventing a fault out of it", async () => {
+		// Nine allies is a misread, not a contradiction, when four are alive: it clamps to four and
+		// the fence has nothing to say. The count is the weakest thing the model does — measured
+		// exact only 44% of the time — which is why nothing downstream speaks it.
+		stub(JSON.stringify({ ...READ, alliesOnMinimap: 9 }))
+		const out = await readMinimap({ jpegBase64: "x", truth: TRUTH })
+		ok(out.read, `expected a clamped read, got ${JSON.stringify(out)}`)
+		strictEqual(out.read.alliesOnMinimap, 4)
 	})
 
 	it("never throws on a non-200, and says which", async () => {
