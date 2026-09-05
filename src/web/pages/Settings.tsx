@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { HealthResponse } from "../../shared/schema/api.ts"
 import type { Settings, SettingsPatch } from "../../shared/schema/settings.ts"
 import { MODEL_CHOICES, clampSettings } from "../../shared/schema/settings.ts"
+import { LIVE_COACH_MODES } from "../../shared/live-coach-mode.ts"
 import { api } from "../lib/api.ts"
 import { useAction, useNow, useResource } from "../lib/hooks.ts"
 import { cls, fmtAgo } from "../lib/format.ts"
@@ -325,6 +326,86 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							<br />
 							There is no "sign in with Google" here because there cannot be — the Live API takes
 							an API key, and a consumer Gemini subscription grants no API access.
+						</div>
+					</div>
+
+					{/*
+					 * WHICH ARCHITECTURE she runs on, with the measurement printed beside each choice.
+					 *
+					 * This is the one setting on this page that changes what she is ALLOWED to say, so it
+					 * is the one place a bare label would be worst. He has turned this coach off mid-game
+					 * more than once and has learned to discount an unevidenced claim about it; "we changed
+					 * the architecture, trust us" is exactly that sentence. So each option carries its own
+					 * numbers from the same blind run, including the fence's — the argument for the option
+					 * he is not on has to be visible too, or this is marketing rather than a choice.
+					 */}
+					<div className="field wide">
+						<div className="label">How she decides what to say</div>
+						<div className="control" style={{ display: "grid", gap: 8 }}>
+							{LIVE_COACH_MODES.map(m => {
+								const on = draft.liveCoachMode === m.id
+								return (
+									<label
+										key={m.id}
+										style={{
+											display: "grid",
+											gridTemplateColumns: "auto 1fr",
+											gap: "0 10px",
+											alignItems: "start",
+											padding: "10px 12px",
+											borderRadius: 8,
+											cursor: "pointer",
+											border: `1px solid ${on ? "var(--gold-dim)" : "var(--line-soft)"}`,
+											background: on ? "var(--panel-2)" : "transparent"
+										}}
+									>
+										<input
+											type="radio"
+											name="liveCoachMode"
+											checked={on}
+											onChange={() => set("liveCoachMode", m.id)}
+											style={{ marginTop: 3 }}
+										/>
+										<div>
+											<div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+												{m.label}
+											</div>
+											<div
+												style={{
+													fontSize: 11.5,
+													color: "var(--dim)",
+													marginTop: 3,
+													maxWidth: "62ch"
+												}}
+											>
+												{m.blurb}
+											</div>
+											<div
+												style={{
+													fontSize: 11.5,
+													color: "var(--faint)",
+													marginTop: 4,
+													maxWidth: "62ch"
+												}}
+											>
+												<b style={{ color: "var(--gold-dim)" }}>Measured:</b> {m.evidence}
+											</div>
+										</div>
+									</label>
+								)
+							})}
+						</div>
+						<div className="help">
+							Both were run on the same model against the same 363 recorded samples from four of
+							your own games, replayed in order, and every line was judged with the labels
+							stripped so the judge could not tell which arm it was reading. Neither one lets her
+							say a number that is not in the block — that rule is what keeps her honest, and it
+							is in both. What changes is how much she is allowed to notice for herself.
+						</div>
+						<div className="help">
+							Takes effect at the start of the next game: one socket is opened per game and the
+							instructions go in when it opens, so changing this mid-game does nothing until the
+							next one.
 						</div>
 					</div>
 
