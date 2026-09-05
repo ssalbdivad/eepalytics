@@ -120,6 +120,46 @@ const findMe = (data: LiveAllGameData) => {
 	)
 }
 
+/**
+ * Which champion he is on, from whichever source can answer yet.
+ *
+ * The socket sets its system prompt ONCE, at champion select, and that is minutes before the live
+ * client on :2999 answers anything at all — so a prompt built from `allgamedata` alone would ship
+ * every socket session with no champion knowledge in it, while the turn-based path (which builds
+ * its prompt per turn, in a game) got the clauses. Same coach, two architectures, silently
+ * different prompts: exactly the confound `coachTurn` refuses to allow.
+ *
+ * `/lol-gameflow/v1/session` publishes the locked champion from champ select onward and is already
+ * how `GET /api/live/matchup` names it, so this reuses that join rather than reading the champ
+ * select delegate directly — `/lol-champ-select/v1/session` 404s with "No active delegate" the
+ * moment the draft ends, which is the half of the window this needs most.
+ *
+ * The game comes FIRST when there is one: a reconnect mid-game re-mints a token, and by then the
+ * live client is authoritative about who is actually being played.
+ *
+ * `""` on every failure, which is a supported answer and not an error — a champion with no notes
+ * on file gets a coach that reasons from the block alone, which is what it did for this app's
+ * whole life.
+ */
+const lockedChampion = async (): Promise<string> => {
+	const handle = await lcu()
+	if (!handle) return ""
+	const data = await handle.live.allGameData().catch(() => null)
+	const inGame = data ? findMe(data) : null
+	if (inGame?.championName) return inGame.championName
+	const session = await handle.client.gameflowSession().catch(() => null)
+	if (!session || !isCoachingPhase(session.phase)) return ""
+	// Hourly-cached and a no-op in the common case; without it every id resolves to "".
+	await refreshChampionNames()
+	const { brief } = buildMatchupBrief({
+		session,
+		puuid: USER_PUUID,
+		championName,
+		spellName: summonerSpellName
+	})
+	return brief?.you.champion ?? ""
+}
+
 
 /**
  * Turn one `allgamedata` read into the ground-truth block the coach is given.
@@ -1155,9 +1195,18 @@ export const createLiveRoute = (): Hono => {
 		 * a game three days ago reads as something happening right now — which is how a coach
 		 * ends up telling someone to stop doing a thing they are not currently doing.
 		 */
+		/*
+		 * The block is rendered FOR THE SELECTED ARCHITECTURE, not once for both.
+		 *
+		 * `renderState` writes the fence's own instructions into the middle of the ground truth —
+		 * "never say this unless it also appears in the list below", "the correct answer is PASS" —
+		 * and those are not facts. Under `cite-or-quiet` they gag the arm this app measured as
+		 * 13.5x more useful, from inside the block, where no prompt change can reach them. See
+		 * `shared/live-coach-mode.ts` for what each repair is and what it was measured against.
+		 */
 		return c.json({
 			inGame: true,
-			text: `${renderState(state)}${
+			text: `${renderBlockForMode(state, getSettings().liveCoachMode)}${
 				focus.length > 0 ?
 					`\n\n## From his PAST reviews — not from this game\n\nThese are habits he is working on. Mention one only if THIS game's facts show it happening again.\n\n${focus
 						.map(f => `- ${f}`)
@@ -1180,7 +1229,30 @@ export const createLiveRoute = (): Hono => {
 	app.post("/live/gemini/token", async c => {
 		const minted = await mintGeminiToken()
 		if (!minted.ok) return c.json({ ok: false, error: minted.error }, 200)
-		return c.json({ ok: true, ...minted.value })
+		/*
+		 * The SYSTEM PROMPT rides with the token, and it has to.
+		 *
+		 * The browser cannot build it: the champion clauses come from `knowledge/champions/*.md`,
+		 * which is a filesystem the renderer has no access to, and the mode is a setting the daemon
+		 * owns. The page used to hold a hardcoded `LIVE_COACH_SYSTEM_PROMPT`, which meant the mode
+		 * picker in Settings changed the block and not the standing instructions — a coach told to
+		 * speak only from a list it was no longer being given one.
+		 *
+		 * It is minted with the token rather than fetched separately because the socket already
+		 * blocks on this call before `setup`, and a second request is a second thing that can fail
+		 * in the one place where failing means connecting with no prompt at all.
+		 */
+		const champion = await lockedChampion()
+		return c.json({
+			ok: true,
+			...minted.value,
+			systemPrompt: liveCoachSystemPrompt({
+				mode: getSettings().liveCoachMode,
+				championKnowledge: liveChampionKnowledge(champion)
+			}),
+			// Echoed so a transcript can say which champion's knowledge the session was opened on.
+			champion
+		})
 	})
 
 	/**
@@ -1274,11 +1346,21 @@ export const createLiveRoute = (): Hono => {
 			return c.json({ ok: false, text: "", reason: "provider and block are required" })
 		const frame =
 			typeof body.frame === "string" ? body.frame.replace(/^data:[^,]+,/, "") : undefined
+		/*
+		 * The mode and the champion are resolved HERE, never taken from the request.
+		 *
+		 * `coachTurn`'s invariant is that the prompt text is not a parameter, so a bench comparison
+		 * cannot accidentally have varied the wording as well. A browser that could post a mode
+		 * would be one step from a browser that posts a prompt; the daemon owns the setting and the
+		 * champion notes, so it owns both halves of what the model is told.
+		 */
 		const r = await coachTurn({
 			provider: body.provider as never,
 			...(typeof body.model === "string" ? { model: body.model } : {}),
 			...(frame ? { frameJpegBase64: frame } : {}),
-			blockText: body.block
+			blockText: body.block,
+			mode: getSettings().liveCoachMode,
+			champion: await lockedChampion()
 		})
 		return c.json(r)
 	})

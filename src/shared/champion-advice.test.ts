@@ -25,6 +25,7 @@ import { dirname, join, resolve } from "node:path"
 import { describe, it } from "node:test"
 import { fileURLToPath } from "node:url"
 import { FARM_COOLDOWN_SEC, buildFacts, newFactMemory } from "../analysis/live-facts.ts"
+import { speechDurationSec } from "../analysis/timeliness.ts"
 import type { FactInput } from "../analysis/live-facts.ts"
 import {
 	ADVICE_KINDS,
@@ -441,16 +442,29 @@ describe("the shipped champion files", () => {
 					build: "Briar just finished Stridebreaker",
 					"farm-behind": "you're roughly 18 CS down on your own pace"
 				}
-				const MAX_SPOKEN_CHARS = 140
+				/*
+				 * The ceiling is in SECONDS, not characters, because seconds are the constraint.
+				 * `speechDurationSec` is the fit measured on real TTS this session (1.18 + 0.189 x
+				 * syllables, R2 0.895, n=24), so this asserts the thing the player experiences
+				 * rather than a proxy for it.
+				 *
+				 * Where it sits today, measured over all 126 shipped combinations: median 6.5s,
+				 * p90 7.2s, max 7.8s — against 3.4s for the bare `farm-behind` stem. **Champion
+				 * advice roughly DOUBLES the time she is talking.** That is a real trade and it is
+				 * pinned here rather than left to drift: 8.0s is a ceiling that permits today and
+				 * catches the next clause that runs long.
+				 */
+				const MAX_SPOKEN_SEC = 8
 				const over: string[] = []
 				for (const m of lines) {
 					const kind = m[1]!.trim()
 					const stem = STEM[kind]
 					if (stem === undefined) continue
 					const spoken = withAdvice(stem, m[2]!.trim())
-					if (spoken.length > MAX_SPOKEN_CHARS) over.push(`${spoken.length}: ${spoken}`)
+					const sec = speechDurationSec(spoken)
+					if (sec > MAX_SPOKEN_SEC) over.push(`${sec.toFixed(1)}s: ${spoken}`)
 				}
-				ok(over.length === 0, `over ${MAX_SPOKEN_CHARS} chars spoken:\n${over.join("\n")}`)
+				ok(over.length === 0, `over ${MAX_SPOKEN_SEC}s spoken:\n${over.join("\n")}`)
 			})
 
 			it("still has something to say for every kind once merged with the role default", () => {
