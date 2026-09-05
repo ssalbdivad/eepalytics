@@ -156,8 +156,17 @@ export interface CoachTurnResult {
 	reason?: string
 }
 
-/** Build the SDK model handle. Kept separate so the provider list stays declarative. */
-const modelFor = async (p: ProviderInfo, key: string, model: string) => {
+/**
+ * Build the SDK model handle. Kept separate so the provider list stays declarative.
+ *
+ * EXPORTED as `modelHandleFor` for one caller: the judge in `scripts/e2e-real-game.ts`, which
+ * grades a coach line and therefore needs its OWN system prompt. It deliberately does not go
+ * through `coachTurn` — `coachTurn`'s whole invariant is that the system prompt is not a
+ * parameter, and a judge sharing the coach's prompt would be grading the coach against its own
+ * opinion of itself. Sharing only the provider plumbing keeps that invariant intact while still
+ * meaning one place decides how each vendor is reached.
+ */
+export const modelHandleFor = async (p: ProviderInfo, key: string, model: string) => {
 	if (p.id === "gemini-http") {
 		const { createGoogleGenerativeAI } = await import("@ai-sdk/google")
 		return createGoogleGenerativeAI({ apiKey: key })(model)
@@ -216,7 +225,7 @@ export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult>
 
 	try {
 		const { generateText } = await import("ai")
-		const handle = await modelFor(p, key, model)
+		const handle = await modelHandleFor(p, key, model)
 		const frameSent = typeof req.frameJpegBase64 === "string" && req.frameJpegBase64.length > 0
 		const result = await generateText({
 			model: handle,
