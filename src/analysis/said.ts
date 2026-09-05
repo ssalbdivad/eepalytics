@@ -56,6 +56,31 @@
  * ninety-eight seconds later, forty percent shared wording": the gate is not a paraphrase detector
  * and does not pretend to be.
  *
+ * ## Showing it the transcript, measured live
+ *
+ * The gate alone is a refusal, and a refusal turns a repeat into silence. Whether SHOWING the coach
+ * its transcript turns a repeat into a different line instead is a question about the model, so it
+ * was asked of the model. Gemini 3.6 Flash, the same 42 states of split-03, the same frames, the
+ * same system prompt lifted verbatim out of the ablation, temperature 0, run in order twice
+ * (`data/eval/said-transcript-ab-20260905.json`, re-runnable with `data/eval/said-transcript-ab.ts`):
+ *
+ *     arm                      spoke   PASS   gate dropped   he HEARD   subjects   instructions
+ *     gate only                   35      7             28          7          4              5
+ *     transcript + gate           20     22              7         13          6              8
+ *
+ * Shown what it had already said, the coach volunteered a line on twenty turns instead of
+ * thirty-five — and because those twenty were not the same line, thirteen of them survived the
+ * gate against seven. **Adding the memory nearly doubled what he actually hears while nearly
+ * halving what the coach tries to say.** The variety moved with it: `gate only` produced five
+ * distinct instructions, all of them buy / clear / recall; `transcript + gate` produced eight,
+ * reaching ganking, counter-jungling and objectives, and its lines include "path top to gank for
+ * Urgot", "push this open mid wave while Lissandra is down" and "start the dragon now" — none of
+ * which the coach reached at all when it could not see itself repeating.
+ *
+ * The honest limits of that: ONE run of ONE model, and the thirteen lines were not judged blind for
+ * usefulness or scored for fabrication, so this measures volume and variety and not quality. It is
+ * evidence that the transcript changes what the model chooses, not yet that it chooses better.
+ *
  * ## THE HONEST COST, because there is one and it is the whole argument
  *
  * **This gate makes the coach quieter, and quiet was already the complaint.** It cuts Opus's seven
@@ -63,9 +88,12 @@
  * repo has measured what that end of the dial feels like: the fenced coach spoke 12 times in a
  * whole game, the first at 8:37, and the owner's word for it was that the coach was ABSENT.
  *
- * So of the two failures — *she never shuts up* and *she is not there* — a no-repeat gate strictly
- * worsens the second. It is not a fix on its own and must not ship as one. Two things stop it
- * being a mute button, and both are outside this file:
+ * So of the two failures — *she never shuts up* and *she is not there* — a no-repeat gate ALONE
+ * worsens the second, and the A/B above is the reason "alone" is doing work in that sentence: with
+ * the transcript in front of it the same model delivered thirteen lines where the bare gate
+ * delivered seven, so the pair is not merely quieter than the ungated coach, it is louder than the
+ * gate by itself. It still is not a fix on its own. Two things stop it being a mute button, and
+ * both are outside this file:
  *
  *   - **the briefing** (`H-series`, `H-event`, `F-schedule`, `X-game` in `target-lines.md`), which
  *     gives the coach facts that are not a value in the current snapshot and therefore are not the
@@ -75,9 +103,10 @@
  *     be comfortable, but a coach that cannot interrupt itself when the drake it just told him to
  *     take has been taken is worse than one that repeats.
  *
- * Stated the other way round: 7 lines in the 6.7 minutes measured is 1.04 a minute, against the
- * fenced coach's 0.28 and the ungated 5.7. This is not the fence. It is the same coach with the
- * duplicates removed, and what it does next depends entirely on being given something new to say.
+ * Stated the other way round: 7 lines in the 6.7 minutes measured is 1.04 a minute against the
+ * fenced coach's 0.28 and the ungated 5.7, and 13 with the transcript is 1.94. This is not the
+ * fence. It is the same coach with the duplicates removed, and what it does next depends entirely
+ * on being given something new to say.
  *
  * ## Where the gate can actually be enforced
  *
