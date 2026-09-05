@@ -234,8 +234,29 @@ const buildLiveState = (
 		 * reached the player in a block whose every other line is champions. Half-fixing this was
 		 * worse than not fixing it, because the remaining misses look exactly like hallucination.
 		 */
-		const p = (data.allPlayers ?? []).find(x => x.riotId === who || x.summonerName === who)
-		return p?.championName ?? who
+		const p = (data.allPlayers ?? []).find(
+			x => x.riotIdGameName === who || x.riotId === who || x.summonerName === who
+		)
+		/*
+		 * NEVER fall through to the raw name.
+		 *
+		 * It did, and this was measured on a real capture (data/live-samples): matching on
+		 * `riotId`/`summonerName` resolved 0 of 37 event names, because the event feed sends the
+		 * BARE game name ("Gooskaffur") while both of those fields carry the tag
+		 * ("Gooskaffur#NA1"). `riotIdGameName` is the one that joins, and it was the one field
+		 * not being consulted.
+		 *
+		 * The cost was not cosmetic. Every kill in the block arrived as an unmappable proper
+		 * noun, in a block that also says "these ten champions are the only champions in this
+		 * game" - so the single richest signal available, who killed whom, was noise the model
+		 * could not use, and it fell back on the only clean numbers left. Six of nine lines in
+		 * one real transcript were about CS.
+		 *
+		 * Returning the sentinel keeps an unresolved name OUT of the block entirely, which is
+		 * the only safe direction: a name we cannot tie to a champion is indistinguishable from
+		 * a hallucination once it has been spoken.
+		 */
+		return p?.championName ?? "someone"
 	}
 	const recentEvents = (data.events?.Events ?? [])
 		.slice(-6)
@@ -245,8 +266,16 @@ const buildLiveState = (
 			if (e.EventName === "BaronKill") return `Baron taken by ${championOf(e.KillerName)}`
 			if (e.EventName === "HeraldKill") return `Herald taken by ${championOf(e.KillerName)}`
 			if (e.EventName === "TurretKilled") return `turret down (${e.TurretKilled ?? "?"})`
-			if (e.EventName === "ChampionKill")
-				return `${championOf(e.KillerName)} killed ${championOf(e.VictimName)}`
+			if (e.EventName === "ChampionKill") {
+				/*
+				 * Drop the event when NEITHER side resolves. "someone killed someone" is not a
+				 * fact, it is a line of filler that pushes a real one out of the six-event window.
+				 * One resolved side is still worth saying.
+				 */
+				const k = championOf(e.KillerName)
+				const v = championOf(e.VictimName)
+				return k === "someone" && v === "someone" ? "" : `${k} killed ${v}`
+			}
 			return ""
 		})
 		.filter(t => t !== "")
@@ -1060,11 +1089,26 @@ export const createLiveRoute = (): Hono => {
  * Returns null for a sample that cannot produce a state — the loading screen, a torn line — so a
  * replay skips it rather than inventing one.
  */
-export const buildLiveStateForBench = (raw: unknown, gameTimeSec: number): VisionState | null => {
+export const buildLiveStateForBench = (
+	raw: unknown,
+	gameTimeSec: number,
+	/*
+	 * His rolling farm average, when the caller has one.
+	 *
+	 * Omitted, `pace` is null and the block says so — honest, but NOT what a real game looks
+	 * like: the daemon always has a baseline from `loadCorpus`, and the `Farm baseline:` line is
+	 * where several of the measured inventions came from ("ahead of your usual pace of 85"). A
+	 * fixture meant to be 1:1 with a real game has to be able to carry it, so
+	 * `scripts/build-fixture.ts` passes the corpus baseline with the replayed game EXCLUDED —
+	 * including it would let the game being replayed set its own average.
+	 *
+	 * Defaulting to null keeps `scripts/bench-providers.ts` byte-identical to what it replayed
+	 * before.
+	 */
+	baseline: ReturnType<typeof baselineFromRows> | null = null
+): VisionState | null => {
 	const data = raw as LiveAllGameData | null
 	const me = findMe(data ?? ({} as LiveAllGameData))
 	if (!data || !me) return null
-	// No baseline: a replay is about the client's facts, and his rolling average is not in the
-	// sample. `pace` is null, exactly as it is early in a real game.
-	return buildLiveState(data, me, gameTimeSec, null)
+	return buildLiveState(data, me, gameTimeSec, baseline)
 }
