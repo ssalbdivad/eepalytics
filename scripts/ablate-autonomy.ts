@@ -1296,7 +1296,24 @@ export interface PaceResult {
 	keptVerdicts: Record<string, number>
 	droppedVerdicts: Record<string, number>
 	spokenAt: number[]
-	dropped: { tSec: number; clock: string; line: string; useful: boolean; verdict: string | null; tier: PaceTier }[]
+	dropped: {
+		tSec: number
+		clock: string
+		line: string
+		useful: boolean
+		verdict: string | null
+		tier: PaceTier
+		/** True when this line restates the line that silenced it — see `sameTopic`. */
+		repeat: boolean
+		silencedBy: string
+	}[]
+	/** Of the dropped lines, how many restate the line that silenced them. */
+	droppedRepeats: number
+	/** Of the dropped lines the blind judge called useful, how many restate the line that silenced them. */
+	droppedUsefulRepeats: number
+	/** Turns carrying an `interrupt` fact where the coach's own sentence was about that fact. */
+	interruptTurnsOnTopic: number
+	interruptTurns: number
 }
 
 /** Most lines inside any `windowSec` window that starts on a spoken line. */
@@ -1310,6 +1327,33 @@ export const busiestWindow = (spokenAt: readonly number[], windowSec: number): n
 	return best
 }
 
+/**
+ * Is this dropped line a RESTATEMENT of the line that silenced it?
+ *
+ * The blind judge scored every sentence ALONE, each with its own evidence block, and never once saw
+ * two of them in a row. That is the right way to measure whether a sentence is true and it is the
+ * wrong way to measure whether a coach is worth listening to: a line can be judged useful nine
+ * times running and still be the same line. Any honest account of what a floor COSTS has to
+ * separate the lines it silenced from the lines it merely stopped repeating.
+ *
+ * Two lines count as one topic when the mechanical subject matches and they share two content words
+ * or a figure. Deliberately loose: the failure it is hunting is "keep the route moving" said again
+ * forty seconds later, not paraphrase detection.
+ */
+const REPEAT_LOOKBACK_SEC = 120
+const CONTENT = /[a-z']{4,}/g
+const STOP = new Set(["your", "yours", "you", "with", "that", "this", "then", "than", "when", "while", "keep", "back", "into", "over", "from", "here", "there", "before", "after", "right", "still"])
+export const sameTopic = (a: string, b: string): boolean => {
+	if (subjectOf(a) !== subjectOf(b)) return false
+	const words = (s: string): Set<string> =>
+		new Set((s.toLowerCase().match(CONTENT) ?? []).filter(w => !STOP.has(w)))
+	const wa = words(a)
+	const shared = [...words(b)].filter(w => wa.has(w))
+	if (shared.length >= 2) return true
+	const na = new Set(numbersIn(a))
+	return numbersIn(b).some(n => na.has(n))
+}
+
 export const runPolicy = (turns: readonly PaceTurn[], policy: PacePolicy): PaceResult => {
 	const mem = newPaceMemory()
 	const spokenAt: number[] = []
@@ -1318,6 +1362,9 @@ export const runPolicy = (turns: readonly PaceTurn[], policy: PacePolicy): PaceR
 	let droppedUseful = 0
 	const keptVerdicts: Record<string, number> = {}
 	const droppedVerdicts: Record<string, number> = {}
+	const spokenLines: { tSec: number; line: string }[] = []
+	let droppedRepeats = 0
+	let droppedUsefulRepeats = 0
 	for (const t of turns) {
 		if (t.silent) continue
 		let speak = true
@@ -1336,13 +1383,40 @@ export const runPolicy = (turns: readonly PaceTurn[], policy: PacePolicy): PaceR
 		if (speak) {
 			spokenAt.push(t.tSec)
 			noteSpoken(mem, t.tSec)
+			spokenLines.push({ tSec: t.tSec, line: t.line })
 			if (t.useful) keptUseful++
 			if (t.verdict) keptVerdicts[t.verdict] = (keptVerdicts[t.verdict] ?? 0) + 1
 		} else {
-			dropped.push({ tSec: t.tSec, clock: t.clock, line: t.line, useful: t.useful, verdict: t.verdict, tier: t.tier })
+			dropped.push({
+				tSec: t.tSec,
+				clock: t.clock,
+				line: t.line,
+				useful: t.useful,
+				verdict: t.verdict,
+				tier: t.tier,
+				repeat: false,
+				silencedBy: ""
+			})
 			if (t.useful) droppedUseful++
 			if (t.verdict) droppedVerdicts[t.verdict] = (droppedVerdicts[t.verdict] ?? 0) + 1
 		}
+	}
+	/*
+	 * COVERED, not merely "repeated". A dropped line is only a real loss if nothing he DID hear
+	 * inside two minutes either side of it was about the same thing. Scoring it against the
+	 * previous line alone is confounded: the bigger the floor, the fewer previous lines there are
+	 * to echo, so a floor that deletes half the game scores as losing more original material than
+	 * one that deletes a third of it. A two-minute window in BOTH directions asks the question he
+	 * actually cares about — did this topic reach him at all?
+	 */
+	for (const d of dropped) {
+		const echo = spokenLines.find(
+			l => Math.abs(l.tSec - d.tSec) <= REPEAT_LOOKBACK_SEC && sameTopic(l.line, d.line)
+		)
+		d.repeat = echo !== undefined
+		d.silencedBy = echo?.line ?? ""
+		if (d.repeat) droppedRepeats++
+		if (d.repeat && d.verdict === "useful") droppedUsefulRepeats++
 	}
 	const gaps: number[] = []
 	for (let i = 1; i < spokenAt.length; i++) gaps.push(spokenAt[i]! - spokenAt[i - 1]!)
@@ -1360,7 +1434,13 @@ export const runPolicy = (turns: readonly PaceTurn[], policy: PacePolicy): PaceR
 		keptVerdicts,
 		droppedVerdicts,
 		spokenAt,
-		dropped
+		dropped,
+		droppedRepeats,
+		droppedUsefulRepeats,
+		interruptTurnsOnTopic: turns.filter(
+			t => !t.silent && t.tier === "interrupt" && t.facts.some(f => sameTopic(f, t.line))
+		).length,
+		interruptTurns: turns.filter(t => !t.silent && t.tier === "interrupt").length
 	}
 }
 
@@ -1527,13 +1607,16 @@ const paceSweep = (): void => {
 	if (unmatched.size > 0) say(`  UNMATCHED    ${unmatched.size} fact templates this sweep could not tier`)
 	say("")
 	say("=== CADENCE ============================================================")
-	say("policy             lines  /min   busy4  minGap  medGap  useful kept/dropped")
+	say("policy             lines  /min   busy4  minGap  medGap  dropped  covered within 2 min by a line he did hear")
 	for (const r of results)
 		say(
 			`${r.policy.id.padEnd(18)} ${String(r.spoke).padStart(5)}  ${r.linesPerMin.toFixed(2).padStart(4)}  ` +
 				`${String(r.busiest4Min).padStart(5)}  ${String(Math.round(r.minGapSec)).padStart(6)}  ` +
-				`${String(Math.round(r.medianGapSec)).padStart(6)}  ${r.keptUseful}/${r.droppedUseful}`
+				`${String(Math.round(r.medianGapSec)).padStart(6)}  ${String(r.suppressed).padStart(7)}  ` +
+				`${r.suppressed > 0 ? `${r.droppedRepeats} (${Math.round((r.droppedRepeats / r.suppressed) * 100)}%)` : "-"}`
 		)
+	say("")
+	say(`interrupt-tier turns where her own sentence was about the interrupt: ${results[0]!.interruptTurnsOnTopic} of ${results[0]!.interruptTurns}`)
 	say("")
 	say("=== WHAT THE BLIND JUDGE SAID ABOUT WHAT SURVIVED =======================")
 	say("policy             kept verdicts                    dropped verdicts")
