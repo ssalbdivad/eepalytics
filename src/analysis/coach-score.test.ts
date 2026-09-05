@@ -575,3 +575,48 @@ Enemy jungler: Briar, under 10 CS, level 3.`
 		ok(s.misattributed.some(m => m.value === 881 && m.claimedOwner === "Briar"))
 	})
 })
+
+/* ------------------------------------- an imperative after a dash is addressed to him */
+
+/**
+ * The other two false positives from `data/eval/opus-briefing/ab-opus-frames.json`.
+ *
+ * After `isMapFigure` the two arms had one mechanical fabrication flag each, and BOTH were the
+ * instrument rather than the coach — the two shapes the briefing's own vocabulary is made of:
+ * telling him to go somewhere, and telling him to spend what is on his own line. Every measurement
+ * of that architecture would have carried them.
+ */
+describe("imperatives after a hard break", () => {
+	const block = `Clock 6:17. You: Lillia lv5 0/1/0, at least 40 CS, 0/979 HP, 808 gold, DEAD (respawn in 12 seconds)
+
+- Void grubs spawns at 6:00 — in 25 seconds.
+
+Enemy jungler: Briar, at least 10 CS, level 3. He is at least 21 CS BEHIND you.`
+	const roster = ["Lillia", "Briar"]
+	const score = (line: string) => scoreLine({ line, block, roster, champions: roster })
+
+	it("his own gold is his, even when the sentence opened on the enemy", () => {
+		const s = score("Briar's at least 21 CS behind you — spend the 808 gold and get back on a full clear route.")
+		deepStrictEqual(s.misattributed, [])
+	})
+
+	it("telling HIM to walk somewhere is not a claim that somebody else moved", () => {
+		const s = score("Void grubs in 25 seconds and Briar is only level 3 — start walking to that pit now.")
+		deepStrictEqual(s.movement, [])
+	})
+
+	it("a comma still carries the subject, so the founding sentence keeps working", () => {
+		const s = scoreLine({
+			line: "Briar is at least 10 CS and level 3, and has 808 gold.",
+			block,
+			roster,
+			champions: roster
+		})
+		ok(s.misattributed.some(m => m.value === 808 && m.claimedOwner === "Briar"))
+	})
+
+	it("a claim about HIS movement inside one clause still fires", () => {
+		const s = score("Briar is walking to your red buff right now.")
+		ok(s.movement.length > 0)
+	})
+})

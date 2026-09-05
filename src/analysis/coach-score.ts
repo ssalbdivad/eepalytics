@@ -504,7 +504,21 @@ const THIRD_TOKEN =
  * fire.
  */
 const subjectIsThirdParty = (text: string, at: number, roster: readonly string[]): boolean => {
-	const window = text.slice(Math.max(0, at - 45), at)
+	/*
+	 * The window may not reach across a HARD break, because an imperative after one has no subject
+	 * of its own and takes the addressee — him.
+	 *
+	 * Measured on `data/eval/opus-briefing/ab-opus-frames.json`: *"Void grubs in 25 seconds and
+	 * Briar is only level 3 — start walking to that pit now"* was the briefing arm's only remaining
+	 * mechanical fabrication flag, and "walking to" is an instruction to HIM. The dash is the whole
+	 * sentence's hinge and the old 45-character window walked straight over it. Commas and "and" are
+	 * deliberately NOT breaks here: "he is level three, and coming for your red" is one claim about
+	 * one person, and the rule this instrument was built on must keep firing on it.
+	 */
+	const from = Math.max(0, at - 45)
+	const reach = text.slice(from, at)
+	const hard = Math.max(reach.lastIndexOf("—"), reach.lastIndexOf("–"), reach.lastIndexOf(";"), reach.lastIndexOf("."), reach.lastIndexOf("!"), reach.lastIndexOf("?"))
+	const window = hard >= 0 ? reach.slice(hard + 1) : reach
 	let self = -1
 	for (const m of window.matchAll(SELF_TOKEN)) if (m.index !== undefined) self = m.index
 	let third = -1
@@ -804,7 +818,31 @@ const clauseOwner = (
 	// 4. The nearest mention inside the same clause.
 	const nearest = before.filter(m => m.index >= clauseStart).at(-1)
 	if (nearest !== undefined) return nearest.owner
-	// 5. No noun in this clause, so the subject carries over from the start of the sentence.
+	/*
+	 * 5. Nobody in this clause. WHICH subject carries over depends on how the clause was joined.
+	 *
+	 * A comma or an "and" continues one sentence, so "You killed Briar and have 1020 gold" hands
+	 * 1020 to the sentence subject — that is the case rule 5 was written for and it is kept. A
+	 * dash, a semicolon or a full stop starts a new one, and a new clause with no subject is an
+	 * imperative addressed to the one person the coach is talking to. Measured on
+	 * `data/eval/opus-briefing/ab-opus-frames.json`: *"Briar's at least 21 CS behind you — spend
+	 * the 808 gold and get straight back on a full clear route"* was the shipped arm's only
+	 * remaining fabrication flag, and 808 is written on HIS line of the block. Carrying "Briar"
+	 * across the dash into an imperative is the instrument inventing an owner in order to find a
+	 * fault, which is the same failure `PLAYER_UNIT` exists to prevent one branch earlier.
+	 */
+	const hard = Math.max(
+		line.lastIndexOf("—", at),
+		line.lastIndexOf("–", at),
+		line.lastIndexOf(";", at),
+		line.lastIndexOf(".", at),
+		line.lastIndexOf("!", at),
+		line.lastIndexOf("?", at)
+	)
+	if (hard >= 0 && !before.some(m => m.index > hard))
+		return PLAYER_UNIT.test(line.slice(at + String(line.slice(at).match(/^\d+/)?.[0] ?? "").length)) ?
+				"you"
+			:	null
 	return before[0]?.owner ?? null
 }
 
