@@ -105,6 +105,7 @@
  *     --out <path>           default data/eval/run-<stamp>.json
  *     --verbose              print every line as it lands, not only at the end
  *
+ *     --summarize <path>     re-print the summary of a run already on disk, calling nothing
  *     --judge <path|latest>  score an existing run file against the labels and stop
  *     --labels <path>        default data/eval/labels-<gameId>.json
  *     --judge-provider <id>  default anthropic, falling back to the run's own provider
@@ -493,8 +494,15 @@ const championVocabulary = (): { names: string[]; source: string } => {
  * disagreement can be located rather than argued about.
  */
 const JudgeVerdict = type({
-	/** Was speaking (or staying silent) the right call at all? */
-	silenceCorrect: "boolean",
+	/**
+	 * Did the coach's CHOICE between speaking and passing match the label's `shouldSpeak`?
+	 *
+	 * Named `decisionCorrect` after a measured misread: as `silenceCorrect` the judge answered
+	 * "was silence correct here", so a line that correctly SPOKE at a labelled shouldSpeak:true
+	 * instant came back `false`, and the summary reported the right call as wrong half the time.
+	 * The prompt now spells the rule out as well — a field name is not a specification.
+	 */
+	decisionCorrect: "boolean",
 	/** Which labelled expectations the line actually met, by topic. */
 	met: type({ topic: "string", met: "boolean", why: "string" }).array(),
 	/** Forbidden things the line did, copied from the label's `forbid` list. */
@@ -550,6 +558,12 @@ For usedFrame, answer "yes" ONLY if the sentence contains something that could n
 the block — a position, what is on screen, what he is doing right now. A line built entirely from
 the block is "no", even when a screenshot was sent.
 
+decisionCorrect is about the CHOICE, not about silence: it is true when the coach SPOKE and the
+label says shouldSpeak, and true when the coach said PASS and the label says shouldSpeak is false.
+It is false whenever the coach spoke at an instant the label wanted silence, or stayed silent at
+an instant the label wanted a line. Do not answer "was silence correct here" — answer "was the
+coach's choice correct here".
+
 Reply with JSON only. No prose, no markdown fences.`
 
 const judgePrompt = (row: {
@@ -575,7 +589,7 @@ const judgePrompt = (row: {
 		row.text === "" ? "(nothing at all came back)" : row.text,
 		"",
 		"## Reply with this JSON",
-		'{"silenceCorrect":bool,"met":[{"topic":str,"met":bool,"why":str}],"broke":[str],"usedFrame":"yes|no|unclear","verdict":"good|weak|wrong","why":str}'
+		'{"decisionCorrect":bool,"met":[{"topic":str,"met":bool,"why":str}],"broke":[str],"usedFrame":"yes|no|unclear","verdict":"good|weak|wrong","why":str}'
 	].join("\n")
 
 /** Strip a ```json fence, which several models add however firmly the prompt says not to. */
@@ -643,7 +657,15 @@ const runJudge = async (): Promise<void> => {
 	).labels
 	const byId = new Map(labels.map(l => [String(l.id), l]))
 
-	const provId = arg("judge-provider", "anthropic") as ProviderId
+	/*
+	 * A DIFFERENT vendor from the one under test by default, because a judge that is the same model
+	 * as the coach is grading its own homework. Anthropic is the default; if there is no key for it
+	 * the run's own provider is used and the summary says so loudly rather than pretending the
+	 * grade is independent.
+	 */
+	const asked = arg("judge-provider", "")
+	const fellBack = asked === "" && providerKey(providerById("anthropic")!) === null
+	const provId = (asked !== "" ? asked : fellBack ? run.provider : "anthropic") as ProviderId
 	const p = providerById(provId)
 	if (!p) throw new Error(`no provider called ${provId}`)
 	const key = providerKey(p)
@@ -655,6 +677,12 @@ const runJudge = async (): Promise<void> => {
 	console.log(`judging ${runPath}`)
 	console.log(`  labels   ${labelsPath}  (${labels.length} labelled instants)`)
 	console.log(`  judge    ${provId} ${model}`)
+	if (provId === run.provider)
+		console.log(
+			`  WARNING  the judge is the same provider as the coach under test (${run.provider}).\n` +
+				`           It is grading its own homework. Put a key in data/anthropic.key, or pass\n` +
+				`           --judge-provider, before quoting any of these numbers.`
+		)
 
 	const rows: JudgeRow[] = []
 	for (const r of run.results) {
@@ -722,7 +750,7 @@ const runJudge = async (): Promise<void> => {
 	/* ---- what the grades say, per arm, because the arms are the experiment ---- */
 	console.log(`\n${"=".repeat(96)}\nJUDGED  ${rows.length} of ${run.results.length} turns had a label\n`)
 	const arms = [...new Set(rows.map(r => r.arm))].sort()
-	console.log("arm        n   good   weak  wrong  silence-right  used-the-frame  broke-a-rule  ungraded")
+	console.log("arm        n   good   weak  wrong  right-call     used-the-frame  broke-a-rule  ungraded")
 	for (const arm of arms) {
 		const a = rows.filter(r => r.arm === arm)
 		const g = a.filter(r => r.verdict !== null)
@@ -732,7 +760,7 @@ const runJudge = async (): Promise<void> => {
 				`${pct(g.filter(r => r.verdict!.verdict === "good").length, n)}  ` +
 				`${pct(g.filter(r => r.verdict!.verdict === "weak").length, n)}  ` +
 				`${pct(g.filter(r => r.verdict!.verdict === "wrong").length, n)}  ` +
-				`${pct(g.filter(r => r.verdict!.silenceCorrect).length, n).padStart(13)}  ` +
+				`${pct(g.filter(r => r.verdict!.decisionCorrect).length, n).padStart(13)}  ` +
 				`${pct(g.filter(r => r.verdict!.usedFrame === "yes").length, n).padStart(14)}  ` +
 				`${pct(g.filter(r => r.verdict!.broke.length > 0).length, n).padStart(12)}  ` +
 				`${String(a.length - n).padStart(8)}`
@@ -750,6 +778,21 @@ const runJudge = async (): Promise<void> => {
 
 const main = async (): Promise<void> => {
 	if (flag("judge")) return runJudge()
+	/*
+	 * Re-print the summary of a run already on disk, calling nothing.
+	 *
+	 * Not a convenience. The summary is the part of this harness most likely to be wrong — its
+	 * control table silently joined on the wrong key once — and re-deriving it from a stored run
+	 * is how a fix to it gets checked without paying for another 180 turns, and without the
+	 * temptation to check it by reading the code instead.
+	 */
+	if (flag("summarize")) {
+		const path = arg("summarize", "latest")
+		const at = path === "latest" ? newestRun() : path
+		summarize(JSON.parse(readFileSync(at, "utf8")) as RunFile)
+		console.log(`\n(from ${at}; nothing was called)`)
+		return
+	}
 
 	const fixturePath = arg("fixture", `${DATA_DIR}/eval/fixture-5635467422.json`)
 	const fixture = readFixture(fixturePath)
@@ -1025,6 +1068,9 @@ export const summarize = (file: RunFile): void => {
 			console.log(`      same subject             ${cmp.sameSubject}`)
 			console.log(`      same numbers cited       ${cmp.sameNumbers}`)
 			console.log(`      differed in CONTENT      ${cmp.contentDiffered}`)
+			// A zero here is not a result, it is a broken join. The first version of the control
+			// keyed on the attempt number and matched nothing, and printed a clean table of zeroes.
+			if (cmp.pairs === 0) console.log("    ^ NO COMPARABLE PAIRS — this table is not a result")
 		}
 		console.log("\nTHE ABLATION  (same block, same prompt, same model; only the picture differs)")
 		table("frame vs no-frame", pairsFor(frameRows, noFrameRows, true))
