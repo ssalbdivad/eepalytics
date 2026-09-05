@@ -67,7 +67,7 @@
  *       --temperature X       default 0, held on every arm
  *       --concurrency N       default 6
  *       --limit N             cap states per set, for a dry run
- *       --arms a,b            subset of fenced,fenced-see,cite-or-quiet,free
+ *       --arms a,b            subset of fenced,fenced-see,cite-or-quiet,free,shipped,briefing
  *       --no-late             skip the LATE set
  *       --no-paired           skip the PAIRED set (no frames; use with --late-from 0)
  *       --late-spacing N      game-clock seconds between LATE turns, default 30
@@ -187,6 +187,15 @@ const LATE_GRID = flag("late-grid")
  * mixture a real game hands the socket.
  */
 const LATE_FRAMES = flag("late-frames")
+/**
+ * Skip the blind (no-frame) half of the PAIRED set.
+ *
+ * The eight-cell design exists to measure FRAME SENSITIVITY. A run comparing two CONTEXTS on the
+ * frames does not need the blind half, and on a reasoning model the blind half is half the bill for
+ * a question nobody asked. `frameSensitivity` comes out empty when this is set, which is honest:
+ * the run did not measure it.
+ */
+const FRAMES_ONLY = flag("frames-only")
 
 /* ================================================================== the states */
 
@@ -211,6 +220,15 @@ interface AblationState {
 	 * change the run below has to price, because none of them was in the run that justified them.
 	 */
 	blockShipped: string
+	/**
+	 * What the BRIEFING mode sees: `renderBlockForMode(state, "briefing")`.
+	 *
+	 * A third block rather than a repair of the second, because the briefing is not the snapshot
+	 * with words changed — it opens with the objective schedule, carries the arc and the career
+	 * lines, and pushes farm and the jungle race to the bottom. Measured smaller than the block it
+	 * replaces (mean 2556–2662 chars against 2850–2926) while carrying four more sections.
+	 */
+	blockBriefing: string
 	/** How many ranked facts the fence offered here. Zero means the fenced arm must PASS. */
 	rankedFacts: number
 	roster: string[]
@@ -309,6 +327,7 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 		tSec: number
 		block: string
 		blockShipped: string
+		blockBriefing: string
 		roster: string[]
 	}
 	const built: Built[] = []
@@ -323,6 +342,7 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 			tSec: s.gameTime,
 			block: renderState(st),
 			blockShipped: renderBlockForMode(st, "cite-or-quiet"),
+			blockBriefing: renderBlockForMode(st, "briefing"),
 			roster: [st.me.champion, ...st.allies.map(p => p.champion), ...st.enemies.map(p => p.champion)]
 		})
 	}
@@ -339,6 +359,7 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 		block: b.block,
 		blockNoList: stripRankedList(b.block),
 		blockShipped: b.blockShipped,
+		blockBriefing: b.blockBriefing,
 		rankedFacts: countRankedFacts(b.block),
 		roster: b.roster
 	})
@@ -551,7 +572,7 @@ export interface Arm {
 	 * separate field rather than a second boolean because the shipped block both KEEPS the list and
 	 * is not the fenced block, which no boolean can say.
 	 */
-	blockKind: "full" | "stripped" | "shipped"
+	blockKind: "full" | "stripped" | "shipped" | "briefing" | "briefing" | "briefing"
 	system: (champion: string) => string
 	why: string
 }
@@ -613,6 +634,22 @@ export const ARMS: Arm[] = [
 		system: champ =>
 			liveCoachSystemPrompt({ mode: "cite-or-quiet", championKnowledge: liveChampionKnowledge(champ) }),
 		why: "The real shipped functions, on the real shipped block. The only arm here that is not a reconstruction."
+	},
+	{
+		id: "briefing",
+		label: "BRIEFING — the block rebuilt as a briefing rather than a snapshot",
+		seesList: true,
+		blockKind: "briefing",
+		/*
+		 * Same citation rule, same persona, same model — the block and the subject order are what
+		 * move.
+		 *
+		 * It exists as an ARM and not as a replacement so `shipped` stays runnable beside it on the
+		 * same states in the same order. A default change that deletes the arm it beat is a default
+		 * change nobody can re-check, and this file's whole point is that the comparison survives.
+		 */
+		system: champ => liveCoachSystemPrompt({ mode: "briefing", championKnowledge: liveChampionKnowledge(champ) }),
+		why: "The real shipped functions on `liveCoachMode: briefing` — the objective schedule first, farm and the jungle race last."
 	}
 ]
 
@@ -844,6 +881,87 @@ export const isSpecific = (line: string, roster: readonly string[], me: string):
 	return roster.some(c => c !== me && lower.includes(c.toLowerCase()))
 }
 
+
+/* ==================================================================== repetition */
+
+/**
+ * Words that carry no subject. Anything left after these is what the sentence is ABOUT.
+ *
+ * Deliberately short. A long stoplist tuned until the number looked good would make the repeat
+ * rate a property of this list rather than of the coach.
+ */
+const CONTENT_STOP = new Set(
+	("a an and are as at be but by can do for from get go got has have he her him his how in into is it its just" +
+		" let me more most not now of off on one or our out own so some than that the their them then there these" +
+		" they this to too up us was we were what when where which while who will with you your s t re ll ve don t")
+		.split(" ")
+)
+
+/**
+ * The content of a spoken line: lowercased words of three letters or more that are not stopwords,
+ * plus every number, as a set. Numbers are kept because two lines quoting different figures about
+ * the same subject are two lines, and the coach's whole claim to freshness is the figure.
+ */
+export const contentOf = (line: string): Set<string> => {
+	const out = new Set<string>()
+	for (const w of line.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ")) {
+		if (w === "") continue
+		if (/^\d+$/.test(w)) {
+			out.add(`#${w}`)
+			continue
+		}
+		if (w.length < 3 || CONTENT_STOP.has(w)) continue
+		out.add(w)
+	}
+	return out
+}
+
+/**
+ * Containment: how much of the SMALLER line is already in the larger one.
+ *
+ * Containment rather than Jaccard because the failure being counted is a coach saying the same
+ * thing again in more or fewer words — "Leave the fountain now, your clear only gets faster while
+ * it keeps running" against "Start it now and don't stop — your clear only gets faster while it
+ * keeps running" — and Jaccard scores that pair down for the padding rather than up for the
+ * restatement.
+ */
+export const containment = (a: Set<string>, b: Set<string>): number => {
+	if (a.size === 0 || b.size === 0) return 0
+	let hits = 0
+	const [small, large] = a.size <= b.size ? [a, b] : [b, a]
+	for (const w of small) if (large.has(w)) hits++
+	return hits / small.size
+}
+
+/** At and above this, two lines are counted as the same line said twice. */
+export const REPEAT_GATE = 0.6
+
+/**
+ * Which spoken lines restate one the coach already said, in transcript order.
+ *
+ * Returns one flag per turn, so a caller can quote the offenders rather than only count them.
+ * `withinSec` bounds how far back it looks in GAME CLOCK: `Infinity` is "anything this game",
+ * which is the honest ceiling, and 180 is the window the shipped socket's own thread could
+ * plausibly remember.
+ */
+export const repeatFlags = (
+	turns: readonly { line: string; silent: boolean; ok: boolean; tSec: number }[],
+	withinSec = Infinity
+): { repeat: boolean; ofTSec: number | null }[] => {
+	const said: { at: number; content: Set<string> }[] = []
+	return turns.map(t => {
+		if (!t.ok || t.silent) return { repeat: false, ofTSec: null }
+		const content = contentOf(t.line)
+		let hit: number | null = null
+		for (const prior of said) {
+			if (t.tSec - prior.at > withinSec) continue
+			if (containment(content, prior.content) >= REPEAT_GATE) hit = prior.at
+		}
+		said.push({ at: t.tSec, content })
+		return { repeat: hit !== null, ofTSec: hit }
+	})
+}
+
 const runCell = async (
 	setName: string,
 	arm: Arm,
@@ -853,7 +971,8 @@ const runCell = async (
 ): Promise<Cell> => {
 	const turns = await pool(states, CONCURRENCY, async state => {
 		const block =
-			arm.blockKind === "shipped" ? state.blockShipped
+			arm.blockKind === "briefing" ? state.blockBriefing
+			: arm.blockKind === "shipped" ? state.blockShipped
 			: arm.blockKind === "stripped" ? state.blockNoList
 			: state.block
 		const frame = withFrame && state.framePath ? frameBase64(state.framePath) : null
@@ -927,6 +1046,12 @@ export interface CellStats {
 	noAlternative: Interval
 	specific: Interval
 	useful: Interval
+	/**
+	 * Of spoken lines, how many restate one this arm already said this game (containment >= 0.6 on
+	 * content words). `repeatRecent` bounds the lookback to three game-clock minutes.
+	 */
+	repeat: Interval
+	repeatRecent: Interval
 	/** Useful lines per minute of game clock covered by the set. */
 	usefulPerMin: number
 	linesPerMin: number
@@ -956,6 +1081,12 @@ export const statsFor = (cell: Cell, minutes: number): CellStats => {
 	const subjects: Record<string, number> = {}
 	for (const t of spoken) subjects[t.subject] = (subjects[t.subject] ?? 0) + 1
 	const usefulCount = spoken.filter(t => t.useful).length
+	/* Flags are computed over the WHOLE cell in transcript order, then read off for spoken turns —
+	 * a repeat is a relation between two lines, so it cannot be computed from one turn. */
+	const flagsAll = repeatFlags(cell.turns)
+	const flagsRecent = repeatFlags(cell.turns, 180)
+	const repeats = cell.turns.filter((t, i) => !t.silent && t.ok && flagsAll[i]!.repeat).length
+	const repeatsRecent = cell.turns.filter((t, i) => !t.silent && t.ok && flagsRecent[i]!.repeat).length
 	return {
 		set: cell.set,
 		arm: cell.arm,
@@ -973,6 +1104,8 @@ export const statsFor = (cell: Cell, minutes: number): CellStats => {
 		noAlternative: wilson(has("no-alternative"), n),
 		specific: wilson(spoken.filter(t => t.specific).length, n),
 		useful: wilson(usefulCount, n),
+		repeat: wilson(repeats, n),
+		repeatRecent: wilson(repeatsRecent, n),
 		usefulPerMin: minutes > 0 ? usefulCount / minutes : 0,
 		linesPerMin: minutes > 0 ? n / minutes : 0,
 		distinctLines: new Set(spoken.map(t => t.line.toLowerCase().replace(/[^a-z0-9 ]/g, ""))).size,
@@ -1022,7 +1155,7 @@ const main = async (): Promise<void> => {
 
 	const cells: Cell[] = []
 	for (const arm of arms) {
-		for (const withFrame of [true, false]) {
+		for (const withFrame of FRAMES_ONLY ? [true] : [true, false]) {
 			if (pairedStates.length === 0) continue
 			const t0 = Date.now()
 			const cell = await runCell("paired", arm, withFrame, pairedStates, vocab.names)
@@ -1199,7 +1332,8 @@ const main = async (): Promise<void> => {
 				roster: s.roster,
 				block: s.block,
 				blockNoList: s.blockNoList,
-				blockShipped: s.blockShipped
+				blockShipped: s.blockShipped,
+				blockBriefing: s.blockBriefing
 			})),
 			late: lateStates.map(s => ({
 				id: s.id,
@@ -1211,7 +1345,8 @@ const main = async (): Promise<void> => {
 				roster: s.roster,
 				block: s.block,
 				blockNoList: s.blockNoList,
-				blockShipped: s.blockShipped
+				blockShipped: s.blockShipped,
+				blockBriefing: s.blockBriefing
 			}))
 		},
 		cells,
@@ -1229,12 +1364,12 @@ const main = async (): Promise<void> => {
 	const line = (s: string) => console.log(s)
 	line("")
 	line("=== SPOKE / FABRICATION / USEFULNESS ===================================")
-	line("set     arm             frame  spoke        fabricate    useful       specific     readback     no-action    med ms")
+	line("set     arm             frame  spoke        fabricate    useful       specific     repeat       repeat<3m    med ms")
 	for (const s of allStats)
 		line(
 			`${s.set.padEnd(7)} ${s.arm.padEnd(15)} ${(s.withFrame ? "yes" : "no").padEnd(6)} ` +
 				`${pct(s.spokeRate).padEnd(12)} ${pct(s.fabrication).padEnd(12)} ${pct(s.useful).padEnd(12)} ` +
-				`${pct(s.specific).padEnd(12)} ${pct(s.visibleOnly).padEnd(12)} ${pct(s.noAlternative).padEnd(12)} ${s.medianMs}`
+				`${pct(s.specific).padEnd(12)} ${pct(s.repeat).padEnd(12)} ${pct(s.repeatRecent).padEnd(12)} ${s.medianMs}`
 		)
 
 	line("")
@@ -1444,11 +1579,15 @@ export const busiestWindow = (spokenAt: readonly number[], windowSec: number): n
  */
 const REPEAT_LOOKBACK_SEC = 120
 const CONTENT = /[a-z']{4,}/g
-const STOP = new Set(["your", "yours", "you", "with", "that", "this", "then", "than", "when", "while", "keep", "back", "into", "over", "from", "here", "there", "before", "after", "right", "still"])
+/*
+ * Named apart from the repetition section's own `STOP` because both are module scope and a second
+ * `const STOP` makes the whole file a SyntaxError — which it briefly was, so this is not hygiene.
+ */
+const TOPIC_STOP = new Set(["your", "yours", "you", "with", "that", "this", "then", "than", "when", "while", "keep", "back", "into", "over", "from", "here", "there", "before", "after", "right", "still"])
 export const sameTopic = (a: string, b: string): boolean => {
 	if (subjectOf(a) !== subjectOf(b)) return false
 	const words = (s: string): Set<string> =>
-		new Set((s.toLowerCase().match(CONTENT) ?? []).filter(w => !STOP.has(w)))
+		new Set((s.toLowerCase().match(CONTENT) ?? []).filter(w => !TOPIC_STOP.has(w)))
 	const wa = words(a)
 	const shared = [...words(b)].filter(w => wa.has(w))
 	if (shared.length >= 2) return true
