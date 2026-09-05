@@ -371,6 +371,35 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 		 * polling it every few seconds threw most of those announcements away unheard. One fetch,
 		 * one turn.
 		 */
+		/*
+		 * The minimap, cropped in the page and read by the daemon.
+		 *
+		 * The daemon makes the model call because the page has no credential that can: its
+		 * ephemeral token is `uses: 1` and accepted only by the Constrained WebSocket endpoint,
+		 * and a raw key in the browser is the one thing this app will not do. The crop is 17 KB
+		 * against the whole frame's 153 KB, to a daemon this page already uploads the whole frame
+		 * to every five seconds, so the extra hop is not the cost — the model call is, and that is
+		 * paid either way.
+		 *
+		 * Swallowing is correct HERE and almost nowhere else in this file: a failed read costs a
+		 * GATE, not a line. `buildFacts` ranks exactly what it ranks today without an observation,
+		 * so there is no silence for the player to misread as the coach being broken, and nothing
+		 * for him to act on. The daemon logs the reason.
+		 */
+		readMinimap: async () => {
+			const crop = share.grabMinimap()
+			if (crop === null) return
+			try {
+				await fetch("/api/live/frame-read", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ crop }),
+					signal: AbortSignal.timeout(4000)
+				})
+			} catch {
+				/* a gate, not a line */
+			}
+		},
 		groundTruth: async () => {
 			try {
 				const r = await fetch("/api/live/ground-truth", { signal: AbortSignal.timeout(4000) })

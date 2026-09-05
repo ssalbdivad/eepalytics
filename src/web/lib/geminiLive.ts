@@ -312,6 +312,8 @@ export interface GeminiLiveOptions {
 	 * **An empty string means "do not take this turn at all"** — see `beat()`.
 	 */
 	groundTruth: () => Promise<string>
+	/** Crop the minimap, have the daemon read it, and store the observation. Optional. */
+	readMinimap?: () => Promise<void>
 	/** Supplies a JPEG data URL of the shared screen, or null when not sharing. */
 	grabFrame: () => string | null
 }
@@ -815,6 +817,25 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			if (!alive || inFlight) return
 			// The same floor the socket applies, for the same reason and before the same fetch.
 			if (!mayspeak(paceRef.current, nowSec(), "standing", { floorSec: paceFloorSec }).speak) return
+			/*
+			 * READ THE MINIMAP FIRST, because the block is built from it.
+			 *
+			 * The daemon stores one observation and `GET /api/live/ground-truth` ranks it with
+			 * everything else, so a read posted after the fetch is a read for nobody. It cannot be
+			 * fired and forgotten either: `FRAME_FRESH_SEC` is ten seconds and turns are twenty
+			 * apart, so an un-awaited read is always stale by the turn that wants it.
+			 *
+			 * The cost is the reader's own latency in front of a turn — measured 1.3 to 2.0
+			 * seconds, capped at three. That is affordable HERE and nowhere else: the read feeds
+			 * only standing facts (it gates the unspent-gold line while he is in the fountain, and
+			 * the objective windows), and standing facts were measured 5% stale at one second and
+			 * 10% at five. It would not be affordable in front of a reactive line, which is 40%
+			 * stale at one second already.
+			 *
+			 * A failed read costs the coach a GATE and never a line: `buildFacts` says exactly what
+			 * it says today without one.
+			 */
+			await optsRef.current.readMinimap?.()
 			const truth = await optsRef.current.groundTruth()
 			// The same rule the socket path follows: no facts, no turn. Without it the coach is
 			// back to reading pixels, which is the failure the block exists to prevent.
@@ -926,6 +947,25 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 * `analysis/speak-pace.ts` anyway.
 			 */
 			if (!mayspeak(paceRef.current, nowSec(), "standing", { floorSec: paceFloorSec }).speak) return
+			/*
+			 * READ THE MINIMAP FIRST, because the block is built from it.
+			 *
+			 * The daemon stores one observation and `GET /api/live/ground-truth` ranks it with
+			 * everything else, so a read posted after the fetch is a read for nobody. It cannot be
+			 * fired and forgotten either: `FRAME_FRESH_SEC` is ten seconds and turns are twenty
+			 * apart, so an un-awaited read is always stale by the turn that wants it.
+			 *
+			 * The cost is the reader's own latency in front of a turn — measured 1.3 to 2.0
+			 * seconds, capped at three. That is affordable HERE and nowhere else: the read feeds
+			 * only standing facts (it gates the unspent-gold line while he is in the fountain, and
+			 * the objective windows), and standing facts were measured 5% stale at one second and
+			 * 10% at five. It would not be affordable in front of a reactive line, which is 40%
+			 * stale at one second already.
+			 *
+			 * A failed read costs the coach a GATE and never a line: `buildFacts` says exactly what
+			 * it says today without one.
+			 */
+			await optsRef.current.readMinimap?.()
 			const truth = await optsRef.current.groundTruth()
 			/*
 			 * NO FACTS, NO TURN.

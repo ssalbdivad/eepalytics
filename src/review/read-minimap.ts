@@ -64,8 +64,15 @@ import type { FrameRead, FrameReadFault, FrameTruth } from "./frame-read.ts"
  */
 export const MINIMAP_MODEL = "gemini-3.1-flash-lite"
 
-/** Long enough for a slow read, short enough that it cannot outlive the turn it belongs to. */
-export const MINIMAP_TIMEOUT_MS = 6000
+/**
+ * Long enough for a slow read, short enough that it cannot outlive the turn it belongs to.
+ *
+ * This read sits IN FRONT of a coaching turn — `FRAME_FRESH_SEC` is ten seconds and turns are
+ * twenty apart, so a fire-and-forget read would always land outside the window it is needed in.
+ * Measured reads are 1.3-2.0s on the fast model, so three seconds is a ceiling that catches a
+ * hang without making the coach wait on one.
+ */
+export const MINIMAP_TIMEOUT_MS = 3000
 
 export type MinimapOutcome =
 	| { read: FrameRead; faults: null; ms: number }
