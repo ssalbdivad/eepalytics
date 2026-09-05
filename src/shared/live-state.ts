@@ -153,9 +153,20 @@ You: ${me.champion}${me.level ? ` lv${me.level}` : ""} ${me.k ?? 0}/${me.d ?? 0}
 	}
 
 ${
-		renderPronunciations(s.pronounce) === "" ? "" : `${renderPronunciations(s.pronounce)}
-
-`
+		/*
+		 * THE PRONUNCIATION GUIDE IS NO LONGER IN THE BLOCK, and this is why.
+		 *
+		 * It was a line reading `Briar = BRY-er`, introduced as "write them normally, just
+		 * pronounce them this way". The model read the RESPELLING out loud instead: "BRY-er is
+		 * still at 0 CS", to the player, in a real game, repeatedly. A name he cannot recognise is
+		 * worse than one said slightly wrong.
+		 *
+		 * The mistake was putting an INSTRUCTION inside the CONTENT. Everything else in this block
+		 * is a fact to be spoken, so a line shaped like data was treated as data. Pronunciation
+		 * belongs in the system prompt where instructions live. Parked, not deleted:
+		 * `knowledge/pronunciations.md` and `shared/pronounce.ts` are untouched and still tested.
+		 */
+		""
 	}${
 		s.counterpart ?
 			`Enemy jungler right now: ${s.counterpart.champion}${
@@ -166,7 +177,7 @@ ${
 
 `
 		:	""
-	}Farm baseline: ${
+	}Farm baseline (CONTEXT ONLY — never say this unless it also appears in the list below): ${
 		s.pace ?
 			`${s.pace.cs} CS against ${s.pace.expected}, ${s.pace.source}${s.pace.exact ? "" : " (approximate)"}`
 		:	"NONE — you have no average to compare his farm against right now, so do not say whether it is ahead, behind, on pace, or what he usually gets. Say the CS and say you cannot compare it."

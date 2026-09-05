@@ -677,7 +677,19 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 						</button>
 					}
 
-					{gem.audioBlocked && (
+					{/*
+			 * A coach that cannot see is the failure that looks most like success: it still speaks,
+			 * fluently, from the block alone. The player reported exactly that and read it, fairly,
+			 * as "it is not looking at the frames at all". It must never be silent again.
+			 */}
+			{gem.blindTurns > 0 && (
+				<div className="csk-screen__warn">
+					<b>{gem.blindTurns}</b> check-in{gem.blindTurns === 1 ? " was" : "s were"} sent with{" "}
+					<b>no picture</b> — she was coaching from the numbers alone. The screen share is not
+					producing frames. Re-share your screen, and pick a display rather than a window.
+				</div>
+			)}
+			{gem.audioBlocked && (
 						<button className="csk-screen__unmute" onClick={() => gem.unlockAudio()}>
 							🔇 Your browser is holding the sound back — click to let her talk
 						</button>

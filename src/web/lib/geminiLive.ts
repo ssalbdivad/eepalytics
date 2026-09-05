@@ -280,6 +280,19 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 */
 	const [usage, setUsage] = useState<GeminiUsage>({ totalTokens: 0, turns: 0 })
 	/**
+	 * Turns sent WITHOUT a picture, and the reason.
+	 *
+	 * `grabFrame()` returns null whenever the video element is not producing pixels — the share was
+	 * granted but the track has not started, the tab was backgrounded, the stream ended. The turn
+	 * then went text-only and NOTHING said so. The coach still spoke, from the block alone, and
+	 * every line was something derivable from the logs — which is exactly what the player reported
+	 * and reasonably read as "it is not looking at the frames at all".
+	 *
+	 * A blind turn is now counted and shown. Silent degradation is the worst failure this app can
+	 * have, because the output looks identical to the working case.
+	 */
+	const [blindTurns, setBlindTurns] = useState(0)
+	/**
 	 * Lines the daemon refused or never received.
 	 *
 	 * Surfaced, not swallowed. "What she said, earlier" reading empty is ambiguous on its own —
@@ -655,10 +668,12 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			if (truth.trim() === "") return
 			inFlight = true
 			try {
+				const shot = optsRef.current.grabFrame()
+				if (shot === null) setBlindTurns(n => n + 1)
 				const r = await runCoachTurn({
 					provider: opts.provider ?? "",
 					model: opts.model ?? "",
-					frame: optsRef.current.grabFrame(),
+					frame: shot,
 					block: truth
 				})
 				if (!alive) return
@@ -763,6 +778,8 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				parts.push({
 					inlineData: { mimeType: "image/jpeg", data: frame.replace(/^data:[^,]+,/, "") }
 				})
+			// Counted, not swallowed. A turn with no picture is a coach reading the block aloud.
+			else setBlindTurns(n => n + 1)
 			parts.push({ text: truth })
 			send({ clientContent: { turns: [{ role: "user", parts }], turnComplete: true } })
 		}
@@ -849,6 +866,8 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		usage,
 		/** Lines the daemon has not acknowledged storing. */
 		unsaved,
+		/** Turns sent with no picture attached. Non-zero means she is coaching from text alone. */
+		blindTurns,
 		unlockAudio,
 		/** True when the browser is holding the sound back until the page is clicked. */
 		audioBlocked: audio.blocked,
