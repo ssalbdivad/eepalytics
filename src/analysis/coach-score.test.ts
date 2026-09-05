@@ -427,3 +427,52 @@ describe("praise is allowed to name no action", () => {
 		ok(noAction("Kayn has more farm than you right now"))
 	})
 })
+
+describe("the comparative shape", () => {
+	/*
+	 * Measured on a real ablation run: 5 of 94 lines from the CITE-OR-QUIET arm were flagged as
+	 * misattributed, and all five were this sentence shape, correctly written. The arm's true
+	 * fabrication rate was 0 and the instrument reported 5%. The whole product decision rests on
+	 * that rate, so an instrument that cries wolf on the shape this coach uses most is worse than
+	 * none at all.
+	 */
+	const block = [
+		"## Ground truth",
+		"",
+		"Clock 14:00.",
+		"",
+		"You: Lillia lv9 2/1/3, 140 CS, 1200g",
+		"",
+		"Enemy jungler right now: Garen, 50 CS, level 8.",
+		"",
+		"### What he is NOT looking at — prefer these",
+		"",
+		"- you are well ahead of Garen on farm"
+	].join("\n")
+	const roster = ROSTER
+
+	it("gives the first figure of a pair to the first player named", () => {
+		const r = scoreLine({ line: "You lead Garen 140 CS to 50, so keep the route running.", block, roster, champions: CHAMPIONS })
+		ok(
+			!r.faults.includes("misattributed-number"),
+			`correctly written comparison was flagged: ${JSON.stringify(r.faults)}`
+		)
+	})
+
+	it("still catches a comparison written the wrong way round", () => {
+		const r = scoreLine({ line: "Garen leads you 140 CS to 50, so keep the route running.", block, roster, champions: CHAMPIONS })
+		ok(
+			r.faults.includes("misattributed-number"),
+			`a swapped comparison should be a misattribution: ${JSON.stringify(r.faults)}`
+		)
+	})
+
+	it("leaves the plain left-biased case alone", () => {
+		// "Briar is 50 CS" — one entity, no pair, so the ordinary rule still owns it.
+		const r = scoreLine({ line: "Garen is on 50 CS, so take the far camps now.", block, roster, champions: CHAMPIONS })
+		ok(
+			!r.faults.includes("misattributed-number"),
+			`single-entity attribution regressed: ${JSON.stringify(r.faults)}`
+		)
+	})
+})

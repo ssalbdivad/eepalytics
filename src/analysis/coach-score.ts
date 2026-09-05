@@ -643,15 +643,19 @@ const comparativeOwners = (
 ): Map<number, string> => {
 	const out = new Map<number, string>()
 	for (const m of line.matchAll(COMPARATIVE_PAIR)) {
-		if (m.index === undefined) continue
-		const named = mentions.filter(x => x.index < m.index)
+		const at = m.index
+		const a = m[1]
+		const b = m[2]
+		if (at === undefined || a === undefined || b === undefined) continue
+		const named = mentions.filter(x => x.index < at)
 		const distinct: string[] = []
 		for (const x of named) if (!distinct.includes(x.owner)) distinct.push(x.owner)
 		if (distinct.length !== 2) continue
-		const firstAt = m.index + m[0].indexOf(m[1])
-		const secondAt = m.index + m[0].lastIndexOf(m[2])
-		out.set(firstAt, distinct[0] as string)
-		out.set(secondAt, distinct[1] as string)
+		const first = distinct[0]
+		const second = distinct[1]
+		if (first === undefined || second === undefined) continue
+		out.set(at + m[0].indexOf(a), first)
+		out.set(at + m[0].lastIndexOf(b), second)
 	}
 	return out
 }
