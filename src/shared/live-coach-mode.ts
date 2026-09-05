@@ -77,7 +77,7 @@
 import { parseChampionClauses } from "./champion-advice.ts"
 import type { ChampionClauses } from "./champion-advice.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "./live-prompt.ts"
-import { renderState } from "./live-state.ts"
+import { downLine, renderBriefing, renderState } from "./live-state.ts"
 import type { VisionState } from "./live-state.ts"
 
 export type LiveCoachMode = "cite-or-quiet" | "fenced"
@@ -318,32 +318,11 @@ export const ALIVE_LINE = /^Alive right now: .*$/m
 /**
  * WHO is dead, by name — the fault the ablation's judge caught this architecture committing.
  *
- * The block gives an alive COUNT and no names, and a count is an invitation: "clear her top jungle
- * while she is dead" was said at 22:03 of a real game in which nobody was down at all. The names
- * are sitting in `allPlayers` and always were, so the guess becomes a fact for the price of one
- * line.
- *
- * NO SECONDS, and that is not an oversight. The block printed `DEAD (14s)` once; the model read
- * timers straight off the roster, bypassing every rate-limit the ranker applies, and announced two
- * respawn timers to a player who was himself dead for longer than both. Dropping the seconds and
- * keeping the bare `DEAD` was not enough either — it invented a timer to go with the word. Names
- * answer "who", which is what was actually missing; the ranked list still owns "for how long".
+ * Lives in `live-state.ts` now, because the briefing block needs the same line and that file may
+ * not import this one. Re-exported here so the two modes that were measured with it keep importing
+ * it from where they always did.
  */
-export const downLine = (s: VisionState): string => {
-	const mine = [
-		...(s.me.dead ? [`you (${s.me.champion})`] : []),
-		...s.allies.filter(p => p.dead).map(p => p.champion)
-	]
-	const theirs = s.enemies.filter(p => p.dead).map(p => p.champion)
-	if (mine.length === 0 && theirs.length === 0)
-		return "Down right now: nobody — every champion named above is alive this instant."
-	return (
-		`Down right now (WHO is dead; this line never says for how long). ` +
-		`Theirs: ${theirs.length > 0 ? theirs.join(", ") : "nobody"}. ` +
-		`Yours: ${mine.length > 0 ? mine.join(", ") : "nobody"}. ` +
-		`Anyone not named here is alive.`
-	)
-}
+export { downLine }
 
 /**
  * The ground-truth block as the selected architecture should see it.

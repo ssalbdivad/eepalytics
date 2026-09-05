@@ -130,6 +130,202 @@ export const csGap = (cs: number, other: number, otherFloored: boolean): CsGap =
  */
 export const csGapWorthSaying = (g: CsGap): boolean => g.certain >= CS_QUANTUM
 
+/* ============================================================ the map's own clock */
+
+/**
+ * WHAT IS COMING — the one layer that was measured to change anything.
+ *
+ * Nine arms of context were replayed through one model over 88 real states of his own games and
+ * judged blind (`data/eval/why-shallow.md`). The shipped block scored 29% useful lines. Adding
+ * ninety seconds of exactly-computed history: 30%, p = 0.94. Adding his measured career habits on
+ * top: no further gain. Adding this — what is up, what is next, and in how many seconds — took it
+ * to 55%, p = 0.0009, and it did so at the QUIET moments most of all (53% against the shipped
+ * block's 39% at a decision point).
+ *
+ * The mechanism is not that a schedule "reasons across time". Lines whose premise spanned time
+ * scored 45% against 37% for lines about the instant — inside every arm's own interval. It is that
+ * a schedule changes the SUBJECT. Classified by what the sentence is about, over 554 judged lines:
+ * a neutral objective 61% useful (n=211), an enemy being down 41%, gold 32%, and farm/CS/clearing
+ * **4% — three useful lines out of eighty-four**, which is the subject the shipped ranker puts
+ * first.
+ *
+ * And the data is not replaceable by an instruction. An arm given the shipped block and a prompt
+ * paragraph telling it to prefer objectives obeyed — 49% of its lines became objective lines — and
+ * still lost to the schedule, 37% against 55% (p = 0.020), because a coach told to talk about
+ * dragons with no dragon timer talks about dragons that are not there: *"Briar is down right now,
+ * so keep your clear running and take dragon"*, fifty-six seconds before the first dragon spawned.
+ * Prompting picks the subject; only data makes the sentence true.
+ */
+
+/** One neutral objective, as the event feed and the map's fixed spawn times leave it. */
+export interface ScheduledObjective {
+	/** Spoken name — "Dragon", "Void grubs", "Rift Herald", "Baron", "Elder Dragon". */
+	name: string
+	/** `up`: available now. `coming`: spawns at `atSec`. */
+	state: "up" | "coming"
+	/** Game clock of the spawn this refers to. */
+	atSec: number
+	/** Seconds it has been up, or seconds until it spawns. Always non-negative. */
+	sec: number
+	/**
+	 * Is the thing this line refers to still standing there?
+	 *
+	 * True for everything computed FROM a kill — the next drake, the next Baron — because the
+	 * spawn was derived from the last one being taken, so nobody has touched this one. False for
+	 * grubs once any have gone, where the feed says a cluster was worked and cannot say what is
+	 * left of it.
+	 */
+	untaken: boolean
+	/** Who has taken this kind of objective so far, when the count is worth carrying. */
+	taken?: { mine: number; theirs: number }
+}
+
+/**
+ * Spawn constants for the live patch. THESE ARE THE ONE THING HERE THAT CAN GO STALE.
+ *
+ * Cross-checked against every objective event in the four recorded games
+ * (`data/live-samples/split-01..04.ndjson`), which is where each of them earned its place:
+ *
+ *   - first `DragonKill` 365, 480, 540, 660 — all after 300, none before.
+ *   - `DragonKill` gaps: minimum observed 309 seconds over eleven retakes, so 300 never overstates.
+ *   - first `HordeKill` 490, 494, 519, 523 — all after 360.
+ *   - `HeraldKill` 934, 1029, 1065, and NEVER TWICE IN A GAME across four games that ran past 29
+ *     minutes. Herald is one per game here, which is why taking it removes it from the schedule
+ *     rather than starting a respawn clock. The why-shallow harness gave it a 360-second respawn;
+ *     the corpus does not support one and a phantom Herald timer is a fabrication with a number on
+ *     it.
+ *   - `BaronKill` 1341, 1879, 1992, none before 1200; the one retake in the corpus came 574
+ *     seconds later, so 360 never overstates either.
+ */
+export const OBJECTIVE_SPAWN = {
+	dragonFirstSec: 300,
+	dragonRespawnSec: 300,
+	/** Once a side has this many drakes it has soul, and the next spawn is Elder. */
+	soulAt: 4,
+	elderRespawnSec: 360,
+	grubsSpawnSec: 360,
+	/** Grubs leave the map when Herald arrives. */
+	grubsDespawnSec: 840,
+	heraldSpawnSec: 840,
+	/** Herald is gone by the time Baron is up; past this the schedule stops mentioning it. */
+	heraldGoneSec: 1200,
+	baronFirstSec: 1200,
+	baronRespawnSec: 360
+} as const
+
+/** The objective events the schedule needs, side-resolved by the caller. */
+export interface ObjectiveEvent {
+	kind: "dragon" | "grub" | "herald" | "baron"
+	tSec: number
+	/** `null` when the killer could not be resolved to a player — see `championOf`. */
+	side: "mine" | "theirs" | null
+}
+
+/**
+ * How far ahead an objective is worth carrying.
+ *
+ * Baron at seven minutes out is not a decision, it is trivia, and every line of this block costs
+ * latency and crowds the roster that stops the hallucinating. Two and a half minutes is the
+ * longest window in which a jungler can actually path towards something.
+ */
+export const SCHEDULE_HORIZON_SEC = 150
+
+/**
+ * What is up and what is next, from the event feed and nothing else.
+ *
+ * Deliberately silent rather than clever in every case the feed cannot settle. It never says how
+ * many grubs REMAIN: six is the number in the patch notes, the corpus has exactly three taken in
+ * each of four games and never a second cluster, and a count arrived at by subtracting from a
+ * number nobody measured is the same fabrication as a made-up respawn timer.
+ */
+export const objectiveSchedule = (events: readonly ObjectiveEvent[], tSec: number): ScheduledObjective[] => {
+	const of = (kind: ObjectiveEvent["kind"]) => events.filter(e => e.kind === kind)
+	const count = (kind: ObjectiveEvent["kind"]) => ({
+		mine: of(kind).filter(e => e.side === "mine").length,
+		theirs: of(kind).filter(e => e.side === "theirs").length
+	})
+	const lastOf = (kind: ObjectiveEvent["kind"]): number | null => {
+		let out: number | null = null
+		for (const e of of(kind)) if (out === null || e.tSec > out) out = e.tSec
+		return out
+	}
+	const out: ScheduledObjective[] = []
+	const add = (name: string, atSec: number, taken?: { mine: number; theirs: number }): void => {
+		if (atSec <= tSec) out.push({ name, state: "up", atSec, sec: Math.round(tSec - atSec), untaken: true, taken })
+		else if (atSec - tSec <= SCHEDULE_HORIZON_SEC)
+			out.push({ name, state: "coming", atSec, sec: Math.round(atSec - tSec), untaken: true, taken })
+	}
+
+	const drakes = count("dragon")
+	const lastDrake = lastOf("dragon")
+	const soul = Math.max(drakes.mine, drakes.theirs) >= OBJECTIVE_SPAWN.soulAt
+	add(
+		soul ? "Elder Dragon" : "Dragon",
+		lastDrake === null ? OBJECTIVE_SPAWN.dragonFirstSec
+		: soul ? lastDrake + OBJECTIVE_SPAWN.elderRespawnSec
+		: lastDrake + OBJECTIVE_SPAWN.dragonRespawnSec,
+		drakes
+	)
+
+	if (tSec < OBJECTIVE_SPAWN.grubsDespawnSec) {
+		const grubs = count("grub")
+		if (grubs.mine + grubs.theirs === 0) add("Void grubs", OBJECTIVE_SPAWN.grubsSpawnSec)
+		else if (tSec >= OBJECTIVE_SPAWN.grubsSpawnSec)
+			out.push({
+				name: "Void grubs",
+				state: "up",
+				atSec: OBJECTIVE_SPAWN.grubsSpawnSec,
+				sec: Math.round(tSec - OBJECTIVE_SPAWN.grubsSpawnSec),
+				untaken: false,
+				taken: grubs
+			})
+	}
+
+	if (lastOf("herald") === null && tSec < OBJECTIVE_SPAWN.heraldGoneSec) add("Rift Herald", OBJECTIVE_SPAWN.heraldSpawnSec)
+
+	const lastBaron = lastOf("baron")
+	add(
+		"Baron",
+		lastBaron === null ? OBJECTIVE_SPAWN.baronFirstSec : lastBaron + OBJECTIVE_SPAWN.baronRespawnSec,
+		count("baron")
+	)
+
+	return out
+}
+
+/** Seconds, said the way a person says them out loud. */
+export const spokenDuration = (sec: number): string => {
+	if (sec < 60) return `${sec} seconds`
+	const m = Math.floor(sec / 60)
+	const s = sec % 60
+	const mins = `${m} minute${m === 1 ? "" : "s"}`
+	return s === 0 ? mins : `${mins} ${s} second${s === 1 ? "" : "s"}`
+}
+
+const mmss = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, "0")}`
+
+/**
+ * The schedule as prose, with the timers written the way they should be said.
+ *
+ * How long something has been UP is the sharpest fact in here and the reason the section is not
+ * just a list of spawn times: a drake that has stood open for two minutes is a statement that
+ * nobody on either team is contesting it, and there is no channel in this app — screenshot
+ * included — through which he could learn that.
+ */
+export const renderSchedule = (list: readonly ScheduledObjective[]): string => {
+	if (list.length === 0) return ""
+	const lines = list.map(o => {
+		const took =
+			o.taken && o.taken.mine + o.taken.theirs > 0 ?
+				` Taken so far this game: ${o.taken.mine} by you, ${o.taken.theirs} by them.`
+			:	""
+		return o.state === "up" ?
+				`- ${o.name}: ${o.untaken ? "UP and untaken" : "up"} since ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
+			:	`- ${o.name} spawns at ${mmss(o.atSec)} — in ${spokenDuration(o.sec)}.${took}`
+	})
+	return `### What is coming (the map's clock, worked out from the event feed)\n\n${lines.join("\n")}`
+}
+
 export interface VisionState {
 	/** `mm:ss`. */
 	clock: string
@@ -235,6 +431,35 @@ export interface VisionState {
 	 * which, unlike a missing baseline, is not a gap a model can fill with a guess.
 	 */
 	said?: string
+	/**
+	 * WHAT IS COMING — the map's own clock, and the only layer measured to change anything.
+	 *
+	 * See `objectiveSchedule` above for the run. Optional because it is computed from the event
+	 * feed by the caller and because every fixture in this repo predates it; absent means the
+	 * briefing simply has no schedule section, never that nothing is due.
+	 */
+	schedule?: ScheduledObjective[]
+	/**
+	 * THE ARC — what has changed over this game, already rendered by `analysis/arc.ts`.
+	 *
+	 * Pre-rendered for the same reason `said` is: `shared/` may not import `analysis/`. Carried
+	 * with its measurement stated plainly — ninety seconds of exactly-computed history moved judged
+	 * usefulness from 29% to 30% (p = 0.94) in the ladder run, so this section is here because it
+	 * is cheap and occasionally carries a fact nothing else can (a five-minute farm stall with
+	 * three deaths inside it), NOT because it was measured to help.
+	 */
+	arc?: string
+	/**
+	 * His measured career habits, one short spoken-ready line each, from `analysis/habits.ts`.
+	 *
+	 * Sentences rather than statistics, and that is a safety property. Handed the measurement
+	 * behind a cue, this coach recompressed it and produced a false claim about his own record:
+	 * given *"He is there at 8 minutes 31 games to your 12"* — a fact about PRESENCE at the grub
+	 * pit — it said *"Enemies take them at 8 minutes in 31 games to your 12"*, which is a different
+	 * and untrue statement, arrived at by faithful quotation. So the block carries only the finished
+	 * sentence and the prompt forbids rewording it.
+	 */
+	habits?: string[]
 }
 
 export interface VisionStatePlayer {
@@ -384,4 +609,191 @@ of the map's width from the truth and matched its own previous answer about the 
 in 60. That is not reading a minimap, it is imagining a game of League. Where anybody is has either
 been worked out for you and put in the list above, hedged, or is not known at all. If a position is
 not in the list, you do not know it, and there is nothing on screen you may fill the gap with.`
+}
+
+/**
+ * WHO is dead, by name — the fault the ablation's judge caught this architecture committing.
+ *
+ * The block gives an alive COUNT and no names, and a count is an invitation: "clear her top jungle
+ * while she is dead" was said at 22:03 of a real game in which nobody was down at all. The names
+ * are sitting in `allPlayers` and always were, so the guess becomes a fact for the price of one
+ * line.
+ *
+ * NO SECONDS, and that is not an oversight. The block printed `DEAD (14s)` once; the model read
+ * timers straight off the roster, bypassing every rate-limit the ranker applies, and announced two
+ * respawn timers to a player who was himself dead for longer than both. Dropping the seconds and
+ * keeping the bare `DEAD` was not enough either — it invented a timer to go with the word. Names
+ * answer "who", which is what was actually missing; the ranked list still owns "for how long".
+ */
+export const downLine = (s: VisionState): string => {
+	const mine = [
+		...(s.me.dead ? [`you (${s.me.champion})`] : []),
+		...s.allies.filter(p => p.dead).map(p => p.champion)
+	]
+	const theirs = s.enemies.filter(p => p.dead).map(p => p.champion)
+	if (mine.length === 0 && theirs.length === 0)
+		return "Down right now: nobody — every champion named above is alive this instant."
+	return (
+		`Down right now (WHO is dead; this line never says for how long). ` +
+		`Theirs: ${theirs.length > 0 ? theirs.join(", ") : "nobody"}. ` +
+		`Yours: ${mine.length > 0 ? mine.join(", ") : "nobody"}. ` +
+		`Anyone not named here is alive.`
+	)
+}
+
+/* ================================================================== the briefing */
+
+/**
+ * THE BRIEFING — the block rebuilt around what was measured, and the shipped default.
+ *
+ * `renderState` above is a SNAPSHOT: who is alive, everyone's CS, the score, the clock, his gold.
+ * Every line derivable from it describes the instant, and the instant is what the man is already
+ * looking at. That was the diagnosis. It is half right, and the half that is wrong matters more
+ * than the half that is right, so both are written down here rather than in a commit message.
+ *
+ * ## What the ladder actually measured (`data/eval/why-shallow.md`)
+ *
+ * Nine arms, one model at temperature zero, 88 real states from three of his own recorded games
+ * replayed in order, every line judged blind with the arm labels stripped and all arms' candidates
+ * shuffled into one anonymous list. Each arm is the one before it plus one layer:
+ *
+ *     block only (what shipped)                29% useful
+ *     + ninety seconds of exact history        30%   p = 0.94    NOTHING
+ *     + the objective schedule                 55%   p = 0.0009  the whole effect
+ *     + his measured career habits             51%   no gain on the schedule
+ *     + everything she has already said        48%   no gain, and no repetition gain either
+ *     block only, PROMPTED to prefer objectives 37%  p = 0.30 against the block; loses to the schedule
+ *
+ * So a briefing beats a snapshot by a lot, and almost none of it is the time dimension. Lines whose
+ * premise spanned time scored 45% against 37% for lines about the instant — inside every arm's own
+ * interval. What separates the arms is the SUBJECT: a neutral objective 61% useful over 211 judged
+ * lines, an enemy being down 41%, gold 32%, and farm, CS, clearing and routing **4%, three useful
+ * lines out of eighty-four** — the subject `live-facts.ts` ranks first and the shipped coach spends
+ * a fifth of its lines on.
+ *
+ * ## Which is why the ORDER of this document is the design
+ *
+ * A block is read top-down and the top is what gets used. The schedule is first because it is the
+ * only measured effect. The board — who is down, what just happened — is second at 41%. The jungle
+ * race and the farm baseline are near the BOTTOM, unchanged in their arithmetic and demoted in
+ * their position, because they are the 4%. Nothing is gagged: the numbers are all still here, and
+ * the fence's instruction-shaped labels ("CONTEXT ONLY — never say this") are gone, because
+ * instructions inside content get read out loud in this app. That is not a theory: a pronunciation
+ * table shaped like data was spoken verbatim to the player mid-game, and the prompt is where the
+ * ranking rule now lives.
+ *
+ * ## Where the layers with no measured gain sit, and why they are here at all
+ *
+ * `arc`, `habits` and `said` are carried LAST, after the material that pays. Each was measured to
+ * add nothing on top of the schedule, and each occasionally carries a fact nothing else in the app
+ * can reach — a five-minute farm stall with three deaths inside it, a career count, the fact that
+ * she already said this. They cost a few hundred characters and they are the cheapest thing here to
+ * remove if latency ever needs them gone.
+ */
+export const renderBriefing = (s: VisionState): string => {
+	const me = s.me
+	const hp = me.hp !== undefined && me.maxHp !== undefined ? `${Math.round(me.hp)}/${Math.round(me.maxHp)} HP` : ""
+	const race =
+		me.cs !== undefined && s.counterpart && s.counterpart.cs !== undefined ?
+			csGap(me.cs, s.counterpart.cs, true)
+		:	null
+	const pace = s.pace ? csGap(s.pace.cs, s.pace.expected, false) : null
+	const schedule = renderSchedule(s.schedule ?? [])
+	const sections: string[] = []
+
+	sections.push(`## Ground truth — from the game client. These are FACTS; the screenshot is not.
+
+Clock ${s.clock}. You: ${me.champion}${me.level ? ` lv${me.level}` : ""} ${me.k ?? 0}/${me.d ?? 0}/${
+		me.a ?? 0
+	}${me.cs !== undefined ? `, ${csPhrase(me.cs)}` : ""}${hp ? `, ${hp}` : ""}${
+		me.gold !== undefined ? `, ${Math.round(me.gold)} gold` : ""
+	}${me.dead ? `, DEAD${me.respawnSec ? ` (respawn in ${Math.round(me.respawnSec)} seconds)` : ""}` : ""}`)
+
+	/*
+	 * The schedule leads. When there is none — no event feed, a fixture built before this existed —
+	 * the absence is STATED. Measured on the empty ranked list: a heading that simply vanishes is a
+	 * gap, and at a tick where nobody was dead and the list was empty this coach announced a death
+	 * that had not happened. Naming the empty case removes the gap to fill.
+	 */
+	sections.push(
+		schedule !== "" ? schedule : (
+			`### What is coming\n\nNo objective clock is available this turn, so you do not know when anything spawns.`
+		)
+	)
+
+	sections.push(`### The board
+
+${downLine(s)}
+Alive right now: ${1 + s.allies.filter(p => !p.dead).length - (s.me.dead ? 1 : 0)} of yours against ${
+		s.enemies.filter(p => !p.dead).length
+	} of theirs.
+Your team: ${s.allies.map(line).join(" · ") || "unknown"}
+Enemy team: ${s.enemies.map(line).join(" · ") || "unknown"}${
+		s.recentEvents.length > 0 ? `\nJust happened: ${s.recentEvents.join("; ")}` : ""
+	}`)
+
+	if (s.unseen.length > 0)
+		sections.push(
+			`### Ranked highest by the app right now — a hint, not a menu\n\n${s.unseen.map(u => `- ${u}`).join("\n")}`
+		)
+	else sections.push(`### Nothing is ranked right now\n\nThe app has no ranked fact to offer at this instant.`)
+
+	if (s.arc && s.arc !== "") sections.push(s.arc)
+
+	if (s.habits && s.habits.length > 0)
+		sections.push(
+			`### From his own finished games — say one of these as written or not at all\n\n${s.habits
+				.map(h => `- ${h}`)
+				.join("\n")}`
+		)
+
+	if (s.said && s.said !== "") sections.push(s.said)
+
+	sections.push(`### The jungle race and his own pace
+
+${
+		s.counterpart ?
+			`Enemy jungler: ${s.counterpart.champion}${
+				s.counterpart.inferred ? " (identified by Smite, so treat the role as a strong guess)" : ""
+			}${s.counterpart.cs !== undefined ? `, ${csPhrase(s.counterpart.cs)}` : ""}${
+				s.counterpart.level !== undefined ? `, level ${s.counterpart.level}` : ""
+			}. His gold is not knowable — the client never reports an enemy's gold, so any gold figure you have belongs to the player.${
+				race ?
+					csGapWorthSaying(race) ?
+						race.direction === "ahead" ?
+							` The race, worked out from those two floors: he is at least ${race.certain} CS BEHIND you.`
+						:	` The race, worked out from those two floors: he is at least ${race.certain} CS AHEAD of you.`
+					:	" The race, worked out from those two floors: the two of you are inside the client's rounding of each other, so nobody can say who is ahead — do not."
+				:	""
+			}`
+		:	"Enemy jungler: not identified this game."
+	}
+Farm baseline: ${
+		s.pace && pace ?
+			`${csPhrase(s.pace.cs)} against ${s.pace.expected}, ${s.pace.source}${s.pace.exact ? "" : " (approximate)"} — ${
+				csGapWorthSaying(pace) ?
+					pace.direction === "ahead" ?
+						`at least ${pace.certain} CS AHEAD of his own average.`
+					:	`at least ${pace.certain} CS BEHIND his own average.`
+				:	"his CS is rounded down by more than the difference between those two numbers, so he is neither measurably ahead nor behind. Do not say he is either."
+			}`
+		:	"NONE — there is no average to compare his farm against right now. Say the CS and say you cannot compare it."
+	}`)
+
+	sections.push(`**The ten champions above are the only champions in this game.** Never name any other, and never
+give a number that is not written above.
+
+**Every timer you say must be one written above.** Not a spawn time, a respawn, a camp or a count
+you completed from what you know about League — the map's clock is in the schedule and nowhere else.
+
+**Every CS figure above is a FLOOR, and he can see the real one.** The client reports farm in tens
+and rounds down, so a block that says 40 is a HUD that says anything from 40 to 49. Say it the way
+it is written and never a bare count, a rounder one, or a difference you worked out yourself.
+
+**The video is context, not a source — and that includes positions.** Measured on this app's own
+frames: asked where the champions were on the screenshot it sends you, the answer was a median 43%
+of the map's width from the truth and matched its own previous answer about the same picture 5 times
+in 60. Where anybody is has either been worked out for you above, hedged, or is not known at all.`)
+
+	return sections.join("\n\n")
 }
