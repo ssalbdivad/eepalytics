@@ -212,7 +212,27 @@ const buildLiveState = (
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
 	const clock = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
-	const myName = me.riotId ?? me.summonerName ?? ""
+	/*
+	 * The EVENT feed names people by BARE game name; the roster's `riotId` and `summonerName`
+	 * both carry the tag. Matching on the tagged fields therefore never matches, and every one
+	 * of these sites silently fell through.
+	 *
+	 * Measured on a real recorded game, one paragraph apart in the SAME block: the prose said
+	 * "Baron taken by Lillia" while the ranked list — the only thing the model is permitted to
+	 * speak — said "they have Baron, do not take a fight in the open". Four seconds after he
+	 * soloed Baron. `myEvents` was empty for the whole game, so "you secured Baron" could never
+	 * fire, and `objectiveCount` returned {mine: 0, theirs: 0} in every block of a 36-minute
+	 * game with three drakes, a herald and a baron in it.
+	 */
+	const nameOf = (p: LivePlayer | undefined): string =>
+		p?.riotIdGameName ?? p?.riotId ?? p?.summonerName ?? ""
+	const playerNamed = (who: string | undefined): LivePlayer | undefined =>
+		who === undefined ? undefined : (
+			(data.allPlayers ?? []).find(
+				x => x.riotIdGameName === who || x.riotId === who || x.summonerName === who
+			)
+		)
+	const myName = nameOf(me)
 	const mine = me.team
 	const asPlayer = (p: LivePlayer): VisionStatePlayer => ({
 		champion: p.championName ?? "unknown",
@@ -412,7 +432,7 @@ const buildLiveState = (
 						 * is a readback, not scouting. Only the most recent kill of that victim
 						 * matters, which is the one still on the respawn clock.
 						 */
-						killedByMe: lastKillerOf(data, p.riotId ?? p.summonerName ?? "") === myName,
+						killedByMe: lastKillerOf(data, nameOf(p)) === myName,
 						// `position` is reliable in the LIVE api (unlike match history), so the
 						// jungler is known rather than inferred.
 						isJungler: (p.position ?? "").toUpperCase() === "JUNGLE"
@@ -461,9 +481,7 @@ const buildLiveState = (
 					let theirs = 0
 					for (const e of data.events?.Events ?? []) {
 						if (!OBJECTIVE_EVENTS.has(e.EventName)) continue
-						const k = (data.allPlayers ?? []).find(
-							p => p.riotId === e.KillerName || p.summonerName === e.KillerName
-						)
+						const k = playerNamed(e.KillerName)
 						// An unresolvable killer counts for nobody rather than for the enemy.
 						if (!k) continue
 						if (k.team === mine) mineN += 1
@@ -509,9 +527,7 @@ const buildLiveState = (
 									// KNOWN to be theirs, never assumed. An unresolvable killer arrives
 									// as false, because a lookup miss must not become an accusation.
 									byEnemy: (() => {
-										const k = (data.allPlayers ?? []).find(
-											p => (p.riotId ?? p.summonerName) === e.KillerName
-										)
+										const k = playerNamed(e.KillerName)
 										return k ? k.team !== mine : false
 									})()
 								})),
@@ -540,9 +556,7 @@ const buildLiveState = (
 					.filter(e => {
 						// A take by one of HIS team is not a loss. Team membership comes from the
 						// roster, since the event feed gives only a name.
-						const killer = (data.allPlayers ?? []).find(
-							p => (p.riotId ?? p.summonerName) === e.KillerName
-						)
+						const killer = playerNamed(e.KillerName)
 						return killer ? killer.team !== mine : true
 					})
 					.map(e => ({

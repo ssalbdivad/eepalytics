@@ -120,3 +120,77 @@ describe("the ground-truth block", () => {
 		ok(just.length > 0, "expected a Just happened line")
 	})
 })
+
+describe("objectives he took himself", () => {
+	/*
+	 * The same namespace bug as `championOf`, in five more sites, and this one is worse because
+	 * it does not merely garble a name — it hands the credit to the enemy.
+	 *
+	 * Measured on a real recorded game, one paragraph apart in the SAME block: the prose read
+	 * "Baron taken by Lillia" while the ranked list — the only surface the model may speak from —
+	 * read "they have Baron, do not take a fight in the open". Four seconds after he soloed it.
+	 * `myEvents` filtered on `me.riotId` ("Gooskaffur#NA1") against the event feed's bare
+	 * `KillerName` ("Gooskaffur"), so it was empty in every block of every game and "you secured
+	 * Baron" could never fire. `enemyObjectives` used the same broken lookup with a fallback of
+	 * `true` — unresolvable means theirs — so all three drakes, the herald and the baron in a
+	 * 36-minute game were attributed to the enemy.
+	 */
+	const withObjectives = {
+		...capture,
+		gameData: { gameTime: 1200 },
+		events: {
+			Events: [
+				{ EventID: 1, EventName: "BaronKill", KillerName: "Gooskaffur", EventTime: 1195 },
+				{
+					EventID: 2,
+					EventName: "DragonKill",
+					KillerName: "Gooskaffur",
+					DragonType: "Water",
+					EventTime: 1190
+				}
+			]
+		}
+	}
+
+	const ranked = (raw: unknown): string => {
+		const st = buildLiveStateForBench(raw, 1200)
+		ok(st, "expected a state")
+		const block = renderState(st)
+		const from = block.indexOf("### ")
+		return from === -1 ? "" : block.slice(from)
+	}
+
+	it("credits him, and never tells him the enemy has what he just took", () => {
+		const list = ranked(withObjectives)
+		ok(!/they have Baron/i.test(list), `his own baron was given to the enemy:\n${list}`)
+		ok(!/they took .*drake/i.test(list), `his own drake was given to the enemy:\n${list}`)
+		ok(/you secured Baron/i.test(list), `no credit for his baron:\n${list}`)
+	})
+
+	it("still calls an enemy take an enemy take", () => {
+		const theirs = {
+			...withObjectives,
+			events: {
+				Events: [
+					{ EventID: 1, EventName: "BaronKill", KillerName: "cQuachy", EventTime: 1195 }
+				]
+			}
+		}
+		const list = ranked(theirs)
+		ok(/they have Baron/i.test(list), `an enemy baron was not reported:\n${list}`)
+		ok(!/you secured/i.test(list), `credited him for an enemy take:\n${list}`)
+	})
+
+	it("credits an ALLY take to his team, not to the enemy", () => {
+		const ally = {
+			...withObjectives,
+			events: {
+				Events: [
+					{ EventID: 1, EventName: "BaronKill", KillerName: "zx6r", EventTime: 1195 }
+				]
+			}
+		}
+		const list = ranked(ally)
+		ok(!/they have Baron/i.test(list), `an ally take was blamed on the enemy:\n${list}`)
+	})
+})
