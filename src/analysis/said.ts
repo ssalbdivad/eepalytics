@@ -11,14 +11,14 @@ export type SaidSubject = FactSubject | "other"
 
 export const SAID_SUBJECTS: { id: SaidSubject; re: RegExp }[] = [
 	{ id: "your-death", re: /\b(you (?:are |'re )?dead|you die|respawn in|you spawn|back up in)\b/i },
-	{ id: "downed", re: /\b(is down|are down|down for|dead for|respawn|is dead)\b/i },
+	{ id: "downed", re: /\b(is down|are down|down for|dead for|respawn)\b/i },
 	{ id: "objective-lost", re: /\b(they took|enemy took|just took|gone|lost the)\b.{0,24}\b(drake|dragon|baron|herald|grub|tower|turret)\b/i },
 	{ id: "objectives", re: /\b(drake|dragon|baron|nashor|herald|grub|scuttle|tower|turret|inhibitor|plate|pit)\b/i },
-	{ id: "fight", re: /\b(fight|trade|skirmish|teamfight|duel|collapse|dive|killed|kill|first blood|died)\b/i },
+	{ id: "fight", re: /\b(fight|trade|skirmish|teamfight|duel|collapse|dive|kill(?:ed|ing|s)?|first blood|die[ds]?)\b/i },
 	{ id: "gold", re: /\bgold\b|\b(recall|back and buy|shop|spend)\b/i },
 	{ id: "farm", re: /\b(cs|farm|camps?|clear|route|gromp|wolves|raptors|krugs|buff|jungle)\b/i },
 	{ id: "levels", re: /\blevel\b/i },
-	{ id: "build", re: /\b(item|build|component|finish(?:ed)?)\b/i },
+	{ id: "build", re: /\b(legendary|completed|bought|component|mythic|finished (?:his|her|their))\b/i },
 	{ id: "kill-share", re: /\b(participation|kill share|involved in)\b/i },
 	{ id: "praise", re: /\b(nice|great|lovely|beautiful|well done|love (?:it|that)|proud|there we go)\b/i }
 ]
@@ -75,10 +75,65 @@ export const premiseClause = (line: string): string => {
 export const subjectOfSaid = (text: string): SaidSubject =>
 	SAID_SUBJECTS.find(s => s.re.test(text))?.id ?? "other"
 
-/** The instruction, stripped of everything that varies turn to turn. */
+/**
+ * Subjects whose FIRST appearance in a game is news by itself.
+ *
+ * An event either happened or it did not, so the first line about one cannot be a restatement. A
+ * value in the snapshot — his farm, his level — is present on every single turn, so "the first
+ * line about it" is a property of the coach's wording rather than of the game.
+ */
+export const NOVEL_SUBJECTS: readonly SaidSubject[] = [
+	"fight",
+	"objectives",
+	"objective-lost",
+	"downed",
+	"your-death",
+	"gold",
+	"build",
+	"kill-share"
+]
+
+/** EVERY subject the sentence touches, not just the one its premise is about. */
+export const subjectsIn = (text: string): SaidSubject[] =>
+	SAID_SUBJECTS.filter(s => s.re.test(text)).map(s => s.id)
+
+/**
+ * WHAT HE WAS TOLD TO DO, as an intent rather than as words.
+ *
+ * Measured, and this is the whole reason the key is not lexical: over the 38 lines Opus 5 spoke in
+ * `data/eval/model-opus5.json`, the instruction "keep clearing" was given under 14 distinct head
+ * phrasings — "keep route rolling", "keep route running", "start route don't", "take every camp",
+ * "full route don't", "full clear start", "go straight next", "keep hitting raptors", "keep
+ * unbroken", "so keep route", "so walk full", "get base start", "leave fountain", "grab leash
+ * commit". A key built from the words counts fourteen different instructions. He heard one.
+ *
+ * First match wins, so the order is the specificity order: counter-jungling names a camp and is a
+ * different decision from clearing your own, and it says "clear" in the same breath.
+ */
+export const DIRECTIVE_INTENTS: { id: string; re: RegExp }[] = [
+	{ id: "recall", re: /\b(recall|reset|take the back|go back|back and buy|back,|\bback\b(?= and)|head back)/i },
+	{ id: "buy", re: /\b(buy|spend|shop|purchase|pick up (?:a|an|your))\b/i },
+	{ id: "objective", re: /\b(drake|dragon|herald|grub|baron|nashor|scuttle|pit|plate|tower|turret)\b/i },
+	{ id: "ward", re: /\b(ward|vision|sweep|trinket)\b/i },
+	{ id: "gank", re: /\b(gank|dive|collapse|rotate|go help|come (?:to|for)|pressure (?:top|mid|bot))\b/i },
+	{ id: "counter-jungle", re: /\b(his|her|their|enemy)\b.{0,16}\b(jungle|camps?|blue|red|raptors|gromp|krugs|wolves)\b|\bcounter[- ]?jungle\b/i },
+	{ id: "avoid", re: /\b(don'?t|do not|never|stop|avoid|stay (?:out|away|home)|leave (?:him|her|it) alone)\b/i },
+	{ id: "keep-clearing", re: /\b(route|clear|camps?|farm|jungle|raptors|gromp|krugs|wolves|buff|leash)\b/i },
+	{ id: "reposition", re: /\b(walk|guard|cover|hover|entrance|river|lane|mid|top|bot|side)\b/i },
+	{ id: "fight", re: /\b(fight|trade|group|engage|take the|contest)\b/i }
+]
+
+/**
+ * The instruction, stripped of everything that varies turn to turn.
+ *
+ * Falls back to the literal head words when no intent matches, so an instruction this vocabulary
+ * has never seen still gets a memory rather than a blank one that collides with every other blank.
+ */
 export const directiveKey = (line: string, champions: readonly string[] = []): string => {
 	const action = actionClause(line)
 	if (action === null) return ""
+	const intent = DIRECTIVE_INTENTS.find(d => d.re.test(action))
+	if (intent) return intent.id
 	const lower = new Set(champions.map(c => c.toLowerCase()))
 	const ws = words(action).filter(w => !/^\d+$/.test(w) && !lower.has(w.replace(/'s$/, "")))
 	const head = ws[0] ?? ""
@@ -91,8 +146,11 @@ export interface SaidLimits {
 	wordingLookbackSec: number
 	directiveCooldownSec: number
 	directiveBudget: number
-	subjectRetireCount: number
+	subjectBudget: number
+	subjectWindowSec: number
 	subjectCooldownSec: number
+	/** However novel a line's subject, this much shared wording is the same sentence. */
+	verbatimOverlap: number
 }
 
 export const SAID_LIMITS: SaidLimits = {
@@ -100,8 +158,10 @@ export const SAID_LIMITS: SaidLimits = {
 	wordingLookbackSec: 240,
 	directiveCooldownSec: 300,
 	directiveBudget: 2,
-	subjectRetireCount: 3,
-	subjectCooldownSec: 90
+	subjectBudget: 3,
+	subjectWindowSec: 300,
+	subjectCooldownSec: 90,
+	verbatimOverlap: 0.8
 }
 
 export interface SaidSnapshot {
@@ -115,6 +175,8 @@ export interface SaidLine {
 	tSec: number
 	line: string
 	subject: SaidSubject
+	/** Every subject the sentence touched, so novelty is asked of the whole line. */
+	touched: SaidSubject[]
 	directive: string
 	content: string[]
 	at: SaidSnapshot
@@ -161,6 +223,7 @@ export const analyseSaid = (mem: SaidMemory, line: string, tSec: number): SaidLi
 	tSec,
 	line: line.trim(),
 	subject: subjectOfSaid(premiseClause(line)),
+	touched: subjectsIn(clean(line)),
 	directive: directiveKey(line, mem.champions),
 	content: contentWords(line),
 	at: {}
@@ -185,6 +248,12 @@ export const judgeSaid = (
 			worstOf = prev
 		}
 	}
+	const verbatim = worst >= limits.verbatimOverlap && worstOf !== null
+	const heard = new Set(mem.lines.flatMap(p => p.touched))
+	const fresh = now.touched.filter(t => !heard.has(t) && NOVEL_SUBJECTS.includes(t))
+	if (fresh.length > 0 && !verbatim)
+		return { repeat: false, reason: null, of: null, why: `first line of the game about ${fresh.join(", ")}` }
+
 	if (worst >= limits.wordingOverlap && worstOf)
 		return {
 			repeat: true,
@@ -213,12 +282,13 @@ export const judgeSaid = (
 	}
 
 	const sameSubject = mem.lines.filter(p => p.subject === now.subject)
-	if (sameSubject.length >= limits.subjectRetireCount)
+	const recent = sameSubject.filter(p => tSec - p.tSec <= limits.subjectWindowSec)
+	if (recent.length >= limits.subjectBudget)
 		return {
 			repeat: true,
 			reason: "subject-spent",
-			of: sameSubject.at(-1) ?? null,
-			why: `${now.subject} has had ${sameSubject.length} lines this game and is settled`
+			of: recent.at(-1) ?? null,
+			why: `${now.subject} has had ${recent.length} lines in the last ${Math.round(limits.subjectWindowSec / 60)} minutes`
 		}
 	const lastOnSubject = sameSubject.at(-1)
 	if (lastOnSubject && tSec - lastOnSubject.tSec <= limits.subjectCooldownSec)
