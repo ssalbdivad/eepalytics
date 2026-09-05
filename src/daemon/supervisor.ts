@@ -42,6 +42,8 @@ import {
 } from "./lcu.ts"
 import type { TransportName } from "./lcu.ts"
 import { errText, makeLogger } from "./log.ts"
+import { currentSampleKey, sampleDue, sampleLive } from "./live-sampler.ts"
+import { openSessionStatus } from "./journal.ts"
 
 const log = makeLogger("supervisor")
 
@@ -188,7 +190,28 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 		})()
 	}
 
-	const tick = async (): Promise<void> => {
+	/**
+ * Take one live sample if the clock says one is due.
+ *
+ * Reads `allgamedata` only when a sample is wanted, so an idle in-game poll costs nothing extra.
+ * Never throws — this sits inside the supervisor tick, which must not fail because a disk is full.
+ */
+const sampleCurrentGame = async (): Promise<void> => {
+	try {
+		if (!sampleDue()) return
+		const handle = await lcu()
+		if (!handle) return
+		const data = await handle.live.allGameData().catch(() => null)
+		const t = data?.gameData?.gameTime
+		if (typeof t !== "number") return
+		sampleLive({ gameId: openSessionStatus().sessionId ?? currentSampleKey(t), gameTimeSec: t, data })
+	} catch {
+		// A failed sample is one missing row in an evaluation aid. It is never worth a log line
+		// during a game, let alone an interrupted tick.
+	}
+}
+
+const tick = async (): Promise<void> => {
 		if (stopped || polling) return
 		polling = true
 		try {
@@ -227,6 +250,17 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 			const wasInGame = phase === "InProgress"
 			setPhase(next)
 			if (next === "InProgress" && !wasInGame) await readCurrentGameId()
+
+			/*
+			 * Sample the live client while a game is running, from the DAEMON's own poll.
+			 *
+			 * It was first hooked to `/api/live/ground-truth`, which only fires while the browser's
+			 * coach is running — so a game played with the page closed recorded nothing, which is
+			 * exactly the game an evaluation would most want. This loop runs whenever the daemon
+			 * does, and `sampleLive` rate-limits itself on the game clock, so an extra read is only
+			 * taken when a sample is actually due.
+			 */
+			if (next === "InProgress") await sampleCurrentGame()
 		} catch (err) {
 			failures++
 			lastErrorText = errText(err)

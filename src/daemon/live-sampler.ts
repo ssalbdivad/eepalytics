@@ -89,6 +89,32 @@ export const sampleLive = (input: {
 	}
 }
 
+/**
+ * Whether a sample is due, WITHOUT reading the client.
+ *
+ * The supervisor polls every couple of seconds during a game and a sample is wanted every five,
+ * so asking first means most ticks cost nothing at all rather than an extra `allgamedata` round
+ * trip that is then thrown away.
+ *
+ * Conservative on purpose: with no game seen yet it says yes, because the first sample of a game
+ * is the one worth having and one extra read is cheaper than missing the start.
+ */
+export const sampleDue = (nowSec?: number): boolean => {
+	if (!current) return true
+	if (nowSec === undefined) return true
+	return nowSec - current.lastAtSec >= SAMPLE_EVERY_SEC
+}
+
+/**
+ * A key for a game the journal has not opened a session for.
+ *
+ * Derived from when the game clock read zero, rounded to the minute — stable across the whole
+ * game, and different for the next one. Only used when there is no session id, which is the case
+ * when he plays with the coach page closed.
+ */
+export const currentSampleKey = (gameTimeSec: number): string =>
+	`g-${Math.round((Date.now() - gameTimeSec * 1000) / 60_000)}`
+
 /** How many samples exist for a game — the number that makes "it is recording" checkable. */
 export const sampleCount = (gameId: string): number => {
 	const p = pathFor(gameId)
