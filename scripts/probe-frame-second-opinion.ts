@@ -271,12 +271,26 @@ export const spokenNumber = (raw: string): number | null => {
 	return saw ? total : null
 }
 
-/** Pull one labelled answer out of a spoken transcript. Labels survive TTS; punctuation does not. */
-export const field = (text: string, label: string): string => {
-	const norm = text.replace(/\s+/g, " ")
-	const re = new RegExp(`${label}\\s*[:\\-]?\\s*([^\\n]*?)(?=\\s*\\d\\)|\\s*(?:MANA|FPS|PLACE|CHAT|JUNGLER|JUNGLERCS)\\b|$)`, "i")
-	const m = norm.match(re)
-	return m?.[1]?.trim() ?? ""
+/**
+ * Answers come back POSITIONALLY, not labelled, and that is not a bug to work around.
+ *
+ * Measured on the first run: asked for `MANA: LOW` the live model spoke `LOW`, `86`, `MAP`, `NO`
+ * — four bare lines, no labels, every one of them correct. A label-only parser scored that
+ * perfect answer 0/4, which is exactly the shape of a measurement bug that reads as a model
+ * failure. So the parser takes the Nth answer line as the Nth question and only falls back to
+ * label matching when the model volunteers labels.
+ */
+export const answerLines = (text: string): string[] =>
+	text
+		.split(/\n+/)
+		.map(l => l.replace(/^\s*\**\s*\d\s*[).:-]\s*/, "").trim())
+		.filter(l => l !== "")
+
+/** The Nth answer, preferring an explicit label when the model used one. */
+export const slot = (text: string, index: number, label: string): string => {
+	const labelled = new RegExp(`${label}\\s*[:\\-]\\s*([^\\n]+)`, "i").exec(text)
+	if (labelled?.[1] !== undefined) return labelled[1].trim()
+	return answerLines(text)[index] ?? ""
 }
 
 const pick = (raw: string, options: string[]): string => {
@@ -299,10 +313,10 @@ interface Trial {
 const scoreFour = (id: string, arm: string, text: string): Trial[] => {
 	const t = TRUTH[id]
 	if (t === undefined) return []
-	const manaSaid = pick(field(text, "MANA"), ["LOW", "MID", "HIGH", "UNKNOWN"])
-	const fpsSaid = spokenNumber(field(text, "FPS"))
-	const placeSaid = pick(field(text, "PLACE"), ["BASE", "DEAD", "MAP", "UNKNOWN"])
-	const chatSaid = pick(field(text, "CHAT"), ["YES", "NO", "UNKNOWN"])
+	const manaSaid = pick(slot(text, 0, "MANA"), ["LOW", "MID", "HIGH", "UNKNOWN"])
+	const fpsSaid = spokenNumber(slot(text, 1, "FPS"))
+	const placeSaid = pick(slot(text, 2, "PLACE"), ["BASE", "DEAD", "MAP", "UNKNOWN"])
+	const chatSaid = pick(slot(text, 3, "CHAT"), ["YES", "NO", "UNKNOWN"])
 	const out: Trial[] = [
 		{ id, arm, question: "mana", answer: manaSaid, truth: t.manaBucket, correct: manaSaid === t.manaBucket },
 		{
@@ -398,8 +412,8 @@ const main = async () => {
 			imageTokens += res[0]?.imageTokens ?? 0
 			raw[c.id]![r.arm] = text
 			if (r.arm.startsWith("reverse")) {
-				const said = field(text, "JUNGLER(?!CS)")
-				const saidCs = field(text, "JUNGLERCS")
+				const said = slot(text, 0, "JUNGLER(?!CS)")
+				const saidCs = slot(text, 1, "JUNGLERCS")
 				const abstained = /NOT VISIBLE|UNKNOWN|CAN'?T|CANNOT/i.test(said + " " + saidCs)
 				trials.push({
 					id: c.id,
