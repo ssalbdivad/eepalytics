@@ -222,13 +222,19 @@ export interface ObjectiveEvent {
 }
 
 /**
- * How far ahead an objective is worth carrying.
+ * When Herald and Baron enter the schedule at all.
  *
- * Baron at seven minutes out is not a decision, it is trivia, and every line of this block costs
- * latency and crowds the roster that stops the hallucinating. Two and a half minutes is the
- * longest window in which a jungler can actually path towards something.
+ * These two are the gates the measured layer used, and they are kept rather than re-tuned: an arm
+ * that scored 55% against a block's 29% is not a thing to improve by eye. Dragon and the grubs
+ * carry NO gate, for the same reason — the ladder showed both on every turn from the first second,
+ * and half of that arm's early-game lines were judged useful against a fifth of the shipped
+ * block's, precisely because the first clear is decided around a spawn five minutes out.
+ *
+ * Baron at seven minutes is trivia; Baron at three is a route. Herald arrives as the grubs leave,
+ * which is why its window opens two minutes before they despawn.
  */
-export const SCHEDULE_HORIZON_SEC = 150
+export const HERALD_VISIBLE_FROM_SEC = 720
+export const BARON_VISIBLE_FROM_SEC = 1020
 
 /**
  * What is up and what is next, from the event feed and nothing else.
@@ -252,8 +258,7 @@ export const objectiveSchedule = (events: readonly ObjectiveEvent[], tSec: numbe
 	const out: ScheduledObjective[] = []
 	const add = (name: string, atSec: number, taken?: { mine: number; theirs: number }): void => {
 		if (atSec <= tSec) out.push({ name, state: "up", atSec, sec: Math.round(tSec - atSec), untaken: true, taken })
-		else if (atSec - tSec <= SCHEDULE_HORIZON_SEC)
-			out.push({ name, state: "coming", atSec, sec: Math.round(atSec - tSec), untaken: true, taken })
+		else out.push({ name, state: "coming", atSec, sec: Math.round(atSec - tSec), untaken: true, taken })
 	}
 
 	const drakes = count("dragon")
@@ -281,14 +286,17 @@ export const objectiveSchedule = (events: readonly ObjectiveEvent[], tSec: numbe
 			})
 	}
 
-	if (lastOf("herald") === null && tSec < OBJECTIVE_SPAWN.heraldGoneSec) add("Rift Herald", OBJECTIVE_SPAWN.heraldSpawnSec)
+	if (lastOf("herald") === null && tSec >= HERALD_VISIBLE_FROM_SEC && tSec < OBJECTIVE_SPAWN.heraldGoneSec)
+		add("Rift Herald", OBJECTIVE_SPAWN.heraldSpawnSec)
 
-	const lastBaron = lastOf("baron")
-	add(
-		"Baron",
-		lastBaron === null ? OBJECTIVE_SPAWN.baronFirstSec : lastBaron + OBJECTIVE_SPAWN.baronRespawnSec,
-		count("baron")
-	)
+	if (tSec >= BARON_VISIBLE_FROM_SEC) {
+		const lastBaron = lastOf("baron")
+		add(
+			"Baron",
+			lastBaron === null ? OBJECTIVE_SPAWN.baronFirstSec : lastBaron + OBJECTIVE_SPAWN.baronRespawnSec,
+			count("baron")
+		)
+	}
 
 	return out
 }
@@ -319,8 +327,18 @@ export const renderSchedule = (list: readonly ScheduledObjective[]): string => {
 			o.taken && o.taken.mine + o.taken.theirs > 0 ?
 				` Taken so far this game: ${o.taken.mine} by you, ${o.taken.theirs} by them.`
 			:	""
+		/*
+		 * A cluster that has been WORKED never claims to still be standing there.
+		 *
+		 * The feed says three grubs were taken in each of the four recorded games and never a
+		 * second cluster; the patch note number is six. Subtracting one from the other is a count
+		 * nobody measured, and "grubs are up" said over an empty pit is a fabrication with a place
+		 * attached. So once any have gone, the line asserts only the spawn time and the tally.
+		 */
 		return o.state === "up" ?
-				`- ${o.name}: ${o.untaken ? "UP and untaken" : "up"} since ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
+				o.untaken ?
+					`- ${o.name}: UP and untaken since ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
+				:	`- ${o.name}: the pit opened at ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
 			:	`- ${o.name} spawns at ${mmss(o.atSec)} — in ${spokenDuration(o.sec)}.${took}`
 	})
 	return `### What is coming (the map's clock, worked out from the event feed)\n\n${lines.join("\n")}`
