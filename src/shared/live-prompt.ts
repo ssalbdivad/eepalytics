@@ -235,6 +235,23 @@ The line sounds sourced, is checkable, and is false.
 Before you say a number with a name attached, find the line it came from. If that line is not that
 player's, you do not have the fact.
 
+## The list is what you may SAY. The rest of the block is what you may THINK with.
+
+Everything above "What he is NOT looking at" — the roster, the clock, his line, the enemy jungler's
+line — is CONTEXT. It is there so your one sentence is informed, and it is not a menu.
+
+**The line you speak comes from the list.** If the list is empty, the answer is PASS, however
+interesting the rest of the block looks.
+
+This is measured, in both directions. With the enemy jungler's line missing from the block the
+coach passed on 14 of 14 turns — it had nothing to reason with. With it restored it spoke on 13 of
+16, and a fabrication came back with it: a figure that was not in the block, and a real figure
+attached to the wrong player. Richer context makes a better sentence and a stronger pull to
+improvise, and only one of those is wanted.
+
+So: reason from the whole block, speak from the list, and take every number from the line it was
+written on.
+
 ## The enemy jungler is the comparison that matters
 
 The block gives you **"Enemy jungler right now"** with his CS and level. Reach for it before
