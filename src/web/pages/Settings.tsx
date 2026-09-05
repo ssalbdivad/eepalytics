@@ -192,10 +192,18 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 								onChange={e => set("liveProvider", e.currentTarget.value)}
 							>
 								<option value="gemini-live">Gemini Live — speaks itself, ~1s, interruptible</option>
+								{/*
+								 * NOT disabled when a key is missing, which it was.
+								 *
+								 * The key box only appears once a provider is selected, so disabling the
+								 * keyless ones made them unreachable: you could not select the thing you
+								 * needed to select in order to give it a key. An option that says "needs a
+								 * key" and then shows you where to put one is the whole flow.
+								 */}
 								{providers.data?.providers.map(p => (
-									<option key={p.id} value={p.id} disabled={!p.available}>
+									<option key={p.id} value={p.id}>
 										{p.label}
-										{p.available ? "" : " — no key"}
+										{p.available ? "" : " — needs a key"}
 									</option>
 								))}
 							</select>
