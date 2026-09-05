@@ -380,7 +380,18 @@ export const habitCues = (input: HabitInput): HabitCue[] => {
 			key: h.key,
 			subject: h.subject,
 			tier: "expiring",
-			text: `Grubs still up. He is there at 8 minutes 31 games to your 12 — go now.`,
+			/*
+			 * Every figure is from this cue's own `evidence` — "him 12 of 65, counterpart 31 of 65".
+			 * The wording is not, and it had to change: the block tells the coach to say a career
+			 * line AS WRITTEN, and claude-opus-5 obeyed exactly, reading *"He is there at 8 minutes
+			 * 31 games to your 12"* out loud at 6:42 of game 5635467422
+			 * (`data/eval/opus-briefing/ab-opus-frames.json`). Spoken, "8 minutes 31" is a clock and
+			 * the sentence means nothing. The denominator is here for the same reason: "31 games to
+			 * your 12" invites the listener to supply a total. The denominator both figures share
+			 * (65) is left out only because the cue has a six-second speech budget its own test
+			 * enforces, and the sentence went to 6.8 with it in.
+			 */
+			text: `Grubs still up. At eight minutes he is on that pit in 31 games and you in 12 — go.`,
 			because: h.evidence
 		})
 	}
