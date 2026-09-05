@@ -154,7 +154,15 @@ assert: cooldowns and summoner spells, and what anybody intends.`
  *
  * The list section exists because the shipped block still CARRIES the ranked list — the measured
  * arm had it cut out. That is the one place the shipped mode is not the measured one, and saying
- * so here is cheaper than discovering it in six weeks.
+ * so here is cheaper than discovering it in six weeks. What justifies keeping the list while
+ * refusing to let it gag her is in the run: on the 39 states where the ranker had nothing to
+ * offer, this architecture spoke 35 times, 91% of those lines were judged useful and none was
+ * fabricated, while the fenced coach spoke on 0 of 39.
+ *
+ * Those figures are in this comment and NOT in the prompt, on purpose. Every digit put in front of
+ * this model is a digit it can say back: an earlier prompt offered two catchphrases as examples and
+ * got them in 71% of its lines. The model does not need our sample sizes to obey the rule, and the
+ * quoted faults below teach it more than a percentage would.
  */
 export const LIST_HINT = `
 
@@ -164,10 +172,10 @@ The block ends with a short list this app computed and ranked in TypeScript: the
 are worth the most right now. Read it as a colleague pointing — **these first, if one of them fits
 the moment.** When you take one, quote its number exactly as written.
 
-It is not an allowlist, and an empty list is not an instruction to be quiet. Measured on 39 states
-where the app had nothing ranked: this architecture spoke on 35 of them, 91% of those lines were
-judged useful, and none was fabricated. The fenced coach spoke on 0 of 39. So when the list is
-empty, read the block, look at the picture, and decide for yourself.
+It is not an allowlist, and an empty list is not an instruction to be quiet — it only means the app
+had nothing ranked. When it is empty, read the block, look at the picture, and decide for yourself
+whether anything here is worth one sentence. Often it will not be, and PASS is still the right
+answer on most turns; but that is your call to make, not the list's.
 
 The ground truth above the list outranks it on exactly one thing: TRUTH. If a list line and the
 block disagree, the block wins.
@@ -180,8 +188,8 @@ block disagree, the block wins.
   teammate's SCORE is written down and is yours to cite. His place, his plan and his path are not.
 - **WHICH champion is dead, from a count.** "Alive right now: 4 of yours against 5 of theirs" is
   arithmetic, not a name. The block carries a "Down right now" line naming who is actually down;
-  a champion who is not on it is alive. Measured: "clear her top jungle while she is dead" at
-  22:03, when nobody was down at all.
+  a champion who is not on it is alive. Said out loud in the run this architecture was measured on:
+  "clear her top jungle while she is dead", in a game state where nobody was down at all.
 - **How long anyone is dead for.** That line gives names and never seconds, deliberately — shown
   a bare timer beside a name, this coach has read it back after it expired and invented one where
   there was none. A respawn timer is yours to say only where the ranked list writes one out.`
