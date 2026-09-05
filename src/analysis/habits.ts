@@ -321,15 +321,25 @@ const missedDeadline = (
 	return worst
 }
 
-/** Minutes and seconds, as a coach says a clock out loud. */
-const clock = (sec: number): string => {
-	const m = Math.floor(sec / 60)
-	const s = Math.round(sec % 60)
-	return s === 0 ? `${m} minutes` : `${m} minutes ${s} seconds`
-}
-
 /**
  * Every habit cue the state supports, ranked, most specific first.
+ *
+ * THE LINES ARE SHORT ON PURPOSE, and the length was measured rather than guessed. The first
+ * drafts of these three ran 12.9, 9.3 and 11.4 seconds through `speechDurationSec` — a fit over
+ * twenty-four of this coach's own lines rendered through real TTS — against a median of 3.9 for
+ * everything the app already says. A twelve-second sentence is not a coaching line, it is a
+ * monologue delivered over the fight it was about.
+ *
+ * Two things went, and the same reasoning cut both. The clock went: "it is 4 minutes 40 seconds"
+ * is built at T and lands at T plus the pipe, so it is wrong on arrival, and he can read a clock.
+ * The 11-camps-by-10-minutes clause went: it is the *reason* the habit matters and it belongs in
+ * `because`, not in a sentence someone is trying to path through. What is left is the number he
+ * cannot know and the thing to do about it.
+ *
+ * Both window cues are `expiring` for a reason beyond urgency. `live-facts.ts` withholds every
+ * expiring fact from a turn-based provider, which is several seconds behind by construction —
+ * and "you are not at 30 CS yet" spoken five seconds after he hit 32 is a fabrication, not a
+ * late line.
  *
  * Ranked here rather than in the prompt for the reason recorded all over `live-facts.ts`:
  * ordering is a suggestion to a model and the contents of a list are not. A caller may take the
@@ -350,7 +360,7 @@ export const habitCues = (input: HabitInput): HabitCue[] => {
 				key: h.key,
 				subject: h.subject,
 				tier: "expiring",
-				text: `It is ${clock(tSec)} and you are not at ${missed.cs} CS yet. In your last 66 games you started this slow 21 times and you won 6 of them — and the gap never closes, it is 11 camps by 10 minutes.`,
+				text: `Not at ${missed.cs} CS yet. You started this slow 21 times and won 6.`,
 				because: h.evidence
 			})
 		}
@@ -370,7 +380,7 @@ export const habitCues = (input: HabitInput): HabitCue[] => {
 			key: h.key,
 			subject: h.subject,
 			tier: "expiring",
-			text: `Grubs are still up. At 8 minutes across 65 recorded games he is standing on that pit 31 times and you are 12 — go now, not after your next camp.`,
+			text: `Grubs still up. He is there at 8 minutes 31 games to your 12 — go now.`,
 			because: h.evidence
 		})
 	}
@@ -385,8 +395,8 @@ export const habitCues = (input: HabitInput): HabitCue[] => {
 			subject: h.subject,
 			tier: "standing",
 			text: heraldLost
-				? `That is the herald gone. Over 66 games you have taken 21 and given up 41, while you win the dragon 154 to 137 — topside is the one you lose.`
-				: `Topside is going the way it usually does. Over 66 games you take 21 heralds to their 41, and win the dragon 154 to 137.`,
+				? `Herald gone. 21 to their 41, and you still win the dragon.`
+				: `Topside again: 21 heralds to their 41, while you win the dragon.`,
 			because: h.evidence
 		})
 	}

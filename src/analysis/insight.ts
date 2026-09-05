@@ -125,7 +125,13 @@ export type ContextNeed =
 const MARKERS: { need: ContextNeed; label: string; re: RegExp }[] = [
 	{ need: "H-series", label: "span", re: /\bsince\b/ },
 	{ need: "H-series", label: "span", re: /\b(?:has|have|had|hasn't|haven't|hadn't) been\b/ },
-	{ need: "H-series", label: "span", re: /\b(?:for|in|over|inside|within) (?:the )?(?:last |past )?\d+ (?:second|minute)s?\b/ },
+	/*
+	 * A bare "in 12 seconds" is a COUNTDOWN and the block prints his own on his own line, so `in`
+	 * only counts with an explicit backward look. "for twenty seconds" and "inside three minutes"
+	 * are elapsed and stay.
+	 */
+	{ need: "H-series", label: "span", re: /\b(?:for|over|inside|within) (?:the )?(?:last |past )?\d+ (?:second|minute)s?\b/ },
+	{ need: "H-series", label: "span", re: /\bin the (?:last|past) \d+ (?:second|minute)s?\b/ },
 	{ need: "H-series", label: "span", re: /\b\d+ (?:second|minute)s? ago\b/ },
 	{ need: "H-series", label: "span", re: /\b(?:in|over|for|inside) the (?:last|past)\b/ },
 	{ need: "H-series", label: "span", re: /\b\d+ (?:second|minute)s of\b/ },
@@ -146,8 +152,15 @@ const MARKERS: { need: ContextNeed; label: string; re: RegExp }[] = [
 	{ need: "H-event", label: "roll-call", re: /\b(?:showed up for|were on|was on|were all on|all over)\b/ },
 	{ need: "H-event", label: "count", re: /\b(?:every|both|each) time\b/ },
 	{ need: "H-event", label: "count", re: /\b(?:second|third|fourth|fifth) (?:time|drake|dragon|one|kill|death)\b/ },
-	{ need: "F-schedule", label: "schedule", re: /\b(?:spawns?|respawns?)\b/ },
-	{ need: "F-schedule", label: "schedule", re: /\b(?:been up|up since|up at|is due|comes? back|back at)\b/ },
+	/*
+	 * Third person only. "You spawn in 12 seconds" is HIS respawn timer, which the block prints on
+	 * his own line; "before it spawns" is a forecast about a camp the client never mentions. The
+	 * bare verb caught both, and on the held-out gemini-3.6-flash corpus it was 2 of 5 false
+	 * positives.
+	 */
+	{ need: "F-schedule", label: "schedule", re: /\b(?:spawns|respawns)\b/ },
+	// "up at" needs a clock after it: "set up at your starting buff" is not a schedule.
+	{ need: "F-schedule", label: "schedule", re: /\b(?:been up|up since|is due|comes? back|(?:up|back) at \d)\b/ },
 	{ need: "F-schedule", label: "schedule", re: /\bnext (?:one|drake|dragon|baron|herald|grub|grubs|objective|pit)\b/ },
 	{ need: "F-consequence", label: "forecast", re: /\bsoul\b/ },
 	{ need: "X-game", label: "habit", re: /\b(?:your|the) last \d+ games?\b/ },

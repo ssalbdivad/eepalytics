@@ -85,6 +85,19 @@ describe("beyondInstant — does the premise need anything but this snapshot", (
 	it("FAILS a bare recent event, because the block already prints one", () => {
 		ok(!one("Briar got first blood on Taliyah — go take his blue side.").beyondInstant.pass)
 	})
+
+	it("FAILS a countdown, which is his own respawn timer and is on his own line in the block", () => {
+		// Both of these came out of the held-out gemini-3.6-flash corpus as false positives, on a
+		// bare `spawn` and on a bare `in N seconds`. An elapsed span still passes.
+		ok(!one("You spawn in 12 seconds with 808 gold, so spend it and run to your raptors.").beyondInstant.pass)
+		ok(!one("Spend your 808 gold while you respawn in 12 seconds, then take your blue.").beyondInstant.pass)
+		ok(one("Briar has been back up for twenty seconds — finish the grub and get out.").beyondInstant.pass)
+	})
+
+	it("FAILS 'set up at', which is not a schedule however much it looks like one", () => {
+		ok(!one("Briar is level 1 just like you, so set up at your blue for a full route.").beyondInstant.pass)
+		ok(one("Baron has been up since twenty — go start Baron.").beyondInstant.pass)
+	})
 })
 
 /* ================================================================= axis 2: freshness */

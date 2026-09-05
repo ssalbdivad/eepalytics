@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
+import { speechDurationSec } from "./timeliness.ts"
 import {
 	CS_DEADLINE_GRACE_SEC,
 	CS_DEADLINE_SEC,
@@ -178,6 +179,27 @@ test("no cue contains an abbreviation a voice would mangle", () => {
 			assert.doesNotMatch(cue.text, /\d+\s*[sg]\b/, cue.text)
 			assert.doesNotMatch(cue.text, /%/, cue.text)
 			assert.ok(cue.text.length <= 220, `${cue.key} is too long to say: ${cue.text.length}`)
+		}
+})
+
+/**
+ * The sentence is part of the arithmetic. `speechDurationSec` is a least-squares fit over
+ * twenty-four of this coach's own lines rendered through real TTS (n = 24, R2 0.895); everything
+ * the app already says runs 2.1 to 7.5 seconds, median 3.9. The first drafts of these cues ran
+ * 12.9, 9.3 and 11.4 — long enough that the fight the line was about is over before it is.
+ */
+test("no cue takes longer to say than the coach's own longest line", () => {
+	const states: HabitInput[] = [
+		idle({ tSec: 280, cs: 20 }),
+		idle({ tSec: 400, cs: 30 }),
+		idle({ tSec: 440, cs: 40 }),
+		idle({ tSec: 900, cs: 90, heralds: { mine: 0, theirs: 1 } }),
+		idle({ tSec: 700, cs: 70, grubs: { mine: 0, theirs: 3 } })
+	]
+	for (const s of states)
+		for (const cue of habitCues(s)) {
+			const sec = speechDurationSec(cue.text)
+			assert.ok(sec <= 6, `${cue.key} takes ${sec.toFixed(1)} seconds to say: ${cue.text}`)
 		}
 })
 
