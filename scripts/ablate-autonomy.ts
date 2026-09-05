@@ -73,6 +73,8 @@
  *       --late-from N         game clock the LATE set starts at, default "after the last frame"
  *       --late-grid           snap LATE turns to the spacing instead of walking forward from the
  *                             last one taken — required for anything measuring CADENCE, see below
+ *       --late-frames         join the real journal frames onto the LATE grid where they exist,
+ *                             so one uniform grid can cover the whole game with the pictures on it
  *       --out <path>          default data/eval/ablation-<stamp>.json
  *
  * and one mode that spends nothing, replaying a stored run of this script instead of calling a
@@ -163,6 +165,17 @@ const RUN_PAIRED = !flag("no-paired")
  * NEAREST each mark instead, which lands within 3 seconds of a true twenty-second turn.
  */
 const LATE_GRID = flag("late-grid")
+/**
+ * Attach the real frames to the LATE grid instead of running it text-only.
+ *
+ * The default LATE set is text-only because it exists to reach the part of the game the frames do
+ * not cover. A run measuring CADENCE wants one uniform grid over the WHOLE game, and it wants the
+ * frames on it where they exist — the shipped coach is looking at a picture for the first seven
+ * minutes. This joins each grid mark's sample to a journal frame under the same
+ * `FRAME_SKEW_GATE_SEC` the PAIRED set uses and leaves the rest text-only, which is exactly the
+ * mixture a real game hands the socket.
+ */
+const LATE_FRAMES = flag("late-frames")
 
 /* ================================================================== the states */
 
@@ -319,6 +332,18 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 		roster: b.roster
 	})
 
+	/** The nearest journal frame to a built state, under the same skew gate the PAIRED set uses. */
+	const frameFor = (b: Built): { path: string; skew: number } | null => {
+		let best: { path: string; skew: number } | null = null
+		for (const f of frames) {
+			const skew = Math.abs(f.atMs - b.atMs) / 1000
+			if (skew > FRAME_SKEW_GATE_SEC) continue
+			if (!existsSync(f.path)) continue
+			if (!best || skew < best.skew) best = { path: f.path, skew: Math.round(skew * 100) / 100 }
+		}
+		return best
+	}
+
 	const paired: AblationState[] = []
 	const usedLines = new Set<number>()
 	let dropped = 0
@@ -361,14 +386,20 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 			}
 			if (!best || bestSkew > LATE_SPACING_SEC / 2) continue
 			taken.add(best.line)
-			late.push(make(best, `late-${String(Math.round(best.tSec)).padStart(4, "0")}`, null, null))
+			const gridFrame = LATE_FRAMES ? frameFor(best) : null
+			late.push(
+				make(best, `late-${String(Math.round(best.tSec)).padStart(4, "0")}`, gridFrame?.path ?? null, gridFrame?.skew ?? null)
+			)
 		}
 	} else {
 		let lastAt = -Infinity
 		for (const b of eligible) {
 			if (b.tSec - lastAt < LATE_SPACING_SEC) continue
 			lastAt = b.tSec
-			late.push(make(b, `late-${String(Math.round(b.tSec)).padStart(4, "0")}`, null, null))
+			const walkFrame = LATE_FRAMES ? frameFor(b) : null
+			late.push(
+				make(b, `late-${String(Math.round(b.tSec)).padStart(4, "0")}`, walkFrame?.path ?? null, walkFrame?.skew ?? null)
+			)
 		}
 	}
 
@@ -979,11 +1010,11 @@ const main = async (): Promise<void> => {
 			)
 		}
 		if (lateStates.length > 0) {
-			const cell = await runCell("late", arm, false, lateStates, vocab.names)
+			const cell = await runCell("late", arm, LATE_FRAMES, lateStates, vocab.names)
 			cells.push(cell)
 			const st = statsFor(cell, span(lateStates))
 			console.log(
-				`late   ${arm.id.padEnd(14)} no-frame    spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}`
+				`late   ${arm.id.padEnd(14)} ${LATE_FRAMES ? "frames  " : "no-frame"}    spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}`
 			)
 		}
 	}
@@ -1151,6 +1182,8 @@ const main = async (): Promise<void> => {
 				id: s.id,
 				tSec: s.tSec,
 				clock: s.clock,
+				framePath: s.framePath,
+				frameSkewSec: s.frameSkewSec,
 				rankedFacts: s.rankedFacts,
 				roster: s.roster,
 				block: s.block,
