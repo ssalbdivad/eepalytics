@@ -64,6 +64,7 @@ import { matchupPromptSection } from "../../shared/matchup-prompt.ts"
 import type { EndedGame, JustEnded } from "../../shared/postgame.ts"
 import { LiveResponse, MatchupResponse } from "../../shared/schema/api.ts"
 import { isCoachingPhase } from "../../shared/schema/lcu.ts"
+import type { GameflowSession } from "../../shared/schema/lcu.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { liveCoachSystemPrompt, renderBlockForMode } from "../../shared/live-coach-mode.ts"
@@ -147,14 +148,37 @@ const lockedChampion = async (): Promise<string> => {
 	const inGame = data ? findMe(data) : null
 	if (inGame?.championName) return inGame.championName
 	const session = await handle.client.gameflowSession().catch(() => null)
-	if (!session || !isCoachingPhase(session.phase)) return ""
+	if (!session) return ""
 	// Hourly-cached and a no-op in the common case; without it every id resolves to "".
 	await refreshChampionNames()
+	return championFromSession(session, championName)
+}
+
+/**
+ * The champion he has locked, read off a gameflow session. Pure, so it can be tested.
+ *
+ * Split out from `lockedChampion` because the interesting half is the JOIN — the client publishes
+ * the roster and the champion selections separately, and during the draft they disagree in a
+ * specific way (the roster rows lag a swap). `buildMatchupBrief` already resolves that, and
+ * resolving it a second time here is how the two would drift.
+ *
+ * `""` for every "not yet": no roster published, no lock, an unknown id, a phase that is not a
+ * game. Never a guess — `championName` returns `""` for an id it does not know rather than
+ * inventing one, and a wrong champion in the prompt is worse than none, because the clauses would
+ * then be advice about a kit he is not playing.
+ */
+export const championFromSession = (
+	session: GameflowSession,
+	nameOf: (championId: number) => string
+): string => {
+	// The same list `/live/phase` arms on; a lobby has no champion and a post-game screen's is over.
+	if (!isCoachingPhase(session.phase)) return ""
 	const { brief } = buildMatchupBrief({
 		session,
 		puuid: USER_PUUID,
-		championName,
-		spellName: summonerSpellName
+		championName: nameOf,
+		// Spells are not read here; the brief needs a lookup, and an empty name is its own "unknown".
+		spellName: () => ""
 	})
 	return brief?.you.champion ?? ""
 }

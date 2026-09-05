@@ -21,7 +21,6 @@
 
 import { readFileSync } from "node:fs"
 import { DATA_DIR, SERVER_PORT } from "../src/shared/constants.ts"
-import { LIVE_COACH_SYSTEM_PROMPT } from "../src/shared/live-prompt.ts"
 
 const BASE = `http://127.0.0.1:${SERVER_PORT}`
 const arg = (name: string, fallback: string): string => {
@@ -63,10 +62,20 @@ const main = async () => {
 
 	step(3, "ephemeral token minted")
 	const tok = (await (await fetch(`${BASE}/api/live/gemini/token`, { method: "POST" })).json()) as
-		| { ok: true; token: string; model: string; wsUrl: string }
+		| { ok: true; token: string; model: string; wsUrl: string; systemPrompt?: string; champion?: string }
 		| { ok: false; error: string }
 	if (!tok.ok) fail(tok.error)
-	ok(tok.model.replace("models/", ""))
+	/*
+	 * The PROMPT rides with the token, and this walks the shipped path, so it must be the prompt
+	 * the app would connect with. Falling back silently to the fenced constant here would make the
+	 * one check that exercises the real socket the one check that could not see the coach mode.
+	 */
+	if (!tok.systemPrompt) fail("the daemon minted a token with no system prompt — it is too old")
+	ok(
+		`${tok.model.replace("models/", "")}, prompt ${tok.systemPrompt.length} chars${
+			tok.champion ? ` for ${tok.champion}` : " (no champion locked yet)"
+		}`
+	)
 
 	step(4, "ground truth from the League client")
 	const truth = (await (await fetch(`${BASE}/api/live/ground-truth`)).json()) as {
@@ -113,7 +122,7 @@ Enemy team: Graves lv12 6/3/3 DEAD (22s)
 							model: tok.model,
 							generationConfig: { responseModalities: ["AUDIO"] },
 							outputAudioTranscription: {},
-							systemInstruction: { parts: [{ text: LIVE_COACH_SYSTEM_PROMPT }] }
+							systemInstruction: { parts: [{ text: tok.systemPrompt! }] }
 						}
 					})
 				)
