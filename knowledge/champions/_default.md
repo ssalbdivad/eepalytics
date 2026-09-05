@@ -6,7 +6,7 @@ No champion-specific notes are on file for this champion, so coach the *role* an
 only. Do not improvise champion knowledge to fill the gap — say nothing about their kit, their
 spikes or their clear rather than guessing.
 
-The role fundamentals still apply in full: camps per minute, whether the clear kept moving,
+The role fundamentals still apply in full: CS per minute, whether the clear kept moving,
 where they were when objectives went down, and where they died.
 
 ## Live coaching

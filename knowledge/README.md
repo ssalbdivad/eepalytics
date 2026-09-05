@@ -85,6 +85,26 @@ The format is `<fact kind>: <clause>`, one per line, and the rules are hard:
 - **A clause that would read identically on another champion belongs in `_default.md`.** That is
   the whole test for whether champion knowledge is earning its place; `_default.md` carries the
   role version of every kind.
+- **Every clause is pinned in `src/knowledge/champion-claims.test.ts`.** Add one, reword one or
+  move one and that test goes red until the mechanic it leans on is written down there, with
+  where that mechanic was checked. See below.
+
+## What the digit fence does NOT do
+
+The parser refuses a clause with a number in it, which kills every benchmark, price and cooldown
+at load time. It validates the FORM of a clause and never its SUBJECT — a digit-free sentence can
+still be flatly false about the champion.
+
+It has already been walked through. `belveth.md` shipped `death: your stacks die with you`. Death
+in Lavender stacks are permanent and survive death, and the same file said so two paragraphs
+earlier. Nothing caught it, because nothing in the repo knew what the clause depended on.
+
+So `src/knowledge/champion-claims.test.ts` is a **bet register**: every shipped clause cites one
+or more entries in a `FACTS` table, and every fact carries the mechanic in one sentence plus where
+it was checked (a source from `SOURCES.md`, or an explicit "community consensus" that must also
+say `judgment` in its own id). It cannot verify truth — no test can, the game is patched and the
+test is a string. What it can do is make the bet explicit: when a patch changes a champion, that
+table is where you find out which clauses just became false.
 
 ## Staleness
 

@@ -150,11 +150,11 @@ interface AblationState {
  * A dangling reference is not neutral: it tells the model something was withheld. So that clause
  * alone is repaired, and the substitution is recorded in the run output.
  */
-const LIST_HEADINGS = ["### What he is NOT looking at", "### Nothing he is missing right now"]
-const DANGLING = "and take every timer from the list below rather than\ninferring one"
-const REPAIRED = "and never infer a timer you were not given"
+export const LIST_HEADINGS = ["### What he is NOT looking at", "### Nothing he is missing right now"]
+export const DANGLING = "and take every timer from the list below rather than\ninferring one"
+export const REPAIRED = "and never infer a timer you were not given"
 
-const stripRankedList = (block: string): string => {
+export const stripRankedList = (block: string): string => {
 	const tail = block.indexOf("**The ten champions above")
 	if (tail < 0) return block
 	let head = -1
@@ -166,7 +166,7 @@ const stripRankedList = (block: string): string => {
 	return out.replace(DANGLING, REPAIRED)
 }
 
-const countRankedFacts = (block: string): number =>
+export const countRankedFacts = (block: string): number =>
 	block.split("\n").filter(l => l.startsWith("- ")).length
 
 /**
@@ -293,7 +293,7 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
  * digit in prose is exactly the fabrication source the parser exists to refuse. So they get the
  * PARSED clauses, which are digit-free by construction. Same knowledge, unfenced delivery.
  */
-const championKnowledge = (champion: string): string => {
+export const championKnowledge = (champion: string): string => {
 	const path = `knowledge/champions/${champion.toLowerCase().replace(/[^a-z]/g, "")}.md`
 	if (!existsSync(path)) return ""
 	const clauses = parseChampionClauses(readFileSync(path, "utf8"))
@@ -396,7 +396,7 @@ looking at, and it is why you are given it.
 
 Be the coach he would pay for.`
 
-interface Arm {
+export interface Arm {
 	id: string
 	label: string
 	/** Does this arm see the fence's ranked list? */
@@ -405,7 +405,7 @@ interface Arm {
 	why: string
 }
 
-const ARMS: Arm[] = [
+export const ARMS: Arm[] = [
 	{
 		id: "fenced",
 		label: "FENCED — exactly what ships",
@@ -444,7 +444,7 @@ const ARMS: Arm[] = [
  * Crude on purpose. It is here to show whether an arm's subjects move when the picture is removed,
  * not to grade a line.
  */
-const SUBJECTS: { id: string; re: RegExp }[] = [
+export const SUBJECTS: { id: string; re: RegExp }[] = [
 	{ id: "respawn-window", re: /\b(is down|down for|respawn|dead for|seconds? (?:until|before) (?:he|she|they))\b/i },
 	{ id: "objective", re: /\b(drake|dragon|baron|nashor|herald|grub|scuttle|tower|turret|inhibitor|plate)\b/i },
 	{ id: "counterpart-race", re: /\b(CS (?:up|down|ahead|behind)|up on|ahead of|behind on|out ?farm)/i },
@@ -455,7 +455,7 @@ const SUBJECTS: { id: string; re: RegExp }[] = [
 	{ id: "praise", re: /\b(nice|great|lovely|beautiful|well done|love (?:it|that)|proud|there we go|that'?s it)\b/i }
 ]
 
-const subjectOf = (line: string): string => SUBJECTS.find(s => s.re.test(line))?.id ?? "other"
+export const subjectOf = (line: string): string => SUBJECTS.find(s => s.re.test(line))?.id ?? "other"
 
 /**
  * Does the line reference something ONLY the picture could show?
@@ -466,7 +466,7 @@ const subjectOf = (line: string): string => SUBJECTS.find(s => s.re.test(line))?
  * running every arm blind as well: an arm that makes spatial claims at the same rate WITHOUT the
  * picture is improvising, whatever it claims.
  */
-const PICTURE_ONLY = [
+export const PICTURE_ONLY = [
 	/\bminimap\b/i,
 	/\bon (?:your|the) screen\b/i,
 	/\b(?:top|bot|mid)(?:\s?lane|side)?\b(?!\s*(?:cs|gold))/i,
@@ -487,7 +487,7 @@ const PICTURE_ONLY = [
 	/\bback(?:ing)? (?:now|home)\b/i
 ]
 
-const picturePhrases = (line: string): string[] => {
+export const picturePhrases = (line: string): string[] => {
 	const out: string[] = []
 	for (const re of PICTURE_ONLY) {
 		const m = line.match(re)
@@ -498,18 +498,30 @@ const picturePhrases = (line: string): string[] => {
 
 /* =================================================================== transport */
 
-const provider = providerById("gemini-http")
-if (!provider) throw new Error("gemini-http provider missing")
-const KEY = providerKey(provider)
-if (!KEY) {
-	console.error("No key in data/gemini.key. This ablation cannot run without it, and it is the")
-	console.error("ONLY key on this machine — anthropic.key, openai.key, kimi.key and glm.key are")
-	console.error("all absent, which is why this varies the architecture and not the model.")
-	process.exit(1)
-}
+/*
+ * The SDK handle and the `generateText` import are opened by `main`, never at module load.
+ *
+ * Everything above this line is pure, and `src/analysis/ablate-autonomy.test.ts` imports this file
+ * to exercise it. A module that mints a provider handle on import cannot be imported by a test
+ * without a key, and a helper that cannot be tested is a helper whose regression nobody notices.
+ */
+type GenerateText = typeof import("ai").generateText
+let generateText: GenerateText | null = null
+let handle: Awaited<ReturnType<typeof modelHandleFor>> | null = null
 
-const { generateText } = await import("ai")
-const handle = await modelHandleFor(provider, KEY, MODEL)
+const openTransport = async (): Promise<void> => {
+	const provider = providerById("gemini-http")
+	if (!provider) throw new Error("gemini-http provider missing")
+	const key = providerKey(provider)
+	if (!key) {
+		console.error("No key in data/gemini.key. This ablation cannot run without it, and it is the")
+		console.error("ONLY key on this machine — anthropic.key, openai.key, kimi.key and glm.key are")
+		console.error("all absent, which is why this varies the architecture and not the model.")
+		process.exit(1)
+	}
+	generateText = (await import("ai")).generateText
+	handle = await modelHandleFor(provider, key, MODEL)
+}
 
 const frameCache = new Map<string, string>()
 const frameBase64 = (path: string): string => {
@@ -540,8 +552,8 @@ interface TurnResult {
 const runTurn = async (system: string, block: string, frame: string | null): Promise<TurnResult> => {
 	const started = Date.now()
 	try {
-		const result = await generateText({
-			model: handle,
+		const result = await generateText!({
+			model: handle!,
 			system,
 			messages: [
 				{
@@ -582,7 +594,7 @@ const championVocabulary = (): { names: string[]; source: string } => {
 	return { names: [], source: "" }
 }
 
-interface CellTurn {
+export interface CellTurn {
 	stateId: string
 	tSec: number
 	clock: string
@@ -605,7 +617,7 @@ interface CellTurn {
 	useful: boolean
 }
 
-interface Cell {
+export interface Cell {
 	set: string
 	arm: string
 	withFrame: boolean
@@ -634,7 +646,7 @@ const pool = async <T, R>(items: T[], n: number, fn: (item: T, i: number) => Pro
  * in a different game, or five minutes ago in this one?"). It is a floor, not a verdict — a line
  * can be specific and still worthless.
  */
-const isSpecific = (line: string, roster: readonly string[], me: string): boolean => {
+export const isSpecific = (line: string, roster: readonly string[], me: string): boolean => {
 	if (/\d/.test(line)) return true
 	const lower = line.toLowerCase()
 	return roster.some(c => c !== me && lower.includes(c.toLowerCase()))
@@ -702,7 +714,7 @@ const runCell = async (
 
 const pct = (i: Interval): string => `${(i.p * 100).toFixed(0)}% [${(i.lo * 100).toFixed(0)}–${(i.hi * 100).toFixed(0)}]`
 
-interface CellStats {
+export interface CellStats {
 	set: string
 	arm: string
 	withFrame: boolean
@@ -730,18 +742,18 @@ interface CellStats {
 	subjects: Record<string, number>
 }
 
-const median = (xs: number[]): number => {
+export const median = (xs: number[]): number => {
 	if (xs.length === 0) return 0
 	const s = [...xs].sort((a, b) => a - b)
 	return s[Math.floor(s.length / 2)]!
 }
-const quantile = (xs: number[], q: number): number => {
+export const quantile = (xs: number[], q: number): number => {
 	if (xs.length === 0) return 0
 	const s = [...xs].sort((a, b) => a - b)
 	return s[Math.min(s.length - 1, Math.floor(q * s.length))]!
 }
 
-const statsFor = (cell: Cell, minutes: number): CellStats => {
+export const statsFor = (cell: Cell, minutes: number): CellStats => {
 	const ok = cell.turns.filter(t => t.ok)
 	const spoken = ok.filter(t => !t.silent)
 	const n = spoken.length
@@ -778,269 +790,283 @@ const statsFor = (cell: Cell, minutes: number): CellStats => {
 
 /* ======================================================================== run */
 
-const { paired, late, note } = buildStates()
-const vocab = championVocabulary()
-const armIds = arg("arms", ARMS.map(a => a.id).join(",")).split(",").map(s => s.trim()).filter(s => s !== "")
-const arms = ARMS.filter(a => armIds.includes(a.id))
-if (arms.length === 0) throw new Error(`no arms matched ${armIds.join(",")}`)
-
-const pairedStates = LIMIT > 0 ? paired.slice(0, LIMIT) : paired
-const lateStates = RUN_LATE ? (LIMIT > 0 ? late.slice(0, LIMIT) : late) : []
-
-const span = (s: AblationState[]): number =>
-	s.length === 0 ? 0 : (s[s.length - 1]!.tSec - s[0]!.tSec) / 60
-
-console.log(`ablate-autonomy — architecture held against itself, model held constant`)
-console.log(`  model        ${MODEL} (gemini-http, the only key on this machine)`)
-console.log(`  temperature  ${TEMPERATURE}`)
-console.log(`  samples      data/live-samples/${SAMPLE_FILE}.ndjson, game ${GAME_ID}`)
-console.log(`  ${note}`)
-console.log(`  PAIRED       ${pairedStates.length} states, ${pairedStates[0]?.clock ?? "-"}–${pairedStates[pairedStates.length - 1]?.clock ?? "-"}, every arm twice`)
-console.log(`  LATE         ${lateStates.length} states, ${lateStates[0]?.clock ?? "-"}–${lateStates[lateStates.length - 1]?.clock ?? "-"}, text only`)
-console.log(`  arms         ${arms.map(a => a.id).join(", ")}`)
-const totalCalls = pairedStates.length * arms.length * 2 + lateStates.length * arms.length
-console.log(`  calls        ${totalCalls}`)
-console.log(`  ranked facts ${pairedStates.filter(s => s.rankedFacts > 0).length}/${pairedStates.length} PAIRED, ${lateStates.filter(s => s.rankedFacts > 0).length}/${lateStates.length} LATE states carry one`)
-console.log("")
-
-const cells: Cell[] = []
-for (const arm of arms) {
-	for (const withFrame of [true, false]) {
-		if (pairedStates.length === 0) continue
-		const t0 = Date.now()
-		const cell = await runCell("paired", arm, withFrame, pairedStates, vocab.names)
-		cells.push(cell)
-		const st = statsFor(cell, span(pairedStates))
-		console.log(
-			`paired ${arm.id.padEnd(14)} ${withFrame ? "with-frame" : "no-frame  "}  spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}  ${((Date.now() - t0) / 1000).toFixed(0)}s`
-		)
-	}
-	if (lateStates.length > 0) {
-		const cell = await runCell("late", arm, false, lateStates, vocab.names)
-		cells.push(cell)
-		const st = statsFor(cell, span(lateStates))
-		console.log(
-			`late   ${arm.id.padEnd(14)} no-frame    spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}`
-		)
-	}
-}
-
-/* ------------------------------------------------------------ frame sensitivity */
-
 /**
- * The test the whole run exists for.
+ * Everything with a side effect lives here, so importing this file costs nothing.
  *
- * An arm whose speak/PASS decision and whose subject matter do not move when the picture is taken
- * away is not using the picture, whatever its prompt says it may do. The fenced baseline on the
- * real socket was 13 of 14 identical; anything near that is an arm coaching from text.
+ * `import.meta.main` is false when a test imports it, which is what lets
+ * `src/analysis/ablate-autonomy.test.ts` exercise the block surgery, the arm prompts and the
+ * scoring helpers without a key, a bill, or a game.
  */
-interface FrameSensitivity {
-	arm: string
-	states: number
-	/** Turns where with-frame and no-frame made the same speak-or-PASS call. */
-	decisionAgreement: Interval
-	/** Of turns where BOTH spoke, how often the two lines were textually identical. */
-	bothSpoke: number
-	identicalLines: Interval
-	pictureRefWithFrame: Interval
-	pictureRefNoFrame: Interval
-	pictureRefSeparated: boolean
-	spokeWithFrame: Interval
-	spokeNoFrame: Interval
-}
+const main = async (): Promise<void> => {
+	await openTransport()
 
-const norm = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, "")
+	const { paired, late, note } = buildStates()
+	const vocab = championVocabulary()
+	const armIds = arg("arms", ARMS.map(a => a.id).join(",")).split(",").map(s => s.trim()).filter(s => s !== "")
+	const arms = ARMS.filter(a => armIds.includes(a.id))
+	if (arms.length === 0) throw new Error(`no arms matched ${armIds.join(",")}`)
 
-const sensitivity: FrameSensitivity[] = []
-for (const arm of arms) {
-	const withC = cells.find(c => c.set === "paired" && c.arm === arm.id && c.withFrame)
-	const noC = cells.find(c => c.set === "paired" && c.arm === arm.id && !c.withFrame)
-	if (!withC || !noC) continue
-	let agree = 0
-	let both = 0
-	let identical = 0
-	let n = 0
-	for (let i = 0; i < withC.turns.length; i++) {
-		const a = withC.turns[i]!
-		const b = noC.turns[i]!
-		if (!a.ok || !b.ok) continue
-		n++
-		if (a.silent === b.silent) agree++
-		if (!a.silent && !b.silent) {
-			both++
-			if (norm(a.line) === norm(b.line)) identical++
+	const pairedStates = LIMIT > 0 ? paired.slice(0, LIMIT) : paired
+	const lateStates = RUN_LATE ? (LIMIT > 0 ? late.slice(0, LIMIT) : late) : []
+
+	const span = (s: AblationState[]): number =>
+		s.length === 0 ? 0 : (s[s.length - 1]!.tSec - s[0]!.tSec) / 60
+
+	console.log(`ablate-autonomy — architecture held against itself, model held constant`)
+	console.log(`  model        ${MODEL} (gemini-http, the only key on this machine)`)
+	console.log(`  temperature  ${TEMPERATURE}`)
+	console.log(`  samples      data/live-samples/${SAMPLE_FILE}.ndjson, game ${GAME_ID}`)
+	console.log(`  ${note}`)
+	console.log(`  PAIRED       ${pairedStates.length} states, ${pairedStates[0]?.clock ?? "-"}–${pairedStates[pairedStates.length - 1]?.clock ?? "-"}, every arm twice`)
+	console.log(`  LATE         ${lateStates.length} states, ${lateStates[0]?.clock ?? "-"}–${lateStates[lateStates.length - 1]?.clock ?? "-"}, text only`)
+	console.log(`  arms         ${arms.map(a => a.id).join(", ")}`)
+	const totalCalls = pairedStates.length * arms.length * 2 + lateStates.length * arms.length
+	console.log(`  calls        ${totalCalls}`)
+	console.log(`  ranked facts ${pairedStates.filter(s => s.rankedFacts > 0).length}/${pairedStates.length} PAIRED, ${lateStates.filter(s => s.rankedFacts > 0).length}/${lateStates.length} LATE states carry one`)
+	console.log("")
+
+	const cells: Cell[] = []
+	for (const arm of arms) {
+		for (const withFrame of [true, false]) {
+			if (pairedStates.length === 0) continue
+			const t0 = Date.now()
+			const cell = await runCell("paired", arm, withFrame, pairedStates, vocab.names)
+			cells.push(cell)
+			const st = statsFor(cell, span(pairedStates))
+			console.log(
+				`paired ${arm.id.padEnd(14)} ${withFrame ? "with-frame" : "no-frame  "}  spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}  ${((Date.now() - t0) / 1000).toFixed(0)}s`
+			)
+		}
+		if (lateStates.length > 0) {
+			const cell = await runCell("late", arm, false, lateStates, vocab.names)
+			cells.push(cell)
+			const st = statsFor(cell, span(lateStates))
+			console.log(
+				`late   ${arm.id.padEnd(14)} no-frame    spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}`
+			)
 		}
 	}
-	const wf = statsFor(withC, span(pairedStates))
-	const nf = statsFor(noC, span(pairedStates))
-	sensitivity.push({
-		arm: arm.id,
-		states: n,
-		decisionAgreement: wilson(agree, n),
-		bothSpoke: both,
-		identicalLines: wilson(identical, both),
-		pictureRefWithFrame: wf.pictureRefLines,
-		pictureRefNoFrame: nf.pictureRefLines,
-		pictureRefSeparated: separated(wf.pictureRefLines, nf.pictureRefLines),
-		spokeWithFrame: wf.spokeRate,
-		spokeNoFrame: nf.spokeRate
-	})
-}
 
-/* ------------------------------------------------------------------- the trade */
+	/* ------------------------------------------------------------ frame sensitivity */
 
-/**
- * What each arm says in the states where the fenced coach is structurally silent.
- *
- * This is the cost of the fence stated directly: a state whose ranked list is empty is a state the
- * shipped coach CANNOT speak in, however much is on the screen.
- */
-interface Rescue {
-	arm: string
-	set: string
-	emptyListStates: number
-	spokeThere: Interval
-	fabricatedThere: Interval
-	usefulThere: Interval
-	examples: { clock: string; line: string; faults: CoachFault[] }[]
-}
+	/**
+	 * The test the whole run exists for.
+	 *
+	 * An arm whose speak/PASS decision and whose subject matter do not move when the picture is taken
+	 * away is not using the picture, whatever its prompt says it may do. The fenced baseline on the
+	 * real socket was 13 of 14 identical; anything near that is an arm coaching from text.
+	 */
+	interface FrameSensitivity {
+		arm: string
+		states: number
+		/** Turns where with-frame and no-frame made the same speak-or-PASS call. */
+		decisionAgreement: Interval
+		/** Of turns where BOTH spoke, how often the two lines were textually identical. */
+		bothSpoke: number
+		identicalLines: Interval
+		pictureRefWithFrame: Interval
+		pictureRefNoFrame: Interval
+		pictureRefSeparated: boolean
+		spokeWithFrame: Interval
+		spokeNoFrame: Interval
+	}
 
-const rescues: Rescue[] = []
-for (const cell of cells) {
-	if (cell.withFrame === false && cell.set === "paired") continue
-	const empty = cell.turns.filter(t => t.ok && t.rankedFacts === 0)
-	const spoken = empty.filter(t => !t.silent)
-	rescues.push({
-		arm: cell.arm,
-		set: cell.set,
-		emptyListStates: empty.length,
-		spokeThere: wilson(spoken.length, empty.length),
-		fabricatedThere: wilson(spoken.filter(t => t.fabricated).length, spoken.length),
-		usefulThere: wilson(spoken.filter(t => t.useful).length, spoken.length),
-		examples: spoken.slice(0, 8).map(t => ({ clock: t.clock, line: t.line, faults: t.faults }))
-	})
-}
+	const norm = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, "")
 
-/* --------------------------------------------------------------------- output */
+	const sensitivity: FrameSensitivity[] = []
+	for (const arm of arms) {
+		const withC = cells.find(c => c.set === "paired" && c.arm === arm.id && c.withFrame)
+		const noC = cells.find(c => c.set === "paired" && c.arm === arm.id && !c.withFrame)
+		if (!withC || !noC) continue
+		let agree = 0
+		let both = 0
+		let identical = 0
+		let n = 0
+		for (let i = 0; i < withC.turns.length; i++) {
+			const a = withC.turns[i]!
+			const b = noC.turns[i]!
+			if (!a.ok || !b.ok) continue
+			n++
+			if (a.silent === b.silent) agree++
+			if (!a.silent && !b.silent) {
+				both++
+				if (norm(a.line) === norm(b.line)) identical++
+			}
+		}
+		const wf = statsFor(withC, span(pairedStates))
+		const nf = statsFor(noC, span(pairedStates))
+		sensitivity.push({
+			arm: arm.id,
+			states: n,
+			decisionAgreement: wilson(agree, n),
+			bothSpoke: both,
+			identicalLines: wilson(identical, both),
+			pictureRefWithFrame: wf.pictureRefLines,
+			pictureRefNoFrame: nf.pictureRefLines,
+			pictureRefSeparated: separated(wf.pictureRefLines, nf.pictureRefLines),
+			spokeWithFrame: wf.spokeRate,
+			spokeNoFrame: nf.spokeRate
+		})
+	}
 
-const allStats = cells.map(c => statsFor(c, span(c.set === "paired" ? pairedStates : lateStates)))
+	/* ------------------------------------------------------------------- the trade */
 
-const sha = (s: string): string => createHash("sha256").update(s).digest("hex").slice(0, 16)
+	/**
+	 * What each arm says in the states where the fenced coach is structurally silent.
+	 *
+	 * This is the cost of the fence stated directly: a state whose ranked list is empty is a state the
+	 * shipped coach CANNOT speak in, however much is on the screen.
+	 */
+	interface Rescue {
+		arm: string
+		set: string
+		emptyListStates: number
+		spokeThere: Interval
+		fabricatedThere: Interval
+		usefulThere: Interval
+		examples: { clock: string; line: string; faults: CoachFault[] }[]
+	}
 
-const run = {
-	kind: "ablate-autonomy",
-	built: Date.now(),
-	stamp,
-	question:
-		"The fence is measured safe. What does it COST? Model held constant, architecture varied: how much usefulness does speak-only-from-the-ranked-list give up, and is there a middle setting that keeps fabrication at zero while letting the picture matter?",
-	limits: [
-		"ONE MODEL. data/gemini.key is the only key on this machine — anthropic.key, openai.key, kimi.key and glm.key are all absent, and the `claude -p` CLI path cannot attach an image. The cross-MODEL comparison could not run. This varies only the ARCHITECTURE.",
-		"`analysis/coach-score.ts` validates FORM, not TRUTH. It catches a champion who is not in the game, a figure that is not in the block, a figure attached to the wrong player, and asserted motion or intent. It CANNOT catch a false statement about League that contains no digit and no roster name — a wrong claim about what an item does, a wrong claim about a champion's kit, a wrong claim about what a jungler should do at this minute. A false champion claim passed straight through the digit fence earlier tonight. The FREE arm is exactly where that failure would live, so its fabrication rate is a FLOOR and not a measurement.",
-		"Frames exist only for 0:02–6:43 of this game. There are no replays left for it, so the PAIRED set cannot be widened, and every frame-sensitivity number here is an EARLY-GAME number.",
-		"These are turn-based HTTPS calls with no conversation thread, so no arm can obey the prompt's 'do not say the same thing twice' rules. All four arms are equally memoryless, so the comparison is fair, but the repetition figures are worse than the shipped socket's would be.",
-		"A few frames pair with the same sample, so a handful of PAIRED states carry the same block with a picture taken about five seconds apart. Treat those as one state seen twice.",
-		"`useful` is a mechanical composite (spoke AND no fabrication fault AND carries a figure or a roster name AND names an action AND is not a screen readback). It is a floor on quality, never a verdict — read the lines."
-	],
-	config: {
-		model: MODEL,
-		provider: "gemini-http",
-		temperature: TEMPERATURE,
-		maxOutputTokens: 2000,
-		concurrency: CONCURRENCY,
-		samples: `data/live-samples/${SAMPLE_FILE}.ndjson`,
-		gameId: GAME_ID,
-		frameSkewGateSec: FRAME_SKEW_GATE_SEC,
-		lateSpacingSec: LATE_SPACING_SEC,
-		championVocabulary: { count: vocab.names.length, source: vocab.source },
-		stateNote: note
-	},
-	blockSurgery: {
-		what: "Arms 3 and 4 see the block with the fence's own output removed — the 'What he is NOT looking at' list, or the explicit empty-case paragraph that stands in for it. Every other byte of ground truth is identical.",
-		removedFrom: LIST_HEADINGS,
-		removedTo: "**The ten champions above",
-		repaired: { from: DANGLING, to: REPAIRED },
-		why: "A dangling pointer at a list that is no longer there is not neutral: it tells the model something was withheld."
-	},
-	arms: arms.map(a => ({
-		id: a.id,
-		label: a.label,
-		seesRankedList: a.seesList,
-		why: a.why,
-		systemPromptSha: sha(a.system("Lillia")),
-		systemPromptChars: a.system("Lillia").length,
-		systemPrompt: a.system("Lillia")
-	})),
-	states: {
-		paired: pairedStates.map(s => ({
-			id: s.id,
-			tSec: s.tSec,
-			clock: s.clock,
-			framePath: s.framePath,
-			frameSkewSec: s.frameSkewSec,
-			rankedFacts: s.rankedFacts,
-			roster: s.roster,
-			block: s.block,
-			blockNoList: s.blockNoList
+	const rescues: Rescue[] = []
+	for (const cell of cells) {
+		if (cell.withFrame === false && cell.set === "paired") continue
+		const empty = cell.turns.filter(t => t.ok && t.rankedFacts === 0)
+		const spoken = empty.filter(t => !t.silent)
+		rescues.push({
+			arm: cell.arm,
+			set: cell.set,
+			emptyListStates: empty.length,
+			spokeThere: wilson(spoken.length, empty.length),
+			fabricatedThere: wilson(spoken.filter(t => t.fabricated).length, spoken.length),
+			usefulThere: wilson(spoken.filter(t => t.useful).length, spoken.length),
+			examples: spoken.slice(0, 8).map(t => ({ clock: t.clock, line: t.line, faults: t.faults }))
+		})
+	}
+
+	/* --------------------------------------------------------------------- output */
+
+	const allStats = cells.map(c => statsFor(c, span(c.set === "paired" ? pairedStates : lateStates)))
+
+	const sha = (s: string): string => createHash("sha256").update(s).digest("hex").slice(0, 16)
+
+	const run = {
+		kind: "ablate-autonomy",
+		built: Date.now(),
+		stamp,
+		question:
+			"The fence is measured safe. What does it COST? Model held constant, architecture varied: how much usefulness does speak-only-from-the-ranked-list give up, and is there a middle setting that keeps fabrication at zero while letting the picture matter?",
+		limits: [
+			"ONE MODEL. data/gemini.key is the only key on this machine — anthropic.key, openai.key, kimi.key and glm.key are all absent, and the `claude -p` CLI path cannot attach an image. The cross-MODEL comparison could not run. This varies only the ARCHITECTURE.",
+			"`analysis/coach-score.ts` validates FORM, not TRUTH. It catches a champion who is not in the game, a figure that is not in the block, a figure attached to the wrong player, and asserted motion or intent. It CANNOT catch a false statement about League that contains no digit and no roster name — a wrong claim about what an item does, a wrong claim about a champion's kit, a wrong claim about what a jungler should do at this minute. A false champion claim passed straight through the digit fence earlier tonight. The FREE arm is exactly where that failure would live, so its fabrication rate is a FLOOR and not a measurement.",
+			"Frames exist only for 0:02–6:43 of this game. There are no replays left for it, so the PAIRED set cannot be widened, and every frame-sensitivity number here is an EARLY-GAME number.",
+			"These are turn-based HTTPS calls with no conversation thread, so no arm can obey the prompt's 'do not say the same thing twice' rules. All four arms are equally memoryless, so the comparison is fair, but the repetition figures are worse than the shipped socket's would be.",
+			"A few frames pair with the same sample, so a handful of PAIRED states carry the same block with a picture taken about five seconds apart. Treat those as one state seen twice.",
+			"`useful` is a mechanical composite (spoke AND no fabrication fault AND carries a figure or a roster name AND names an action AND is not a screen readback). It is a floor on quality, never a verdict — read the lines."
+		],
+		config: {
+			model: MODEL,
+			provider: "gemini-http",
+			temperature: TEMPERATURE,
+			maxOutputTokens: 2000,
+			concurrency: CONCURRENCY,
+			samples: `data/live-samples/${SAMPLE_FILE}.ndjson`,
+			gameId: GAME_ID,
+			frameSkewGateSec: FRAME_SKEW_GATE_SEC,
+			lateSpacingSec: LATE_SPACING_SEC,
+			championVocabulary: { count: vocab.names.length, source: vocab.source },
+			stateNote: note
+		},
+		blockSurgery: {
+			what: "Arms 3 and 4 see the block with the fence's own output removed — the 'What he is NOT looking at' list, or the explicit empty-case paragraph that stands in for it. Every other byte of ground truth is identical.",
+			removedFrom: LIST_HEADINGS,
+			removedTo: "**The ten champions above",
+			repaired: { from: DANGLING, to: REPAIRED },
+			why: "A dangling pointer at a list that is no longer there is not neutral: it tells the model something was withheld."
+		},
+		arms: arms.map(a => ({
+			id: a.id,
+			label: a.label,
+			seesRankedList: a.seesList,
+			why: a.why,
+			systemPromptSha: sha(a.system("Lillia")),
+			systemPromptChars: a.system("Lillia").length,
+			systemPrompt: a.system("Lillia")
 		})),
-		late: lateStates.map(s => ({
-			id: s.id,
-			tSec: s.tSec,
-			clock: s.clock,
-			rankedFacts: s.rankedFacts,
-			roster: s.roster,
-			block: s.block,
-			blockNoList: s.blockNoList
-		}))
-	},
-	cells,
-	stats: allStats,
-	frameSensitivity: sensitivity,
-	rescue: rescues
+		states: {
+			paired: pairedStates.map(s => ({
+				id: s.id,
+				tSec: s.tSec,
+				clock: s.clock,
+				framePath: s.framePath,
+				frameSkewSec: s.frameSkewSec,
+				rankedFacts: s.rankedFacts,
+				roster: s.roster,
+				block: s.block,
+				blockNoList: s.blockNoList
+			})),
+			late: lateStates.map(s => ({
+				id: s.id,
+				tSec: s.tSec,
+				clock: s.clock,
+				rankedFacts: s.rankedFacts,
+				roster: s.roster,
+				block: s.block,
+				blockNoList: s.blockNoList
+			}))
+		},
+		cells,
+		stats: allStats,
+		frameSensitivity: sensitivity,
+		rescue: rescues
+	}
+
+	mkdirSync(`${DATA_DIR}/eval`, { recursive: true })
+	if (existsSync(OUT)) throw new Error(`${OUT} exists — every measurement is kept, nothing is overwritten`)
+	writeFileSync(OUT, `${JSON.stringify(run, null, 1)}\n`)
+
+	/* --------------------------------------------------------------------- print */
+
+	const line = (s: string) => console.log(s)
+	line("")
+	line("=== SPOKE / FABRICATION / USEFULNESS ===================================")
+	line("set     arm             frame  spoke        fabricate    useful       specific     readback     no-action    med ms")
+	for (const s of allStats)
+		line(
+			`${s.set.padEnd(7)} ${s.arm.padEnd(15)} ${(s.withFrame ? "yes" : "no").padEnd(6)} ` +
+				`${pct(s.spokeRate).padEnd(12)} ${pct(s.fabrication).padEnd(12)} ${pct(s.useful).padEnd(12)} ` +
+				`${pct(s.specific).padEnd(12)} ${pct(s.visibleOnly).padEnd(12)} ${pct(s.noAlternative).padEnd(12)} ${s.medianMs}`
+		)
+
+	line("")
+	line("=== FRAME SENSITIVITY (PAIRED, with-picture against blind) =============")
+	line("arm             states  same speak/PASS   both spoke  identical text   picture-ref with   picture-ref blind  separated")
+	for (const f of sensitivity)
+		line(
+			`${f.arm.padEnd(15)} ${String(f.states).padStart(6)}  ${pct(f.decisionAgreement).padEnd(16)}  ` +
+				`${String(f.bothSpoke).padStart(10)}  ${pct(f.identicalLines).padEnd(15)}  ${pct(f.pictureRefWithFrame).padEnd(17)}  ` +
+				`${pct(f.pictureRefNoFrame).padEnd(17)}  ${f.pictureRefSeparated ? "YES" : "no"}`
+		)
+
+	line("")
+	line("=== WHAT THE FENCE SILENCES (states whose ranked list is empty) ========")
+	line("set     arm             empty states  spoke there   fabricated    useful")
+	for (const r of rescues)
+		line(
+			`${r.set.padEnd(7)} ${r.arm.padEnd(15)} ${String(r.emptyListStates).padStart(12)}  ${pct(r.spokeThere).padEnd(12)}  ` +
+				`${pct(r.fabricatedThere).padEnd(12)}  ${pct(r.usefulThere)}`
+		)
+
+	line("")
+	line("=== SUBJECT MIX (spoken lines) =========================================")
+	for (const s of allStats)
+		line(
+			`${s.set.padEnd(7)} ${s.arm.padEnd(15)} ${(s.withFrame ? "frame" : "blind").padEnd(6)} ` +
+				`${Object.entries(s.subjects).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}:${v}`).join(" ")}`
+		)
+
+	line("")
+	line(`written ${OUT}`)
+
 }
 
-mkdirSync(`${DATA_DIR}/eval`, { recursive: true })
-if (existsSync(OUT)) throw new Error(`${OUT} exists — every measurement is kept, nothing is overwritten`)
-writeFileSync(OUT, `${JSON.stringify(run, null, 1)}\n`)
-
-/* --------------------------------------------------------------------- print */
-
-const line = (s: string) => console.log(s)
-line("")
-line("=== SPOKE / FABRICATION / USEFULNESS ===================================")
-line("set     arm             frame  spoke        fabricate    useful       specific     readback     no-action    med ms")
-for (const s of allStats)
-	line(
-		`${s.set.padEnd(7)} ${s.arm.padEnd(15)} ${(s.withFrame ? "yes" : "no").padEnd(6)} ` +
-			`${pct(s.spokeRate).padEnd(12)} ${pct(s.fabrication).padEnd(12)} ${pct(s.useful).padEnd(12)} ` +
-			`${pct(s.specific).padEnd(12)} ${pct(s.visibleOnly).padEnd(12)} ${pct(s.noAlternative).padEnd(12)} ${s.medianMs}`
-	)
-
-line("")
-line("=== FRAME SENSITIVITY (PAIRED, with-picture against blind) =============")
-line("arm             states  same speak/PASS   both spoke  identical text   picture-ref with   picture-ref blind  separated")
-for (const f of sensitivity)
-	line(
-		`${f.arm.padEnd(15)} ${String(f.states).padStart(6)}  ${pct(f.decisionAgreement).padEnd(16)}  ` +
-			`${String(f.bothSpoke).padStart(10)}  ${pct(f.identicalLines).padEnd(15)}  ${pct(f.pictureRefWithFrame).padEnd(17)}  ` +
-			`${pct(f.pictureRefNoFrame).padEnd(17)}  ${f.pictureRefSeparated ? "YES" : "no"}`
-	)
-
-line("")
-line("=== WHAT THE FENCE SILENCES (states whose ranked list is empty) ========")
-line("set     arm             empty states  spoke there   fabricated    useful")
-for (const r of rescues)
-	line(
-		`${r.set.padEnd(7)} ${r.arm.padEnd(15)} ${String(r.emptyListStates).padStart(12)}  ${pct(r.spokeThere).padEnd(12)}  ` +
-			`${pct(r.fabricatedThere).padEnd(12)}  ${pct(r.usefulThere)}`
-	)
-
-line("")
-line("=== SUBJECT MIX (spoken lines) =========================================")
-for (const s of allStats)
-	line(
-		`${s.set.padEnd(7)} ${s.arm.padEnd(15)} ${(s.withFrame ? "frame" : "blind").padEnd(6)} ` +
-			`${Object.entries(s.subjects).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}:${v}`).join(" ")}`
-	)
-
-line("")
-line(`written ${OUT}`)
+if (import.meta.main) await main()

@@ -18,7 +18,7 @@ with nothing behind it.)
 back half of a route is faster than the front, and the correct clear *kites the camp toward the
 next camp* while killing it rather than standing still. This is why a *broken* clear costs her
 more than it costs a flat-rate jungler: stopping mid-route to hover a lane throws away the speed
-she already paid for. Low camps-per-minute on Lillia is usually an interrupted route, not a slow
+she already paid for. A low CS per minute on Lillia is usually an interrupted route, not a slow
 one. Watch Out! Eep! (W) is the damage centre of the clear and wants the camp stacked up.
 
 **She is weak in an early even fight and that is correct play.** She is a scaling jungler: avoid
@@ -40,9 +40,8 @@ advice he can actually execute, and it is the honest substitute for ward coachin
 (W) — it carries her a step toward where she aimed it and it will not cross terrain, so it is a
 way of landing the damage, not a way out. Everything else about leaving is the movement speed
 she has already stacked. Once she is committed into a corridor, a pit or a tri-brush, neither of
-those saves her. A death in the enemy jungle costs her
-more than it costs a mobile jungler, and "you had no way out of there" is a fair champion-specific
-read on her death locations.
+those saves her. A death in the enemy jungle costs her more than it costs a mobile jungler, and
+"you had no way out of there" is a fair champion-specific read on her death locations.
 
 **What she wants from a fight.** Sustained damage over a long fight with room to kite, not a
 short burst trade. The fights she wins are the long ones — worth crediting when the data shows a

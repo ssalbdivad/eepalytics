@@ -21,9 +21,9 @@ entrances — anywhere a wall across the middle turns a retreat into a trap. Aga
 whose escape is movement speed rather than a dash, that is the pairing worth planning around.
 
 **He contests objectives well.** Subjugate takes a share of the target's health, armour and
-magic resist and gives him the same — so between that and the passive he is comfortable
-duelling on a pit, so a drake or a herald taken with him unaccounted for is a bigger gamble than
-it is against most junglers. "Know where he is before you start it" is the executable version.
+magic resist and gives him the same, so between that and the passive he is comfortable duelling
+on a pit. A drake or a herald taken with him unaccounted for is a bigger gamble than it is
+against most junglers. "Know where he is before you start it" is the executable version.
 
 **He falls off relative to the field.** His case is early pressure converted into something
 permanent. A game where nothing early goes his way is a game he has to win on someone else's
