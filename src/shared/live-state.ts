@@ -156,6 +156,16 @@ ${
 		renderPronunciations(s.pronounce) === "" ? "" : `${renderPronunciations(s.pronounce)}
 
 `
+	}${
+		s.counterpart ?
+			`Enemy jungler right now: ${s.counterpart.champion}${
+				s.counterpart.inferred ? " (identified by Smite, so treat the role as a strong guess)" : ""
+			}${s.counterpart.cs !== undefined ? `, ${s.counterpart.cs} CS` : ""}${
+				s.counterpart.level !== undefined ? `, level ${s.counterpart.level}` : ""
+			}. This is the man he is racing, and comparing him to it is the most useful thing you can do. It says how much has been cleared and NEVER where anyone is. His GOLD is not listed and is not knowable — the client does not report an enemy's gold, so any gold figure you have belongs to the player.
+
+`
+		:	""
 	}Farm baseline: ${
 		s.pace ?
 			`${s.pace.cs} CS against ${s.pace.expected}, ${s.pace.source}${s.pace.exact ? "" : " (approximate)"}`

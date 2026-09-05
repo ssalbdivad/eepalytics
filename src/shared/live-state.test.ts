@@ -73,3 +73,35 @@ describe("renderState", () => {
 		ok(out.includes("Graves"))
 	})
 })
+
+/**
+ * The counterpart line went missing once, silently: the edit that added it did not match, nothing
+ * asserted it, and the block shipped without the app's single most valuable comparison for hours.
+ * The ranked facts still worked, which is exactly why nobody noticed.
+ */
+describe("the enemy jungler line", () => {
+	it("is in the block whenever a counterpart is known", () => {
+		const out = renderState(base({ counterpart: { champion: "Karthus", cs: 120, level: 15 } }))
+		ok(out.includes("Enemy jungler right now: Karthus"), out.slice(0, 400))
+		ok(out.includes("120 CS"))
+		ok(out.includes("level 15"))
+	})
+
+	it("says the role is a guess when it came from Smite", () => {
+		const out = renderState(
+			base({ counterpart: { champion: "Karthus", cs: 120, level: 15, inferred: true } })
+		)
+		ok(/strong guess/i.test(out), "an inferred role must be hedged in the sentence")
+	})
+
+	it("states that an enemy's gold is not knowable, so the gap cannot be filled", () => {
+		// A gap gets filled: with the enemy's CS and level present and gold absent, the coach
+		// attributed HIS gold to the enemy out loud.
+		const out = renderState(base({ counterpart: { champion: "Karthus", cs: 120 } }))
+		ok(/gold is not listed and is not knowable/i.test(out))
+	})
+
+	it("says nothing at all when there is no counterpart", () => {
+		strictEqual(renderState(base({ counterpart: null })).includes("Enemy jungler right now"), false)
+	})
+})
