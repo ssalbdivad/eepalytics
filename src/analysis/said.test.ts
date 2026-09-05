@@ -367,6 +367,23 @@ describe("renderSaid", () => {
 		strictEqual(renderSaid(filled(2)).includes("Earlier, no longer quoted"), false)
 	})
 
+	/*
+	 * Every digit put in front of this model is a digit it can say back — the lesson recorded in
+	 * `live-coach-mode.ts`, where two catchphrases offered as examples came back in 71% of the
+	 * lines. The quoted lines carry his own numbers because he already heard them; the machinery
+	 * around them adds none.
+	 */
+	it("counts repetitions in words, never in digits", () => {
+		const mem = newSaidMemory(ROSTER)
+		for (const t of [10, 200, 400]) rememberSaid(mem, `Take his raptors and keep the route running.`, t)
+		const out = renderSaid(mem)
+		ok(out.includes("three times"))
+		strictEqual(/x\d|\bx3\b/.test(out), false)
+		// Nothing outside the quoted lines carries a figure.
+		const machinery = out.split("\n").filter(l => !l.startsWith("- ")).join(" ")
+		strictEqual(/\d/.test(machinery), false)
+	})
+
 	it("carries the follow-through into the quoted line", () => {
 		const mem = newSaidMemory(ROSTER)
 		rememberSaid(mem, "Recall and spend every coin before you leave.", 500, { gold: 1300 })

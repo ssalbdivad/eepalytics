@@ -242,7 +242,16 @@ export const subjectsIn = (text: string): SaidSubject[] =>
  * different decision from clearing your own, and it says "clear" in the same breath.
  */
 export const DIRECTIVE_INTENTS: { id: string; re: RegExp }[] = [
-	{ id: "recall", re: /\b(recall|reset|take the back|go back|back and buy|back,|\bback\b(?= and)|head back)/i },
+	/*
+	 * "back" only where it opens the instruction.
+	 *
+	 * "You're on 133 HP with 881 gold — back, buy, and restart the route" splits into a clause that
+	 * is the single word `back`, and without the anchor it fell through to the word fallback — so
+	 * the coach's own recall reminder was not recognised as one, and `followUp` never asked whether
+	 * he had spent. A bare \bback\b anywhere would have caught "get right back to clearing", which
+	 * is the opposite instruction.
+	 */
+	{ id: "recall", re: /^back\b|\b(recall|reset|take the back|go back|back and buy|back,|\bback\b(?= and)|head back)/i },
 	{ id: "buy", re: /\b(buy|spend|shop|purchase|pick up (?:a|an|your))\b/i },
 	{ id: "objective", re: /\b(drake|dragon|herald|grub|baron|nashor|scuttle|pit|plate|tower|turret)\b/i },
 	{ id: "ward", re: /\b(ward|vision|sweep|trinket)\b/i },
@@ -417,7 +426,7 @@ const overlap = (a: readonly string[], b: readonly string[]): number => {
  * Which rule fires how often, on the two real transcripts replayed through the gate:
  *
  *     corpus     wording   directive   subject-spent   survived
- *     opus5           21           8               2          7
+ *     opus5           21           9               1          7
  *     flash36         20           5               1          9
  *     targets          0           0               0         15
  *
@@ -537,10 +546,12 @@ export const judgeSaid = (
 	/*
 	 * "other" is the bucket, not a subject, so it gets no budget and no cooldown.
 	 *
-	 * Measured on the targets: three of the fifteen classify as `other` — "take all three now, you
-	 * have thirteen seconds" and "stop taking that fight without Braum" among them — and treating
-	 * the bucket as a topic made the second a restatement of the first thirty-one seconds later.
-	 * Two lines are not about the same thing because neither matched a regex.
+	 * Measured on the targets: three of the fifteen classify as `other`, and two of those three are
+	 * M11 ("...the grubs are untouched — take all three now, you have thirteen seconds") and M12
+	 * ("Briar has been back up for twenty seconds and you're at forty one percent — finish the grub
+	 * and get out"). Thirty-one seconds apart and about different things, and giving the bucket a
+	 * cooldown silenced the second. Two lines are not about the same subject because neither
+	 * matched a regex.
 	 */
 	if (now.subject === "other") return { repeat: false, reason: null, of: null, why: "new" }
 
@@ -592,9 +603,10 @@ export const rememberSaid = (
  * The block is already 60 lines and every line in it competes with the picture for attention, so
  * the transcript cannot grow with the game — a 36-minute game at the shipped 45-second floor is
  * about 45 lines and quoting them all would double the prompt by the twenty-minute mark. Five is
- * the number of DISTINCT things this gate lets through in the seven minutes it was measured over
- * (7 for Opus, 9 for Gemini), so at the rate the gated coach actually speaks, five covers roughly
- * the last four minutes and the tally covers the rest.
+ * just under what this gate lets through in the seven minutes it was measured over — 7 lines for
+ * Opus, 9 for Gemini — so at the rate the gated coach actually speaks, the quotes cover roughly the
+ * last four or five minutes and the tally covers everything before that. It is a number to raise if
+ * the briefing makes the coach talkative again, not a constant with a measurement behind it.
  */
 export const SAID_SHOWN = 5
 
@@ -621,11 +633,22 @@ export const followUp = (said: SaidLine, now: SaidSnapshot): string | null => {
 	return `he has NOT spent — ${Math.round(then)} gold then, ${Math.round(gold)} now`
 }
 
+/**
+ * A count of repetitions, in WORDS and never in digits.
+ *
+ * Everything in this block is a thing the coach may say out loud, and this file's own subject is a
+ * model that repeats what it is shown. `keep-clearing x4` invites "keep clearing times four"; the
+ * same lesson is already recorded in `live-coach-mode.ts`, where two catchphrases offered as
+ * examples came back in 71% of the lines. Above four it stops counting, because the exact number
+ * changes nothing about the instruction, which is to stop.
+ */
+const SPELLED = ["", "", "twice", "three times", "four times"]
+
 const tally = (keys: string[]): string =>
 	[...new Set(keys)]
 		.map(k => ({ k, n: keys.filter(x => x === k).length }))
 		.sort((a, b) => b.n - a.n)
-		.map(t => (t.n > 1 ? `${t.k} x${t.n}` : t.k))
+		.map(t => (t.n === 1 ? t.k : `${t.k} (${SPELLED[t.n] ?? "many times"})`))
 		.join(", ")
 
 /**
@@ -647,10 +670,9 @@ export const renderSaid = (mem: SaidMemory, now: SaidSnapshot = {}): string => {
 	})
 	return `### What you have already said out loud this game
 
-He heard every one of these. **Say none of them again, in any wording** — not the same fact with a
-new number, not the same instruction in different words. Measured on this coach's own transcripts,
-half of everything it says restates something he has already been told, and a true thing said twice
-teaches him to stop listening to the first telling.
+He heard every one of these. **Say none of them again, in any wording** — not the same fact carrying
+a new number, not the same instruction in different words. A true thing said twice does not land
+twice; it teaches him to stop listening to the first telling.
 
 ${quoted.join("\n")}${
 		older.length > 0 ?
