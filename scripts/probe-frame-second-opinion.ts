@@ -116,12 +116,23 @@ interface TurnResult {
 const runTurns = async (systemPrompt: string, turns: TurnSpec[]): Promise<TurnResult[]> => {
 	const key = geminiKey()
 	if (key === "") throw new Error("no Gemini key")
-	const mint = await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens", {
-		method: "POST",
-		headers: { "x-goog-api-key": key, "content-type": "application/json" },
-		body: JSON.stringify({ uses: 1 })
-	})
-	const token = ((await mint.json()) as { name?: string }).name
+	// MEASURED: minting hung indefinitely on the fourth socket of a run and took the whole probe
+	// with it — `fetch` has no default timeout, so a stalled connection is a hang, not an error.
+	// Three tries with a deadline turns that into a retry.
+	let token: string | undefined
+	for (let attempt = 0; attempt < 3 && token === undefined; attempt++) {
+		try {
+			const mint = await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens", {
+				method: "POST",
+				headers: { "x-goog-api-key": key, "content-type": "application/json" },
+				body: JSON.stringify({ uses: 1 }),
+				signal: AbortSignal.timeout(20_000)
+			})
+			token = ((await mint.json()) as { name?: string }).name
+		} catch {
+			token = undefined
+		}
+	}
 	if (token === undefined) throw new Error("could not mint a token")
 
 	return await new Promise<TurnResult[]>((resolve, reject) => {
@@ -206,7 +217,7 @@ const runTurns = async (systemPrompt: string, turns: TurnSpec[]): Promise<TurnRe
 		setTimeout(() => {
 			ws.close()
 			resolve(out)
-		}, 120_000)
+		}, 60_000)
 	})
 }
 
