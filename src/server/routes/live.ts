@@ -68,6 +68,11 @@ import type { GameflowSession } from "../../shared/schema/lcu.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { liveCoachSystemPrompt, renderBlockForMode } from "../../shared/live-coach-mode.ts"
+import { objectiveSchedule } from "../../shared/live-state.ts"
+import type { ObjectiveEvent } from "../../shared/live-state.ts"
+import { buildArc, renderArc } from "../../analysis/arc.ts"
+import type { ArcSample } from "../../analysis/arc.ts"
+import { habitCues } from "../../analysis/habits.ts"
 import { liveChampionKnowledge } from "../../review/live-coach-knowledge.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import { buildFacts, FRAME_FRESH_SEC, newFactMemory, resetFactMemory } from "../../analysis/live-facts.ts"
@@ -202,6 +207,36 @@ export const championFromSession = (
  * Module-level memory is right for this daemon: one local user, one game at a time. It is reset
  * whenever there is no game.
  */
+/**
+ * The game so far, one sample every few seconds, for `analysis/arc.ts`.
+ *
+ * A rolling buffer rather than a re-read of the sampler's file: the poll has already parsed this
+ * object and dropping it only to read it back off disk every turn is work for nothing. The spacing
+ * matches the daemon's own sampler, because the arc's stall detection is judged against his median
+ * run LENGTH and a denser series does not make a stall more real, only more expensive.
+ *
+ * CLEARED BETWEEN GAMES beside `resetFactMemory`, and that is the whole hazard: a buffer that
+ * outlives its game gives game two a stall computed from game one's clear, which is the same class
+ * of bug as a socket spanning two games.
+ */
+const arcSamples: ArcSample[] = []
+const ARC_SAMPLE_SPACING_SEC = 5
+/** ~50 minutes at that spacing. A cap so a forgotten reset cannot become a leak. */
+const ARC_SAMPLE_CAP = 600
+
+/**
+ * When each career-habit cue first became true this game, so a STANDING one stops repeating.
+ *
+ * `habitCues` is pure and stateless by design — `habits.ts` says so, and rate-limiting lives with
+ * the caller. Without one, "topside conceded" is true from the moment it fires until the game ends,
+ * and a fact that is true for twenty minutes is read out for twenty minutes. That is the exact
+ * monotone failure the whole rebuild is against: measured over 88 states, the block's one
+ * comparative fact returned the same verdict in 82 of them and none the other way.
+ */
+const habitFirstSeen = new Map<string, number>()
+/** How long a career cue stays in the block after it first becomes true. */
+const HABIT_WINDOW_SEC = 120
+
 const factMemory = newFactMemory()
 const fightMemory = newFightMemory()
 /**
@@ -335,6 +370,8 @@ const buildLiveState = (
 		 */
 		resetFactMemory(factMemory)
 		resetFightMemory(fightMemory)
+		arcSamples.length = 0
+		habitFirstSeen.clear()
 		/*
 		 * And forget the picture. A frame read belongs to the game it was taken in, and carrying one
 		 * across is the same class of bug as a socket spanning two games: the roster changes, the
@@ -360,6 +397,11 @@ const buildLiveState = (
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
 	const clock = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
+	const lastArcSample = arcSamples[arcSamples.length - 1]
+	if (!lastArcSample || secs - lastArcSample.atSec >= ARC_SAMPLE_SPACING_SEC) {
+		arcSamples.push({ atSec: secs, data })
+		if (arcSamples.length > ARC_SAMPLE_CAP) arcSamples.shift()
+	}
 	/*
 	 * The EVENT feed names people by BARE game name; the roster's `riotId` and `summonerName`
 	 * both carry the tag. Matching on the tagged fields therefore never matches, and every one
@@ -745,7 +787,78 @@ const buildLiveState = (
 				...(frameRead ? { frame: frameRead } : {})
 			},
 			factMemory
-		)
+		),
+		/*
+		 * WHAT IS COMING — the map's own clock, and the only layer the ladder measured to move
+		 * anything (`data/eval/why-shallow.md`: 29% useful lines to 55%, p = 0.0009, against 30%
+		 * for ninety seconds of exactly-computed history).
+		 *
+		 * Side resolution goes through the ROSTER, never the event feed's name, for the reason
+		 * every other join in this function does: the feed sends the bare game name and both
+		 * roster id fields carry the tag. An unresolved killer becomes `null` rather than
+		 * "theirs" — a mis-sided objective count is a false claim about his own game.
+		 */
+		schedule: objectiveSchedule(
+			(data.events?.Events ?? [])
+				.map((e): ObjectiveEvent | null => {
+					const kind =
+						e.EventName === "DragonKill" ? ("dragon" as const)
+						: e.EventName === "HordeKill" ? ("grub" as const)
+						: e.EventName === "HeraldKill" ? ("herald" as const)
+						: e.EventName === "BaronKill" ? ("baron" as const)
+						: null
+					if (kind === null) return null
+					const killer = playerNamed(e.KillerName)
+					return {
+						kind,
+						tSec: e.EventTime ?? 0,
+						side: killer ? (killer.team === mine ? "mine" : "theirs") : null
+					}
+				})
+				.filter((e): e is ObjectiveEvent => e !== null),
+			secs
+		),
+		/*
+		 * The arc, and an honest note about what it bought: nothing measurable on top of the
+		 * schedule (51% against 55%, inside each other's intervals). It is here because it is the
+		 * only thing in the app that can notice a farm stall that lasted five minutes with three
+		 * deaths inside it, and because it costs a few hundred characters. It is the first thing
+		 * to cut if latency ever needs cutting.
+		 */
+		...(() => {
+			const arc = buildArc(arcSamples)
+			const text = arc ? renderArc(arc) : ""
+			return text === "" ? {} : { arc: text }
+		})(),
+		/*
+		 * At most ONE career line, and only while it is fresh.
+		 *
+		 * `habitCues` returns them ranked; taking the first is the rule `habits.ts` documents for
+		 * its callers. The window is what stops a standing habit from being in every block for the
+		 * rest of the game.
+		 */
+		...(() => {
+			const grubSide = (name: string) => {
+				const c = { mine: 0, theirs: 0 }
+				for (const e of data.events?.Events ?? []) {
+					if (e.EventName !== name) continue
+					const killer = playerNamed(e.KillerName)
+					if (!killer) continue
+					if (killer.team === mine) c.mine++
+					else c.theirs++
+				}
+				return c
+			}
+			const cue = habitCues({
+				tSec: secs,
+				cs: me.scores?.creepScore ?? null,
+				grubs: grubSide("HordeKill"),
+				heralds: grubSide("HeraldKill")
+			})[0]
+			if (!cue) return {}
+			if (!habitFirstSeen.has(cue.key)) habitFirstSeen.set(cue.key, secs)
+			return secs - (habitFirstSeen.get(cue.key) ?? secs) <= HABIT_WINDOW_SEC ? { habits: [cue.text] } : {}
+		})()
 	}
 	/*
 	 * The fence's ground truth, cached off this poll rather than fetched again by the frame-read

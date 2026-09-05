@@ -80,9 +80,15 @@ import { LIVE_COACH_SYSTEM_PROMPT } from "./live-prompt.ts"
 import { downLine, renderBriefing, renderState } from "./live-state.ts"
 import type { VisionState } from "./live-state.ts"
 
-export type LiveCoachMode = "cite-or-quiet" | "fenced"
+export type LiveCoachMode = "briefing" | "cite-or-quiet" | "fenced"
 
-export const DEFAULT_LIVE_COACH_MODE: LiveCoachMode = "cite-or-quiet"
+/**
+ * The briefing, because it is the only thing measured to move the number he complained about.
+ *
+ * `cite-or-quiet` and `fenced` are both still here and both still exactly what they were — a
+ * default change that quietly deletes the comparison it beat is a default change nobody can check.
+ */
+export const DEFAULT_LIVE_COACH_MODE: LiveCoachMode = "briefing"
 
 /**
  * The picker's own copy, kept beside the prompts rather than in the page.
@@ -97,6 +103,14 @@ export const LIVE_COACH_MODES: {
 	blurb: string
 	evidence: string
 }[] = [
+	{
+		id: "briefing",
+		label: "Briefing (what is coming)",
+		blurb:
+			"The same one hard rule, but the block is rebuilt as a briefing rather than a snapshot: what neutral objective is up and for how long, what spawns next and in how many seconds, what has changed this game, what she has already said, and what he does in his own finished games. The jungle race and the farm comparison are still there, at the bottom, because they were measured to be the least useful thing she says.",
+		evidence:
+			"Nine layers of context replayed through one model over 88 real states of his own games, every line judged blind: the shipped block scored 29% useful, the same block plus the objective schedule scored 55% (p = 0.0009). Ninety seconds of exact history bought nothing (p = 0.94), and telling the model to prefer objectives WITHOUT giving it the timers reached 37% and invented dragons that had not spawned."
+	},
 	{
 		id: "cite-or-quiet",
 		label: "Cite or stay quiet",
@@ -224,6 +238,92 @@ block disagree, the block wins.
   a bare timer beside a name, this coach has read it back after it expired and invented one where
   there was none. A respawn timer is yours to say only where the ranked list writes one out.`
 
+/**
+ * What the BRIEFING mode adds to the measured arm, in place of `LIST_HINT`.
+ *
+ * Two rules here reverse things this app has instructed the coach to do since it was written, and
+ * both reversals are measurements rather than taste (`data/eval/why-shallow.md`, 554 lines judged
+ * blind by a model that could not see which arm wrote them).
+ *
+ * **The subject order.** Classified by what the sentence is about: a neutral objective 61% useful
+ * over 211 lines, an enemy being down 41%, gold 32%, and farm, CS, clearing and routing 4% — three
+ * useful lines out of eighty-four. That last is the subject `live-facts.ts` ranks first, the
+ * subject the enemy-jungler comparison was built to serve, and the subject a fifth of the shipped
+ * coach's lines are about. It is not demoted because it is false; every figure in it is exact. It
+ * is demoted because it is the same true thing every turn of every game: across 88 states the
+ * block's race verdict read "he is behind you" in 82 and "ahead of you" in none.
+ *
+ * **The test for whether a line earns a sentence.** `AGENTS.md` names two — not visible, and not
+ * generic — and the first of them is inverted in the data. Lines about something plainly on his
+ * screen were judged useful 45% of the time against 27% for lines about something invisible, and
+ * the best quadrant in the corpus is visible AND specific, at 67% over 205 lines. What kills a line
+ * is genericness alone: 14% against 55%. Naming which of the things he can already see the next
+ * thirty seconds are for is the single best move available, and the old rule forbade it.
+ *
+ * NO FIGURES APPEAR BELOW, and that is deliberate for the reason recorded all over this file:
+ * every digit put in front of this model is a digit it can say back. An earlier prompt offered two
+ * catchphrases as examples and got them in 71% of its lines. The sample sizes belong in this
+ * comment; the model only needs the order.
+ */
+export const BRIEFING_HINT = `
+
+## What is worth a sentence, in the order that was measured
+
+The block is a BRIEFING, not a snapshot. It opens with the map's own clock — what neutral objective
+is standing there untaken and for how long, and what spawns next and in how many seconds. Read that
+first, every turn.
+
+Prefer, in this order:
+
+1. **The next neutral objective** — dragon, grubs, herald, baron. Where he should BE in the next
+   thirty seconds is the jungler's whole job, and it is the only subject he cannot work out from
+   his own screen without doing the arithmetic mid-clear. An objective that has stood untaken for
+   minutes is a statement that nobody is contesting it; say so.
+2. **An enemy who is down**, and what that opens up while it lasts.
+3. **Gold he is carrying**, when it has been sitting long enough to be a decision.
+4. **His farm, the jungle race, his clear and his route** — LAST, and only when something about it
+   has actually changed. Those numbers are exact and they are near the bottom of the block for a
+   reason: they say the same true thing every turn of every game, and a coach who reaches for them
+   by default says one sentence over and over for thirty-six minutes. If a farm line would be as
+   true five minutes ago as it is now, it is not a line.
+
+## The test is GENERIC, not invisible
+
+Say the thing that is true of THIS minute of THIS game. **A sentence that would have been equally
+true five minutes ago, or in a different game entirely, is the failure** — however correct it is.
+
+You are NOT forbidden from talking about what is on his screen. Naming which of the things he can
+see the next thirty seconds are for is the most useful thing you can do: he is looking at the same
+map you are and the question is which part of it matters now.
+
+## Every timer you say is one you were given
+
+The schedule section is the only place the map's clock exists. Never complete a spawn time, a
+respawn, a camp timer or a count of what is left from what you know about League — a number that
+sounds right and was not measured is the one kind of mistake he cannot catch, and it sends him to a
+pit that is empty.
+
+## The career lines are quotes
+
+Where the block gives a line from his own finished games, **say it as written or leave it out.**
+Those sentences are compressions of a statistic and rewording one changes what it claims: given a
+line about how often he is AT the grub pit, this coach reworded it into a claim about how often
+grubs are TAKEN, and read a false statement about his own record out loud.
+
+## Three things this block never tells you, each of which has been said out loud
+
+- **Where a teammate is, or what he is about to do.** There are no positions in the block for
+  anybody. "Push mid with Taliyah" and "group with Taliyah" were both said in the run this
+  architecture was measured on, about a champion whose location no channel in this app knows. A
+  teammate's SCORE is written down and is yours to cite. His place, his plan and his path are not.
+- **WHICH champion is dead, from a count.** "Alive right now: 4 of yours against 5 of theirs" is
+  arithmetic, not a name. The board carries a "Down right now" line naming who is actually down; a
+  champion who is not on it is alive. Said out loud in a real game: "clear her top jungle while she
+  is dead", in a state where nobody was down at all.
+- **How long anyone is dead for.** That line gives names and never seconds, deliberately — shown a
+  bare timer beside a name, this coach has read it back after it expired and invented one where
+  there was none. A respawn timer is yours to say only where the ranked list writes one out.`
+
 /* ============================================================== the two prompts */
 
 export interface LiveCoachPromptOptions {
@@ -240,7 +340,9 @@ export interface LiveCoachPromptOptions {
 
 /** The coach's standing instructions for the selected architecture. */
 export const liveCoachSystemPrompt = ({ mode, championKnowledge = "" }: LiveCoachPromptOptions): string =>
-	mode === "fenced" ? LIVE_COACH_SYSTEM_PROMPT : `${CITE_PERSONA}${CITE_RULE}${LIST_HINT}${championKnowledge}`
+	mode === "fenced" ? LIVE_COACH_SYSTEM_PROMPT
+	: mode === "briefing" ? `${CITE_PERSONA}${CITE_RULE}${BRIEFING_HINT}${championKnowledge}`
+	: `${CITE_PERSONA}${CITE_RULE}${LIST_HINT}${championKnowledge}`
 
 /**
  * The champion's own knowledge, as the unfenced arms were given it.
@@ -331,6 +433,7 @@ export { downLine }
  * is the same block with the fence's own instructions rewritten and the dead named.
  */
 export const renderBlockForMode = (state: VisionState, mode: LiveCoachMode): string => {
+	if (mode === "briefing") return renderBriefing(state)
 	const block = renderState(state)
 	if (mode === "fenced") return block
 	let out = block

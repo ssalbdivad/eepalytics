@@ -85,7 +85,7 @@ export const Settings = type({
 	 * is a measured arm and because a coach that says almost nothing is the right coach for someone
 	 * who wants almost nothing said.
 	 */
-	liveCoachMode: "'cite-or-quiet'|'fenced'",
+	liveCoachMode: "'briefing'|'cite-or-quiet'|'fenced'",
 
 	/**
 	 * How we reach the League client across the WSL2 boundary. `bridge` is a long-lived
@@ -147,7 +147,7 @@ export const SettingsPatch = type({
 	"coachIntensity?": "0<=number<=1",
 	"liveProvider?": "string",
 	"liveModel?": "string",
-	"liveCoachMode?": "'cite-or-quiet'|'fenced'",
+	"liveCoachMode?": "'briefing'|'cite-or-quiet'|'fenced'",
 	"transport?": "'bridge'|'curl'",
 	"pollIdleMs?": "number",
 	"pollInGameMs?": "number",
