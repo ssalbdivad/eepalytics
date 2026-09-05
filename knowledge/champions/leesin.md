@@ -63,3 +63,46 @@ Treat matchups with only a few hundred games as a hint, not a plan.
 ## The one-line version
 
 Full-clear to six camps, then decide scuttle-or-gank off where the enemy jungler actually is; land Q before you commit anything else; save R for isolating or displacing rather than as a gap-closer; and remember that a death on the wrong side of the map at minute 8 is the single most expensive thing this champion can do.
+
+## Live coaching
+
+Half-sentences, said out loud after a number the client has already proved. **No digits** —
+a figure here would be a claim about the game, and every figure he hears must come from the
+client. Anything with a number in it is refused at load time, deliberately.
+
+Several clauses per key is intentional: a fixed clause per kind means the identical half-sentence
+every time that kind fires, and sameness is what made him stop listening. Each one has to end on
+something he can DO in the next thirty seconds.
+
+race-behind: your clear does not out-farm him, so make the next deviation buy a kill or a plate
+race-behind: you catch up on a landed Q with an ally nearby, not on a faster route
+race-behind: take his camps while your Q is up, and leave the moment it is not
+
+race-ahead: you are an early champion, so turn this into a tower rather than sitting on it
+race-ahead: spend it now, the lead is worth less every minute he spends scaling
+race-ahead: path to the lane that can take a plate off the next gank
+
+restraint: levels down you can arrive but not finish, so take your camps and come back with R
+restraint: a Q you land into a fight you still lose is the worst version of this, so walk away
+restraint: put a ward in first, then come back for the fight with something to hop out to
+
+fight-lost: you are committed the moment you dash, so leave a ward behind you to get back out
+fight-lost: the recast hurts most on someone already low, so pick the damaged target
+fight-lost: R is for removing someone or kicking them into your team, not for closing a gap
+
+fight-absent: your kit is choosing the fight, so choose the next one and be early
+fight-absent: go where the map still has something to decide, that one is already spent
+fight-absent: drop a ward on the next objective now, it is vision and it is your way in
+
+death: everything you own starts with a landed Q, so do not cross while it is down.
+death: put the ward down before you enter, so leaving is a button rather than a walk.
+death: with R down, take the camp instead of the fight, that kick is your team's only displacement.
+death: melee means the way out has to exist first, so check there is an ally to jump to.
+
+build: you win the phase before his items land, so force something before he finishes the next
+build: that makes the melee trade worse, so pick a target that is already damaged instead
+build: once he beats your carry, kick him away from the fight rather than into it
+
+farm-behind: full clear first, then deviate on purpose rather than on impulse
+farm-behind: make the next detour buy a kill or a plate, or do not take it
+farm-behind: your camps come back either way, take them on the way to the lane

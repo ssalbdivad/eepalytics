@@ -50,15 +50,44 @@ him — do not use it to explain away a number.
 
 ## Live coaching
 
-One clause per situation, said out loud after the number the client proved. **No digits** — a
-figure here would be a claim about the game, and every figure he hears must come from the client.
-Anything with a number in it is refused at load time, deliberately.
+Half-sentences, said out loud after a number the client has already proved. **No digits** —
+a figure here would be a claim about the game, and every figure he hears must come from the
+client. Anything with a number in it is refused at load time, deliberately.
 
-race-behind: your clear accelerates as it chains, so a broken route wastes the speed you already paid for
-race-ahead: keep the route moving, being somewhere they are not is the whole plan
-restraint: you lose the even fight, and declining it is correct play rather than timidity
-fight-lost: you want the long fight with room to kite, not a short trade
-fight-absent: you win by being where they are not, so be there before the next one starts
-death: your escape is movement speed, so leave before you are committed rather than after
-build: itemise for the fight you actually win, which is the long one
-farm-behind: low farm on you is almost always an interrupted route rather than a slow one
+Several clauses per key is intentional: a fixed clause per kind means the identical half-sentence
+every time that kind fires, and sameness is what made him stop listening. Each one has to end on
+something he can DO in the next thirty seconds.
+
+race-behind: your clear only gets faster while it keeps running, so finish the whole route
+race-behind: he will not lose a straight duel to you, so win the race on route speed instead
+race-behind: the speed you paid for on the last camp is gone the moment you stop, keep moving
+race-behind: roll a Swirlseed into his side and take whatever it tells you is safe
+
+race-ahead: you are ahead because the route never stopped, so do not stop it to go find him
+race-ahead: keep the clear running toward his camps while the speed is stacked
+race-ahead: you still lose the even fight, so spend this on the pit rather than on him
+
+restraint: you have no burst and no dash, so that fight is his to leave, take your camps instead
+restraint: get the level back off a full clear, then contest it with the ult up
+restraint: being passive here is correct play, so path away and be full for that timer
+
+fight-lost: your damage arrives over time, so take the long fights with room to kite
+fight-lost: the ult only sleeps someone already covered in dust, so hit them before you cast it
+fight-lost: a corridor takes away the speed that is your only exit, pull them into open ground
+
+fight-absent: your value is being where they are not, so take the far camps while that settles
+fight-absent: you cannot arrive late and change it, so pick the objective on the other side
+fight-absent: start walking to the next timer, your speed only pays in transit
+
+death: you have no dash out of there, so the leaving has to happen before you are committed.
+death: roll a Swirlseed in ahead of you next time, it shows you what is waiting.
+death: speed only saves you when it is already stacked, so start moving before you need it.
+death: a pit or a corridor is where your escape stops existing, so fight at the entrance to it.
+
+build: if that shortens the fight, stop taking the fight and go take something instead
+build: you win the long one, so ask whether he can still be outlasted before you contest
+build: he spiked and you scale, so trade the duel for a camp and come back a level up
+
+farm-behind: that is an interrupted route, not a slow one, so finish the next
+farm-behind: a camp skipped mid-route costs the speed for all the ones after
+farm-behind: stop hovering the lane, the camp that is already up is the tempo

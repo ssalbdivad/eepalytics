@@ -45,8 +45,14 @@ import { loadCorpus } from "../../daemon/corpus.ts"
 import { championName, refreshChampionNames } from "../../daemon/champions.ts"
 import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
-import { championNote, pronunciationTable } from "../../knowledge/index.ts"
-import { parseChampionAdvice } from "../../shared/champion-advice.ts"
+import { championNote, defaultNote, pronunciationTable } from "../../knowledge/index.ts"
+import {
+	mergeClauses,
+	newAdviceCursor,
+	parseChampionClauses,
+	resetAdviceCursor,
+	rotatingAdvice
+} from "../../shared/champion-advice.ts"
 import { pronunciationsFor } from "../../shared/pronounce.ts"
 import { dragonPhrase } from "../../shared/dragons.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
@@ -121,6 +127,15 @@ const findMe = (data: LiveAllGameData) => {
  */
 const factMemory = newFactMemory()
 const fightMemory = newFightMemory()
+/**
+ * Where each fact kind is up to in its champion-advice rotation.
+ *
+ * Beside `factMemory` and reset on the same boundary, because it is the same kind of thing: state
+ * that exists to stop the coach saying one sentence over and over, and that must not survive into
+ * the next game. Counting FIRINGS rather than reading the clock is load-bearing — a clock index
+ * shares a factor with the cooldowns and lands every firing of a kind on the same clause.
+ */
+const adviceCursor = newAdviceCursor()
 
 /** Who last killed this player, by riotId, or "" if nothing in the feed says. */
 const lastKillerOf = (data: LiveAllGameData, victim: string): string => {
@@ -192,6 +207,7 @@ const buildLiveState = (
 		factMemory.lastLedWithDeath = false
 		factMemory.lastGoldMentioned = 0
 		factMemory.lastFarmAtSec = 0
+		resetAdviceCursor(adviceCursor)
 		return null
 	}
 	const secs = gameTimeSec ?? data.gameData?.gameTime ?? 0
@@ -414,7 +430,30 @@ const buildLiveState = (
 				 */
 				advice: (() => {
 					const note = championNote(me.championName ?? "")
-					return note ? parseChampionAdvice(note.text) : undefined
+					if (!note) return undefined
+					/*
+					 * The role defaults UNDER the champion's own clauses, merged per fact kind.
+					 *
+					 * `championNote` only falls back to `_default.md` when no champion file exists
+					 * at all, so a champion file that says nothing about deaths used to leave the
+					 * coach with nothing to say about deaths — having a file was strictly worse
+					 * than having none. Merging per kind means a file overrides only where it has
+					 * something better, and every kind still has a clause.
+					 */
+					const clauses =
+						note.isDefault ?
+							parseChampionClauses(note.text)
+						:	mergeClauses(
+								parseChampionClauses(defaultNote()?.text ?? ""),
+								parseChampionClauses(note.text)
+							)
+					/*
+					 * A fresh view per turn over a cursor that outlives the turn. Reading a kind is
+					 * what advances it, and `buildFacts` reads a kind exactly when it renders a
+					 * fact of that kind — so the rotation index is the count of firings, which is
+					 * the only thing the cooldowns cannot collide with.
+					 */
+					return rotatingAdvice(clauses, adviceCursor)
 				})(),
 				meLevel: me.level,
 				objectiveCount: (() => {

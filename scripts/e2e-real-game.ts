@@ -994,40 +994,70 @@ export const summarize = (file: RunFile): void => {
 	const perMin = (spoke: number, turns: number): string =>
 		turns === 0 ? "-" : ((spoke / turns) * (60_000 / file.turnCadenceMs)).toFixed(1)
 
-	console.log(`\n${"=".repeat(96)}\nWHAT CAME BACK  ${file.provider} ${file.model}\n`)
-	console.log("arm        turns  failed  silent  empty   spoke   lines/min   median ms   faults")
-	for (const arm of arms) {
-		const a = file.results.filter(r => r.arm === arm)
-		const okRows = a.filter(r => r.ok)
-		const spoke = okRows.filter(r => !r.silent && !r.empty)
-		const lat = a.map(r => r.latencyMs).sort((x, y) => x - y)
-		const faults = okRows.filter(r => (r.score?.faults.length ?? 0) > 0).length
-		console.log(
-			`${arm.padEnd(9)} ${String(a.length).padStart(6)}  ` +
-				`${String(a.length - okRows.length).padStart(6)}  ` +
-				`${pct(okRows.filter(r => r.silent).length, okRows.length)}   ` +
-				`${pct(okRows.filter(r => r.empty).length, okRows.length)}  ` +
-				`${pct(spoke.length, okRows.length)}   ` +
-				`${perMin(spoke.length, okRows.length).padStart(9)}   ` +
-				`${String(lat[Math.floor(lat.length / 2)] ?? 0).padStart(9)}   ` +
-				`${String(faults).padStart(6)}`
-		)
+	const armTable = (rows: TurnResult[]): void => {
+		console.log("arm        turns  failed  silent  empty   spoke   lines/min   median ms   faults")
+		for (const arm of arms) {
+			const a = rows.filter(r => r.arm === arm)
+			if (a.length === 0) continue
+			const okRows = a.filter(r => r.ok)
+			const spoke = okRows.filter(r => !r.silent && !r.empty)
+			const lat = a.map(r => r.latencyMs).sort((x, y) => x - y)
+			const faults = okRows.filter(r => (r.score?.faults.length ?? 0) > 0).length
+			console.log(
+				`${arm.padEnd(9)} ${String(a.length).padStart(6)}  ` +
+					`${String(a.length - okRows.length).padStart(6)}  ` +
+					`${pct(okRows.filter(r => r.silent).length, okRows.length)}   ` +
+					`${pct(okRows.filter(r => r.empty).length, okRows.length)}  ` +
+					`${pct(spoke.length, okRows.length)}   ` +
+					`${perMin(spoke.length, okRows.length).padStart(9)}   ` +
+					`${String(lat[Math.floor(lat.length / 2)] ?? 0).padStart(9)}   ` +
+					`${String(faults).padStart(6)}`
+			)
+		}
 	}
+	const mixLine = (rows: TurnResult[]): void => {
+		const subjects = [...new Set(rows.filter(r => r.ok && !r.silent && !r.empty).map(r => r.subject))]
+		for (const arm of arms) {
+			const spoke = rows.filter(r => r.arm === arm && r.ok && !r.silent && !r.empty)
+			const mix = subjects
+				.map(s => ({ s, n: spoke.filter(r => r.subject === s).length }))
+				.filter(x => x.n > 0)
+				.sort((a, b) => b.n - a.n)
+			console.log(`  ${arm.padEnd(9)} ${mix.map(x => `${x.s} ${x.n}`).join("  ") || "(said nothing)"}`)
+		}
+	}
+
+	console.log(`\n${"=".repeat(96)}\nWHAT CAME BACK  ${file.provider} ${file.model}\n`)
+	console.log("EVERY TURN — the whole game, as the coach would have experienced it")
+	armTable(file.results)
 	console.log(
 		`\n(lines/min assumes the shipped ${file.turnCadenceMs / 1000}s turn cadence from ` +
 			`DEFAULT_TURN_MS in src/web/lib/geminiLive.ts)`
 	)
-
-	/* -- subject mix ---------------------------------------------------------- */
 	console.log("\nWHAT IT TALKED ABOUT")
-	const subjects = [...new Set(file.results.filter(r => r.ok && !r.silent && !r.empty).map(r => r.subject))]
-	for (const arm of arms) {
-		const spoke = file.results.filter(r => r.arm === arm && r.ok && !r.silent && !r.empty)
-		const mix = subjects
-			.map(s => ({ s, n: spoke.filter(r => r.subject === s).length }))
-			.filter(x => x.n > 0)
-			.sort((a, b) => b.n - a.n)
-		console.log(`  ${arm.padEnd(9)} ${mix.map(x => `${x.s} ${x.n}`).join("  ") || "(said nothing)"}`)
+	mixLine(file.results)
+
+	/*
+	 * The two arms again, restricted to the checkpoints they SHARE — and this table is the one to
+	 * read, not the one above.
+	 *
+	 * Frames exist only from 0:02 to 6:43 of a 36:49 game, so the frame arm runs on 42 early-game
+	 * instants and the no-frame arm on all 140. Measured on the first full run, the top table read
+	 * "frame 93% silent, no-frame 84% silent", which looks like the picture making the coach
+	 * quieter and is nothing of the kind: it is laning phase against the whole game. On the shared
+	 * 42 both arms were 93%. A rate compared across different halves of a game is not a comparison.
+	 */
+	const pairedIds = new Set(file.results.filter(r => r.arm === "frame").map(r => r.id))
+	if (pairedIds.size > 0 && pairedIds.size < new Set(file.results.map(r => r.id)).size) {
+		const shared = file.results.filter(r => pairedIds.has(r.id))
+		console.log(
+			`\nTHE SAME ${pairedIds.size} CHECKPOINTS, BOTH ARMS — the only fair arm-vs-arm comparison\n` +
+				`(frames exist only from ${file.results.find(r => r.arm === "frame")?.clock ?? "?"} to ` +
+				`${[...file.results].reverse().find(r => r.arm === "frame")?.clock ?? "?"}; the rows above ` +
+				`compare laning phase against a whole game)`
+		)
+		armTable(shared)
+		mixLine(shared)
 	}
 
 	/* -- the ablation, pair by pair ------------------------------------------- */
