@@ -265,29 +265,45 @@ describe("the rotation, simulated over a real game", () => {
 		return said
 	}
 
-	it("fires the farm kind on its cooldown, several times in a game", () => {
-		const said = replay()
-		ok(said.length >= 3, `expected at least three farm lines, got ${said.length}`)
-		deepStrictEqual(
-			said.slice(0, 3).map(s => s.atSec),
-			[FIRST_FIRE_SEC, FIRST_FIRE_SEC + FARM_COOLDOWN_SEC, FIRST_FIRE_SEC + 2 * FARM_COOLDOWN_SEC]
-		)
-	})
-
-	it("says three DIFFERENT things when a kind fires three times", () => {
-		const first3 = replay().slice(0, 3).map(s => s.line)
-		strictEqual(new Set(first3).size, 3, `three firings said: ${JSON.stringify(first3)}`)
-		// And each one is a real clause, attached behind the number rather than replacing it.
-		clauses["farm-behind"]!.forEach((clause, i) => {
-			ok(first3[i]!.endsWith(` — ${clause}`), `firing ${i} said: ${first3[i]}`)
-			ok(/^you're \d+ CS down on your own pace/.test(first3[i]!), `the number is still first: ${first3[i]}`)
-		})
-	})
-
-	it("speaks every variant across the game, none of them stranded", () => {
+	/*
+	 * These used to assert that farm fires at least three times in a game. It no longer does: the
+	 * ranker was deliberately quietened this session (offers per minute 0.80 -> 0.48 over five real
+	 * games, CS-or-farm as the opening fact 46 -> 7), which is a product win and makes a cadence
+	 * assumption the wrong thing for a rotation test to rest on.
+	 *
+	 * So the guarantee is stated without reference to how often a kind fires: whatever the ranker
+	 * offers, no two consecutive firings of a kind say the same thing, and the mechanism itself is
+	 * exercised directly.
+	 */
+	it("never says the same thing twice running, however often the kind fires", () => {
 		const said = replay().map(s => s.line)
-		for (const clause of clauses["farm-behind"]!)
-			ok(said.some(l => l.endsWith(` — ${clause}`)), `never spoken: ${clause}`)
+		for (let i = 1; i < said.length; i++)
+			ok(said[i] !== said[i - 1], `repeated verbatim at firing ${i}: ${said[i]}`)
+	})
+
+	it("rotates through every variant when a kind is read repeatedly", () => {
+		// The mechanism, driven directly: reading a kind is what advances it, so N reads of a kind
+		// with N clauses must produce all N, in order, and then wrap.
+		const cursor = newAdviceCursor()
+		const variants = clauses["farm-behind"]!
+		const seen: string[] = []
+		for (let i = 0; i < variants.length * 2; i++)
+			seen.push(rotatingAdvice(clauses, cursor)["farm-behind"] ?? "")
+		strictEqual(new Set(seen).size, variants.length, `stranded a variant: ${JSON.stringify(seen)}`)
+		deepStrictEqual(seen.slice(0, variants.length), variants)
+		deepStrictEqual(seen.slice(variants.length), variants, "did not wrap cleanly")
+	})
+
+	it("attaches the clause behind the number rather than replacing it", () => {
+		const said = replay().map(s => s.line)
+		ok(said.length > 0, "the ranker offered no farm line at all")
+		for (const line of said) {
+			ok(/^you're \d+ CS down on your own pace/.test(line), `the number is not first: ${line}`)
+			ok(
+				clauses["farm-behind"]!.some(c => line.endsWith(` — ${c}`)),
+				`not one of the shipped clauses: ${line}`
+			)
+		}
 	})
 
 	it("is why the index is the firing count and NOT the clock", () => {
@@ -298,7 +314,12 @@ describe("the rotation, simulated over a real game", () => {
 		 * third at all. This is arithmetic, not a judgement call, so it is asserted rather than
 		 * argued.
 		 */
-		const fired = replay().map(s => s.atSec)
+		/*
+		 * Asserted from the COOLDOWN, not from a replay. The ranker was quietened this session and
+		 * a synthetic constant deficit no longer fires farm three times, but the collision is a
+		 * property of the arithmetic and holds whenever it does fire on its cooldown.
+		 */
+		const fired = [0, 1, 2].map(i => FIRST_FIRE_SEC + i * FARM_COOLDOWN_SEC)
 		const byClock = fired.map(sec => Math.floor(sec / 60) % 3)
 		strictEqual(new Set(byClock).size, 1, `the clock index would have varied: ${byClock}`)
 		const byCount = fired.map((_, i) => i % 3)
@@ -452,11 +473,18 @@ describe("the shipped champion files", () => {
 			))
 				if (/ CS down on your own pace/.test(line)) said.push(line)
 		}
-		ok(said.length >= 3, `only ${said.length} farm lines in a thirty-minute game`)
+		/*
+		 * No lower bound on the COUNT. The ranker was quietened deliberately this session, so how
+		 * often farm fires is a product decision that may keep moving; what must never move is that
+		 * consecutive firings differ and every line is a shipped clause.
+		 */
+		ok(said.length >= 1, "the shipped configuration offered no farm line at all")
+		for (let i = 1; i < said.length; i++)
+			ok(said[i] !== said[i - 1], `repeated verbatim at firing ${i}: ${said[i]}`)
 		strictEqual(
-			new Set(said.slice(0, 3)).size,
-			Math.min(3, clauses["farm-behind"]!.length),
-			`the first three farm lines repeated:\n${said.slice(0, 3).join("\n")}`
+			new Set(said).size,
+			Math.min(said.length, clauses["farm-behind"]!.length),
+			`the shipped farm lines repeated:\n${said.join("\n")}`
 		)
 	})
 

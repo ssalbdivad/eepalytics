@@ -672,6 +672,15 @@ const comparativeOwners = (
 		const named = mentions.filter(x => x.index < at)
 		const distinct: string[] = []
 		for (const x of named) if (!distinct.includes(x.owner)) distinct.push(x.owner)
+		if (distinct.length === 0) {
+			// "With 190 CS to Briar's 70 CS" — nobody is named before the pair, so the first
+			// figure is his and the possessive names the second.
+			const owner = mentions.find(x => x.index > at && x.index < at + m[0].length + 4)
+			if (owner === undefined) continue
+			out.set(at + m[0].indexOf(a), "you")
+			out.set(at + m[0].lastIndexOf(b), owner.owner)
+			continue
+		}
 		if (distinct.length !== 2) continue
 		const first = distinct[0]
 		const second = distinct[1]
@@ -706,7 +715,17 @@ const comparativeOwners = (
  * Rule 4 is what fixes the compound predicate: "and have 1020 gold" is a clause with no noun in
  * it, so the subject carries over, exactly as it does in English.
  */
-const CLAUSE_SPLIT = /,|;|\bso\b|\band\b|\bbut\b|\bwhile\b|\bthen\b/g
+const CLAUSE_SPLIT = /,|;|—|–|\bso\b|\band\b|\bbut\b|\bwhile\b|\bthen\b/g
+
+/**
+ * Units that make a figure SOMEBODY'S. A timer belongs to the map and to nobody on it.
+ *
+ * This is the difference between "With 190 CS to Briar's 70" — where 190 is unmistakably his, and
+ * saying so is the point — and "Drake is back in fifty-five seconds", where charging the 55 to
+ * anyone at all is the instrument inventing an owner in order to find a fault. That exact line is
+ * the shipped ranked fact, said verbatim, and it was being scored as a fabrication.
+ */
+const PLAYER_UNIT = /^\s*(?:cs|gold|kills?|deaths?|assists?|hp|health|level)\b/i
 
 const clauseOwner = (
 	line: string,
@@ -720,17 +739,33 @@ const clauseOwner = (
 		const between = line.slice(possessive.index, at)
 		if (/^\S*['\u2019]s\s+\S{0,4}$/.test(between)) return possessive.owner
 	}
-	// 2. Nobody named before it: the sentence is addressed to him, so the figure is his.
-	if (before.length === 0) return "you"
-	// 3. The nearest mention inside the same clause.
+	// Clause bounds: the figure may only look for an owner inside its own clause.
 	let clauseStart = 0
 	for (const m of line.matchAll(CLAUSE_SPLIT)) {
 		if (m.index !== undefined && m.index < at) clauseStart = m.index + m[0].length
 	}
-	const inClause = before.filter(m => m.index >= clauseStart)
-	const nearest = inClause.at(-1)
+	let clauseEnd = line.length
+	for (const m of line.matchAll(CLAUSE_SPLIT)) {
+		if (m.index !== undefined && m.index > at) {
+			clauseEnd = m.index
+			break
+		}
+	}
+	// 2. A name AFTER the figure but inside the same clause still owns it: "88 CS for Kayn" hands
+	//    88 to Kayn, and getting that wrong would make the rule a blanket amnesty.
+	const forward = mentions.find(m => m.index > at && m.index < clauseEnd)
+	if (before.length === 0 && forward !== undefined) return forward.owner
+	// 3. Nobody named anywhere before it. If the figure carries a player's unit it is his, because
+	//    the coach addresses one person; if it carries no unit it belongs to the map, and the
+	//    honest answer is that it has no owner to be wrong about.
+	if (before.length === 0)
+		return PLAYER_UNIT.test(line.slice(at + String(line.slice(at).match(/^\d+/)?.[0] ?? "").length)) ?
+				"you"
+			:	null
+	// 4. The nearest mention inside the same clause.
+	const nearest = before.filter(m => m.index >= clauseStart).at(-1)
 	if (nearest !== undefined) return nearest.owner
-	// 4. No noun in this clause, so the subject carries over from the start of the sentence.
+	// 5. No noun in this clause, so the subject carries over from the start of the sentence.
 	return before[0]?.owner ?? null
 }
 
