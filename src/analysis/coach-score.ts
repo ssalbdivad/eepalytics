@@ -742,6 +742,16 @@ const CLAUSE_SPLIT = /,|;|—|–|\bso\b|\band\b|\bbut\b|\bwhile\b|\bthen\b/g
 const PLAYER_UNIT = /^\s*(?:cs|gold|kills?|deaths?|assists?|hp|health|level)\b/i
 
 /**
+ * A sentence that opens on a bare verb is an instruction to him, whoever else it names.
+ *
+ * Drawn from the same vocabulary as the `ACTION` list further down — these are the verbs this
+ * coach actually opens on, and nothing here is a verb a third person could be the subject of
+ * without a name in front of it.
+ */
+const IMPERATIVE_OPENING =
+	/^(?:take|go|back|recall|reset|clear|start|come|stay|hold|rotate|collapse|buy|spend|invade|walk|get|be|keep|leave|punish|trade|fight|contest|path|push|dive|group|check|watch|wait|use|finish|shove|drop|swing|head|track|force|play|move|ask|remember|stop|avoid|skip|ignore|retreat|kite|peel|poke|farm|gank|chase|shop|ward|deny|don't|dont)\b/i
+
+/**
  * The same doctrine as `PLAYER_UNIT`, from the other side: units that make a figure the MAP'S.
  *
  * `PLAYER_UNIT` is only consulted on the one branch where nothing was named before the figure, so
@@ -831,6 +841,24 @@ const clauseOwner = (
 	 * across the dash into an imperative is the instrument inventing an owner in order to find a
 	 * fault, which is the same failure `PLAYER_UNIT` exists to prevent one branch earlier.
 	 */
+	/*
+	 * An IMPERATIVE sentence is addressed to him from its first word, so a clause inside it with no
+	 * noun of its own is about him and not about whoever the sentence mentioned in passing.
+	 * Measured: *"Recall on that Briar kill and spend the 1130 gold"* — 1130 is written on HIS line
+	 * of the block, and the rule below handed it to Briar because "Briar" is the sentence's first
+	 * mention. "and" joins the clause, so the hard-break test underneath cannot reach it.
+	 *
+	 * Gated on BOTH the imperative opening and a player's unit, because the amnesty this could
+	 * become is real and is pinned by a test: *"Briar is ahead and has 1180 gold"* has the same
+	 * subjectless second clause, opens on a name rather than a verb, and must stay a misattribution.
+	 */
+	const sentence = line.slice(0, at)
+	const clause = sentence.slice(Math.max(0, sentence.search(/[.!?]\s+\S*$/) + 1)).trimStart()
+	const imperative = IMPERATIVE_OPENING.test(clause)
+	if (imperative && before.every(m => m.index < clauseStart))
+		return PLAYER_UNIT.test(line.slice(at + String(line.slice(at).match(/^\d+/)?.[0] ?? "").length)) ?
+				"you"
+			:	null
 	const hard = Math.max(
 		line.lastIndexOf("—", at),
 		line.lastIndexOf("–", at),

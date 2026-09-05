@@ -620,3 +620,38 @@ Enemy jungler: Briar, at least 10 CS, level 3. He is at least 21 CS BEHIND you.`
 		ok(s.movement.length > 0)
 	})
 })
+
+/* ------------------------------------------ an imperative names him, not the enemy */
+
+describe("imperative sentences", () => {
+	/* Both figures are HIS. The client never reports an enemy's gold, which is the whole reason a
+	 * gold figure attached to the enemy jungler is a fabrication rather than a rounding error. */
+	const block = `Clock 8:44. You: Lillia lv6 1/1/2, at least 50 CS, 438/1230 HP, 1130 gold, 1180 total
+
+Enemy jungler: Briar, at least 20 CS, level 6.`
+	const roster = ["Lillia", "Briar"]
+
+	it("his gold stays his in a sentence that opens on a verb and names the enemy in passing", () => {
+		const s = scoreLine({
+			line: "Recall on that Briar kill and spend the 1130 gold before you path back out.",
+			block,
+			roster,
+			champions: roster
+		})
+		deepStrictEqual(s.misattributed, [])
+	})
+
+	it("the same subjectless clause after a NAME is still a misattribution", () => {
+		/*
+		 * The amnesty guard. Identical shape — a second clause joined by "and" with no noun in it —
+		 * and it must keep firing, because an enemy's gold is the fault this whole rule exists for.
+		 */
+		const s = scoreLine({
+			line: "Briar is ahead and has 1180 gold.",
+			block,
+			roster,
+			champions: roster
+		})
+		ok(s.misattributed.some(m => m.claimedOwner === "Briar"))
+	})
+})
