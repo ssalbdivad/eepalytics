@@ -318,9 +318,10 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["his item is a clock on the phase you are weak in, so farm through it rather than test it", ["role.items-change-a-duel", "belveth.judgment.weak-early"]],
 		["every camp you finish is a permanent stack, so run the route out rather than cut it", ["belveth.stacks-are-permanent"]],
 		["each dash direction has its own timer, so clear with one still pointed at the way out", ["belveth.q-per-direction-cooldown", "role.camps-are-gold-and-xp"]],
-		["put the next camps between you and the drake pit", ["role.objective-timers", "role.camps-are-gold-and-xp"]]
+		["stacks are the only thing you keep through a death, so bank them before contesting", ["belveth.stacks-are-permanent"]]
 	],
 	"trundle.md": [
+		["without the pillar down first you are just another body, so set the next one up", ["trundle.e-is-terrain"]],
 		["your power is now rather than later, so take the camps that put you next to him", ["trundle.judgment.early-power", "role.camps-are-gold-and-xp"]],
 		["your best version is the early duel, so cross for his camps while it still is", ["trundle.judgment.early-power", "trundle.q-saps-ad"]],
 		["he is buying time and you have none, so shorten the route and force contact", ["trundle.judgment.early-power"]],
@@ -334,7 +335,6 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["the pillar goes down to cut them apart before you commit, not once you are surrounded", ["trundle.e-is-terrain"]],
 		["the ult wants the biggest body in the fight, so drain the tank and not the carry", ["trundle.r-steals-from-the-biggest"]],
 		["your window is early, so start walking to the next one before it starts", ["trundle.judgment.early-power", "role.objective-timers"]],
-		["go and make the next one uneven instead of being the last body into this one", ["role.judgment"]],
 		["you want the fight you chose, so go take a camp of his and make him come", ["trundle.judgment.early-power", "role.camps-respawn"]],
 		["you have no dash, only a wall, so the pillar goes down before you commit rather than after.", ["trundle.no-dash", "trundle.e-is-terrain"]],
 		["your field is where you win, so take the fight at your camp instead of walking into theirs.", ["trundle.w-boosts-healing-and-speed"]],
@@ -348,12 +348,13 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["enemies dying near you heal you, so clear through the camp rather than backing", ["trundle.passive-heals-off-deaths"]]
 	],
 	"leesin.md": [
+		["your strong window is burning while you walk, so take the camps on the way to it", ["leesin.judgment.early-champion", "leesin.route-full-clear-first", "role.camps-are-gold-and-xp"]],
+		["the ward hop is the reach nobody else has, so pick the lane with a wall to cross", ["leesin.w-targets-any-ally-or-ward"]],
 		["your clear is unremarkable, so make the next deviation buy a kill or a plate", ["leesin.judgment.early-champion", "role.plates"]],
 		["you catch up on a landed Q with an ally nearby, not on a faster route", ["leesin.q-must-land-first", "leesin.w-targets-any-ally-or-ward"]],
 		["take his camps while your Q is up, and leave the moment it is not", ["leesin.q-must-land-first"]],
 		["you are an early champion, so turn this into a tower rather than sitting on it", ["leesin.judgment.early-champion"]],
 		["your lead is a kill threat rather than a stat check, so find a lane to follow up", ["leesin.judgment.early-champion", "leesin.q-must-land-first"]],
-		["path to the lane that can take a plate off the next gank", ["role.plates"]],
 		["levels down you can arrive but not finish, so take your camps and come back with R", ["leesin.r-is-his-only-displacement", "role.camps-are-gold-and-xp"]],
 		["a Q you land into a fight you still lose is the worst version of this, so walk away", ["leesin.q-must-land-first", "leesin.melee-commitment"]],
 		["put a ward in first, then come back for the fight with something to hop out to", ["leesin.w-targets-any-ally-or-ward"]],
@@ -370,7 +371,6 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["you win the phase before his items land, so force something before he finishes the next", ["leesin.judgment.early-champion", "role.items-change-a-duel"]],
 		["that makes the melee trade worse, so pick a target that is already damaged instead", ["role.items-change-a-duel", "leesin.q-must-land-first"]],
 		["once he beats your carry, kick him away from the fight rather than into it", ["leesin.r-is-his-only-displacement", "role.items-change-a-duel"]],
-		["full clear first, then deviate on purpose rather than on impulse", ["leesin.route-full-clear-first"]],
 		["make the next detour buy a kill or a plate, or do not take it", ["role.plates", "leesin.judgment.early-champion"]],
 		["the level that makes your gank a kill comes off camps, so clear first", ["role.camps-are-gold-and-xp", "leesin.judgment.early-champion"]]
 	]
