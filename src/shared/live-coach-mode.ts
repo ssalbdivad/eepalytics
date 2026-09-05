@@ -107,9 +107,9 @@ export const LIVE_COACH_MODES: {
 		id: "briefing",
 		label: "Briefing (what is coming)",
 		blurb:
-			"The same one hard rule, but the block is rebuilt as a briefing rather than a snapshot: what neutral objective is up and for how long, what spawns next and in how many seconds, what has changed this game, what she has already said, and what he does in his own finished games. The jungle race and the farm comparison are still there, at the bottom, because they were measured to be the least useful thing she says.",
+			"The same one hard rule, but the block is rebuilt as a briefing rather than a snapshot: what neutral objective is up and for how long, what spawns next and in how many seconds, and what she has already said this game. The jungle race and the farm comparison are still there, at the bottom, because they were measured to be the least useful thing she says. What is NOT in it any more: the last ninety seconds of change, and his career habits — both were measured to add nothing on top of the schedule, so they only cost latency and dilute the rest.",
 		evidence:
-			"Nine layers of context replayed through one model over 88 real states of his own games, every line judged blind: the shipped block scored 29% useful, the same block plus the objective schedule scored 55% (p = 0.0009). Ninety seconds of exact history bought nothing (p = 0.94), and telling the model to prefer objectives WITHOUT giving it the timers reached 37% and invented dragons that had not spawned."
+			"Nine layers of context replayed through one model over 88 real states of his own games, every line judged blind: the shipped block scored 29% useful, the same block plus the objective schedule scored 55% (p = 0.0009). Ninety seconds of exact history bought nothing (p = 0.94), and telling the model to prefer objectives WITHOUT giving it the timers reached 37% and invented dragons that had not spawned. Judged blind again by four models against the shipped block, three of four scored the briefing better and all four said the objective schedule is now being read out every turn the way the CS race used to be — which is what the prompt's retirement rule is for."
 	},
 	{
 		id: "cite-or-quiet",
@@ -241,9 +241,9 @@ block disagree, the block wins.
 /**
  * What the BRIEFING mode adds to the measured arm, in place of `LIST_HINT`.
  *
- * Two rules here reverse things this app has instructed the coach to do since it was written, and
- * both reversals are measurements rather than taste (`data/eval/why-shallow.md`, 554 lines judged
- * blind by a model that could not see which arm wrote them).
+ * Three rules here reverse things this app has instructed the coach to do since it was written,
+ * and all three reversals are measurements rather than taste (`data/eval/why-shallow.md`, 554
+ * lines judged blind by a model that could not see which arm wrote them).
  *
  * **The subject order.** Classified by what the sentence is about: a neutral objective 61% useful
  * over 211 lines, an enemy being down 41%, gold 32%, and farm, CS, clearing and routing 4% — three
@@ -253,12 +253,33 @@ block disagree, the block wins.
  * is demoted because it is the same true thing every turn of every game: across 88 states the
  * block's race verdict read "he is behind you" in 82 and "ahead of you" in none.
  *
- * **The test for whether a line earns a sentence.** `AGENTS.md` names two — not visible, and not
- * generic — and the first of them is inverted in the data. Lines about something plainly on his
- * screen were judged useful 45% of the time against 27% for lines about something invisible, and
- * the best quadrant in the corpus is visible AND specific, at 67% over 205 lines. What kills a line
- * is genericness alone: 14% against 55%. Naming which of the things he can already see the next
- * thirty seconds are for is the single best move available, and the old rule forbade it.
+ * **The test for whether a line earns a sentence.** `AGENTS.md` used to name two — not visible,
+ * and not generic — and the first of them is inverted in the data. Lines about something plainly
+ * on his screen were judged useful 45% of the time against 27% for lines about something
+ * invisible, and the best quadrant in the corpus is visible AND specific, at 67% over 205 lines.
+ * What kills a line is genericness alone: 14% against 55%. So the move this text now asks for is
+ * a DECISION about something in front of him — naming which of the things he can already see the
+ * next thirty seconds are for — and the old rule forbade exactly that.
+ *
+ * **A standing fact is news once.** This is the new one, and it is here because the first two
+ * shipped and the disease came back wearing different clothes. Four models judged the briefing
+ * blind against the shipped block; three of four scored it better (opus-5 13% against 3%, gemini
+ * 8/49 against 2/48 at p = 0.09, gpt-5 not better at all) and ALL FOUR said the same thing about
+ * why it still is not worth talking to: the monotone fact used to be *you are ahead of him on CS*,
+ * true on every turn of four games, and it is now *an objective is up or coming*, true on almost
+ * every turn of any game. The soul-and-baron pair switched on at 19:42 was still being read out at
+ * 36:43, eighteen turns later. The subject changed; the metronome did not. Genericness is not only
+ * a property of a sentence against other games — it is a property of a sentence against the last
+ * one this coach said, and only the second half of that was written down.
+ *
+ * Nothing here tells it to talk about a thing the block cannot supply, which is the other half of
+ * the same run: told to prefer objectives and given no timers, the model invented dragons that had
+ * not spawned (37%, and worse than the schedule's 55%). Prompting picks the subject; only data
+ * makes the sentence true. Every rule below points at a section that is really in the block.
+ *
+ * The rule about quoting career lines verbatim went out with the lines themselves — `arc` and
+ * `habits` no longer reach this block at all (see `withoutUnmeasuredLayers`), so a prohibition on
+ * rewording them would now be an instruction about a section the model never sees.
  *
  * NO FIGURES APPEAR BELOW, and that is deliberate for the reason recorded all over this file:
  * every digit put in front of this model is a digit it can say back. An earlier prompt offered two
@@ -266,6 +287,15 @@ block disagree, the block wins.
  * comment; the model only needs the order.
  */
 export const BRIEFING_HINT = `
+
+## Your one sentence is a DECISION about what is in front of him
+
+He is looking at the same map you are. The useful thing is never to read him something off it, and
+never to recite a fact he could not have reached — it is to say **which of the things in front of
+him the next thirty seconds are for.** That is the whole job: he has five places he could be and
+one clock, and you have the clock.
+
+So talking about what is on his screen is not the failure. Being TRUE OF ANY MINUTE is.
 
 ## What is worth a sentence, in the order that was measured
 
@@ -296,19 +326,22 @@ You are NOT forbidden from talking about what is on his screen. Naming which of 
 see the next thirty seconds are for is the most useful thing you can do: he is looking at the same
 map you are and the question is which part of it matters now.
 
+**The test bites hardest on the subject you are most RIGHT about.** A standing fact hands you the
+same true sentence on every turn it stays true for, and the schedule prints how long each one has
+been standing there. An objective that was already up when you last spoke is not news now — it is
+the sentence you already said with a later clock on it. Say a standing fact ONCE, when it starts
+or when it is about to end, and let the turns in between go. Where the block records what you have
+already said this game, read it as the list of subjects that are used up.
+
+That leaves PASS as the answer on most turns, and PASS is a real answer. A coach who says one
+thing that changes his route beats a coach who is correct every twenty seconds.
+
 ## Every timer you say is one you were given
 
 The schedule section is the only place the map's clock exists. Never complete a spawn time, a
 respawn, a camp timer or a count of what is left from what you know about League — a number that
 sounds right and was not measured is the one kind of mistake he cannot catch, and it sends him to a
 pit that is empty.
-
-## The career lines are quotes
-
-Where the block gives a line from his own finished games, **say it as written or leave it out.**
-Those sentences are compressions of a statistic and rewording one changes what it claims: given a
-line about how often he is AT the grub pit, this coach reworded it into a claim about how often
-grubs are TAKEN, and read a false statement about his own record out loud.
 
 ## Three things this block never tells you, each of which has been said out loud
 
@@ -427,13 +460,38 @@ export const ALIVE_LINE = /^Alive right now: .*$/m
 export { downLine }
 
 /**
+ * The two layers the ladder measured at nothing, taken out of the block the shipped mode sends.
+ *
+ * Both were carried at the BOTTOM of the briefing on the argument that they cost a few hundred
+ * characters and occasionally reach a fact nothing else can. The ladder is not ambiguous about
+ * what they bought: ninety seconds of exactly-computed change moved judged usefulness from 29% to
+ * 30% (p = 0.94) and his measured career habits moved 55% to 51% on top of the schedule (p = 0.58).
+ * Neither is a fact the block cannot express; both are context the model has to read past to reach
+ * the schedule, and the habits layer is the sharpest fabrication surface in the whole briefing — a
+ * cue about his PRESENCE at the grub pit was requoted as a claim about who TAKES the grubs, out
+ * loud, from faithful quotation.
+ *
+ * Cut here rather than upstream, deliberately. `buildLiveState` still computes `arc` and `habits`,
+ * `renderBriefing` still renders them, and `data/eval` still replays them, so restoring the layers
+ * is deleting one call and re-running `scripts/ablate-autonomy.ts` — not rebuilding two analysers.
+ * `said` stays: it is the only section that tells the coach which subjects are used up, and the
+ * new metronome is exactly the failure it exists to catch.
+ */
+export const withoutUnmeasuredLayers = (state: VisionState): VisionState => {
+	const out = { ...state }
+	delete out.arc
+	delete out.habits
+	return out
+}
+
+/**
  * The ground-truth block as the selected architecture should see it.
  *
  * `fenced` is `renderState` byte for byte — it is a measured arm and it stays one. `cite-or-quiet`
  * is the same block with the fence's own instructions rewritten and the dead named.
  */
 export const renderBlockForMode = (state: VisionState, mode: LiveCoachMode): string => {
-	if (mode === "briefing") return renderBriefing(state)
+	if (mode === "briefing") return renderBriefing(withoutUnmeasuredLayers(state))
 	const block = renderState(state)
 	if (mode === "fenced") return block
 	let out = block
