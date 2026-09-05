@@ -1350,9 +1350,6 @@ export interface PaceResult {
 	droppedRepeats: number
 	/** Of the dropped lines the blind judge called useful, how many restate the line that silenced them. */
 	droppedUsefulRepeats: number
-	/** Turns carrying an `interrupt` fact where the coach's own sentence was about that fact. */
-	interruptTurnsOnTopic: number
-	interruptTurns: number
 }
 
 /** Most lines inside any `windowSec` window that starts on a spoken line. */
@@ -1475,11 +1472,7 @@ export const runPolicy = (turns: readonly PaceTurn[], policy: PacePolicy): PaceR
 		spokenAt,
 		dropped,
 		droppedRepeats,
-		droppedUsefulRepeats,
-		interruptTurnsOnTopic: turns.filter(
-			t => !t.silent && t.tier === "interrupt" && t.facts.some(f => sameTopic(f, t.line))
-		).length,
-		interruptTurns: turns.filter(t => !t.silent && t.tier === "interrupt").length
+		droppedUsefulRepeats
 	}
 }
 
@@ -1603,6 +1596,7 @@ const paceSweep = (): void => {
 		{ id: "flat-90", label: "flat 90s", floorSec: 90 },
 		{ id: "flat-120", label: "flat 120s", floorSec: 120 },
 		{ id: "flat-150", label: "flat 150s", floorSec: 150 },
+		{ id: "tier-45", label: "45s, interrupt cuts to 20s", floorSec: 45, interruptFloorSec: 20 },
 		{ id: "tier-60", label: "60s, interrupt cuts to 20s", floorSec: 60, interruptFloorSec: 20 },
 		{ id: "tier-90", label: "90s, interrupt cuts to 20s", floorSec: 90, interruptFloorSec: 20 },
 		{ id: "adaptive-90-45", label: "90s quiet / 45s when something is expiring", floorSec: 90, busyFloorSec: 45 },
@@ -1655,7 +1649,20 @@ const paceSweep = (): void => {
 				`${r.suppressed > 0 ? `${r.droppedRepeats} (${Math.round((r.droppedRepeats / r.suppressed) * 100)}%)` : "-"}`
 		)
 	say("")
-	say(`interrupt-tier turns where her own sentence was about the interrupt: ${results[0]!.interruptTurnsOnTopic} of ${results[0]!.interruptTurns}`)
+	/*
+	 * QUOTED, not scored. The exemption is only worth its cost if the sentence she writes on an
+	 * interrupt turn is ABOUT the interrupt, and a mechanical topic match cannot settle that: it
+	 * scored "that fight was 3 for 1, so reset before you take anything else" against "That was a
+	 * good fight, so recall with your 1067 gold before you take anything else" as a MISS, because
+	 * the word `gold` sorts above the word `fight` in `SUBJECTS`. Six pairs a game is a short
+	 * enough list to read.
+	 */
+	say("=== EVERY TURN THAT WOULD BUY AN EXEMPTION, RANKED FACT AGAINST HER LINE ==")
+	for (const t of turns)
+		if (!t.silent && t.tier !== "standing") {
+			say(`${t.clock.padStart(6)} [${t.tier}] ranked: ${t.facts.join(" | ")}`)
+			say(`${" ".repeat(6)}   ${" ".repeat(t.tier.length)}  said:   ${t.line}`)
+		}
 	say("")
 	say("=== WHAT THE BLIND JUDGE SAID ABOUT WHAT SURVIVED =======================")
 	say("policy             kept verdicts                    dropped verdicts")
