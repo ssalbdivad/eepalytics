@@ -344,25 +344,17 @@ const buildLiveState = (
 		frameRead = null
 		lastFrameSide = null
 		lastTruth = null
-		factMemory.lastFarmCs = 0
-		factMemory.lastGoldAtSec = 0
-		factMemory.goldSinceSec = 0
-		factMemory.praiseSaid.clear()
-		factMemory.lastRaceAtSec = 0
-		factMemory.lastRaceGap = 0
-		factMemory.saidRestraint = false
-		factMemory.saidLevelGap = false
-		factMemory.saidKillShare = false
-		factMemory.saidOwnDeath = false
-		factMemory.saidSwing = false
-		factMemory.saidObjectives = false
-		factMemory.goldMentions = 0
-		factMemory.lastObjectiveAtSec = 0
-		factMemory.sawCounterpartBuild = false
-		factMemory.seenCounterpartItems.clear()
-		factMemory.lastLedWithDeath = false
-		factMemory.lastGoldMentioned = 0
-		factMemory.lastFarmAtSec = 0
+		/*
+		 * ONE CALL, not a list of fields.
+		 *
+		 * This was twenty-one assignments naming fields by hand, and it was already stale: counted
+		 * against `FactMemory`, it cleared 22 of 26 fields, and the four it missed were the four
+		 * most recently added. `resetFactMemory` exists precisely to end that — it assigns a fresh
+		 * memory in place, so a field added tomorrow is reset today. Leaking one across games is
+		 * the same class of bug as a socket spanning two: an announce-once fact that was already
+		 * spent stays spent, and the coach silently loses a line for the whole next game.
+		 */
+		resetFactMemory(factMemory)
 		resetAdviceCursor(adviceCursor)
 		return null
 	}

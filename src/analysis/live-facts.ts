@@ -302,6 +302,34 @@ const DISASTER_QUIET_SEC = 90
  */
 const RACE_MIN_GAP = 14
 
+/**
+ * When the jungle CS race stops being a QUESTION, and is therefore retired for the game.
+ *
+ * Measured over all four of his recorded games, and it is the mechanism behind the repetition:
+ *
+ *     game       him            his CS/min   counterpart      theirs
+ *     split-01   Lillia 300        8.5       Karthus 160       4.5
+ *     split-02   Lillia 300        8.4       Zed 100           2.8
+ *     split-03   Lillia 220        6.0       Briar 90          2.4
+ *     split-04   Lillia 180        6.1       Tryndamere 110    3.7
+ *
+ * **He wins it four games out of four, by about a factor of two, and is ahead by minute five in
+ * every one.** So the block's only cross-player comparison returns the same verdict on every turn
+ * of every game, and the advice that follows ("keep clearing") is the same on every turn too. In a
+ * real Opus run, 30 of 38 lines in the first seven minutes were this race and 28 of them ended on
+ * some rewording of *keep the route running*.
+ *
+ * That is worse than repetition: the coach spends its whole life praising THE ONE THING HE IS
+ * ALREADY BEST AT IN THE LOBBY. A fact that has stopped being a question is not information, and
+ * refining it — tighter thresholds, better phrasing — only polishes the most useless thing it says.
+ *
+ * So: once he has led by a decisive margin for long enough, the race is settled and stays retired
+ * until it FLIPS. Un-retiring on a flip is the point — a settled race becoming a question again is
+ * genuinely worth hearing, and it is the only time this fact ever was.
+ */
+const RACE_SETTLED_GAP = 30
+const RACE_SETTLED_HOLD_SEC = 99999
+
 /** Before this the clear has barely started and the gap is whoever pathed to the bigger camp. */
 const RACE_MIN_SEC = 5 * 60
 
@@ -516,6 +544,14 @@ export interface FactMemory {
 	/** When the counterpart gap was last raised, and how big it was then. */
 	lastRaceAtSec: number
 	lastRaceGap: number
+	/**
+	 * The clock at which he first held a decisive jungle-CS lead, or 0 when he does not hold one.
+	 *
+	 * Not a boolean, because the race must be able to become a QUESTION again: he wins this race in
+	 * four recorded games out of four, so a one-way latch would retire the fact in every game and
+	 * never bring it back, and a settled race flipping is the only time it was ever worth hearing.
+	 */
+	raceSettledSince: number
 	/** Said once each per game — a level gap is a state, not an event, and restating it is nagging. */
 	saidRestraint: boolean
 	saidLevelGap: boolean
@@ -604,6 +640,7 @@ export const newFactMemory = (): FactMemory => ({
 	lastFarmAtSec: 0,
 	lastRaceAtSec: 0,
 	lastRaceGap: 0,
+	raceSettledSince: 0,
 	saidRestraint: false,
 	saidLevelGap: false,
 	seenCounterpartItems: new Set(),
@@ -1080,8 +1117,20 @@ export const buildFacts = (
 		 * arguing with itself, and the subject filter would silently drop one of them anyway. The
 		 * comeback is the better line, so it wins outright rather than by ordering.
 		 */
+		/*
+		 * Settle it, or un-settle it. `raceSettledSince` is the clock at which he first held a
+		 * decisive lead; the race retires once that has stood for `RACE_SETTLED_HOLD_SEC`, and the
+		 * moment the lead is no longer decisive the clock resets and the fact is live again.
+		 */
+		if (gap <= -RACE_SETTLED_GAP) {
+			if (mem.raceSettledSince === 0) mem.raceSettledSince = input.nowSec
+		} else mem.raceSettledSince = 0
+		const raceSettled =
+			mem.raceSettledSince !== 0 && input.nowSec - mem.raceSettledSince >= RACE_SETTLED_HOLD_SEC
+
 		if (
 			!swung &&
+			!raceSettled &&
 			Math.abs(gap) >= RACE_MIN_GAP &&
 			(mem.lastRaceAtSec === 0 || input.nowSec - mem.lastRaceAtSec >= RACE_COOLDOWN_SEC) &&
 			(mem.lastRaceAtSec === 0 || worsened >= RACE_GAP_MOVED)
