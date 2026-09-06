@@ -2096,3 +2096,22 @@ describe("buildFacts — an interrupt does not charge a floor it exempted itself
 		deepStrictEqual(soon, [], "a second slow fact inside two minutes is still withheld")
 	})
 })
+
+describe("buildFacts — the one plural pit", () => {
+	it("says the grubs HAVE been up and nobody has taken THEM", () => {
+		/*
+		 * This string is read out loud. `spokenDuration` carries the same note for the same reason,
+		 * after a model read "spawns in 1 seconds" to him verbatim off the schedule.
+		 */
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({ nowSec: 800, standing: [{ name: "Void grubs", atSec: 480, heldSec: 320 }] }),
+			mem
+		)
+		ok(
+			out.some(f => /^Void grubs have been up 5 minutes 20 seconds and nobody has taken them/.test(f)),
+			out.join(" | ")
+		)
+		strictEqual(premiseOf("Void grubs have been up 5 minutes and nobody has taken them").kind, "uncontested")
+	})
+})

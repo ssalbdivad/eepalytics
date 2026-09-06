@@ -416,7 +416,7 @@ export const premiseOf = (text: string): Premise => {
 	 * text in `live-facts.test.ts`; a premise parser that silently returns `unknown` reads as a
 	 * quiet coach rather than as a broken classifier, which is how it goes unnoticed.
 	 */
-	const stood = /^(.+?) has been up .+ and nobody has taken it/.exec(t)
+	const stood = /^(.+?) ha(?:s|ve) been up .+ and nobody has taken (?:it|them)/.exec(t)
 	if (stood) return { kind: "uncontested", label: stood[1]! }
 
 	if (/^\d+ of your \d+ deaths are /.test(t)) return { kind: "matchup" }

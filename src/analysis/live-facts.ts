@@ -120,6 +120,86 @@
  * not a function of any state, and the second is only visible in the frame (`stranded`), which the
  * frameless replay cannot exercise.
  *
+ * ## WHY IT WAS QUIET, measured rather than guessed — `scripts/measure-starve.ts`
+ *
+ * Three blind judges on three models converged on one finding: the lines this function ranks are
+ * several times more useful per line than anything else in the block, and it offered one on about a
+ * tenth of turns. Nothing here could say WHY, because the function returns what it offers and says
+ * nothing about what it built and threw away — so a threshold that never fired and a floor that
+ * withheld a real line looked identical from outside. `FactOptions.trace` is that seam, and it
+ * turns "starved" into a table.
+ *
+ * Over the four recorded games at the shipped twenty-second turn, with his real rolling baseline:
+ * **493 facts built, 84 offered, and the ranked list was non-empty on 77 of 306 turns.** Where the
+ * other 409 went:
+ *
+ *     routine-gap  184     fight-quiet  34     retired      8
+ *     min-gap      106     sole-line    30     outranked    7
+ *     subject-rep   24     event-veto   16
+ *
+ * Two of those are the answer and neither of them is a threshold.
+ *
+ * ### 1. An interrupt charged a floor it had exempted itself from
+ *
+ * Attributing every gap rejection to the subject of the offer that started its clock:
+ * **176 of 314 — 56% — were stopped by a floor started by a `fight` line.** A fight is `interrupt`,
+ * so `allowed` returns before every rate in this function, and then the turn it took set
+ * `lastOfferedAtSec` and bought the full two-minute routine quiet for everything else. Fights fire
+ * on 39 turns of 306, so one turn of high-stakes news was buying two minutes of silence about
+ * everything he cannot see, thirty-nine times over a corpus.
+ *
+ * The routine floor's own argument names slow facts specifically — farm, gold and the objective
+ * count "turn into nagging, because the state that produced them is still there next turn". That is
+ * a statement about a slow fact following a SLOW fact, so it is now counted from `lastStandingAtSec`
+ * rather than from any offer at all. `MIN_GAP_SEC` is still charged by everything, because its
+ * argument — the previous instruction has plausibly been acted on — is about any two lines, and the
+ * subject bar is still measured from any offer, because a subject he heard is a subject he heard.
+ * Measured alone: 84 offers to 96, and 77 speaking turns to 88.
+ *
+ * ### 2. The supply was thin, and that is the bigger half
+ *
+ * With every floor relaxed to nothing the ranker still only reaches ~100 offers, because 83 of the
+ * 237 facts that survive are `fight` and `praise` — one of which is already unfenced and the other
+ * of which is warmth by its own definition. **The floors were half the answer; the other half is
+ * that there was not enough to say.** So two fact kinds were added, both named by
+ * `data/eval/target-lines.md` as premises the block could not express, both settled by
+ * `events.Events` and the schedule this app already computes: how long an objective has STOOD
+ * untaken (`stood`), and who keeps killing whom (`matchup`).
+ *
+ * Both changes together, over the same four games:
+ *
+ *                                    before   after
+ *     turns carrying a ranked fact    77/306   94/306   25.2% -> 30.7%
+ *     ranked lines offered            84       109
+ *     same subject two turns running   4        4
+ *     longest run of one subject       2        2
+ *
+ * Retirement is untouched and is now the largest single filter in the table (197 of 526), which is
+ * the intended shape: a fact stops being offered because its answer has stopped changing, not
+ * because a clock has not run out.
+ *
+ * ### What was tried and did NOT pay, recorded so it is not tried again
+ *
+ * - **Deleting the routine floor outright** rather than re-keying it: 100 offers against 96, for a
+ *   rule with a real argument behind it. Kept the argument.
+ * - **Exempting `praise` from the routine floor**, on the theory that a line carrying no
+ *   information should not buy silence: 110 offers against 109. It is not the bottleneck, and a
+ *   special case for no measured gain is how this file got its worst rules.
+ *
+ * ### A whole fact kind that has never once fired, and cannot
+ *
+ * `build` — "what the enemy jungler just BOUGHT", which `AGENTS.md` names as one of the four things
+ * that earn a sentence — was built ZERO times in four games. `routes/live.ts` gates it on
+ * `item.price >= 2000`, and the Live Client Data API's `price` is the item's COMBINE cost, not its
+ * total: across all four games the largest non-consumable `price` on any player is 1300, and it is a
+ * B. F. Sword. No threshold on that field can work either, because components outprice legendaries
+ * on it — B. F. Sword 1300 and Needlessly Large Rod 1200 against Rabadon's Deathcap 1100,
+ * Stridebreaker 750 and Blade of The Ruined King 725. The feed carries no total cost and no tier
+ * field, so this is written down rather than fixed by guessing: a heuristic on the slot count (a
+ * combine consumes slots, a component purchase adds one) tracks the real completions in the corpus
+ * and misfires on a full inventory, and a shopping notification for a Pickaxe is the exact failure
+ * that fact was fenced against.
+ *
  * Pure: state goes in, state comes out. The daemon owns the one mutable copy.
  */
 
@@ -1300,6 +1380,7 @@ export const buildFacts = (
 		 * runs, so nothing is spent and the line is still available the moment he walks away.
 		 */
 		if (frame !== null && frame === SCHEDULE_SIDE[o.name]) continue
+		const plural = o.name === "Void grubs"
 		const q: Question = {
 			key: `stood:${o.name}`,
 			/*
@@ -1319,7 +1400,15 @@ export const buildFacts = (
 			 * stood slightly LESS long than it will have by the time the sentence lands.
 			 */
 			text: withAdvice(
-				`${o.name} has been up ${spokenDuration(Math.round(o.heldSec))} and nobody has taken it`,
+				/*
+				 * "Void grubs HAVE been up ... and nobody has taken THEM". The one plural name in
+				 * the schedule, and this string is spoken aloud — `spokenDuration` carries the same
+				 * note one line down for the same reason, after a model read "spawns in 1 seconds"
+				 * out to him verbatim. A grammar mistake here is a grammar mistake in his ear.
+				 */
+				`${o.name} ${plural ? "have" : "has"} been up ${spokenDuration(Math.round(o.heldSec))} and nobody has taken ${
+					plural ? "them" : "it"
+				}`,
 				input.advice?.["objective-uncontested"]
 			),
 			subject: "objectives",
