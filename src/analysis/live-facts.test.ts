@@ -27,7 +27,7 @@ import {
 	TURN_PIPE_SEC,
 	WINDOW_MIN_SEC
 } from "./live-facts.ts"
-import type { FactInput, FactMemory } from "./live-facts.ts"
+import type { FactInput, FactMemory, FactTrace } from "./live-facts.ts"
 import { premiseOf, speechDurationSec } from "./timeliness.ts"
 import { SCHEDULE_UNCONTESTED_SEC } from "../shared/live-state.ts"
 
@@ -46,14 +46,40 @@ const heard = (raw: number, line: (n: number) => string, pipeSec = SOCKET_PIPE_S
 /**
  * Let gold sit long enough to be worth saying, then return the tick at which it is.
  *
- * Gold requires GOLD_MIN_HELD_SEC of holding before it is ever mentioned — the amount is on his
- * HUD and only the duration is news. Tests that use a gold line as "some other fact" have to
- * respect that, so they prime through this rather than each inventing its own timeline.
+ * Gold requires GOLD_MIN_HELD_SEC of holding before it is ever BUILT — the amount is on his HUD
+ * and only the duration is news. It is never offered any more (see `recall-and-spend` below), so
+ * this now primes the tests that assert on what the ranker builds and refuses.
  */
 const holdGold = (mem: FactMemory, gold: number, crossedAt: number): number => {
 	buildFacts(input({ nowSec: crossedAt, currentGold: gold }), mem)
 	return crossedAt + GOLD_MIN_HELD_SEC
 }
+
+/**
+ * Every fact BUILT this turn and what became of it — the only way to assert on a banned family.
+ *
+ * A ban is a rejection rather than a missing `push` precisely so it stays visible here: a family
+ * that is simply deleted looks identical to a threshold that never fired, which is the confusion
+ * `FactOptions.trace` was added to end.
+ */
+const built = (i: FactInput, mem: FactMemory): FactTrace[] => {
+	const out: FactTrace[] = []
+	buildFacts(i, mem, { trace: r => out.push(r) })
+	return out
+}
+
+/**
+ * A standing objective, which is what the tests below reach for when they need "some other slow
+ * fact" to sit beside the one under test.
+ *
+ * It used to be an unspent-gold line. Gold is banned now, so a test that used it as scenery was
+ * asserting on a family that can no longer speak — and every one of those failures looked like a
+ * bug in the rule actually being tested.
+ */
+const slow = (name = "Baron", atSec = 300, heldSec = SCHEDULE_UNCONTESTED_SEC + 60) => ({
+	standing: [{ name, atSec, heldSec }]
+})
+const SLOW_LINE = /nobody has taken it/
 
 const input = (over: Partial<FactInput> = {}): FactInput => ({
 	nowSec: 600,
