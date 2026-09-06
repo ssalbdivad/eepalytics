@@ -259,6 +259,31 @@ export interface FactOptions {
 	path?: CoachPath
 	/** Seconds between this state being read and the first syllable. Defaults from `path`. */
 	pipeSec?: number
+	/**
+	 * A DIAGNOSTIC SINK, and the reason it exists is that this file could not answer its own
+	 * question.
+	 *
+	 * `buildFacts` returns the lines it offers and says nothing about the ones it built and threw
+	 * away, so "the ranker is starved" was measurable only as an absence — 80 offers over 306 turns
+	 * of four recorded games, with no way to tell a threshold that never fired from a floor that
+	 * withheld a line that did. Every candidate cause in this file (thresholds, the tier gate,
+	 * announce-once latches, two independent brakes multiplying) predicts the same output and a
+	 * different reason, so the reason is the measurement.
+	 *
+	 * Called once per fact BUILT, offered or not, after the turn is decided. Never called on the
+	 * shipped path — it is undefined there — and it may not influence anything: the sink cannot
+	 * write to `mem` and nothing above reads it.
+	 */
+	trace?: (rec: FactTrace) => void
+}
+
+/** One fact that was built this turn, and what became of it. See `FactOptions.trace`. */
+export interface FactTrace {
+	subject: FactSubject
+	tier: FactTier
+	text: string
+	/** Null when the line was offered; otherwise the name of the rule that stopped it. */
+	reason: string | null
 }
 
 /**
@@ -1982,7 +2007,15 @@ export const buildFacts = (
 	 */
 	const veto = vetoingEvent(input)
 
-	const allowed = (f: Fact): boolean => {
+	/**
+	 * Why this line may not be said, or null if it may.
+	 *
+	 * Split out of `allowed` so the REASON survives — see `FactOptions.trace`. Memoised below
+	 * because `allowed` is asked about the same fact more than once a turn (a window is in the
+	 * ranked list and in `alone`), and the trace must record one verdict per fact rather than the
+	 * last one asked for.
+	 */
+	const rejection = (f: Fact): string | null => {
 		/*
 		 * THE TIER GATE, and it is first because it is structural rather than a rate.
 		 *
@@ -1994,7 +2027,7 @@ export const buildFacts = (
 		 * This is the one rule here that makes the socket structurally different from every other
 		 * provider rather than merely faster.
 		 */
-		if (path === "turn" && reactive(f)) return false
+		if (path === "turn" && reactive(f)) return "turn-path-reactive"
 		/*
 		 * THE EVENT VETO, above the interrupt exemption, because it is about whether the line is
 		 * TRUE-BUT-WRONG rather than about how urgent it is. "Your CS has not moved in three
@@ -2002,7 +2035,7 @@ export const buildFacts = (
 		 * not a fact that arrived at a bad moment; it is a fact that means the opposite of what it
 		 * says. See `TREND_VETO_SEC`.
 		 */
-		if (f.trend && veto !== null) return false
+		if (f.trend && veto !== null) return "event-veto"
 		/*
 		 * RETIREMENT, and it sits with the veto rather than with the rates for the same reason: a
 		 * retired answer is not being delayed, it has stopped being information. See
@@ -2010,10 +2043,10 @@ export const buildFacts = (
 		 * is observed on every turn its fact was built — which is what lets the flip be noticed.
 		 */
 		const answer = f.question ? standingOf(mem.retired, f.question, input.nowSec) : null
-		if (answer && !answer.open) return false
+		if (answer && !answer.open) return "retired"
 		// An enemy Baron and a fight he missed are worth cutting in on anything. Both are rare,
 		// both are announce-once, and staying quiet about either to protect a rate is absurd.
-		if (f.tier === "interrupt") return true
+		if (f.tier === "interrupt") return null
 		/*
 		 * The same subject may not follow itself inside ROUTINE_GAP_SEC.
 		 *
@@ -2024,8 +2057,8 @@ export const buildFacts = (
 		 * standing floor uses, and it means the worst case for any one topic is two lines in four
 		 * minutes rather than the six he actually got.
 		 */
-		if (mem.lastSubjects.includes(f.subject) && sinceLast < ROUTINE_GAP_SEC) return false
-		if (sinceLast < MIN_GAP_SEC) return false
+		if (mem.lastSubjects.includes(f.subject) && sinceLast < ROUTINE_GAP_SEC) return "subject-repeat"
+		if (sinceLast < MIN_GAP_SEC) return "min-gap"
 		/*
 		 * A FLIP IS NEWS, and it is the only time these facts ever were.
 		 *
@@ -2039,8 +2072,15 @@ export const buildFacts = (
 		 * at which the previous instruction has plausibly been acted on, nor past the subject bar. A
 		 * flip is worth saying loudly; it is not worth talking over the last thing that was said.
 		 */
-		if (answer?.flipped && answer.from !== null) return true
-		return f.tier !== "standing" || sinceLast >= ROUTINE_GAP_SEC
+		if (answer?.flipped && answer.from !== null) return null
+		return f.tier !== "standing" || sinceLast >= ROUTINE_GAP_SEC ? null : "routine-gap"
+	}
+
+	/** One verdict per fact, remembered, so the trace and the ranking cannot disagree. */
+	const verdict = new Map<Fact, string | null>()
+	const allowed = (f: Fact): boolean => {
+		if (!verdict.has(f)) verdict.set(f, rejection(f))
+		return verdict.get(f) === null
 	}
 
 	/*
@@ -2136,6 +2176,50 @@ export const buildFacts = (
 		: disaster ? []
 		: soleRotate.length > 0 ? soleRotate
 		: distinct(ranked).slice(0, MAX_FACTS)
+
+	/*
+	 * THE TRACE, emitted once the turn is decided and read by nothing that ships.
+	 *
+	 * A fact reaches one of three ends: offered, stopped by a rule in `rejection`, or allowed and
+	 * then passed over because a sole line took the turn, a blackout was in force, or it fell off
+	 * the end of `MAX_FACTS`. The last group is invisible in `rejection` and is most of the
+	 * interesting cases, so it is named here rather than lumped in with the rules.
+	 */
+	if (opts.trace) {
+		const offered = new Set(out)
+		const passedOver =
+			input.fight?.quiet ? "fight-quiet"
+			: soleFight.length + soleRestraint.length + soleLost.length + soleWindow.length > 0 ?
+				"sole-line-took-turn"
+			: disaster ? "disaster-blackout"
+			: soleRotate.length > 0 ? "sole-rotate-took-turn"
+			: "outranked"
+		for (const f of [
+			...fight,
+			...ownDeath,
+			...restraint,
+			...windows,
+			...build,
+			...race,
+			...objectives,
+			...participation,
+			...rest,
+			...rotate,
+			...lost,
+			...money,
+			...farm,
+			...deaths,
+			...praise
+		]) {
+			const why = verdict.get(f)
+			opts.trace({
+				subject: f.subject,
+				tier: f.tier,
+				text: f.text,
+				reason: offered.has(f) ? null : typeof why === "string" ? why : passedOver
+			})
+		}
+	}
 
 	/*
 	 * Memory is written HERE, for the facts that were actually offered, and nowhere else.
