@@ -54,17 +54,28 @@ describe("the retirement ledger", () => {
 		assert.equal(flip.heldSec, 0)
 	})
 
-	it("does not report the same flip twice, and reports it twice in the same turn", () => {
+	it("keeps an unspoken flip news until it is actually said", () => {
 		/*
 		 * `standingOf` writes as it looks — noticing a change IS the observation — so it has to be
-		 * safe to call more than once on one turn. `allowed` in `analysis/live-facts.ts` calls it
-		 * once per candidate list.
+		 * safe to call more than once, and `analysis/live-facts.ts` calls it on every turn a fact is
+		 * BUILT including the ones where the speech floor then withholds it. A flip that expired on
+		 * the clock would be consumed by the very turn that refused to say it.
 		 */
 		const mem = newRetirementMemory()
 		spendAnswer(mem, race("ahead"), 300)
 		assert.equal(standingOf(mem, race("behind"), 900).flipped, true)
 		assert.equal(standingOf(mem, race("behind"), 900).flipped, true)
-		assert.equal(standingOf(mem, race("behind"), 920).flipped, false)
+		assert.equal(standingOf(mem, race("behind"), 920).flipped, true, "withheld, so still unheard")
+		spendAnswer(mem, race("behind"), 940)
+		assert.equal(standingOf(mem, race("behind"), 960).flipped, false, "said, so no longer news")
+	})
+
+	it("does not call the first answer of the game a flip", () => {
+		const mem = newRetirementMemory()
+		const first = standingOf(mem, race("ahead"), 300)
+		assert.equal(first.flipped, false)
+		assert.equal(first.from, null)
+		assert.equal(first.open, true)
 	})
 
 	it("counts how long the current answer has stood", () => {

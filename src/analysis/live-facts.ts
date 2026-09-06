@@ -2009,7 +2009,8 @@ export const buildFacts = (
 		 * `shared/live-state.ts`. `standingOf` records the answer as a side effect, so a question
 		 * is observed on every turn its fact was built — which is what lets the flip be noticed.
 		 */
-		if (f.question && !standingOf(mem.retired, f.question, input.nowSec).open) return false
+		const answer = f.question ? standingOf(mem.retired, f.question, input.nowSec) : null
+		if (answer && !answer.open) return false
 		// An enemy Baron and a fight he missed are worth cutting in on anything. Both are rare,
 		// both are announce-once, and staying quiet about either to protect a rate is absurd.
 		if (f.tier === "interrupt") return true
@@ -2025,6 +2026,20 @@ export const buildFacts = (
 		 */
 		if (mem.lastSubjects.includes(f.subject) && sinceLast < ROUTINE_GAP_SEC) return false
 		if (sinceLast < MIN_GAP_SEC) return false
+		/*
+		 * A FLIP IS NEWS, and it is the only time these facts ever were.
+		 *
+		 * A settled question becoming a question again — the race turning against him after twenty
+		 * minutes of a lead — is a different thing from the same standing fact coming round on its
+		 * cooldown, and it must not queue behind the two-minute routine floor that exists to stop
+		 * exactly that. `from` being non-null is what separates a real change from the first time a
+		 * question has ever been asked, which is merely the normal case.
+		 *
+		 * It buys past the ROUTINE floor and NOT past `MIN_GAP_SEC` above, which is the shortest gap
+		 * at which the previous instruction has plausibly been acted on, nor past the subject bar. A
+		 * flip is worth saying loudly; it is not worth talking over the last thing that was said.
+		 */
+		if (answer?.flipped && answer.from !== null) return true
 		return f.tier !== "standing" || sinceLast >= ROUTINE_GAP_SEC
 	}
 

@@ -128,6 +128,16 @@ const runs = (
 
 const main = async (): Promise<void> => {
 	const turnSec = Number(arg("turn", "20"))
+	/*
+	 * `--before` reproduces the shipped-before block, and it is exact rather than approximate.
+	 *
+	 * Retirement only ever MARKS a schedule entry; the entry, its state and its timer are computed
+	 * the same way either side of this change, and the ranked half is untouched (80 offers over the
+	 * four games before and after). So counting the marked entries as offered is byte-for-byte the
+	 * context that shipped, and the two rows of the before/after come out of one binary rather than
+	 * out of a stashed working tree nobody can re-run.
+	 */
+	const before = process.argv.includes("--before")
 	const out = arg("out", "")
 	const dir = `${DATA_DIR}/live-samples`
 	const games = readdirSync(dir).filter(f => /^split-\d+\.ndjson$/.test(f)).sort()
@@ -200,7 +210,7 @@ const main = async (): Promise<void> => {
 			const here: string[] = []
 			turnSubjects.push(here)
 			for (const o of state.schedule ?? []) {
-				if (o.retired) continue
+				if (o.retired && !before) continue
 				here.push(`objective:${o.name}`)
 				mine.push({
 					game,
@@ -237,7 +247,11 @@ const main = async (): Promise<void> => {
 		})
 	}
 
-	console.log(`## ${offers.length} context items offered over ${games.length} games at ${turnSec}s turns\n`)
+	console.log(
+		`## ${offers.length} context items offered over ${games.length} games at ${turnSec}s turns${
+			before ? " — BEFORE, retirement counted as if it were not there" : ""
+		}\n`
+	)
 	console.log(
 		`  ${vetoTurns} of ${allTurns.length - games.length} turns are inside a ${TREND_VETO_SEC}s veto — ${(
 			(100 * vetoTurns) /

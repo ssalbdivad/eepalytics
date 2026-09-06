@@ -202,8 +202,6 @@ export interface AnswerRecord {
 	offers: number
 	/** The answer before this one, or null while this is the first. */
 	from: string | null
-	/** Game clock at which it changed to this answer — so a flip is reportable more than once a turn. */
-	flippedAtSec: number
 }
 
 export interface RetirementMemory {
@@ -221,10 +219,17 @@ export interface Standing {
 	/** May a line about this question be offered at all? */
 	open: boolean
 	/**
-	 * The answer changed on THIS turn.
+	 * The answer has CHANGED and he has not been told the new one yet.
 	 *
 	 * The only moment the fact was ever news, and the reason a retired question is retired rather
 	 * than deleted: a flip is worth saying loudly, and nothing that has been deleted can flip.
+	 *
+	 * It stays true until the answer is spent, rather than only on the turn of the change, and that
+	 * is not a detail. `buildFacts` observes a question on every turn its fact is BUILT, including
+	 * the turns where the floor then withholds it — so a flip that expired on the clock would be
+	 * consumed by the very turn that refused to say it, which is the same bug as burning a cooldown
+	 * on a withheld fact and is recorded three times in `analysis/live-facts.ts`. An unspoken flip is
+	 * still news.
 	 */
 	flipped: boolean
 	/** What it flipped from, or null while this is the first answer seen. */
@@ -254,15 +259,14 @@ export const standingOf = (mem: RetirementMemory, q: Question, nowSec: number): 
 			verdict: q.verdict,
 			sinceSec: nowSec,
 			offers: 0,
-			from: prior ? prior.verdict : null,
-			flippedAtSec: nowSec
+			from: prior ? prior.verdict : null
 		}
 		mem.answers[q.key] = rec
-		return { open: true, flipped: true, from: rec.from, heldSec: 0, offers: 0 }
+		return { open: true, flipped: rec.from !== null, from: rec.from, heldSec: 0, offers: 0 }
 	}
 	return {
 		open: prior.offers < (q.budget ?? 1),
-		flipped: prior.flippedAtSec === nowSec,
+		flipped: prior.from !== null && prior.offers === 0,
 		from: prior.from,
 		heldSec: Math.max(0, nowSec - prior.sinceSec),
 		offers: prior.offers
@@ -532,6 +536,13 @@ export const scheduleQuestion = (o: ScheduledObjective): Question => ({
  * change while it stands, but the sentence about it does: "up since 14:00, two seconds ago" becomes
  * "up since 14:00, eleven minutes ago", and every one of those reads as fresh. There is nothing in
  * the state to retire on, so the retirement has to be on the telling.
+ *
+ * The cost of using offers as the proxy for tellings is stated rather than hidden: when two
+ * objectives flip on the same turn both are spent and the coach speaks at most one of them, so the
+ * other is demoted having never been said. Spending only what was SPOKEN needs the transcript joined
+ * back to the state, and that layer was measured to add nothing on top of the schedule (48% against
+ * 55%, inside each other's intervals). A demoted entry keeps its exact timer and comes back the
+ * moment its answer changes, so the failure mode is one missed sentence rather than a wrong one.
  *
  * Replayed over the four recorded games at the shipped turn, this is the whole of the metronome:
  * before it the dragon entry was in the block on 300 turns of 306 and the four games' longest

@@ -1737,6 +1737,25 @@ describe("buildFacts — a question that has been answered", () => {
 		strictEqual(said.length, 1, said.join(" | "))
 	})
 
+	it("lets the flip cut the routine floor, but never the floor between any two lines", () => {
+		/*
+		 * A settled question becoming a question again is not the same standing fact coming round on
+		 * its cooldown, so it must not queue behind the two-minute routine floor that exists to stop
+		 * exactly that. It still waits out `MIN_GAP_SEC`, which is the shortest gap at which the
+		 * previous instruction has plausibly been carried out.
+		 */
+		const mem = newFactMemory()
+		for (let t = 400; t <= 1200; t += 20) buildFacts(racing(t, -40), mem)
+		// Something else is said, so the routine floor is freshly against him.
+		ok(
+			buildFacts(input({ nowSec: 1400, deadEnemies: [{ champion: "Graves", respawnSec: 40, isJungler: true }] }), mem)
+				.length > 0
+		)
+		strictEqual(buildFacts(racing(1400 + MIN_GAP_SEC - 5, 40), mem).length, 0, "inside the floor")
+		const after = buildFacts(racing(1400 + MIN_GAP_SEC + 5, 40), mem)
+		ok(after.some(f => /Karthus is 40 CS up on you/.test(f)), `${1400 + MIN_GAP_SEC + 5}: ${after.join(" | ")}`)
+	})
+
 	it("but comes back the moment the race turns against him", () => {
 		/*
 		 * The flip is the only time this fact was ever news, so a rule that merely went quiet would
