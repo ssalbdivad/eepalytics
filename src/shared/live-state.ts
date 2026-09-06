@@ -600,6 +600,193 @@ export const spokenDuration = (sec: number): string => {
 
 const mmss = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, "0")}`
 
+/* ================================================ what is already on his screen */
+
+/**
+ * HIS HUD IS A CHANNEL, and this section is the app's model of what it already carries.
+ *
+ * The failure this exists to stop is one sentence long: *"Dragon spawns in 44 seconds, path to the
+ * pit."* Every digit in it is exact, it is grounded, it names an action, and it is worthless,
+ * because the number was printed on his minimap before this app polled for it and the directive
+ * that follows from it follows for anybody. Fifteen of one judge's forty-six lines were that shape.
+ *
+ * ## Visible is NOT disqualifying, and getting this backwards is the expensive mistake
+ *
+ * Measured over 554 blind-judged lines (`data/eval/why-shallow.md`): lines about something plainly
+ * on his screen were judged useful 45% of the time against 27% for lines about something invisible,
+ * and the BEST quadrant in the whole corpus is visible AND specific, at 67% over 205 lines. What
+ * kills a line is genericness alone — 14% against 55%. So nothing here forbids talking about a
+ * thing he can see. Naming which of the things in front of him the next thirty seconds are for is
+ * the best sentence this coach can write.
+ *
+ * What this refuses is narrower and it is the other quadrant: a turn on which the block's ENTIRE
+ * news is HUD-derived, so the only line available is a figure he is looking at plus the directive
+ * that figure implies. On such a turn the block states the answer — PASS — rather than hoping the
+ * model declines. A prompt rule is a plea; a block that says there is nothing here is a mechanism.
+ *
+ * ## Where the classification comes from
+ *
+ * `data/eval/is-the-timer-visible.md`, which read 1,876 real journal frames — his own nine games,
+ * three sessions, two days — and established what his minimap prints, with the game clock stamped
+ * by the daemon on the other side of the process from the picture. Its verdict, and the whole
+ * basis of `scheduleScreen` below:
+ *
+ * - the spawn countdown IS on his minimap, in 9 of 9 games and 257 of 260 frames sampled in the
+ *   three minutes before the first dragon. It appears at exactly T-3:00, reads `2m+` until T-2:00,
+ *   then exact `m:ss`, then yellow under ten seconds. Our copy of that number is a poll and a
+ *   render late;
+ * - once the thing is STANDING the map prints its icon and no number at all. **How long it has
+ *   stood untaken is not on his screen in any state, for any objective** — the one genuinely
+ *   off-screen fact in the whole schedule, and the premise of the best line any model produced;
+ * - the drake tally and the soul point are not on the top bar. Game 4 at 25:29 with the drakes 3-1
+ *   prints the count nowhere; it needs TAB, which is not a thing he does in a fight.
+ *
+ * Replayed over those 1,876 ticks, 27.5% of the shipped schedule's entries were a number already on
+ * his map and 36.6% named something whose icon was already there. That is what this splits.
+ *
+ * ## The one thing this deliberately does NOT classify
+ *
+ * The block's standing background — his own line, the two rosters, the jungle race, the farm
+ * baseline — is not weighed here at all, and that is a decision rather than an oversight. It is
+ * printed on every turn of every game, and the retirement work above measured what its answers do:
+ * the race verdict read "he is behind you" in 82 states of 88 and "ahead" in none. A section whose
+ * answer never changes cannot make this turn different from the last one, so it cannot be the
+ * reason to speak now. When one of those facts genuinely becomes news — a swing, a gap that moved,
+ * a level deficit — `analysis/live-facts.ts` ranks it and it arrives in `unseen`, where it IS
+ * weighed. The background is excluded by construction and re-enters through the list.
+ */
+
+/**
+ * How far out his minimap starts printing a spawn.
+ *
+ * Bounded on game 4 of the corpus: absent at 1:48 with 3:13 to go, present at 2:03 with 2:58 to go.
+ * Games 7, 8 and 9 give first-continuous-presence at 178, 157 and 175 seconds remaining.
+ *
+ * Between 3:00 and 2:00 the map prints the literal string `2m+` and no digits, so the exact second
+ * in that band is genuinely ours. It is still classed as his, because the DECISION does not change
+ * across it — "not yet" either way — and a coach that speaks on the strength of a second he cannot
+ * act on differently is the readback this whole section is about.
+ */
+export const MINIMAP_COUNTDOWN_SEC = 180
+
+/** Could he have got this by looking at his own screen this instant? */
+export type Screen = "hud" | "off-screen"
+
+/**
+ * One schedule entry, by whether his own minimap already carries it.
+ *
+ * Order matters and each branch is a measured line from `is-the-timer-visible.md`. A standing
+ * objective is off-screen on its DURATION, which the map never prints. A tally is off-screen
+ * because the top bar does not carry it. A countdown inside three minutes is his, exactly, and
+ * earlier than ours.
+ */
+export const scheduleScreen = (o: ScheduledObjective): Screen =>
+	o.state === "up" ? "off-screen"
+	: o.taken && o.taken.mine + o.taken.theirs > 0 ? "off-screen"
+	: o.sec > MINIMAP_COUNTDOWN_SEC ? "off-screen"
+	: "hud"
+
+/**
+ * The ranked list's HUD templates, and NOTHING ELSE IS ONE.
+ *
+ * `analysis/live-facts.ts` writes every line in this list from a fixed template, so the templates
+ * can be recognised — `premiseOf` in `analysis/timeliness.ts` has parsed them for months and
+ * `analysis/useful.ts` already keeps a premise-to-screen table. Neither is importable from
+ * `shared/`, so the patterns are restated here for the four that matter, and the two files are
+ * checked against each other in the test rather than left to drift silently.
+ *
+ * **An unrecognised line is off-screen**, which is the conservative direction: a template added
+ * tomorrow makes the coach speak on a turn it might have passed, rather than silently gagging it.
+ * The same posture `analysis/useful.ts` takes with `unmeasured`, for the same reason.
+ *
+ * Two entries diverge from `screenOfPremise`, both deliberately and both toward speaking less:
+ *
+ * - **the objective COUNT is off-screen here.** That table calls it `hud` on the reasoning that the
+ *   top bar carries drake icons. Measured on real frames afterwards, it does not: the top bar
+ *   carries kills, his KDA, his CS and the clock, and game 3 at 18:40 with the enemy one drake from
+ *   soul prints the tally nowhere. So the count is not listed below and falls through to
+ *   off-screen.
+ * - **gold splits on the DURATION.** `live-facts.ts` says it itself — "he can read 1280 gold, he
+ *   cannot feel that it has been sitting there for three minutes" — and the hand-written target set
+ *   makes the same call at M13. So `N gold sitting unspent` is his HUD and
+ *   `N gold unspent for M minutes now` is not.
+ */
+export const HUD_FACT_PATTERNS: readonly RegExp[] = [
+	// "Drake is back in 41 seconds", "Baron is up NOW", and the rotation variant that adds a side.
+	/^(?:Baron|Herald|Drake) is (?:back in \d+ seconds|up NOW)/,
+	// The amount, with no hold behind it. Bottom right of his screen, permanently.
+	/^\d+ gold sitting unspent/,
+	// His own CS against his own average: the half he acts on is the half he is looking at.
+	/^you're (?:roughly )?\d+ CS (?:down|up) on your own pace/,
+	// Announced on his screen with a banner and a sound when it happened.
+	/^they (?:took|have) /,
+	// The game already told him, loudly. Praise is not information and does not have to be.
+	/^you (?:just got a |secured |stole )/
+]
+
+/** Whether a ranked line's whole premise is something he is already looking at. */
+export const factScreen = (text: string): Screen =>
+	HUD_FACT_PATTERNS.some(re => re.test(text.trim())) ? "hud" : "off-screen"
+
+/** One schedule entry, written the way it should be said. */
+const scheduleLine = (o: ScheduledObjective): string => {
+	const took =
+		o.taken && o.taken.mine + o.taken.theirs > 0 ?
+			` Taken so far this game: ${o.taken.mine} by you, ${o.taken.theirs} by them.`
+		:	""
+	return o.state === "up" ?
+			`- ${o.name}: UP and untaken since ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
+		:	`- ${o.name} spawns at ${mmss(o.atSec)} — in ${spokenDuration(o.sec)}.${took}`
+}
+
+/** What this turn's block carries, split by whether he could have read it himself. */
+export interface ScreenSplit {
+	/** News in this block that no channel he has supplies. Empty means there is nothing to say. */
+	offScreen: string[]
+	/** News in this block that is already rendered on his screen this instant. */
+	hud: string[]
+}
+
+/**
+ * Split this turn's NEWS by channel — the mechanism the PASS offer is computed from.
+ *
+ * News is the schedule's live entries, the ranked list, an enemy who is down, and what just
+ * happened. Retired schedule entries are excluded because he has already been told them; the
+ * standing background is excluded for the reason in this section's header.
+ *
+ * `recentEvents` is HUD, and that is checked rather than assumed: frame `js-mtn2jrku-8ae9-3683.jpg`
+ * carries the banner "Enemy team has slain the Hextech Drake!" across his screen at the instant the
+ * block would have reported it. A take he watched is not a fact he was missing.
+ *
+ * An enemy being down is off-screen and one of his own side being down is not, and the asymmetry is
+ * the point: he is looking at his own grey screen, and the kill feed for an ally scrolls past, but
+ * an enemy corpse across the map is a state he can only reach through TAB. Judged blind, an enemy
+ * being down is the second-best subject in the corpus at 41% useful.
+ */
+export const screenSplit = (s: VisionState): ScreenSplit => {
+	const offScreen: string[] = []
+	const hud: string[] = []
+	for (const o of s.schedule ?? []) {
+		if (o.retired) continue
+		;(scheduleScreen(o) === "hud" ? hud : offScreen).push(scheduleLine(o).replace(/^- /, ""))
+	}
+	for (const u of s.unseen) (factScreen(u) === "hud" ? hud : offScreen).push(u)
+	const theirs = s.enemies.filter(p => p.dead).map(p => p.champion)
+	if (theirs.length > 0) offScreen.push(`down right now on their side: ${theirs.join(", ")}`)
+	const mine = [...(s.me.dead ? [s.me.champion] : []), ...s.allies.filter(p => p.dead).map(p => p.champion)]
+	if (mine.length > 0) hud.push(`down right now on his side: ${mine.join(", ")}`)
+	for (const e of s.recentEvents) hud.push(e)
+	return { offScreen, hud }
+}
+
+/**
+ * Is every scrap of news in this block one he is already reading?
+ *
+ * True is the PASS offer. It is true both when the block's news is entirely HUD-derived and when
+ * there is no news at all — the second is the commoner case and it is the same answer.
+ */
+export const hudOnlyTurn = (s: VisionState): boolean => screenSplit(s).offScreen.length === 0
+
 /**
  * The schedule as prose, with the timers written the way they should be said.
  *
@@ -610,20 +797,45 @@ const mmss = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.rou
  */
 export const renderSchedule = (list: readonly ScheduledObjective[]): string => {
 	if (list.length === 0) return ""
-	const render = (o: ScheduledObjective): string => {
-		const took =
-			o.taken && o.taken.mine + o.taken.theirs > 0 ?
-				` Taken so far this game: ${o.taken.mine} by you, ${o.taken.theirs} by them.`
-			:	""
-		return o.state === "up" ?
-				`- ${o.name}: UP and untaken since ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
-			:	`- ${o.name} spawns at ${mmss(o.atSec)} — in ${spokenDuration(o.sec)}.${took}`
-	}
+	const render = scheduleLine
 	const live = list.filter(o => !o.retired)
 	const old = list.filter(o => o.retired)
+	/*
+	 * THE LIVE HALF IS SPLIT BY CHANNEL, and the split is a heading rather than a suffix on each
+	 * line, deliberately.
+	 *
+	 * A marker attached to a fact gets spoken in this app. `Briar = BRY-er` was introduced as a
+	 * pronunciation hint and was read out to the player verbatim, mid-game, because everything else
+	 * in the block is a fact to be said and a line shaped like data is treated as data. The
+	 * "Already covered" group below is the pattern that has worked: the fence is a heading and a
+	 * paragraph of prose, and the entries under it are untouched.
+	 */
+	const mine = live.filter(o => scheduleScreen(o) === "off-screen")
+	const his = live.filter(o => scheduleScreen(o) === "hud")
 	const parts: string[] = []
-	if (live.length > 0)
-		parts.push(`### What is coming (the map's clock, worked out from the event feed)\n\n${live.map(render).join("\n")}`)
+	if (mine.length > 0)
+		parts.push(
+			`### What is coming — and this is the part his own map does not print\n\n${mine
+				.map(render)
+				.join("\n")}`
+		)
+	/*
+	 * The countdown he is already looking at, kept with its digits exact and fenced in prose.
+	 *
+	 * Deleting it is the cheaper change and it is the wrong one, for the same reason the retired
+	 * group is kept: a coach that wants to talk about a dragon and has no dragon timer invents one,
+	 * measured at 37% useful against the schedule's 55%, telling him to take a dragon fifty-six
+	 * seconds before the first dragon spawned. The number stays where he can reach it; what is
+	 * withdrawn is the sentence that consists of nothing else.
+	 */
+	if (his.length > 0)
+		parts.push(
+			`### Also on the map's clock — his own minimap is already printing these\n\n${his
+				.map(render)
+				.join(
+					"\n"
+				)}\n\nHis map prints these from three minutes out, exactly, and this block is a poll behind it. A sentence whose only content is one of them is a number he is already looking at.`
+		)
 	/*
 	 * The retired half is kept, with its timers exact, and it is fenced in PROSE.
 	 *
@@ -1031,6 +1243,37 @@ Clock ${s.clock}. You: ${me.champion}${me.level ? ` lv${me.level}` : ""} ${me.k 
 	}${me.dead ? `, DEAD${me.respawnSec ? ` (respawn in ${Math.round(me.respawnSec)} seconds)` : ""}` : ""}`)
 
 	/*
+	 * THE PASS OFFER, and it is FIRST because a block is read top-down and the top is what gets used.
+	 *
+	 * Gemini's blind judge asked for this in the other direction: if the only thing a line would
+	 * carry is a countdown, a gold total, an HP bar or a death state, the block should offer PASS
+	 * rather than hope the model declines — fifteen of that judge's forty-six lines were a countdown
+	 * plus the obvious action. A prompt rule asking for restraint is a plea; this is the app doing
+	 * the arithmetic and stating the answer.
+	 *
+	 * It fires only when EVERY scrap of news in this block is on his screen already — see
+	 * `screenSplit`. It is not a rule against visible facts, which would be the expensive mistake:
+	 * visible AND specific is the best quadrant in the corpus at 67% over 205 judged lines, and the
+	 * lines it kills are the other quadrant, visible and generic at 14%.
+	 *
+	 * The picture keeps an escape, and it is cheap. FENCED+SEE — the shipped prompt plus explicit
+	 * permission to speak from the screenshot, on a byte-identical block — spoke on exactly the same
+	 * 3 of 42 frames as FENCED, so permission has never been what makes this coach talk. Leaving the
+	 * door open costs nothing measurable and keeps the one channel that can carry a fact the block
+	 * cannot.
+	 */
+	if (hudOnlyTurn(s))
+		sections.push(`### Nothing in this block is off his screen — the answer this turn is PASS
+
+Everything below he is reading right now: his own bar and his gold, the clock, the kill feed, and a
+spawn countdown his minimap prints exactly and earlier than this block can. There is no fact here he
+could not have got by looking, so the only sentence available is a number in front of him followed
+by the instruction that number implies for anybody — and that is the one shape measured to be worth
+nothing.
+
+Answer PASS, unless the picture shows something plain and urgent that nothing below carries.`)
+
+	/*
 	 * The schedule leads. When there is none — no event feed, a fixture built before this existed —
 	 * the absence is STATED. Measured on the empty ranked list: a heading that simply vanishes is a
 	 * gap, and at a tick where nobody was dead and the list was empty this coach announced a death
@@ -1053,11 +1296,32 @@ Enemy team: ${s.enemies.map(line).join(" · ") || "unknown"}${
 		s.recentEvents.length > 0 ? `\nJust happened: ${s.recentEvents.join("; ")}` : ""
 	}`)
 
-	if (s.unseen.length > 0)
+	/*
+	 * The ranked list is split by the same rule as the schedule, and for the same measured reason.
+	 *
+	 * The ranker's own comment on the objective timer says it plainly — "a timer he can read is the
+	 * definition of a readout" — and it rate-limits that fact hard rather than dropping it, because
+	 * a coach with no timer invents one. Same treatment here: both halves are printed, and only the
+	 * heading says which is which.
+	 */
+	const rankedOff = s.unseen.filter(u => factScreen(u) === "off-screen")
+	const rankedHud = s.unseen.filter(u => factScreen(u) === "hud")
+	if (rankedOff.length > 0)
 		sections.push(
-			`### Ranked highest by the app right now — a hint, not a menu\n\n${s.unseen.map(u => `- ${u}`).join("\n")}`
+			`### Ranked highest by the app right now — a hint, not a menu\n\n${rankedOff
+				.map(u => `- ${u}`)
+				.join("\n")}`
 		)
-	else sections.push(`### Nothing is ranked right now\n\nThe app has no ranked fact to offer at this instant.`)
+	else if (s.unseen.length === 0)
+		sections.push(`### Nothing is ranked right now\n\nThe app has no ranked fact to offer at this instant.`)
+	if (rankedHud.length > 0)
+		sections.push(
+			`### Also ranked, and every one of these is on his screen this instant\n\n${rankedHud
+				.map(u => `- ${u}`)
+				.join(
+					"\n"
+				)}\n\nRanked, then checked against his HUD — his gold, his own CS, the kill feed, the map's own countdown. Each on its own is a figure he can see plus the instruction it implies for anybody.`
+		)
 
 	if (s.arc && s.arc !== "") sections.push(s.arc)
 

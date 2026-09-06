@@ -682,6 +682,8 @@ export interface FactMemory {
 	 * in four minutes, and a ceiling is the part that was missing.
 	 */
 	lastOfferedAtSec: number
+	/** When a STANDING fact was last offered — the routine floor's own clock. */
+	lastStandingAtSec: number
 	/**
 	 * The game clock on the previous turn, so a clock that goes BACKWARDS can be recognised.
 	 *
@@ -764,6 +766,7 @@ export const newFactMemory = (): FactMemory => ({
 	lastFarmCs: 0,
 	lastFarmBehind: 0,
 	lastOfferedAtSec: 0,
+	lastStandingAtSec: 0,
 	lastSeenSec: 0,
 	lastSubjects: [],
 	lastLedWithDeath: false,
@@ -1983,6 +1986,8 @@ export const buildFacts = (
 	 */
 	const sinceLast =
 		mem.lastOfferedAtSec === 0 ? Number.POSITIVE_INFINITY : input.nowSec - mem.lastOfferedAtSec
+	const sinceStanding =
+		mem.lastStandingAtSec === 0 ? Number.POSITIVE_INFINITY : input.nowSec - mem.lastStandingAtSec
 	/**
 	 * Is this line about a MOMENT rather than about how the game stands?
 	 *
@@ -2073,7 +2078,7 @@ export const buildFacts = (
 		 * flip is worth saying loudly; it is not worth talking over the last thing that was said.
 		 */
 		if (answer?.flipped && answer.from !== null) return null
-		return f.tier !== "standing" || sinceLast >= ROUTINE_GAP_SEC ? null : "routine-gap"
+		return f.tier !== "standing" || sinceStanding >= ROUTINE_GAP_SEC ? null : "routine-gap"
 	}
 
 	/** One verdict per fact, remembered, so the trace and the ranking cannot disagree. */
@@ -2251,6 +2256,7 @@ export const buildFacts = (
 	if (out.length > 0) {
 		mem.lastSubjects = out.map(f => f.subject)
 		mem.lastOfferedAtSec = input.nowSec
+		if (out.some(f => f.tier === "standing")) mem.lastStandingAtSec = input.nowSec
 	}
 	return out.map(f => f.text)
 }

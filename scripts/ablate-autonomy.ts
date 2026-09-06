@@ -76,12 +76,42 @@
  *                             last one taken — required for anything measuring CADENCE, see below
  *       --late-frames         join the real journal frames onto the LATE grid where they exist,
  *                             so one uniform grid can cover the whole game with the pictures on it
+ *       --late-skip-paired    drop samples the PAIRED set already consumed from the LATE grid.
+ *                             OFF by default. It used to be unconditional, which is the bug below.
+ *       --dry-run             build the states, print the frame accounting and the manifest, spend
+ *                             nothing. Check WHICH pictures a configuration attaches before paying.
  *       --out <path>          default data/eval/ablation-<stamp>.json
  *
  * and one mode that spends nothing, replaying a stored run of this script instead of calling a
  * model — see `paceSweep` at the bottom of this file:
  *
  *     node --experimental-strip-types scripts/ablate-autonomy.ts --pace-sweep <run.json>
+ *
+ * ## The frames have gone missing twice, so they are now counted out loud
+ *
+ * A whole round was measured, reported and defended on a corpus that carried NO PICTURES, and its
+ * central claim was about pictures. Two independent silences did it, and neither showed up in the
+ * printed table:
+ *
+ *   1. **The LATE grid excluded the frame-bearing samples.** The eligibility filter dropped any
+ *      sample the PAIRED set had consumed — and the samples PAIRED consumes are, by construction,
+ *      exactly the ones a frame joins. So `--late-from 0 --late-frames` asked for a whole-game grid
+ *      with the pictures on it and got a grid that was blind for precisely the seven minutes the
+ *      pictures exist for. That exclusion is now `--late-skip-paired` and defaults OFF; it was
+ *      always redundant in the default configuration, where `tSec > fromSec` already excludes the
+ *      paired window.
+ *   2. **A quarter of the frames were `existsSync`-dropped on a stale path.** `journal_frame.path`
+ *      is absolute and was written by whichever checkout recorded the session; this project has
+ *      been renamed, so 503 of 1876 rows point at a directory that no longer exists while the JPEGs
+ *      sit under the current `DATA_DIR` with the same session folder and filename. `relocateFrame`
+ *      recovers those and COUNTS the ones it cannot.
+ *
+ * So the run now prints, before it spends anything: the full frame accounting (rows -> on disk ->
+ * in the sample window -> joined), the frame-bearing count for each set, and a one-line manifest
+ * for EVERY state naming the frame's path, its skew, its journal session and its game. It records
+ * `framesAttached` per cell in the JSON — images actually sent, not the cell's `withFrame`
+ * intention — and it writes the coverage into the run's own `limits`. A future report cannot claim
+ * a vision result on a blind run without contradicting its own output file.
  *
  * DO NOT run this while a game is in progress. It touches no League API and no LCU endpoint, but
  * it spends the Gemini HTTPS quota, which bills separately from the Live socket the coach uses.
@@ -212,6 +242,14 @@ const FRAMES_ONLY = flag("frames-only")
  * separately. It costs calls, and the run header prints the call count before spending any.
  */
 const LATE_SKIP_PAIRED = flag("late-skip-paired")
+/**
+ * Build the states, print the frame accounting and the manifest, and stop before spending anything.
+ *
+ * The frame bugs were both invisible in the printed table and both cost a full run to discover. A
+ * mode that shows exactly which pictures a configuration would attach, for nothing, is the cheapest
+ * possible defence — check the manifest, THEN spend the money.
+ */
+const DRY_RUN = flag("dry-run")
 
 /* ================================================================== the states */
 
@@ -1356,7 +1394,7 @@ export const statsFor = (cell: Cell, minutes: number): CellStats => {
  * scoring helpers without a key, a bill, or a game.
  */
 const main = async (): Promise<void> => {
-	await openTransport()
+	if (!DRY_RUN) await openTransport()
 
 	const { paired, late, note, frameAudit } = buildStates()
 	const vocab = championVocabulary()
@@ -1430,6 +1468,11 @@ const main = async (): Promise<void> => {
 			)
 	console.log("")
 
+	if (DRY_RUN) {
+		console.log(`--dry-run: nothing was sent to ${PROVIDER}. ${totalCalls} calls would have been.`)
+		return
+	}
+
 	const cells: Cell[] = []
 	for (const arm of arms) {
 		for (const withFrame of FRAMES_ONLY ? [true] : [true, false]) {
@@ -1439,7 +1482,7 @@ const main = async (): Promise<void> => {
 			cells.push(cell)
 			const st = statsFor(cell, span(pairedStates))
 			console.log(
-				`paired ${arm.id.padEnd(14)} ${withFrame ? "with-frame" : "no-frame  "}  spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}  ${((Date.now() - t0) / 1000).toFixed(0)}s`
+				`paired ${arm.id.padEnd(14)} ${withFrame ? "with-frame" : "no-frame  "} ${String(st.framesAttached).padStart(3)}/${String(st.turns).padEnd(3)} framed  spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}  ${((Date.now() - t0) / 1000).toFixed(0)}s`
 			)
 		}
 		if (lateStates.length > 0) {
@@ -1447,7 +1490,7 @@ const main = async (): Promise<void> => {
 			cells.push(cell)
 			const st = statsFor(cell, span(lateStates))
 			console.log(
-				`late   ${arm.id.padEnd(14)} ${LATE_FRAMES ? "frames  " : "no-frame"}    spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}`
+				`late   ${arm.id.padEnd(14)} ${LATE_FRAMES ? "frames    " : "no-frame  "} ${String(st.framesAttached).padStart(3)}/${String(st.turns).padEnd(3)} framed  spoke ${String(st.spoke).padStart(2)}/${st.turns}  fabrication ${pct(st.fabrication)}  useful ${pct(st.useful)}`
 			)
 		}
 	}
@@ -1554,6 +1597,18 @@ const main = async (): Promise<void> => {
 
 	const sha = (s: string): string => createHash("sha256").update(s).digest("hex").slice(0, 16)
 
+	const frameEntry = (st: AblationState) => ({
+		id: st.id,
+		tSec: st.tSec,
+		clock: st.clock,
+		rankedFacts: st.rankedFacts,
+		framed: st.framePath !== null,
+		framePath: st.framePath,
+		frameSkewSec: st.frameSkewSec,
+		frameSession: st.frameSession,
+		frameGameId: st.frameGameId
+	})
+
 	const run = {
 		kind: "ablate-autonomy",
 		built: Date.now(),
@@ -1564,6 +1619,10 @@ const main = async (): Promise<void> => {
 			"ONE MODEL. data/gemini.key is the only key on this machine — anthropic.key, openai.key, kimi.key and glm.key are all absent, and the `claude -p` CLI path cannot attach an image. The cross-MODEL comparison could not run. This varies only the ARCHITECTURE.",
 			"`analysis/coach-score.ts` validates FORM, not TRUTH. It catches a champion who is not in the game, a figure that is not in the block, a figure attached to the wrong player, and asserted motion or intent. It CANNOT catch a false statement about League that contains no digit and no roster name — a wrong claim about what an item does, a wrong claim about a champion's kit, a wrong claim about what a jungler should do at this minute. A false champion claim passed straight through the digit fence earlier tonight. The FREE arm is exactly where that failure would live, so its fabrication rate is a FLOOR and not a measurement.",
 			"Frames exist only for 0:02–6:43 of this game. There are no replays left for it, so the PAIRED set cannot be widened, and every frame-sensitivity number here is an EARLY-GAME number.",
+			`PICTURES IN THIS RUN: PAIRED ${pairedCov.framed}/${pairedCov.states} states carried a frame, LATE ${lateCov.framed}/${lateCov.states}${LATE_FRAMES ? "" : " (--late-frames was not passed, so the LATE set is text-only BY REQUEST)"}. ` +
+				(pairedCov.framed + lateCov.framed === 0 ?
+					"NOT ONE image was attached anywhere in this run. Nothing here is evidence about what the picture is worth."
+				:	"`frames.manifest` in this file names the path and the skew for every state, and `cells[].framesAttached` counts the images each cell actually sent."),
 			"These are turn-based HTTPS calls with no conversation thread, so no arm can obey the prompt's 'do not say the same thing twice' rules. All four arms are equally memoryless, so the comparison is fair, but the repetition figures are worse than the shipped socket's would be.",
 			"A few frames pair with the same sample, so a handful of PAIRED states carry the same block with a picture taken about five seconds apart. Treat those as one state seen twice.",
 			"`useful` is a mechanical composite (spoke AND no fabrication fault AND carries a figure or a roster name AND names an action AND is not a screen readback). It is a floor on quality, never a verdict — read the lines."
@@ -1578,6 +1637,12 @@ const main = async (): Promise<void> => {
 			gameId: GAME_ID,
 			frameSkewGateSec: FRAME_SKEW_GATE_SEC,
 			lateSpacingSec: LATE_SPACING_SEC,
+			lateFromSec: LATE_FROM_SEC,
+			lateGrid: LATE_GRID,
+			lateFrames: LATE_FRAMES,
+			lateSkipPaired: LATE_SKIP_PAIRED,
+			runPaired: RUN_PAIRED,
+			framesOnly: FRAMES_ONLY,
 			championVocabulary: { count: vocab.names.length, source: vocab.source },
 			stateNote: note
 		},
@@ -1605,6 +1670,8 @@ const main = async (): Promise<void> => {
 				clock: s.clock,
 				framePath: s.framePath,
 				frameSkewSec: s.frameSkewSec,
+				frameSession: s.frameSession,
+				frameGameId: s.frameGameId,
 				rankedFacts: s.rankedFacts,
 				roster: s.roster,
 				block: s.block,
@@ -1618,6 +1685,8 @@ const main = async (): Promise<void> => {
 				clock: s.clock,
 				framePath: s.framePath,
 				frameSkewSec: s.frameSkewSec,
+				frameSession: s.frameSession,
+				frameGameId: s.frameGameId,
 				rankedFacts: s.rankedFacts,
 				roster: s.roster,
 				block: s.block,
@@ -1625,6 +1694,24 @@ const main = async (): Promise<void> => {
 				blockShipped: s.blockShipped,
 				blockBriefing: s.blockBriefing
 			}))
+		},
+		/**
+		 * Everything about pictures, at the top level, so a reader never has to reconstruct it.
+		 *
+		 * `audit` is where the frames went between the table and the states; `coverage` is what each
+		 * set ended up carrying; `manifest` is one entry per state the harness emitted, with the path
+		 * and the skew. `cells[].framesAttached` and `stats[].framesAttached` say it a third time, per
+		 * cell, because a report quoting one cell must be able to contradict itself locally.
+		 */
+		frames: {
+			audit: frameAudit,
+			coverage: { paired: pairedCov, late: lateCov },
+			lateFramesRequested: LATE_FRAMES,
+			lateSkipPaired: LATE_SKIP_PAIRED,
+			manifest: [
+				...pairedStates.map(st => ({ set: "paired", ...frameEntry(st) })),
+				...lateStates.map(st => ({ set: "late", ...frameEntry(st) }))
+			]
 		},
 		cells,
 		stats: allStats,
@@ -1641,10 +1728,14 @@ const main = async (): Promise<void> => {
 	const line = (s: string) => console.log(s)
 	line("")
 	line("=== SPOKE / FABRICATION / USEFULNESS ===================================")
-	line("set     arm             frame  spoke        fabricate    useful       specific     repeat       repeat<3m    med ms")
+	/*
+	 * The `framed` column is `images actually sent / turns`, not the cell's `withFrame` intention.
+	 * A row reading `0/74` under an arm someone is about to call frame-sensitive is the whole point.
+	 */
+	line("set     arm             framed   spoke        fabricate    useful       specific     repeat       repeat<3m    med ms")
 	for (const s of allStats)
 		line(
-			`${s.set.padEnd(7)} ${s.arm.padEnd(15)} ${(s.withFrame ? "yes" : "no").padEnd(6)} ` +
+			`${s.set.padEnd(7)} ${s.arm.padEnd(15)} ${`${s.framesAttached}/${s.turns}`.padEnd(8)} ` +
 				`${pct(s.spokeRate).padEnd(12)} ${pct(s.fabrication).padEnd(12)} ${pct(s.useful).padEnd(12)} ` +
 				`${pct(s.specific).padEnd(12)} ${pct(s.repeat).padEnd(12)} ${pct(s.repeatRecent).padEnd(12)} ${s.medianMs}`
 		)
