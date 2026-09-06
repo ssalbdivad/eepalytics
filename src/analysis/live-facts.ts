@@ -412,6 +412,18 @@ interface Fact {
 	 * objective deficit is a trend and an objective timer is not, and both are `objectives`.
 	 */
 	trend?: boolean
+	/**
+	 * THIS FAMILY IS RETIRED BY MEASUREMENT, and the string says which measurement.
+	 *
+	 * It is a field on the fact rather than a missing `push`, and that is the whole point: a family
+	 * that is simply deleted disappears from `FactOptions.trace` too, so the next person to ask
+	 * "why is the coach quiet" sees a threshold that never fired where there is actually a ban. The
+	 * fact is still built, still traced, and refused first — see `rejection` — so the audit table
+	 * keeps a row for it and the cost of the ban stays visible.
+	 *
+	 * See `## THE SUPPLY AUDIT` in the module comment for what earned each one.
+	 */
+	banned?: string
 }
 
 /*
@@ -493,6 +505,17 @@ const OBJECTIVE_CALL_COOLDOWN_SEC = 420
 
 /** An objective is "live" for restraint purposes when it is this close. */
 const OBJECTIVE_SOON_SEC = 45
+
+/**
+ * How much of a body's respawn must be left, WHEN HE HEARS IT, to be worth starting an objective.
+ *
+ * The call is to START the thing, not to finish it: the fight over a pit happens when they walk
+ * back, and a jungler with smite who is already standing there does not need the whole respawn. So
+ * this is the time to commit rather than the time to kill, and fifteen seconds is a rotation plus
+ * the first hits. Below it he is being sent to a pit to meet them at it, which is the failure the
+ * window fact's own floor exists to prevent.
+ */
+export const OBJECTIVE_START_WINDOW_SEC = 15
 
 /**
  * Kill-participation gap worth a sentence, in percentage points.
@@ -1066,6 +1089,14 @@ export interface FactInput {
 		line: string | null
 		/** Which champion clause fits: he was not in it, or he was and it went badly. */
 		kind?: "fight-lost" | "fight-absent"
+		/**
+		 * Did the fight BUY the enemy an objective? The one thing that separates the two halves of
+		 * this family, and it decides whether the line is offered at all — see `FIGHT_NEEDS_BOUGHT`.
+		 *
+		 * `analysis/fights.ts` already computes it (`Fight.bought`) and already phrases the line two
+		 * different ways from it; nothing downstream could see which one it had produced.
+		 */
+		bought?: boolean
 	}
 	enemyObjectives: { name: string; atSec: number; dragonType?: string }[]
 	myEvents: {
@@ -1628,10 +1659,117 @@ export const buildFacts = (
 						input.fight.kind ? input.advice?.[input.fight.kind] : undefined
 					),
 					subject: "fight",
-					tier: "interrupt"
+					tier: "interrupt",
+					/*
+					 * THE HALF OF THIS FAMILY THAT NEVER PRODUCED. See `## THE SUPPLY AUDIT`.
+					 *
+					 * A fight line has two halves. The head is the trade, which is exact and off his
+					 * HUD. The tail is either what the fight BOUGHT them — an objective, from the
+					 * event feed, at a named interval — or an imperative, and the imperative comes
+					 * from `fights.ts`'s five-branch `tail` or from the champion markdown. Both of
+					 * those are static text: they cannot name a place, a time or a number by
+					 * construction, so the sentence they end is transplantable to any game in which
+					 * a fight went the same way. That is the second of AGENTS.md's two tests failing
+					 * structurally rather than by accident.
+					 *
+					 * Measured, blind, two judges: 17 spoken lines off the tail-only variant,
+					 * ZERO clears from either judge and both of the corpus's two `wrong` verdicts.
+					 * The bought variant is 1 clear and 1 marginal from 2 — far too small to call a
+					 * win, and the reason it survives is that its tail is a fact off the feed rather
+					 * than a sentence that fits every game.
+					 */
+					...(input.fight.bought === true ? {} : { banned: "generic-directive" })
 				}
 			]
 		:	[]
+
+	/*
+	 * A NAMED OBJECTIVE, AND THE BODIES THAT MAKE IT FREE — the shape the judges actually cleared.
+	 *
+	 * This did not exist and it is the largest single finding of the supply audit. Of the 24 lines
+	 * the round-3 judge passed, SIXTEEN were "a specific neutral objective is takeable and several
+	 * of them are dead, so go start it now" — start-baron-now 10 of 10, take-standing-dragon 5 of 5,
+	 * take-dragon-while-ej-dead 2 of 2 — and NONE of them came from this function. The model was
+	 * forming the conjunction itself out of two halves of the block, and every time it did, it
+	 * cleared.
+	 *
+	 * Both halves were already ranked here and neither works alone:
+	 *
+	 *   - `windows` is the bodies with no object. "2 of them are dead — you have about 12 seconds"
+	 *     is 0 clears from 2 judged lines, both judges: he is told a window and left to find the
+	 *     thing to spend it on.
+	 *   - `stood` and `soon` are the object with no bodies. `stood` is the best-yielding ranked
+	 *     family in the corpus (5 of 5, and 3 of 5 on the stricter judge) and `soon` is 0 of 3,
+	 *     which is the spawn countdown he can read off his own minimap.
+	 *
+	 * The conjunction is neither: the objective comes from the schedule (untaken by construction —
+	 * see `add` in `shared/live-state.ts`) and the bodies come from the respawn column, so the line
+	 * is one sentence naming a place, a reason it is free, and a deadline. Nothing in it is a
+	 * readback of a single HUD element, and it cannot be said about a different game.
+	 *
+	 * Ranked ABOVE everything and offered ALONE, for the reason recorded five times in this file:
+	 * ordering is a suggestion to a model and the contents of the list are not.
+	 */
+	const takeNow: Fact[] = []
+	{
+		/*
+		 * ONE objective, and it is the one that has stood longest.
+		 *
+		 * The schedule can carry three untaken things at once, and a line that names all of them is
+		 * a list rather than a decision. The oldest is the one nobody is contesting, which is the
+		 * one a free window is worth spending on.
+		 */
+		const target = [...(input.standing ?? [])].sort((a, b) => b.heldSec - a.heldSec)[0]
+		/*
+		 * WHO IS DOWN, and it is deliberately two different tests rather than a count.
+		 *
+		 * The enemy jungler alone is enough because he is the only one who reliably contests a pit;
+		 * anybody else has to be two of them before the pit is actually free. Both are exactly what
+		 * the cleared lines named — "Briar is down right now, so start Dragon while their jungler is
+		 * dead" and "Ornn, Lissandra, and Senna are down, so start Baron right now".
+		 */
+		const jungler = input.deadEnemies.find(d => d.isJungler)
+		const bodies =
+			jungler !== undefined ? [jungler]
+			: input.deadEnemies.length >= 2 ? input.deadEnemies
+			: []
+		if (!stranded && target !== undefined && bodies.length > 0) {
+			const who = jungler !== undefined ? `${jungler.champion} is down` : `${bodies.length} of them are dead`
+			const shortest = Math.min(...bodies.map(d => d.respawnSec))
+			/*
+			 * A DRAFT, priced before it is spoken, exactly like the window and the respawn line: the
+			 * whole claim is that the pit is free for the next N seconds, and the sentence spends
+			 * some of them.
+			 */
+			const draft = (n: number): string => `${target.name} is up and ${who} — start it now, you have about ${n} seconds`
+			const pipe = heardBy(draft(Math.round(shortest - dead)))
+			/*
+			 * How long the pit is still free once he can act — after his own respawn and after the
+			 * sentence. Same arithmetic as `windows`, and for the same reason: a window computed
+			 * before the sentence started is not the window he is being handed.
+			 */
+			const left = Math.round(shortest - Math.max(dead, pipe))
+			/*
+			 * Announce-once per spawn AND per window, so a drake standing through three separate
+			 * deaths is three sentences rather than thirty. Both halves of the key are instants
+			 * rather than durations — the objective's spawn and the respawn the window ends on —
+			 * which is what makes them stable across polls.
+			 */
+			const id = `take:${target.name}@${target.atSec}:${Math.round((input.nowSec + shortest) / 4)}`
+			if (left >= OBJECTIVE_START_WINDOW_SEC && !outnumberedIn(pipe) && !mem.announcedDeaths.has(id))
+				takeNow.push({
+					text: draft(left),
+					subject: "objectives",
+					/*
+					 * EXPIRING, and that is not a formality. The claim is a countdown on somebody
+					 * else's respawn, so it is 77% stale at nine seconds by this file's own table
+					 * and a turn provider must not be offered it at all. See `CoachPath`.
+					 */
+					tier: "expiring",
+					commit: () => mem.announcedDeaths.add(id)
+				})
+		}
+	}
 
 	/*
 	 * What the counterpart just FINISHED, by name.
@@ -2330,6 +2468,12 @@ export const buildFacts = (
 	 */
 	const rejection = (f: Fact): string | null => {
 		/*
+		 * A MEASURED BAN, and it is first because it is not a rate at all: this family produced
+		 * nothing across a judged corpus, so no floor lifting and no clock running out should ever
+		 * let it through. See `Fact.banned` and `## THE SUPPLY AUDIT` in the module comment.
+		 */
+		if (f.banned !== undefined) return f.banned
+		/*
 		 * THE TIER GATE, and it is first because it is structural rather than a rate.
 		 *
 		 * A turn-based provider is several seconds behind by construction — the sentence is written
@@ -2428,6 +2572,7 @@ export const buildFacts = (
 	 * every subject, in `allowed`.
 	 */
 	const ranked = [
+		...takeNow,
 		...fight,
 		...ownDeath,
 		...restraint,
@@ -2469,6 +2614,14 @@ export const buildFacts = (
 	 * itself and anything that expires in seconds; if neither exists, saying nothing is correct.
 	 */
 	const alone = (facts: Fact[]): Fact[] => facts.filter(allowed).slice(0, 1)
+	/*
+	 * The objective-plus-bodies call is offered ALONE and before everything, including a fight.
+	 *
+	 * It is the only line this function has that names a place, a reason it is free and a deadline
+	 * in one sentence, and it was 16 of the judged corpus's 24 clears when the model had to assemble
+	 * it from the block by itself. A fight line beside it is a report on something already over.
+	 */
+	const soleTakeNow = alone(takeNow)
 	const soleFight = alone(fight)
 	const soleRestraint = alone(restraint)
 	const soleLost = alone(lost)
@@ -2490,6 +2643,7 @@ export const buildFacts = (
 	const out =
 		// Kills still landing: nothing at all, from any source. The module's own rule.
 		input.fight?.quiet ? []
+		: soleTakeNow.length > 0 ? soleTakeNow
 		: soleFight.length > 0 ? soleFight
 		: soleRestraint.length > 0 ? soleRestraint
 		: soleLost.length > 0 ? soleLost
@@ -2510,12 +2664,14 @@ export const buildFacts = (
 		const offered = new Set(out)
 		const passedOver =
 			input.fight?.quiet ? "fight-quiet"
-			: soleFight.length + soleRestraint.length + soleLost.length + soleWindow.length > 0 ?
+			: soleTakeNow.length + soleFight.length + soleRestraint.length + soleLost.length + soleWindow.length >
+				0 ?
 				"sole-line-took-turn"
 			: disaster ? "disaster-blackout"
 			: soleRotate.length > 0 ? "sole-rotate-took-turn"
 			: "outranked"
 		for (const f of [
+			...takeNow,
 			...fight,
 			...ownDeath,
 			...restraint,
