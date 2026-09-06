@@ -1484,7 +1484,7 @@ const main = async (): Promise<void> => {
 		s.length === 0 ? 0 : (s[s.length - 1]!.tSec - s[0]!.tSec) / 60
 
 	console.log(`ablate-autonomy — architecture held against itself, model held constant`)
-	console.log(`  model        ${MODEL} (gemini-http, the only key on this machine)`)
+	console.log(`  model        ${MODEL} via ${PROVIDER}`)
 	console.log(`  temperature  ${TEMPERATURE}`)
 	console.log(`  samples      data/live-samples/${SAMPLE_FILE}.ndjson, game ${GAME_ID}`)
 	console.log(`  ${note}`)
@@ -1698,7 +1698,7 @@ const main = async (): Promise<void> => {
 		question:
 			"The fence is measured safe. What does it COST? Model held constant, architecture varied: how much usefulness does speak-only-from-the-ranked-list give up, and is there a middle setting that keeps fabrication at zero while letting the picture matter?",
 		limits: [
-			"ONE MODEL. data/gemini.key is the only key on this machine — anthropic.key, openai.key, kimi.key and glm.key are all absent, and the `claude -p` CLI path cannot attach an image. The cross-MODEL comparison could not run. This varies only the ARCHITECTURE.",
+			`ONE MODEL PER RUN: everything here was produced by ${MODEL} through ${PROVIDER}. This run varies the ARCHITECTURE, never the model; a cross-model claim needs a second run and a second file.`,
 			"`analysis/coach-score.ts` validates FORM, not TRUTH. It catches a champion who is not in the game, a figure that is not in the block, a figure attached to the wrong player, and asserted motion or intent. It CANNOT catch a false statement about League that contains no digit and no roster name — a wrong claim about what an item does, a wrong claim about a champion's kit, a wrong claim about what a jungler should do at this minute. A false champion claim passed straight through the digit fence earlier tonight. The FREE arm is exactly where that failure would live, so its fabrication rate is a FLOOR and not a measurement.",
 			"Frames exist only for 0:02–6:43 of this game. There are no replays left for it, so the PAIRED set cannot be widened, and every frame-sensitivity number here is an EARLY-GAME number.",
 			`PICTURES IN THIS RUN: PAIRED ${pairedCov.framed}/${pairedCov.states} states carried a frame, LATE ${lateCov.framed}/${lateCov.states}${LATE_FRAMES ? "" : " (--late-frames was not passed, so the LATE set is text-only BY REQUEST)"}. ` +
