@@ -359,10 +359,33 @@ export const OBJECTIVE_SPAWN = {
 	/** Once a side has this many drakes it has soul, and the next spawn is Elder. */
 	soulAt: 4,
 	elderRespawnSec: 360,
-	grubsSpawnSec: 360,
+	/*
+	 * VOID GRUBS AND HERALD ARE 8:00 AND 15:00, and both were wrong here until the minimap said so.
+	 *
+	 * The event log alone cannot settle a spawn time — it only ever gives an upper bound, because it
+	 * records when somebody got round to taking the thing. The four games' first `HordeKill` at 490,
+	 * 494, 519 and 523 are consistent with a 360 spawn and MORE consistent with a 480 one, and the
+	 * `HeraldKill`s at 934, 1029 and 1065 say nothing about 840 against 900.
+	 *
+	 * What settles it is the countdown on his own minimap, read out of the journal frames
+	 * (`data/eval/is-the-timer-visible.md`): six games read 31/31/31/32/30/30 seconds remaining at
+	 * 7:29–7:30, and the grub icon appears at 8:08; five games read 33/30/32/30/35 at 14:26–14:30.
+	 * Both resolve to the minute, and neither is the number that was here.
+	 *
+	 * The cost of the old figures was not academic. Replayed over all 1,876 real ticks of his four
+	 * games, the schedule spent 146 of them — 7.8% — asserting the grubs were UP while the pit was
+	 * empty, plus 54 more for Herald. That is the app telling a jungler to walk to a camp that does
+	 * not exist yet, in a confident voice, which is the one failure this whole file is built to
+	 * refuse. It also breaks retirement specifically: a false "UP" is an answer, and an answer now
+	 * gets said once, loudly.
+	 *
+	 * `HERALD_VISIBLE_FROM_SEC` below is 720, i.e. exactly three minutes before 900 and not before
+	 * 840 — the gate was already tuned to the real spawn while the constant beside it was not.
+	 */
+	grubsSpawnSec: 480,
 	/** Grubs leave the map when Herald arrives. */
-	grubsDespawnSec: 840,
-	heraldSpawnSec: 840,
+	grubsDespawnSec: 900,
+	heraldSpawnSec: 900,
 	/** Herald is gone by the time Baron is up; past this the schedule stops mentioning it. */
 	heraldGoneSec: 1200,
 	baronFirstSec: 1200,

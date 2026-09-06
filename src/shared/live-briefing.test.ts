@@ -52,7 +52,7 @@ test("with no objective events at all, the schedule is the map's opening times",
 	const s = objectiveSchedule([], 60)
 	assert.deepEqual(
 		s.map(o => `${o.name} ${o.state} ${o.sec}`),
-		["Dragon coming 240", "Void grubs coming 300"]
+		["Dragon coming 240", "Void grubs coming 420"]
 	)
 	// Baron and Herald are seven and thirteen minutes out at this point: trivia, not a route.
 	assert.equal(
@@ -103,9 +103,9 @@ test("once a side has soul the next spawn is named Elder and timed as Elder", ()
  * each, so nothing here can say whether one is left. Off the list beats a guess on it.
  */
 test("the grubs are a place to go only while nobody has touched them", () => {
-	const fresh = renderSchedule(objectiveSchedule([], 400))
-	assert.match(fresh, /Void grubs: UP and untaken since 6:00/)
-	const worked = objectiveSchedule([{ kind: "grub", tSec: 380, side: "mine" }], 400)
+	const fresh = renderSchedule(objectiveSchedule([], 520))
+	assert.match(fresh, /Void grubs: UP and untaken since 8:00/)
+	const worked = objectiveSchedule([{ kind: "grub", tSec: 500, side: "mine" }], 520)
 	assert.equal(worked.some(o => o.name === "Void grubs"), false, "a worked pit is still being offered")
 	// And no count of what is left, ever, in either state.
 	assert.equal(/left|remain|of the six|unclaimed|six/i.test(fresh), false, fresh)
