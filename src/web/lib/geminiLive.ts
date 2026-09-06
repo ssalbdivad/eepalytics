@@ -33,6 +33,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { isBannedDirective } from "../../analysis/directive.ts"
 import { mayspeak, newPaceMemory, noteSpoken, SPEAK_FLOOR_SEC } from "../../analysis/speak-pace.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../../shared/live-prompt.ts"
 import { runCoachTurn, SystemVoice } from "./turnCoach.ts"
@@ -93,6 +94,13 @@ export interface GeminiUsage {
 	/** Cumulative billed tokens for the session, straight from Gemini's own usageMetadata. */
 	totalTokens: number
 	turns: number
+	/**
+	 * Lines she produced and was not allowed to say, because their ORDER was one of the three
+	 * measured at a zero hit rate over 214 blind-graded lines. Counted rather than hidden: a gate
+	 * this blunt can make her mute, and the number that tells him which is happening is this one
+	 * beside `turns`.
+	 */
+	refused: number
 }
 
 /**
@@ -330,7 +338,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 * its spend. A number quoted in dollars would be a guess at Google's rate; tokens are what the
 	 * API actually reports.
 	 */
-	const [usage, setUsage] = useState<GeminiUsage>({ totalTokens: 0, turns: 0 })
+	const [usage, setUsage] = useState<GeminiUsage>({ totalTokens: 0, turns: 0 , refused: 0})
 	/**
 	 * Turns sent WITHOUT a picture, and the reason.
 	 *
@@ -525,7 +533,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 * The durable record is the daemon's transcript either way; this is only the panel.
 			 */
 			setLines([])
-			setUsage({ totalTokens: 0, turns: 0 })
+			setUsage({ totalTokens: 0, turns: 0, refused: 0 })
 			/*
 			 * The fault counters belong to the session too. Carrying "11 blind check-ins" into a
 			 * game that has not started yet is the same lie as carrying the check-in count: a
@@ -649,7 +657,7 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				}
 
 				if (m.usageMetadata?.totalTokenCount !== undefined)
-					setUsage(u => ({ totalTokens: m.usageMetadata!.totalTokenCount!, turns: u.turns }))
+					setUsage(u => ({ ...u, totalTokens: m.usageMetadata!.totalTokenCount!, turns: u.turns }))
 
 				if (m.setupComplete) {
 					clearGuard()
@@ -752,6 +760,29 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 						 * An answer to a typed question counts too: he asked, she replied out loud,
 						 * and the next thing he hears should still be a floor away.
 						 */
+						/*
+						 * THE DIRECTIVE GATE, and it is the mechanical half of the ban.
+						 *
+						 * Measured over 214 blind-graded lines, two independent judges: not one line
+						 * whose order was clear-camps (n=76), spend-gold (n=36) or fight-shape
+						 * (n=20) ever cleared his bar. Zero of 132. Withholding those offers from
+						 * the block reaches only about half of them, because most came from turns
+						 * with no ranked offer at all — the model improvising — and there a block
+						 * rule is a request. Three rounds of measurement say what a request is worth.
+						 *
+						 * So it is refused HERE, at the last moment, where it is a mechanism. The
+						 * cost was measured and it is zero: the ban silenced 132 of 214 lines and
+						 * not one that either judge had cleared (Fisher p = 1.3e-13). Sentences per
+						 * game fell 36 -> 24 with the useful count unchanged.
+						 *
+						 * The floor is deliberately NOT charged. A refused line was never heard, so
+						 * buying forty-five seconds of silence with it would spend his attention on
+						 * a sentence he did not get.
+						 */
+						if (isBannedDirective(text)) {
+							setUsage(u => ({ ...u, refused: u.refused + 1 }))
+							return
+						}
 						noteSpoken(paceRef.current, nowSec())
 						record(text, false, truthInFlight.current)
 						setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
@@ -860,6 +891,11 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				setUsage(u => ({ ...u, turns: u.turns + 1 }))
 				// PASS means it judged the moment and declined, exactly as on the socket.
 				if (text === "" || /^pass\b/i.test(text)) return
+				// The same gate on the turn-based path. See the socket site above for the evidence.
+				if (isBannedDirective(text)) {
+					setUsage(u => ({ ...u, refused: u.refused + 1 }))
+					return
+				}
 				noteSpoken(paceRef.current, nowSec())
 				record(text, false, truth)
 				setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
