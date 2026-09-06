@@ -581,6 +581,53 @@ const buildLiveState = (
 			}
 	})()
 
+	/*
+	 * WHAT IS STANDING, computed ONCE and read twice.
+	 *
+	 * The block renders it as prose and `buildFacts` now ranks the untaken ones — and the rule this
+	 * app keeps rediscovering is that a fact which is not RANKED does not exist, so the two must be
+	 * the same list rather than two calls that can drift. `objectiveSchedule` is pure; `retireSchedule`
+	 * is the part with a memory and it stays at the point in the literal where it always ran, so
+	 * the order in which the ledger is spent is unchanged.
+	 */
+	const scheduled = objectiveSchedule(
+		(data.events?.Events ?? [])
+			.map((e): ObjectiveEvent | null => {
+				const kind =
+					e.EventName === "DragonKill" ? ("dragon" as const)
+					: e.EventName === "HordeKill" ? ("grub" as const)
+					: e.EventName === "HeraldKill" ? ("herald" as const)
+					: e.EventName === "BaronKill" ? ("baron" as const)
+					: null
+				if (kind === null) return null
+				const killer = playerNamed(e.KillerName)
+				return {
+					kind,
+					tSec: e.EventTime ?? 0,
+					side: killer ? (killer.team === mine ? "mine" : "theirs") : null
+				}
+			})
+			.filter((e): e is ObjectiveEvent => e !== null),
+		secs
+	)
+
+	/**
+	 * Every champion kill this game, both sides, with both ends resolved to a champion.
+	 *
+	 * An unresolvable end is DROPPED rather than passed through: `championOf` answers "someone" for
+	 * a name it cannot join, and a tally that counted "someone" would report a nemesis nobody in
+	 * the game is playing. The same feed reaches `analysis/fights.ts` for a different question, and
+	 * the two stay separate on purpose — one asks about clusters, the other about totals.
+	 */
+	const resolvedKills = (data.events?.Events ?? [])
+		.filter(e => e.EventName === "ChampionKill")
+		.map(e => ({
+			atSec: e.EventTime ?? 0,
+			killer: championOf(e.KillerName),
+			victim: championOf(e.VictimName)
+		}))
+		.filter(k => k.killer !== "someone" && k.victim !== "someone")
+
 	const state: VisionState = {
 		clock,
 		me: {
@@ -682,6 +729,16 @@ const buildLiveState = (
 					return rotatingAdvice(clauses, adviceCursor)
 				})(),
 				meLevel: me.level,
+				meChampion: me.championName,
+				kills: resolvedKills,
+				/*
+				 * The untaken half of the schedule above. Every entry `objectiveSchedule` emits is
+				 * standing and untaken by construction, so the filter is on STATE alone and the
+				 * ranker never has to ask whether the thing it names is still there.
+				 */
+				standing: scheduled
+					.filter(o => o.state === "up")
+					.map(o => ({ name: o.name, atSec: o.atSec, heldSec: o.sec })),
 				objectiveCount: (() => {
 					let mineN = 0
 					let theirs = 0
@@ -813,30 +870,7 @@ const buildLiveState = (
 		 * standing"; `retireSchedule` answers "has he already been told", and only the second one
 		 * needs a memory that survives the turn.
 		 */
-		schedule: retireSchedule(
-			objectiveSchedule(
-				(data.events?.Events ?? [])
-					.map((e): ObjectiveEvent | null => {
-						const kind =
-							e.EventName === "DragonKill" ? ("dragon" as const)
-							: e.EventName === "HordeKill" ? ("grub" as const)
-							: e.EventName === "HeraldKill" ? ("herald" as const)
-							: e.EventName === "BaronKill" ? ("baron" as const)
-							: null
-						if (kind === null) return null
-						const killer = playerNamed(e.KillerName)
-						return {
-							kind,
-							tSec: e.EventTime ?? 0,
-							side: killer ? (killer.team === mine ? "mine" : "theirs") : null
-						}
-					})
-					.filter((e): e is ObjectiveEvent => e !== null),
-				secs
-			),
-			factMemory.retired,
-			secs
-		),
+		schedule: retireSchedule(scheduled, factMemory.retired, secs),
 		/*
 		 * The arc, and an honest note about what it bought: nothing measurable on top of the
 		 * schedule (51% against 55%, inside each other's intervals). It is here because it is the

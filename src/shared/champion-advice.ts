@@ -70,7 +70,17 @@ export const ADVICE_KINDS = [
 	"fight-absent",
 	"death",
 	"build",
-	"farm-behind"
+	"farm-behind",
+	/*
+	 * The two kinds the ranker gained when it stopped being starved.
+	 *
+	 * Both name a fact the client settles and neither can supply its own instruction: "Baron has
+	 * been standing for two minutes" and "three of your five deaths are Briar" are true, off his
+	 * screen, and say nothing about what to do in the next thirty seconds. That gap is what a
+	 * clause is for, and it is why it must stay digit-free — the number is the client's half.
+	 */
+	"objective-uncontested",
+	"matchup"
 ] as const
 
 export type AdviceKind = (typeof ADVICE_KINDS)[number]

@@ -718,8 +718,15 @@ export const HUD_FACT_PATTERNS: readonly RegExp[] = [
 	/^\d+ gold sitting unspent/,
 	// His own CS against his own average: the half he acts on is the half he is looking at.
 	/^you're (?:roughly )?\d+ CS (?:down|up) on your own pace/,
-	// Announced on his screen with a banner and a sound when it happened.
-	/^they (?:took|have) /,
+	/*
+	 * Announced on his screen with a banner and a sound when it happened.
+	 *
+	 * Narrow on purpose. A looser `^they (took|have) ` swallowed "they have taken 2 of the
+	 * objectives and you have taken none", which is the TALLY and is measurably not on his screen —
+	 * caught by replaying split-03, where that exact line was reclassified as a readout at 15:26.
+	 */
+	/^they took /,
+	/^they have (?:Baron|Herald)\b/,
 	// The game already told him, loudly. Praise is not information and does not have to be.
 	/^you (?:just got a |secured |stole )/
 ]

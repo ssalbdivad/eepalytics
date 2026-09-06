@@ -261,12 +261,16 @@ interface AblationState {
 	framePath: string | null
 	frameSkewSec: number | null
 	/**
-	 * Which journal session the frame came from, and which game that session was recording.
+	 * Which journal session the frame came from, and which game it is a picture OF.
 	 *
 	 * Frames are joined on wall-clock `atMs` against every row in the table, with no game filter, so
 	 * "never across games" is a property of the clocks rather than of the query. Carrying the source
-	 * here makes that checkable instead of assumed: if a set's frames come from two sessions, the
-	 * run says so in its header and in its output file.
+	 * here makes that checkable instead of assumed.
+	 *
+	 * `frameGameId` is decided by the frame's own wall clock against the game table, NEVER by
+	 * `journal_session.gameId`. The screen share persists across games by design, so a session
+	 * records the game it started on and then outlives it — the session behind every frame used here
+	 * says `5635110604` while the frames are of `5635467422`, eleven hours later.
 	 */
 	frameSession: string | null
 	frameGameId: number | null
@@ -460,6 +464,16 @@ export interface FrameAudit {
 	inSampleWindow: number
 	joinedPaired: number
 	droppedOverGate: number
+	/** Which games the SAMPLE stream falls in, by wall clock. Normally exactly one. */
+	sampleGames: number[]
+	/**
+	 * Frames joined onto a state whose picture belongs to a DIFFERENT game than the samples.
+	 *
+	 * Must be zero. The join is on wall clock and games do not overlap in time, so a non-zero here
+	 * means either the game table is wrong or the frame table is — and a picture of a different game
+	 * next to this game's ground truth is the exact hallucination this whole app is built against.
+	 */
+	crossGameFrames: number
 }
 
 /** A journal frame that has been confirmed on disk, with where it came from. */
@@ -515,20 +529,30 @@ const buildStates = (): {
 		.prepare("SELECT id, sessionId, path, atMs, tSec FROM journal_frame ORDER BY atMs")
 		.all() as unknown as { id: string; sessionId: string; path: string; atMs: number; tSec: number }[]
 	/*
-	 * Which game each journal session was recording. Only for the manifest — the join itself is on
-	 * wall clock — but it is what makes "never across games" a checkable claim rather than a comment.
+	 * Which GAME a frame belongs to, decided by its own wall clock against the game table.
+	 *
+	 * NOT `journal_session.gameId`. A screen share persists across games on purpose — that is a
+	 * design decision this repo defends in as many words — so a session records the game it STARTED
+	 * on and then outlives it. The session that holds every frame used here says `5635110604`, and
+	 * the frames actually joined are from `5635467422`, forty-one thousand seconds later. Labelling
+	 * the manifest from the session would have printed a confident, wrong game id on every row,
+	 * which is worse than printing none.
+	 *
+	 * A window of two minutes on each side absorbs the gap between `gameCreationMs` (lobby) and game
+	 * clock zero, measured at about 18 seconds here, plus the post-game screen.
 	 */
-	const sessionGame = new Map<string, number>()
-	try {
-		const rows = db.prepare("SELECT id, gameId FROM journal_session").all() as unknown as {
-			id: string
-			gameId: number | bigint | null
-		}[]
-		for (const r of rows) if (r.gameId !== null) sessionGame.set(r.id, Number(r.gameId))
-	} catch {
-		/* an older database has no journal_session; the manifest then reports a null gameId */
-	}
+	const gameRows = db
+		.prepare("SELECT gameId, gameCreationMs, gameDurationSec FROM game")
+		.all() as unknown as { gameId: number | bigint; gameCreationMs: number | bigint; gameDurationSec: number | bigint }[]
 	db.close()
+
+	const games = gameRows.map(g => ({
+		gameId: Number(g.gameId),
+		from: Number(g.gameCreationMs) - 120_000,
+		to: Number(g.gameCreationMs) + Number(g.gameDurationSec) * 1000 + 120_000
+	}))
+	const gameAt = (atMs: number): number | null =>
+		games.find(g => atMs >= g.from && atMs <= g.to)?.gameId ?? null
 
 	const frames: UsableFrame[] = []
 	let relocatedCount = 0
@@ -548,7 +572,7 @@ const buildStates = (): {
 			atMs: r.atMs,
 			tSec: r.tSec,
 			sessionId: r.sessionId,
-			gameId: sessionGame.get(r.sessionId) ?? null
+			gameId: gameAt(r.atMs)
 		})
 	}
 
@@ -603,20 +627,24 @@ const buildStates = (): {
 	})
 
 	/**
-	 * The nearest journal frame to a built state, under the same skew gate the PAIRED set uses.
+	 * The nearest journal frame to each built state, under the same skew gate the PAIRED set uses.
 	 *
-	 * `frames` has already been existence-checked and relocated, so a null here means there is
-	 * genuinely no picture within the gate — not that a path had gone stale.
+	 * `frames` has already been existence-checked and relocated, so a miss here means there is
+	 * genuinely no picture within the gate — not that a path had gone stale. Computed once for every
+	 * sample rather than on demand: the grid asks this question for every candidate at every mark,
+	 * and the table has nearly two thousand rows.
 	 */
-	const frameFor = (b: Built): Attached | null => {
+	const frameByLine = new Map<number, Attached>()
+	for (const b of built) {
 		let best: Attached | null = null
 		for (const f of frames) {
 			const skew = Math.abs(f.atMs - b.atMs) / 1000
 			if (skew > FRAME_SKEW_GATE_SEC) continue
 			if (!best || skew < best.skew) best = { path: f.path, skew, sessionId: f.sessionId, gameId: f.gameId }
 		}
-		return best
+		if (best) frameByLine.set(b.line, best)
 	}
+	const frameFor = (b: Built): Attached | null => frameByLine.get(b.line) ?? null
 
 	const paired: AblationState[] = []
 	const usedLines = new Set<number>()
@@ -651,17 +679,35 @@ const buildStates = (): {
 		for (let mark = lastFrameSec + LATE_SPACING_SEC; mark <= end + LATE_SPACING_SEC / 2; mark += LATE_SPACING_SEC) {
 			let best: Built | null = null
 			let bestSkew = Infinity
+			/*
+			 * Under `--late-frames`, a candidate that carries a picture wins over one that does not,
+			 * PROVIDED it is inside the same tolerance the grid already allows (half a spacing).
+			 *
+			 * Samples arrive every ~6s and frames every ~10s, so the sample nearest a mark often has
+			 * no frame within the gate while its neighbour does — on the 20s grid that alone was the
+			 * difference between 13 and 20 of the 20 marks in the frame window carrying a picture.
+			 * The grid stays as uniform as it was: every state is still within half a spacing of its
+			 * mark, and the mark it belongs to is still in its id.
+			 */
+			let framedBest: Built | null = null
+			let framedSkew = Infinity
 			for (const b of eligible) {
 				if (taken.has(b.line)) continue
 				const skew = Math.abs(b.tSec - mark)
+				if (skew > LATE_SPACING_SEC / 2) continue
 				if (skew < bestSkew) {
 					bestSkew = skew
 					best = b
 				}
+				if (LATE_FRAMES && skew < framedSkew && frameByLine.has(b.line)) {
+					framedSkew = skew
+					framedBest = b
+				}
 			}
-			if (!best || bestSkew > LATE_SPACING_SEC / 2) continue
-			taken.add(best.line)
-			late.push(make(best, `late-${String(Math.round(best.tSec)).padStart(4, "0")}`, LATE_FRAMES ? frameFor(best) : null))
+			const pick = framedBest ?? best
+			if (!pick) continue
+			taken.add(pick.line)
+			late.push(make(pick, `late-${String(Math.round(pick.tSec)).padStart(4, "0")}`, LATE_FRAMES ? frameFor(pick) : null))
 		}
 	} else {
 		let lastAt = -Infinity
@@ -671,6 +717,12 @@ const buildStates = (): {
 			late.push(make(b, `late-${String(Math.round(b.tSec)).padStart(4, "0")}`, LATE_FRAMES ? frameFor(b) : null))
 		}
 	}
+
+	/*
+	 * Which game(s) the SAMPLES are from, decided the same way the frames were — by wall clock, not
+	 * by `--game`, which only feeds the baseline query and has been stale before.
+	 */
+	const sampleGames = [...new Set(built.map(b => gameAt(b.atMs)).filter((g): g is number => g !== null))].sort()
 
 	return {
 		paired,
@@ -683,6 +735,10 @@ const buildStates = (): {
 		frameAudit: {
 			dataDir: DATA_DIR,
 			gateSec: FRAME_SKEW_GATE_SEC,
+			sampleGames,
+			crossGameFrames: [...paired, ...late].filter(
+				st => st.frameGameId !== null && !sampleGames.includes(st.frameGameId)
+			).length,
 			rows: frameRows.length,
 			onDisk: frames.length,
 			relocated: relocatedCount,
@@ -1430,6 +1486,9 @@ const main = async (): Promise<void> => {
 	console.log(
 		`  frames       ${frameAudit.rows} rows -> ${frameAudit.onDisk} on disk (${frameAudit.relocated} relocated under ${frameAudit.dataDir}, ${frameAudit.missing} missing) -> ${frameAudit.inSampleWindow} in the sample window -> ${frameAudit.joinedPaired} joined within ${frameAudit.gateSec}s (${frameAudit.droppedOverGate} over the gate)`
 	)
+	console.log(
+		`  game         samples are game ${frameAudit.sampleGames.join(",") || "unknown"} by wall clock; --game ${GAME_ID} is used only for the farm baseline`
+	)
 	console.log(`  PAIRED       ${pairedStates.length} states, ${pairedStates[0]?.clock ?? "-"}–${pairedStates[pairedStates.length - 1]?.clock ?? "-"}, every arm twice — ${covLine(pairedCov)}`)
 	console.log(`  LATE         ${lateStates.length} states, ${lateStates[0]?.clock ?? "-"}–${lateStates[lateStates.length - 1]?.clock ?? "-"}, ${LATE_FRAMES ? "--late-frames" : "text only (no --late-frames)"} — ${covLine(lateCov)}`)
 	console.log(`  arms         ${arms.map(a => a.id).join(", ")}`)
@@ -1446,8 +1505,12 @@ const main = async (): Promise<void> => {
 		console.log(
 			`  !! --late-skip-paired with --late-frames: the samples the PAIRED set consumed are exactly the frame-bearing ones, so the LATE grid is blind wherever pictures exist.`
 		)
-	if (pairedCov.sessions.length + lateCov.sessions.length > 2 || new Set([...pairedCov.gameIds, ...lateCov.gameIds]).size > 1)
-		console.log(`  !! frames came from more than one game. The join is on wall clock; check the manifest.`)
+	if (frameAudit.crossGameFrames > 0)
+		console.log(
+			`  !! ${frameAudit.crossGameFrames} attached frames belong to a DIFFERENT game than the samples. A picture of another game beside this game's ground truth is the hallucination this app exists to prevent. Stop and check the manifest.`
+		)
+	if (frameAudit.sampleGames.length > 1)
+		console.log(`  !! the sample stream spans ${frameAudit.sampleGames.length} games (${frameAudit.sampleGames.join(", ")}).`)
 	console.log("")
 
 	/*

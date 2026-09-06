@@ -147,7 +147,13 @@ export const GOLD_FLOOR = 1200
 /** How much more must accumulate before unspent gold is news again. */
 export const GOLD_STEP = 800
 import { dragonPhrase } from "../shared/dragons.ts"
-import { newRetirementMemory, spendAnswer, standingOf } from "../shared/live-state.ts"
+import {
+	newRetirementMemory,
+	SCHEDULE_UNCONTESTED_SEC,
+	spendAnswer,
+	spokenDuration,
+	standingOf
+} from "../shared/live-state.ts"
 import type { Question, RetirementMemory } from "../shared/live-state.ts"
 /*
  * MEASURED SPEECH, and it belongs here because the length of the sentence is part of whether the
@@ -206,6 +212,15 @@ export type FactSubject =
 	| "kill-share"
 	| "praise"
 	| "your-death"
+	/**
+	 * WHO KEEPS KILLING WHOM. One subject, because to him it is one topic: this matchup.
+	 *
+	 * Covers both halves of the same `GROUP BY` — his own deaths by killer, and the enemy
+	 * jungler's kills by victim. `data/eval/target-lines.md` calls the first of those the largest
+	 * single gap in the app: the block can see `0/5/4` and has no way to know that three of those
+	 * five are one champion.
+	 */
+	| "matchup"
 
 /**
  * How badly this line needs to be said NOW, which is the only thing that can buy it a short gap.
@@ -421,6 +436,24 @@ const OBJECTIVES_MIN_GAP = 2
 /** Before this there have not been enough objectives for a count to mean anything. */
 const OBJECTIVES_MIN_SEC = 8 * 60
 
+/**
+ * How many times one champion must have killed the same player before the pattern is the news.
+ *
+ * Two is a rematch. Three is a matchup — `data/eval/target-lines.md` M21 is *three of your five
+ * deaths are Briar* and M29 is *Tryndamere has killed your Morgana four times*, and both are one
+ * `GROUP BY` over the event feed that nothing in this app computed.
+ */
+const MATCHUP_MIN_TIMES = 3
+
+/**
+ * At what count it stops being a pattern and starts being the game.
+ *
+ * The boundary between the two answers this question has — see the fact's `question` below. A run
+ * that grows from three to six is the same verdict said four times, which is the widening-number
+ * nag this file already refuses to do with his farm; one escalation is news and the rest is not.
+ */
+const MATCHUP_DECIDED_TIMES = 5
+
 /** Game-clock seconds between counterpart mentions. */
 const RACE_COOLDOWN_SEC = 150
 
@@ -559,6 +592,25 @@ const OBJECTIVE_SIDE: Record<string, Coarse> = {
 	Baron: "topside",
 	Herald: "topside",
 	Drake: "botside"
+}
+
+/**
+ * The same map again, for the SCHEDULE's own names, which are not this file's.
+ *
+ * `soon` speaks "Drake" and "Herald"; `objectiveSchedule` speaks "Dragon", "Elder Dragon", "Rift
+ * Herald" and "Void grubs". Two vocabularies for one set of pits, and a single table keyed by one
+ * of them would have silently failed to gate the other — a gate that stops firing looks exactly
+ * like a gate that is not needed. Both are written out rather than derived, because the derivation
+ * would be a substring test and a substring test is how "Elder Dragon" becomes topside.
+ *
+ * The grub pit is Baron's pit, so it takes Baron's side.
+ */
+const SCHEDULE_SIDE: Record<string, Coarse> = {
+	Dragon: "botside",
+	"Elder Dragon": "botside",
+	Baron: "topside",
+	"Rift Herald": "topside",
+	"Void grubs": "topside"
 }
 
 /**
@@ -972,6 +1024,41 @@ export interface FactInput {
 	baronBackInSec: number | null
 	heraldBackInSec: number | null
 	/**
+	 * Neutral objectives standing UNTAKEN right now, and how long they have stood.
+	 *
+	 * THE ONE FACT IN THIS APP THAT IS ON NO CHANNEL HE HAS. Measured over 1,876 real journal
+	 * frames of nine of his own games (`data/eval/is-the-timer-visible.md`): the spawn COUNTDOWN is
+	 * printed on his minimap from three minutes out, exact, in 9 games of 9 — so an objective timer
+	 * is a slower copy of something he is looking at. But while the thing is standing the display
+	 * prints no digits at all. Its icon says it is there; nothing anywhere says since when.
+	 *
+	 * It was already computed and already in the block — `renderSchedule` writes "UP and untaken
+	 * since 6:04" — and it was never RANKED, which in this app means it did not exist. The rule is
+	 * recorded in AGENTS.md and was measured twice: with the enemy jungler's CS in the block's prose
+	 * and not in the ranked list, the coach said nothing in 12 of 12 turns.
+	 *
+	 * Comes from the SAME `objectiveSchedule` call the block renders, hoisted so there is one
+	 * answer to "what is standing" rather than two that can disagree. Every entry it produces is
+	 * untaken by construction — see the invariant on `add` in `shared/live-state.ts`.
+	 */
+	standing?: { name: string; atSec: number; heldSec: number }[]
+	/**
+	 * His own champion, so a kill list can tell HIS deaths from his team's.
+	 *
+	 * Absent for the whole life of this interface, which is why nothing here could ever ask a
+	 * question about him by name.
+	 */
+	meChampion?: string
+	/**
+	 * Every champion kill this game, resolved to champion names on both sides.
+	 *
+	 * Passed raw rather than pre-grouped: the `GROUP BY` is the fact, and it belongs in the pure
+	 * layer with the rest of the rules about what may be said. `analysis/fights.ts` gets the same
+	 * feed for a different question — clusters rather than tallies — and the two must not become
+	 * one aggregate that answers neither.
+	 */
+	kills?: { atSec: number; killer: string; victim: string }[]
+	/**
 	 * The one thing the picture knows that the client does not: where HE is. See `FrameObservation`.
 	 *
 	 * OPTIONAL, and everything that reads it degrades to exactly today's behaviour when it is
@@ -1185,6 +1272,138 @@ export const buildFacts = (
 					mem.saidObjectives = true
 				}
 			})
+		}
+	}
+
+	/*
+	 * HOW LONG IT HAS STOOD THERE — the only fact in this app that reaches him through no other
+	 * channel, and it was already computed and never ranked.
+	 *
+	 * `data/eval/is-the-timer-visible.md`, over 1,876 of his own journal frames: the spawn
+	 * countdown is on his minimap from T−3:00, exact, in nine games of nine — so a timer is a
+	 * slower copy of a number he is looking at, and 27.5% of the schedule's entries are exactly
+	 * that. While the thing is STANDING the display prints nothing at all. The icon says it is
+	 * there; no pixel anywhere says since when, and inferring it requires him to have been counting
+	 * at the moment he is deciding something else.
+	 *
+	 * The subject is `objectives`, the SAME as the timer calls, deliberately. He does not hear "the
+	 * uncontested-objective fact" and "the respawn fact", he hears someone talking about dragon
+	 * again — the argument this file already makes for `downed` and for `farm`.
+	 */
+	const stood: Fact[] = []
+	for (const o of input.standing ?? []) {
+		if (o.heldSec < SCHEDULE_UNCONTESTED_SEC) continue
+		/*
+		 * ALREADY THERE, so it is withheld — the same gate `soon` applies to a timer, and for the
+		 * same reason. Standing in the pit and being told nobody has taken the thing in the pit is
+		 * the readout this whole file exists to refuse. Withheld rather than demoted: `commit` never
+		 * runs, so nothing is spent and the line is still available the moment he walks away.
+		 */
+		if (frame !== null && frame === SCHEDULE_SIDE[o.name]) continue
+		const q: Question = {
+			key: `stood:${o.name}`,
+			/*
+			 * The spawn instant is IN the verdict, so a retake starting a fresh clock is a genuine
+			 * flip rather than a continuation, and the bucket is coarse for the reason every
+			 * verdict in this app is: an age climbs on its own, and a question whose answer changes
+			 * on its own can never retire. Two answers, so a standing objective gets at most two
+			 * sentences per spawn — one when the ignoring becomes the news, one when it has gone on
+			 * long enough to be a different sentence.
+			 */
+			verdict: `${o.atSec}@${o.heldSec >= 5 * 60 ? "long" : "some"}`
+		}
+		stood.push({
+			/*
+			 * The duration is spoken as it will be HEARD, like every other countdown here — except
+			 * that this one grows, so the arithmetic rounds the safe way round: he is told it has
+			 * stood slightly LESS long than it will have by the time the sentence lands.
+			 */
+			text: withAdvice(
+				`${o.name} has been up ${spokenDuration(Math.round(o.heldSec))} and nobody has taken it`,
+				input.advice?.["objective-uncontested"]
+			),
+			subject: "objectives",
+			/*
+			 * STANDING, not expiring. An objective that has stood for two minutes will still have
+			 * stood for two minutes in twenty seconds' time — that is the entire content of the
+			 * claim — so it must not buy the short floor, and a turn provider may carry it.
+			 */
+			tier: "standing",
+			question: q
+		})
+	}
+
+	/*
+	 * WHO KEEPS KILLING WHOM — one `GROUP BY` over the event feed, and the largest single gap in
+	 * the app by the target corpus's own count.
+	 *
+	 * The block renders `0/5/4` and cannot know that three of those five are one champion. In
+	 * split-03 Briar's victim list is Urgot ×6, Taliyah ×4, Lillia ×4 and half of his own eight
+	 * deaths are Briar; in split-04 Tryndamere's is Mel ×4, Morgana ×4. Neither sentence can be
+	 * formed from any snapshot, both are exact, and both name a boundary he can hold rather than a
+	 * number he can read.
+	 *
+	 * HIS OWN killers rank above the counterpart's other victims, because one is about a fight he
+	 * keeps taking and the other is about a fight somebody else keeps taking. They share a subject
+	 * so only one can be in a list.
+	 */
+	const matchup: Fact[] = []
+	if (input.kills && input.kills.length > 0) {
+		const tally = new Map<string, number>()
+		for (const k of input.kills) tally.set(`${k.killer}>${k.victim}`, (tally.get(`${k.killer}>${k.victim}`) ?? 0) + 1)
+		const times = (killer: string, victim: string): number => tally.get(`${killer}>${victim}`) ?? 0
+		const bucket = (n: number): string => (n >= MATCHUP_DECIDED_TIMES ? "decided" : "pattern")
+		const me = input.meChampion ?? ""
+		/*
+		 * His own deaths, grouped by killer. `myDeaths` is counted from the same feed rather than
+		 * read off the scoreboard so the two halves of the sentence — "three of your five" — come
+		 * from ONE source and cannot disagree by a kill the feed has not delivered yet.
+		 */
+		const myDeaths = me === "" ? 0 : input.kills.filter(k => k.victim === me).length
+		const nemesis =
+			me === "" ? null : (
+				[...new Set(input.kills.filter(k => k.victim === me).map(k => k.killer))]
+					.map(killer => ({ killer, n: times(killer, me) }))
+					.sort((a, b) => b.n - a.n)[0] ?? null
+			)
+		if (nemesis && nemesis.n >= MATCHUP_MIN_TIMES)
+			matchup.push({
+				/*
+				 * The COUNT and nothing more. "He beats you straight up" is a judgement from three
+				 * losses and reads exactly like a measurement, which is the line AGENTS.md draws
+				 * through the middle of this app; the clause that follows is champion knowledge and
+				 * carries no digit by construction.
+				 */
+				text: withAdvice(
+					`${nemesis.n} of your ${myDeaths} deaths are ${nemesis.killer}`,
+					input.advice?.matchup
+				),
+				subject: "matchup",
+				tier: "standing",
+				question: { key: `nemesis:${nemesis.killer}`, verdict: bucket(nemesis.n) }
+			})
+		const who = input.counterpart?.champion
+		if (who !== undefined) {
+			const prey =
+				[...new Set(input.kills.filter(k => k.killer === who && k.victim !== me).map(k => k.victim))]
+					.map(victim => ({ victim, n: times(who, victim) }))
+					.sort((a, b) => b.n - a.n)[0] ?? null
+			if (prey && prey.n >= MATCHUP_MIN_TIMES)
+				matchup.push({
+					/*
+					 * A teammate's score as CONTEXT, which AGENTS.md allows and which is the whole
+					 * value here: it says where the enemy jungler keeps going. It never becomes a
+					 * judgement about the teammate, and it never becomes a claim about where anyone
+					 * is now.
+					 */
+					text: withAdvice(
+						`${who} has killed your ${prey.victim} ${prey.n} times`,
+						input.advice?.matchup
+					),
+					subject: "matchup",
+					tier: "standing",
+					question: { key: `prey:${who}>${prey.victim}`, verdict: bucket(prey.n) }
+				})
 		}
 	}
 
@@ -2124,6 +2343,14 @@ export const buildFacts = (
 		...ownDeath,
 		...restraint,
 		...windows,
+		/*
+		 * The two facts nothing else in the app can reach, immediately below the things that expire
+		 * in seconds. `stood` is off every channel he has (`is-the-timer-visible.md`), and `matchup`
+		 * is a `GROUP BY` the block was structurally unable to perform. Everything below them is
+		 * either on his HUD or a comparison whose answer rarely changes.
+		 */
+		...stood,
+		...matchup,
 		...build,
 		...race,
 		...objectives,
@@ -2204,6 +2431,8 @@ export const buildFacts = (
 			...ownDeath,
 			...restraint,
 			...windows,
+			...stood,
+			...matchup,
 			...build,
 			...race,
 			...objectives,

@@ -51,6 +51,14 @@ build: assume the duel just got worse and take the fight you already had the num
 build: that is a real spike on him, so avoid the even fight until you have reset too
 build: he paid for that, so make him spend it somewhere that is not the pit you want
 
+objective-uncontested: nobody wants it, so be the one who is standing on it when the fight starts
+objective-uncontested: uncontested means the fight over it has not happened yet, so bring someone
+objective-uncontested: start it while it is free rather than trading for it later
+
+matchup: stop taking that one alone, walk to it with somebody or walk away
+matchup: give that fight up and take the camps on the far side instead
+matchup: put the ward down before you cross into that half of the map
+
 farm-behind: run the next route to the end, a gank that is not ready is not one
 farm-behind: take the camps on the way to where you were going, not a lap back
 farm-behind: soak the wave crashing into your own turret while camps come back
