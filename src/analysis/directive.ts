@@ -29,10 +29,10 @@
  *
  *     family              n    judge A clears   [95% CI]     judge B clears
  *     clear-camps        76     0    0%         [0-5]%        0    0%
- *     objective          52    33   63%         [50-75]%     19   37%
+ *     objective          51    33   65%         [51-77]%     19   37%
  *     spend-gold         36     0    0%         [0-10]%       0    0%
  *     fight-shape        20     0    0%         [0-16]%       0    0%
- *     push               14     5   36%         [16-61]%      0    0%
+ *     push               15     5   33%         [15-58]%      0    0%
  *     objective-unnamed   7     0    0%         [0-35]%       0    0%
  *     disengage           6     1   17%          1   17%
  *     path-side           2     2  100%          2  100%
@@ -76,7 +76,7 @@
  * and it belongs there. Banning a verb this classifier cannot read would take the best line in the
  * corpus with it.
  *
- * `push` and `disengage` were considered and kept: push is 5/14 by one judge and 0/14 by the other,
+ * `push` and `disengage` were considered and kept: push is 5/15 by one judge and 0/15 by the other,
  * which is disagreement rather than a zero, and disengage cleared once in six. `objective-unnamed`
  * ("push AN objective", "take a far objective") is 0 of 7 by both judges and is the obvious next
  * candidate — n is too small to ban on, and it is named here so the next run can settle it.
@@ -191,7 +191,7 @@ const familyOf = (imperative: string): DirectiveFamily | "" => {
 		return "spend-gold"
 	if (OBJECTIVE.test(imperative)) return "objective"
 	if (/\ban? (?:far )?objective\b|\bnext timer\b/.test(imperative)) return "objective-unnamed"
-	if (/\bpush\b|\bend (?:the|this) game\b|\bnexus\b|\btower\b|\bturret\b|\bgroup\b|\bbase\b|\blane\b/.test(imperative))
+	if (/\bpush\b|\bend (?:the|this) game\b|\bnexus\b|\btowers?\b|\bturrets?\b|\bgroup\b|\bbase\b|\blane\b/.test(imperative))
 		return "push"
 	if (/pull back|path away|don'?t\b|\bavoid\b|\bskip\b|back off|walk away|\bstay\b|\bleave\b/.test(imperative))
 		return "disengage"
@@ -210,6 +210,13 @@ const familyOf = (imperative: string): DirectiveFamily | "" => {
  * finish the next", "so bring someone", "so take it now" — the whole line is used to resolve the
  * missing object, which is what a listener does. The fallback can only fire on a line that already
  * HAS an imperative: a bare fact stays "none" and is never banned by association with its premise.
+ *
+ * It is imprecise in one known way, and the count is small enough to state rather than hide. An
+ * order that is a bare DIRECTION — "so path top and clear your camps" — has an object of its own,
+ * so the clause pass takes it and the fallback then resolves "top" off whatever the premise
+ * happened to name. Three lines in 214 are filed that way, all three into families that are not
+ * banned, so it cannot reach the ban: it moves the denominator of `objective` by one or two and
+ * nothing else.
  */
 export const classifyDirective = (line: string): DirectiveFamily => {
 	const imperative = imperativeOf(line)
@@ -259,10 +266,10 @@ export const DIRECTIVE_EVIDENCE: readonly {
 	banned: boolean
 }[] = [
 	{ family: "clear-camps", n: 76, clears: 0, clearsB: 0, banned: true },
-	{ family: "objective", n: 52, clears: 33, clearsB: 19, banned: false },
+	{ family: "objective", n: 51, clears: 33, clearsB: 19, banned: false },
 	{ family: "spend-gold", n: 36, clears: 0, clearsB: 0, banned: true },
 	{ family: "fight-shape", n: 20, clears: 0, clearsB: 0, banned: true },
-	{ family: "push", n: 14, clears: 5, clearsB: 0, banned: false },
+	{ family: "push", n: 15, clears: 5, clearsB: 0, banned: false },
 	{ family: "objective-unnamed", n: 7, clears: 0, clearsB: 0, banned: false },
 	{ family: "disengage", n: 6, clears: 1, clearsB: 1, banned: false },
 	{ family: "path-side", n: 2, clears: 2, clearsB: 2, banned: false },

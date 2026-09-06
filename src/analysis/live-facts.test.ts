@@ -815,6 +815,18 @@ describe("buildFacts — an objective, and the bodies that make it free", () => 
 		strictEqual(out.some(f => /start it now/.test(f)), false, out.join(" | "))
 	})
 
+	it("says \"Void grubs are up ... start them now\", because the line is spoken aloud", () => {
+		const out = buildFacts(
+			input({
+				nowSec: 600,
+				standing: [{ name: "Void grubs", atSec: 400, heldSec: 200 }],
+				deadEnemies: [{ champion: "Briar", respawnSec: 45, isJungler: true }]
+			}),
+			newFactMemory()
+		)
+		ok(out.some(f => /^Void grubs are up and Briar is down — start them now/.test(f)), out.join(" | "))
+	})
+
 	it("names the objective that has stood longest, not the first in the list", () => {
 		const out = buildFacts(
 			input({
@@ -866,7 +878,7 @@ describe("buildFacts — an objective, and the bodies that make it free", () => 
 			newFactMemory()
 		)
 		deepStrictEqual(out.length, 1, out.join(" | "))
-		ok(/start it now/.test(out[0]!), out[0])
+		ok(/start it now/.test(out[0]!), out.join(" | "))
 	})
 
 	it("is not offered to a turn provider, because it is a countdown on a respawn", () => {

@@ -200,6 +200,104 @@
  * and misfires on a full inventory, and a shopping notification for a Pickaxe is the exact failure
  * that fact was fenced against.
  *
+ * ## THE SUPPLY AUDIT — what each family COSTS against what it PRODUCED
+ *
+ * Three rounds of work attacked the hit rate and three rounds returned nulls. The denominator had
+ * never been attacked: at the best arm, over a whole game, judged at the floor he would really
+ * hear, the coach said 36 sentences and 10 of them were useful — one every 3.7 minutes buried in
+ * 26 that were not. So this round measured the two axes that had never been put beside each other.
+ *
+ * SUPPLY: `scripts/measure-starve.ts` over the four recorded games at the shipped twenty-second
+ * turn, with his real rolling baseline — 109 offered lines over 306 turns, classified by the
+ * generator that produced them rather than by `Fact.subject`.
+ *
+ * YIELD: the blind judged runs already on disk (`data/eval/offered/blind-key.json` with
+ * `hand-verdicts.json`, and the independent second pass in `data/eval/judge-r3/verdicts.json`) —
+ * 103 spoken lines over one game, two judges, label-blinded. Each line was attributed by hand to
+ * the ranked fact it was speaking from, or to the block when it was speaking from neither.
+ *
+ *   family      offers  share   judged  cleared (opus / r3)
+ *   fight          39   35.8%     19        1  /  1
+ *   praise         13   11.9%      0        —
+ *   stood          11   10.1%      5        5  /  3
+ *   obj-timer       7    6.4%      3        0  /  0
+ *   ej-death        6    5.5%      0        —
+ *   race            5    4.6%      2        0  /  0
+ *   obj-lost        5    4.6%      1        0  /  0
+ *   prey            5    4.6%      2        2  /  2
+ *   gold            4    3.7%      0        —
+ *   window          3    2.8%      2        0  /  0
+ *   farm-pace       3    2.8%      0        —
+ *   the block      n/a   n/a      69       16  /  9
+ *
+ * ### 1. Fight-shape was 36% of everything the coach said and produced one line in nineteen
+ *
+ * It is the single largest family by a factor of three, and it is offered on 39 of 306 turns with
+ * ZERO rejections — `interrupt` skips every rate in this function, and `soleFight` then takes the
+ * whole turn. One turn of it costs everything else on the list, thirty-nine times over a corpus.
+ *
+ * Against that: 19 judged lines, 1 clear from either judge, and BOTH of the corpus's two `wrong`
+ * verdicts. The reason is structural rather than tonal. A fight line has two halves — the trade,
+ * which is exact and off his HUD, and a tail. The tail is either what the fight BOUGHT them (an
+ * objective, from the event feed, at a named interval) or an imperative, and every imperative
+ * available is static text: `fights.ts`'s five-branch `tail`, or the champion markdown, which is
+ * digit-free by construction and therefore cannot name a place, a time or a number. So the
+ * sentence it ends survives being pasted onto any other game where a fight went the same way.
+ * Split by that seam: tail-only is 0 of 17, bought is 1 clear and 1 marginal from 2.
+ *
+ * Two of 2 is nothing and is not claimed as a win. It is 0 of 17 that decides it, and the bought
+ * variant survives because its tail is a fact off the feed rather than a sentence that fits every
+ * game. `FactInput.fight.bought` is that seam, plumbed from the `Fight.bought` that `fights.ts`
+ * has always computed and that nothing downstream could see.
+ *
+ * ### 2. The thing that produced was never in the ranking at all
+ *
+ * Of the 24 lines the judge passed, SIXTEEN were the same shape: a named neutral objective is
+ * takeable and several of them are dead, so go start it now. start-baron-now 10 of 10,
+ * take-standing-dragon 5 of 5, take-dragon-while-ej-dead 2 of 2. Not one of them came from this
+ * file — the model was assembling the conjunction out of two halves of the block by itself, and
+ * every time it did, it cleared. The objective schedule is also the one context change that ever
+ * measured better on its own (29% -> 55%, p = 0.0009).
+ *
+ * Both halves were ALREADY ranked here and neither works alone. `windows` is the bodies with no
+ * object — 0 clears from 2. `soon` is the object with no bodies, and it is the spawn countdown he
+ * can read off his own minimap — 0 clears from 3. `stood` is the object with no bodies but with the
+ * one premise that is on no channel he has, and it is the best-yielding ranked family in the corpus
+ * — 5 of 5, and 3 of 5 on the stricter judge. `takeNow` is the conjunction: place, reason it is
+ * free, deadline, one sentence.
+ *
+ * ### 3. Two bans that are counts rather than judgements
+ *
+ * `gold` — across both blind rounds, 102 lines whose imperative was of the recall-and-spend family
+ * were graded and not one cleared. The premise was never the problem; the ACTION is one he would
+ * have given himself. `race`, ahead side — he wins that race in four games of four and the advice
+ * attached is `race-ahead`, static markdown that comes out as some rewording of *keep the route
+ * running*; keep-clearing is 18 judged lines and 0 clears. The behind side and the comeback swing
+ * are untouched.
+ *
+ * ### What it did to the coach, measured on the same four games
+ *
+ *                                     before   after
+ *     offered lines                     109      71     (27.3 -> 17.8 per game)
+ *     turns carrying a ranked fact    77/306  64/306
+ *     fight-shape's share of output      36%    2.8%
+ *     objective-plus-bodies lines          0       5
+ *
+ * **This is a cut to the denominator and it is reported as one.** Nothing here shows the hit rate
+ * moved, because the judged corpus predates the change; what is shown is that 39 offers of a family
+ * that cleared once in nineteen have become 2, and that the shape which cleared sixteen times out of
+ * the block is now something this file can say. Whether that lands is one blind re-judge away and
+ * nothing short of it will settle it.
+ *
+ * Two things are deliberately NOT acted on, and the reason is n. `obj-timer` (0 of 3), `window`
+ * (0 of 2) and `obj-lost` (0 of 1) are all zero on samples far too small to ban a family over —
+ * and the timer at least is a readback by `is-the-timer-visible.md`'s own measurement, so it is the
+ * next candidate rather than a mystery. `praise` is now the second-largest family at 13 of 71
+ * offers and has never been judged at all: it cannot clear a bar that asks whether he learned
+ * something, because the game announced it with a banner and a sound, and warmth is a product call
+ * rather than a measurement. What would settle both: the same blind sheet, run again, with enough
+ * lines per family to separate 0 of 3 from 0 of 30.
+ *
  * Pure: state goes in, state comes out. The daemon owns the one mutable copy.
  */
 
@@ -1765,7 +1863,15 @@ export const buildFacts = (
 			 * whole claim is that the pit is free for the next N seconds, and the sentence spends
 			 * some of them.
 			 */
-			const draft = (n: number): string => `${target.name} is up and ${who} — start it now, you have about ${n} seconds`
+			/*
+			 * "Void grubs ARE up ... start THEM now". The one plural name in the schedule, and this
+			 * string is spoken aloud — `stood` carries the same note for the same reason, after a
+			 * model read "spawns in 1 seconds" out to him verbatim. A grammar mistake here is a
+			 * grammar mistake in his ear.
+			 */
+			const plural = target.name === "Void grubs"
+			const draft = (n: number): string =>
+				`${target.name} ${plural ? "are" : "is"} up and ${who} — start ${plural ? "them" : "it"} now, you have about ${n} seconds`
 			const pipe = heardBy(draft(Math.round(shortest - dead)))
 			/*
 			 * How long the pit is still free once he can act — after his own respawn and after the
