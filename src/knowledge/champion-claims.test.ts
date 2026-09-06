@@ -264,7 +264,22 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["he paid for that, so make him spend it somewhere that is not the pit you want", ["role.items-change-a-duel", "role.objective-timers"]],
 		["run the next route to the end, a gank that is not ready is not one", ["role.camps-are-gold-and-xp"]],
 		["take the camps on the way to where you were going, not a lap back", ["role.camps-are-gold-and-xp"]],
-		["soak the wave crashing into your own turret while camps come back", ["role.jungler-soaks-waves", "role.camps-respawn"]]
+		["soak the wave crashing into your own turret while camps come back", ["role.jungler-soaks-waves", "role.camps-respawn"]],
+		/*
+		 * The two kinds the ranker gained when the ranked list stopped being starved. Both lean on
+		 * role facts only, which is what `_default.md` is allowed to do — and both are the
+		 * instruction half of a fact the client has already proved, so the clause carries the
+		 * judgment and never the number.
+		 */
+		["nobody wants it, so be the one who is standing on it when the fight starts", ["role.objectives-persist", "role.judgment"]],
+		["uncontested means the fight over it has not happened yet, so bring someone", ["role.objectives-persist", "role.judgment"]],
+		["start it while it is free rather than trading for it later", ["role.objectives-persist", "role.objective-timers"]],
+		["stop taking that one alone, walk to it with somebody or walk away", ["role.judgment"]],
+		["give that duel up and take the camps on the far side instead", ["role.camps-are-gold-and-xp", "role.judgment"]],
+		["the next time you see him, path the other way and let him come to your side", ["role.camps-respawn", "role.judgment"]],
+		["that is where he keeps going, so ward the entrance to it before your next clear", ["role.vision"]],
+		["put your next path through that side of the map rather than the empty one", ["role.judgment"]],
+		["he is spending his game over there, so take the camps he is not standing on", ["role.camps-respawn", "role.judgment"]]
 	],
 	"lillia.md": [
 		["your clear only gets faster while it keeps running, so finish the whole route", ["lillia.q-stacks-move-speed"]],

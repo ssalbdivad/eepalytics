@@ -654,6 +654,37 @@ const mmss = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.rou
  * reason to speak now. When one of those facts genuinely becomes news — a swing, a gap that moved,
  * a level deficit — `analysis/live-facts.ts` ranks it and it arrives in `unseen`, where it IS
  * weighed. The background is excluded by construction and re-enters through the list.
+ *
+ * ## What it does, measured — `scripts/measure-hud-screen.ts`, no model calls
+ *
+ * Over his four recorded games replayed through the daemon's own state builder at the shipped
+ * twenty-second turn, **113 of 306 turns (37%) carry nothing he could not read himself.** What
+ * holds the rest open, in order: an enemy being down (127), a spawn the map is not printing yet
+ * (55), a ranked fact of some other kind (50), an objective standing untaken (39).
+ *
+ * **The number that argues against this rule, stated first.** Joined back to the nine recorded
+ * `briefing`-arm transcripts on split-03, it would have silenced 167 of the 341 lines the coach
+ * actually said, and the blind judges called 113 of those 167 useful (68%, against 83% on the turns
+ * it leaves open). Taken alone that reads as cutting good coaching.
+ *
+ * It is not taken alone, because those judges are the ones that returned `betterThanLastRound:
+ * false` on a round the owner called garbage, and `data/eval/target-lines.md` — the only definition
+ * of "good" here that a model did not write — marks several of the exact clocks in that silenced
+ * set SILENCE. Scored against its 24 split-03 verdicts this agrees on 14: it catches 3 of 8
+ * hand-written silences and leaves 11 of 16 hand-written lines open. Both halves of the
+ * disagreement are worth writing down, because neither is a bug in this rule:
+ *
+ * - the **five kept-open misses** (M02, M12, M13, M20, M21) are all moments whose premise is a CS
+ *   stall run, a gold hold, an assist roll-call or a per-killer breakdown. That document's own count
+ *   is that 19 of its 23 lines are impossible from today's data. Nothing that decides whether to
+ *   speak can open a turn on a fact the block does not carry;
+ * - the **five caught-silence misses** (M05, M09, M14, M16, M23) are all the same shape and it is a
+ *   different question from this one: he is in the fountain with 57 gold, or on 7% health in the
+ *   middle of a scramble, or has just backed and bought. The block genuinely held something
+ *   off-screen at each; what it did not hold is that he was in no position to act. That is a
+ *   question about his STATE rather than about the channel, and M03 of the same document names the
+ *   mechanism for it — gold that has started FALLING means he is in the fountain — which needs a
+ *   run-length over the sample stream and does not exist yet.
  */
 
 /**
@@ -692,8 +723,10 @@ export const scheduleScreen = (o: ScheduledObjective): Screen =>
  * `analysis/live-facts.ts` writes every line in this list from a fixed template, so the templates
  * can be recognised — `premiseOf` in `analysis/timeliness.ts` has parsed them for months and
  * `analysis/useful.ts` already keeps a premise-to-screen table. Neither is importable from
- * `shared/`, so the patterns are restated here for the four that matter, and the two files are
- * checked against each other in the test rather than left to drift silently.
+ * `shared/`, so the patterns are restated here for the handful that matter. The two tables are NOT
+ * wired together — the test pins each divergence between them by hand instead, with the frame
+ * measurement that settles it, because the point of the divergence is that one of them was written
+ * before the frames were read.
  *
  * **An unrecognised line is off-screen**, which is the conservative direction: a template added
  * tomorrow makes the coach speak on a turn it might have passed, rather than silently gagging it.

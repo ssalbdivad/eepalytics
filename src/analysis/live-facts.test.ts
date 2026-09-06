@@ -29,6 +29,7 @@ import {
 } from "./live-facts.ts"
 import type { FactInput, FactMemory } from "./live-facts.ts"
 import { premiseOf, speechDurationSec } from "./timeliness.ts"
+import { SCHEDULE_UNCONTESTED_SEC } from "../shared/live-state.ts"
 
 /**
  * A countdown as this file will SPEAK it: the raw figure minus the pipe — the provider's latency
@@ -1839,5 +1840,259 @@ describe("buildFacts — an event may veto a trend", () => {
 			mem
 		)
 		ok(out.some(f => /Karthus/.test(f)), out.join(" | "))
+	})
+})
+
+describe("buildFacts — how long it has stood there", () => {
+	/*
+	 * THE ONE FACT ON NO CHANNEL HE HAS. `data/eval/is-the-timer-visible.md` read 1,876 real journal
+	 * frames of nine of his own games: the spawn countdown is on his minimap from three minutes out,
+	 * exact, in 9 of 9 — and while the thing is STANDING the display prints no digits at all. It was
+	 * already computed and already in the block's prose; it was never ranked, which in this app is
+	 * the same as not existing.
+	 */
+	const standing = (heldSec: number, over: Partial<FactInput> = {}): FactInput =>
+		input({ nowSec: 1400, standing: [{ name: "Baron", atSec: 1400 - heldSec, heldSec }], ...over })
+
+	it("says nothing while it has only just spawned", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(standing(20), mem)
+		strictEqual(out.some(f => /nobody has taken it/.test(f)), false, out.join(" | "))
+	})
+
+	it("speaks once it has been ignored long enough for the ignoring to be the news", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(standing(SCHEDULE_UNCONTESTED_SEC + 5), mem)
+		ok(
+			out.some(f => /^Baron has been up 2 minutes 5 seconds and nobody has taken it/.test(f)),
+			out.join(" | ")
+		)
+	})
+
+	it("does not restate the same standing objective on the next turn", () => {
+		const mem = newFactMemory()
+		buildFacts(standing(150), mem)
+		const again = buildFacts(
+			input({ nowSec: 1400 + ROUTINE_GAP_SEC + 10, standing: [{ name: "Baron", atSec: 1250, heldSec: 160 }] }),
+			mem
+		)
+		strictEqual(again.some(f => /nobody has taken it/.test(f)), false, again.join(" | "))
+	})
+
+	it("says it a second time once it has stood long enough to be a different sentence", () => {
+		const mem = newFactMemory()
+		buildFacts(standing(150), mem)
+		const later = buildFacts(
+			input({ nowSec: 1700, standing: [{ name: "Baron", atSec: 1250, heldSec: 450 }] }),
+			mem
+		)
+		ok(later.some(f => /Baron has been up 7 minutes 30 seconds/.test(f)), later.join(" | "))
+	})
+
+	it("a retake starts a fresh clock and is a genuine flip, not a continuation", () => {
+		const mem = newFactMemory()
+		buildFacts(standing(150), mem)
+		const respawned = buildFacts(
+			input({ nowSec: 2000, standing: [{ name: "Baron", atSec: 1850, heldSec: 150 }] }),
+			mem
+		)
+		ok(respawned.some(f => /nobody has taken it/.test(f)), respawned.join(" | "))
+	})
+
+	it("is withheld when the frame says he is already standing on it", () => {
+		/*
+		 * The same gate `soon` applies to a timer, for the same reason: standing in the pit and being
+		 * told nobody has taken the thing in the pit is the readout this whole file refuses. Withheld
+		 * rather than demoted, so nothing is spent and it is still available when he walks away.
+		 */
+		const mem = newFactMemory()
+		const out = buildFacts(
+			standing(150, { frame: { where: "topside", atSec: 1398, confidence: "medium" } }),
+			mem
+		)
+		strictEqual(out.some(f => /nobody has taken it/.test(f)), false, out.join(" | "))
+		const away = buildFacts(
+			standing(150, { frame: { where: "botside", atSec: 1398, confidence: "medium" } }),
+			newFactMemory()
+		)
+		ok(away.some(f => /nobody has taken it/.test(f)), away.join(" | "))
+	})
+
+	it("is a standing fact, so a turn provider may carry it", () => {
+		// It is true for minutes by construction — that is the entire content of the claim — so it
+		// must not be stripped by the tier gate the way a countdown is.
+		const mem = newFactMemory()
+		const out = buildFacts(standing(150), mem, { path: "turn" })
+		ok(out.some(f => /nobody has taken it/.test(f)), out.join(" | "))
+	})
+
+	it("parses back to its own premise rather than to the build line", () => {
+		strictEqual(premiseOf("Baron has been up 2 minutes and nobody has taken it").kind, "uncontested")
+	})
+})
+
+describe("buildFacts — who keeps killing whom", () => {
+	/*
+	 * The largest single gap the target corpus found: the block renders `0/5/4` and cannot know that
+	 * three of those five are one champion. Both halves are one `GROUP BY` over the event feed.
+	 */
+	const kill = (killer: string, victim: string, atSec: number) => ({ killer, victim, atSec })
+
+	it("says nothing at two, because two is a rematch", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({ meChampion: "Lillia", kills: [kill("Briar", "Lillia", 100), kill("Briar", "Lillia", 200)] }),
+			mem
+		)
+		strictEqual(out.some(f => /deaths are/.test(f)), false, out.join(" | "))
+	})
+
+	it("names his nemesis with the count and the total from ONE source", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				meChampion: "Lillia",
+				kills: [
+					kill("Briar", "Lillia", 100),
+					kill("Briar", "Lillia", 200),
+					kill("Briar", "Lillia", 300),
+					kill("Jhin", "Lillia", 400),
+					kill("Senna", "Lillia", 500)
+				]
+			}),
+			mem
+		)
+		ok(out.some(f => /^3 of your 5 deaths are Briar/.test(f)), out.join(" | "))
+	})
+
+	it("does not restate the same verdict as the count creeps up", () => {
+		const mem = newFactMemory()
+		const kills = [kill("Briar", "Lillia", 100), kill("Briar", "Lillia", 200), kill("Briar", "Lillia", 300)]
+		buildFacts(input({ meChampion: "Lillia", kills }), mem)
+		const again = buildFacts(
+			input({
+				nowSec: 600 + ROUTINE_GAP_SEC + 10,
+				meChampion: "Lillia",
+				kills: [...kills, kill("Briar", "Lillia", 700)]
+			}),
+			mem
+		)
+		strictEqual(again.some(f => /deaths are Briar/.test(f)), false, again.join(" | "))
+	})
+
+	it("says it once more when it stops being a pattern and becomes the game", () => {
+		const mem = newFactMemory()
+		const kills = [kill("Briar", "Lillia", 100), kill("Briar", "Lillia", 200), kill("Briar", "Lillia", 300)]
+		buildFacts(input({ meChampion: "Lillia", kills }), mem)
+		const decided = buildFacts(
+			input({
+				nowSec: 600 + ROUTINE_GAP_SEC + 10,
+				meChampion: "Lillia",
+				kills: [...kills, kill("Briar", "Lillia", 700), kill("Briar", "Lillia", 800)]
+			}),
+			mem
+		)
+		ok(decided.some(f => /^5 of your 5 deaths are Briar/.test(f)), decided.join(" | "))
+	})
+
+	it("names who the enemy jungler keeps farming, as context and never as blame", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				meChampion: "Lillia",
+				counterpart: { champion: "Briar" },
+				kills: [
+					kill("Briar", "Urgot", 100),
+					kill("Briar", "Urgot", 200),
+					kill("Briar", "Urgot", 300)
+				]
+			}),
+			mem
+		)
+		ok(out.some(f => /^Briar has killed your Urgot 3 times/.test(f)), out.join(" | "))
+	})
+
+	it("puts his own deaths above a teammate's, and never both in one list", () => {
+		/*
+		 * One subject, so `distinct` keeps one — and the one about the fight HE keeps taking wins,
+		 * because it is the only one of the two he can act on by himself.
+		 */
+		const mem = newFactMemory()
+		const out = buildFacts(
+			input({
+				meChampion: "Lillia",
+				counterpart: { champion: "Briar" },
+				kills: [
+					kill("Briar", "Lillia", 100),
+					kill("Briar", "Lillia", 200),
+					kill("Briar", "Lillia", 300),
+					kill("Briar", "Urgot", 400),
+					kill("Briar", "Urgot", 500),
+					kill("Briar", "Urgot", 600)
+				]
+			}),
+			mem
+		)
+		strictEqual(out.filter(f => /Briar/.test(f)).length, 1, out.join(" | "))
+		ok(out.some(f => /deaths are Briar/.test(f)), out.join(" | "))
+	})
+
+	it("parses back to its own premise", () => {
+		strictEqual(premiseOf("3 of your 5 deaths are Briar").kind, "matchup")
+		strictEqual(premiseOf("Briar has killed your Urgot 5 times").kind, "matchup")
+	})
+})
+
+describe("buildFacts — an interrupt does not charge a floor it exempted itself from", () => {
+	/*
+	 * MEASURED over the four recorded games (`scripts/measure-starve.ts`): 493 facts were built and
+	 * 84 offered, and of the 314 stopped by a floor, 176 — 56% — were stopped by a floor started by
+	 * a `fight` line. A fight is `interrupt`, so it skips every rate in this function for itself and
+	 * then charged the full two-minute routine quiet to everything else. One turn of high-stakes
+	 * news bought two minutes of silence about everything he could not see.
+	 *
+	 * The routine floor's own comment says what it is for — farm, gold and the objective count are
+	 * "the ones that turn into nagging, because the state that produced them is still there next
+	 * turn". That is a statement about SLOW facts following each other, so it is counted from the
+	 * last slow fact. `MIN_GAP_SEC` is still charged by everything, because its argument — the
+	 * previous instruction has plausibly been acted on — is about any two lines.
+	 */
+	it("lets a standing fact follow a fight at the general floor rather than the routine one", () => {
+		const mem = newFactMemory()
+		const fought = buildFacts(
+			input({ nowSec: 600, fight: { quiet: false, line: "that fight was 0 for 3 without you" } }),
+			mem
+		)
+		ok(fought.length === 1, fought.join(" | "))
+		const after = buildFacts(
+			input({
+				nowSec: 600 + MIN_GAP_SEC + 1,
+				standing: [{ name: "Baron", atSec: 400, heldSec: 245 }]
+			}),
+			mem
+		)
+		ok(after.some(f => /nobody has taken it/.test(f)), after.join(" | "))
+	})
+
+	it("still keeps two slow facts two minutes apart", () => {
+		const mem = newFactMemory()
+		const first = buildFacts(
+			input({ nowSec: 600, standing: [{ name: "Baron", atSec: 400, heldSec: 200 }] }),
+			mem
+		)
+		ok(first.some(f => /nobody has taken it/.test(f)), first.join(" | "))
+		const soon = buildFacts(
+			input({
+				nowSec: 600 + MIN_GAP_SEC + 1,
+				meChampion: "Lillia",
+				kills: [
+					{ killer: "Briar", victim: "Lillia", atSec: 100 },
+					{ killer: "Briar", victim: "Lillia", atSec: 200 },
+					{ killer: "Briar", victim: "Lillia", atSec: 300 }
+				]
+			}),
+			mem
+		)
+		deepStrictEqual(soon, [], "a second slow fact inside two minutes is still withheld")
 	})
 })
