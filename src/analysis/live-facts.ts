@@ -216,6 +216,14 @@
  * 103 spoken lines over one game, two judges, label-blinded. Each line was attributed by hand to
  * the ranked fact it was speaking from, or to the block when it was speaking from neither.
  *
+ * Both columns are stored and re-derivable: `data/eval/family-audit/attribution.json` is every
+ * judged line with its family and both verdicts, `starve-before.json` and `starve-after.json` are
+ * the traces, and `report.py` beside them prints the table below from the pair.
+ *
+ * ONE LIMIT OF THE CORPUS, stated wherever it is quoted: only 14 of the 103 judged lines carried a
+ * picture at all (2 of those 14 cleared, against 22 of 89 without one). Vision is limited by what
+ * the sample streams can be joined to, not by this file, and nothing here is a claim about frames.
+ *
  *   family      offers  share   judged  cleared (opus / r3)
  *   fight          39   35.8%     19        1  /  1
  *   praise         13   11.9%      0        —
@@ -2761,16 +2769,23 @@ export const buildFacts = (
 	 */
 	const alone = (facts: Fact[]): Fact[] => facts.filter(allowed).slice(0, 1)
 	/*
-	 * The objective-plus-bodies call is offered ALONE and before everything, including a fight.
+	 * The objective-plus-bodies call is offered ALONE, immediately above the bare window.
 	 *
-	 * It is the only line this function has that names a place, a reason it is free and a deadline
-	 * in one sentence, and it was 16 of the judged corpus's 24 clears when the model had to assemble
-	 * it from the block by itself. A fight line beside it is a report on something already over.
+	 * ALONE because it is the only line this function has that names a place, a reason it is free
+	 * and a deadline in one sentence, and it was 16 of the judged corpus's 24 clears when the model
+	 * had to assemble it out of the block by itself — put it in a list beside a number and every
+	 * measurement in this file says the number wins.
+	 *
+	 * Exactly THERE, and not at the top, because it supersedes the window and nothing else: "2 of
+	 * them are dead — you have about 12 seconds" is the same fact with nothing to spend it on, and
+	 * it is 0 clears from 2 judged lines. Everything above it — a fight that bought them an
+	 * objective, a level gap with a pit live, a lost Baron — is a precedence this file already
+	 * measured, and a new fact does not get to reorder those on the strength of a different corpus.
 	 */
-	const soleTakeNow = alone(takeNow)
 	const soleFight = alone(fight)
 	const soleRestraint = alone(restraint)
 	const soleLost = alone(lost)
+	const soleTakeNow = alone(takeNow)
 	const soleWindow = alone(windows)
 	/*
 	 * A rotation call is offered ALONE too, and it sits exactly here for two separate reasons.
@@ -2789,10 +2804,10 @@ export const buildFacts = (
 	const out =
 		// Kills still landing: nothing at all, from any source. The module's own rule.
 		input.fight?.quiet ? []
-		: soleTakeNow.length > 0 ? soleTakeNow
 		: soleFight.length > 0 ? soleFight
 		: soleRestraint.length > 0 ? soleRestraint
 		: soleLost.length > 0 ? soleLost
+		: soleTakeNow.length > 0 ? soleTakeNow
 		: soleWindow.length > 0 ? soleWindow
 		: disaster ? []
 		: soleRotate.length > 0 ? soleRotate
