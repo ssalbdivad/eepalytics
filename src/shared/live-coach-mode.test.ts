@@ -21,6 +21,7 @@ import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import { test } from "node:test"
 import { ARMS, championKnowledge } from "../../scripts/ablate-autonomy.ts"
+import { isBannedDirective } from "../analysis/directive.ts"
 import { parseChampionClauses } from "./champion-advice.ts"
 import {
 	CITE_BLOCK_REPAIRS,
@@ -31,7 +32,8 @@ import {
 	downLine,
 	liveCoachSystemPrompt,
 	renderBlockForMode,
-	renderChampionKnowledge
+	renderChampionKnowledge,
+	withoutBannedClauses
 } from "./live-coach-mode.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "./live-prompt.ts"
 import { renderState } from "./live-state.ts"
@@ -88,6 +90,44 @@ test("champion knowledge reaches the prompt and carries no digits", () => {
 	// The one rule that keeps this honest by construction rather than by obedience.
 	const clauses = knowledge.split("\n").filter(l => l.startsWith("- ("))
 	for (const c of clauses) assert.equal(/[0-9]/.test(c), false, `a digit reached the prompt: ${c}`)
+})
+
+test("the briefing's champion menu does not contain the orders the briefing bans", () => {
+	const md = readFileSync("knowledge/champions/lillia.md", "utf8")
+	const knowledge = renderChampionKnowledge("Lillia", parseChampionClauses(md))
+	const clause = (l: string): string => l.replace(/^- \([^)]*\) /, "")
+	const all = knowledge.split("\n").filter(l => l.startsWith("- ("))
+	// The hole this closes: half of Lillia's own menu IS the three banned orders, verbatim.
+	assert.equal(
+		all.some(l => isBannedDirective(clause(l))),
+		true,
+		"nothing in the menu classifies as banned — either the file or the classifier moved"
+	)
+	const briefing = liveCoachSystemPrompt({ mode: "briefing", championKnowledge: knowledge })
+	for (const l of all)
+		assert.equal(
+			briefing.includes(l),
+			!isBannedDirective(clause(l)),
+			`the briefing prompt ${isBannedDirective(clause(l)) ? "still offers" : "dropped"}: ${l}`
+		)
+	// The kinds survive the cut: race-behind loses two of four clauses and keeps two.
+	assert.equal(withoutBannedClauses(knowledge).includes("(race-behind)"), true)
+})
+
+test("the two measured control arms keep the menu they were measured with", () => {
+	const md = readFileSync("knowledge/champions/lillia.md", "utf8")
+	const knowledge = renderChampionKnowledge("Lillia", parseChampionClauses(md))
+	assert.equal(liveCoachSystemPrompt({ mode: "cite-or-quiet", championKnowledge: knowledge }).endsWith(knowledge), true)
+	assert.equal(liveCoachSystemPrompt({ mode: "fenced", championKnowledge: knowledge }), LIVE_COACH_SYSTEM_PROMPT)
+})
+
+test("a menu whose every clause is banned renders no section rather than an empty heading", () => {
+	const allBanned = renderChampionKnowledge("Nobody", {
+		"race-behind": ["your clear only gets faster while it keeps running, so finish the whole route"],
+		"fight-lost": ["your damage arrives over time, so take the long fights with room to kite"]
+	} as never)
+	assert.equal(withoutBannedClauses(allBanned), "")
+	assert.equal(withoutBannedClauses(""), "")
 })
 
 /* ---------------------------------------------------------- the block surgery */
