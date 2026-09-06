@@ -1711,7 +1711,14 @@ const main = async (): Promise<void> => {
 		],
 		config: {
 			model: MODEL,
-			provider: "gemini-http",
+			/*
+			 * The provider ACTUALLY used, not a hardcoded string.
+			 *
+			 * This field read `"gemini-http"` unconditionally, so every opus and gpt-5 run on this
+			 * harness recorded a provider it had never called. A config that cannot be wrong about
+			 * the model but is always wrong about the provider is worse than no field at all.
+			 */
+			provider: PROVIDER,
 			temperature: TEMPERATURE,
 			maxOutputTokens: 2000,
 			concurrency: CONCURRENCY,
