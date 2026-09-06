@@ -196,6 +196,22 @@ const LATE_FRAMES = flag("late-frames")
  * the run did not measure it.
  */
 const FRAMES_ONLY = flag("frames-only")
+/**
+ * Let the LATE grid skip any sample the PAIRED set already consumed.
+ *
+ * OFF by default, and it used to be ON with no way to turn it off. That is the bug this flag
+ * exists to have fixed. The default LATE set starts AFTER the last frame, so `tSec > fromSec`
+ * already excludes every paired state — the exclusion could only ever fire when `--late-from` was
+ * pushed back over the frame window, which is the one configuration where the frames are the whole
+ * point. `--late-from 0 --late-frames` therefore produced a grid that was blind for exactly the
+ * seven minutes the pictures exist for, silently, and a round whose thesis was about pictures was
+ * measured without them.
+ *
+ * Running a state in both sets is not double-counting: PAIRED measures frame sensitivity by running
+ * the same state twice, LATE measures cadence on a uniform grid, and the two sets are reported
+ * separately. It costs calls, and the run header prints the call count before spending any.
+ */
+const LATE_SKIP_PAIRED = flag("late-skip-paired")
 
 /* ================================================================== the states */
 
@@ -206,6 +222,16 @@ interface AblationState {
 	/** Absolute path to the real frame, or null for a text-only state. */
 	framePath: string | null
 	frameSkewSec: number | null
+	/**
+	 * Which journal session the frame came from, and which game that session was recording.
+	 *
+	 * Frames are joined on wall-clock `atMs` against every row in the table, with no game filter, so
+	 * "never across games" is a property of the clocks rather than of the query. Carrying the source
+	 * here makes that checkable instead of assumed: if a set's frames come from two sessions, the
+	 * run says so in its header and in its output file.
+	 */
+	frameSession: string | null
+	frameGameId: number | null
 	/** What arms 1 and 2 see: `renderState` verbatim. */
 	block: string
 	/** What arms 3 and 4 see: the same block with the fence's ranked list cut out. */
@@ -289,6 +315,137 @@ export const stripRankedList = (block: string): string => {
 export const countRankedFacts = (block: string): number =>
 	block.split("\n").filter(l => l.startsWith("- ")).length
 
+/* -------------------------------------------------------------------- frames */
+
+/**
+ * Where a journal frame actually IS, which is not always where its row says it is.
+ *
+ * `journal_frame.path` is an ABSOLUTE path written by whichever checkout recorded the session. This
+ * project has been renamed at least once, so 503 of the 1876 rows in the live database point at
+ * `/home/ssalb/coachskaffur/data/journal/...` while the JPEGs sit under
+ * `${DATA_DIR}/journal/...` — same session directory, same filename, same bytes.
+ *
+ * The old code was `if (!existsSync(f.path)) continue`, with no count and no message. A row whose
+ * path had gone stale was indistinguishable from a game nobody screen-shared, so a quarter of the
+ * corpus's pictures vanished without a line of output. Relocating by the `/journal/` suffix under
+ * the data directory this run is actually pointed at recovers them, and the ones that cannot be
+ * recovered are COUNTED and printed rather than skipped.
+ *
+ * `exists` is a parameter so the resolution rule can be tested without a filesystem.
+ */
+export const relocateFrame = (
+	storedPath: string,
+	dataDir: string,
+	exists: (path: string) => boolean
+): { path: string; relocated: boolean } | null => {
+	if (exists(storedPath)) return { path: storedPath, relocated: false }
+	const marker = "/journal/"
+	const at = storedPath.indexOf(marker)
+	if (at < 0) return null
+	const alt = `${dataDir}${marker}${storedPath.slice(at + marker.length)}`
+	return exists(alt) ? { path: alt, relocated: true } : null
+}
+
+/**
+ * Which states in a set carry a picture, and how far that picture sits from the block.
+ *
+ * Reported for every set the harness emits, printed in the run header, and stored per cell. A run
+ * that attached no images cannot then be read as a vision result without contradicting its own
+ * output file — which is the entire reason this exists, because that has now happened twice.
+ */
+export interface FrameCoverage {
+	states: number
+	framed: number
+	blind: number
+	/** `framed / states`, 0 when the set is empty. */
+	frameRate: number
+	skewMedianSec: number
+	skewMaxSec: number
+	/** Which journal sessions the attached frames came from. More than one is a cross-game join. */
+	sessions: string[]
+	gameIds: number[]
+}
+
+export const frameCoverage = (
+	states: readonly {
+		framePath: string | null
+		frameSkewSec: number | null
+		frameSession?: string | null
+		frameGameId?: number | null
+	}[]
+): FrameCoverage => {
+	const framed = states.filter(s => s.framePath !== null)
+	const skews = framed.map(s => s.frameSkewSec ?? 0)
+	return {
+		states: states.length,
+		framed: framed.length,
+		blind: states.length - framed.length,
+		frameRate: states.length === 0 ? 0 : framed.length / states.length,
+		skewMedianSec: median(skews),
+		skewMaxSec: skews.length === 0 ? 0 : Math.max(...skews),
+		sessions: [...new Set(framed.map(s => s.frameSession ?? "?"))].sort(),
+		gameIds: [...new Set(framed.map(s => s.frameGameId).filter((g): g is number => typeof g === "number"))].sort()
+	}
+}
+
+/**
+ * Which built samples the LATE grid may draw from.
+ *
+ * Pure, exported and tested, because the version of this line that was inlined here cost a whole
+ * round: `!(RUN_PAIRED && usedByPaired.has(b.line))` was unconditional, and the samples the PAIRED
+ * set consumes are *precisely* the frame-bearing ones. Every configuration that asked for a
+ * whole-game grid with pictures got a grid with no pictures in the window where pictures exist.
+ *
+ * `skipPaired` is now opt-in (`--late-skip-paired`). With it off, a sample may appear in both sets.
+ */
+export const lateEligible = <T extends { line: number; tSec: number }>(
+	built: readonly T[],
+	fromSec: number,
+	usedByPaired: ReadonlySet<number>,
+	skipPaired: boolean
+): T[] => built.filter(b => b.tSec > fromSec && !(skipPaired && usedByPaired.has(b.line)))
+
+/**
+ * What the frame table gave this run, from row count down to pictures actually attached.
+ *
+ * Every subtraction between `rows` and `joinedPaired` is a place a frame can disappear, and each
+ * one used to be silent. They are printed in the header in this order so the step that lost them is
+ * named rather than inferred.
+ */
+export interface FrameAudit {
+	dataDir: string
+	gateSec: number
+	rows: number
+	onDisk: number
+	relocated: number
+	missing: number
+	inSampleWindow: number
+	joinedPaired: number
+	droppedOverGate: number
+}
+
+/** A journal frame that has been confirmed on disk, with where it came from. */
+interface UsableFrame {
+	id: string
+	/** Where the bytes are now. */
+	path: string
+	/** Where the row said they were. Kept so a relocation is visible in the manifest. */
+	storedPath: string
+	relocated: boolean
+	atMs: number
+	tSec: number
+	sessionId: string
+	gameId: number | null
+}
+
+/** A frame joined onto a state, and the skew that join cost. */
+interface Attached {
+	path: string
+	skew: number
+	sessionId: string
+	gameId: number | null
+}
+
 /**
  * Replay the recorded game and join the browser's real frames onto it.
  *
@@ -296,7 +453,12 @@ export const countRankedFacts = (block: string): number =>
  * `scripts/build-fixture.ts` does, because the fact list carries memory. Frames come from the
  * `journal_frame` table and are joined on `atMs` — never on index, never across games.
  */
-const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: string } => {
+const buildStates = (): {
+	paired: AblationState[]
+	late: AblationState[]
+	note: string
+	frameAudit: FrameAudit
+} => {
 	const samples = readSamples(SAMPLE_FILE)
 	if (samples.length === 0) throw new Error(`no samples in data/live-samples/${SAMPLE_FILE}.ndjson`)
 
@@ -311,10 +473,46 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 			| { gameCreationMs: number | bigint }
 			| undefined)?.gameCreationMs ?? 0
 	)
-	const frames = db
-		.prepare("SELECT id, path, atMs, tSec FROM journal_frame ORDER BY atMs")
-		.all() as unknown as { id: string; path: string; atMs: number; tSec: number }[]
+	const frameRows = db
+		.prepare("SELECT id, sessionId, path, atMs, tSec FROM journal_frame ORDER BY atMs")
+		.all() as unknown as { id: string; sessionId: string; path: string; atMs: number; tSec: number }[]
+	/*
+	 * Which game each journal session was recording. Only for the manifest — the join itself is on
+	 * wall clock — but it is what makes "never across games" a checkable claim rather than a comment.
+	 */
+	const sessionGame = new Map<string, number>()
+	try {
+		const rows = db.prepare("SELECT id, gameId FROM journal_session").all() as unknown as {
+			id: string
+			gameId: number | bigint | null
+		}[]
+		for (const r of rows) if (r.gameId !== null) sessionGame.set(r.id, Number(r.gameId))
+	} catch {
+		/* an older database has no journal_session; the manifest then reports a null gameId */
+	}
 	db.close()
+
+	const frames: UsableFrame[] = []
+	let relocatedCount = 0
+	let missingCount = 0
+	for (const r of frameRows) {
+		const found = relocateFrame(r.path, DATA_DIR, existsSync)
+		if (!found) {
+			missingCount++
+			continue
+		}
+		if (found.relocated) relocatedCount++
+		frames.push({
+			id: r.id,
+			path: found.path,
+			storedPath: r.path,
+			relocated: found.relocated,
+			atMs: r.atMs,
+			tSec: r.tSec,
+			sessionId: r.sessionId,
+			gameId: sessionGame.get(r.sessionId) ?? null
+		})
+	}
 
 	const corpus = loadCorpus(200)
 		.filter(e => createdMs === 0 || Number(e.row.gameCreationMs) < createdMs)
@@ -350,12 +548,14 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 
 	const firstMs = built[0]!.atMs
 	const lastMs = built[built.length - 1]!.atMs
-	const make = (b: Built, id: string, framePath: string | null, skew: number | null): AblationState => ({
+	const make = (b: Built, id: string, frame: Attached | null): AblationState => ({
 		id,
 		tSec: Math.round(b.tSec),
 		clock: `${Math.floor(b.tSec / 60)}:${String(Math.floor(b.tSec % 60)).padStart(2, "0")}`,
-		framePath,
-		frameSkewSec: skew,
+		framePath: frame?.path ?? null,
+		frameSkewSec: frame ? Math.round(frame.skew * 100) / 100 : null,
+		frameSession: frame?.sessionId ?? null,
+		frameGameId: frame?.gameId ?? null,
 		block: b.block,
 		blockNoList: stripRankedList(b.block),
 		blockShipped: b.blockShipped,
@@ -364,24 +564,29 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 		roster: b.roster
 	})
 
-	/** The nearest journal frame to a built state, under the same skew gate the PAIRED set uses. */
-	const frameFor = (b: Built): { path: string; skew: number } | null => {
-		let best: { path: string; skew: number } | null = null
+	/**
+	 * The nearest journal frame to a built state, under the same skew gate the PAIRED set uses.
+	 *
+	 * `frames` has already been existence-checked and relocated, so a null here means there is
+	 * genuinely no picture within the gate — not that a path had gone stale.
+	 */
+	const frameFor = (b: Built): Attached | null => {
+		let best: Attached | null = null
 		for (const f of frames) {
 			const skew = Math.abs(f.atMs - b.atMs) / 1000
 			if (skew > FRAME_SKEW_GATE_SEC) continue
-			if (!existsSync(f.path)) continue
-			if (!best || skew < best.skew) best = { path: f.path, skew: Math.round(skew * 100) / 100 }
+			if (!best || skew < best.skew) best = { path: f.path, skew, sessionId: f.sessionId, gameId: f.gameId }
 		}
 		return best
 	}
 
 	const paired: AblationState[] = []
 	const usedLines = new Set<number>()
+	let inWindow = 0
 	let dropped = 0
 	for (const f of frames) {
 		if (f.atMs < firstMs - 5000 || f.atMs > lastMs + 5000) continue
-		if (!existsSync(f.path)) continue
+		inWindow++
 		let best: Built | null = null
 		let bestSkew = Infinity
 		for (const b of built) {
@@ -395,13 +600,13 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 			dropped++
 			continue
 		}
-		paired.push(make(best, f.id, f.path, Math.round(bestSkew * 100) / 100))
+		paired.push(make(best, f.id, { path: f.path, skew: bestSkew, sessionId: f.sessionId, gameId: f.gameId }))
 		usedLines.add(best.line)
 	}
 
 	const lastFrameSec = LATE_FROM_SEC >= 0 ? LATE_FROM_SEC : paired.length > 0 ? paired[paired.length - 1]!.tSec : 0
 	const late: AblationState[] = []
-	const eligible = built.filter(b => b.tSec > lastFrameSec && !(RUN_PAIRED && usedLines.has(b.line)))
+	const eligible = lateEligible(built, lastFrameSec, usedLines, RUN_PAIRED && LATE_SKIP_PAIRED)
 	if (LATE_GRID) {
 		const taken = new Set<number>()
 		const end = eligible.length > 0 ? eligible[eligible.length - 1]!.tSec : 0
@@ -418,20 +623,14 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 			}
 			if (!best || bestSkew > LATE_SPACING_SEC / 2) continue
 			taken.add(best.line)
-			const gridFrame = LATE_FRAMES ? frameFor(best) : null
-			late.push(
-				make(best, `late-${String(Math.round(best.tSec)).padStart(4, "0")}`, gridFrame?.path ?? null, gridFrame?.skew ?? null)
-			)
+			late.push(make(best, `late-${String(Math.round(best.tSec)).padStart(4, "0")}`, LATE_FRAMES ? frameFor(best) : null))
 		}
 	} else {
 		let lastAt = -Infinity
 		for (const b of eligible) {
 			if (b.tSec - lastAt < LATE_SPACING_SEC) continue
 			lastAt = b.tSec
-			const walkFrame = LATE_FRAMES ? frameFor(b) : null
-			late.push(
-				make(b, `late-${String(Math.round(b.tSec)).padStart(4, "0")}`, walkFrame?.path ?? null, walkFrame?.skew ?? null)
-			)
+			late.push(make(b, `late-${String(Math.round(b.tSec)).padStart(4, "0")}`, LATE_FRAMES ? frameFor(b) : null))
 		}
 	}
 
@@ -441,7 +640,19 @@ const buildStates = (): { paired: AblationState[]; late: AblationState[]; note: 
 		note:
 			`${built.length} of ${samples.length} samples produced a state; ${paired.length} frames joined within ` +
 			`${FRAME_SKEW_GATE_SEC}s and ${dropped} were dropped over that gate; the LATE set is every state after ` +
-			`${lastFrameSec}s at ${LATE_SPACING_SEC}s spacing`
+			`${lastFrameSec}s at ${LATE_SPACING_SEC}s spacing` +
+			(LATE_SKIP_PAIRED ? ", excluding samples the PAIRED set consumed" : ""),
+		frameAudit: {
+			dataDir: DATA_DIR,
+			gateSec: FRAME_SKEW_GATE_SEC,
+			rows: frameRows.length,
+			onDisk: frames.length,
+			relocated: relocatedCount,
+			missing: missingCount,
+			inSampleWindow: inWindow,
+			joinedPaired: paired.length,
+			droppedOverGate: dropped
+		}
 	}
 }
 
@@ -849,7 +1060,17 @@ export interface CellTurn {
 export interface Cell {
 	set: string
 	arm: string
+	/** What the cell ASKED for. `framesAttached` is what it got, and they are not the same field. */
 	withFrame: boolean
+	/**
+	 * How many turns in this cell actually carried a JPEG.
+	 *
+	 * Recorded per cell, not derived at report time, because the failure being guarded against is a
+	 * report that reads `withFrame: true` and calls the run a vision result. `withFrame` is an
+	 * intention; this is a count of images sent. A cell with `withFrame: true` and
+	 * `framesAttached: 0` is a blind cell, and it now says so in the file.
+	 */
+	framesAttached: number
 	turns: CellTurn[]
 }
 
@@ -1021,7 +1242,13 @@ const runCell = async (
 		}
 		return turn
 	})
-	return { set: setName, arm: arm.id, withFrame, turns }
+	return {
+		set: setName,
+		arm: arm.id,
+		withFrame,
+		framesAttached: turns.filter(t => t.framePath !== null).length,
+		turns
+	}
 }
 
 /* ==================================================================== reporting */
@@ -1032,6 +1259,8 @@ export interface CellStats {
 	set: string
 	arm: string
 	withFrame: boolean
+	/** Turns that actually carried a JPEG. Zero on a cell whose `withFrame` is true is a blind cell. */
+	framesAttached: number
 	turns: number
 	errors: number
 	spoke: number
@@ -1091,6 +1320,7 @@ export const statsFor = (cell: Cell, minutes: number): CellStats => {
 		set: cell.set,
 		arm: cell.arm,
 		withFrame: cell.withFrame,
+		framesAttached: cell.framesAttached,
 		turns: cell.turns.length,
 		errors: cell.turns.length - ok.length,
 		spoke: n,
@@ -1128,7 +1358,7 @@ export const statsFor = (cell: Cell, minutes: number): CellStats => {
 const main = async (): Promise<void> => {
 	await openTransport()
 
-	const { paired, late, note } = buildStates()
+	const { paired, late, note, frameAudit } = buildStates()
 	const vocab = championVocabulary()
 	const armIds = arg("arms", ARMS.map(a => a.id).join(",")).split(",").map(s => s.trim()).filter(s => s !== "")
 	const arms = ARMS.filter(a => armIds.includes(a.id))
@@ -1145,12 +1375,59 @@ const main = async (): Promise<void> => {
 	console.log(`  temperature  ${TEMPERATURE}`)
 	console.log(`  samples      data/live-samples/${SAMPLE_FILE}.ndjson, game ${GAME_ID}`)
 	console.log(`  ${note}`)
-	console.log(`  PAIRED       ${pairedStates.length} states, ${pairedStates[0]?.clock ?? "-"}–${pairedStates[pairedStates.length - 1]?.clock ?? "-"}, every arm twice`)
-	console.log(`  LATE         ${lateStates.length} states, ${lateStates[0]?.clock ?? "-"}–${lateStates[lateStates.length - 1]?.clock ?? "-"}, text only`)
+	/*
+	 * The frame accounting, printed BEFORE anything is spent.
+	 *
+	 * Two runs in this project's history reported a vision result on a corpus that carried no
+	 * pictures, and in both cases the run's own output looked fine. So every subtraction between the
+	 * frame table and the images actually attached is named here, in the order the frames were lost,
+	 * and a set that asked for pictures and got none says so in capitals.
+	 */
+	const pairedCov = frameCoverage(pairedStates)
+	const lateCov = frameCoverage(lateStates)
+	const covLine = (c: FrameCoverage): string =>
+		c.states === 0 ? "no states"
+		: c.framed === 0 ? `0/${c.states} FRAME-BEARING — BLIND`
+		: `${c.framed}/${c.states} frame-bearing (${(c.frameRate * 100).toFixed(0)}%), skew median ${c.skewMedianSec.toFixed(2)}s max ${c.skewMaxSec.toFixed(2)}s, session${c.sessions.length === 1 ? "" : "s"} ${c.sessions.join(",")}, game${c.gameIds.length === 1 ? "" : "s"} ${c.gameIds.length === 0 ? "unknown" : c.gameIds.join(",")}`
+	console.log(
+		`  frames       ${frameAudit.rows} rows -> ${frameAudit.onDisk} on disk (${frameAudit.relocated} relocated under ${frameAudit.dataDir}, ${frameAudit.missing} missing) -> ${frameAudit.inSampleWindow} in the sample window -> ${frameAudit.joinedPaired} joined within ${frameAudit.gateSec}s (${frameAudit.droppedOverGate} over the gate)`
+	)
+	console.log(`  PAIRED       ${pairedStates.length} states, ${pairedStates[0]?.clock ?? "-"}–${pairedStates[pairedStates.length - 1]?.clock ?? "-"}, every arm twice — ${covLine(pairedCov)}`)
+	console.log(`  LATE         ${lateStates.length} states, ${lateStates[0]?.clock ?? "-"}–${lateStates[lateStates.length - 1]?.clock ?? "-"}, ${LATE_FRAMES ? "--late-frames" : "text only (no --late-frames)"} — ${covLine(lateCov)}`)
 	console.log(`  arms         ${arms.map(a => a.id).join(", ")}`)
-	const totalCalls = pairedStates.length * arms.length * 2 + lateStates.length * arms.length
+	const totalCalls = pairedStates.length * arms.length * (FRAMES_ONLY ? 1 : 2) + lateStates.length * arms.length
 	console.log(`  calls        ${totalCalls}`)
 	console.log(`  ranked facts ${pairedStates.filter(s => s.rankedFacts > 0).length}/${pairedStates.length} PAIRED, ${lateStates.filter(s => s.rankedFacts > 0).length}/${lateStates.length} LATE states carry one`)
+	if (LATE_FRAMES && lateCov.framed === 0)
+		console.log(
+			`  !! --late-frames was asked for and NOT ONE frame joined. This run is blind. Nothing it produces is a vision result.`
+		)
+	if (RUN_PAIRED && pairedStates.length === 0)
+		console.log(`  !! the PAIRED set is EMPTY — no frame joined any sample. Frame sensitivity cannot be measured.`)
+	if (LATE_SKIP_PAIRED && LATE_FRAMES)
+		console.log(
+			`  !! --late-skip-paired with --late-frames: the samples the PAIRED set consumed are exactly the frame-bearing ones, so the LATE grid is blind wherever pictures exist.`
+		)
+	if (pairedCov.sessions.length + lateCov.sessions.length > 2 || new Set([...pairedCov.gameIds, ...lateCov.gameIds]).size > 1)
+		console.log(`  !! frames came from more than one game. The join is on wall clock; check the manifest.`)
+	console.log("")
+
+	/*
+	 * One line per state, every state, always printed.
+	 *
+	 * "Discoverable" was the old standard — the paths were in the JSON if anyone thought to look — and
+	 * twice nobody did. A manifest that scrolls past is cheap; a round measured blind is not.
+	 */
+	console.log("=== FRAME MANIFEST (every state the harness emits) ======================")
+	console.log("set     state             clock   ranked  frame")
+	for (const [setName, states] of [["paired", pairedStates], ["late", lateStates]] as const)
+		for (const st of states)
+			console.log(
+				`${setName.padEnd(7)} ${st.id.padEnd(17)} ${st.clock.padStart(5)}   ${String(st.rankedFacts).padStart(6)}  ` +
+					(st.framePath === null ?
+						"— none"
+					:	`+${st.frameSkewSec?.toFixed(2)}s  ${st.frameSession ?? "?"}  game ${st.frameGameId ?? "?"}  ${st.framePath}`)
+			)
 	console.log("")
 
 	const cells: Cell[] = []

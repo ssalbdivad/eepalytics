@@ -76,6 +76,7 @@ import { habitCues } from "../../analysis/habits.ts"
 import { liveChampionKnowledge } from "../../review/live-coach-knowledge.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import { buildFacts, FRAME_FRESH_SEC, newFactMemory, resetFactMemory } from "../../analysis/live-facts.ts"
+import type { FactOptions } from "../../analysis/live-facts.ts"
 import type { FrameObservation } from "../../analysis/live-facts.ts"
 import {
 	asFrameRead,
@@ -356,7 +357,13 @@ const buildLiveState = (
 	data: LiveAllGameData | null,
 	me: ReturnType<typeof findMe>,
 	gameTimeSec: number | null,
-	baseline: ReturnType<typeof baselineFromRows> | null
+	baseline: ReturnType<typeof baselineFromRows> | null,
+	/*
+	 * Forwarded to `buildFacts`, and the only caller that passes anything is a measurement script.
+	 * The alternative was a second copy of this function's hundred lines of joins inside the
+	 * harness, which is the drift `buildLiveStateForBench` exists to prevent.
+	 */
+	opts: FactOptions = {}
 ): VisionState | null => {
 	if (!data || !me || !me.championName) {
 		/*
@@ -787,7 +794,8 @@ const buildLiveState = (
 				 */
 				...(frameRead ? { frame: frameRead } : {})
 			},
-			factMemory
+			factMemory,
+			opts
 		),
 		/*
 		 * WHAT IS COMING — the map's own clock, and the only layer the ladder measured to move
@@ -1608,10 +1616,12 @@ export const buildLiveStateForBench = (
 	 * Defaulting to null keeps `scripts/bench-providers.ts` byte-identical to what it replayed
 	 * before.
 	 */
-	baseline: ReturnType<typeof baselineFromRows> | null = null
+	baseline: ReturnType<typeof baselineFromRows> | null = null,
+	/** Forwarded to `buildFacts`; `scripts/measure-starve.ts` passes a trace sink through it. */
+	opts: FactOptions = {}
 ): VisionState | null => {
 	const data = raw as LiveAllGameData | null
 	const me = findMe(data ?? ({} as LiveAllGameData))
 	if (!data || !me) return null
-	return buildLiveState(data, me, gameTimeSec, baseline)
+	return buildLiveState(data, me, gameTimeSec, baseline, opts)
 }

@@ -246,6 +246,7 @@ test("silences are excluded from every rate, not scored as clean", () => {
 		set: "paired",
 		arm: "x",
 		withFrame: false,
+		framesAttached: 0,
 		turns: [
 			turn({ silent: true, useful: false, specific: false }),
 			turn({ silent: true, useful: false, specific: false }),
@@ -265,6 +266,7 @@ test("a failed call is an error, never a PASS", () => {
 		set: "paired",
 		arm: "x",
 		withFrame: false,
+		framesAttached: 0,
 		turns: [turn({ ok: false, silent: true, reason: "429" }), turn({ line: "a" })]
 	}
 	const s = statsFor(cell, 1)
@@ -347,10 +349,10 @@ test("the unpaced row is the same transcript with no floor", () => {
 
 test("armTurns takes one turn per game clock, prefers the frame-bearing cell, and sorts", () => {
 	const cells: Cell[] = [
-		{ set: "paired", arm: "a", withFrame: true, turns: [pacedTurn(40, { line: "with picture" })] },
-		{ set: "paired", arm: "a", withFrame: false, turns: [pacedTurn(40, { line: "blind" })] },
-		{ set: "late", arm: "a", withFrame: false, turns: [pacedTurn(80), pacedTurn(60)] },
-		{ set: "late", arm: "b", withFrame: false, turns: [pacedTurn(10, { line: "other arm" })] }
+		{ set: "paired", arm: "a", withFrame: true, framesAttached: 1, turns: [pacedTurn(40, { line: "with picture" })] },
+		{ set: "paired", arm: "a", withFrame: false, framesAttached: 0, turns: [pacedTurn(40, { line: "blind" })] },
+		{ set: "late", arm: "a", withFrame: false, framesAttached: 0, turns: [pacedTurn(80), pacedTurn(60)] },
+		{ set: "late", arm: "b", withFrame: false, framesAttached: 0, turns: [pacedTurn(10, { line: "other arm" })] }
 	]
 	const t = armTurns(cells, "a")
 	assert.deepEqual(t.map(x => x.tSec), [40, 60, 80])
