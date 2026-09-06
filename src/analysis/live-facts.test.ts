@@ -21,6 +21,7 @@ import {
 	MAX_FACTS,
 	MIN_GAP_SEC,
 	ROUTINE_GAP_SEC,
+	TREND_VETO_SEC,
 	CLOCK_BACK_SEC,
 	SOCKET_PIPE_SEC,
 	TURN_PIPE_SEC,
@@ -1706,5 +1707,118 @@ describe("buildFacts — a turn provider may not carry a reactive line", () => {
 			pipeSec: TURN_PIPE_SEC
 		})
 		deepStrictEqual(out, [plain(heard(55, plain, TURN_PIPE_SEC))])
+	})
+})
+
+
+describe("buildFacts — a question that has been answered", () => {
+	/*
+	 * THE DISEASE THIS APP HAS CAUGHT TWICE. Over 88 states of his own games the block's jungle-race
+	 * verdict read "he is behind you" in 82 and "ahead" in none, and farm, CS, clearing and routing
+	 * together produced three useful lines out of eighty-four. A comparison whose answer never
+	 * changes cannot drive a decision, however exact both numbers are.
+	 *
+	 * The general mechanism is in `shared/live-state.ts` and pinned in `shared/retirement.test.ts`;
+	 * these two cases are about it actually reaching the ranked list.
+	 */
+	const racing = (nowSec: number, gap: number): FactInput =>
+		input({
+			nowSec,
+			pace: { cs: 100, expected: 100, exact: true },
+			counterpart: { champion: "Karthus", cs: 100 + gap }
+		})
+
+	it("says the race once and then stops, however long the game runs", () => {
+		const mem = newFactMemory()
+		const said: string[] = []
+		// Twenty minutes of him holding the same decisive lead, which is what four of four recorded
+		// games look like. Every per-fact cooldown in the file lapses several times over.
+		for (let t = 400; t <= 1600; t += 20) said.push(...buildFacts(racing(t, -40), mem).filter(f => /Karthus/.test(f)))
+		strictEqual(said.length, 1, said.join(" | "))
+	})
+
+	it("but comes back the moment the race turns against him", () => {
+		/*
+		 * The flip is the only time this fact was ever news, so a rule that merely went quiet would
+		 * be worse than the nagging: it would be silent about the one state worth hearing.
+		 */
+		const mem = newFactMemory()
+		for (let t = 400; t <= 1200; t += 20) buildFacts(racing(t, -40), mem)
+		const turned = buildFacts(racing(1400, 40), mem)
+		ok(turned.some(f => /Karthus is 40 CS up on you/.test(f)), turned.join(" | "))
+	})
+})
+
+describe("buildFacts — an event may veto a trend", () => {
+	/*
+	 * THE TRAP, from `data/eval/target-lines.md` M25: between 30:24 and 33:15 his CS floor does not
+	 * move for 171 seconds, and in exactly that window he solo'd a drake, his team aced and he took
+	 * Baron. A farm line there is not useless, it is wrong coaching about the best three minutes he
+	 * played, and every rate limit in this file would have let it through — each of them asks
+	 * whether time has passed and none asks whether anything happened.
+	 */
+	const behind = (nowSec: number, over: Partial<FactInput> = {}): FactInput =>
+		input({ nowSec, pace: { cs: 100, expected: 140, exact: true }, ...over })
+
+	it("says nothing about his farm right after he takes Baron himself", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			behind(2000, { myEvents: [{ id: 1, name: "BaronKill", atSec: 1990 }] }),
+			mem
+		)
+		strictEqual(out.some(f => /own pace/.test(f)), false, out.join(" | "))
+	})
+
+	it("says it again once the play is far enough behind him", () => {
+		const mem = newFactMemory()
+		const out = buildFacts(
+			behind(2000, { myEvents: [{ id: 1, name: "BaronKill", atSec: 2000 - TREND_VETO_SEC - 10 }] }),
+			mem
+		)
+		ok(out.some(f => /own pace/.test(f)), out.join(" | "))
+	})
+
+	it("is not fooled by an event with no clock on it", () => {
+		/*
+		 * Every fixture in this repo predates `atSec`, so it is optional — and a veto that treated a
+		 * timeless event as recent would silence his farm for the rest of a game after one drake.
+		 */
+		const mem = newFactMemory()
+		const out = buildFacts(behind(2000, { myEvents: [{ id: 1, name: "BaronKill" }] }), mem)
+		ok(out.some(f => /own pace/.test(f)), out.join(" | "))
+	})
+
+	it("a triple kill vetoes it too, and three grubs do not", () => {
+		const mem = newFactMemory()
+		strictEqual(
+			buildFacts(
+				behind(2000, { myEvents: [{ id: 1, name: "ChampionKill", atSec: 1980, killStreak: 3 }] }),
+				mem
+			).some(f => /own pace/.test(f)),
+			false
+		)
+		const fresh = newFactMemory()
+		ok(
+			buildFacts(behind(2000, { myEvents: [{ id: 2, name: "HordeKill", atSec: 1980 }] }), fresh).some(f =>
+				/own pace/.test(f)
+			)
+		)
+	})
+
+	it("still lets him hear that an enemy is down while it holds", () => {
+		/*
+		 * A veto on the CRITICISM, never a blackout. The window a corpse opens is the most
+		 * actionable thing this coach has, and his own Baron is a reason to use it rather than a
+		 * reason to go quiet.
+		 */
+		const mem = newFactMemory()
+		const out = buildFacts(
+			behind(2000, {
+				myEvents: [{ id: 1, name: "BaronKill", atSec: 1990 }],
+				deadEnemies: [{ champion: "Karthus", respawnSec: 40, isJungler: true }]
+			}),
+			mem
+		)
+		ok(out.some(f => /Karthus/.test(f)), out.join(" | "))
 	})
 })

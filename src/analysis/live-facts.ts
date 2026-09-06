@@ -559,10 +559,16 @@ export const CLOCK_BACK_SEC = 30
  * model and the contents of the list are not.
  *
  * Two and a half minutes, because that is what covers the corpus case without blacking out the
- * game: drake at 30:43 covers to 33:13 and Baron at 33:11 takes over two seconds before it lapses,
- * so the whole stall is explained by a continuous chain. Replayed over the four recorded games it
- * costs no offered line at all, which is the honest way to say it bites rarely — it is insurance
- * against a fact class that is being built next, not a rate limit.
+ * game: his drake at 30:43 covers to 33:13 and his Baron at 33:11 takes over two seconds before it
+ * lapses, so the whole stall is explained by an unbroken chain and the three-minute mark — the
+ * earliest a stall fact could exist at all — is inside it.
+ *
+ * MEASURED over the four recorded games at the shipped turn (`scripts/measure-retirement.ts`): a
+ * veto is live on 88 turns of 306 — 29% of a jungler's game is spent inside the two and a half
+ * minutes after he did something that explains his own numbers. That is a real amount of silence
+ * and it is bought deliberately. It cost zero offered lines in that replay, but ONLY because this
+ * worktree's game table is empty, so `pace` is null and no farm or race fact could be built to veto
+ * in the first place; 29% is the figure to quote and the zero means nothing.
  */
 export const TREND_VETO_SEC = 150
 
@@ -570,7 +576,7 @@ export const TREND_VETO_SEC = 150
  * The objectives big enough to explain a lull in his own farm. Grubs are not one of them — three
  * grubs is fifteen seconds of work and does not account for a five-minute stall.
  */
-const VETOING_TAKES = new Set(["DragonKill", "BaronKill", "HeraldKill"])
+export const VETOING_TAKES = new Set(["DragonKill", "BaronKill", "HeraldKill"])
 
 /**
  * Did HE just do something that explains why his numbers look wrong?

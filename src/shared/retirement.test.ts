@@ -135,7 +135,9 @@ describe("the schedule, retired", () => {
 
 	it("never retires two different objectives together", () => {
 		const mem = newRetirementMemory()
-		const t = 1300
+		// Late enough that every entry's answer is stable across the two turns — the first turn is
+		// where Baron crosses into "uncontested", and a crossing is a flip, not a repeat.
+		const t = 1400
 		const first = retireSchedule(objectiveSchedule([], t), mem, t)
 		assert.equal(first.every(o => !o.retired), true, first.map(o => o.name).join(", "))
 		const again = retireSchedule(objectiveSchedule([], t + 20), mem, t + 20)

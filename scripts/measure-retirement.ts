@@ -39,6 +39,7 @@
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from "node:fs"
 import { DATA_DIR } from "../src/shared/constants.ts"
 import { premiseOf } from "../src/analysis/timeliness.ts"
+import { TREND_VETO_SEC, VETOING_TAKES } from "../src/analysis/live-facts.ts"
 import type { PremiseKind } from "../src/analysis/timeliness.ts"
 import type { VisionState } from "../src/shared/live-state.ts"
 import { baselineFromRows, perGameMetrics } from "../src/analysis/index.ts"
@@ -133,6 +134,16 @@ const main = async (): Promise<void> => {
 
 	const offers: Offer[] = []
 	const allTurns: string[][] = []
+	/*
+	 * How much of a game the event veto covers.
+	 *
+	 * Counted here from the raw feed rather than read out of `buildFacts`, because the ranker never
+	 * reports what it withheld — and counted with the SAME constants the ranker uses, imported
+	 * rather than restated, so the two cannot drift. The name resolution is this file's own and
+	 * mirrors `nameOf` in `routes/live.ts`: the event feed sends the bare game name while the roster
+	 * fields carry the tag, which is the join every other consumer of this feed also has to make.
+	 */
+	let vetoTurns = 0
 	const perGame: Record<string, unknown>[] = []
 
 	for (const file of games) {
@@ -163,6 +174,13 @@ const main = async (): Promise<void> => {
 			.slice(0, 20)
 		const baseline = corpus.length > 0 ? baselineFromRows(perGameMetrics(corpus)) : null
 
+		const lastData = rows[rows.length - 1]?.data as
+			| { activePlayer?: { summonerName?: string; riotId?: string }; allPlayers?: Record<string, string>[] }
+			| undefined
+		const tagged = lastData?.activePlayer?.summonerName ?? lastData?.activePlayer?.riotId ?? ""
+		const meRow = (lastData?.allPlayers ?? []).find(p => p.riotId === tagged || p.summonerName === tagged)
+		const myName = meRow?.riotIdGameName ?? meRow?.riotId ?? meRow?.summonerName ?? ""
+
 		const mine: Offer[] = []
 		const turnSubjects: string[][] = []
 		let turns = 0
@@ -173,6 +191,12 @@ const main = async (): Promise<void> => {
 			const state: VisionState | null = mod.buildLiveStateForBench(row.data, row.gameTime, baseline)
 			if (!state) continue
 			turns++
+			const his = (
+				(row.data as { events?: { Events?: { EventName: string; EventTime?: number; KillerName?: string; KillStreak?: number }[] } })
+					.events?.Events ?? []
+			).filter(e => e.KillerName === myName && (VETOING_TAKES.has(e.EventName) || (e.KillStreak ?? 0) >= 2))
+			if (his.some(e => row.gameTime - (e.EventTime ?? 0) >= 0 && row.gameTime - (e.EventTime ?? 0) <= TREND_VETO_SEC))
+				vetoTurns++
 			const here: string[] = []
 			turnSubjects.push(here)
 			for (const o of state.schedule ?? []) {
@@ -214,6 +238,12 @@ const main = async (): Promise<void> => {
 	}
 
 	console.log(`## ${offers.length} context items offered over ${games.length} games at ${turnSec}s turns\n`)
+	console.log(
+		`  ${vetoTurns} of ${allTurns.length - games.length} turns are inside a ${TREND_VETO_SEC}s veto — ${(
+			(100 * vetoTurns) /
+			Math.max(1, allTurns.length - games.length)
+		).toFixed(1)}% of the game spent where a criticism of his own numbers is wrong\n`
+	)
 	console.log(
 		`  ${"game".padEnd(9)} ${"turns".padStart(5)} ${"offered".padStart(7)} ${"sched".padStart(5)} ${"ranked".padStart(6)} ${"2-running".padStart(9)} ${"longest".padStart(7)}  top subjects`
 	)
