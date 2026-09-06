@@ -31,7 +31,13 @@ import {
 	spokenDuration
 } from "./live-state.ts"
 import type { ObjectiveEvent, VisionState } from "./live-state.ts"
-import { BRIEFING_HINT, LIVE_COACH_MODES, liveCoachSystemPrompt, renderBlockForMode } from "./live-coach-mode.ts"
+import {
+	BRIEFING_HINT,
+	LIVE_COACH_MODES,
+	liveCoachSystemPrompt,
+	renderBlockForMode,
+	withoutBannedOffers
+} from "./live-coach-mode.ts"
 
 const state = (over: Partial<VisionState> = {}): VisionState => ({
 	clock: "9:40",
@@ -354,4 +360,54 @@ test("an unresolvable killer withholds the dragon line rather than guessing at s
 	// Resolve that last one and the line comes back, named for what it actually is.
 	const resolved = ev.map(e => (e.side === null ? { ...e, side: "theirs" as const } : e))
 	assert.equal(objectiveSchedule(resolved, 1600).find(o => o.name.includes("Dragon"))?.name, "Elder Dragon")
+})
+
+/* ------------------------------------------------------- the directive ban */
+
+/*
+ * The denominator lever, wired at the two places it can be wired.
+ *
+ * `analysis/directive.ts` owns the measurement — three families of imperative, 132 of 214 judged
+ * lines, none of them cleared by either blind reader. Here it only has to be true that the briefing
+ * block stops POINTING at them, and that a ranked fact which gives no order at all survives, since
+ * that is the failure mode a keyword filter would have: eating the facts along with the orders.
+ */
+test("the briefing withholds a ranked offer whose order is one he would give himself", () => {
+	const s = state({
+		unseen: [
+			"that fight was 3 for 1, so take the free camps while you are up bodies",
+			"Baron has been up 3 minutes 17 seconds and nobody has taken it — start it while it is free"
+		]
+	})
+	const out = renderBlockForMode(s, "briefing")
+	assert.equal(out.includes("take the free camps"), false, "a banned order is still being pointed at")
+	assert.equal(out.includes("start it while it is free"), true, "the objective offer was taken with it")
+	// The fenced control is untouched, so the comparison it exists for still works.
+	assert.equal(renderBlockForMode(s, "fenced").includes("take the free camps"), true)
+})
+
+test("a ranked fact that gives no order survives the ban", () => {
+	const kept = ["Drake is back in 10 seconds", "1017 gold sitting unspent", "they took the dragon"]
+	assert.deepEqual(withoutBannedOffers(state({ unseen: kept })).unseen, kept)
+})
+
+/*
+ * The trap, at the block level. "Take dragon" is an order he could give himself; the same order
+ * with a standing duration and a dead jungler behind it is the best line this app has produced.
+ * Both are objective orders and the ban does not read premises, so neither may be withheld.
+ */
+test("the ban never reaches an objective offer", () => {
+	const s = state({
+		unseen: [
+			"Baron has been up 7 minutes 3 seconds and nobody has taken it — uncontested means the fight over it has not happened yet, so bring someone"
+		]
+	})
+	assert.deepEqual(withoutBannedOffers(s).unseen, s.unseen)
+})
+
+test("the prompt states the ban and names PASS as the answer to it", () => {
+	assert.match(BRIEFING_HINT, /Three orders you may not give/)
+	assert.match(BRIEFING_HINT, /the answer is PASS/)
+	// A ban on the order, not on the subject: the facts behind it are still reasoning material.
+	assert.match(BRIEFING_HINT, /The ban is on the ORDER, not on the fact and not on the verb/)
 })

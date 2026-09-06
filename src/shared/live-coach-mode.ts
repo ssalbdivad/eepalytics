@@ -74,6 +74,7 @@
  * the measured text and the shipped delta can always be told apart.
  */
 
+import { isBannedDirective } from "../analysis/directive.ts"
 import { parseChampionClauses } from "./champion-advice.ts"
 import type { ChampionClauses } from "./champion-advice.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "./live-prompt.ts"
@@ -109,7 +110,7 @@ export const LIVE_COACH_MODES: {
 		blurb:
 			"The same one hard rule, but the block is rebuilt as a briefing rather than a snapshot: what neutral objective is up and for how long, what spawns next and in how many seconds, and what she has already said this game. The jungle race and the farm comparison are still there, at the bottom, because they were measured to be the least useful thing she says. What is NOT in it any more: the last ninety seconds of change, and his career habits — both were measured to add nothing on top of the schedule, so they only cost latency and dilute the rest. Every figure in it is also marked by whether his own screen already carries it, and on a turn where the whole block is his own HUD the block itself answers PASS.",
 		evidence:
-			"Nine layers of context replayed through one model over 88 real states of his own games, every line judged blind: the shipped block scored 29% useful, the same block plus the objective schedule scored 55% (p = 0.0009). Ninety seconds of exact history bought nothing (p = 0.94), and telling the model to prefer objectives WITHOUT giving it the timers reached 37% and invented dragons that had not spawned. Judged blind again by four models against the shipped block, three of four scored the briefing better and all four said the objective schedule is now being read out every turn the way the CS race used to be — which is what the prompt's retirement rule is for. Replayed over four recorded games, 37% of turns now carry nothing he could not have read off his own screen and the block answers PASS on them; measured against the 24 hand-written moments in data/eval/target-lines.md that agrees on 14, catching 3 of 8 silences and leaving 11 of 16 lines open."
+			"Nine layers of context replayed through one model over 88 real states of his own games, every line judged blind: the shipped block scored 29% useful, the same block plus the objective schedule scored 55% (p = 0.0009). Ninety seconds of exact history bought nothing (p = 0.94), and telling the model to prefer objectives WITHOUT giving it the timers reached 37% and invented dragons that had not spawned. Judged blind again by four models against the shipped block, three of four scored the briefing better and all four said the objective schedule is now being read out every turn the way the CS race used to be — which is what the prompt's retirement rule is for. Replayed over four recorded games, 37% of turns now carry nothing he could not have read off his own screen and the block answers PASS on them; measured against the 24 hand-written moments in data/eval/target-lines.md that agrees on 14, catching 3 of 8 silences and leaving 11 of 16 lines open. It now also refuses three ORDERS rather than three facts: across 214 lines graded blind by two independent readers, every line whose imperative was keep-clearing, recall-and-spend or how-to-fight failed the bar — 132 lines, zero cleared — so they are withheld from the ranked list and forbidden in the prompt. Replayed over the same corpus that cuts what he hears from 35.7 sentences a game to 13.7 with the useful count unchanged, and on the best whole-game arm from 36 sentences with 10 useful to 24 with 10."
 	},
 	{
 		id: "cite-or-quiet",
@@ -272,6 +273,23 @@ block disagree, the block wins.
  * a property of a sentence against other games — it is a property of a sentence against the last
  * one this coach said, and only the second half of that was written down.
  *
+ * **The three orders, and this is the first rule here that attacks the DENOMINATOR.** Every rule
+ * above tries to make the next sentence better and none of them moved what he hears: three rounds,
+ * three nulls, and round 3 falsified the hypothesis it was built on. So this one deletes sentences
+ * instead. `analysis/directive.ts` reduces a line to the ACTION it demands and holds the
+ * measurement — 214 judged lines, two independent blind readers, and the imperatives *keep
+ * clearing*, *recall and spend* and *how to fight* cleared the bar 0 times in 132. Banning them
+ * takes what he hears from 35.7 sentences a game to 13.7 and leaves the useful count exactly where
+ * it was; on the best whole-game arm, thirty-six sentences with ten useful become twenty-four with
+ * ten. The order is banned and the FACT is not: the enemy jungler's farm and the gold in his pocket
+ * are still reasoning material, which is why this is a paragraph about imperatives and not a
+ * subject that has been deleted from the block.
+ *
+ * The half of it that is arithmetic lives in `withoutBannedOffers`, which withholds a ranked offer
+ * whose own text ends on one of the three. The half above is a request, and three rounds say a
+ * request is what it is; the number to watch when this is next run is sentences per game beside
+ * useful-per-heard, because a rule this blunt can also make her mute.
+ *
  * Nothing here tells it to talk about a thing the block cannot supply, which is the other half of
  * the same run: told to prefer objectives and given no timers, the model invented dragons that had
  * not spawned (37%, and worse than the schedule's 55%). Prompting picks the subject; only data
@@ -308,6 +326,28 @@ already said this game, read it as the list of subjects that are used up.
 That leaves PASS as the answer on most turns, and PASS is a real answer: one sentence that changes
 his route beats a correct one every twenty seconds.
 
+## Three orders you may not give, because he would have given them himself
+
+A line has two halves: the FACT, which came off the client and may be excellent, and the ORDER,
+which is the only part he has to act on. These three orders were graded blind across a whole game
+by two readers who could not see who wrote them, and between them they never once cleared the bar:
+
+- **Keep clearing.** Take your camps, take his camps, get the route moving, full clear to catch up.
+- **Recall and spend.** Recall, buy, reset, spend the gold sitting in his pocket.
+- **How to fight.** Take the long fights, pull them into open ground, land the dust before the ult.
+
+None of them is banned for being wrong — every figure in them is exact. They are banned because he
+is a jungler and those are the three things a jungler is already doing. Telling him costs a sentence
+and buys nothing, and the sentence it costs is the one he was still listening for.
+
+**The ban is on the ORDER, not on the fact and not on the verb.** The enemy jungler's farm, his own
+pace, the gold in his pocket and the shape of the last fight are all still yours to reason from; end
+somewhere else with them. And "take dragon" is not on this list — a neutral objective is the one
+place he cannot do the arithmetic himself mid-clear.
+
+**If the most useful sentence you have left is one of those three, the answer is PASS.** Not a
+softer version of it, not the same order with a fresher number in front of it. PASS.
+
 ## What is worth a sentence, in the order that was measured
 
 The block opens with the map's own clock — what neutral objective is standing there untaken and for
@@ -322,7 +362,9 @@ this order:
 - **Gold he is carrying**, when it has been sitting long enough to be a decision.
 - **His farm, the jungle race, his clear and his route** — LAST, and only when something about it
   has actually changed. Those figures are exact, and they sit at the bottom of the block for the
-  reason above: they say the same true thing every turn of every game.
+  reason above: they say the same true thing every turn of every game. Whatever you reach for here,
+  it may not come out as *keep clearing* — that order is banned above, and it is the one this
+  subject hands you every time.
 
 ## Every timer you say is one you were given
 
@@ -473,13 +515,45 @@ export const withoutUnmeasuredLayers = (state: VisionState): VisionState => {
 }
 
 /**
+ * The ranked offers whose ORDER is one he would have given himself, taken out before he is offered
+ * them — the computed half of the ban, and the half that cannot be argued with.
+ *
+ * `analysis/directive.ts` holds the measurement: three families of imperative, 132 of the 214
+ * judged lines, and not one of them cleared the bar under either blind reader. A ranked fact whose
+ * own text ends on one of those orders ("that fight was 3 for 1, so take the free camps while you
+ * are up bodies") is pointing the coach straight at a sentence that has never worked, and the list
+ * is read as a colleague pointing.
+ *
+ * Two things it deliberately does NOT do.
+ *
+ * It does not name what it withheld. A block that says "the app is holding back: you're 40 CS up on
+ * Briar" has re-supplied the figure and the coach says it anyway — the same reason `renderBriefing`
+ * keeps the ranking rule in the prompt rather than in the content.
+ *
+ * It does not touch a fact that gives no order. "Drake is back in 10 seconds" and "1017 gold sitting
+ * unspent" state a situation and leave the sentence to the model; `classifyDirective` returns
+ * "none" for them and they stay. Whether THOSE are worth saying is the HUD question, which
+ * `factScreen` already answers a few lines further down.
+ *
+ * Measured on round 3's fifty states: 13 of the 22 off-screen offers are withheld, and two more
+ * states fall through to the block's own computed PASS because the withheld offer was the only news
+ * in them that was not already on his screen. The remaining reach of the ban is the prompt rule in
+ * `BRIEFING_HINT`, which is a request; the mechanical version of it is a speak-time gate on
+ * `isBannedDirective`, and the socket is not this file's to edit.
+ */
+export const withoutBannedOffers = (state: VisionState): VisionState => ({
+	...state,
+	unseen: state.unseen.filter(u => !isBannedDirective(u))
+})
+
+/**
  * The ground-truth block as the selected architecture should see it.
  *
  * `fenced` is `renderState` byte for byte — it is a measured arm and it stays one. `cite-or-quiet`
  * is the same block with the fence's own instructions rewritten and the dead named.
  */
 export const renderBlockForMode = (state: VisionState, mode: LiveCoachMode): string => {
-	if (mode === "briefing") return renderBriefing(withoutUnmeasuredLayers(state))
+	if (mode === "briefing") return renderBriefing(withoutBannedOffers(withoutUnmeasuredLayers(state)))
 	const block = renderState(state)
 	if (mode === "fenced") return block
 	let out = block

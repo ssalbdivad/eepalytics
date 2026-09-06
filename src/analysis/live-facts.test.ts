@@ -20,6 +20,7 @@ import {
 	GOLD_STEP,
 	MAX_FACTS,
 	MIN_GAP_SEC,
+	OBJECTIVE_START_WINDOW_SEC,
 	ROUTINE_GAP_SEC,
 	TREND_VETO_SEC,
 	CLOCK_BACK_SEC,
@@ -217,87 +218,71 @@ describe("buildFacts — deaths", () => {
 })
 
 describe("buildFacts — rate limiting", () => {
-	it("says nothing about gold until it has actually been sitting there", () => {
-		/*
-		 * Simulated across a full game, gold was 8 of the coach's 12 lines — the most frequent
-		 * thing it said and the least valuable, because the amount is on his HUD. What is NOT on
-		 * his HUD is that it has been there for minutes, so duration is now the gate.
-		 */
+	/*
+	 * THE GOLD BAN, and it is the cleanest one in this file because it is a count rather than a
+	 * judgement.
+	 *
+	 * Across both blind rounds 102 lines whose imperative was of the recall-and-spend family were
+	 * graded and NOT ONE cleared the bar. In the round-3 sheet alone that is 13 lines over four
+	 * directive labels — recall-and-spend, spend-gold-and-clear, spend-gold-while-dead,
+	 * recall-before-baron — and zero clears from either of two independent judges.
+	 *
+	 * The premise was never the problem: the duration really is invisible, and the hold gate below
+	 * still measures it. It is the ACTION. He knows to spend gold, so the instruction is one he
+	 * would have given himself, and this family has no other instruction to give.
+	 *
+	 * What went with the ban, recorded so nobody re-derives it as a regression: the step rule
+	 * (GOLD_STEP), the persistence re-mention (GOLD_NAG_SEC), the per-game cap and the
+	 * count-from-the-crossing arithmetic are all spent in `commit`, which runs only when a fact is
+	 * OFFERED. A banned fact is never offered, so all four are unreachable while the ban stands and
+	 * cannot be asserted through any public seam. They are still in `live-facts.ts`, unchanged, so
+	 * lifting the ban restores them intact.
+	 */
+	it("builds the gold line once it has been held, and refuses it", () => {
 		const mem = newFactMemory()
+		const early = built(input({ nowSec: 300, currentGold: 1300 }), mem)
 		strictEqual(
-			buildFacts(input({ nowSec: 300, currentGold: 1300 }), mem).some(f => f.includes("unspent")),
+			early.some(r => r.subject === "gold"),
 			false,
 			"crossing the threshold is not news; sitting on it is"
 		)
+		const held = built(input({ nowSec: 300 + GOLD_MIN_HELD_SEC, currentGold: 1300 }), mem)
+		const gold = held.filter(r => r.subject === "gold")
+		strictEqual(gold.length, 1, JSON.stringify(held))
+		ok(gold[0]!.text.includes("1300 gold sitting unspent"), gold[0]!.text)
+		strictEqual(gold[0]!.reason, "recall-and-spend", "built, traced, and refused by name")
 	})
 
-	it("mentions gold once it has been held, then only after another step", () => {
+	it("never says anything about gold, however long it sits", () => {
 		const mem = newFactMemory()
-		// Crossing starts the clock; the mention comes once it has been held long enough.
-		buildFacts(input({ nowSec: 300, currentGold: 1300 }), mem)
-		const said = 300 + GOLD_MIN_HELD_SEC
-		ok(buildFacts(input({ nowSec: said, currentGold: 1300 }), mem).some(f => f.includes("unspent")))
-		/*
-		 * The follow-ups are a full ROUTINE_GAP_SEC later, one turn apart.
-		 *
-		 * They used to sit on the same tick as the first mention, which tested the step rule in
-		 * isolation and is now unreachable: the global floor silences a second line on the same
-		 * second whatever it is about, so a same-tick assertion would pass for the wrong reason.
-		 */
+		const said: string[] = []
+		for (let t = 300; t <= 2400; t += 20)
+			said.push(...buildFacts(input({ nowSec: t, currentGold: 1300 + t }), mem))
 		strictEqual(
-			buildFacts(input({ nowSec: said + ROUTINE_GAP_SEC, currentGold: 1400 }), mem).some(f =>
-				f.includes("unspent")
-			),
-			false,
-			"a hundred more gold is not news"
+			said.filter(f => /gold/.test(f)).length,
+			0,
+			`gold is retired: ${said.join(" | ")}`
 		)
-		ok(
-			buildFacts(
-				input({ nowSec: said + ROUTINE_GAP_SEC, currentGold: 1300 + GOLD_STEP }),
+	})
+
+	it("does not even build a gold line while he is standing in the shop", () => {
+		/*
+		 * MEASURED, and it survives the ban because `stranded` gates the BUILD rather than the
+		 * offer: the one `impossible` gold verdict in four games is "he spent it: 373 gold when it
+		 * lands, was told 2511" — built while he was in the fountain buying. Nothing in the client
+		 * says so; the frame does.
+		 */
+		const mem = newFactMemory()
+		const at = holdGold(mem, 2000, 400)
+		strictEqual(
+			built(
+				input({ nowSec: at, currentGold: 2000, frame: { where: "base", atSec: at, confidence: "medium" } }),
 				mem
-			).some(f => f.includes("unspent")),
-			"a full step later it is news again"
+			).some(r => r.subject === "gold"),
+			false
 		)
-	})
-
-	it("raises persistent gold again even without a step, because persistence is the point", () => {
-		/*
-		 * A judge found the coach silent through six minutes of an unspent item while spending
-		 * eight lines on death timers. Novel events were treated as valuable and durable state as
-		 * one-shot, which is backwards — the longer it sits, the more it is worth saying.
-		 */
-		const mem = newFactMemory()
-		// It CROSSES here, which starts the duration clock; the first mention waits for the hold.
-		const crossed = 600
-		buildFacts(input({ nowSec: crossed, currentGold: 1400 }), mem)
-		ok(
-			buildFacts(input({ nowSec: crossed + GOLD_MIN_HELD_SEC, currentGold: 1400 }), mem).some(f =>
-				f.includes("unspent")
-			)
-		)
-		strictEqual(
-			buildFacts(input({ nowSec: crossed + GOLD_MIN_HELD_SEC + 100, currentGold: 1400 }), mem).some(
-				f => f.includes("unspent")
-			),
-			false,
-			"a hundred seconds later is still nagging"
-		)
-		// A different figure: a re-mention needs time AND change, or it is the same sentence twice.
-		const at = crossed + GOLD_MIN_HELD_SEC + GOLD_NAG_SEC
-		const later = buildFacts(input({ nowSec: at, currentGold: 1450 }), mem)
-		// Computed, not hardcoded: the point is that it counts from the CROSSING, not the mention.
-		const expectMin = Math.round((at - crossed) / 60)
-		ok(
-			later.some(f => f.includes(`unspent for ${expectMin} minutes`)),
-			`should count from the crossing: ${later.join(" | ")}`
-		)
-		/*
-		 * States the duration and NOTHING about its cause. The previous phrasing, "4m since you
-		 * last had a chance", was read as "since you last died" and turned into a fabricated
-		 * twelve-minutes-ago anchor — an invented number in a system whose whole premise is that
-		 * it never invents numbers.
-		 */
-		for (const f of later) strictEqual(/since you/.test(f), false, `causal anchor in: ${f}`)
+		// Delayed, never deleted: the clock kept running, so the fact is back the moment he walks out.
+		ok(built(input({ nowSec: at + 60, currentGold: 2000 }), mem).some(r => r.subject === "gold"))
 	})
 
 	it("does not restate the farm gap when his CS has not moved", () => {
@@ -324,61 +309,6 @@ describe("buildFacts — rate limiting", () => {
 			mem
 		)
 		ok(moved.some(f => /CS (down|up) on your own pace/.test(f)), "once he has actually farmed, the gap is news again")
-	})
-
-	it("counts the unspent duration from when it crossed, not from the last mention", () => {
-		/*
-		 * Regression: every re-mention reset the clock, so it said "4m" forever — at 23:20 and
-		 * again at 27:20, into a game state that had not moved. The player can see that is wrong.
-		 */
-		const mem = newFactMemory()
-		const crossed = 600
-		buildFacts(input({ nowSec: crossed, currentGold: 1400 }), mem)
-		buildFacts(input({ nowSec: crossed + GOLD_MIN_HELD_SEC, currentGold: 1400 }), mem)
-		const at1 = crossed + GOLD_MIN_HELD_SEC + GOLD_NAG_SEC
-		const later = buildFacts(input({ nowSec: at1, currentGold: 1500 }), mem)
-		ok(
-			later.some(f => f.includes(`unspent for ${Math.round((at1 - crossed) / 60)} minutes`)),
-			`got: ${later.join(" | ")}`
-		)
-		const at2 = at1 + GOLD_NAG_SEC
-		const later2 = buildFacts(input({ nowSec: at2, currentGold: 1600 }), mem)
-		ok(
-			later2.some(f => f.includes(`unspent for ${Math.round((at2 - crossed) / 60)} minutes`)),
-			`duration must keep growing: ${later2.join(" | ")}`
-		)
-	})
-
-	it("says nothing about gold while he is on the respawn screen", () => {
-		// He is looking at the shop. Telling him his gold is unspent there reads as a scold.
-		const mem = newFactMemory()
-		deepStrictEqual(buildFacts(input({ meDeadForSec: 15, currentGold: 3000 }), mem), [])
-	})
-
-	it("does not repeat the gold line when nothing has changed", () => {
-		const mem = newFactMemory()
-		buildFacts(input({ nowSec: 600 - GOLD_MIN_HELD_SEC, currentGold: 1400 }), mem)
-		buildFacts(input({ nowSec: 600, currentGold: 1400 }), mem)
-		deepStrictEqual(
-			buildFacts(input({ nowSec: 600 + GOLD_NAG_SEC, currentGold: 1400 }), mem),
-			[],
-			"same gold, same sentence — say nothing"
-		)
-	})
-
-	it("forgets gold after a recall", () => {
-		const mem = newFactMemory()
-		buildFacts(input({ nowSec: holdGold(mem, 1500, 300), currentGold: 1500 }), mem)
-		const spentAt = 300 + GOLD_MIN_HELD_SEC + 60
-		buildFacts(input({ nowSec: spentAt, currentGold: 200 }), mem) // spent it
-		// Accumulating again starts a NEW hold, which must also be respected.
-		ok(
-			buildFacts(
-				input({ nowSec: holdGold(mem, 1300, spentAt + 60), currentGold: 1300 }),
-				mem
-			).some(f => f.includes("unspent")),
-			"after spending, the next accumulation is news"
-		)
 	})
 
 	it("mentions the farm gap once, then not for minutes", () => {
@@ -571,11 +501,18 @@ describe("buildFacts — outnumbered", () => {
 	})
 
 	it("still says the things he can act on alone", () => {
-		// Being outnumbered does not make his unspent gold less true.
+		/*
+		 * Being outnumbered suppresses the facts that send him at somebody — a window, a free
+		 * jungle, a pit with bodies in it. It does not make an objective standing untaken for four
+		 * minutes less true, and that is a fact about the map rather than an instruction to walk
+		 * into four people.
+		 *
+		 * This used to assert on an unspent-gold line, which is banned now; the rule under test was
+		 * never about gold.
+		 */
 		const mem = newFactMemory()
-		const at = holdGold(mem, 2000, 400)
-		const out = buildFacts(input({ nowSec: at, alliesAlive: 1, enemiesAlive: 4, currentGold: 2000 }), mem)
-		ok(out.some(f => f.includes("unspent")), `got: ${out.join(" | ")}`)
+		const out = buildFacts(input({ nowSec: 600, alliesAlive: 1, enemiesAlive: 4, ...slow() }), mem)
+		ok(out.some(f => SLOW_LINE.test(f)), `got: ${out.join(" | ")}`)
 	})
 })
 
@@ -640,22 +577,24 @@ describe("buildFacts — every string is a script", () => {
 		 */
 		const mem = newFactMemory()
 		const t = [600, 600 + ROUTINE_GAP_SEC, 600 + ROUTINE_GAP_SEC * 2, 600 + ROUTINE_GAP_SEC * 3]
-		// Gold rides along from the first turn rather than being primed out of order: a turn whose
-		// clock runs backwards is treated as a new game and wipes the memory, as it should.
+		/*
+		 * A standing objective rides along where an unspent-gold line used to. Gold is banned, so a
+		 * turn primed with gold now contributes no line at all and this test would have been
+		 * checking the wording of three sentences while claiming to check four.
+		 */
 		const out = [
 			...buildFacts(
 				input({
 					nowSec: t[0],
-					currentGold: 2000,
 					myEvents: [{ id: 1, name: "DragonKill", stolen: true }]
 				}),
 				mem
 			),
 			...buildFacts(
-				input({ nowSec: t[1], currentGold: 2000, pace: { cs: 193, expected: 169, exact: false } }),
+				input({ nowSec: t[1], pace: { cs: 193, expected: 169, exact: false } }),
 				mem
 			),
-			...buildFacts(input({ nowSec: t[2], currentGold: 2000 }), mem),
+			...buildFacts(input({ nowSec: t[2], ...slow() }), mem),
 			...buildFacts(
 				input({
 					nowSec: t[3],
@@ -798,6 +737,236 @@ describe("buildFacts — ranking", () => {
  * was — so the ranker offered farm and gold and the model picked the best of a worthless list.
  * These tests pin both halves of the fix: the loss must be sayable, and the small talk must stop.
  */
+/**
+ * THE SUPPLY AUDIT — the two families this round changed, and the measurements behind them.
+ *
+ * Every fact family was scored on two axes that had never been put beside each other: how much of
+ * the coach's OUTPUT it occupies across the four recorded games, and what share of the lines it
+ * produced cleared the bar in the blind judged runs on disk (`data/eval/offered/`,
+ * `data/eval/judge-r3/`, two independent judges over the same 103 lines).
+ *
+ *   family      offers / 109   judged lines   cleared (opus / r3)
+ *   fight            39             19            1 / 1      <- 36% of supply, 5% yield
+ *   stood            11              5            5 / 3      <- 10% of supply, best yield
+ *   prey              5              2            2 / 2
+ *   obj-timer         7              3            0 / 0
+ *   window            3              2            0 / 0
+ *   race              5              2            0 / 0
+ *   gold              4              0            —
+ *
+ * And the finding that mattered more than any row: 16 of the 24 lines the judge passed were "a
+ * named neutral objective is takeable and several of them are dead, so go start it now", and NONE
+ * of them came from this file. The model was assembling that conjunction out of two halves of the
+ * block on its own, and every time it did, it cleared.
+ */
+describe("buildFacts — an objective, and the bodies that make it free", () => {
+	const pit = { standing: [{ name: "Baron", atSec: 900, heldSec: 200 }] }
+
+	it("names the objective, the body and the deadline in one sentence", () => {
+		const out = buildFacts(
+			input({
+				nowSec: 1100,
+				...pit,
+				deadEnemies: [{ champion: "Briar", respawnSec: 45, isJungler: true }]
+			}),
+			newFactMemory()
+		)
+		deepStrictEqual(out.length, 1, out.join(" | "))
+		ok(/^Baron is up and Briar is down — start it now, you have about \d+ seconds$/.test(out[0]!), out.join(" | "))
+	})
+
+	it("counts bodies when it is not their jungler", () => {
+		const out = buildFacts(
+			input({
+				nowSec: 1100,
+				...pit,
+				deadEnemies: [
+					{ champion: "Jhin", respawnSec: 45 },
+					{ champion: "Senna", respawnSec: 50 }
+				]
+			}),
+			newFactMemory()
+		)
+		ok(out.some(f => /^Baron is up and 2 of them are dead/.test(f)), out.join(" | "))
+	})
+
+	it("says nothing when only one of them is down and it is not their jungler", () => {
+		/*
+		 * A support dying does not free a pit. The enemy jungler is the one who reliably contests
+		 * it, which is why he alone is enough and anybody else has to be two.
+		 */
+		const out = buildFacts(
+			input({ nowSec: 1100, ...pit, deadEnemies: [{ champion: "Senna", respawnSec: 45 }] }),
+			newFactMemory()
+		)
+		strictEqual(out.some(f => /start it now/.test(f)), false, out.join(" | "))
+	})
+
+	it("refuses a window that will have closed before he could start", () => {
+		// The floor is applied to the figure he HEARS, like every other countdown in this file.
+		const out = buildFacts(
+			input({
+				nowSec: 1100,
+				...pit,
+				deadEnemies: [{ champion: "Briar", respawnSec: OBJECTIVE_START_WINDOW_SEC + 2, isJungler: true }]
+			}),
+			newFactMemory()
+		)
+		strictEqual(out.some(f => /start it now/.test(f)), false, out.join(" | "))
+	})
+
+	it("names the objective that has stood longest, not the first in the list", () => {
+		const out = buildFacts(
+			input({
+				nowSec: 1100,
+				standing: [
+					{ name: "Void grubs", atSec: 1050, heldSec: 50 },
+					{ name: "Dragon", atSec: 800, heldSec: 300 }
+				],
+				deadEnemies: [{ champion: "Briar", respawnSec: 45, isJungler: true }]
+			}),
+			newFactMemory()
+		)
+		ok(out.some(f => /^Dragon is up/.test(f)), out.join(" | "))
+	})
+
+	it("says it once per spawn and per window", () => {
+		const mem = newFactMemory()
+		const at = (t: number, respawn: number) =>
+			buildFacts(
+				input({
+					nowSec: t,
+					...pit,
+					deadEnemies: [{ champion: "Briar", respawnSec: respawn, isJungler: true }]
+				}),
+				mem
+			)
+		ok(at(1100, 45).some(f => /start it now/.test(f)))
+		// The same death, twenty seconds on: the same window, so the same sentence.
+		strictEqual(at(1120, 25).some(f => /start it now/.test(f)), false)
+		// A different death entirely, well past every floor: news again.
+		ok(at(1400, 45).some(f => /start it now/.test(f)), "a new window is a new sentence")
+	})
+
+	it("outranks the bare window, which is the same fact with nothing to spend it on", () => {
+		/*
+		 * "2 of them are dead — you have about 12 seconds" is 0 clears from 2 judged lines under
+		 * both judges: he is handed a window and left to find the thing to spend it on. With an
+		 * objective standing, this file can name it.
+		 */
+		const out = buildFacts(
+			input({
+				nowSec: 1100,
+				...pit,
+				deadEnemies: [
+					{ champion: "Briar", respawnSec: 45, isJungler: true },
+					{ champion: "Jhin", respawnSec: 40 }
+				]
+			}),
+			newFactMemory()
+		)
+		deepStrictEqual(out.length, 1, out.join(" | "))
+		ok(/start it now/.test(out[0]!), out[0])
+	})
+
+	it("is not offered to a turn provider, because it is a countdown on a respawn", () => {
+		/*
+		 * The turn provider still hears about the pit — `stood` is standing and survives — it just
+		 * does not get the half of the sentence that is arithmetic on somebody's respawn. That is
+		 * the tier gate doing exactly its job: expiring facts are 77% stale at nine seconds.
+		 */
+		const out = buildFacts(
+			input({
+				nowSec: 1100,
+				...pit,
+				deadEnemies: [{ champion: "Briar", respawnSec: 45, isJungler: true }]
+			}),
+			newFactMemory(),
+			{ path: "turn" }
+		)
+		strictEqual(out.some(f => /start it now/.test(f)), false, out.join(" | "))
+	})
+
+	it("stays quiet when he is in base, where none of it is his to take", () => {
+		const out = buildFacts(
+			input({
+				nowSec: 1100,
+				...pit,
+				deadEnemies: [{ champion: "Briar", respawnSec: 45, isJungler: true }],
+				frame: { where: "base", atSec: 1100, confidence: "medium" }
+			}),
+			newFactMemory()
+		)
+		strictEqual(out.some(f => /start it now/.test(f)), false, out.join(" | "))
+	})
+})
+
+/**
+ * THE FIGHT BAN — 36% of the coach's output, 1 clear in 19 judged lines, both `wrong` verdicts.
+ *
+ * A fight line has two halves. The head is the trade, which is exact and off his HUD. The tail is
+ * either what the fight BOUGHT them — an objective, from the event feed, at a named interval — or
+ * an imperative, and every imperative available here is static text: `fights.ts`'s five-branch
+ * `tail` or the champion markdown, neither of which can name a place, a time or a number. So the
+ * sentence it ends is transplantable to any game in which a fight went the same way, which is the
+ * second of AGENTS.md's two tests failing by construction rather than by accident.
+ */
+describe("buildFacts — the fight family, gated on what the fight bought", () => {
+	it("says the line that names what they took", () => {
+		const out = buildFacts(
+			input({
+				nowSec: 600,
+				fight: {
+					quiet: false,
+					line: "that fight was 2 for 0 without you, and they took the dragon 18 seconds later",
+					bought: true
+				}
+			}),
+			newFactMemory()
+		)
+		deepStrictEqual(out, ["that fight was 2 for 0 without you, and they took the dragon 18 seconds later"])
+	})
+
+	it("builds the tail-only line, traces it, and refuses it by name", () => {
+		const traced = built(
+			input({
+				nowSec: 600,
+				fight: { quiet: false, line: "that fight was 0 for 3, so back off and catch up" }
+			}),
+			newFactMemory()
+		)
+		const fight = traced.filter(r => r.subject === "fight")
+		strictEqual(fight.length, 1, JSON.stringify(traced))
+		strictEqual(fight[0]!.reason, "generic-directive")
+	})
+
+	it("does not let a banned fight take the turn from a fact that earns it", () => {
+		/*
+		 * The failure this fixes. A fight is `interrupt` and was offered ALONE, so one turn of a
+		 * transplantable imperative took the whole turn from whatever else was on the list — 39
+		 * turns of 306 across the four recorded games.
+		 */
+		const out = buildFacts(
+			input({
+				nowSec: 600,
+				...slow(),
+				fight: { quiet: false, line: "that fight was 0 for 3, so back off and catch up" }
+			}),
+			newFactMemory()
+		)
+		ok(out.some(f => SLOW_LINE.test(f)), out.join(" | "))
+	})
+
+	it("still goes silent while kills are landing", () => {
+		// `quiet` is a different thing from the line and is not touched by the ban: a sentence
+		// arriving behind a live teamfight is noise at the moment noise costs most.
+		deepStrictEqual(
+			buildFacts(input({ nowSec: 600, ...slow(), fight: { quiet: true, line: null } }), newFactMemory()),
+			[]
+		)
+	})
+})
+
 describe("buildFacts — losing an objective", () => {
 	const baron = (atSec: number) => ({ name: "BaronKill", atSec })
 
@@ -852,10 +1021,10 @@ describe("buildFacts — losing an objective", () => {
 	it("lets normal facts back once the loss is old news", () => {
 		const mem = newFactMemory()
 		buildFacts(input({ nowSec: 1500, enemyObjectives: [baron(1490)] }), mem)
-		// The blackout is a window, not a mute button — but gold still needs its own hold.
-		const at = holdGold(mem, 3000, 1490 + 120)
+		// The blackout is a window, not a mute button. The fact that comes back used to be an
+		// unspent-gold line; gold is banned, so it is a standing objective instead.
 		const later = buildFacts(
-			input({ nowSec: at, enemyObjectives: [baron(1490)], currentGold: 3000 }),
+			input({ nowSec: 1490 + 120 + 60, enemyObjectives: [baron(1490)], ...slow() }),
 			mem
 		)
 		ok(later.length > 0, "the blackout is a window, not a mute button")
@@ -1074,14 +1243,20 @@ describe("buildFacts — a withheld fact is delayed, never deleted", () => {
 		)
 	})
 
-	it("does not spend the gold cooldown on a turn where gold was withheld", () => {
+	it("does not spend a slow fact's turn when a sole line took it", () => {
+		/*
+		 * A fact held back by a sole line has not been said, so nothing about it may be marked as
+		 * spent — otherwise the budget deletes facts instead of delaying them, and the rarest and
+		 * best lines are exactly the ones a floor lands on.
+		 *
+		 * This used to be asserted with an unspent-gold line, which is banned; the rule it pins has
+		 * nothing to do with gold.
+		 */
 		const mem = newFactMemory()
-		const ready = holdGold(mem, 2000, 300)
-		// A window is offered on the same turn the gold becomes sayable, and wins.
 		const first = buildFacts(
 			input({
-				nowSec: ready,
-				currentGold: 2000,
+				nowSec: 600,
+				...slow(),
 				deadEnemies: [
 					{ champion: "Karthus", respawnSec: 40, isJungler: true },
 					{ champion: "Jinx", respawnSec: 35 }
@@ -1089,24 +1264,36 @@ describe("buildFacts — a withheld fact is delayed, never deleted", () => {
 			}),
 			mem
 		)
-		ok(first.some(f => /of them are dead/.test(f)), first.join(" | "))
-		strictEqual(first.some(f => /unspent/.test(f)), false, "the window is offered alone")
+		/*
+		 * And the sole line is the CONJUNCTION, not the bare window: an objective is standing and
+		 * their jungler is dead, which is the one shape the judges cleared. "2 of them are dead —
+		 * you have about 12 seconds" is 0 clears from 2 judged lines; it only speaks when there is
+		 * nothing to spend the window on.
+		 */
+		ok(first.some(f => /start it now/.test(f)), first.join(" | "))
+		strictEqual(first.some(f => SLOW_LINE.test(f)), false, "the sole line takes the turn")
 		ok(
-			buildFacts(input({ nowSec: ready + ROUTINE_GAP_SEC, currentGold: 2000 }), mem).some(f =>
-				/unspent/.test(f)
-			),
-			"gold was withheld, not spent"
+			buildFacts(input({ nowSec: 600 + ROUTINE_GAP_SEC, ...slow() }), mem).some(f => SLOW_LINE.test(f)),
+			"withheld, not spent"
 		)
 	})
 })
 
 describe("buildFacts — the race is news when it turns against him", () => {
-	it("does not recite a lead that is growing on its own", () => {
+	it("does not recite a lead at all, growing or otherwise", () => {
 		/*
 		 * Replayed over a real game this produced "you're 20 CS up on Karthus", then 40, 50, 60,
 		 * 100 and 130 — six lines, every cooldown respected, reciting a lead that was widening
-		 * without him doing anything about it. That is the widening-number nag this file already
-		 * refuses to do with his own pace, wearing the counterpart's name.
+		 * without him doing anything about it. Trimming it to one line was the first fix; the ban
+		 * is the second and it takes the whole ahead side.
+		 *
+		 * He wins this race in four recorded games of four, by about a factor of two, and is ahead
+		 * by minute five in every one — so the ahead-side sentence is nearly always the answer, and
+		 * the advice it carries is `race-ahead`, static markdown that comes out as some rewording
+		 * of *keep the route running*. Judged: 2 spoken lines, both marginal, both labelled
+		 * keep-clearing, and keep-clearing is 18 lines and 0 clears across the round-3 sheet.
+		 *
+		 * The BEHIND side is untouched — see the test below.
 		 */
 		const mem = newFactMemory()
 		const spoken = session(
@@ -1120,7 +1307,7 @@ describe("buildFacts — the race is news when it turns against him", () => {
 			600
 		)
 		const races = spoken.flatMap(t => t.lines).filter(f => /CS up on Karthus/.test(f))
-		strictEqual(races.length, 1, `a widening lead is one line, not many: ${races.join(" | ")}`)
+		strictEqual(races.length, 0, `a lead earns no line at all: ${races.join(" | ")}`)
 	})
 
 	it("still raises the race when it gets worse", () => {
@@ -1301,7 +1488,7 @@ describe("buildFacts — the frame", () => {
 				nowSec: 600,
 				drakeBackInSec: 40,
 				...frame("topside"),
-				fight: { quiet: false, line: "that fight happened without you" }
+				fight: { quiet: false, line: "that fight happened without you", bought: true }
 			}),
 			fighting
 		)
@@ -1614,24 +1801,6 @@ describe("buildFacts — the sentence is part of the arithmetic", () => {
 		deepStrictEqual(out.filter(f => /of them are dead/.test(f)), [])
 	})
 
-	it("holds his gold while he is standing in the shop", () => {
-		/*
-		 * MEASURED: the one `impossible` gold verdict in four games is "he spent it: 373 gold when
-		 * it lands, was told 2511" — built while he was in the fountain buying. Nothing in the
-		 * client says so; the frame does.
-		 */
-		const mem = newFactMemory()
-		const at = holdGold(mem, 2000, 400)
-		const inBase = buildFacts(
-			input({ nowSec: at, currentGold: 2000, frame: { where: "base", atSec: at, confidence: "medium" } }),
-			mem
-		)
-		strictEqual(inBase.some(f => f.includes("unspent")), false, `got: ${inBase.join(" | ")}`)
-		// Delayed, never deleted: the clock kept running, so it is still there when he walks out.
-		ok(
-			buildFacts(input({ nowSec: at + 60, currentGold: 2000 }), mem).some(f => f.includes("unspent"))
-		)
-	})
 })
 
 /**
@@ -1657,7 +1826,7 @@ describe("buildFacts — a turn provider may not carry a reactive line", () => {
 		{ drakeBackInSec: 3 },
 		{ enemyObjectives: [{ name: "DragonKill", atSec: 590, dragonType: "Fire" }] },
 		{ counterpart: { champion: "Karthus", level: 9 }, meLevel: 6, drakeBackInSec: 30 },
-		{ fight: { quiet: false, line: "that fight was 0 for 3 without you", kind: "fight-absent" } }
+		{ fight: { quiet: false, line: "that fight was 0 for 3 without you", kind: "fight-absent", bought: true } }
 	]
 
 	it("says all of them to the socket and none of them to a turn provider", () => {
@@ -1673,11 +1842,9 @@ describe("buildFacts — a turn provider may not carry a reactive line", () => {
 	})
 
 	it("still hands a turn provider the facts that stay true for minutes", () => {
-		const mem = newFactMemory()
-		const at = holdGold(mem, 2000, 400)
 		ok(
-			buildFacts(input({ nowSec: at, currentGold: 2000 }), mem, { path: "turn" }).some(f =>
-				f.includes("unspent")
+			buildFacts(input({ nowSec: 600, ...slow() }), newFactMemory(), { path: "turn" }).some(f =>
+				SLOW_LINE.test(f)
 			)
 		)
 		ok(
@@ -1758,9 +1925,16 @@ describe("buildFacts — a question that has been answered", () => {
 	it("says the race once and then stops, however long the game runs", () => {
 		const mem = newFactMemory()
 		const said: string[] = []
-		// Twenty minutes of him holding the same decisive lead, which is what four of four recorded
-		// games look like. Every per-fact cooldown in the file lapses several times over.
-		for (let t = 400; t <= 1600; t += 20) said.push(...buildFacts(racing(t, -40), mem).filter(f => /Karthus/.test(f)))
+		/*
+		 * Twenty minutes of the same decisive verdict. Every per-fact cooldown in the file lapses
+		 * several times over, and retirement is what holds it to one line.
+		 *
+		 * The gap is now the BEHIND side. It used to be the lead — four of four recorded games look
+		 * like that — but the ahead side is banned outright, so a run of it would prove retirement
+		 * by proving nothing was ever built. Retirement is a rule about a verdict that stops
+		 * changing, and it holds on whichever side of the race the verdict sits.
+		 */
+		for (let t = 400; t <= 1600; t += 20) said.push(...buildFacts(racing(t, 40), mem).filter(f => /Karthus/.test(f)))
 		strictEqual(said.length, 1, said.join(" | "))
 	})
 
@@ -2086,7 +2260,7 @@ describe("buildFacts — an interrupt does not charge a floor it exempted itself
 	it("lets a standing fact follow a fight at the general floor rather than the routine one", () => {
 		const mem = newFactMemory()
 		const fought = buildFacts(
-			input({ nowSec: 600, fight: { quiet: false, line: "that fight was 0 for 3 without you" } }),
+			input({ nowSec: 600, fight: { quiet: false, line: "that fight was 0 for 3 without you", bought: true } }),
 			mem
 		)
 		ok(fought.length === 1, fought.join(" | "))
