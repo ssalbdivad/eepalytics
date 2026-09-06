@@ -127,7 +127,9 @@ nothing, not because he can see it.
 
 A judge reviewing a real session found 25 of 27 lines opened with a dead-enemy timer. Correct
 every time, and unbearable. **If your last line was about a death, this one should not be.** Reach
-for the farm comparison, an objective, a warning, praise — or PASS.
+for an objective, a window, a warning, praise — or PASS. And the rule cuts the other way too: a
+standing fact is news ONCE. An objective that was already up the last time you spoke is the
+sentence you already said with a later clock on it.
 
 ## What to say, in order
 
@@ -334,7 +336,7 @@ examples you are given.**
 
 ## A stat on its own is a kill feed
 
-"Renekton down 19 seconds" is a readback of something he could have seen. **Say the fact and what it
+"Renekton down 19 seconds" is a fact with no decision attached to it. **Say the fact and what it
 buys**, naming a place or an objective: "Renekton down 19 seconds — their topside is free" or
 "Drake in 47 seconds, be there with your gold spent".
 

@@ -275,6 +275,23 @@ interface Fact {
 	subject: FactSubject
 	tier: FactTier
 	commit?: () => void
+	/**
+	 * The QUESTION this line answers, when it is one that can stop being a question.
+	 *
+	 * See `shared/live-state.ts`. A fact carrying one is offered only while its answer is still new
+	 * to him, and comes back the moment the answer flips. Optional because most facts here are
+	 * EVENTS — a death, a take, a multikill — and an event happens once by construction, so the
+	 * announce-once sets above are already the degenerate case of this rule. What needs it is the
+	 * other kind: a comparison that is recomputed every turn and returns the same answer every time.
+	 */
+	question?: Question
+	/**
+	 * This line is a criticism of a TREND in his own numbers, and an event may cancel it.
+	 *
+	 * See `vetoingEvent`. Separate from `subject` because the two cut across each other: an
+	 * objective deficit is a trend and an objective timer is not, and both are `objectives`.
+	 */
+	trend?: boolean
 }
 
 /*
@@ -523,6 +540,58 @@ const OBJECTIVE_SIDE: Record<string, Coarse> = {
  * two reads a second apart can disagree by a little, a game restarting disagrees by minutes.
  */
 export const CLOCK_BACK_SEC = 30
+
+/**
+ * How long one of HIS OWN big plays cancels a criticism of his own numbers.
+ *
+ * The trap, from the target corpus (`data/eval/target-lines.md`, M25): between 30:24 and 33:15 of
+ * game 5635467422 his CS floor does not move for 171 seconds. In exactly that window he solo'd the
+ * Water drake at 30:43, his team aced at 32:44, and he took Baron at 33:11 — the best three minutes
+ * he played all game. A farm line there is not merely useless, it is **wrong coaching about the best
+ * three minutes he played**, and every rate limit in this file would have let it through, because
+ * every one of them asks whether time has passed and none of them asks whether anything happened.
+ *
+ * So an EVENT vetoes a TREND, and it has to happen before ranking rather than as an ordering
+ * preference: the lesson recorded four times in this file is that ordering is a suggestion to a
+ * model and the contents of the list are not.
+ *
+ * Two and a half minutes, because that is what covers the corpus case without blacking out the
+ * game: drake at 30:43 covers to 33:13 and Baron at 33:11 takes over two seconds before it lapses,
+ * so the whole stall is explained by a continuous chain. Replayed over the four recorded games it
+ * costs no offered line at all, which is the honest way to say it bites rarely — it is insurance
+ * against a fact class that is being built next, not a rate limit.
+ */
+export const TREND_VETO_SEC = 150
+
+/**
+ * The objectives big enough to explain a lull in his own farm. Grubs are not one of them — three
+ * grubs is fifteen seconds of work and does not account for a five-minute stall.
+ */
+const VETOING_TAKES = new Set(["DragonKill", "BaronKill", "HeraldKill"])
+
+/**
+ * Did HE just do something that explains why his numbers look wrong?
+ *
+ * His own events only. The enemy taking Baron explains a stall too, and it is not a reason to
+ * withhold a criticism — it is a reason to say something else entirely, which `enemyObjectives`
+ * already handles with its own blackout.
+ *
+ * An ACE is the one member of this class the client will not hand over here: the `Ace` event names
+ * an `Acer` rather than a killer, so it never reaches `myEvents`, which is filtered to his own name.
+ * The corpus case survives that gap because the drake and the Baron on either side of the ace
+ * overlap; a case that does not would be a false negative, and a false negative here is only the
+ * behaviour that shipped.
+ */
+const vetoingEvent = (input: FactInput): string | null => {
+	for (const e of input.myEvents) {
+		if (e.atSec === undefined) continue
+		const ago = input.nowSec - e.atSec
+		if (ago < 0 || ago > TREND_VETO_SEC) continue
+		if (VETOING_TAKES.has(e.name)) return e.name
+		if ((e.killStreak ?? 0) >= 2) return MULTI[e.killStreak!] ?? "multikill"
+	}
+	return null
+}
 
 /**
  * Everything the ranker must remember between turns.
@@ -842,6 +911,14 @@ export interface FactInput {
 	myEvents: {
 		id: number
 		name: string
+		/**
+		 * Game clock of the event. Optional only because every fixture in this repo predates it.
+		 *
+		 * Needed by `vetoingEvent` and by nothing else: an event with no time cannot bound a window,
+		 * and a veto that assumed "recent" from a list's presence would silence his farm for the
+		 * rest of a game after one drake.
+		 */
+		atSec?: number
 		killStreak?: number
 		dragonType?: string
 		stolen?: boolean
@@ -1850,6 +1927,14 @@ export const buildFacts = (
 	 */
 	const reactive = (f: Fact): boolean => f.tier === "expiring" || f.subject === "fight"
 
+	/**
+	 * His own big play, if there was one, computed ONCE for the turn.
+	 *
+	 * Read by `allowed` below and by nothing else, so a trend fact is filtered out of every list —
+	 * the ranked one and each of the `alone` ones — rather than merely demoted inside one of them.
+	 */
+	const veto = vetoingEvent(input)
+
 	const allowed = (f: Fact): boolean => {
 		/*
 		 * THE TIER GATE, and it is first because it is structural rather than a rate.
@@ -1863,6 +1948,21 @@ export const buildFacts = (
 		 * provider rather than merely faster.
 		 */
 		if (path === "turn" && reactive(f)) return false
+		/*
+		 * THE EVENT VETO, above the interrupt exemption, because it is about whether the line is
+		 * TRUE-BUT-WRONG rather than about how urgent it is. "Your CS has not moved in three
+		 * minutes" said to a man who spent those three minutes taking a drake, an ace and a Baron is
+		 * not a fact that arrived at a bad moment; it is a fact that means the opposite of what it
+		 * says. See `TREND_VETO_SEC`.
+		 */
+		if (f.trend && veto !== null) return false
+		/*
+		 * RETIREMENT, and it sits with the veto rather than with the rates for the same reason: a
+		 * retired answer is not being delayed, it has stopped being information. See
+		 * `shared/live-state.ts`. `standingOf` records the answer as a side effect, so a question
+		 * is observed on every turn its fact was built — which is what lets the flip be noticed.
+		 */
+		if (f.question && !standingOf(mem.retired, f.question, input.nowSec).open) return false
 		// An enemy Baron and a fight he missed are worth cutting in on anything. Both are rare,
 		// both are announce-once, and staying quiet about either to protect a rate is absurd.
 		if (f.tier === "interrupt") return true
@@ -1982,7 +2082,13 @@ export const buildFacts = (
 	 * the budget silently deletes facts instead of delaying them, and the rarest and best lines are
 	 * exactly the ones a floor is most likely to land on.
 	 */
-	for (const f of out) f.commit?.()
+	for (const f of out) {
+		f.commit?.()
+		// The ledger is spent here and only here, for the same reason `commit` is: a fact withheld
+		// by a floor has not been heard, and a question that retires while being withheld is a
+		// question that was never answered out loud.
+		if (f.question) spendAnswer(mem.retired, f.question, input.nowSec)
+	}
 
 	/*
 	 * NOT cleared by a silent turn. This is the opposite of what the flag it replaces did, and the

@@ -68,7 +68,7 @@ import type { GameflowSession } from "../../shared/schema/lcu.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
 import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
 import { liveCoachSystemPrompt, renderBlockForMode } from "../../shared/live-coach-mode.ts"
-import { objectiveSchedule } from "../../shared/live-state.ts"
+import { objectiveSchedule, retireSchedule } from "../../shared/live-state.ts"
 import type { ObjectiveEvent } from "../../shared/live-state.ts"
 import { buildArc, renderArc } from "../../analysis/arc.ts"
 import type { ArcSample } from "../../analysis/arc.ts"
@@ -798,24 +798,34 @@ const buildLiveState = (
 		 * roster id fields carry the tag. An unresolved killer becomes `null` rather than
 		 * "theirs" — a mis-sided objective count is a false claim about his own game.
 		 */
-		schedule: objectiveSchedule(
-			(data.events?.Events ?? [])
-				.map((e): ObjectiveEvent | null => {
-					const kind =
-						e.EventName === "DragonKill" ? ("dragon" as const)
-						: e.EventName === "HordeKill" ? ("grub" as const)
-						: e.EventName === "HeraldKill" ? ("herald" as const)
-						: e.EventName === "BaronKill" ? ("baron" as const)
-						: null
-					if (kind === null) return null
-					const killer = playerNamed(e.KillerName)
-					return {
-						kind,
-						tSec: e.EventTime ?? 0,
-						side: killer ? (killer.team === mine ? "mine" : "theirs") : null
-					}
-				})
-				.filter((e): e is ObjectiveEvent => e !== null),
+		/*
+		 * RETIRED THROUGH THE SHARED LEDGER, which is why the schedule is built and then filtered
+		 * rather than built already-filtered. `objectiveSchedule` stays pure and answers "what is
+		 * standing"; `retireSchedule` answers "has he already been told", and only the second one
+		 * needs a memory that survives the turn.
+		 */
+		schedule: retireSchedule(
+			objectiveSchedule(
+				(data.events?.Events ?? [])
+					.map((e): ObjectiveEvent | null => {
+						const kind =
+							e.EventName === "DragonKill" ? ("dragon" as const)
+							: e.EventName === "HordeKill" ? ("grub" as const)
+							: e.EventName === "HeraldKill" ? ("herald" as const)
+							: e.EventName === "BaronKill" ? ("baron" as const)
+							: null
+						if (kind === null) return null
+						const killer = playerNamed(e.KillerName)
+						return {
+							kind,
+							tSec: e.EventTime ?? 0,
+							side: killer ? (killer.team === mine ? "mine" : "theirs") : null
+						}
+					})
+					.filter((e): e is ObjectiveEvent => e !== null),
+				secs
+			),
+			factMemory.retired,
 			secs
 		),
 		/*
