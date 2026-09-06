@@ -812,7 +812,18 @@ const buildLiveState = (
 						: r.fight.participation === "absent" ? ("fight-absent" as const)
 						: r.fight.lost > r.fight.won ? ("fight-lost" as const)
 						: undefined
-					return { quiet: r.quiet, line: r.line, ...(kind ? { kind } : {}) }
+					/*
+					 * WHETHER THE FIGHT BOUGHT THEM SOMETHING, which is the only thing separating the
+					 * half of this family that produced from the half that did not. `fights.ts` has
+					 * always computed it and phrased two different lines from it; nothing downstream
+					 * could see which one it had been handed. See `FIGHT` in `analysis/live-facts.ts`.
+					 */
+					return {
+						quiet: r.quiet,
+						line: r.line,
+						bought: r.fight?.bought != null,
+						...(kind ? { kind } : {})
+					}
 				})(),
 				enemyObjectives: (data.events?.Events ?? [])
 					.filter(e => OBJECTIVE_EVENTS.has(e.EventName) && e.KillerName !== myName)

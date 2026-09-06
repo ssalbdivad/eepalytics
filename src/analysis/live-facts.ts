@@ -1587,6 +1587,30 @@ export const buildFacts = (
 		 */
 		if (
 			!swung &&
+			/*
+			 * THE AHEAD SIDE IS NOT BUILT AT ALL, and this is the one ban in the file that costs its
+			 * own trace row rather than carrying `Fact.banned`. The reason is mechanical and worth
+			 * writing down: every rate limit on this fact is spent in `commit`, which runs only when
+			 * a fact is OFFERED, so a banned-but-built race fact never advances `lastRaceAtSec` and
+			 * is therefore rebuilt on all 306 turns of the corpus — 266 rows of one dead family,
+			 * which is the audit table this ban came from rendered unreadable.
+			 *
+			 * What it costs: the table on `RACE_SETTLED_GAP` records that he wins this race in four
+			 * games of four, by about a factor of two, and is ahead by minute five in every one. So
+			 * the ahead-side sentence is the answer nearly every time it is offered, and the advice
+			 * it carries is `race-ahead` — static markdown, which comes out as some rewording of
+			 * *keep the route running*. That is a directive he gives himself, on a comparison whose
+			 * verdict never changes. Judged: 2 spoken lines, both marginal, both labelled
+			 * keep-clearing, and keep-clearing is 18 lines and 0 clears across the round-3 sheet.
+			 * n of 2 on this fact alone is nothing; it is banned because it converges with the
+			 * whole-game retirement table above it.
+			 *
+			 * The BEHIND side is untouched. It is the half that has never once been the answer in
+			 * this corpus, which is exactly what would make it worth hearing if it ever were. So is
+			 * the SWING above, which fires only after a behind-side line has been said and is the
+			 * one genuinely invisible piece of good news this function has.
+			 */
+			gap > 0 &&
 			Math.abs(gap) >= RACE_MIN_GAP &&
 			(mem.lastRaceAtSec === 0 || input.nowSec - mem.lastRaceAtSec >= RACE_COOLDOWN_SEC) &&
 			(mem.lastRaceAtSec === 0 || worsened >= RACE_GAP_MOVED)
@@ -2110,6 +2134,22 @@ export const buildFacts = (
 						:	`${Math.round(input.currentGold)} gold sitting unspent`,
 					subject: "gold",
 					tier: "standing",
+					/*
+					 * RETIRED BY THE JUDGES' OWN COUNT, and it is the cleanest ban in this file.
+					 *
+					 * Across both blind rounds, 102 lines whose imperative was of the recall-and-spend
+					 * family were graded and NOT ONE cleared the bar. In the round-3 sheet alone that
+					 * is 13 lines over four directive labels — recall-and-spend, spend-gold-and-clear,
+					 * spend-gold-while-dead, recall-before-baron — and zero clears from either judge.
+					 *
+					 * The argument this fact was built on was that the DURATION is the invisible part,
+					 * and the argument is sound; it is the ACTION that fails. He knows to spend gold.
+					 * A coach whose instruction is one the listener would have given himself is
+					 * spending the turn to say nothing, however novel the premise attached to it, and
+					 * this family's whole output is that instruction. Four offers over four recorded
+					 * games are what the ban costs.
+					 */
+					banned: "recall-and-spend",
 					commit: () => {
 						mem.lastGoldMentioned = amount
 						mem.lastGoldAtSec = input.nowSec
