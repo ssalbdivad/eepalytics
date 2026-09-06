@@ -64,6 +64,8 @@ export type PremiseKind =
 	| "objective-count"
 	| "kill-share"
 	| "build"
+	| "uncontested"
+	| "matchup"
 	| "praise"
 	| "my-death"
 	| "unknown"
@@ -99,6 +101,10 @@ export type Premise =
 	| { kind: "objective-count"; mine: number; theirs: number }
 	| { kind: "kill-share"; gapPct: number }
 	| { kind: "build"; champion: string; item: string }
+	/** "Baron has been up 2 minutes 21 seconds and nobody has taken it" */
+	| { kind: "uncontested"; label: string }
+	/** "3 of your 5 deaths are Briar" / "Briar has killed your Urgot 5 times" */
+	| { kind: "matchup" }
 	| { kind: "praise" }
 	| { kind: "my-death" }
 	| { kind: "unknown" }
@@ -404,6 +410,18 @@ export const premiseOf = (text: string): Premise => {
 	const kp = /^(.+?) is in (\d+) percent more of his team's kills/.exec(t)
 	if (kp) return { kind: "kill-share", gapPct: Number(kp[2]) }
 
+	/*
+	 * BEFORE the build pattern, which is `(.+?) just finished (.+?)` and would otherwise be the
+	 * first thing a new sentence shape collides with. Both of these are tested against real shipped
+	 * text in `live-facts.test.ts`; a premise parser that silently returns `unknown` reads as a
+	 * quiet coach rather than as a broken classifier, which is how it goes unnoticed.
+	 */
+	const stood = /^(.+?) has been up .+ and nobody has taken it/.exec(t)
+	if (stood) return { kind: "uncontested", label: stood[1]! }
+
+	if (/^\d+ of your \d+ deaths are /.test(t)) return { kind: "matchup" }
+	if (/^.+ has killed your .+ \d+ times/.test(t)) return { kind: "matchup" }
+
 	const build = /^(.+?) just finished (.+?)(?:$|[.—])/.exec(t)
 	if (build) return { kind: "build", champion: build[1]!, item: build[2]!.trim() }
 
@@ -639,6 +657,26 @@ export const stalenessOf = (
 			if (!items.includes(p.item)) return gone(`${p.item} is not in his items at t_end`)
 			return fresh(p.kind, `${p.champion} still has ${p.item}`, endSec, spokenSec)
 		}
+
+		case "uncontested": {
+			/*
+			 * The one way this premise dies inside a sentence is somebody taking the thing. Only the
+			 * ENEMY takes are in this state, so a take by his own team reads as fresh — a false
+			 * negative, and the safe one: the claim understates by construction (the age only grows)
+			 * and the worst case is telling him a pit is free seconds after his team cleared it.
+			 */
+			const taken = stateAtEnd.enemyObjectives.some(e => e.atSec > line.atSec && e.atSec <= endSec)
+			if (taken) return gone(`an objective was taken between ${line.atSec.toFixed(0)}s and ${endSec.toFixed(0)}s`)
+			return fresh(p.kind, `${p.label} still standing`, endSec, spokenSec)
+		}
+
+		case "matchup":
+			/*
+			 * A tally over the whole game so far, which can only grow, and the sentence is a
+			 * boundary rather than a window. Nothing that lands inside four seconds makes "three of
+			 * your five deaths are Briar" false; a fourth would make it an understatement.
+			 */
+			return fresh(p.kind, "a tally over the whole game cannot be falsified inside one sentence", endSec, spokenSec)
 
 		case "praise":
 			// It happened. Nothing that arrives later can make it not have happened.

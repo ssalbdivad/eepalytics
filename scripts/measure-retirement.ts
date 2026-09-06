@@ -70,6 +70,8 @@ const SUBJECT: Record<PremiseKind, string> = {
 	"objective-count": "objectives",
 	"kill-share": "kill-share",
 	build: "build",
+	uncontested: "objectives",
+	matchup: "matchup",
 	praise: "praise",
 	"my-death": "your-death",
 	unknown: "unknown"

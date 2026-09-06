@@ -18,7 +18,7 @@
 
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { frameCoverage, lateEligible, relocateFrame, statsFor } from "../../scripts/ablate-autonomy.ts"
+import { frameCoverage, lateEligible, pickGridSample, relocateFrame, statsFor } from "../../scripts/ablate-autonomy.ts"
 import type { Cell, CellTurn } from "../../scripts/ablate-autonomy.ts"
 
 /* =========================================================== lateEligible */
@@ -48,6 +48,47 @@ test("the exclusion was always redundant in the default configuration", () => {
 	// every paired sample. Skipping them on top of that changes nothing — which is why the flag went
 	// unnoticed until someone moved `--late-from` back over the frames.
 	assert.deepEqual(lateEligible(built, 402, framed, true), lateEligible(built, 402, framed, false))
+})
+
+/* ========================================================= pickGridSample */
+
+const none = new Set<number>()
+const never = () => false
+
+test("without pictures the grid still takes the sample nearest the mark", () => {
+	const c = [{ line: 1, tSec: 14 }, { line: 2, tSec: 20 }, { line: 3, tSec: 26 }]
+	assert.equal(pickGridSample(c, 20, 10, none, never, false)?.line, 2)
+})
+
+test("a mark with nothing inside its tolerance takes nothing", () => {
+	assert.equal(pickGridSample([{ line: 1, tSec: 60 }], 20, 10, none, never, false), null)
+})
+
+test("a sample already taken by an earlier mark is not taken twice", () => {
+	const c = [{ line: 1, tSec: 20 }, { line: 2, tSec: 26 }]
+	assert.equal(pickGridSample(c, 20, 10, new Set([1]), never, false)?.line, 2)
+})
+
+test("--late-frames prefers the neighbour that carries a picture, inside the same tolerance", () => {
+	// The nearest sample to the mark has no frame within the gate; the one six seconds later does.
+	// Taking the nearest is how a twenty-second grid came out mostly blind over a window where every
+	// state had a picture available.
+	const c = [{ line: 1, tSec: 20 }, { line: 2, tSec: 26 }]
+	const framed = (b: { line: number }) => b.line === 2
+	assert.equal(pickGridSample(c, 20, 10, none, framed, true)?.line, 2)
+	assert.equal(pickGridSample(c, 20, 10, none, framed, false)?.line, 1)
+})
+
+test("the preference never reaches outside the tolerance the grid promised", () => {
+	// A picture eleven seconds off a twenty-second mark is a different moment, not a better one.
+	const c = [{ line: 1, tSec: 20 }, { line: 2, tSec: 31 }]
+	const framed = (b: { line: number }) => b.line === 2
+	assert.equal(pickGridSample(c, 20, 10, none, framed, true)?.line, 1)
+})
+
+test("when no candidate has a picture the preference changes nothing", () => {
+	const c = [{ line: 1, tSec: 20 }, { line: 2, tSec: 26 }]
+	assert.equal(pickGridSample(c, 20, 10, none, never, true)?.line, 1)
 })
 
 /* ========================================================== relocateFrame */

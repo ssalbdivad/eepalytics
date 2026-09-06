@@ -1376,7 +1376,7 @@ export const buildFacts = (
 				 */
 				text: withAdvice(
 					`${nemesis.n} of your ${myDeaths} deaths are ${nemesis.killer}`,
-					input.advice?.matchup
+					input.advice?.nemesis
 				),
 				subject: "matchup",
 				tier: "standing",

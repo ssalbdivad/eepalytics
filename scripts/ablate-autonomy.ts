@@ -448,6 +448,45 @@ export const lateEligible = <T extends { line: number; tSec: number }>(
 ): T[] => built.filter(b => b.tSec > fromSec && !(skipPaired && usedByPaired.has(b.line)))
 
 /**
+ * Which sample a grid mark takes: the nearest one inside the tolerance, and under `--late-frames`
+ * the nearest one that carries a PICTURE, if any does.
+ *
+ * Samples arrive about every six seconds and the browser posts a frame about every ten, so the
+ * sample nearest a mark frequently has no frame within the three-second gate while its neighbour
+ * does. Taking the neighbour costs nothing the grid was promising — every state is still inside half
+ * a spacing of its mark, which is the same tolerance the plain nearest-sample rule uses — and on the
+ * twenty-second grid it is the difference between 13 and 19 of the marks in the frame window
+ * carrying a picture. Without pictures, `preferFramed` is false and this is exactly the old rule.
+ */
+export const pickGridSample = <T extends { line: number; tSec: number }>(
+	candidates: readonly T[],
+	mark: number,
+	toleranceSec: number,
+	taken: ReadonlySet<number>,
+	hasFrame: (candidate: T) => boolean,
+	preferFramed: boolean
+): T | null => {
+	let best: T | null = null
+	let bestSkew = Infinity
+	let framed: T | null = null
+	let framedSkew = Infinity
+	for (const c of candidates) {
+		if (taken.has(c.line)) continue
+		const skew = Math.abs(c.tSec - mark)
+		if (skew > toleranceSec) continue
+		if (skew < bestSkew) {
+			bestSkew = skew
+			best = c
+		}
+		if (preferFramed && skew < framedSkew && hasFrame(c)) {
+			framedSkew = skew
+			framed = c
+		}
+	}
+	return framed ?? best
+}
+
+/**
  * What the frame table gave this run, from row count down to pictures actually attached.
  *
  * Every subtraction between `rows` and `joinedPaired` is a place a frame can disappear, and each
@@ -677,34 +716,14 @@ const buildStates = (): {
 		const taken = new Set<number>()
 		const end = eligible.length > 0 ? eligible[eligible.length - 1]!.tSec : 0
 		for (let mark = lastFrameSec + LATE_SPACING_SEC; mark <= end + LATE_SPACING_SEC / 2; mark += LATE_SPACING_SEC) {
-			let best: Built | null = null
-			let bestSkew = Infinity
-			/*
-			 * Under `--late-frames`, a candidate that carries a picture wins over one that does not,
-			 * PROVIDED it is inside the same tolerance the grid already allows (half a spacing).
-			 *
-			 * Samples arrive every ~6s and frames every ~10s, so the sample nearest a mark often has
-			 * no frame within the gate while its neighbour does — on the 20s grid that alone was the
-			 * difference between 13 and 20 of the 20 marks in the frame window carrying a picture.
-			 * The grid stays as uniform as it was: every state is still within half a spacing of its
-			 * mark, and the mark it belongs to is still in its id.
-			 */
-			let framedBest: Built | null = null
-			let framedSkew = Infinity
-			for (const b of eligible) {
-				if (taken.has(b.line)) continue
-				const skew = Math.abs(b.tSec - mark)
-				if (skew > LATE_SPACING_SEC / 2) continue
-				if (skew < bestSkew) {
-					bestSkew = skew
-					best = b
-				}
-				if (LATE_FRAMES && skew < framedSkew && frameByLine.has(b.line)) {
-					framedSkew = skew
-					framedBest = b
-				}
-			}
-			const pick = framedBest ?? best
+			const pick = pickGridSample(
+				eligible,
+				mark,
+				LATE_SPACING_SEC / 2,
+				taken,
+				b => frameByLine.has(b.line),
+				LATE_FRAMES
+			)
 			if (!pick) continue
 			taken.add(pick.line)
 			late.push(make(pick, `late-${String(Math.round(pick.tSec)).padStart(4, "0")}`, LATE_FRAMES ? frameFor(pick) : null))

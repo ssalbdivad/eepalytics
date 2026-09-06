@@ -55,9 +55,13 @@ objective-uncontested: nobody wants it, so be the one who is standing on it when
 objective-uncontested: uncontested means the fight over it has not happened yet, so bring someone
 objective-uncontested: start it while it is free rather than trading for it later
 
-matchup: stop taking that one alone, walk to it with somebody or walk away
-matchup: give that fight up and take the camps on the far side instead
-matchup: put the ward down before you cross into that half of the map
+nemesis: stop taking that one alone, walk to it with somebody or walk away
+nemesis: give that duel up and take the camps on the far side instead
+nemesis: the next time you see him, path the other way and let him come to your side
+
+matchup: that is where he keeps going, so ward the entrance to it before your next clear
+matchup: put your next path through that side of the map rather than the empty one
+matchup: he is spending his game over there, so take the camps he is not standing on
 
 farm-behind: run the next route to the end, a gank that is not ready is not one
 farm-behind: take the camps on the way to where you were going, not a lap back

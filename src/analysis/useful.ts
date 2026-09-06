@@ -150,6 +150,8 @@ export const topicOfPremise: Record<PremiseKind, Topic> = {
 	"objective-timer": "objectives",
 	"objective-lost": "objectives",
 	"objective-count": "objectives",
+	uncontested: "objectives",
+	matchup: "fighting",
 	fight: "fighting",
 	"kill-share": "fighting",
 	"my-death": "fighting",
@@ -172,6 +174,17 @@ export const screenOfPremise: Record<PremiseKind, Screen> = {
 	// Announced on screen, in the kill feed, and on the top bar's drake icons.
 	"objective-lost": "hud",
 	"objective-count": "hud",
+	/*
+	 * HOW LONG IT HAS STOOD IS ON NO CHANNEL HE HAS, and this is the one row in this table that was
+	 * settled by looking rather than judged. `data/eval/is-the-timer-visible.md` read 1,876 real
+	 * journal frames of nine of his own games: the spawn COUNTDOWN is printed on his minimap from
+	 * three minutes out, exact, in 9 of 9 — but once the thing is standing the display prints no
+	 * digits at all, in any state, for any objective. The icon says it is there; nothing says since
+	 * when.
+	 */
+	uncontested: "unseen",
+	// A `GROUP BY` over the kill feed. The scoreboard shows 0/5/4 and never who the five were.
+	matchup: "unseen",
 	// The trade's arithmetic, and whether he was even in it — displayed nowhere.
 	fight: "unseen",
 	"kill-share": "unseen",

@@ -80,6 +80,14 @@ export const ADVICE_KINDS = [
 	 * clause is for, and it is why it must stay digit-free — the number is the client's half.
 	 */
 	"objective-uncontested",
+	/*
+	 * TWO KINDS, not one, and the split is the difference between advice that fits and advice that
+	 * reads as a non sequitur. "Three of your five deaths are Briar" wants a boundary he can hold
+	 * himself; "Briar has killed your Urgot six times" wants a place he should go and cover. One
+	 * shared rotation produced *"Briar has killed your Urgot 5 times — stop taking that one alone"*,
+	 * which is addressed to the wrong person.
+	 */
+	"nemesis",
 	"matchup"
 ] as const
 
