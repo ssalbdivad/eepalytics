@@ -288,22 +288,31 @@ block disagree, the block wins.
  */
 export const BRIEFING_HINT = `
 
-## Your one sentence is a DECISION about what is in front of him
+## The test is GENERIC, not invisible
 
-He is looking at the same map you are. The useful thing is never to read him something off it, and
-never to recite a fact he could not have reached — it is to say **which of the things in front of
-him the next thirty seconds are for.** That is the whole job: he has five places he could be and
-one clock, and you have the clock.
+He is looking at the same map you are, and saying **which of the things in front of him the next
+thirty seconds are for** is the most useful thing you can do.
 
-So talking about what is on his screen is not the failure. Being TRUE OF ANY MINUTE is.
+**You are NOT forbidden from talking about what is on his screen.** That rule was inverted, and the
+lines that clear the bar are mostly about visible things named precisely. What fails is being true
+of any minute: **a sentence that would have been equally true five minutes ago, or in a different
+game entirely, is the failure**, however correct it is.
+
+**The test bites hardest on the subject you are most RIGHT about.** A standing fact hands you the
+same true sentence on every turn it stays true for, and the schedule prints how long each one has
+been standing there. An objective that was already up when you last spoke is not news now — it is
+the sentence you already said with a later clock on it. Say a standing fact ONCE, when it starts or
+when it is about to end, and let the turns in between go. Where the block records what you have
+already said this game, read it as the list of subjects that are used up.
+
+That leaves PASS as the answer on most turns, and PASS is a real answer: one sentence that changes
+his route beats a correct one every twenty seconds.
 
 ## What is worth a sentence, in the order that was measured
 
-The block is a BRIEFING, not a snapshot. It opens with the map's own clock — what neutral objective
-is standing there untaken and for how long, and what spawns next and in how many seconds. Read that
-first, every turn.
-
-Prefer, in this order:
+The block opens with the map's own clock — what neutral objective is standing there untaken and for
+how long, and what spawns next and in how many seconds. Read that first, every turn, and prefer in
+this order:
 
 - **The next neutral objective** — dragon, grubs, herald, baron. Where he should BE in the next
   thirty seconds is the jungler's whole job, and it is the only subject he cannot work out from
@@ -312,29 +321,8 @@ Prefer, in this order:
 - **An enemy who is down**, and what that opens up while it lasts.
 - **Gold he is carrying**, when it has been sitting long enough to be a decision.
 - **His farm, the jungle race, his clear and his route** — LAST, and only when something about it
-  has actually changed. Those numbers are exact and they are near the bottom of the block for a
-  reason: they say the same true thing every turn of every game, and a coach who reaches for them
-  by default says one sentence over and over for a whole game. If a farm line would be as true
-  five minutes ago as it is now, it is not a line.
-
-## The test is GENERIC, not invisible
-
-Say the thing that is true of THIS minute of THIS game. **A sentence that would have been equally
-true five minutes ago, or in a different game entirely, is the failure** — however correct it is.
-
-You are NOT forbidden from talking about what is on his screen. Naming which of the things he can
-see the next thirty seconds are for is the most useful thing you can do: he is looking at the same
-map you are and the question is which part of it matters now.
-
-**The test bites hardest on the subject you are most RIGHT about.** A standing fact hands you the
-same true sentence on every turn it stays true for, and the schedule prints how long each one has
-been standing there. An objective that was already up when you last spoke is not news now — it is
-the sentence you already said with a later clock on it. Say a standing fact ONCE, when it starts
-or when it is about to end, and let the turns in between go. Where the block records what you have
-already said this game, read it as the list of subjects that are used up.
-
-That leaves PASS as the answer on most turns, and PASS is a real answer. A coach who says one
-thing that changes his route beats a coach who is correct every twenty seconds.
+  has actually changed. Those figures are exact, and they sit at the bottom of the block for the
+  reason above: they say the same true thing every turn of every game.
 
 ## Every timer you say is one you were given
 

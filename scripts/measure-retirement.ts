@@ -54,7 +54,7 @@ const arg = (name: string, fallback: string): string => {
  * counterpart-CS fact", he hears someone talking about his farm again — the same argument
  * `live-facts.ts` makes where it defines `FactSubject`, applied one level further.
  */
-const SUBJECT: Record<PremiseKind["kind"], string> = {
+const SUBJECT: Record<PremiseKind, string> = {
 	window: "downed",
 	"jungler-down": "downed",
 	"objective-timer": "objective-timer",
@@ -81,22 +81,46 @@ interface Offer {
 	from: "schedule" | "ranked"
 }
 
-const runs = (subjects: string[]): { sameTwiceRunning: number; longest: number; longestSubject: string } => {
+/**
+ * The two numbers, computed PER SUBJECT over the sequence of turns.
+ *
+ * Not over the flattened list of offers: a turn hands the model three or four items at once and
+ * they are all different, so an adjacency count over the flat list reports almost no repetition
+ * while the same objective sits in every single block. The fault the judges named is a subject that
+ * is in front of him on turn after turn — "the soul/baron pair switched on at 19:42 and was still
+ * being read out at 36:43, eighteen turns later" — so the unit is the TURN.
+ *
+ * `sameTwiceRunning` counts every offer that repeats a subject the previous turn already carried.
+ * `longest` is the longest unbroken run of turns carrying one subject.
+ */
+const runs = (
+	turns: string[][]
+): { sameTwiceRunning: number; longest: number; longestSubject: string; bySubject: Map<string, { turns: number; longest: number }> } => {
 	let sameTwiceRunning = 0
-	let run = 0
+	const bySubject = new Map<string, { turns: number; longest: number }>()
+	const run = new Map<string, number>()
+	for (let i = 0; i < turns.length; i++) {
+		const here = new Set(turns[i] ?? [])
+		const before = new Set(i > 0 ? (turns[i - 1] ?? []) : [])
+		for (const s of here) {
+			const n = (run.get(s) ?? 0) * (before.has(s) ? 1 : 0) + 1
+			run.set(s, n)
+			if (before.has(s)) sameTwiceRunning++
+			const rec = bySubject.get(s) ?? { turns: 0, longest: 0 }
+			rec.turns++
+			if (n > rec.longest) rec.longest = n
+			bySubject.set(s, rec)
+		}
+		for (const s of run.keys()) if (!here.has(s)) run.set(s, 0)
+	}
 	let longest = 0
 	let longestSubject = ""
-	for (let i = 0; i < subjects.length; i++) {
-		if (i > 0 && subjects[i] === subjects[i - 1]) {
-			sameTwiceRunning++
-			run++
-		} else run = 1
-		if (run > longest) {
-			longest = run
-			longestSubject = subjects[i]!
+	for (const [s, rec] of bySubject)
+		if (rec.longest > longest) {
+			longest = rec.longest
+			longestSubject = s
 		}
-	}
-	return { sameTwiceRunning, longest, longestSubject }
+	return { sameTwiceRunning, longest, longestSubject, bySubject }
 }
 
 const main = async (): Promise<void> => {
@@ -106,6 +130,7 @@ const main = async (): Promise<void> => {
 	const games = readdirSync(dir).filter(f => /^split-\d+\.ndjson$/.test(f)).sort()
 
 	const offers: Offer[] = []
+	const allTurns: string[][] = []
 	const perGame: Record<string, unknown>[] = []
 
 	for (const file of games) {
@@ -119,6 +144,7 @@ const main = async (): Promise<void> => {
 			.map(l => JSON.parse(l) as { atMs: number; gameTime: number; data: unknown })
 
 		const mine: Offer[] = []
+		const turnSubjects: string[][] = []
 		let turns = 0
 		let last = -1e9
 		for (const row of rows) {
@@ -127,8 +153,11 @@ const main = async (): Promise<void> => {
 			const state: VisionState | null = mod.buildLiveStateForBench(row.data, row.gameTime)
 			if (!state) continue
 			turns++
+			const here: string[] = []
+			turnSubjects.push(here)
 			for (const o of state.schedule ?? []) {
 				if (o.retired) continue
+				here.push(`objective:${o.name}`)
 				mine.push({
 					game,
 					atSec: row.gameTime,
@@ -137,12 +166,15 @@ const main = async (): Promise<void> => {
 					text: `${o.name} ${o.state} ${o.sec}s`
 				})
 			}
-			for (const text of state.unseen)
+			for (const text of state.unseen) {
+				here.push(SUBJECT[premiseOf(text).kind])
 				mine.push({ game, atSec: row.gameTime, subject: SUBJECT[premiseOf(text).kind], from: "ranked", text })
+			}
 		}
 		offers.push(...mine)
 
-		const r = runs(mine.map(o => o.subject))
+		const r = runs(turnSubjects)
+		allTurns.push(...turnSubjects, [])
 		const sched = mine.filter(o => o.from === "schedule").length
 		const counts = new Map<string, number>()
 		for (const o of mine) counts.set(o.subject, (counts.get(o.subject) ?? 0) + 1)
@@ -173,7 +205,7 @@ const main = async (): Promise<void> => {
 			).replace("objective:", "")}`.padStart(7)}  ${g.top}`
 		)
 
-	const all = runs(offers.map(o => o.subject))
+	const all = runs(allTurns)
 	console.log(
 		`\n  TOTAL     ${String(perGame.reduce((n, g) => n + (g.turns as number), 0)).padStart(5)} ${String(
 			offers.length
@@ -182,11 +214,12 @@ const main = async (): Promise<void> => {
 		).padStart(6)} ${String(all.sameTwiceRunning).padStart(9)}`
 	)
 
-	const counts = new Map<string, number>()
-	for (const o of offers) counts.set(o.subject, (counts.get(o.subject) ?? 0) + 1)
-	console.log("\n## every subject, pooled\n")
-	for (const [s, n] of [...counts.entries()].sort((a, b) => b[1] - a[1]))
-		console.log(`  ${s.padEnd(24)} ${String(n).padStart(4)}  ${((100 * n) / offers.length).toFixed(1)}%`)
+	console.log("\n## every subject, pooled — turns it was offered on, and its longest unbroken run\n")
+	const total = allTurns.length
+	for (const [s, rec] of [...all.bySubject.entries()].sort((a, b) => b[1].turns - a[1].turns))
+		console.log(
+			`  ${s.padEnd(24)} ${String(rec.turns).padStart(4)} turns  ${((100 * rec.turns) / total).toFixed(1).padStart(5)}% of turns   longest run ${rec.longest}`
+		)
 
 	if (out !== "") {
 		if (!existsSync(`${DATA_DIR}/eval`)) mkdirSync(`${DATA_DIR}/eval`, { recursive: true })

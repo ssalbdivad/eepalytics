@@ -147,6 +147,8 @@ export const GOLD_FLOOR = 1200
 /** How much more must accumulate before unspent gold is news again. */
 export const GOLD_STEP = 800
 import { dragonPhrase } from "../shared/dragons.ts"
+import { newRetirementMemory, spendAnswer, standingOf } from "../shared/live-state.ts"
+import type { Question, RetirementMemory } from "../shared/live-state.ts"
 /*
  * MEASURED SPEECH, and it belongs here because the length of the sentence is part of whether the
  * sentence is true. `speechDurationSec` is a least-squares fit over twenty-four of these very
@@ -614,6 +616,20 @@ export interface FactMemory {
 	 * below exists to replace that whole block with one call.
 	 */
 	lastLedWithDeath: boolean
+	/**
+	 * THE RETIREMENT LEDGER — every question the coach has answered, and what the answer was.
+	 *
+	 * Lives inside `FactMemory` rather than beside it so that `resetFactMemory` clears it without
+	 * anybody remembering to, which is the failure mode this interface already documents: the
+	 * daemon's hand-written between-games reset named 22 of 26 fields, and the four it missed were
+	 * the four most recently added.
+	 *
+	 * Shared with `shared/live-state.ts`, which owns the primitive and applies it to the objective
+	 * schedule. One ledger for the whole context is the point — the fault it fixes moved from the CS
+	 * race to the schedule the moment the race was demoted, so a mechanism that only knew about
+	 * ranked facts would have watched it happen.
+	 */
+	retired: RetirementMemory
 }
 
 /**
@@ -656,7 +672,8 @@ export const newFactMemory = (): FactMemory => ({
 	lastOfferedAtSec: 0,
 	lastSeenSec: 0,
 	lastSubjects: [],
-	lastLedWithDeath: false
+	lastLedWithDeath: false,
+	retired: newRetirementMemory()
 })
 
 /**

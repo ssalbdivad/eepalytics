@@ -130,6 +130,158 @@ export const csGap = (cs: number, other: number, otherFloored: boolean): CsGap =
  */
 export const csGapWorthSaying = (g: CsGap): boolean => g.certain >= CS_QUANTUM
 
+/* ===================================== when a fact stops being a question */
+
+/**
+ * RETIREMENT — a fact that returns the same answer every turn is not information.
+ *
+ * This is the general form of a fault this app has now committed twice, with two different subjects,
+ * and the second time is what forced it into a mechanism rather than a constant.
+ *
+ * The first was the jungle CS race. Over his four recorded games the block's race verdict read
+ * "he is behind you" in 82 states of 88 and "ahead" in none; farm, CS, clearing and routing together
+ * produced three useful lines out of eighty-four. A comparison whose answer never changes cannot
+ * drive a decision, however exact both numbers are.
+ *
+ * The second is the schedule directly above, which replaced it and is the one layer measured to
+ * help (29% useful to 55%, p = 0.0009). Judged blind by four models afterwards, all four said the
+ * same thing in different words: *the subject changed; the metronome did not.* 43 of 72 lines in one
+ * run were the dragon, and the soul/baron pair that switched on at 19:42 was still being read out at
+ * 36:43, eighteen turns later, with nothing retiring it. Replayed over the four games at the shipped
+ * turn, the dragon entry was in the block on 300 turns of 306 — 98% — and 579 of 673 offered context
+ * items repeated a subject the previous turn had already carried.
+ *
+ * So the rule cannot be about drakes, or about CS. It is about ANSWERS:
+ *
+ *   - a QUESTION is a thing the coach could talk about, named by a stable `key`;
+ *   - a VERDICT is the answer right now, discretized so that it only changes when the DECISION
+ *     changes — not when the number does;
+ *   - each distinct answer is worth a fixed number of sentences (`budget`, one by default), after
+ *     which the question is retired;
+ *   - it comes back the instant the answer FLIPS, and `Standing.from` says what it flipped from,
+ *     because that flip is the only moment the fact was ever news.
+ *
+ * ## Why the budget, and not "N turns without a change"
+ *
+ * The brief for this was "a fact whose verdict has not changed in N turns has stopped being
+ * information", and that reading was tried and rejected on a case: the coach is silent on most turns
+ * because of the floors in `analysis/live-facts.ts`, so a Baron standing untaken from 20:00 would age
+ * out on the clock without ever having been mentioned. Baron up at 23:00 that he has not been told
+ * about is MORE worth saying than at 20:01, not less. Counting turns retires facts that were never
+ * said; counting offers retires facts he has already heard, which is the thing that was actually
+ * wrong. Ageing an answer out unsaid is available by widening the verdict instead — see
+ * `SCHEDULE_UNCONTESTED_SEC`, where standing for two minutes IS a different answer.
+ *
+ * An offer is counted rather than a spoken line, for the reason `FactMemory` records: the coach may
+ * only speak from what it is handed, and it also passes, so offers are an upper bound on lines and
+ * the enforced rate is a ceiling rather than a schedule.
+ */
+export interface Question {
+	/** Names the QUESTION and never the answer, and is stable for the whole game. */
+	key: string
+	/**
+	 * The answer, discretized.
+	 *
+	 * Coarseness is the entire design of a verdict. "Dragon spawns in 214 seconds" is a different
+	 * string every turn and the same information every turn; `later@300` is not. Anything that
+	 * changes on its own — a countdown, an elapsed age, a gold total that only grows — must be
+	 * bucketed into the answers a jungler would actually act on differently, or the question can
+	 * never retire.
+	 */
+	verdict: string
+	/** How many times a line on this answer may be offered. One unless there is a reason. */
+	budget?: number
+}
+
+/** What the retirement rule remembers about one question. */
+export interface AnswerRecord {
+	verdict: string
+	/** Game clock at which this answer first appeared. */
+	sinceSec: number
+	/** Offers spent on this answer. */
+	offers: number
+	/** The answer before this one, or null while this is the first. */
+	from: string | null
+	/** Game clock at which it changed to this answer — so a flip is reportable more than once a turn. */
+	flippedAtSec: number
+}
+
+export interface RetirementMemory {
+	answers: Record<string, AnswerRecord>
+}
+
+export const newRetirementMemory = (): RetirementMemory => ({ answers: {} })
+
+/** In place, because the daemon holds one memory for the process and the identity must survive. */
+export const resetRetirementMemory = (mem: RetirementMemory): void => {
+	mem.answers = {}
+}
+
+export interface Standing {
+	/** May a line about this question be offered at all? */
+	open: boolean
+	/**
+	 * The answer changed on THIS turn.
+	 *
+	 * The only moment the fact was ever news, and the reason a retired question is retired rather
+	 * than deleted: a flip is worth saying loudly, and nothing that has been deleted can flip.
+	 */
+	flipped: boolean
+	/** What it flipped from, or null while this is the first answer seen. */
+	from: string | null
+	/** How long the current answer has stood, in game-clock seconds. */
+	heldSec: number
+	/** Offers already spent on this answer. */
+	offers: number
+}
+
+/**
+ * Look at a question, and notice if the answer has changed since the last look.
+ *
+ * WRITES to `mem`, deliberately and idempotently: noticing a change IS the observation, so a caller
+ * that had to remember to record it separately would be a second copy of the rule, and this file
+ * already carries the cost of that mistake in three other places. Calling it twice in one turn gives
+ * the same answer twice — `flippedAtSec` is compared against the clock rather than cleared.
+ *
+ * A question is only ever observed on a turn where its fact was BUILT, which means a verdict can
+ * change while nobody is looking and be recorded as the next flip rather than as two. That is the
+ * intended reading: an answer he was never in a position to hear did not change for him.
+ */
+export const standingOf = (mem: RetirementMemory, q: Question, nowSec: number): Standing => {
+	const prior = mem.answers[q.key]
+	if (!prior || prior.verdict !== q.verdict) {
+		const rec: AnswerRecord = {
+			verdict: q.verdict,
+			sinceSec: nowSec,
+			offers: 0,
+			from: prior ? prior.verdict : null,
+			flippedAtSec: nowSec
+		}
+		mem.answers[q.key] = rec
+		return { open: true, flipped: true, from: rec.from, heldSec: 0, offers: 0 }
+	}
+	return {
+		open: prior.offers < (q.budget ?? 1),
+		flipped: prior.flippedAtSec === nowSec,
+		from: prior.from,
+		heldSec: Math.max(0, nowSec - prior.sinceSec),
+		offers: prior.offers
+	}
+}
+
+/**
+ * Mark that a line about this question was put in front of him.
+ *
+ * Called only for what is actually offered, for the reason `buildFacts` writes its memory after
+ * ranking rather than while building: a fact that burns its budget while being withheld is a fact
+ * that is never said at all, and the rarest and best lines are exactly the ones a floor lands on.
+ */
+export const spendAnswer = (mem: RetirementMemory, q: Question, nowSec: number): void => {
+	standingOf(mem, q, nowSec)
+	const rec = mem.answers[q.key]
+	if (rec) rec.offers++
+}
+
 /* ============================================================ the map's own clock */
 
 /**
@@ -169,6 +321,15 @@ export interface ScheduledObjective {
 	sec: number
 	/** Who has taken this kind of objective so far, when the count is worth carrying. */
 	taken?: { mine: number; theirs: number }
+	/**
+	 * He has already been told this, and the answer has not changed since. See `retireSchedule`.
+	 *
+	 * The entry is kept rather than dropped, and the timer inside it is kept exact, because the one
+	 * failure worse than repeating a spawn time is inventing one: an arm prompted to prefer
+	 * objectives WITHOUT a schedule reached 37% and told him to take a dragon fifty-six seconds
+	 * before the first dragon spawned. A retired entry is demoted in the prose, never deleted.
+	 */
+	retired?: boolean
 }
 
 /**
@@ -320,6 +481,74 @@ export const objectiveSchedule = (events: readonly ObjectiveEvent[], tSec: numbe
 	return out
 }
 
+/**
+ * When a countdown stops being trivia and becomes a route. See `scheduleQuestion`.
+ *
+ * A minute is roughly the time it takes a jungler to finish the camp he is on and walk to a pit, so
+ * it is the point at which "in four minutes" turns into "start moving". `analysis/live-facts.ts`
+ * uses forty-five seconds for the same idea on its own objective calls; this is the coarser of the
+ * two on purpose, because a verdict is about when the DECISION changes and a fact is about when the
+ * sentence is due.
+ */
+export const SCHEDULE_SOON_SEC = 60
+
+/**
+ * How long an objective must stand untaken before that is a DIFFERENT fact.
+ *
+ * "Herald is up" and "Herald has been standing there for two minutes and nobody on either team has
+ * gone near it" are not the same claim, and the second was the best line any model produced in this
+ * whole evaluation — there is no channel in this app, screenshot included, through which he could
+ * learn it. So a standing objective gets exactly two sentences: one when it goes up, and one when
+ * it has been ignored long enough for the ignoring to be the news. The fifth telling is the noise
+ * this mechanism exists to stop.
+ */
+export const SCHEDULE_UNCONTESTED_SEC = 120
+
+/**
+ * One schedule entry, as a question with an answer.
+ *
+ * The KEY is the objective's name, so a dragon stays one question all game. The VERDICT carries the
+ * spawn it refers to, so that taking a drake and starting the next timer is a genuine flip rather
+ * than a continuation — and it carries a coarse bucket rather than the countdown, because a
+ * countdown changes every turn on its own and a question whose answer changes on its own can never
+ * retire. That is the whole trick, and it is where the previous attempt went wrong: the fact was
+ * ranked, the number moved, and it looked like news for eighteen turns running.
+ */
+export const scheduleQuestion = (o: ScheduledObjective): Question => ({
+	key: `objective:${o.name}`,
+	verdict:
+		o.state === "up" ?
+			o.sec >= SCHEDULE_UNCONTESTED_SEC ? `uncontested@${o.atSec}`
+			:	`up@${o.atSec}`
+		: o.sec <= SCHEDULE_SOON_SEC ? `soon@${o.atSec}`
+		: `later@${o.atSec}`
+})
+
+/**
+ * Mark every schedule entry he has already been told about, and spend the ones he has not.
+ *
+ * Mutates `mem`, and spends on being OFFERED rather than on being spoken — which is the right rule
+ * for this section specifically, and the reason is the age. A standing objective's verdict does not
+ * change while it stands, but the sentence about it does: "up since 14:00, two seconds ago" becomes
+ * "up since 14:00, eleven minutes ago", and every one of those reads as fresh. There is nothing in
+ * the state to retire on, so the retirement has to be on the telling.
+ *
+ * Replayed over the four recorded games at the shipped turn, this is the whole of the metronome:
+ * before it the dragon entry was in the block on 300 turns of 306 and the four games' longest
+ * unbroken runs of one subject were 47, 89, 91 and 73 turns.
+ */
+export const retireSchedule = (
+	list: readonly ScheduledObjective[],
+	mem: RetirementMemory,
+	tSec: number
+): ScheduledObjective[] =>
+	list.map(o => {
+		const q = scheduleQuestion(o)
+		const st = standingOf(mem, q, tSec)
+		if (st.open) spendAnswer(mem, q, tSec)
+		return st.open ? o : { ...o, retired: true }
+	})
+
 /** Seconds, said the way a person says them out loud. */
 export const spokenDuration = (sec: number): string => {
 	/*
@@ -347,7 +576,7 @@ const mmss = (sec: number): string => `${Math.floor(sec / 60)}:${String(Math.rou
  */
 export const renderSchedule = (list: readonly ScheduledObjective[]): string => {
 	if (list.length === 0) return ""
-	const lines = list.map(o => {
+	const render = (o: ScheduledObjective): string => {
 		const took =
 			o.taken && o.taken.mine + o.taken.theirs > 0 ?
 				` Taken so far this game: ${o.taken.mine} by you, ${o.taken.theirs} by them.`
@@ -355,8 +584,33 @@ export const renderSchedule = (list: readonly ScheduledObjective[]): string => {
 		return o.state === "up" ?
 				`- ${o.name}: UP and untaken since ${mmss(o.atSec)}, ${spokenDuration(o.sec)} ago.${took}`
 			:	`- ${o.name} spawns at ${mmss(o.atSec)} — in ${spokenDuration(o.sec)}.${took}`
-	})
-	return `### What is coming (the map's clock, worked out from the event feed)\n\n${lines.join("\n")}`
+	}
+	const live = list.filter(o => !o.retired)
+	const old = list.filter(o => o.retired)
+	const parts: string[] = []
+	if (live.length > 0)
+		parts.push(`### What is coming (the map's clock, worked out from the event feed)\n\n${live.map(render).join("\n")}`)
+	/*
+	 * The retired half is kept, with its timers exact, and it is fenced in PROSE.
+	 *
+	 * Deleting it would be the cheaper change and it is the wrong one: the map's clock exists
+	 * nowhere else, and a coach that wants to talk about a dragon and has no dragon timer invents
+	 * one — measured, at 37% useful against the schedule's 55%, telling him to take a dragon
+	 * fifty-six seconds before the first dragon spawned. So the number stays where he can reach it
+	 * and the sentence is what is withdrawn.
+	 *
+	 * Prose rather than a label, because a line SHAPED like data gets read out in this app: a
+	 * pronunciation table written as `Briar = BRY-er` was spoken to the player verbatim, mid-game.
+	 */
+	if (old.length > 0)
+		parts.push(
+			`### Already covered — he has been told each of these and nothing about them has changed since\n\n${old
+				.map(render)
+				.join(
+					"\n"
+				)}\n\nThese are here so that you never have to guess a timer, not to be said again. Raise one only when its answer changes — it spawns, it gets taken, someone finally contests it.`
+		)
+	return parts.join("\n\n")
 }
 
 export interface VisionState {

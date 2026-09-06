@@ -293,6 +293,44 @@ test("the priority order carries no loose numbers for the model to repeat", () =
 	assert.equal(/[0-9]/.test(outsideQuotes), false, outsideQuotes.match(/.{0,60}[0-9].{0,60}/)?.[0] ?? "")
 })
 
+/*
+ * The rule the FOUR-JUDGE run added. Three of four models scored the briefing above the shipped
+ * block and all four said it was not worth talking to yet, for one reason each of them found
+ * independently: the monotone fact used to be the CS race and is now the objective schedule. In
+ * one game the soul-and-baron pair switched on at 19:42 was still being read out at 36:43,
+ * eighteen turns later, because nothing in the text retired a fact that stayed true.
+ */
+test("a standing fact is news once, and the hint says so", () => {
+	assert.match(BRIEFING_HINT, /A standing fact hands you the\s+same true sentence/)
+	assert.match(BRIEFING_HINT, /is not news now/)
+	// And it points at sections that exist: the schedule's own "since" clause, and the said layer.
+	assert.match(renderBriefing(state({ schedule: objectiveSchedule([], 460) })), /UP and untaken since/)
+})
+
+/*
+ * The two layers the ladder measured at nothing (p = 0.94 for ninety seconds of exact history,
+ * p = 0.58 for career habits on top of the schedule) do not reach the model any more. They are cut
+ * at the last possible moment — `renderBriefing` still renders them — so restoring them is one
+ * call, and so `data/eval`'s replays of the old block still mean what they meant.
+ */
+test("the layers measured at nothing are out of the shipped block and still reachable", () => {
+	const s = state({
+		schedule: objectiveSchedule([], 460),
+		arc: "### The arc\n\n- You have been holding 1501 gold and have not been to a shop in 3:34.",
+		habits: ["Topside again: 21 heralds to their 41, while you win the dragon."],
+		said: "### Already said\n\n- at 8:12 you said: start the drake now"
+	})
+	const shipped = renderBlockForMode(s, "briefing")
+	for (const gone of ["### The arc", "1501 gold", "From his own finished games", "21 heralds"])
+		assert.equal(shipped.includes(gone), false, `a layer measured at nothing is still in the block: ${gone}`)
+	// The memory stays: it is the only section that says which subjects are used up.
+	assert.match(shipped, /Already said/)
+	// Nothing was deleted, only withheld.
+	assert.match(renderBriefing(s), /1501 gold/)
+	assert.match(renderBriefing(s), /21 heralds/)
+	assert.ok(shipped.length < renderBriefing(s).length)
+})
+
 test("the hint reverses the visibility rule rather than restating it", () => {
 	// Measured: lines about something on his screen were judged useful 45% against 27% for
 	// invisible ones, and the best quadrant is visible AND specific at 67%.
