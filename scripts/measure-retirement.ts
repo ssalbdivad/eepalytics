@@ -41,6 +41,8 @@ import { DATA_DIR } from "../src/shared/constants.ts"
 import { premiseOf } from "../src/analysis/timeliness.ts"
 import type { PremiseKind } from "../src/analysis/timeliness.ts"
 import type { VisionState } from "../src/shared/live-state.ts"
+import { baselineFromRows, perGameMetrics } from "../src/analysis/index.ts"
+import { loadCorpus } from "../src/daemon/corpus.ts"
 
 const arg = (name: string, fallback: string): string => {
 	const i = process.argv.indexOf(`--${name}`)
@@ -143,6 +145,24 @@ const main = async (): Promise<void> => {
 			.filter(l => l.trim() !== "")
 			.map(l => JSON.parse(l) as { atMs: number; gameTime: number; data: unknown })
 
+		/*
+		 * HIS FARM BASELINE, as the daemon would have held it DURING this game.
+		 *
+		 * Without one `pace` is null, and the whole farm-and-race family of facts — the family this
+		 * app's repetition problem was originally about — cannot fire at all. A replay with no
+		 * baseline reports zero farm lines and looks like a coach that has stopped nagging about
+		 * farm, which would be a flattering lie about this change.
+		 *
+		 * Games created AFTER the recording are excluded, the same rule and the same reason as
+		 * `scripts/build-fixture.ts`: letting the future set the average produces a number that
+		 * never existed at the time.
+		 */
+		const startedMs = rows[0]?.atMs ?? 0
+		const corpus = loadCorpus(200)
+			.filter(e => startedMs === 0 || Number(e.row.gameCreationMs) < startedMs)
+			.slice(0, 20)
+		const baseline = corpus.length > 0 ? baselineFromRows(perGameMetrics(corpus)) : null
+
 		const mine: Offer[] = []
 		const turnSubjects: string[][] = []
 		let turns = 0
@@ -150,7 +170,7 @@ const main = async (): Promise<void> => {
 		for (const row of rows) {
 			if (row.gameTime - last < turnSec) continue
 			last = row.gameTime
-			const state: VisionState | null = mod.buildLiveStateForBench(row.data, row.gameTime)
+			const state: VisionState | null = mod.buildLiveStateForBench(row.data, row.gameTime, baseline)
 			if (!state) continue
 			turns++
 			const here: string[] = []
@@ -182,6 +202,7 @@ const main = async (): Promise<void> => {
 		perGame.push({
 			game,
 			turns,
+			baselineGames: corpus.length,
 			offered: mine.length,
 			schedule: sched,
 			ranked: mine.length - sched,

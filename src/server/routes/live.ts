@@ -770,6 +770,7 @@ const buildLiveState = (
 					.map(e => ({
 						id: e.EventID,
 						name: e.EventName,
+						atSec: e.EventTime ?? 0,
 						killStreak: e.KillStreak,
 						dragonType: e.DragonType,
 						stolen: e.Stolen === "True"

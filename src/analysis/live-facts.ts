@@ -346,8 +346,11 @@ const RACE_MIN_GAP = 14
  * until it FLIPS. Un-retiring on a flip is the point — a settled race becoming a question again is
  * genuinely worth hearing, and it is the only time this fact ever was.
  */
+/**
+ * A lead this size is not a timing difference, it is a different game. Used as the boundary between
+ * the two "ahead" answers and the two "behind" ones — see the race fact's `question` below.
+ */
 const RACE_SETTLED_GAP = 30
-const RACE_SETTLED_HOLD_SEC = 99999
 
 /** Before this the clear has barely started and the gap is whoever pathed to the bigger camp. */
 const RACE_MIN_SEC = 5 * 60
@@ -615,14 +618,6 @@ export interface FactMemory {
 	/** When the counterpart gap was last raised, and how big it was then. */
 	lastRaceAtSec: number
 	lastRaceGap: number
-	/**
-	 * The clock at which he first held a decisive jungle-CS lead, or 0 when he does not hold one.
-	 *
-	 * Not a boolean, because the race must be able to become a QUESTION again: he wins this race in
-	 * four recorded games out of four, so a one-way latch would retire the fact in every game and
-	 * never bring it back, and a settled race flipping is the only time it was ever worth hearing.
-	 */
-	raceSettledSince: number
 	/** Said once each per game — a level gap is a state, not an event, and restating it is nagging. */
 	saidRestraint: boolean
 	saidLevelGap: boolean
@@ -725,7 +720,6 @@ export const newFactMemory = (): FactMemory => ({
 	lastFarmAtSec: 0,
 	lastRaceAtSec: 0,
 	lastRaceGap: 0,
-	raceSettledSince: 0,
 	saidRestraint: false,
 	saidLevelGap: false,
 	seenCounterpartItems: new Set(),
@@ -1146,6 +1140,13 @@ export const buildFacts = (
 					:	`objectives are ${theirs} to ${mineCount} against you`,
 				subject: "objectives",
 				tier: "standing",
+				/*
+				 * A count of what he has conceded is the purest trend fact in the file, and it is the
+				 * one most likely to be said the instant it stops being true: he takes Baron, the
+				 * count is still 4-2 against him for another turn, and the coach reports the deficit
+				 * to a man standing on the objective that closes it.
+				 */
+				trend: true,
 				commit: () => {
 					mem.saidObjectives = true
 				}
@@ -1211,20 +1212,8 @@ export const buildFacts = (
 		 * arguing with itself, and the subject filter would silently drop one of them anyway. The
 		 * comeback is the better line, so it wins outright rather than by ordering.
 		 */
-		/*
-		 * Settle it, or un-settle it. `raceSettledSince` is the clock at which he first held a
-		 * decisive lead; the race retires once that has stood for `RACE_SETTLED_HOLD_SEC`, and the
-		 * moment the lead is no longer decisive the clock resets and the fact is live again.
-		 */
-		if (gap <= -RACE_SETTLED_GAP) {
-			if (mem.raceSettledSince === 0) mem.raceSettledSince = input.nowSec
-		} else mem.raceSettledSince = 0
-		const raceSettled =
-			mem.raceSettledSince !== 0 && input.nowSec - mem.raceSettledSince >= RACE_SETTLED_HOLD_SEC
-
 		if (
 			!swung &&
-			!raceSettled &&
 			Math.abs(gap) >= RACE_MIN_GAP &&
 			(mem.lastRaceAtSec === 0 || input.nowSec - mem.lastRaceAtSec >= RACE_COOLDOWN_SEC) &&
 			(mem.lastRaceAtSec === 0 || worsened >= RACE_GAP_MOVED)
@@ -1237,6 +1226,34 @@ export const buildFacts = (
 					:	withAdvice(`you're ${-gap} CS up on ${who}`, input.advice?.["race-ahead"]),
 				subject: "farm",
 				tier: "standing",
+				trend: true,
+				/*
+				 * THE QUESTION THIS FILE WAS WRITTEN AROUND, now asked the general way.
+				 *
+				 * Over 88 states of his own games the block's race verdict read "he is behind you"
+				 * in 82 and "ahead" in none, and farm, CS, clearing and routing together produced
+				 * three useful lines out of eighty-four. The answer never changes, so neither does
+				 * the advice — and the coach spends its life praising the one thing he is already
+				 * best at in the lobby.
+				 *
+				 * The verdict is the SIDE and the SIZE, never the number: a lead that grows from 20
+				 * to 130 is the same answer said six times, which is the widening-number nag this
+				 * file already refuses to do with his own pace. So he hears it once when it is
+				 * established, once more if it becomes decisive — and again the moment it flips,
+				 * which is the only time this fact was ever news.
+				 *
+				 * This replaces a `raceSettledSince` latch whose hold was 99999 seconds, i.e. never
+				 * within a game: the retirement it documented had never once fired.
+				 */
+				question: {
+					key: "race",
+					verdict:
+						gap >= RACE_SETTLED_GAP ? "behind-badly"
+						: gap >= RACE_MIN_GAP ? "behind"
+						: gap <= -RACE_SETTLED_GAP ? "ahead-decisively"
+						: gap <= -RACE_MIN_GAP ? "ahead"
+						: "level"
+				},
 				commit: () => {
 					mem.lastRaceAtSec = input.nowSec
 					mem.lastRaceGap = gap
@@ -1365,6 +1382,9 @@ export const buildFacts = (
 				text: `${input.counterpart.champion} is in ${gap} percent more of his team's kills than you are — get to the next fight before it starts, not after`,
 				subject: "kill-share",
 				tier: "standing",
+				// A share is an average over the whole game so far: the definition of a trend, and
+				// the one most obviously wrong to say to a man who just landed a triple kill.
+				trend: true,
 				commit: () => {
 					mem.saidKillShare = true
 				}
@@ -1501,6 +1521,27 @@ export const buildFacts = (
 				:	`you're ${hedge}${-behind} CS up on your own pace, ${input.pace.cs} against ${input.pace.expected} — keep taking the free camps`,
 			subject: "farm",
 			tier: "standing",
+			/*
+			 * A trend by construction: the whole claim is that a number has drifted away from where
+			 * it usually is by this minute. It is also the exact line M25 of the target corpus
+			 * catches being wrong — his CS floor sat still for 171 seconds while he solo'd a drake,
+			 * aced and took Baron.
+			 */
+			trend: true,
+			/*
+			 * The same retirement as the race, one bucket coarser, because this comparison is to his
+			 * OWN average and therefore encodes his own mistakes: at best it says he is being
+			 * unusually himself. He hears which side of his average he is on, and how badly, and
+			 * then not again until that changes. The cooldowns above still apply on top — they
+			 * decide when it may be REPEATED, and this decides whether repeating it says anything.
+			 */
+			question: {
+				key: "farm-pace",
+				verdict:
+					behind >= 2 * FARM_MIN_GAP ? "behind-badly"
+					: behind > 0 ? "behind"
+					: "ahead"
+			},
 			commit: () => {
 				mem.lastFarmAtSec = input.nowSec
 				mem.lastFarmCs = atCs
