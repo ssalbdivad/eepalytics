@@ -401,10 +401,38 @@ export interface LiveCoachPromptOptions {
 	championKnowledge?: string
 }
 
+/**
+ * The champion menu with the banned orders struck out — the third place the ban has to be applied,
+ * and the one that was contradicting the other two.
+ *
+ * `renderChampionKnowledge` hands the model a bulleted list of half-sentences, and thirteen of
+ * Lillia's twenty-six are, verbatim, the orders `BRIEFING_HINT` forbids two thousand characters
+ * earlier: *finish the whole route*, *take the far camps while that settles*, *take the long fights
+ * with room to kite*. A prompt that bans an order and then supplies a menu of it is not a rule, it
+ * is a suggestion with a counter-example attached, and this coach follows shapes rather than rules
+ * — that is what three rounds measured.
+ *
+ * Cut at the CLAUSE, so the kinds survive: `race-behind` keeps *you do not win the straight early
+ * duel, so win the race on route speed instead* and *roll a Swirlseed down his entrance*, which are
+ * the same knowledge ending somewhere he could not have gone himself. A kind emptied entirely just
+ * stops appearing, and a champion whose every clause is banned renders no section at all rather
+ * than an empty heading.
+ *
+ * Briefing only. `fenced` and `cite-or-quiet` are measured controls and keep the menu they were
+ * measured with, so a difference between the arms is still a difference in one thing.
+ */
+export const withoutBannedClauses = (knowledge: string): string => {
+	if (knowledge === "") return ""
+	const lines = knowledge.split("\n")
+	const kept = lines.filter(l => !(l.startsWith("- (") && isBannedDirective(l.replace(/^- \([^)]*\) /, ""))))
+	if (!kept.some(l => l.startsWith("- ("))) return ""
+	return kept.join("\n")
+}
+
 /** The coach's standing instructions for the selected architecture. */
 export const liveCoachSystemPrompt = ({ mode, championKnowledge = "" }: LiveCoachPromptOptions): string =>
 	mode === "fenced" ? LIVE_COACH_SYSTEM_PROMPT
-	: mode === "briefing" ? `${CITE_PERSONA}${CITE_RULE}${BRIEFING_HINT}${championKnowledge}`
+	: mode === "briefing" ? `${CITE_PERSONA}${CITE_RULE}${BRIEFING_HINT}${withoutBannedClauses(championKnowledge)}`
 	: `${CITE_PERSONA}${CITE_RULE}${LIST_HINT}${championKnowledge}`
 
 /**
