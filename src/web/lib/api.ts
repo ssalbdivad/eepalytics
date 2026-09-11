@@ -154,8 +154,8 @@ export const api = {
 		request(API.watch(gameId), WatchListResponse, { signal }),
 
 	/**
-	 * Look at the captured frames for one moment. Requires REAL frames to already exist —
-	 * this never triggers a capture, because capture takes over the League client.
+	 * Look at the journal frames for one moment. Requires REAL frames to already exist —
+	 * this never goes and gets them.
 	 */
 	watchMoment: (gameId: number, momentId: string, signal?: AbortSignal) =>
 		request(API.watch(gameId), type({ note: WatchNote }), {
@@ -199,9 +199,6 @@ export const api = {
 
 	requestReview: (gameId: number) =>
 		request(API.review(gameId), JobAccepted, { method: "POST" }),
-
-	requestCapture: (gameId: number) =>
-		request(API.capture(gameId), JobAccepted, { method: "POST" }),
 
 	cancelJob: (id: number) => request(API.cancelJob(id), OkResponse, { method: "POST" }),
 

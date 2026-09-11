@@ -12,7 +12,6 @@
  *   GET  /api/games/:gameId              -> GameDetailResponse
  *   GET  /api/trends?games=              -> TrendsResponse
  *   POST /api/games/:gameId/review       -> JobAccepted
- *   POST /api/games/:gameId/capture      -> JobAccepted
  *   GET  /api/jobs                       -> JobListResponse
  *   POST /api/jobs/:id/cancel            -> OkResponse
  *   POST /api/jobs/:id/retry             -> OkResponse
@@ -86,12 +85,7 @@ export const HealthResponse = type({
 	 * Why the client is unreachable, when it is. Absent while the LCU is connected — there is
 	 * nothing to diagnose and probing costs a Windows round trip.
 	 */
-	"vanguard?": VanguardReport,
-	/**
-	 * The capture gate's verdict, in its own words. Declared rather than passed through
-	 * undeclared so the UI can render "why is nothing happening" without guessing at it.
-	 */
-	"capture?": type({ allowed: "boolean", reason: "string" })
+	"vanguard?": VanguardReport
 })
 export type HealthResponse = typeof HealthResponse.infer
 
@@ -104,7 +98,7 @@ export const GameListItem = Game.and({
 	mediaCount: "number",
 	/** The review's headline, so the list renders in one request instead of one per row. */
 	"headline?": "string|null",
-	/** Moments with real captured replay frames — what a visual pass could look at. */
+	/** Moments with real journal frames — what a visual pass could look at. */
 	"frameMoments?": "number",
 	/** Moments actually watched. The three states (0 frames / frames / watched) each have a
 	 *  different next action, which is why this is two numbers and not a flag. */
@@ -504,7 +498,6 @@ export const SSE_EVENT_NAMES = [
 	"game",
 	"review",
 	"chat",
-	"capture",
 	"daemon",
 	"error"
 ] as const
@@ -533,7 +526,6 @@ export const API = {
 	games: "/api/games",
 	game: (gameId: number | string) => `/api/games/${gameId}`,
 	review: (gameId: number | string) => `/api/games/${gameId}/review`,
-	capture: (gameId: number | string) => `/api/games/${gameId}/capture`,
 	chat: (gameId: number | string) => `/api/games/${gameId}/chat`,
 	trends: "/api/trends",
 	jobs: "/api/jobs",

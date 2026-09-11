@@ -7,9 +7,10 @@
  * shape in all of them and never 500s.
  *
  * Three fields go beyond the declared `HealthResponse` contract (ArkType passes undeclared
- * keys through, so this is additive and safe for older clients): `uptimeMs`, `pid`, and
- * `capture`, which carries the human-readable gate reason from `daemon/gate.ts`. The queue
- * screen renders that verbatim so "why is nothing happening" never needs a log dive.
+ * keys through, so this is additive and safe for older clients): `uptimeMs`, `pid` and
+ * `sseClients`. There was a fourth, `capture`, carrying the intrusive gate's reason; the
+ * gate guarded exactly one job kind, that job is gone, and a verdict about nothing is worse
+ * than no verdict at all.
  */
 
 import { Hono } from "hono"
@@ -24,7 +25,7 @@ import { HealthResponse } from "../../shared/schema/api.ts"
 import type { VanguardReport } from "../../shared/schema/api.ts"
 import { probeVanguard } from "../../lcu/vanguard.ts"
 import { APP_VERSION, OFFLINE_STATUS } from "../deps.ts"
-import type { CaptureGate, DaemonStatus, ServerDeps } from "../deps.ts"
+import type { DaemonStatus, ServerDeps } from "../deps.ts"
 import { subscriberCount } from "../events.ts"
 import { send } from "../respond.ts"
 
@@ -50,7 +51,6 @@ const vanguardReport = async (): Promise<VanguardReport> => {
 interface HealthExtras {
 	uptimeMs: number | null
 	pid: number
-	capture: CaptureGate
 	sseClients: number
 }
 
@@ -97,14 +97,6 @@ export const createHealthRoute = (deps: ServerDeps): Hono => {
 			}
 		}
 
-		const capture: CaptureGate = status.captureGate ?? {
-			allowed: false,
-			reason:
-				deps.status ?
-					"capture gate not reported by the daemon"
-				:	"daemon not running — capture is unavailable"
-		}
-
 		const body = {
 			daemon: status.daemon,
 			lcu: status.lcu,
@@ -120,7 +112,6 @@ export const createHealthRoute = (deps: ServerDeps): Hono => {
 			warnings,
 			uptimeMs: status.startedMs === undefined ? null : Date.now() - status.startedMs,
 			pid: process.pid,
-			capture,
 			sseClients: subscriberCount(),
 			// Only when the client is unreachable. "The League client is not running" is true
 			// and useless; on Windows the usual cause is Vanguard, and asking Windows is cheap

@@ -17,18 +17,6 @@ import type { Settings } from "../shared/schema/settings.ts"
 /** Shown in `GET /api/health`. Bumped by hand; there is no `version` in package.json. */
 export const APP_VERSION = "0.1.0"
 
-/**
- * Whether an intrusive capture could start right now, and — more usefully — why not.
- *
- * `reason` is rendered verbatim in the UI ("Waiting: you're in ChampSelect. Needs None/Lobby
- * for 2 min."), which is the entire point: the queue screen exists to answer "why is nothing
- * happening" without a log dive. It comes from the daemon's `gate.ts` (rules G1-G9).
- */
-export interface CaptureGate {
-	allowed: boolean
-	reason: string
-}
-
 /** The live daemon state the status banner needs. Sampled fresh on every `/api/health`. */
 export interface DaemonStatus {
 	daemon: "ok" | "starting" | "degraded" | "stopped"
@@ -42,7 +30,6 @@ export interface DaemonStatus {
 	warnings?: string[]
 	/** Epoch ms of the last successful match-history reconcile. */
 	lastSyncMs?: number | null
-	captureGate?: CaptureGate
 }
 
 /** Result of a manual `POST /api/sync`. */

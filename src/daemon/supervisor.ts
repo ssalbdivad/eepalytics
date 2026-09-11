@@ -30,7 +30,6 @@
 
 import { getSettings } from "../db/queries.ts"
 import { publish } from "./bus.ts"
-import { notePhase } from "./gate.ts"
 import { isPidAlive, readLockfileSync, sameLockfile, watchLockfile } from "../lcu/index.ts"
 import type { Lockfile } from "../lcu/index.ts"
 import {
@@ -43,6 +42,7 @@ import {
 import type { TransportName } from "./lcu.ts"
 import { errText, makeLogger } from "./log.ts"
 import { currentSampleKey, sampleDue, sampleLive } from "./live-sampler.ts"
+import { observeLiveSample } from "../server/routes/live.ts"
 import { openSessionStatus } from "./journal.ts"
 
 const log = makeLogger("supervisor")
@@ -118,7 +118,6 @@ export const startSupervisor = (events: SupervisorEvents = {}): Supervisor => {
 		const previous = phase
 		phase = next
 		lastPhaseChangeMs = Date.now()
-		notePhase(next)
 		log.info("gameflow phase", { from: previous ?? "—", to: next ?? "—" })
 		publish("daemon", { gameflowPhase: next, previousPhase: previous })
 		events.onPhase?.(next, previous)
@@ -205,6 +204,17 @@ const sampleCurrentGame = async (): Promise<void> => {
 		const t = data?.gameData?.gameTime
 		if (typeof t !== "number") return
 		sampleLive({ gameId: openSessionStatus().sessionId ?? currentSampleKey(t), gameTimeSec: t, data })
+		/*
+		 * The coach's memory, fed from THIS poll and not only from the browser's turns.
+		 *
+		 * `coach-memory.ts` was designed around exactly this call — a back, a death and a completed
+		 * item can all land between two turns, and a memory that only sees turns misses them. It
+		 * was never wired, so the whole module ran at browser cadence, and a beat held back by the
+		 * pace floor fed it nothing at all. `observe` ignores a repeated or out-of-order clock and
+		 * `observeLiveSample` owns the per-game reset, so calling it here is idempotent and safe to
+		 * do on every sample.
+		 */
+		observeLiveSample(data, t)
 	} catch {
 		// A failed sample is one missing row in an evaluation aid. It is never worth a log line
 		// during a game, let alone an interrupted tick.
