@@ -32,7 +32,12 @@
  *
  * Usage:
  *     node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning \
- *       scripts/judge-corpus.ts <run.json> [--judge anthropic] [--judge-model <id>] [--batch 8]
+ *       scripts/judge-corpus.ts <run.json> --arm gemini-http [--judge anthropic] [--batch 8]
+ *
+ *     --concurrency N  batches in flight (default 6). The batches are independent; the only
+ *                  thing raising it can break is the provider's rate limit
+ *     --arm <id>   grade only this arm. `bench-stream` always writes a `mock` reference arm
+ *                  beside the real one, and pooling its echoes with real lines halves every rate.
  *
  * NODE ONLY. Reads a stored run and never writes to it: the verdicts go to a NEW file beside it.
  */
@@ -54,6 +59,21 @@ const judgeProvider = arg("judge", "anthropic")
 const judgeModelArg = arg("judge-model", "")
 const batchSize = Number(arg("batch", "8"))
 const seed = Number(arg("seed", "20260911"))
+/*
+ * WHICH arm to grade, and the default is not "all of them". `bench-stream` always writes a `mock`
+ * arm beside the real one as a reference transcript — 529 template echoes in this corpus — and
+ * pooling those with the model's lines would halve every rate for a reason that has nothing to do
+ * with the coach. Named explicitly so a run that meant to grade two arms says so.
+ */
+const armWanted = arg("arm", "")
+/*
+ * Batches in flight at once. The judge is the slow half by a long way — one batch of eight lines,
+ * each carrying its own ~6000-character payload, took a measured 96 seconds against Sonnet, so a
+ * 529-line corpus is 105 minutes serial and about 18 at six. The batches are independent by
+ * construction — each carries its own payloads and returns verdicts keyed by opaque id — so the
+ * only thing concurrency can change is the provider's rate limit, which is why it is a knob.
+ */
+const concurrency = Math.max(1, Number(arg("concurrency", "6")))
 
 type Verdict = "useful" | "generic" | "unverifiable" | "false"
 
@@ -161,7 +181,14 @@ const main = async (): Promise<void> => {
 	const run = JSON.parse(readFileSync(runPath, "utf8")) as RunFile
 	const byWindow = new Map(run.windows.map(w => [w.id, w]))
 
-	const spoken = run.records.filter(r => r.error === null && (r.text ?? "").trim() !== "")
+	const spoken = run.records.filter(
+		r => r.error === null && (r.text ?? "").trim() !== "" && (armWanted === "" || r.arm === armWanted)
+	)
+	if (spoken.length === 0)
+		throw new Error(
+			`no spoken lines${armWanted === "" ? "" : ` for arm ${armWanted}`} in ${runPath} — ` +
+				`arms present: ${[...new Set(run.records.map(r => r.arm))].join(", ")}`
+		)
 	const candidates: Candidate[] = shuffled(spoken, seed).map((r, i) => ({
 		id: `L${i}`,
 		arm: r.arm,
@@ -185,19 +212,28 @@ const main = async (): Promise<void> => {
 	)
 
 	const verdicts = new Map<string, { verdict: Verdict; why: string }>()
-	for (let i = 0; i < candidates.length; i += batchSize) {
-		const slice = candidates.slice(i, i + batchSize)
-		let got: Map<string, { verdict: Verdict; why: string }> | null = null
-		for (let attempt = 0; attempt < 2 && got === null; attempt++) {
-			try {
-				got = await judgeBatch(handle, slice)
-			} catch (e) {
-				console.log(`  batch ${1 + i / batchSize} failed${attempt === 0 ? ", retrying" : " twice, dropped"}: ${e}`)
+	const slices: Candidate[][] = []
+	for (let i = 0; i < candidates.length; i += batchSize) slices.push(candidates.slice(i, i + batchSize))
+
+	let next = 0
+	const worker = async (): Promise<void> => {
+		for (;;) {
+			const n = next++
+			const slice = slices[n]
+			if (!slice) return
+			let got: Map<string, { verdict: Verdict; why: string }> | null = null
+			for (let attempt = 0; attempt < 2 && got === null; attempt++) {
+				try {
+					got = await judgeBatch(handle, slice)
+				} catch (e) {
+					console.log(`  batch ${n + 1} failed${attempt === 0 ? ", retrying" : " twice, dropped"}: ${e}`)
+				}
 			}
+			for (const [id, v] of got ?? []) verdicts.set(id, v)
+			process.stdout.write(`\r  judged ${verdicts.size}/${candidates.length}`)
 		}
-		for (const [id, v] of got ?? []) verdicts.set(id, v)
-		process.stdout.write(`\r  judged ${verdicts.size}/${candidates.length}`)
 	}
+	await Promise.all(Array.from({ length: Math.min(concurrency, slices.length) }, worker))
 	console.log("")
 
 	/* ------------------------------------------------------------ the report */

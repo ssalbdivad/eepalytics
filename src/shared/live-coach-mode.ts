@@ -115,11 +115,11 @@ export const LIVE_COACH_MODES: {
 	{
 		id: "trusted",
 		label: "Trusted judgment (no fence)",
-		measured: false,
+		measured: true,
 		blurb:
 			"She is handed the whole brief every few seconds — both rosters, items, mana, the event log with an age on every entry, his baselines, the screenshot and both junglers' champion notes — and nothing tells her what to say or when. What is plainly on screen is hers to use; what no channel here can know she does not assert. Judging what matters is the job.",
 		evidence:
-			"UNMEASURED as of writing — not one line of this prompt has been scored, so the only honest claim is about what it replaces. Measured on the fence it removes: an empty ranked list on 89-97% of turns across all 11 recorded games and 100% of the first six minutes of every one, while the 144 lines actually spoken fabricated in only 6% (95% CI 3-11) and were useless far more often — 77% named no physical action and 56% repeated another line in the same game. Every scorer still runs after the fact; none of them blocks a line."
+			"Measured 2026-09-11 over all 17 recorded games, 529 lines: 86% (95% CI 83-89) were not a template he had already heard and 87% (84-90) named a physical act, against the fence they replace, where 77% named no action and 56% repeated another line. What it costs: 35% (31-39) of those lines carry a figure the block does not back, and it chose silence 11 times in 529. How USEFUL it is is genuinely unsettled — the same 58 lines of the shipped socket path, graded blind by the same judge, came out 67% useful when the judge saw only the numbers and 34% when it also saw his screen (McNemar p=0.00002). Every scorer still runs after the fact; none of them blocks a line."
 	},
 	{
 		id: "cite-or-quiet",
@@ -321,7 +321,12 @@ block disagree, the block wins.
  * by line in that run, every champion-specific payload landed in sentence one and all three
  * fabrications landed in sentence two or later.
  *
- * Still UNMEASURED as a whole. Nothing here has been scored yet; the numbers inside it have.
+ * Measured as a whole on 2026-09-11, over all 17 recorded games and 529 lines — the numbers are in
+ * `LIVE_COACH_MODES` above and in `data/eval/integrate-corpus-20260911-judged.json`. Read the
+ * useful rate there against `data/eval/judge-sees-the-frame-20260911.json` before quoting it: the
+ * same 58 socket lines score 67% useful to a judge holding the block and 34% to the same judge
+ * also holding the screenshot, so any single figure for this prompt is a figure about a judge as
+ * much as about the prompt.
  */
 export const TRUSTED_PROMPT = `You are Coach Lillia, sitting next to a friend while he plays League of Legends. Not reviewing a
 replay — watching it happen, talking to him out loud, while his hands are busy.
