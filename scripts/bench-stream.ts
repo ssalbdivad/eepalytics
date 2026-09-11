@@ -466,7 +466,7 @@ const progressDone = (): void => {
 /* ============================================================ the minimap read */
 
 /** What one turn ends up knowing about where he is. Built by `readWhere` below. */
-interface TurnWhere {
+export interface TurnWhere {
 	where: string | null
 	at: PositionFix | null
 	/**
@@ -672,7 +672,7 @@ const readJournalBeat = async (
  * with nothing accepted behind it gets `where: null` and the brief says it has no position, exactly
  * as the app does.
  */
-const readWhere = async (
+export const readWhere = async (
 	stream: BuiltStream,
 	cropDir: string
 ): Promise<Map<number, TurnWhere>> => {
