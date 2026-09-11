@@ -312,27 +312,6 @@ export class LcuClient {
 		)
 	}
 
-	/**
-	 * MUTATES, INTRUSIVELY. **Launches the League game client into replay playback**, taking
-	 * over the user's machine for 15-30 s of load plus however long the capture runs.
-	 *
-	 * Written here so the capture unit has one correct implementation. It must only ever be
-	 * called behind the daemon's idle gate (client idle, `isPlayingGame:false`,
-	 * `isPlayingReplay:false`, gameflow `None`/`Lobby`, watch `None`). Nothing in the LCU unit
-	 * calls it, and nothing verified it — the research phase deliberately issued no POSTs.
-	 */
-	async watchReplay(gameId: number, componentType = "eepalytics"): Promise<void> {
-		expectOk(
-			await this.transport.request(
-				"POST",
-				`/lol-replays/v1/rofls/${gameId}/watch`,
-				{ componentType },
-				{ timeoutMs: 30_000 }
-			),
-			`watch replay ${gameId}`
-		)
-	}
-
 	/** MUTATES (client-local). Rescan the replays folder so on-disk files are recognised. */
 	async scanReplays(): Promise<void> {
 		expectOk(

@@ -1848,40 +1848,6 @@ button.csk-chip:focus-visible,
 	.csk-drill > summary::before { transition: none; }
 }
 
-/* ====================================================== capture progress */
-
-.csk-capprog {
-	border: 1px solid var(--gold-dim);
-	border-radius: var(--radius);
-	background: linear-gradient(180deg, rgba(200, 170, 110, 0.07), transparent);
-	padding: 13px 15px;
-	margin-bottom: 12px;
-	font-size: 12.5px;
-}
-.csk-capprog__head { display: flex; align-items: center; gap: 9px; }
-.csk-capprog__head strong { color: var(--gold-bright); }
-.csk-capprog__count { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--dim); }
-.csk-capprog__spin {
-	width: 9px; height: 9px; border-radius: 50%;
-	border: 2px solid var(--gold-dim); border-top-color: var(--gold);
-	animation: csk-spin 0.9s linear infinite; flex: none;
-}
-@keyframes csk-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .csk-capprog__spin { animation: none; } }
-
-.csk-capprog__steps { list-style: none; margin: 11px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
-.csk-capprog__steps li { display: flex; gap: 9px; align-items: baseline; color: var(--faint); }
-.csk-capprog__steps li .mark { font-family: var(--mono); width: 12px; flex: none; }
-.csk-capprog__steps li.done { color: var(--dim); }
-.csk-capprog__steps li.done .mark { color: var(--win); }
-.csk-capprog__steps li.now { color: var(--text); }
-.csk-capprog__steps li.now .mark { color: var(--gold); }
-.csk-capprog__steps li em {
-	font-style: normal; font-size: 11px; color: var(--dim); font-family: var(--mono);
-	margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.csk-capprog__foot { margin-top: 11px; font-size: 11px; color: var(--dim); }
-
 /*
  * Shown instead of the Start button when the app is running inside WSL, where screen capture
  * can only ever see Linux windows. Explaining the boundary beats letting someone share a screen

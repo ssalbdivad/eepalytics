@@ -188,9 +188,14 @@ export const fetchReplayMetadata = async (
 /* =============================================================== writes */
 
 /**
- * The daemon issues exactly three POSTs, all of them client-local replay bookkeeping:
- * `createReplayMetadata`, `downloadReplay` and (from the capture unit only, behind the gate)
- * `watchReplay`. Nothing else in this app ever mutates the League client.
+ * The daemon issues exactly two POSTs, both of them client-local replay bookkeeping:
+ * `createReplayMetadata` and `downloadReplay`. Neither opens a window or starts a game.
+ *
+ * There was a third, `watchReplay`, which POSTed `/lol-replays/v1/rofls/{id}/watch` and
+ * launched the game client into playback. It is deleted along with the capture unit, and
+ * deleting it is the real end of the invariant the gate used to enforce: the app no longer
+ * CONTAINS a call that can put a League window on the user's screen. Nothing else in this app
+ * ever mutates the League client.
  */
 export const createReplayMetadata = async (args: {
 	gameId: number
