@@ -37,6 +37,7 @@ import {
 	liveNudges,
 	paceReading
 } from "../../analysis/live-coach.ts"
+import { projectTick } from "../../analysis/live-events.ts"
 import type { LiveState } from "../../analysis/live-coach.ts"
 import { baselineFromRows, perGameMetrics } from "../../analysis/index.ts"
 import { focusAreas } from "../../analysis/focus.ts"
@@ -53,7 +54,8 @@ import {
 	resetAdviceCursor,
 	rotatingAdvice
 } from "../../shared/champion-advice.ts"
-import { pronunciationsFor } from "../../shared/pronounce.ts"
+import { pronunciationsFor, renderPronunciationGuide } from "../../shared/pronounce.ts"
+import type { Pronunciation } from "../../shared/pronounce.ts"
 import { dragonPhrase } from "../../shared/dragons.ts"
 import { hasSmite } from "../../shared/smite.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
@@ -66,22 +68,60 @@ import { LiveResponse, MatchupResponse } from "../../shared/schema/api.ts"
 import { isCoachingPhase } from "../../shared/schema/lcu.ts"
 import type { GameflowSession } from "../../shared/schema/lcu.ts"
 import type { LiveAllGameData, LivePlayer } from "../../shared/schema/live.ts"
-import { QUEUE_NAMES, USER_PUUID } from "../../shared/constants.ts"
+import { QUEUE_NAMES, TEAM_BLUE, TEAM_RED, USER_PUUID } from "../../shared/constants.ts"
 import { liveCoachSystemPrompt, renderBlockForMode } from "../../shared/live-coach-mode.ts"
+import type { LiveCoachMode } from "../../shared/live-coach-mode.ts"
 import { liveChampionKnowledge } from "../../review/live-coach-knowledge.ts"
+import { fullKnowledge } from "../../review/live-knowledge-full.ts"
+import { buildBrief, buildDelta } from "../../shared/live-brief.ts"
+import type { PositionFix } from "../../shared/live-brief.ts"
+/*
+ * The coach's memory of its own game, which is the thing the turn protocol was missing.
+ *
+ * Four calls, and each is a different half of "what has already happened here":
+ *   `observe`    — every sample, so the log outlives the client's own short event array;
+ *   `noteSaid`   — every spoken line, fed from the REAL transcript route, which is the only place
+ *                  the coach's own words exist on this side of the wire;
+ *   `renderSaid` — the section the delta prints.
+ *
+ * There is no reset function and none is wanted: the state is a plain growing log, so a new game
+ * is `newMemory()`. Carrying one across a game boundary is the same class of bug as a socket
+ * spanning two games — game one's advice spoken into game two.
+ */
+import {
+	cpSeenAt,
+	newMemory,
+	noteSaid,
+	observe,
+	renderGameSoFar,
+	renderSaidWithin
+} from "../../analysis/coach-memory.ts"
+import type { MemoryState } from "../../analysis/coach-memory.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
+import {
+	latestMinimapRead,
+	minimapTrack,
+	minimapWatchStatus,
+	offerFrame as offerMinimapFrame,
+	resetMinimapWatch,
+	takeMinimapReads
+} from "../../daemon/minimap-watch.ts"
 import { buildFacts, FRAME_FRESH_SEC, newFactMemory, resetFactMemory } from "../../analysis/live-facts.ts"
 import type { FrameObservation } from "../../analysis/live-facts.ts"
 import {
 	asFrameRead,
+	pctOf,
 	coarseOf,
+	zoneLabelForTeam,
 	frameReadFaults,
 	parseFrameRead,
 	parseFrameReadXY,
 	truthFromState
 } from "../../review/frame-read.ts"
+import type { TeamId, Zone } from "../../shared/map.ts"
 import { readMinimap } from "../../review/read-minimap.ts"
-import type { Coarse, FrameRead, FrameTruth } from "../../review/frame-read.ts"
+import type { Coarse, FrameRead, FrameReadXY, FrameTruth } from "../../review/frame-read.ts"
+import { reachFromLive } from "../../analysis/reach-live.ts"
 import { newFightMemory, readFight, resetFightMemory } from "../../analysis/fights.ts"
 import {
 	appendTranscript,
@@ -113,6 +153,107 @@ const OBJECTIVE_EVENTS = new Set(["DragonKill", "BaronKill", "HeraldKill"])
  * The live API has no puuid, so this matches on Riot ID — which is why the fallback matters: on
  * a mismatch we return no player rather than coaching a stranger's stats.
  */
+/**
+ * The previous raw `allgamedata` payload, for the brief's delta section.
+ *
+ * Module scope because the brief's "what he is doing right now" is a DIFFERENCE — CS ticking, gold
+ * ticking, health falling — and a stateless route has nothing to difference against. One payload,
+ * overwritten each poll: the coach only ever asks what changed since the last thing it was told.
+ */
+let previousSample: { raw: unknown; gameTimeSec: number } | null = null
+
+/**
+ * The coach's memory of what it has already said this game, and of the states it said it into.
+ *
+ * Module scope for exactly the reason `factMemory` is: one local user, one game at a time, one
+ * process. It is the daemon's copy on purpose — the browser holds the socket, but the browser is
+ * also the thing that is reloaded mid-game, and a memory that dies with a page refresh is not a
+ * memory. Fed from `POST /live/gemini/transcript`, which already receives every spoken line.
+ */
+let coachMemory: MemoryState = newMemory()
+
+/**
+ * The last few blocks SERVED, by turn number, so a reply can be matched to the block it answered.
+ *
+ * Small and bounded: a reply that arrives more turns late than this is one the memory is better
+ * off dating from `turnSeq` than from a guess. Cleared with the sequence, because a turn number
+ * from the previous game names a different block.
+ */
+const servedTurns = new Map<number, { servedAtMs: number; gameTimeSec: number }>()
+const SERVED_TURNS_KEEP = 8
+
+/** The roster the current `coachMemory` belongs to. A different one is a different game. */
+let memoryRoster: string | null = null
+
+/**
+ * How stale the last payload may be before the next one has to be a FULL brief again.
+ *
+ * A delta is a sentence about a difference, and a difference against a sample from a minute ago is
+ * not the difference the model is being told it is. Turns are seconds apart in normal running, so
+ * anything past this gap means something broke — a reconnect, a backgrounded tab, a run of failed
+ * fetches — and the honest repair is to re-establish the whole picture rather than to describe a
+ * change nobody saw the start of.
+ */
+/**
+ * How stale a sequence may get before the next payload is a full brief again.
+ *
+ * Raised from 45 because 45 is inside the real turn spacing. The stored `--every 30` run has
+ * inter-turn gaps of 42.6s repeatedly and one of 48.75s, which resynced — producing two full briefs
+ * where the bench's own comment claims "1 is the healthy number for a whole game" and this never
+ * fires. In the app, `TURN_CHOICES` offers a 40s beat, so a single skipped poll gives an 80s gap.
+ * A resync is expensive (it re-sends the whole roster table), so the threshold belongs well clear
+ * of the slowest offered beat rather than just above the fastest.
+ */
+const RESYNC_AFTER_SEC = 90
+
+/**
+ * Bytes the utterance log may take out of the delta before its oldest rows are dropped.
+ *
+ * It had none, and it grows: its rows gain verdict text as windows close, so from about 3:00 of
+ * the stored run it plateaued above `DELTA_HARD_CAP` and evicted CLOCKS — the objective timers —
+ * from every remaining turn of the game. A section with no budget is a section that spends
+ * everyone else's.
+ */
+const SAID_BUDGET = 380
+
+/** The same, for the accumulated beat log. See `renderNarrativeWithin`. */
+const NARRATIVE_BUDGET = 380
+
+/**
+ * Where the trusted protocol's turn sequence lives. Null means "no sequence": the next payload is
+ * the full brief.
+ *
+ * The DAEMON owns this rather than the page, because the daemon is the only side that knows what it
+ * has already sent. The page can ask for a resync (it knows when its socket is new, which the daemon
+ * cannot see) but it cannot be the record of what the thread already holds.
+ */
+let turnSeq: {
+	turns: number
+	lastAtSec: number
+	roster: string
+	/**
+	 * Wall clock when the payload went out, which is how the coach's own latency gets MEASURED
+	 * rather than assumed.
+	 *
+	 * `noteSaid` wants the delay between a brief being built and the first syllable, because that is
+	 * what turns "he said it at 4:03" into "he was heard at 4:06" — and a countdown that expires in
+	 * between is a line the player hears after it stopped being true. The daemon is the only side
+	 * that sees both ends: it served this block, and the transcript for the line it produced comes
+	 * back through this same process.
+	 */
+	servedAtMs: number
+} | null = null
+
+/**
+ * A game's identity, from the only thing in `allgamedata` that has one.
+ *
+ * There is no game id in this feed. The roster is the next best invariant and it is a good one: two
+ * consecutive games with the same ten champions in the same order is not a case worth defending
+ * against, and the clock going backwards catches it anyway.
+ */
+const rosterKey = (data: LiveAllGameData): string =>
+	(data.allPlayers ?? []).map(p => p.championName ?? "?").join("|")
+
 const findMe = (data: LiveAllGameData) => {
 	const riotId = data.activePlayer?.riotId ?? data.activePlayer?.summonerName ?? ""
 	if (riotId === "") return null
@@ -153,6 +294,86 @@ const lockedChampion = async (): Promise<string> => {
 	// Hourly-cached and a no-op in the common case; without it every id resolves to "".
 	await refreshChampionNames()
 	return championFromSession(session, championName)
+}
+
+/**
+ * The ENEMY JUNGLER's champion, for the counterpart half of the knowledge pack.
+ *
+ * Derived exactly as `buildLiveState` derives it — declared position first, Smite second, because
+ * Smite is renamed on upgrade and a name equality test recognised 18.5% of the real ones.
+ *
+ * ## The gameflow fallback, which is the whole reason this is not one read
+ *
+ * It used to read `allgamedata` and stop, and the comment here said "in champ select there is no
+ * `allgamedata` at all, so the socket opens with only his own champion's notes". That was written
+ * as a graceful degradation and it is in fact the ONLY case: the socket's system instruction is
+ * minted exactly once, at ChampSelect (`isCoachingPhase` includes it, and `ScreenCoach` calls
+ * `gem.start()` on `gate.armed`), which is precisely when :2999 answers nothing. So
+ * `fullKnowledge({ champion, counterpart: null })` dropped the entire `# THE ENEMY JUNGLER` section
+ * for the LIFE of every socket — for the whole game — while `TRUSTED_PROMPT` told the model "both
+ * junglers' champion notes are at the end of these instructions, in full", and
+ * `knowledge/champions/briar.md` was dead on arrival.
+ *
+ * Worse for comparison work: the turn-based route resolves the counterpart PER TURN and does get
+ * it, so `trusted` was two different prompts depending on transport — the exact confound
+ * `coachTurn`'s no-prompt-parameter invariant exists to prevent, and the same defect class as the
+ * `socketSystemPrompt` fix. `lockedChampion` one function above already answers this same "not yet"
+ * from the gameflow session; this is that fallback, on the other half of the matchup.
+ *
+ * `buildMatchupBrief` owns the derivation there for the same reason `championFromSession` uses it:
+ * during the draft the roster rows lag a swap, and resolving that a second time by hand is how the
+ * two would drift. Its own basis rules are the ones above — declared position first, the lone enemy
+ * Smite holder second — so both paths agree by construction.
+ *
+ * `null` on every real failure. A wrong counterpart would put a whole matchup essay in the prompt
+ * about a champion not in the game, which is worse than none.
+ */
+const lockedCounterpart = async (): Promise<string | null> => {
+	const handle = await lcu()
+	if (!handle) return null
+	const data = await handle.live.allGameData().catch(() => null)
+	const me = data ? findMe(data) : null
+	if (data && me) {
+		const enemies = (data.allPlayers ?? []).filter(p => p.team !== me.team)
+		const byRole = enemies.find(p => (p.position ?? "").toUpperCase() === "JUNGLE")
+		const jungler = byRole ?? enemies.find(hasSmite)
+		if (jungler?.championName) return jungler.championName
+	}
+	const session = await handle.client.gameflowSession().catch(() => null)
+	if (!session) return null
+	// Both hourly-cached and no-ops in the common case; without them every id resolves to "".
+	await refreshChampionNames()
+	await refreshSummonerSpellNames()
+	return counterpartFromSession(session, championName)
+}
+
+/**
+ * The enemy jungler off a gameflow session. Pure, so the route test can mint a ChampSelect prompt.
+ *
+ * Split out for the same reason `championFromSession` is: the interesting half is a join the draft
+ * makes awkward, `buildMatchupBrief` already resolves it, and a second copy is a second thing to
+ * drift. `null` for every "not yet" — no roster, no lock, an unknown id, a phase that is not a
+ * game, or a counterpart the brief could not identify at all.
+ */
+export const counterpartFromSession = (
+	session: GameflowSession,
+	nameOf: (championId: number) => string
+): string | null => {
+	if (!isCoachingPhase(session.phase)) return null
+	const { brief } = buildMatchupBrief({
+		session,
+		puuid: USER_PUUID,
+		championName: nameOf,
+		/*
+		 * SPELLS ARE READ HERE, unlike in `championFromSession`, and the difference matters.
+		 * `buildMatchupBrief` falls back to the lone enemy Smite holder when nobody declared a
+		 * position — which is most solo-queue drafts — and `hasSmite` needs the spell NAME to do
+		 * it. `championFromSession` only ever wanted `brief.you`, so it could pass a stub.
+		 */
+		spellName: summonerSpellName
+	})
+	const champion = brief?.opponent?.champion ?? ""
+	return champion === "" ? null : champion
 }
 
 /**
@@ -230,6 +451,155 @@ const adviceCursor = newAdviceCursor()
 
 /** The last read that survived the client's fence, or null. Handed to `buildFacts` as `frame`. */
 let frameRead: FrameObservation | null = null
+/**
+ * The accepted read's PROSE zone and its anonymous enemy icons, kept beside the coarsened
+ * observation because `FrameObservation` throws both away at the door and `PositionFix` needs them.
+ * Cleared in lockstep with `frameRead` — a label surviving a refused read would put last minute's
+ * position into this minute's brief.
+ */
+let frameZone: { you: Zone; enemies: Zone[] } | null = null
+
+/**
+ * Forget the picture. Every variable above, in one call, from every branch that ends a game.
+ *
+ * A frame read belongs to the game it was taken in, and carrying one across is the same class of
+ * bug as a socket spanning two games: the roster changes, the clock restarts, and a half of the map
+ * from the last game would gate a real objective call in the first minute of the next one.
+ *
+ * IT IS A FUNCTION BECAUSE THE ONE CALL SITE IT HAD WAS UNREACHABLE. The reset lived inline in
+ * `buildLiveState`'s out-of-game branch, and under `trusted` — the shipped default —
+ * `GET /live/ground-truth` returns above `buildLiveState` entirely. So in the shipped app nothing
+ * ever cleared these: the first minimap read of game N+1 was fenced by `frameReadFaults` against
+ * game N's roster, the response schema handed to the model enumerated game N's champions, and the
+ * read was stamped from game N's FINAL poll — a paid Gemini call checked against the wrong game,
+ * saved from becoming a false claim only by `pictureLine`'s `ageSec < 0` guard.
+ *
+ * `frameZone` was in NO reset list at all, despite its own doc claiming it is "cleared in lockstep
+ * with `frameRead`". That is the failure a hand-written list produces on its next field, which is
+ * the same reason `resetFactMemory` exists one line above the old copy of this.
+ */
+const resetFrameState = (): void => {
+	frameRead = null
+	frameZone = null
+	carriedRead = null
+	carriedZone = null
+	carriedPct = null
+	lastFrameSide = null
+	lastTruth = null
+	/*
+	 * And the watcher's own track, including reads that were accepted but not landed yet.
+	 *
+	 * The watcher rolls its track on a new journal session by itself, which is the earlier and more
+	 * reliable of the two signals. This is the other end of the same rule, for the case where the
+	 * daemon notices the game ended before the next frame arrives: a read accepted at 28:14 of game
+	 * N must not be drained into game N+1's first turn.
+	 */
+	resetMinimapWatch()
+}
+
+/**
+ * Land every accepted read the watcher has taken since the last turn, in order.
+ *
+ * THE ORDER AND THE EXACTLY-ONCE ARE LOAD-BEARING, which is why this drains a queue rather than
+ * reading a latest-value. `observationFrom` marks a read `low` when it disagrees with the previous
+ * one taken inside `FRAME_FRESH_SEC` — the measured 7% where two looks at one picture part company
+ * — and that comparison is only meaningful against the read that actually came before it. Skipping
+ * the middle of three reads would compare two that are ten seconds apart and call an honest
+ * rotation a disagreement.
+ *
+ * EVERY RULE ABOUT WHAT A READ MEANS STAYS WHERE IT WAS. This function supplies; `observationFrom`,
+ * `carryable`, `landRead`, `pictureLine` and `buildFacts` decide. That separation is the whole
+ * reason the watcher was worth building as a supply change: the ranked modes' rules — a refusal
+ * nulls `frameRead`, `FRAME_FRESH_SEC` is re-checked downstream — are untouched, and every stored
+ * measurement of them was taken under exactly those rules.
+ */
+const drainMinimapReads = (): void => {
+	for (const taken of takeMinimapReads())
+		landRead(observationFrom(taken.read, lastFrameSide, taken.atSec), zoneSideOf(taken.read), taken.xy)
+}
+
+/*
+ * THE ROLLING LAST-KNOWN READ, and why it is a SECOND pair of variables rather than a relaxed rule
+ * on the first.
+ *
+ * `frameRead` is what the RANKER is handed, and the ranker uses the read as a GATE as well as a
+ * sentence ("drake is back in 40s — looks like you're topside, walk down"). Its rules are the strict
+ * ones and they are not mine to widen: a refused read nulls it, and `buildFacts` re-checks
+ * `FRAME_FRESH_SEC` on top of that. Every stored measurement of the ranked modes was taken under
+ * exactly those two rules, so they are left byte-identical by construction — nothing below touches
+ * the variables they read.
+ *
+ * The BRIEF is a different consumer with a different job. It does not gate on the position, it
+ * PRINTS it, and a printed position carries its own age. So the brief gets the last read that was
+ * accepted, placed and undoubted, whether or not the current turn produced one.
+ *
+ * ## The defect this exists for
+ *
+ * 42% of the event-driven turns on the graded run of game 5639406342 were REACTIVE — a death, a
+ * respawn, `resource.low` — and a reactive turn deliberately skips the 1.3-3.0s minimap call,
+ * because a death's premise is 40% stale at one second. Correct, and it meant the position reached
+ * the model on 7 of 23 turns, absent on precisely the turns where where-he-is matters most. A turn
+ * that is racing has no business paying for a read; it has every business seeing the read from
+ * eleven seconds ago.
+ *
+ * ## A REFUSAL DOES NOT TOUCH THIS, in either direction
+ *
+ * A refused read is not evidence about anything — not about where he is, and not about the read
+ * that came before it. 44% of reads on the graded game were refused and the fence was right every
+ * time (16 of them were the model pointing at a red-ringed Singed inside his camera box). So a
+ * refusal neither lands here nor clears what is here, and a game in which nothing was ever accepted
+ * carries nothing: silence stays silence.
+ */
+let carriedRead: FrameObservation | null = null
+let carriedZone: { you: Zone; enemies: Zone[] } | null = null
+/*
+ * The SAME carry, in the units the reachability arithmetic needs.
+ *
+ * `carriedRead` is prose and a coarse half; `carriedZone` is a 13-way label. Neither can be
+ * subtracted from a pit's coordinates, so the accepted read's own percentages ride alongside them
+ * and age exactly as they do. Written only by `landRead`, like the other two, so a refusal cannot
+ * displace it and a doubt cannot become one.
+ */
+let carriedPct: { pct: { left: number; top: number }; atSec: number } | null = null
+
+/**
+ * How old the last-known read may be before the brief stops printing it at all.
+ *
+ * MEASURED, on the 94 stored games, by the only sub-minute position source the post-game timeline
+ * has: a participant frame is stamped once a minute, but a ChampionKill or ELITE_MONSTER_KILL
+ * carries its own position and its own millisecond stamp, so pairing a frame with a later event the
+ * player was IN gives 2,602 (lag, same-coarse-zone?) pairs at lags from zero to a minute. Chance
+ * agreement — guessing his half from the marginal distribution alone — is 31.8%.
+ *
+ *      0-5s   n=234   96.2% same half    (this end of the range is `FRAME_FRESH_SEC`, and a fact)
+ *      5-10s  n=220   88.2%
+ *     10-15s  n=205   77.1%
+ *     15-20s  n=218   76.1%
+ *     20-25s  n=243   70.4%
+ *     25-30s  n=208   67.3%
+ *     ------------------------------ the knee
+ *     30-35s  n=212   51.9%
+ *     35-40s  n=225   46.7%
+ *     40-45s  n=212   44.3%           and then FLAT: 48.9 / 42.8 / 46.2 out to 62s
+ *
+ * THE BREAK IS REAL AND NOT AN ARTEFACT OF WHERE THE BUCKETS WERE DRAWN. The decay from 0 to 30
+ * seconds is gradual — about six points per five seconds — and then one 5-second bucket costs
+ * fifteen, after which the curve is flat at a coin flip all the way to a minute. Something commits
+ * a jungler to a half for about half a minute (a clear, a gank, a pit) and past that he has
+ * rotated, so an older read is not a weaker version of the same fact, it is a different fact.
+ *
+ * Thirty seconds is therefore where a coarse read stops being a better-than-even bet about the half
+ * he is on. Past it the line would still be TRUE — it is rendered in the past tense, with its age —
+ * but true and uninformative, and this payload has a fixed character budget in which an
+ * uninformative line is paid for by whatever falls off the bottom. A second measurement, at minute
+ * granularity over whole games rather than around events, agrees about where this ends: 36.0% at a
+ * 60s lag against 31.8% chance, and 25.6% at 120s, which is BELOW chance — a jungler's
+ * topside/botside oscillation makes a two-minute-old read actively misleading.
+ *
+ * The reader's own accuracy (17 of 18 on his half) is a separate factor and is not compounded in
+ * here; it is stated in the line itself.
+ */
+export const CARRY_MAX_SEC = 30
 
 /**
  * The half of the map the PREVIOUS accepted read named, which is the whole of the confidence test.
@@ -248,12 +618,56 @@ let lastFrameSide: { where: Coarse | null; atSec: number } | null = null
  * A frame read has to be fenced against the client before any of it is believed — more enemies than
  * are alive, his icon on the map while he is on the respawn screen, his own champion read as
  * somebody else — and re-polling the LCU inside the frame-read handler would double the traffic
- * during a game for data the ground-truth poll fetched a moment ago. `atSec` doubles as the stamp
- * on the read itself: the browser grabs its frame from the same screen it is polling this route
- * about, so the last poll's clock is the closest honest time the picture has. It is an
- * approximation of a few seconds and `FRAME_FRESH_SEC` is sized to absorb it.
+ * during a game for data the ground-truth poll fetched a moment ago.
+ *
+ * `atMs` IS WHY THE READER WAS PAID FOR AND NEVER HEARD. `atSec` used to double as the stamp on the
+ * read as well as the fence, on the argument that the browser grabs its frame from the same screen
+ * it is polling this route about — "an approximation of a few seconds". It is not a few seconds, and
+ * the size of the error is a whole BEAT: a turn does the read FIRST and fetches the block after it
+ * (`geminiLive.ts`), so the poll this route has cached when a crop arrives is the previous turn's.
+ * The two cadences then part company, and the ranked modes lost outright:
+ *
+ *   cite-or-quiet / fenced, 20s beat   age 21-23s against FRAME_FRESH_SEC of 10 — DISCARDED, every
+ *                                      read, every turn, in every game ever played
+ *   trusted, 6s beat                   age ~7s for a picture taken ~1.3s ago — inside the window,
+ *                                      but printed into the brief five seconds older than it is,
+ *                                      and one skipped beat puts it outside
+ *
+ * The bill was paid in full either way: on game 5639406342 the reader is 7/8 exact on the zone with
+ * 1.8% median position error, 101 reads cost a measured p50 1,239ms apiece, and in the mode that
+ * ranks facts not one of them ever modified or gated a line.
+ *
+ * So the wall clock rides along and `frameClockSec` carries the game clock forward to the instant
+ * the crop actually arrived. See it for why an extrapolation is allowed here at all.
  */
-let lastTruth: { truth: FrameTruth; atSec: number } | null = null
+let lastTruth: { truth: FrameTruth; atSec: number; atMs: number } | null = null
+
+/**
+ * The game clock a picture arriving NOW was taken at, carried forward from the last poll.
+ *
+ * The game clock and the wall clock advance together while a game is running, so this is exact
+ * rather than a guess for the whole of a normal game — the LCU's `gameTime` is a stopwatch, and the
+ * only thing that separates the two is a PAUSE, which stops the game clock while the wall clock
+ * keeps going.
+ *
+ * That single failure mode is why this is safe to do at all: a pause makes the answer too LARGE,
+ * never too small. A stamp in the future is thrown away whole by `buildFacts` (`nowSec - atSec >= 0`)
+ * and by the freshness rule at the `where` call site, so the direction of failure is the coach
+ * saying nothing about where he is — the same cheap direction every other rule around this read
+ * chooses. The reverse would be the expensive one: a picture presented as fresher than it is, which
+ * is precisely the inverted half `FRAME_FRESH_SEC` exists to prevent.
+ *
+ * Clamped at zero because a clock that has gone backwards is a new game, not a negative age.
+ *
+ * The two stamps are taken in the order that fails the same way: `atMs` is read AFTER the poll it
+ * belongs to has come back, so it is a few milliseconds LATER than the clock it is paired with, and
+ * the extrapolation therefore lands a hair short rather than a hair long — an age over-stated by
+ * the round trip, which the bridge measures at 2.3ms against a ten-second window.
+ */
+export const frameClockSec = (
+	cached: { atSec: number; atMs: number },
+	nowMs: number
+): number => cached.atSec + Math.max(0, (nowMs - cached.atMs) / 1000)
 
 /**
  * A fenced read, plus the previous one, into the single observation `buildFacts` is handed.
@@ -283,6 +697,212 @@ export const observationFrom = (
 		previous !== null && atSec - previous.atSec <= FRAME_FRESH_SEC && previous.where !== where
 	return { where, atSec, confidence: doubted ? "low" : "medium" }
 }
+
+/**
+ * The picture as the ONE sentence the brief prints, or nothing at all.
+ *
+ * Exported and pure for the same reason `observationFrom` is: every rule about whether the read may
+ * be spoken of lives in one testable place rather than inside a handler that needs a running game
+ * to reach. `shared/live-brief.ts` renders this verbatim inside NOW and computes nothing from
+ * pixels, so the hedging has to be IN THE STRING — which half, how old, and where it came from.
+ *
+ * FOUR WAYS TO BE NOTHING, and all four are silence rather than a guess:
+ *
+ *   - no read at all — the pre-pass is off, the call failed, or the client's fence threw it away
+ *     whole (44% of reads on the graded game were refused, and that refusal is the reader working:
+ *     16 of them were the model pointing at a red-ringed Singed inside his camera box);
+ *   - a read that could not place him, which the reader is offered precisely so guessing is never
+ *     its only move;
+ *   - a read two consecutive looks disagreed about — the measured 7% arriving;
+ *   - a picture old enough to be about somewhere else, or stamped ahead of the clock.
+ *
+ * The confidence is quoted as the measurement rather than as a word. `medium` is the ceiling this
+ * reader has by construction and "a read of a picture" alone does not say how good a read; 17 of 18
+ * is a figure the model can price a sentence against, and it is the same figure `FrameObservation`
+ * is documented with. ENEMY icons are not here and their absence is the finding: 63% per-icon zone
+ * accuracy is not shippable as a claim that SENDS HIM SOMEWHERE.
+ */
+export const pictureLine = (read: FrameObservation | null, nowSec: number): string | null => {
+	if (read === null || read.where === null || read.confidence === "low") return null
+	const ageSec = nowSec - read.atSec
+	/*
+	 * TWO WINDOWS, because there are two honest things to say and they are not the same sentence.
+	 *
+	 * `FRAME_FRESH_SEC` — ten seconds, the ranker's one freshness rule, imported rather than retyped
+	 * — is where a read is still a statement about the PRESENT: measured, the half holds on 92.3% of
+	 * 454 pairs at that age. A jungler crosses from his topside jungle to the drake pit in the high
+	 * teens of seconds, so past it a present-tense claim can be exactly INVERTED, and an inverted
+	 * half is worse than no half: it is specific, confident, and it sends him back the way he came.
+	 *
+	 * `CARRY_MAX_SEC` — thirty — is where a read stops being worth PRINTING AT ALL, in any tense.
+	 * Between the two the sentence changes tense rather than disappearing, which is the whole of
+	 * this round's position work: see `carriedRead` for the reactive turns that had nothing, and
+	 * `CARRY_MAX_SEC` for the measured cliff at thirty seconds.
+	 *
+	 * The upper test was absent entirely once and the age was clamped with `Math.max(0, …)`, which
+	 * is the one shape that converts an honest failure into a dishonest one: a read the browser
+	 * stopped refreshing printed as "0s ago" forever, and so does a stamp from the future, which is
+	 * what a PAUSED game produces (see `frameClockSec`). Both are still simply not in the brief.
+	 */
+	if (ageSec < 0 || ageSec > CARRY_MAX_SEC) return null
+	/*
+	 * "YOUR own icon", not "his". The pronoun is the whole sentence.
+	 *
+	 * This line was written in the third person while every other line of the payload addresses the
+	 * player in the second — NOW opens "Lillia (JUNGLE) lvl 6, alive" and NEXT opens "You: blue-side
+	 * jungle (top)" — and the only other person in the payload is the enemy jungler. So "his own
+	 * icon read topside" had a genuinely ambiguous referent, and the coach resolved it the wrong
+	 * way. Measured on the 23-turn event-driven run of game 5639406342: of the seven turns that
+	 * carried this line, THREE produced an inverted claim about the counterpart —
+	 *
+	 *   6:46  "Kayn's been spotted topside"      (Kayn was botside, dragon pit)
+	 *   15:54 "Kayn ... just appeared topside"   (Kayn was river-bot, then mid)
+	 *   23:01 "Kayn was just spotted botside,
+	 *          so absolutely take this Baron"    (Kayn was standing IN the baron pit)
+	 *
+	 * — each one his OWN position, repeated back to him as the enemy's, and the last of them sends
+	 * him into a Baron the enemy jungler is already at. A read that is 17-of-18 accurate about the
+	 * right person becomes worse than no read at all when the sentence names the wrong one.
+	 *
+	 * The measurement accuracy clause used to keep "his own half" on the argument that there it
+	 * refers to the SUBJECT of the hand-scoring rather than to anyone in this game. That argument is
+	 * correct and it does not matter: the model does not know which "his" is a citation, and a
+	 * sentence whose only job is that there is exactly one person in it cannot afford to introduce a
+	 * second one in a subordinate clause. It says "your own half" now.
+	 */
+	/*
+	 * NOT ONE THIRD-PERSON WORD IN EITHER TENSE, and the accuracy clause is the reason this is worth
+	 * a note. It used to read "right about the player's own half", which is not a pronoun but is
+	 * still a third party appearing in a sentence whose entire job is that there is only one person
+	 * in it. `live-brief.test.ts` pins the rendered section against a pronoun list; this is the text
+	 * that has to survive it.
+	 */
+	const whose = `A read of a picture, right about your own half on 17 of 18 hand-scored reads, not something this feed knows`
+	return ageSec <= FRAME_FRESH_SEC ?
+			`YOUR own icon read ${read.where} on the minimap ${Math.round(ageSec)}s ago — this is where YOU are, not where anyone else is. ${whose}`
+		:	`YOUR own icon read ${read.where} on the minimap ${Math.round(ageSec)}s ago — that is where YOU WERE then, not where anyone else was, and old enough that you may have moved since. ${whose}`
+}
+
+/**
+ * The SAME read, as data, for the prospective joins in NEXT — or nothing, on exactly the same rules.
+ *
+ * `pictureLine` above is prose, and prose can only be printed. The join this round is chasing —
+ * "drake is up in 45s and you are in base with 100g" — needs the position as a VALUE, because
+ * something has to compare the pit's side with his. `shared/live-brief.ts` will do that comparison
+ * in TypeScript when it is handed a `PositionFix`, and it was never handed one: the route passed
+ * `where` and stopped, so `prospectHead` printed "no position read this turn" on every turn of
+ * every game while the read sat in `frameRead` one field away. That is the second half of the same
+ * defect as the clock stamp — the reader ran, was paid for, and was discarded.
+ *
+ * GATED THROUGH `pictureLine` RATHER THAN BESIDE IT, deliberately. Two gates over one read is two
+ * places to drift, and the failure that drift produces is the worst shape available here: NOW
+ * saying nothing about where he is while NEXT confidently joins an objective to a position the
+ * prose declined to state. One `null` check, so the prose and the data are true together or absent
+ * together.
+ *
+ * The label and the enemy icons cannot come from `FrameObservation` — it is coarsened at the door,
+ * which is the right thing for a fact that gates a sentence — so the accepted read's own zone is
+ * kept beside it by the endpoint and passed in here. Enemy icons stay ANONYMOUS: the reader cannot
+ * tell Kayn's dot from Singed's, and 16 of its refusals on the graded game were exactly that
+ * mistake.
+ */
+/**
+ * The accepted read's ZONES — his and the anonymous enemy icons. Null when it could not place him.
+ *
+ * ZONES AND NOT LABELS, which is the fix for an inversion. `zoneLabel` is blue-absolute by design
+ * ("blue-side jungle (top)"), and the label was minted here, where nothing knows which side he is
+ * on. Rendered into the delta that reads `You: blue-side jungle (top), 3s old.` — and on a red-side
+ * game that sentence means he is standing in the ENEMY jungle, with nothing in the payload to
+ * settle it. The team id is known one layer up, so the label is minted one layer up.
+ */
+const zoneSideOf = (read: FrameRead): { you: Zone; enemies: Zone[] } | null =>
+	read.you === null ? null : { you: read.you, enemies: [...read.enemiesOnMinimap] }
+
+/**
+ * Land an accepted read in BOTH stores, and nowhere else.
+ *
+ * `frameRead`/`frameZone` are the ranker's, and are nulled by a refusal one line up in every branch
+ * that calls this. `carriedRead`/`carriedZone` are the brief's and survive a refusal — so the only
+ * way into them is an acceptance, and this is the one function that performs one.
+ *
+ * A `low`-confidence observation (two consecutive reads disagreed about his half, the measured 7%
+ * arriving) or one that placed nobody is accepted by the fence and still does not land: it is not a
+ * read of a position, so carrying it forward would be carrying a doubt as though it were a fact.
+ * The previous carried read is left exactly where it is, because a doubt is not evidence against it
+ * either.
+ */
+/**
+ * Whether a read is worth REMEMBERING past the turn it was taken on — pure, so it can be pinned.
+ *
+ * A read that placed nobody, or one two consecutive looks disagreed about, is a doubt rather than a
+ * position. Carrying a doubt forward would launder it into a fact on the next turn, when the doubt
+ * itself has aged out of view. It also does not DISPLACE the read already carried, because a doubt
+ * is not evidence against one either.
+ */
+export const carryable = (
+	seen: FrameObservation,
+	zone: { you: Zone; enemies: Zone[] } | null
+): boolean => seen.where !== null && seen.confidence !== "low" && zone !== null
+
+const landRead = (
+	seen: FrameObservation,
+	zone: { you: Zone; enemies: Zone[] } | null,
+	/** The read as a POINT. Absent on the legacy zone-name body, which carries no coordinates. */
+	xy?: FrameReadXY | null
+): void => {
+	lastFrameSide = { where: seen.where, atSec: seen.atSec }
+	frameRead = seen
+	frameZone = zone
+	if (!carryable(seen, zone)) return
+	carriedRead = seen
+	carriedZone = zone
+	/*
+	 * Cleared rather than left standing when this acceptance has no point. The prose carry has just
+	 * MOVED, and a pct from the previous read paired with the new read's age would put a confident
+	 * travel time on a position the app has already replaced.
+	 */
+	carriedPct =
+		xy?.you ? { pct: pctOf(xy.you), atSec: seen.atSec } : null
+}
+
+export const pictureFix = (
+	read: FrameObservation | null,
+	zone: { you: Zone; enemies: Zone[] } | null,
+	nowSec: number,
+	teamId: TeamId
+): PositionFix | null => {
+	if (pictureLine(read, nowSec) === null) return null
+	if (read === null || read.where === null || zone === null) return null
+	return {
+		// See `zoneLabelForTeam`: "own blue-side jungle (top)" / "enemy red-side jungle (bot)". The
+		// absolute half is kept because it is the half the picture verified.
+		label: zoneLabelForTeam(zone.you, teamId),
+		coarse: read.where,
+		atSec: read.atSec,
+		/*
+		 * WHICH TENSE THE RENDERER MAY USE, decided here because this is where `FRAME_FRESH_SEC`
+		 * lives. `shared/` may not import `analysis/`, so handing the brief the boundary as a word
+		 * is the alternative to either copying the constant into `shared/` — a second definition of
+		 * the app's one freshness rule, which is the drift `pictureFix` delegating to `pictureLine`
+		 * exists to avoid — or letting the renderer pick a threshold of its own.
+		 *
+		 * `"now"` is a 92.3%-accurate statement about the present. `"last-known"` is a statement
+		 * about the past, which is true at any age this function will still return at.
+		 */
+		asOf: nowSec - read.atSec <= FRAME_FRESH_SEC ? "now" : "last-known",
+		enemies: zone.enemies.map(z => zoneLabelForTeam(z, teamId))
+	}
+}
+
+/**
+ * His team id, from the live feed's `"ORDER"`/`"CHAOS"`. Blue when the feed cannot say.
+ *
+ * A default is required because `pictureFix` must return a label or nothing, and defaulting to blue
+ * reproduces exactly the behaviour every stored measurement was taken under — so a game whose team
+ * field is missing is no worse off than it was, and every game that has one is right.
+ */
+const myTeamId = (data: LiveAllGameData | null): TeamId =>
+	(data ? findMe(data)?.team : null) === "CHAOS" ? TEAM_RED : TEAM_BLUE
 
 /** Who last killed this player, by riotId, or "" if nothing in the feed says. */
 const lastKillerOf = (data: LiveAllGameData, victim: string): string => {
@@ -335,15 +955,7 @@ const buildLiveState = (
 		 */
 		resetFactMemory(factMemory)
 		resetFightMemory(fightMemory)
-		/*
-		 * And forget the picture. A frame read belongs to the game it was taken in, and carrying one
-		 * across is the same class of bug as a socket spanning two games: the roster changes, the
-		 * clock restarts, and a half of the map from the last game would gate a real objective call
-		 * in the first minute of the next one.
-		 */
-		frameRead = null
-		lastFrameSide = null
-		lastTruth = null
+		resetFrameState()
 		factMemory.lastFarmCs = 0
 		factMemory.lastGoldAtSec = 0
 		factMemory.goldSinceSec = 0
@@ -761,8 +1373,130 @@ const buildLiveState = (
 	 * against the same five fields — a fence only one caller can build is a fence only one caller
 	 * uses.
 	 */
-	lastTruth = { truth: truthFromState(state), atSec: secs }
+	lastTruth = { truth: truthFromState(state), atSec: secs, atMs: Date.now() }
 	return state
+}
+
+/**
+ * The five facts the frame-read fence needs, straight off a raw `allgamedata`.
+ *
+ * `truthFromState` takes a `VisionState`, which the `trusted` path deliberately never builds. Same
+ * five fields, same derivation, so a read is fenced identically in every mode — see the call site.
+ */
+export const truthFromRaw = (data: LiveAllGameData): FrameTruth => {
+	const me = findMe(data)
+	const players = data.allPlayers ?? []
+	const allies = players.filter(p => me !== null && p.team === me.team && p !== me)
+	const enemies = players.filter(p => me === null || p.team !== me.team)
+	return {
+		myChampion: me?.championName ?? "",
+		meDead: me?.isDead === true,
+		enemiesAlive: enemies.filter(p => p.isDead !== true).length,
+		alliesAlive: allies.filter(p => p.isDead !== true).length,
+		enemyChampions: enemies.map(p => p.championName ?? "")
+	}
+}
+
+/**
+ * THE GAME SO FAR plus how old the enemy jungler's figures are, rendered and budgeted.
+ *
+ * Composed here rather than in `live-brief.ts` because `shared/` may not import `analysis/` — the
+ * brief prints a section, it does not own a memory. Both halves are facts with no instruction in
+ * them: what happened, and when each of his opponent's frozen figures last moved.
+ */
+const memoryNarrative = (nowSec: number): string => renderGameSoFar(coachMemory, nowSec, NARRATIVE_BUDGET)
+
+/**
+ * Feed one raw sample to the coach's memory. The DAEMON'S poll calls this, not only the browser's.
+ *
+ * `coach-memory.ts` was written on the premise that the 5s sampler feeds it — "a browser-owned
+ * memory would miss the back that happened between two turns" — and it did not: the only call site
+ * was inside `GET /live/ground-truth`, at browser TURN cadence, and `beat()` returns on the pace
+ * floor BEFORE that fetch, so a paced-out beat fed the memory nothing at all. Several of the
+ * module's constants assume a dense grid: `respawning` tests whether any retained sample inside
+ * `BACK_COALESCE_SEC` (20s) showed him dead, so at a 25s cadence every `respawn-buy` beat degrades
+ * to a plain `back` and the narrative says "you backed and spent 1038 gold" about a moment he had
+ * just been killed.
+ *
+ * The memory's LIFECYCLE lives here rather than in the turn handler, and that is the point of
+ * extracting it: the turn handler used to reset on its own `newSequence`, which would have thrown
+ * away everything this poll had accumulated before the page ever beat. One rule, one place — a new
+ * roster or a clock that went backwards is a new game.
+ *
+ * Trusted only, exactly like the utterance log: nothing else reads the memory, `observe` never ran
+ * in the other modes, and a memory quietly accumulating across games in a mode nobody reads is the
+ * cross-game leak this app's design exists to fight.
+ */
+export const observeLiveSample = (data: LiveAllGameData | null, gameTimeSec: number | null): void => {
+	if (!data || gameTimeSec === null || getSettings().liveCoachMode !== "trusted") return
+	const roster = rosterKey(data)
+	if (memoryRoster !== roster || gameTimeSec < coachMemory.lastSec) {
+		coachMemory = newMemory()
+		memoryRoster = roster
+		/*
+		 * A different roster or a clock that went backwards is a DIFFERENT GAME, and the picture
+		 * belongs to the game it was taken in as much as the memory does. The daemon's own 5s poll
+		 * calls this whether or not the page is beating, so this is the earliest of the three
+		 * boundaries to notice a new game — and the one that notices it when the page was closed.
+		 */
+		resetFrameState()
+	}
+	coachMemory = observe(coachMemory, data, gameTimeSec)
+}
+
+/**
+ * Everything the socket is told ONCE, at setup: the mode's standing rules, the champion knowledge,
+ * and how to say the names.
+ *
+ * ## The bug this function exists to close
+ *
+ * `renderPronunciationGuide` was written, documented, unit-tested — and called from nothing but
+ * `scripts/measure-speech.ts`. The block had stopped rendering the guide on purpose (it produced
+ * "BRY-er is still at 0 CS" out loud; see `shared/pronounce.ts`), the system instruction never
+ * started, and the feature shipped DEAD in between. Measured on game 5639406342, the first full
+ * paired stream this app has: **zero of 715 ground-truth blocks carried a pronunciation section**,
+ * so the audio model free-styled every champion name for 28 minutes and the player graded the
+ * result "a total disaster".
+ *
+ * A pure unit test could never have caught that, because every pure unit passed. So the guide is
+ * composed HERE, one line from the route that mints the token, and the test asserts on this
+ * function's output for a roster read off a real recorded sample: the thing under test is the
+ * payload, not the renderer.
+ *
+ * ## Why the socket, and not the brief
+ *
+ * The guide is static for a whole game — the roster is fixed at champ select — and the per-turn
+ * brief is rebuilt every few seconds. A hundred rows in the system instruction is about 1.2k
+ * tokens paid ONCE per socket; the same rows in the brief would be 1.2k tokens times ~85 turns, to
+ * fix at most ten names. It is also the only home that has ever been safe: the brief is CONTENT,
+ * every other line in it is a fact the coach may speak, and a line shaped like data gets spoken.
+ *
+ * ## The whole table, not the roster's slice
+ *
+ * `pronunciationsFor` filters to a roster and is right to, for anything built per turn. This is
+ * minted at CHAMP SELECT, where the live client reports no champions at all, so filtering here
+ * would produce an empty guide in exactly the moment the socket opens — a guide that never runs.
+ *
+ * ## Every mode, and the old arms are still byte-identical
+ *
+ * How a name SOUNDS is orthogonal to which architecture decides what to say, so the guide rides on
+ * all three modes. The measured arms are unaffected: `scripts/ablate-autonomy.ts` and the benches
+ * build their prompts from `liveCoachSystemPrompt` directly, and that function's output for
+ * `fenced` and `cite-or-quiet` is unchanged to the byte — this composition happens one level up,
+ * in the thing the live socket is handed.
+ */
+export const socketSystemPrompt = (opts: {
+	mode: LiveCoachMode
+	championKnowledge: string
+	/** Defaults to the shipped `knowledge/pronunciations.md`; passed in only by tests and benches. */
+	pronunciations?: readonly Pronunciation[]
+}): string => {
+	const guide = renderPronunciationGuide(opts.pronunciations ?? pronunciationTable())
+	const prompt = liveCoachSystemPrompt({
+		mode: opts.mode,
+		championKnowledge: opts.championKnowledge
+	})
+	return guide === "" ? prompt : `${prompt}\n\n${guide}`
 }
 
 export const createLiveRoute = (): Hono => {
@@ -1108,7 +1842,36 @@ export const createLiveRoute = (): Hono => {
 
 		const result = await writeFrame({
 			jpeg: Buffer.from(b64, "base64"),
-			truth: typeof body?.truth === "string" ? body.truth : null
+			truth: typeof body?.truth === "string" ? body.truth : null,
+			/*
+			 * THE MINIMAP, READ ON THIS BEAT INSTEAD OF IN FRONT OF A TURN.
+			 *
+			 * Measured, position SUPPLY was the binding constraint on the live coach, not how long a
+			 * read may be carried: a read was only ever taken in front of a coaching turn, a
+			 * reactive turn skips it because it is racing, and 42% of the event-driven turns on the
+			 * graded run of game 5639406342 were reactive. The median reactive turn therefore sat
+			 * 136 seconds from the last accepted read — past `CARRY_MAX_SEC`, so the brief said
+			 * nothing about where he was on exactly the turns where where-he-is decides the
+			 * sentence.
+			 *
+			 * This beat is five seconds and it runs whether or not a turn is being taken, so nearly
+			 * every turn now has a read inside `FRAME_FRESH_SEC` instead of one past the knee.
+			 *
+			 * `offerFrame` returns synchronously and never throws. The model call is detached: a
+			 * slow read, a failed read or a missing `ffmpeg` costs a POSITION and never a line, and
+			 * never the journal write either — the frame is already on disk by the time this runs.
+			 *
+			 * The truth is built from the poll that STAMPED this frame, not from `lastTruth`. Who is
+			 * dead and how many are alive change inside five seconds, and the fence is the one thing
+			 * about this read that is not allowed to get looser.
+			 */
+			onStored: stored =>
+				offerMinimapFrame({
+					framePath: stored.framePath,
+					tSec: stored.tSec,
+					sessionId: stored.sessionId,
+					truth: truthFromRaw(stored.raw)
+				})
 		})
 		// 200 either way: a refused frame is a normal outcome (no game, practice tool), not an
 		// error the page should surface as broken.
@@ -1117,6 +1880,58 @@ export const createLiveRoute = (): Hono => {
 
 	/** `GET /api/live/journal` — is the journal actually recording? A number, not a claim. */
 	app.get("/live/journal", c => c.json(openSessionStatus()))
+
+	/**
+	 * `GET /api/live/minimap-watch` — the position track, and what it cost to get.
+	 *
+	 * Counters and a track, no claims. The counters are here because every one of them is a way the
+	 * watcher can be silently doing nothing — disabled, backing off after a 429, dropping every
+	 * frame because a read is wedged in flight — and a reader that is off looks exactly like a
+	 * reader that is refusing, which is the failure mode replay capture lived in for its whole life.
+	 *
+	 * The TRACK is the history, oldest first, which is more than the freshest read: two reads ten
+	 * seconds apart say which way he is moving and neither one alone does. It is deliberately not in
+	 * any coaching payload — see the report — because a direction is a new fact and a new fact
+	 * belongs in `buildFacts` behind its own measurement, not smuggled in through a status route.
+	 */
+	app.get("/live/minimap-watch", c => {
+		drainMinimapReads()
+		return c.json({
+			...minimapWatchStatus(),
+			track: minimapTrack().map(t => ({
+				tSec: Math.round(t.atSec * 10) / 10,
+				where: t.read.you === null ? null : coarseOf(t.read.you),
+				zone: t.read.you,
+				ms: t.ms
+			}))
+		})
+	})
+
+	/**
+	 * `GET /api/live/tick` — the raw feed, projected, so the browser can decide WHEN to ask.
+	 *
+	 * The event-driven coach (`analysis/live-events.ts`) has to see the feed move before it can ask
+	 * a question about it, and the browser holds the socket. Everything it needs is already in the
+	 * one `allgamedata` poll this daemon makes anyway, so this hands back a projection of it and
+	 * nothing else.
+	 *
+	 * DELIBERATELY STATELESS, and that is the whole reason it is a separate route rather than a
+	 * flag on `/live/ground-truth`. That one CONSUMES state on every call: it advances the delta's
+	 * baseline, increments the turn sequence, and caches the fence's `lastTruth`. Polling it every
+	 * couple of seconds to look for a death would mean the next real turn's delta covered two
+	 * seconds instead of the ninety since the coach last spoke — the changes would be absorbed by
+	 * a poll that produced no turn, which is the same class of bug as an announce-once fact
+	 * consumed to build a turn that is then dropped. This route touches none of it.
+	 *
+	 * It is also why the minimap read is NOT taken here: it costs 1.3-3.0s and a model call, and
+	 * it is only worth paying in front of a turn that is actually going to be sent. The browser
+	 * pays it after the decision, and only for events whose value does not decay in seconds.
+	 */
+	app.get("/live/tick", async c => {
+		const handle = await lcu()
+		const data = handle ? await handle.live.allGameData().catch(() => null) : null
+		return c.json({ tick: projectTick(data) })
+	})
 
 	/**
 	 * `POST /api/live/frame-read` — one reading of the minimap, from whoever took it.
@@ -1168,6 +1983,16 @@ export const createLiveRoute = (): Hono => {
 		 * unfenced read is precisely the thing this design refuses to hold.
 		 */
 		if (!cached) return c.json({ accepted: false, reason: "no-truth" })
+		/*
+		 * THE PICTURE'S OWN CLOCK, taken HERE — before the model call, not after it.
+		 *
+		 * The browser grabs the crop and posts it in the same breath, so the request arriving is
+		 * within milliseconds of the shutter; `readMinimap` then costs a measured 1.3-3.0 seconds,
+		 * and stamping on the way out would age the picture by the reader's own latency and spend a
+		 * third of `FRAME_FRESH_SEC` on the act of looking. The stamp is when it was TAKEN, which is
+		 * what `FrameObservation.atSec` says it is and what the freshness rule downstream assumes.
+		 */
+		const takenAtSec = frameClockSec(cached, Date.now())
 		const ctx = {
 			myChampion: cached.truth.myChampion,
 			enemyChampions: cached.truth.enemyChampions
@@ -1191,9 +2016,52 @@ export const createLiveRoute = (): Hono => {
 		if (typeof body?.crop === "string" && body.crop !== "") {
 			const b64 = body.crop.replace(/^data:image\/\w+;base64,/, "")
 			if (b64.length > 4_000_000) return c.json({ accepted: false, reason: "crop-too-big" })
+			/*
+			 * THE READ THE DAEMON ALREADY HAS, served without a model call.
+			 *
+			 * This route is awaited by the browser in front of a coaching turn, so `readMinimap`'s
+			 * measured p50 of 1,239ms (p99 2,615ms, over 101 reads on game 5639406342) is p50 1.2
+			 * SECONDS ON THE CRITICAL PATH OF EVERY PROACTIVE TURN. The daemon now reads the
+			 * minimap on the journal's own five-second beat, so by the time a turn asks there is
+			 * almost always a read of a picture taken within a beat of this one — the same reader,
+			 * the same crop rectangle, the same fence, from a frame seconds older at worst.
+			 *
+			 * So the model call is skipped when the watcher's freshest accepted read is inside
+			 * `FRAME_FRESH_SEC` of the crop's own stamp. That is the same window `buildFacts` uses
+			 * to decide a read is a statement about the PRESENT, which is what this turn wanted one
+			 * for: a read it would have accepted as current is not worth 1.2 seconds and a second
+			 * charge to take again.
+			 *
+			 * IT FALLS THROUGH RATHER THAN REFUSING when there is no such read — the watcher is off,
+			 * `ffmpeg` is missing, it is backing off a 429, or the last few reads were fenced. The
+			 * old path is then exactly the old path, which is what keeps a script or a probe posting
+			 * a crop working unchanged and keeps this route honest when the cheap answer is absent.
+			 */
+			drainMinimapReads()
+			const watched = latestMinimapRead()
+			/*
+			 * `frameRead` and not a fresh `observationFrom`, because the drain one line up has
+			 * ALREADY landed this read through every rule there is — including the doubt test
+			 * against the read before it, which would come out `medium` every time if it were
+			 * re-run here against a `lastFrameSide` this same read had just written.
+			 */
+			if (
+				watched !== null &&
+				frameRead !== null &&
+				Math.abs(takenAtSec - watched.atSec) <= FRAME_FRESH_SEC
+			)
+				return c.json({
+					accepted: true,
+					where: frameRead.where,
+					confidence: frameRead.confidence,
+					ms: 0,
+					source: "watch",
+					ageSec: Math.round((takenAtSec - watched.atSec) * 10) / 10
+				})
 			const out = await readMinimap({ jpegBase64: b64, truth: cached.truth })
 			if (!out.read) {
 				frameRead = null
+				frameZone = null
 				return c.json({
 					accepted: false,
 					reason: out.reason,
@@ -1201,9 +2069,8 @@ export const createLiveRoute = (): Hono => {
 					...(out.faults ? { faults: out.faults.map(f => `${f.code} (${f.detail})`) } : {})
 				})
 			}
-			const seen = observationFrom(out.read, lastFrameSide, cached.atSec)
-			lastFrameSide = { where: seen.where, atSec: seen.atSec }
-			frameRead = seen
+			const seen = observationFrom(out.read, lastFrameSide, takenAtSec)
+			landRead(seen, zoneSideOf(out.read), out.xy)
 			return c.json({ accepted: true, where: seen.where, confidence: seen.confidence, ms: out.ms })
 		}
 		// The coordinate form first, because it measured best. `RawFrameReadXY` refuses the
@@ -1212,20 +2079,21 @@ export const createLiveRoute = (): Hono => {
 		const parsed = xy.read ? { read: asFrameRead(xy.read), rejected: null } : parseFrameRead(body?.read ?? null, ctx)
 		if (!parsed.read) {
 			frameRead = null
+			frameZone = null
 			return c.json({ accepted: false, reason: parsed.rejected ?? "schema" })
 		}
 		const faults = frameReadFaults(parsed.read, cached.truth)
 		if (faults.length > 0) {
 			frameRead = null
+			frameZone = null
 			return c.json({
 				accepted: false,
 				reason: "fenced",
 				faults: faults.map(f => `${f.code} (${f.detail})`)
 			})
 		}
-		const observation = observationFrom(parsed.read, lastFrameSide, cached.atSec)
-		lastFrameSide = { where: observation.where, atSec: observation.atSec }
-		frameRead = observation
+		const observation = observationFrom(parsed.read, lastFrameSide, takenAtSec)
+		landRead(observation, zoneSideOf(parsed.read), xy.read)
 		return c.json({ accepted: true, where: observation.where, confidence: observation.confidence })
 	})
 
@@ -1237,6 +2105,15 @@ export const createLiveRoute = (): Hono => {
 	 * keeps exactly one definition of "what is true" for both coaching paths.
 	 */
 	app.get("/live/ground-truth", async c => {
+		/*
+		 * LAND WHAT THE WATCHER READ SINCE THE LAST TURN, before anything is built from it.
+		 *
+		 * Every consumer below — `buildLiveState`'s `frame`, the brief's `where` and `at` — reads
+		 * `frameRead` or `carriedRead`, and those are only as current as the last drain. Draining
+		 * here rather than inside each branch is one call before all of them, which is also why it
+		 * is above the `trusted` early return that has swallowed three other things.
+		 */
+		drainMinimapReads()
 		const handle = await lcu()
 		const data = handle ? await handle.live.allGameData().catch(() => null) : null
 		const me = data ? findMe(data) : null
@@ -1247,8 +2124,218 @@ export const createLiveRoute = (): Hono => {
 		 * identical to what this call just fetched. `sampleLive` rate-limits itself on the game
 		 * clock, so calling it every turn costs one comparison.
 		 */
+		const mode = getSettings().liveCoachMode
+		/*
+		 * Under `trusted` the coach is handed the FULL brief instead of the ranked block.
+		 *
+		 * Not a render option on the same state: `buildLiveState` throws away everything the ranker
+		 * did not need — mana, per-player items, the event log's ages — and those are the four holes
+		 * that produced the false lines. So the brief reads the raw payload again, and the delta
+		 * section compares it against the previous poll.
+		 */
+		if (mode === "trusted") {
+			const nowSec = data?.gameData?.gameTime ?? null
+			/*
+			 * Out of game: forget the sequence, the delta's baseline AND the coach's memory.
+			 *
+			 * `buildLiveState` does this for every other mode — and `trusted` returns above it, so
+			 * for the whole of this mode's life nothing was reset between games. `previousSample`
+			 * therefore carried game N-1's final roster into game N's first delta, and the memory
+			 * would have carried game N-1's advice into game N's first sentence. Same class of bug
+			 * as a socket spanning two games, which is the one this app's design exists to fight.
+			 */
+			if (!data || nowSec === null) {
+				turnSeq = null
+				previousSample = null
+				coachMemory = newMemory()
+				memoryRoster = null
+				servedTurns.clear()
+				/*
+				 * And the picture, which this branch forgot. `buildLiveState` does it for the other
+				 * modes and `trusted` returns above that, so the frame state was never cleared in
+				 * the shipped app at all — see `resetFrameState`.
+				 */
+				resetFrameState()
+				return c.json({ inGame: false, text: "", gameTimeSec: null })
+			}
+			const roster = rosterKey(data)
+			/*
+			 * THREE ways a payload has to be the full brief again, and they are different questions.
+			 *
+			 * - a NEW SEQUENCE — no turns sent yet, the roster changed, or the clock went backwards.
+			 *   This is the first turn of a game and the only turn on which a roster table earns its
+			 *   tokens, because it is the only turn on which the thread does not already hold one.
+			 * - the PAGE ASKED. Only the browser knows its socket is new: a reconnect gives Gemini a
+			 *   fresh thread holding nothing, and the daemon cannot see that from here. It also asks
+			 *   again when a payload never left the page, because a brief the model never received
+			 *   is a brief that was not sent.
+			 * - STALENESS. See `RESYNC_AFTER_SEC`.
+			 */
+			const newSequence =
+				turnSeq === null || turnSeq.roster !== roster || nowSec < turnSeq.lastAtSec
+			/*
+			 * The delta's baseline resets with the sequence; the MEMORY does not.
+			 *
+			 * `observeLiveSample` owns the memory's lifecycle now, and the daemon's own 5s poll
+			 * feeds it whether or not this page is beating. Wiping it here would throw away every
+			 * sample taken before the first turn — which is most of a game when the page was
+			 * opened late, and is the whole reason the poll feeds it at all.
+			 */
+			if (newSequence) previousSample = null
+			const full =
+				newSequence ||
+				c.req.query("resync") === "1" ||
+				nowSec - turnSeq!.lastAtSec > RESYNC_AFTER_SEC
+			/*
+			 * The frame read, which under this mode was COMPUTED AND THROWN AWAY twice over: once
+			 * because `trusted` returned before anything read it, and then because every read it did
+			 * store was stamped a whole turn late (see `lastTruth`). It goes into the brief's
+			 * situation line, worded as a read of a picture. `pictureLine` owns every rule about
+			 * whether there is a sentence at all.
+			 */
+			/*
+			 * THE CARRIED READ, not this turn's — see `carriedRead`. A reactive turn skips the
+			 * 1.3-3.0s minimap call because it is racing, and 42% of the event-driven turns on the
+			 * graded run were reactive, so the brief was handed nothing on exactly the turns where
+			 * where-he-is decides the sentence. `pictureLine` ages it and picks the tense.
+			 */
+			const where = pictureLine(carriedRead, nowSec)
+			// The same read as DATA, so `prospectHead` can join it to the objective clocks instead
+			// of printing "no usable position". Same gate as `where` — see `pictureFix`.
+			const at = pictureFix(carriedRead, carriedZone, nowSec, myTeamId(data))
+			/*
+			 * HOW FAR EACH PIT IS, IN SECONDS — the third input of the unit of value, and the one
+			 * no HUD shows him. `buildReach` decides whether the read is still fresh enough to
+			 * bound anything; a null carry is not a missing input, because a DEAD player's origin
+			 * is his own fountain and that answer is exact.
+			 */
+			const reach = reachFromLive({ raw: data, nowSec, read: carriedPct })
+			/*
+			 * THE FENCE, cached here too, or the minimap read is structurally dead in this mode.
+			 *
+			 * `POST /api/live/frame-read` refuses everything unless `lastTruth` is set, and
+			 * `lastTruth` was assigned in exactly one place: inside `buildLiveState`, which this
+			 * branch returns above. So under `trusted` no read was ever accepted, `frameRead`
+			 * stayed null forever, and `where` was null on every turn — while `ScreenCoach` went
+			 * on uploading a 17 KB minimap crop every beat to be refused. That is the one
+			 * mechanism in the app aimed at the failure the owner actually named: at 1:37 the
+			 * coach said "Center your W on the red buff" about a man standing on a topside camp.
+			 *
+			 * Narrowed straight off the raw payload rather than by building a `VisionState` for
+			 * its side effect: `FrameTruth` is five fields and this mode has no use for the rest.
+			 * Same five facts, same fence, so `frameReadFaults` behaves identically in every mode.
+			 */
+			lastTruth = { truth: truthFromRaw(data), atSec: nowSec, atMs: Date.now() }
+			const built =
+				full ?
+					buildBrief({
+						raw: data,
+						gameTimeSec: nowSec,
+						previous: previousSample,
+						baseline: cachedBaseline(),
+						where,
+						at,
+						reach,
+						/*
+						 * How old the counterpart's row is. `cpSeen` has been computed on every
+						 * `observe` since `coach-memory.ts` was written and nothing ever read it
+						 * into a payload, so every turn of every game told the coach his level was
+						 * current. See `cpSeenAt` for the line that fact produced at 2:06.
+						 */
+						counterpartSeenSec: cpSeenAt(coachMemory),
+						/*
+						 * And when this memory STARTED watching, because a null age above has two
+						 * opposite meanings. Without it `counterpartClause` reported the game clock
+						 * as the age of its own ignorance — "his row has NEVER moved in 7m23s" after
+						 * 43 seconds of watching, on a replay with the memory started at 400s.
+						 */
+						counterpartWatchedFromSec: coachMemory.observedFrom,
+						/*
+						 * The memory rides on this path too. A resync happens because the thread is
+						 * EMPTY — a reconnect, a gap, a dropped send — which is an argument for
+						 * more history, not less. The two `brief` turns of the stored run were the
+						 * only two payloads with no record of what had already been said, and one
+						 * of them was mid-game at 5:22 with six lines already spoken.
+						 */
+						said: renderSaidWithin(coachMemory, nowSec, SAID_BUDGET).split("\n").slice(1),
+						narrative: memoryNarrative(nowSec),
+						/*
+						 * The feed notes are dropped from the payload, not moved: every bullet of
+						 * that 1,190-character block is already in `TRUSTED_PROMPT`, which rides
+						 * once in the socket's system instruction. Sending it again every turn was
+						 * 26% of a payload spent restating the standing instructions.
+						 */
+						feedNotes: false
+					})
+				:	buildDelta({
+						raw: data,
+						gameTimeSec: nowSec,
+						previous: previousSample,
+						baseline: cachedBaseline(),
+						where,
+						at,
+						reach,
+						counterpartSeenSec: cpSeenAt(coachMemory),
+						/*
+						 * And when this memory STARTED watching, because a null age above has two
+						 * opposite meanings. Without it `counterpartClause` reported the game clock
+						 * as the age of its own ignorance — "his row has NEVER moved in 7m23s" after
+						 * 43 seconds of watching, on a replay with the memory started at 400s.
+						 */
+						counterpartWatchedFromSec: coachMemory.observedFrom,
+						/*
+						 * What the coach already said, and what the feed did next.
+						 *
+						 * Rendered to plain lines at this boundary because `shared/` may not import
+						 * `analysis/` — the brief prints a section, it does not own a memory. The
+						 * heading is dropped because `saidBlock` writes its own; keeping both would
+						 * put the same title on the section twice.
+						 */
+						said: renderSaidWithin(coachMemory, nowSec, SAID_BUDGET).split("\n").slice(1),
+						/*
+						 * THE GAME SO FAR — the half of the memory the owner actually asked for.
+						 *
+						 * `renderNarrative` was written, tested and never called: the delta's only
+						 * history was `newEventsBlock`, one inter-turn gap, so a kill left the
+						 * thread forever the moment the client's own `events.Events` stopped
+						 * carrying it. At 6:42 of the stored run the payload held three events from
+						 * the last 37 seconds and the Hextech drake taken at 6:04 was already gone.
+						 */
+						narrative: memoryNarrative(nowSec)
+					})
+			previousSample = { raw: data, gameTimeSec: nowSec }
+			if (!built) return c.json({ inGame: false, text: "", gameTimeSec: nowSec })
+			if (newSequence) servedTurns.clear()
+			turnSeq = {
+				turns: (newSequence ? 0 : turnSeq!.turns) + 1,
+				lastAtSec: nowSec,
+				roster,
+				servedAtMs: Date.now()
+			}
+			servedTurns.set(turnSeq.turns, { servedAtMs: turnSeq.servedAtMs, gameTimeSec: nowSec })
+			for (const k of servedTurns.keys())
+				if (k <= turnSeq.turns - SERVED_TURNS_KEEP) servedTurns.delete(k)
+			/*
+			 * `gameTimeSec` rides with the block so the browser can stamp the transcript with it.
+			 * All 154 stored transcript rows have a null clock because the page never had one to
+			 * send — it holds a socket and a screenshot, and the game clock only ever existed on
+			 * this side of the wire.
+			 */
+			return c.json({
+				inGame: true,
+				text: built.text,
+				gameTimeSec: nowSec,
+				full,
+				turn: turnSeq.turns
+			})
+		}
 		const state = buildLiveState(data, me, data?.gameData?.gameTime ?? null, cachedBaseline())
-		if (!state) return c.json({ inGame: false, text: "" })
+		/*
+		 * The two older modes keep their path byte for byte; `gameTimeSec` is the one addition, and
+		 * it changes nothing they send the model. It is metadata beside the block, so the browser
+		 * can stamp its transcript rows with a clock in every mode rather than only in `trusted`.
+		 */
+		if (!state) return c.json({ inGame: false, text: "", gameTimeSec: null })
 		const focus = cachedFocus().map(f => f.fix).filter(f => f !== "")
 		/*
 		 * The focus list is appended OUTSIDE the ground-truth block and labelled as coming from
@@ -1267,7 +2354,8 @@ export const createLiveRoute = (): Hono => {
 		 */
 		return c.json({
 			inGame: true,
-			text: `${renderBlockForMode(state, getSettings().liveCoachMode)}${
+			gameTimeSec: data?.gameData?.gameTime ?? null,
+			text: `${renderBlockForMode(state, mode)}${
 				focus.length > 0 ?
 					`\n\n## From his PAST reviews — not from this game\n\nThese are habits he is working on. Mention one only if THIS game's facts show it happening again.\n\n${focus
 						.map(f => `- ${f}`)
@@ -1304,13 +2392,35 @@ export const createLiveRoute = (): Hono => {
 		 * in the one place where failing means connecting with no prompt at all.
 		 */
 		const champion = await lockedChampion()
+		const mode = getSettings().liveCoachMode
+		const counterpart = await lockedCounterpart()
+		/*
+		 * Under `trusted` the socket's ONE-TIME system instruction carries the whole of the champion
+		 * knowledge — his champion, the enemy jungler's, and the role's — unparsed and with its
+		 * numbers intact. That is the point of biasing to Gemini Live: static context rides once at
+		 * setup and costs nothing per turn, so the per-turn payload stays the brief and the frame.
+		 *
+		 * The older modes keep `liveChampionKnowledge`, which is the digit-free clause list their
+		 * own measurements were taken against. Byte-identical, deliberately.
+		 */
 		return c.json({
 			ok: true,
 			...minted.value,
-			systemPrompt: liveCoachSystemPrompt({
-				mode: getSettings().liveCoachMode,
-				championKnowledge: liveChampionKnowledge(champion)
+			/*
+			 * `socketSystemPrompt`, not `liveCoachSystemPrompt`: the say-it-like-this guide rides
+			 * with the standing rules. This call is the whole fix for the pronunciations — the
+			 * renderer had existed and been tested for weeks with no caller, so the guide reached
+			 * the socket in zero of 715 turns of the one game he graded.
+			 */
+			systemPrompt: socketSystemPrompt({
+				mode,
+				championKnowledge:
+					mode === "trusted" ?
+						fullKnowledge({ champion, counterpart })
+					:	liveChampionKnowledge(champion)
 			}),
+			mode,
+			counterpart,
 			// Echoed so a transcript can say which champion's knowledge the session was opened on.
 			champion
 		})
@@ -1331,10 +2441,12 @@ export const createLiveRoute = (): Hono => {
 			fromUser?: unknown
 			gameTimeSec?: unknown
 			groundTruth?: unknown
+			/** The `turn` number the block this line answers was served with. See `servedTurns`. */
+			turn?: unknown
 		} | null
 		if (typeof body?.text !== "string" || body.text.trim() === "")
 			return fail(c, 400, "text is required", "bad-line")
-		const stored = appendTranscript({
+		const line = {
 			atMs: Date.now(),
 			text: body.text.slice(0, 2000),
 			fromUser: body.fromUser === true,
@@ -1342,7 +2454,70 @@ export const createLiveRoute = (): Hono => {
 			...(typeof body.groundTruth === "string" && body.groundTruth !== "" ?
 				{ groundTruth: body.groundTruth.slice(0, 8000) }
 			:	{})
-		})
+		}
+		const stored = appendTranscript(line)
+		/*
+		 * INTO THE MEMORY, and before the write is checked.
+		 *
+		 * This is the route every spoken line already came through, so it is the only place the
+		 * coach's own words exist on this side of the wire. Feeding it here is what makes "you are
+		 * STILL low on mana" expressible at all: nothing anywhere recorded what had been said, so
+		 * the coach repeated itself — the CS lead was cited on six consecutive turns of one graded
+		 * run and never once became a decision.
+		 *
+		 * Before the `stored` check on purpose. A failed disk write costs the audit trail, which is
+		 * recoverable; letting it also cost the next turn's memory would make one failure two.
+		 *
+		 * The stored row keeps whatever clock the browser sent — including null, which is the honest
+		 * record of an older page that had none. The MEMORY gets this route's own last sampled clock
+		 * as a fallback, because a line with no time cannot be placed in a sequence, and the ground
+		 * truth this line answers was polled seconds ago.
+		 */
+		/*
+		 * The turn this line ANSWERS, not the most recent one served.
+		 *
+		 * `turnSeq.servedAtMs` is overwritten on every ground-truth call, so when a reply arrives
+		 * after the next turn has already gone out — the normal case for the turn-based providers
+		 * the comment below cites, at 7.9s and 20.5s p50 against a ~25s turn interval — the
+		 * latency was the age of an UNRELATED payload and was understated by a whole turn. Every
+		 * follow-through window built from it opened that much early. The browser now echoes the
+		 * `turn` number it was served with, and this looks that turn up; a page that sends none
+		 * falls back to the old behaviour rather than failing.
+		 */
+		const answered =
+			typeof body?.turn === "number" ? servedTurns.get(body.turn) ?? null : null
+		const atSec = line.gameTimeSec ?? answered?.gameTimeSec ?? turnSeq?.lastAtSec ?? null
+		/*
+		 * HIS lines are not the coach's memory of what it said.
+		 *
+		 * `noteSaid` is the log of advice, and a question the player typed is not advice — counting
+		 * it would make "you already said this" refer to sentences the coach never spoke.
+		 */
+		/*
+		 * TRUSTED ONLY. The memory is reset inside the trusted branch of `/live/ground-truth` and
+		 * nowhere else, but this route had no mode check — so under `cite-or-quiet` or `fenced`
+		 * the utterance log accumulated across games and across the whole daemon lifetime, and
+		 * since `observe` never runs in those modes `closeWindows` never fired and every entry
+		 * stayed open forever. Inert today only because nothing reads the memory outside trusted,
+		 * which is a reason to close it now rather than a reason to leave it.
+		 */
+		if (!line.fromUser && atSec !== null && getSettings().liveCoachMode === "trusted")
+			coachMemory = noteSaid(
+				coachMemory,
+				line.text,
+				atSec,
+				/*
+				 * The latency is MEASURED, not assumed: wall clock from serving the block this line
+				 * answers to the line coming back. That is the whole of the delay the player
+				 * experiences — the model's thinking, the socket, and the daemon's own hop — and it
+				 * is what makes `endSec` the moment the advice landed rather than the moment it was
+				 * thought. The two shapes differ by seconds here (a socket p50 of 790ms against a
+				 * turn-based several), so a constant would have been wrong for one of them.
+				 */
+				answered !== null ? (Date.now() - answered.servedAtMs) / 1000
+				: turnSeq === null ? 0
+				: (Date.now() - turnSeq.servedAtMs) / 1000
+			)
 		/*
 		 * The truth about the write, not a reflex `{ok: true}`.
 		 *
@@ -1421,7 +2596,8 @@ export const createLiveRoute = (): Hono => {
 			...(frame ? { frameJpegBase64: frame } : {}),
 			blockText: body.block,
 			mode: getSettings().liveCoachMode,
-			champion: await lockedChampion()
+			champion: await lockedChampion(),
+			counterpart: await lockedCounterpart()
 		})
 		return c.json(r)
 	})

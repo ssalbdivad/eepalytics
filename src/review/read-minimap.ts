@@ -53,7 +53,7 @@ import {
 	frameReadSchemaXY,
 	parseFrameReadXY
 } from "./frame-read.ts"
-import type { FrameRead, FrameReadFault, FrameTruth } from "./frame-read.ts"
+import type { FrameRead, FrameReadFault, FrameReadXY, FrameTruth } from "./frame-read.ts"
 
 /**
  * The fast model, and the reason it is the fast one.
@@ -67,16 +67,47 @@ export const MINIMAP_MODEL = "gemini-3.1-flash-lite"
 /**
  * Long enough for a slow read, short enough that it cannot outlive the turn it belongs to.
  *
- * This read sits IN FRONT of a coaching turn — `FRAME_FRESH_SEC` is ten seconds and turns are
- * twenty apart, so a fire-and-forget read would always land outside the window it is needed in.
- * Measured reads are 1.3-2.0s on the fast model, so three seconds is a ceiling that catches a
- * hang without making the coach wait on one.
+ * This read sits IN FRONT of a coaching turn and is AWAITED there, so its latency is the turn's
+ * latency. Both halves of that are deliberate: the observation has to describe the picture THIS
+ * turn is about, and un-awaited it describes the previous beat's.
+ *
+ * MEASURED over a whole game, which the earlier "1.3-2.0s on the fast model" estimate was not:
+ * 101 reads through this exact call on game 5639406342 (`data/eval/minimap-track/js-mtvxb5f4-f81a.json`,
+ * `ms` on every entry) —
+ *
+ *     min 908ms   p50 1,239ms   p90 1,583ms   p99 2,615ms   max 2,727ms   over the cap: 0 of 101
+ *
+ * So three seconds is a ceiling that has never once fired on real frames and still catches a hang.
+ * Against the shipped `trusted` beat of six seconds that is 21% of the interval at p50 and 45% at
+ * the worst read seen; against the ranked modes' twenty it is 6%. Those reads were offline and
+ * uncontended, which is the direction that flatters them — a game is running on the same machine.
  */
 export const MINIMAP_TIMEOUT_MS = 3000
 
+/**
+ * `raw` is the model's own JSON, carried on every outcome including the refused ones.
+ *
+ * Additive, and it exists for the OFFLINE callers rather than for the live path, which ignores it.
+ * A read costs a model call; a re-score costs nothing if the answer was kept, so a harness that
+ * stores `raw` can re-run `parseFrameReadXY` and `frameReadFaults` against a changed parser, a
+ * changed fence or a changed zone map without asking the model about the same picture twice. It is
+ * also the only way a FENCED read survives at all — `readMinimap` throws those away whole, which is
+ * right for a sentence and wrong for a measurement of how often the fence fires and on what.
+ *
+ * Nothing here is a fact. `raw` is unparsed model output and must go through the parser and the
+ * fence before any of it means anything.
+ */
 export type MinimapOutcome =
-	| { read: FrameRead; faults: null; ms: number }
-	| { read: null; faults: FrameReadFault[] | null; reason: string; ms: number }
+	/**
+	 * `xy` is the SAME read, before `asFrameRead` collapsed the points into zone labels.
+	 *
+	 * Additive, and it exists because a zone cannot be subtracted from a pit. `analysis/reachability.ts`
+	 * needs a POINT to measure a distance from, and the only point in the pipeline was being thrown
+	 * away one line after it was parsed — which is why the reachability arithmetic sat built,
+	 * tested and uncallable. Nothing already reading `read` sees any change.
+	 */
+	| { read: FrameRead; xy: FrameReadXY; faults: null; ms: number; raw?: unknown }
+	| { read: null; faults: FrameReadFault[] | null; reason: string; ms: number; raw?: unknown }
 
 /**
  * Read one minimap crop.
@@ -149,7 +180,7 @@ export const readMinimap = async (input: {
 		try {
 			raw = JSON.parse(text)
 		} catch {
-			return { read: null, faults: null, reason: "not-json", ms: ms() }
+			return { read: null, faults: null, reason: "not-json", ms: ms(), raw: text }
 		}
 
 		const parsed = parseFrameReadXY(raw, {
@@ -157,7 +188,7 @@ export const readMinimap = async (input: {
 			enemyChampions: input.truth.enemyChampions
 		})
 		if (!parsed.read)
-			return { read: null, faults: null, reason: parsed.rejected ?? "schema", ms: ms() }
+			return { read: null, faults: null, reason: parsed.rejected ?? "schema", ms: ms(), raw }
 
 		const read = asFrameRead(parsed.read)
 		/*
@@ -168,9 +199,9 @@ export const readMinimap = async (input: {
 		 * dropped WHOLE rather than repaired.
 		 */
 		const faults = frameReadFaults(read, input.truth)
-		if (faults.length > 0) return { read: null, faults, reason: "fenced", ms: ms() }
+		if (faults.length > 0) return { read: null, faults, reason: "fenced", ms: ms(), raw }
 
-		return { read, faults: null, ms: ms() }
+		return { read, xy: parsed.read, faults: null, ms: ms(), raw }
 	} catch (err) {
 		const aborted = err instanceof Error && err.name === "AbortError"
 		return { read: null, faults: null, reason: aborted ? "timeout" : "error", ms: ms() }
