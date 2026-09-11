@@ -1,0 +1,106 @@
+{
+  "game": 5639406342,
+  "variant": "terse-facts",
+  "turns": [
+    {
+      "clock": "4:20",
+      "tSec": 260,
+      "chars": 373,
+      "dropped": [],
+      "payload": "4:21\nYOU Lillia L4 100%hp 100%mana 259g 1/0/2 20cs — blue-side base, moving, read 9s ago\nHIM Kayn L4 alive 1/1/0 — just bought Long Sword, Long Sword\nDOWN Yone 11s (yours)\nJUST 4:20 (1s ago) Kayn killed Yone\nNEXT Drake in 39s, 15-32s walk floor, 7s spare · Voidgrubs in 219s · Rift Herald in 639s · Baron in 939s\nRINGS (unidentified enemy dots) top lane, mid lane, bot lane",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-2619.jpg",
+      "text": "Kayn just showed mid killing Yone, so clear your bot camps on the way down to set up for drake in thirty-nine seconds.",
+      "latencyMs": 4116
+    },
+    {
+      "clock": "6:04",
+      "tSec": 364,
+      "chars": 284,
+      "dropped": [],
+      "payload": "6:04\nYOU Lillia L5 100%hp 85%mana 879g 1/0/2 40cs — blue-side jungle (bot), moving, read 22s ago\nHIM Kayn L4 alive 1/1/0\nNEXT Drake up 64s, 0-29s walk floor · Voidgrubs in 116s, 2-46s walk floor, 69s spare · Rift Herald in 536s · Baron in 836s\nRINGS (unidentified enemy dots) mid lane",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-3621.jpg",
+      "text": "Take one camp to hit level six and buy your items, then back so you're locked in for dragon in a minute.",
+      "latencyMs": 4478
+    },
+    {
+      "clock": "7:23",
+      "tSec": 443,
+      "chars": 298,
+      "dropped": [],
+      "payload": "7:23\nYOU Lillia L6 100%hp 76%mana 1304g 1/0/2 50cs — river (top), moving, read 1s ago\nHIM Kayn L5 alive 1/1/0\nJUST 7:19 (4s ago) Kayn took Mountain drake\nNEXT Drake in 296s · Voidgrubs in 37s, 2-5s walk floor, 32s spare · Rift Herald in 457s · Baron in 757s\nRINGS (unidentified enemy dots) mid lane",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-4422.jpg",
+      "text": "Reset right now with that thirteen hundred gold for your spike, then head straight to Voidgrubs while Kayn is stuck botside.",
+      "latencyMs": 4638
+    },
+    {
+      "clock": "8:42",
+      "tSec": 522,
+      "chars": 395,
+      "dropped": [],
+      "payload": "8:43\nYOU Lillia L6 96%hp 75%mana 165g 1/1/2 50cs — blue-side jungle (bot), moving, read 10s ago\nHIM Kayn L6 DEAD 12s 3/2/1\nDOWN Kayn 12s, Yone 15s (yours)\nJUST 8:39 (4s ago) Morgana killed Kayn · 8:38 (5s ago) Kayn killed Yone\nNEXT Drake in 217s · Voidgrubs up 43s, 8-28s walk floor · Rift Herald in 377s · Baron in 677s\nRINGS (unidentified enemy dots) top lane, mid lane, blue-side jungle (bot)",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-5223.jpg",
+      "text": "Kayn is dead for twelve seconds, so finish raptors and start pathing topside for grubs.",
+      "latencyMs": 3476
+    },
+    {
+      "clock": "11:39",
+      "tSec": 699,
+      "chars": 313,
+      "dropped": [],
+      "payload": "11:39\nYOU Lillia L8 100%hp 49%mana 366g 1/2/2 70cs — blue-side jungle (bot), moving, read 20s ago\nHIM Kayn L8 alive 3/2/1\nDOWN Draven 22s\nJUST 11:36 (3s ago) Xayah killed Draven\nNEXT Drake in 40s, 0-25s walk floor, 15s spare · Rift Herald in 201s · Baron in 501s\nRINGS (unidentified enemy dots) bot lane, top lane",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-6993.jpg",
+      "text": "Draven is dead for twenty seconds and Drake is up in forty, so finish these Raptors and get to that pit.",
+      "latencyMs": 4915
+    },
+    {
+      "clock": "13:28",
+      "tSec": 808,
+      "chars": 356,
+      "dropped": [],
+      "payload": "13:29\nYOU Lillia L8 100%hp 100%mana 77g 2/3/3 70cs — position unknown (the minimap reader refused this look)\nHIM Kayn L8 alive 3/3/1\nDOWN Urgot 20s (yours)\nJUST 13:00 (29s ago) Singed killed Lillia · 13:16 (13s ago) Lulu killed Urgot · 13:01 (28s ago) Draven killed Morgana\nNEXT Drake up 70s, walk unknown · Rift Herald in 91s, walk unknown · Baron in 391s",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-8095.jpg",
+      "text": "You're sitting on a finished Liandry's, so head straight out through your bot camps to build tempo before this drake in seventy seconds.",
+      "latencyMs": 4444
+    },
+    {
+      "clock": "14:17",
+      "tSec": 857,
+      "chars": 337,
+      "dropped": [],
+      "payload": "14:17\nYOU Lillia L9 96%hp 58%mana 420g 2/3/3 80cs — blue-side jungle (bot), moving, read 23s ago\nHIM Kayn L8 alive 3/3/1\nNEXT Drake in 264s · Rift Herald in 43s, 0-37s walk floor, 6s spare · Baron in 343s\nRINGS (unidentified enemy dots) mid lane, mid lane\nPACE 80cs at 14:00 against your own 14-minute average of 101.4 (mean of 20 games)",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-8546.jpg",
+      "text": "You have a level on Kayn, so finish this red and head straight north to set up for Herald in forty seconds.",
+      "latencyMs": 4165
+    },
+    {
+      "clock": "17:56",
+      "tSec": 1076,
+      "chars": 404,
+      "dropped": [],
+      "payload": "17:57\nYOU Lillia L10 85%hp 100%mana 33g 4/4/3 100cs — blue-side base, moving, read 2s ago\nHIM Kayn L11 alive 7/3/1\nDOWN Morgana 1s (yours)\nJUST 17:29 (28s ago) Singed killed Morgana · 17:22 (35s ago) Ornn killed Xayah\nNEXT Drake in 45s, 11-15s walk floor, 30s spare · Rift Herald up 177s, 10-14s walk floor · Baron in 123s, 11-15s walk floor, 108s spare\nRINGS (unidentified enemy dots) top lane, bot lane",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-10749.jpg",
+      "text": "Drake is up in forty-five seconds, so clear your botside camps on the way down to stack your speed before setting up at the pit.",
+      "latencyMs": 3257
+    },
+    {
+      "clock": "19:16",
+      "tSec": 1156,
+      "chars": 371,
+      "dropped": [],
+      "payload": "19:16\nYOU Lillia L11 57%hp 28%mana 581g 4/4/3 110cs — position unknown (the minimap reader refused this look)\nHIM Kayn L11 alive 8/3/2\nDOWN Xayah 2s (yours), Morgana 15s (yours), Yone 32s (yours)\nJUST 18:44 (32s ago) Kayn killed Xayah · 19:07 (9s ago) Singed killed Yone · 19:03 (14s ago) Draven killed Morgana\nNEXT Drake up 35s, walk unknown · Baron in 44s, walk unknown",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-11551.jpg",
+      "text": "You have no mana and no ult with three down, so reset now and let this next dragon go.",
+      "latencyMs": 6314
+    },
+    {
+      "clock": "23:50",
+      "tSec": 1430,
+      "chars": 376,
+      "dropped": [],
+      "payload": "23:50\nYOU Lillia L13 100%hp 97%mana 1543g 5/4/4 150cs — bot lane, fighting, read 5s ago\nHIM Kayn L13 alive 9/4/4\nDOWN Morgana 13s (yours)\nJUST 23:44 (6s ago) Lillia took a turret · 23:29 (21s ago) Kayn took Baron · 23:26 (24s ago) Singed killed Morgana\nNEXT Drake in 45s, 6-15s walk floor, 30s spare · Baron in 339s\nRINGS (unidentified enemy dots) bot lane, bot lane, mid lane",
+      "frame": "/home/ssalb/eepalytics/data/journal/js-mtvxb5f4-f81a/js-mtvxb5f4-f81a-14305.jpg",
+      "text": "Recall right now with your 1500 gold so you can buy and set up for Drake before it spawns in 45 seconds.",
+      "latencyMs": 7120
+    }
+  ]
+}
