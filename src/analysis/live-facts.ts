@@ -724,6 +724,15 @@ export interface FrameObservation {
 	 * Staleness is decided in `buildFacts` rather than by the caller, for the same reason the rate
 	 * limits are: a producer that decides for itself whether it is still fresh is a second copy of a
 	 * rule, and this file is where the rules about what may be said live.
+	 *
+	 * WHICH PUTS THE WHOLE FIELD IN THE PRODUCER'S HANDS, and the producer got it wrong for the
+	 * life of the feature. `POST /api/live/frame-read` stamped every read with the clock of the
+	 * PREVIOUS ground-truth poll, because that was the only clock the route had cached — and a turn
+	 * reads the minimap BEFORE it fetches the block, so that poll is a whole beat old. At the ranked
+	 * modes' twenty-second beat that is an age of 21-23 seconds against `FRAME_FRESH_SEC` of ten:
+	 * the test below this line never once passed in a real game, and the reader ran, and was paid
+	 * for, and was discarded, on every turn of every game. `frameClockSec` in `server/routes/live.ts`
+	 * is what makes the stamp mean what this comment has always said it means.
 	 */
 	atSec: number
 	/**

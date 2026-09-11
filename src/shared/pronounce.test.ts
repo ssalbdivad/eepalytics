@@ -33,6 +33,27 @@ describe("parsePronunciations", () => {
 		strictEqual(parsePronunciations("Zed = Zed\n").length, 0)
 	})
 
+	it("does not read the file's own description of its format as an entry", () => {
+		/*
+		 * `knowledge/pronunciations.md` documents itself with the sentence "One name per line,
+		 * `Name = respelling`. Capitals mark the stressed syllable." — which contains " = ", so the
+		 * forgiving rule below read it as a row named "One name per line, `Name". That row sat in
+		 * the shipped table for the whole life of the feature, and would have been rendered into
+		 * the coach's standing instructions as a name to say the moment anything rendered the guide
+		 * at all. Prose above `## Names` is prose.
+		 */
+		const out = parsePronunciations(
+			"## Format\n\nOne name per line, `Name = respelling`.\n\n## Names\n\nJhin = JIN\n"
+		)
+		deepStrictEqual(out, [{ name: "Jhin", say: "JIN" }])
+	})
+
+	it("still parses a list with no heading at all", () => {
+		// The file is edited mid-session by someone who just heard a name mangled. A scratch list
+		// with no structure has to keep working, or the heading rule bought one bug and sold one.
+		strictEqual(parsePronunciations("Jhin = JIN\nZoe = ZO-ee\n").length, 2)
+	})
+
 	it("keeps the first of a duplicated name", () => {
 		const out = parsePronunciations("Jhin = JIN\nJhin = something else\n")
 		deepStrictEqual(out, [{ name: "Jhin", say: "JIN" }])

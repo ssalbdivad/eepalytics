@@ -45,7 +45,24 @@ export interface Pronunciation {
 export const parsePronunciations = (markdown: string): Pronunciation[] => {
 	const out: Pronunciation[] = []
 	const seen = new Set<string>()
-	for (const raw of markdown.split("\n")) {
+	/*
+	 * PROSE ABOVE `## Names` IS NOT DATA, and the shipped file proves why this rule is needed.
+	 *
+	 * `knowledge/pronunciations.md` documents its own format with the sentence "One name per line,
+	 * `Name = respelling`. Capitals mark the stressed syllable." — which contains " = ", so the
+	 * forgiving rule below read it as an entry and the table carried a hundred-and-first row named
+	 * "One name per line, `Name". Rendered into the system instruction that is a line telling the
+	 * coach to say the word "respelling`. Capitals mark the stressed syllable. Write it the way
+	 * you". It never reached a game only because nothing rendered the guide at all; the moment the
+	 * guide was wired up, it would have.
+	 *
+	 * The fix keeps the forgiveness and moves the boundary: when the file names its data section,
+	 * only that section is data. A file with no such heading is parsed whole, exactly as before,
+	 * because a hand-edited scratch list must still work.
+	 */
+	const lines = markdown.split("\n")
+	const namesAt = lines.findIndex(l => /^#{1,6}\s+names\s*$/i.test(l.trim()))
+	for (const raw of namesAt === -1 ? lines : lines.slice(namesAt + 1)) {
 		const line = raw.trim()
 		if (line === "" || line.startsWith("#") || line.startsWith(">") || line.startsWith("-")) continue
 		const at = line.indexOf(" = ")

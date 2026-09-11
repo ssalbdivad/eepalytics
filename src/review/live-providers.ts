@@ -35,6 +35,7 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { DATA_DIR } from "../shared/constants.ts"
 import { DEFAULT_LIVE_COACH_MODE, liveCoachSystemPrompt } from "../shared/live-coach-mode.ts"
+import { fullKnowledge } from "./live-knowledge-full.ts"
 import type { LiveCoachMode } from "../shared/live-coach-mode.ts"
 import { liveChampionKnowledge } from "./live-coach-knowledge.ts"
 
@@ -164,6 +165,13 @@ export interface CoachTurnRequest {
 	 * arriving this way can become a statistic. Unknown or empty is normal and means no clauses.
 	 */
 	champion?: string
+	/**
+	 * The enemy jungler, for the matchup half of the knowledge pack. `trusted` only.
+	 *
+	 * Same closed-vocabulary rule as `champion`: a NAME, never prose. Absent means the matchup
+	 * section is simply missing, which is what champ select and an unread client both look like.
+	 */
+	counterpart?: string | null
 }
 
 export interface CoachTurnResult {
@@ -253,9 +261,18 @@ export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult>
 		const frameSent = typeof req.frameJpegBase64 === "string" && req.frameJpegBase64.length > 0
 		const result = await generateText({
 			model: handle,
+			/*
+			 * `trusted` gets the FULL knowledge — his champion's file, the counterpart's, and the
+			 * role's, with their numbers intact — so a turn-based arm is asked the same question the
+			 * socket is asked and the bench can compare the two. The older modes keep the digit-free
+			 * clause list they were measured against, byte for byte.
+			 */
 			system: liveCoachSystemPrompt({
 				mode: req.mode ?? DEFAULT_LIVE_COACH_MODE,
-				championKnowledge: liveChampionKnowledge(req.champion ?? "")
+				championKnowledge:
+					(req.mode ?? DEFAULT_LIVE_COACH_MODE) === "trusted" ?
+						fullKnowledge({ champion: req.champion ?? "", counterpart: req.counterpart ?? null })
+					:	liveChampionKnowledge(req.champion ?? "")
 			}),
 			messages: [
 				{

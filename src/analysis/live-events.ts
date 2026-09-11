@@ -1,0 +1,1768 @@
+/**
+ * WHEN the coach is asked to speak — the only decision this file makes.
+ *
+ * ## The problem this exists to solve
+ *
+ * The live coach spoke on a clock. At the shipped twenty-second beat that is 85 invitations in a
+ * 28-minute game; at `TRUSTED_TURN_MS` (6s) it is 282. The post-game reviewer, graded blind against
+ * the same game, picks SEVEN items out of the whole match and was scored 68% useful against the
+ * live coach's 0/10 — "nothing it said was useful, generic and often hilariously wrong".
+ *
+ * Part of that gap is data (the counterpart-CS bug, the discarded minimap read) and part of it is
+ * hindsight, which cannot be recovered. But a large part is neither: **a coach asked 85 times has
+ * to produce something 85 times, and there are not 85 things worth saying in a game of League.**
+ * Asked at a moment when nothing has changed, the only honest material left is what is already on
+ * his screen, so it reads his HUD back to him. That is the failure, and it is a property of the
+ * question, not of the answer.
+ *
+ * So the timer is replaced by this: **the turn fires when something happens.** The selection problem
+ * the post-game reviewer solves by looking at all 28 minutes at once, the live coach solves by only
+ * being asked when the feed says the game moved.
+ *
+ * ## THE SECOND CUT: "something happened" was not enough
+ *
+ * The first version of this list fired on a death, an objective, a fight resolving, a spike, an
+ * item, a resource threshold and the counterpart surfacing. Replayed over the recorded samples of
+ * game 5639406342 that is **68 turns in 28 minutes — one every 25 seconds, against the timer's own
+ * 20.** The timer with extra steps.
+ *
+ * A 23-turn subsample of that schedule was then run through the real socket and read line by line
+ * (`data/eval/stream-kayn-events-20260910.json`). Five lines were useful, twelve were true and
+ * useless, six were false. Sorted by the event that ASKED, the twelve useless ones are not spread
+ * evenly at all:
+ *
+ * | asked by             | useful | useless | false |
+ * |----------------------|-------:|--------:|------:|
+ * | `fight.resolved`     |      1 |       5 |     1 |
+ * | `resource.low`       |      0 |       4 |     0 |
+ * | `objective.window`   |      0 |       2 |     0 |
+ * | `level.spike`        |      0 |       0 |     2 |
+ * | `counterpart.seen`   |      0 |       0 |     1 |
+ * | `game.start`         |      0 |       1 |     0 |
+ * | `heartbeat`          |      0 |       0 |     1 |
+ * | `death.counterpart`  |      1 |       1 |     1 |
+ * | `respawn.self`       |      1 |       0 |     1 |
+ * | `counterpart.unseen` |      1 |       0 |     0 |
+ * | `objective.taken`    |      1 |       0 |     0 |
+ * | `item.completed`     |      1 |       0 |     0 |
+ *
+ * (Three of the 23 turns carried two causes and are counted under both, so the columns sum to 26.)
+ *
+ * Every one of the twelve useless turns had an objective clock sitting unused in the same payload —
+ * "drake in 22s", "drake untaken 39s", "drake in 14s". The material was there. The MOMENT was
+ * wrong, and the moment is the only thing this file chooses.
+ *
+ * ## The rule the second cut is made on: CONTESTABLE FUTURE STATE
+ *
+ * The app's two tests for what may be SAID — not visible, not generic — applied to when it is
+ * ASKED, and sharpened by what the five useful lines had in common. Four of the five were
+ * PROSPECTIVE: they named something that had not happened yet and a decision that was still open.
+ * The best line the app has produced live is 18:08 "Kayn just secured Herald, so path botside
+ * immediately and get ready to contest this drake spawning in thirty seconds" — his position joined
+ * to an objective clock, which is exactly what the post-game reviewer's best items do.
+ *
+ * So a thing earns a turn when it opens or closes a decision about something that has not happened
+ * yet:
+ *
+ *   - an objective entering the window where the decision is still open, or sitting up and untaken
+ *     past it;
+ *   - the counterpart dying or going dark, which is what makes that window contestable;
+ *   - his own capability changing — out of the fountain, an ultimate, a legendary — because that
+ *     changes what he can DO about the thing that is coming.
+ *
+ * And a thing does NOT earn a turn when it is a reading he already has:
+ *
+ *   - **`resource.low` is deleted.** A health bar and a mana bar are the two things he is
+ *     unambiguously looking at. Four of the twelve useless lines were his own HP or mana read back
+ *     to him, and four separate "you are low, back now" turns in one game is the timer's failure
+ *     reproduced. The bands survive as `HP_LOW`/`MANA_LOW` because the brief still PRINTS them; they
+ *     no longer ASK anything.
+ *   - **`fight.resolved` is deleted.** What a trade bought is retrospective — it is the post-game
+ *     reviewer's job — and by the time the killing has stopped for eight seconds he has watched the
+ *     recap on his own screen. It was the single largest source of volume (15 of 68 turns) and the
+ *     worst hit rate in the graded sample: 1 useful in 6, and that one line was about his completed
+ *     items and the drake clock rather than about the fight.
+ *   - **`counterpart.seen` is deleted, `counterpart.unseen` is kept.** His ABSENCE is the one thing
+ *     about the enemy jungler that no screen can tell him. His presence usually IS the screen
+ *     telling him — the counter that detects it only moves because somebody on his team has eyes on
+ *     the man.
+ *   - **`death.self` no longer asks anything.** He is looking at a grey screen and cannot act for
+ *     10-45 seconds; the fork in the road is the RESPAWN, and that is the turn the graded run scored
+ *     useful. The killer's name is carried forward onto it rather than lost.
+ *   - **`level.spike` keeps only the ultimate levels.** 2 and 3 arrive on his own clear by
+ *     construction and change no route; 6, 11 and 16 unlock or rank up the ultimate.
+ *
+ * Two things are ADDED, both prospective:
+ *
+ *   - **`objective.contested`** — the objective is up and nobody has taken it. The recorded game had
+ *     Baron standing for 209 seconds and Herald for 182, and the old list had no way to ask about
+ *     either: it fired once, 45 seconds BEFORE the spawn, and then never again.
+ *   - **grubs count as an objective taken**, as one turn per cluster rather than three. They are a
+ *     jungler's objective and the old list ignored `HordeKill` entirely.
+ *
+ * `item.completed` is kept and its detection is repaired — see `ITEM_SPIKE_GOLD`. It was firing on
+ * the wrong things: over the whole recorded game it fired exactly once, on a Needlessly Large Rod,
+ * and missed both legendaries.
+ *
+ * Replayed over the same samples the SECOND CUT is **38 turns in 28 minutes — one every 44 seconds,
+ * against the first list's 68 and the timer's 85.** (The third cut takes that to 28 — see below.)
+ * The composition is the point rather than the count:
+ * `objective.taken` 9, `objective.window` 7, `respawn.self` 7, `objective.contested` 5,
+ * `counterpart.unseen` 3, `death.counterpart` 3, `item.completed` 3, `level.spike` 2, `game.start`
+ * 1, heartbeat 0. Twelve of the 38 are an objective he has not yet decided about, where the old
+ * list had seven. See `scripts/bench-events.ts`, which is where every number here comes from rather
+ * than an estimate.
+ *
+ * Against the 23 graded lines of ROUND 1, replayed turn by turn: **9 of the 12 true-but-useless
+ * turns no longer fire, 4 of the 6 false ones no longer fire, and 4 of the 5 useful ones survive.**
+ * The
+ * useful one lost is 17:38 "you have your Liandry's done and a Codex so finish that recall, then
+ * look for a play around the drake spawning in a minute", which was asked by `fight.resolved`; the
+ * drake window it is actually about now asks at 17:56, eighteen seconds later, and Liandry's
+ * completing now asks its own turn at 10:32 where before it asked nothing. That is the trade, and
+ * it is a trade rather than a free win.
+ *
+ * ## THE THIRD CUT: the WINDOW is the unit, not the event
+ *
+ * The second cut's 38 turns were run through the real socket and read line by line
+ * (`data/eval/stream-kayn-events2-20260910.json`, 38 asks, 37 lines, one PASS). His own blinded
+ * grading: **10 useful.** Every one of the ten is the same object —
+ *
+ *   4:20  Kayn just got Yone again so he's on the top side, which gives you a free shot to set up
+ *         the drake spawning in 39 seconds.
+ *   8:42  Kayn just died, so while he's off the map you have twelve seconds to finish kiting this
+ *         raptor camp towards mid for a gank.
+ *  21:05  Baron is still free with Kayn and Draven dead, but you are too low to take it, so back
+ *         immediately, pick up your item, and then force it.
+ *
+ * — a WINDOW (an objective clock or a death timer), WHERE the contest will be, and WHETHER HE CAN
+ * BE THERE, resolved into one action. Twenty-five of the 38 lines were prospective and only ten
+ * were useful, so prospective is necessary and not sufficient. What separates them is that the ten
+ * are each ONE DECISION ABOUT ONE CONTESTABLE WINDOW.
+ *
+ * And the dominant remaining fault, ahead of fabrication, was REPETITION: **three drake lines in
+ * nineteen seconds** (18:02 off a Herald take, 18:08 off the counterpart going dark, 18:21 off
+ * level 11 — all three about the drake spawning at 18:41), three herald lines in 67 seconds, three
+ * wave-clear lines in 30. Twenty of the 37 lines were true and useless.
+ *
+ * Those are the same fact. The second cut asked PER EVENT, and several events can be about one
+ * decision, so a coach with one thing to say was asked to say it three times. **The unit was
+ * wrong.** So:
+ *
+ *   - A **contest window** is one objective INSTANCE while the decision about it is still open. It
+ *     opens when the contest becomes decidable — the objective comes inside the range where he
+ *     could still get there (`OBJECTIVE_LEAD_SEC`, or the reachability port's own ETA once that
+ *     module lands — see `ReachFn`), it is standing untaken, or he walks out of the fountain with
+ *     it as the soonest thing on the map (`RESPAWN_HORIZON_SEC`).
+ *   - **ONE ASK PER WINDOW.** A second ask is paid for by `materialDiff` over a `WindowMark`: he
+ *     died and came back, the counterpart died, the counterpart resurfaced, two of the enemy went
+ *     down, he backed, another objective fell, or his reach flipped. Every field is a counter or a
+ *     debounced verdict with its threshold declared next to it. The CLOCK is not in there, and his
+ *     bars are not in there.
+ *   - **A window that closes without an ask is fine**, and so is a quiet stretch. The grubs can
+ *     spawn, stand and fall while he is on a grey screen and nothing is asked, because none of it
+ *     was his decision.
+ *   - Everything else this file detects — the item, the level, the counterpart going dark, the
+ *     respawn, the resolved fight, the trip to the shop — is still DETECTED and still RIDES the
+ *     turn, and none of it causes one. See `LiveEvent.asks`.
+ *
+ * ### What it measured, on the recorded game and not on an estimate
+ *
+ * Replayed over the same samples round 2 ran on (`data/live-samples/js-mtvxb5f4-f81a-t29817812`):
+ * **28 asks against round 2's 38**, and against the fixed timer's 85.
+ *
+ *   - **ALL TEN useful moments survive.** Every one still gets an ask within 1.5s of the clock it
+ *     was asked at.
+ *   - **18 of the 28 turns that did not produce a useful line no longer fire** — every
+ *     `counterpart.unseen` turn, both `level.spike` turns, all three `item.completed` turns, both
+ *     inhibitor turns, three of the four late respawns, and the 6:04 / 9:00 / 16:00 re-asks about a
+ *     window that had already been asked about.
+ *   - The three drake lines in nineteen seconds become **two** (17:56 opens the window, 18:02
+ *     re-asks it because Herald fell topside). Both of those two were graded useful; 18:08 and
+ *     18:21 are gone.
+ *   - It adds **eight asks round 2 did not make**, each with a named material cause: two
+ *     heartbeats, two on the counterpart resurfacing, three on the enemy team opening up, one on
+ *     him backing. Whether those are worth hearing is not something a replay can answer.
+ *   - Asks per window over that game: Baron 5 across the 209 seconds it stood, Herald 5 across six
+ *     minutes, grubs 5, the four drakes 1/3/4/1.
+ *
+ * The false/useless partition of round 2's other 27 lines is NOT in the run file — only his ten
+ * useful ones were recorded — so "18 of 28 gone" counts every turn that did not produce a useful
+ * line, and no claim is made here about which of them were false.
+ *
+ * Across all sixteen recorded sample files (482 minutes, several of them multi-game): 553 asks, 45
+ * of them heartbeats, gaps median 55s, p90 164s, p95 183s. Roughly one ask a minute.
+ *
+ * The one thing that had to be widened rather than narrowed is `RESPAWN_HORIZON_SEC`, and the two
+ * fields that were measured and replaced are written up on `WindowMark`. Both are there because the
+ * first version of this cut lost a useful line and the replay said which one.
+ *
+ * ## What this file is NOT
+ *
+ * It is not a rate limit and it is not a guardrail. It never tells the model what to say, it never
+ * tells it whether it has permission to speak, and it never suppresses a line the model produced.
+ * The model still decides everything about the line INCLUDING whether to take the turn at all —
+ * a turn it declines is silence, exactly as today. This changes only the moment the question is
+ * asked, which was always the harness's decision and was always arbitrary.
+ *
+ * The distinction matters because the pace floor (`analysis/speak-pace.ts`) is the other thing,
+ * and it was deliberately removed under `trusted`: that one watched the OUTPUT and refused to let
+ * a written line be spoken. Nothing here looks at a line. If the event-driven coach still talks too
+ * much, the fix is fewer event kinds or a longer absence window — both of which are statements
+ * about the game — and not a clock over the model's mouth.
+ *
+ * ## The heartbeat is a FLOOR, not a cadence
+ *
+ * `HEARTBEAT_SEC` is the longest the coach may go without being asked anything. It is a ceiling on
+ * silence, and it is reset by any turn — so in a busy game it never fires at all, and in a quiet
+ * one it is the only thing firing. Read as a cadence it would be a slower timer, which is the
+ * design being replaced. See the constant for how the number was chosen, and for why the second cut
+ * had to move it.
+ *
+ * The third cut did NOT move it again, and the honest figure is that it now sits AT p95 of the ask
+ * gaps rather than above it: 45 of 553 asks across the corpus are heartbeats, and 2 of the 28 in
+ * the graded game (3:02 and 26:53). That is a floor doing its job in a quiet stretch rather than a
+ * cadence, but it is closer to the ordinary lull than it was, and it is the first number to look at
+ * if the coach starts sounding like a timer again.
+ *
+ * ## Everything here is pure
+ *
+ * `analysis/` does no I/O and calls no model. `projectTick` turns one raw `allgamedata` payload
+ * into the small structure the detector diffs, `observeTick` diffs two of them, and `dueTurn`
+ * answers one question. That is what makes the whole policy replayable against the recorded
+ * samples in `data/live-samples/` — see `scripts/bench-events.ts`, which is where the turn counts
+ * quoted above and in that script's output come from.
+ */
+import type { LiveAllGameData } from "../shared/schema/live.ts"
+
+/* ============================================================ the tick */
+
+const rec = (v: unknown): Record<string, unknown> | null =>
+	typeof v === "object" && v !== null && !Array.isArray(v) ? (v as Record<string, unknown>) : null
+const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
+const num = (v: unknown): number | null =>
+	typeof v === "number" && Number.isFinite(v) ? v : null
+const str = (v: unknown): string | null => (typeof v === "string" && v.length > 0 ? v : null)
+
+/** One other player, as much of them as this feed actually knows. */
+export interface TickPlayer {
+	/** The riotId/summoner name. The event log names participants this way, so it is the join key. */
+	name: string
+	champion: string
+	team: string
+	position: string
+	level: number
+	kills: number
+	deaths: number
+	assists: number
+	/**
+	 * NOT their farm. For anyone but the local player this counter only advances when HIS client
+	 * witnessed the kill — measured on game 5639406342, Kayn's feed read 70 against a true 183.
+	 * It is used here for exactly one thing it IS sound for: a change means somebody on his team
+	 * has eyes on that player RIGHT NOW. See `counterpart.seen`.
+	 */
+	seenCs: number
+	dead: boolean
+	respawn: number
+	itemCount: number
+}
+
+export interface TickMe {
+	/**
+	 * His BARE game name, which is the only name the event log ever uses.
+	 *
+	 * This field used to hold `activePlayer.riotId` — verified `"Gooskaffur#NA1"` — while the event
+	 * feed names people by `riotIdGameName`, verified `"Gooskaffur"`. So `e.victim === tick.me.name`
+	 * was structurally false and the `death.self` branch of the kill log was dead code: replayed
+	 * over game 5639406342 the scoreboard has 7 deaths, 0 log entries match the tagged name and 7
+	 * match the bare one. Every `death.self` that fired came from the `isDead` diff further down,
+	 * whose own comment says it exists as a backstop for turret executes — so the highest-value
+	 * moment in the game fired up to one 2-second tick late, stamped `atSec: now` instead of the
+	 * event's own clock, and lost the killer's name out of its note.
+	 *
+	 * It is the join key for the whole file, so it is the bare name for him exactly as it is for
+	 * everybody else. `riotId` is kept separately in `taggedName`, and only `projectTick` uses it —
+	 * to find his row, which is the one place the tagged form is the right one.
+	 */
+	name: string
+	/** `activePlayer.riotId`, which matches the ROSTER rows and never the event log. */
+	taggedName: string
+	champion: string
+	team: string
+	level: number
+	hp: number
+	maxHp: number
+	/** The resource bar. `manaType` is `"MANA"` only for champions that actually have mana. */
+	mana: number
+	maxMana: number
+	manaType: string
+	/** Gold in his pocket, not gold earned. */
+	gold: number
+	dead: boolean
+	respawn: number
+	cs: number
+	kills: number
+	deaths: number
+	assists: number
+	/** Item display names in slot order, so a completion can be spotted by NAME rather than by value. */
+	items: string[]
+	itemPrices: number[]
+}
+
+export interface TickEvent {
+	id: number
+	name: string
+	atSec: number
+	killer: string | null
+	victim: string | null
+	assisters: string[]
+	dragonType: string | null
+	stolen: boolean
+}
+
+/** The projection of one raw `allgamedata` poll — everything the detector needs and nothing else. */
+export interface LiveTick {
+	gameTimeSec: number
+	me: TickMe
+	players: TickPlayer[]
+	events: TickEvent[]
+}
+
+const readItems = (v: unknown): { names: string[]; prices: number[] } => {
+	const names: string[] = []
+	const prices: number[] = []
+	for (const raw of arr(v)) {
+		const it = rec(raw)
+		if (!it) continue
+		names.push(str(it.displayName) ?? "?")
+		prices.push(num(it.price) ?? 0)
+	}
+	return { names, prices }
+}
+
+/**
+ * Raw feed -> tick. Returns null when there is no game to read, which is most of the time this is
+ * called: the socket is open from champion select and :2999 answers nothing until the game starts.
+ */
+export const projectTick = (data: LiveAllGameData | null | undefined): LiveTick | null => {
+	const d = rec(data)
+	if (!d) return null
+	const gameTimeSec = num(rec(d.gameData)?.gameTime)
+	if (gameTimeSec === null) return null
+	const active = rec(d.activePlayer)
+	/*
+	 * TWO NAMES, because the client uses two and they are not interchangeable.
+	 *
+	 * `activePlayer.riotId` is TAGGED ("Gooskaffur#NA1") and matches the roster rows' `riotId` and
+	 * `summonerName`. The EVENT log names participants by bare game name ("Gooskaffur"), which is
+	 * the roster's `riotIdGameName`. Joining across the two was the bug this split fixes — see
+	 * `TickMe.name`.
+	 */
+	const myTagged = str(active?.riotId) ?? str(active?.summonerName)
+	if (!myTagged) return null
+
+	const players: TickPlayer[] = []
+	let mine: Record<string, unknown> | null = null
+	for (const raw of arr(d.allPlayers)) {
+		const p = rec(raw)
+		if (!p) continue
+		const name = str(p.riotIdGameName) ?? str(p.summonerName) ?? str(p.riotId) ?? ""
+		const isMe = (str(p.riotId) ?? str(p.summonerName) ?? "") === myTagged
+		if (isMe) mine = p
+		const scores = rec(p.scores) ?? {}
+		players.push({
+			// HIS ROW IS NAMED LIKE EVERY OTHER ROW. It used to take the tagged form, so
+			// `tick.players.find(p => p.name === e.victim)` never found him and `championOf`
+			// rendered his own kills as "Gooskaffur killed Kayn" rather than "Lillia killed Kayn".
+			name,
+			champion: str(p.championName) ?? "?",
+			team: str(p.team) ?? "?",
+			position: str(p.position) ?? "",
+			level: num(p.level) ?? 0,
+			kills: num(scores.kills) ?? 0,
+			deaths: num(scores.deaths) ?? 0,
+			assists: num(scores.assists) ?? 0,
+			seenCs: num(scores.creepScore) ?? 0,
+			dead: p.isDead === true,
+			respawn: num(p.respawnTimer) ?? 0,
+			itemCount: arr(p.items).length
+		})
+	}
+	if (!mine) return null
+
+	const stats = rec(active?.championStats) ?? {}
+	const myScores = rec(mine.scores) ?? {}
+	const items = readItems(mine.items)
+	const me: TickMe = {
+		name: str(mine.riotIdGameName) ?? str(mine.summonerName) ?? myTagged,
+		taggedName: myTagged,
+		champion: str(mine.championName) ?? "?",
+		team: str(mine.team) ?? "?",
+		level: num(mine.level) ?? num(active?.level) ?? 0,
+		hp: num(stats.currentHealth) ?? 0,
+		maxHp: num(stats.maxHealth) ?? 0,
+		mana: num(stats.resourceValue) ?? 0,
+		maxMana: num(stats.resourceMax) ?? 0,
+		manaType: str(stats.resourceType) ?? "",
+		gold: num(active?.currentGold) ?? 0,
+		dead: mine.isDead === true,
+		respawn: num(mine.respawnTimer) ?? 0,
+		cs: num(myScores.creepScore) ?? 0,
+		kills: num(myScores.kills) ?? 0,
+		deaths: num(myScores.deaths) ?? 0,
+		assists: num(myScores.assists) ?? 0,
+		items: items.names,
+		itemPrices: items.prices
+	}
+
+	const events: TickEvent[] = []
+	for (const raw of arr(rec(d.events)?.Events)) {
+		const e = rec(raw)
+		const id = e && num(e.EventID)
+		const name = e && str(e.EventName)
+		if (!e || id === null || !name) continue
+		events.push({
+			id,
+			name,
+			atSec: num(e.EventTime) ?? gameTimeSec,
+			killer: str(e.KillerName),
+			victim: str(e.VictimName),
+			assisters: arr(e.Assisters).map(a => str(a) ?? "").filter(a => a !== ""),
+			dragonType: str(e.DragonType),
+			stolen: str(e.Stolen) !== null && str(e.Stolen) !== "False"
+		})
+	}
+
+	return { gameTimeSec, me, players, events }
+}
+
+/* ============================================================ the events */
+
+/**
+ * Every kind of thing that earns the coach a question.
+ *
+ * The list is short on purpose and every entry answers the same question: **has a decision about
+ * something that has not happened yet just opened or closed?** A fact that is merely TRUE — his
+ * gold total, his health bar, the drake timer sitting where it has been for two minutes — is not on
+ * it, because it was true a moment ago too and asking about it is what produced the HUD recital.
+ *
+ * The kinds the SECOND cut removed are in the module docblock with the numbers that removed them.
+ * They are gone rather than demoted.
+ *
+ * The THIRD cut demotes rather than removes, and the difference is deliberate. `objective.window`,
+ * `respawn.self`, `objective.taken` and the rest are still here and still fire, because the brief,
+ * the fault panel and the bench read their notes and because a material change has to be DETECTED
+ * before it can be compared — what changed is that `asks` is false on all of them, so they ride a
+ * turn and never cause one. Read this list with `LiveEvent.asks` next to it: four kinds ask, ten
+ * carry.
+ */
+export type LiveEventKind =
+	/* ---- the four that ASK. Every one of them is one contest window. ---- */
+	| "game.start"
+	| "window.open"
+	| "window.changed"
+	| "heartbeat"
+	/* ---- the rest are MATERIAL and CONTEXT. They ride a turn; they never cause one. ---- */
+	| "death.counterpart"
+	| "respawn.self"
+	| "objective.taken"
+	| "objective.window"
+	| "objective.contested"
+	| "fight.resolved"
+	| "shop.trip"
+	| "level.spike"
+	| "item.completed"
+	| "counterpart.unseen"
+
+export interface LiveEvent {
+	kind: LiveEventKind
+	/**
+	 * Does this event CAUSE a turn, or merely ride one?
+	 *
+	 * The third cut's whole mechanism. `observeTick` still detects everything it detected before —
+	 * the item, the level, the counterpart going dark — because the fault panel, the transcript and
+	 * the bench all read those notes, and because a material change has to be DETECTED before it can
+	 * be compared. What changed is that only four kinds answer true here, and `dueTurn` asks on
+	 * nothing else. See the module docblock for the nine round-2 turns that measurement removes.
+	 */
+	asks: boolean
+	/** The contest window this belongs to, when it belongs to one. For the bench's per-window tally. */
+	windowKey: string | null
+	/** The game clock at which the thing became true — NOT when it was noticed. */
+	atSec: number
+	/**
+	 * REACTIVE means the value of the line decays in seconds: a respawn, the counterpart dying. The
+	 * caller skips the minimap read in front of these, because that read costs 1.3-3.0s and
+	 * `analysis/live-facts.ts` measured reactive premises 40% stale at ONE second. Standing events
+	 * (objective windows, spikes, items) are worth the read: it is what turns "drake in 45s" into
+	 * "drake in 45s and you are in their topside jungle".
+	 */
+	reactive: boolean
+	/** Fired at most once. Carries the identity of the thing, not the moment it was noticed. */
+	key: string
+	/** One short line, for the fault panel and the bench. Never sent to the model. */
+	note: string
+}
+
+/* ------------------------------------------------------------ constants */
+
+/**
+ * The longest the coach may go without being asked ANYTHING. A floor under silence, not a cadence.
+ *
+ * Measured, not picked — and the second cut had to MOVE it, which is the part worth writing down.
+ * Removing three quarters of the event volume stretches the gaps between the turns that remain, so
+ * a floor left where it was would have quietly refilled the silence the cut had just created. At
+ * the old 90 seconds the fourteen recorded games in `data/live-samples/` produce 4-14 heartbeats
+ * each under the new list, which is a third of the schedule asked about nothing in particular.
+ *
+ * Replayed over those games, the gaps between EVENT-driven turns (n=679) are median 43s, p90 104s,
+ * p95 141s, max 244s. 180 therefore sits above p95: it fires 0-2 times in a whole game, 0 times in
+ * the graded game 5639406342, and every time it does fire it is a genuine lull rather than an
+ * ordinary one. Below about 150 it stops being a floor and starts being a slower timer, which is
+ * the design being replaced.
+ *
+ * 180 seconds is also the shape of the thing it protects against, which is a player concluding the
+ * coach is broken. A jungle clear is about three minutes, so at worst he hears from her once while
+ * doing one — and in practice something on the list fires long before that.
+ */
+export const HEARTBEAT_SEC = 180
+
+/**
+ * How far ahead of a spawn the coach is asked about it.
+ *
+ * The prospective twin of the post-game reviewer's best items. "Cloud fell at 13:41 while you were
+ * in base" is hindsight and unreachable live; "Cloud in 45s, you are bot with 100g" is the same
+ * join, asked in time to matter. 45s is a jungler's actual decision horizon: long enough to cross
+ * the map or reset, short enough that the answer has not changed by the time he hears it.
+ */
+export const OBJECTIVE_LEAD_SEC = 45
+
+/**
+ * How long an objective has to stand untaken before the fact that nobody has taken it is itself the
+ * question.
+ *
+ * This is the second cut's main ADDITION, and the recorded game is the argument for it. Baron
+ * spawned at 20:00 and fell at 23:29 — **209 seconds standing** — and Herald stood for 182. Over
+ * both of those stretches the old list had nothing to ask: `objective.window` fired once, 45
+ * seconds before the spawn, spent its key, and then went quiet for the entire time the decision was
+ * actually open. Meanwhile twelve turns were spent on his own health bar.
+ *
+ * 60 seconds, because that is about one recall-and-rotate. Under it the window event has barely
+ * gone out; over it, the objective standing is genuinely new information about the enemy team.
+ */
+export const OBJECTIVE_STALE_SEC = 60
+
+/**
+ * Standard respawn/spawn schedule. These MUST agree with `shared/live-brief.ts`, which owns the
+ * wording sent to the model; this file only decides when to ask. Duplicated rather than imported
+ * because `shared/` may not import `analysis/` and the brief keeps them private.
+ *
+ * RE-DERIVED, both copies, from every timeline in `data/blobs` — see
+ * `shared/live-brief-schedule.test.ts`, which fails when a patch moves one. Grubs were 300 and
+ * Herald 840 here as well as in the brief, from an older patch: across 279 HORDE kills the earliest
+ * is 8:06 and across 89 RIFTHERALD kills the earliest is 15:27, so they spawn at 8:00 and 15:00.
+ * The consequence HERE is different from the consequence in the brief and quieter: this schedule
+ * decides WHEN the coach is asked, so the old numbers spent an objective turn three minutes before
+ * the grubs existed and used up its `fired` key doing it, and then had no turn left for the real
+ * spawn.
+ */
+export const DRAKE_RESPAWN_SEC = 300
+/** The FIRST drake, which happens to share the respawn interval — named so the two cannot drift. */
+export const DRAKE_FIRST_SPAWN_SEC = 300
+export const BARON_RESPAWN_SEC = 360
+export const GRUBS_SPAWN_SEC = 480
+export const HERALD_SPAWN_SEC = 900
+export const BARON_SPAWN_SEC = 1200
+
+/**
+ * When an objective stops being contestable because it leaves the map.
+ *
+ * Needed only by `objective.contested`, which asks about a thing STANDING: without a despawn the
+ * grubs would read as up and untaken from 8:00 until the end of the game and Herald from 15:00
+ * forever, and the coach would be asked about monsters that are not there. Grubs leave at 14:00 and
+ * Herald at 20:00, when Baron takes the pit.
+ */
+export const GRUBS_DESPAWN_SEC = 840
+export const HERALD_DESPAWN_SEC = BARON_SPAWN_SEC
+
+/**
+ * The levels that unlock something rather than merely adding a point — and only the ULTIMATE ones.
+ *
+ * This used to include 2 and 3, which cost two turns in the graded game and produced two of its six
+ * false lines. They were also the wrong question independently of the falsehood: a jungler reaches
+ * 3 on his own first clear by construction, on a schedule that is not a decision, and nothing about
+ * his route changes when he gets there. 6, 11 and 16 unlock or rank up the ultimate, which is the
+ * one level-up that changes what he is able to do about something that is coming.
+ */
+export const SPIKE_LEVELS = [6, 11, 16]
+
+/**
+ * What counts as an item COMPLETING — and the repair of a rule that was firing on the wrong thing.
+ *
+ * The old rule was "a new item name appears whose `price` is at least 1100". Replayed over game
+ * 5639406342 it fired EXACTLY ONCE in 28 minutes, at 26:22, on a **Needlessly Large Rod** — and it
+ * missed Liandry's Torment at 10:32 and Riftmaker at 22:07, the only two legendaries he built. The
+ * reason is in the feed: `price` on a live item row is the COMBINE cost, not the total. Liandry's
+ * reads 800 and Riftmaker 950, while a bare Needlessly Large Rod reads its full 1200. The rule was
+ * therefore biased against exactly the purchases that matter and towards big components.
+ *
+ * The signature that cannot be fooled that way is the COMBINE itself: a new name appears in the
+ * same step that items LEAVE the inventory. A straight purchase adds without removing; a
+ * completion consumes its parts. The value of the spike is then the new items' combine cost plus
+ * the prices of what was consumed, which is a real floor under what was just assembled rather than
+ * a number the feed happens to print.
+ *
+ * Replayed over that game, 1500 over the sum keeps the three real spikes — Liandry's at 10:32
+ * (1800g assembled), Gluttonous Greaves at 15:12 (1850g) and Riftmaker at 22:06 (2450g) — and drops
+ * the two things below the gap: a Seeker's Armguard at 1300g, and the free Seeker's-to-Shattered
+ * upgrade at 1000g, which is a proc rather than a purchase.
+ */
+export const ITEM_SPIKE_GOLD = 1500
+
+/**
+ * The app's measured low bands. They no longer ask anything, and that is the point.
+ *
+ * `resource.low` used to fire a turn when a bar crossed one of these. Four of the twelve
+ * true-but-useless lines in the graded run came from it, all four of them his own health or mana
+ * read back to him, and it was the clearest case in the whole list of a fact that fails "could he
+ * have got it by looking at his screen" — the bar IS his screen.
+ *
+ * The constants stay exported because `shared/live-brief.ts` prints these bands in the payload and
+ * documents them as "the numbers `analysis/live-events.ts` fires `resource.low` on". That sentence
+ * is now half true: they are still the app's own thresholds and the brief is still right to print
+ * them, but nothing is fired on them. The brief keeps its own copies across the `shared` ↛
+ * `analysis` fence, so deleting these would only have broken the cross-reference, not the payload.
+ */
+export const HP_LOW = 0.3
+export const MANA_LOW = 0.2
+
+/**
+ * How long the counterpart has to be invisible before his absence is itself the news.
+ *
+ * "I do not know where the enemy jungler is" is the single most useful thing a jungler can be told,
+ * and it is the one thing he cannot read off his own screen. The feed cannot say where anyone is —
+ * but the enemy's `creepScore` is a VISIBILITY counter (see `TickPlayer.seenCs`), so a stretch in
+ * which nothing about him moves is a stretch in which nobody on his team has seen him.
+ *
+ * 75 seconds is a little longer than a camp clear, so a jungler quietly farming his own side does
+ * not trip it every time he walks between camps out of vision.
+ *
+ * Its twin `counterpart.seen` was cut. The same counter moving again means somebody on his team has
+ * eyes on the man — very often HIM — so "he surfaced" is the screen telling him something it has
+ * already told him, and its one graded line was false. The absence is asymmetric and the presence
+ * is not.
+ */
+export const COUNTERPART_ABSENT_SEC = 75
+
+/* ------------------------------------- the window, and what makes it move again */
+
+/**
+ * How far past the flat lead a RESPAWN may look, because a respawn is a route decision.
+ *
+ * The one place the third cut had to widen rather than narrow, and the measurement that forced it
+ * is a single line. Round 2's 10:44 respawn produced *"now that you're fresh out of base, path
+ * towards your bot side to reset and secure that drake spawning in a minute and a half"* — graded
+ * useful. At 10:44 that drake was 99 seconds away, so under `OBJECTIVE_LEAD_SEC` alone no window
+ * was open and the ask would simply have been lost.
+ *
+ * It is not a bigger lead in general: it applies only on the tick he leaves the fountain, because
+ * that is the moment the next ninety seconds of pathing are actually chosen and the only moment at
+ * which an objective that far out is a decision rather than a clock. 120s is about the length of
+ * the commitment — base to a camp to the pit.
+ *
+ * Replayed over the graded game this opens exactly one extra window (10:44) and costs nothing: the
+ * other five respawns in that game had no epic inside 120s and still ask nothing.
+ */
+export const RESPAWN_HORIZON_SEC = 120
+
+/**
+ * When a burst of killing counts as a FIGHT that has RESOLVED, and why that is a material change.
+ *
+ * `fight.resolved` used to be a turn of its own and was cut for the worst hit rate in the graded
+ * run — 1 useful in 6, 15 of 68 turns. It comes back as CONTEXT only: it is detected, it rides a
+ * turn, and it asks nothing.
+ *
+ * It was tried as a field of the fingerprint first, because "a fight resolving while an objective
+ * stands untaken" is the obvious way to describe what round 2's useful 21:05 line turns on. Replayed,
+ * it caused 7 of 30 asks over the graded game, recovered no useful line, and gave the Herald that
+ * stood for six minutes an ask every time anything died anywhere on the map — so the fingerprint
+ * counts BODIES instead (`ENEMIES_DOWN_FREE`), which is the half of a fight a jungle contest turns
+ * on, and 21:05 is recovered by that.
+ *
+ * Two champion kills, because one death is a pick and two is a trade; eight seconds of quiet,
+ * inherited unchanged from the rule that used to fire the turn.
+ */
+export const FIGHT_MIN_DEATHS = 2
+export const FIGHT_QUIET_SEC = 8
+
+/**
+ * How many of the enemy have to be lying down before an objective is FREE rather than contested.
+ *
+ * Two, and it is the field the fingerprint actually compares — see `WindowMark.twoEnemiesDown` for
+ * the measurement that put it there in place of a fight counter. The counterpart alone is covered
+ * separately by `cpDeaths`, because he is the man being raced and one of him is worth the whole
+ * rest of the team for a jungle contest.
+ */
+export const ENEMIES_DOWN_FREE = 2
+
+/**
+ * Gold spent in one go that means he was standing in the shop — i.e. that he BACKED.
+ *
+ * This feed reports no position, so "he backed" has to be inferred, and `currentGold` only ever
+ * falls by a purchase. 300 is above a control ward (75) and below a component, so a ward on the way
+ * past the shop is not a trip. Two buys in one visit are merged by `SHOP_TRIP_GAP_SEC`, which is
+ * longer than the 5-second sample that can split them.
+ */
+export const SHOP_SPEND_GOLD = 300
+export const SHOP_TRIP_GAP_SEC = 20
+
+/**
+ * How long a reachability verdict has to HOLD before the window is told its answer flipped.
+ *
+ * Hysteresis, and it is here rather than as a cooldown on the ask for a reason that matters to this
+ * file's one standing rule: a cooldown is a rate limit over the model's mouth, and a threshold on
+ * the INPUT is a statement about the game. If the port starts flapping "can"/"cannot" across a
+ * boundary, this is the knob that is wrong, not the ask.
+ */
+export const REACH_FLIP_SEC = 10
+
+/**
+ * Slack on top of the port's own ETA when deciding an objective is still winnable.
+ *
+ * `OBJECTIVE_LEAD_SEC` is the fallback when the port says `unknown`, which today is always — see
+ * `ReachFn`. When a real ETA arrives, the window opens at `eta + this` instead, which is what
+ * "entering the range where he could still get there" actually means. 15 seconds is roughly the
+ * length of a contested pit fight: he has to arrive before the fight, not before the monster dies.
+ */
+export const REACH_MARGIN_SEC = 15
+
+/**
+ * How long a CONTEXT event may wait for a turn before it is stale rather than news.
+ *
+ * Nothing that ASKS is ever dropped — that promise is the reason `dueTurn` peeks and `commitTurn`
+ * spends. But a context event rides whatever turn comes next, and under the window trigger the next
+ * turn can be four minutes away: round 2's Riftmaker completed at 22:06 and the next window ask is
+ * at 23:50. "You just finished Riftmaker" is a lie by 104 seconds at that point, and the model has
+ * no way to tell. 90 seconds is about the time it stops being the thing that just happened.
+ */
+export const CONTEXT_CARRY_SEC = 90
+
+/* --------------------------------------------------- the reachability port */
+
+/**
+ * What the reachability module answers, as this file needs it. **The port, not the module.**
+ *
+ * A separate piece of work is building the thing that reads his position off the minimap and says
+ * how long he would need to be at a pit. This file does not own that and must not guess at it, so
+ * the dependency is one function, injected, defaulting to `unknown` — and `unknown` is a real answer
+ * that behaves correctly rather than a stub that behaves like `can`. Until the module lands, every
+ * window opens on `OBJECTIVE_LEAD_SEC` exactly as it does today and `mark.reach` never flips, so
+ * nothing here is waiting on anything.
+ *
+ * The shape is deliberately narrow so it can be satisfied by whatever that module turns out to be:
+ * a verdict, and the seconds behind it when they exist. It must never return `"can"` on a guess —
+ * this app's whole design is that a gap is stated rather than filled, and a reachability module
+ * that answers confidently from a stale position read is the minimap fence's failure mode wearing
+ * a different hat.
+ */
+export interface ReachRead {
+	verdict: "can" | "cannot" | "unknown"
+	/** Seconds he would need to be at the pit, or null when the module cannot say. */
+	etaSec: number | null
+}
+
+export type ReachFn = (tick: LiveTick, objective: ObjectiveState) => ReachRead
+
+/** The honest default: it does not know, so the flat lead decides and `reach` never moves. */
+export const REACH_UNKNOWN: ReachFn = () => ({ verdict: "unknown", etaSec: null })
+
+/* ------------------------------------------------- the material fingerprint */
+
+/**
+ * The state of the game that a decision about a contest window actually depends on.
+ *
+ * Every field is a MONOTONE COUNTER or a debounced verdict, and that is what makes "did something
+ * material change" a comparison rather than a judgement: the window remembers the fingerprint it
+ * was last asked under, and any field differing is a second ask. Counters rather than booleans
+ * because a boolean that goes out and comes back between two asks reads as no change at all — his
+ * death and his respawn would cancel, which is exactly the ask the graded run scored useful.
+ *
+ * What is deliberately NOT in here, with its reason:
+ *
+ *   - **the clock.** A window ticking from "in 40s" to "up 20s" is not news; it is the thing that
+ *     was already asked about, one sample later. Round 2 asked about the same drake at 4:20 and
+ *     again at 6:04 for no other reason than that it had spawned in between, and the second line
+ *     was true and useless.
+ *   - **his HP, mana and gold totals.** The bars are his screen. This is the same cut that deleted
+ *     `resource.low`, applied to the re-ask.
+ *   - **the counterpart going DARK.** Absence is still detected and still rides the turn, but it
+ *     does not re-open a window: all three `counterpart.unseen` turns in round 2 produced either a
+ *     useless line or a verbatim repeat of the window ask 6 seconds earlier (18:02, then 18:08).
+ *     His coming BACK is in here, because that is the counter moving from "nobody can see him" to
+ *     "somebody does", which genuinely re-prices a contest.
+ */
+export interface WindowMark {
+	/** His own deaths. A death and the respawn after it are two different numbers, on purpose. */
+	myDeaths: number
+	/** The counterpart's deaths — the thing that makes something standing in a pit free. */
+	cpDeaths: number
+	/** Times the counterpart has come back into view after `COUNTERPART_ABSENT_SEC` of nothing. */
+	cpReappearances: number
+	/**
+	 * How many times the enemy team has been OPENED UP — see `ENEMIES_DOWN_FREE`.
+	 *
+	 * This slot has been measured three times and each reading is written down, because each one
+	 * changed the answer:
+	 *
+	 *   1. **A count of RESOLVED fights**, which is the shape the task's own list suggested. It
+	 *      caused 7 of 30 asks over the graded game, recovered no useful line, and gave the Herald
+	 *      that stood for six minutes an ask every time anything died anywhere on the map.
+	 *   2. **A boolean "two or more are down right now"**, which recovered round 2's 21:05 — *"Baron
+	 *      is still free with Kayn and Draven dead, but you are too low to take it"*, the ask twelve
+	 *      seconds after the previous one, which nothing else in the fingerprint can see. It also
+	 *      FLAPPED: three asks in thirteen seconds at 11:57 / 12:04 / 12:10, down then up then down,
+	 *      which is the exact fault this cut exists to remove.
+	 *   3. **A ratchet**, which is what is here. A spell opens the first time two of them are down
+	 *      and does not close until they are ALL back up, so a fight that trades bodies back and
+	 *      forth is one spell and one ask. Monotone, so the enemy respawning is never itself news.
+	 */
+	enemiesOpened: number
+	/** Trips to the shop, inferred from gold spent — see `SHOP_SPEND_GOLD`. */
+	shopTrips: number
+	/** Epics taken this game. A take re-prices every window still open, and says where he just was. */
+	takes: number
+	/** The reachability port's verdict for THIS window, after `REACH_FLIP_SEC` of hysteresis. */
+	reach: "can" | "cannot" | "unknown"
+}
+
+/** Which fields of the fingerprint moved. Empty means nothing material happened. */
+export const materialDiff = (was: WindowMark, now: WindowMark): string[] => {
+	const out: string[] = []
+	if (now.myDeaths !== was.myDeaths) out.push("he died and is back")
+	if (now.cpDeaths !== was.cpDeaths) out.push("counterpart died")
+	if (now.cpReappearances !== was.cpReappearances) out.push("counterpart resurfaced")
+	if (now.enemiesOpened !== was.enemiesOpened) out.push("two enemies are down")
+	if (now.shopTrips !== was.shopTrips) out.push("he backed")
+	if (now.takes !== was.takes) out.push("another objective fell")
+	if (now.reach !== was.reach) out.push(`reach ${was.reach} -> ${now.reach}`)
+	return out
+}
+
+/** One contest window: an objective instance, while the decision about it is still open. */
+export interface WindowRecord {
+	key: string
+	what: string
+	spawnSec: number
+	openedAtSec: number
+	/** Why it became decidable — the flat lead, it standing untaken, or him leaving the fountain. */
+	opening: "lead" | "standing" | "respawn"
+	/** How many times the coach has been asked about this window. */
+	asks: number
+	/** The fingerprint under which the last ask was RAISED. Null until the opening ask is raised. */
+	askedMark: WindowMark | null
+	/** The reach verdict currently being held, and since when — `REACH_FLIP_SEC`'s hysteresis. */
+	reach: "can" | "cannot" | "unknown"
+	reachPending: "can" | "cannot" | "unknown"
+	reachPendingSince: number
+}
+
+/* ------------------------------------------------------------ memory */
+
+export interface EventWatch {
+	prev: LiveTick | null
+	/** Event log ids already turned into events. The log is cumulative, so this is what dedupes it. */
+	seenEventIds: Set<number>
+	/** Keys already fired. One entry per THING, so a truth that stays true does not re-fire. */
+	fired: Set<string>
+	/** Last game clock at which anything about the counterpart moved. */
+	counterpartSeenAtSec: number | null
+	counterpartMissing: boolean
+	/**
+	 * Who killed him last, carried so the RESPAWN turn can say it.
+	 *
+	 * His death no longer asks anything — he is watching a grey screen and cannot act on an answer
+	 * for 10-45 seconds — but the kill log is the only place the killer's champion exists, and the
+	 * fault panel reading "respawn.self (he is back up)" with no idea what happened is worse than the
+	 * two-turns-per-death it replaces. So the death is REMEMBERED and spent on the turn that can use
+	 * it.
+	 */
+	lastDeathNote: string | null
+	/** When a turn was last TAKEN. The heartbeat measures from here, not from the last event. */
+	lastTurnAtSec: number | null
+	/**
+	 * Events detected but not yet carried by a turn.
+	 *
+	 * Nothing that ASKS is ever dropped from here — see `dueTurn` and `commitTurn`. Context events
+	 * ARE dropped once they go stale, because the window trigger can leave minutes between turns and
+	 * a four-minute-old item completion carried into a Baron ask is a false premise. See
+	 * `CONTEXT_CARRY_SEC`.
+	 */
+	pending: LiveEvent[]
+
+	/* ------------------------------------------- the third cut: windows and the fingerprint */
+
+	/** Every contest window that is currently open, by objective instance key. */
+	windows: Map<string, WindowRecord>
+	/** Instance keys whose window has already opened and closed. Stops a take re-opening one. */
+	closedWindows: Set<string>
+	/** The live fingerprint. `markFor` snapshots it per window by adding that window's reach. */
+	counters: Omit<WindowMark, "reach">
+	/** Fights detected. Context only — the fingerprint counts bodies, not fights. See `WindowMark`. */
+	fightsSeen: number
+	/** Whether an "enemies opened up" spell is currently running. See `WindowMark.enemiesOpened`. */
+	enemiesOpen: boolean
+	/** The kill cluster in progress: when the last champion kill landed, and how many it has. */
+	clusterKills: number
+	lastKillAtSec: number | null
+	/** When gold was last seen to fall by `SHOP_SPEND_GOLD` — the merge window for one visit. */
+	lastShopAtSec: number | null
+	/** Bumped per ask so a second `window.changed` on the same window gets its own dedupe key. */
+	askSeq: number
+}
+
+export const newEventWatch = (): EventWatch => ({
+	prev: null,
+	seenEventIds: new Set(),
+	fired: new Set(),
+	counterpartSeenAtSec: null,
+	counterpartMissing: false,
+	lastDeathNote: null,
+	lastTurnAtSec: null,
+	pending: [],
+	windows: new Map(),
+	closedWindows: new Set(),
+	counters: {
+		myDeaths: 0,
+		cpDeaths: 0,
+		cpReappearances: 0,
+		enemiesOpened: 0,
+		shopTrips: 0,
+		takes: 0
+	},
+	fightsSeen: 0,
+	enemiesOpen: false,
+	clusterKills: 0,
+	lastKillAtSec: null,
+	lastShopAtSec: null,
+	askSeq: 0
+})
+
+/**
+ * The enemy jungler, found the same way `shared/live-brief.ts` finds him: the live feed's own
+ * `position`, which is a different and trustworthy source from the post-game `timeline.lane` this
+ * repo refuses. No Smite fallback here, because this file only ever uses the counterpart to decide
+ * whether to ASK — a wrong guess costs a question, not a claim.
+ */
+export const counterpartOf = (tick: LiveTick): TickPlayer | null =>
+	tick.players.find(p => p.team !== tick.me.team && p.position === "JUNGLE") ?? null
+
+const championOf = (tick: LiveTick, name: string | null): string | null => {
+	if (name === null) return null
+	return tick.players.find(p => p.name === name)?.champion ?? null
+}
+
+/* ------------------------------------------------------------ the objectives */
+
+/** One epic monster, as it stands right now. */
+export interface ObjectiveState {
+	/** Unique per INSTANCE — the drake at 12:23 is a different thing from the drake at 17:23. */
+	key: string
+	/** The plain noun — "drake", "voidgrubs", "rift herald", "baron". The notes add the verb. */
+	what: string
+	/** The clock at which this instance spawns, past or future. */
+	spawnSec: number
+	/** How long it has been standing untaken, or null when it has not spawned or is already gone. */
+	upForSec: number | null
+}
+
+/**
+ * Every epic that still has a next instance, from the schedule plus this game's observed takes.
+ *
+ * A take that was never logged produces no window at all — assuming one from the clock would be
+ * inventing a timer, which is the rule `GET /api/live` already follows for the same numbers. Grubs
+ * and Herald are ONE instance each and disappear once taken or once they leave the map; drake and
+ * Baron always have a next one.
+ */
+export const objectiveStates = (tick: LiveTick): ObjectiveState[] => {
+	const now = tick.gameTimeSec
+	let lastDrake: number | null = null
+	let lastBaron: number | null = null
+	let heraldTaken = false
+	let grubsTaken = false
+	for (const e of tick.events) {
+		if (e.name === "DragonKill") lastDrake = Math.max(lastDrake ?? 0, e.atSec)
+		if (e.name === "BaronKill") lastBaron = Math.max(lastBaron ?? 0, e.atSec)
+		if (e.name === "HeraldKill") heraldTaken = true
+		if (e.name === "HordeKill") grubsTaken = true
+	}
+	const out: ObjectiveState[] = []
+	const add = (name: string, what: string, spawnSec: number, goneSec: number | null): void => {
+		out.push({
+			key: `${name}:${Math.round(spawnSec)}`,
+			what,
+			spawnSec,
+			upForSec:
+				now >= spawnSec && (goneSec === null || now < goneSec) ? now - spawnSec : null
+		})
+	}
+	add(
+		"drake",
+		"drake",
+		lastDrake === null ? DRAKE_FIRST_SPAWN_SEC : lastDrake + DRAKE_RESPAWN_SEC,
+		null
+	)
+	if (!grubsTaken && now < GRUBS_DESPAWN_SEC)
+		add("grubs", "voidgrubs", GRUBS_SPAWN_SEC, GRUBS_DESPAWN_SEC)
+	if (!heraldTaken && now < HERALD_DESPAWN_SEC)
+		add("herald", "rift herald", HERALD_SPAWN_SEC, HERALD_DESPAWN_SEC)
+	add(
+		"baron",
+		"baron",
+		lastBaron === null ? BARON_SPAWN_SEC : lastBaron + BARON_RESPAWN_SEC,
+		null
+	)
+	return out
+}
+
+/**
+ * The soonest epic he could still act on — up and untaken, or spawning inside the travel lead.
+ *
+ * This is the gate on `death.counterpart`, and it is the difference between "the enemy jungler is
+ * dead" and "the enemy jungler is dead AND there is something to take with the time that buys". In
+ * the graded game the counterpart died three times inside the sampled turns: at 20:53 with Baron
+ * standing (useful), at 25:39 while HE was also dead (useless), and at 28:12 with the next drake
+ * and the next Baron both more than a minute away (false). Only the first had a window.
+ */
+export const contestableObjective = (tick: LiveTick): ObjectiveState | null => {
+	const now = tick.gameTimeSec
+	let best: ObjectiveState | null = null
+	for (const o of objectiveStates(tick)) {
+		if (o.upForSec === null && o.spawnSec - now > OBJECTIVE_LEAD_SEC) continue
+		if (best === null || o.spawnSec < best.spawnSec) best = o
+	}
+	return best
+}
+
+/* ------------------------------------------------------------ the item spike */
+
+/** The multiset of real (priced, non-trinket) items he is holding, as name -> count and price. */
+const heldItems = (me: TickMe): Map<string, { count: number; price: number }> => {
+	const out = new Map<string, { count: number; price: number }>()
+	me.items.forEach((name, i) => {
+		const price = me.itemPrices[i] ?? 0
+		if (price <= 0) return
+		const row = out.get(name)
+		if (row) row.count += 1
+		else out.set(name, { count: 1, price })
+	})
+	return out
+}
+
+/**
+ * Did something COMBINE between these two ticks, and was it worth a turn? See `ITEM_SPIKE_GOLD`.
+ *
+ * Returns the headline item and the gold the assembly is worth, or null. Names are compared as a
+ * multiset because he can hold two Amplifying Tomes, and a 5-second sample can catch a back in
+ * which a legendary and its next components are all bought at once — which is exactly what happened
+ * at 22:07 in the recorded game, and is why a rule watching the SLOT COUNT instead would have
+ * missed Riftmaker.
+ */
+export const itemSpike = (
+	prev: TickMe,
+	now: TickMe
+): { name: string; gold: number } | null => {
+	const before = heldItems(prev)
+	const after = heldItems(now)
+	let addedGold = 0
+	let removedGold = 0
+	let headline: { name: string; price: number } | null = null
+	for (const [name, row] of after) {
+		const had = before.get(name)?.count ?? 0
+		const gained = row.count - had
+		if (gained <= 0) continue
+		addedGold += gained * row.price
+		if (headline === null || row.price > headline.price) headline = { name, price: row.price }
+	}
+	if (headline === null) return null
+	for (const [name, row] of before) {
+		const kept = after.get(name)?.count ?? 0
+		const lost = row.count - kept
+		if (lost > 0) removedGold += lost * row.price
+	}
+	// A straight purchase adds without consuming. Only an assembly is a spike.
+	if (removedGold === 0) return null
+	const gold = addedGold + removedGold
+	return gold >= ITEM_SPIKE_GOLD ? { name: headline.name, gold } : null
+}
+
+/* ------------------------------------------------------------ detection */
+
+/**
+ * Diff one tick against the last and return the events that just became true.
+ *
+ * Mutates the watch. Returns only what is NEW — the caller appends it to `watch.pending`, which is
+ * drained by a turn. Nothing is dropped on the floor here: an event detected while a turn is in
+ * flight waits for the next one rather than vanishing, because a death nobody was asked about is
+ * the failure this whole file is replacing.
+ */
+export const observeTick = (
+	watch: EventWatch,
+	tick: LiveTick,
+	opts: { reach?: ReachFn } = {}
+): LiveEvent[] => {
+	const out: LiveEvent[] = []
+	const now = tick.gameTimeSec
+	/*
+	 * `asks` and `windowKey` default to "no" and "none", so every detector below reads exactly as it
+	 * did before the third cut and none of them can cause a turn by accident. The four kinds that DO
+	 * ask pass `asks: true` explicitly, and they are the only four places in this file that do.
+	 */
+	const fire = (
+		e: Omit<LiveEvent, "asks" | "windowKey"> & { asks?: boolean; windowKey?: string | null }
+	): boolean => {
+		if (watch.fired.has(e.key)) return false
+		watch.fired.add(e.key)
+		out.push({ ...e, asks: e.asks === true, windowKey: e.windowKey ?? null })
+		return true
+	}
+
+	/*
+	 * A NEW GAME resets everything, and it happens BEFORE `prev` is read.
+	 *
+	 * The clock going backwards is the only signal available — one journal session held 715 frames
+	 * across two games and the second restarted at tSec 2. Carrying game N-1's fired keys into game
+	 * N would suppress game N's first death; carrying its counterpart would name a champion who is
+	 * not in the game, which is the hallucination this app's design exists to fight.
+	 *
+	 * Reading `prev` first is how the first draft of this got it wrong and the test caught it:
+	 * everything was reset, and then every diff below ran against the PREVIOUS GAME's final tick,
+	 * so game two opened with no `game.start` and with a level, item and resource diff taken across
+	 * a loading screen.
+	 */
+	if (watch.prev !== null && now < watch.prev.gameTimeSec - 5) {
+		const fresh = newEventWatch()
+		watch.prev = null
+		watch.seenEventIds = fresh.seenEventIds
+		watch.fired = fresh.fired
+		watch.counterpartSeenAtSec = null
+		watch.counterpartMissing = false
+		watch.lastDeathNote = null
+		watch.lastTurnAtSec = null
+		watch.pending = []
+		watch.windows = fresh.windows
+		watch.closedWindows = fresh.closedWindows
+		watch.counters = fresh.counters
+		watch.fightsSeen = 0
+		watch.enemiesOpen = false
+		watch.clusterKills = 0
+		watch.lastKillAtSec = null
+		watch.lastShopAtSec = null
+		watch.askSeq = 0
+	}
+	const prev = watch.prev
+
+	/* -------------------------------------------------- the event log */
+	for (const e of tick.events) {
+		if (watch.seenEventIds.has(e.id)) continue
+		watch.seenEventIds.add(e.id)
+		/*
+		 * The FIRST tick of a session adopts the log without firing it. The page can be opened at
+		 * 14:00, and a log replayed from GameStart would fire nine deaths and four drakes at once —
+		 * every one of them minutes old, and the newest of them the only one worth a question.
+		 */
+		if (prev === null) continue
+
+		if (e.name === "ChampionKill") {
+			/*
+			 * EVERY champion kill feeds the cluster, including his own and his team's. A fight is a
+			 * fact about the map — who is standing near a pit — and it does not care who was in it.
+			 * Resolution is checked once per tick, further down, because it is the QUIET that ends a
+			 * fight and quiet is not an event.
+			 */
+			watch.clusterKills += 1
+			watch.lastKillAtSec = Math.max(watch.lastKillAtSec ?? e.atSec, e.atSec)
+			const victimIsMe = e.victim === tick.me.name
+			const victim = tick.players.find(p => p.name === e.victim) ?? null
+			const cp = counterpartOf(tick)
+			/*
+			 * A KILL IS NOT A TURN, and this is where the first version of this file went wrong.
+			 *
+			 * The recorded game caught it. 5639406342's live log carries 62 champion kills across 28
+			 * minutes (the post-game match counts 69), and firing on each one produced 105 turns — MORE than the 85 the timer it replaces produces, and
+			 * for exactly the same reason. A coach asked about every corpse is as mechanical as a
+			 * coach asked every twenty seconds.
+			 *
+			 * The rule that survives is the app's own test for WHAT may be said, applied to WHEN it
+			 * is asked: not visible, and not generic — sharpened, by the graded run, to "is a
+			 * decision about something that has not happened yet open or closed by this".
+			 *
+			 *   - HIS death closes every decision for the next 10-45 seconds. He is looking at a grey
+			 *     screen and cannot act on an answer, so it no longer asks anything; it is remembered
+			 *     and spent on `respawn.self`, which is the fork in the road and which is the turn
+			 *     the graded run actually scored useful.
+			 *   - THE COUNTERPART's death is the one death he very likely did not see, and it OPENS a
+			 *     window — but only if there is something standing in that window to take. See
+			 *     `contestableObjective` for the three graded cases that settled the gate.
+			 *   - Everyone else's death he watched happen, on the minimap or in the recap. It is
+			 *     visible by construction, and what the exchange as a whole bought is retrospective —
+			 *     the post-game reviewer's job. `fight.resolved` tried to ask it live and was the
+			 *     largest single source of true-but-useless lines in the graded run.
+			 */
+			if (victimIsMe) {
+				watch.lastDeathNote = `${championOf(tick, e.killer) ?? e.killer ?? "someone"} killed ${
+					tick.me.champion
+				} at ${Math.round(e.atSec)}s`
+				continue
+			}
+			if (cp === null || victim === null || victim.name !== cp.name) continue
+			const window = contestableObjective(tick)
+			if (tick.me.dead || window === null) continue
+			fire({
+				kind: "death.counterpart",
+				atSec: e.atSec,
+				reactive: true,
+				key: `kill:${e.id}`,
+				note: `${championOf(tick, e.killer) ?? e.killer ?? "someone"} killed ${cp.champion}, ${
+					window.upForSec === null ?
+						`${window.what} in ${Math.round(window.spawnSec - now)}s`
+					:	`${window.what} up ${Math.round(window.upForSec)}s`
+				}`
+			})
+			continue
+		}
+
+		/*
+		 * EPIC MONSTERS AND INHIBITORS, and deliberately not turrets.
+		 *
+		 * This is a jungler's coach. Drakes, Baron, Herald and grubs are his job and his call, and
+		 * an inhibitor changes what the whole map is allowed to do. Turret plates and towers are a
+		 * laner's outcome — he can see them on his own minimap, they are the definition of a fact
+		 * that fails the "could he have got it by looking at his screen" test, and there are up to
+		 * 22 of them in a game. In the recorded game they were 11 of the 23 objective events, which
+		 * is a fifth of the coach's whole voice spent narrating towers.
+		 *
+		 * GRUBS COUNT, which they did not before — `HordeKill` was not in this list at all, so the
+		 * one objective that is most exclusively a jungler's was the one the coach never mentioned.
+		 * They come in threes and the recorded game logged its cluster across 23 seconds, so the key
+		 * buckets them: one turn for the set, not three for the same thirty seconds of map.
+		 */
+		if (
+			e.name === "DragonKill" ||
+			e.name === "BaronKill" ||
+			e.name === "HeraldKill" ||
+			e.name === "HordeKill" ||
+			e.name === "InhibKilled"
+		) {
+			/*
+			 * The take is a MATERIAL CHANGE on every other window still open, and it is the only
+			 * thing in this feed that says where the enemy jungler just was. Both of round 2's
+			 * useful `objective.taken` lines are that join and nothing else — 7:23 "Kayn just took
+			 * that drake bot side, so he's there, making those grubs free" and 18:02 "Kayn just got
+			 * Herald topside, so path bot to secure this drake". Neither is about the thing that
+			 * fell; both are about the thing that has not.
+			 *
+			 * An inhibitor is counted as context and NOT as a take: it changes no jungle contest,
+			 * and both of round 2's inhibitor turns were useless.
+			 */
+			const isEpic = e.name !== "InhibKilled"
+			if (
+				fire({
+					kind: "objective.taken",
+					atSec: e.atSec,
+				/*
+				 * NOT reactive. A drake that just fell is worth the 1.3-3.0s minimap read in front
+				 * of the turn, because "where was he when it fell" is the entire content of the
+				 * post-game reviewer's best objective items and the only half of it this feed has.
+				 */
+				reactive: false,
+				key:
+					e.name === "HordeKill" ?
+						`obj:horde:${Math.floor(e.atSec / 60)}`
+					:	`obj:${e.id}`,
+					note: `${e.name}${e.dragonType !== null ? ` (${e.dragonType})` : ""}${e.stolen ? " STOLEN" : ""}`
+				}) &&
+				isEpic
+			)
+				watch.counters.takes += 1
+			continue
+		}
+	}
+
+	/* -------------------------------------------------- the fingerprint's own counters */
+	/*
+	 * The material state of the game, kept as running counters so `materialDiff` is a comparison
+	 * rather than a judgement. See `WindowMark` for what is deliberately not here.
+	 *
+	 * Both death counts come off the SCOREBOARD rather than off the kill log, because the scoreboard
+	 * is monotone by construction and survives a page opened at 14:00 — a log replayed from
+	 * GameStart is explicitly not read on the first tick (see above), so a counter built from it
+	 * would start at zero mid-game and then jump.
+	 */
+	watch.counters.myDeaths = tick.me.deaths
+	const cpNow = counterpartOf(tick)
+	if (cpNow !== null) watch.counters.cpDeaths = cpNow.deaths
+
+	/*
+	 * HE BACKED, inferred from the only thing in this feed that can only happen in the shop. See
+	 * `SHOP_SPEND_GOLD`.
+	 */
+	if (prev !== null) {
+		const spent = prev.me.gold - tick.me.gold
+		if (
+			spent >= SHOP_SPEND_GOLD &&
+			(watch.lastShopAtSec === null || now - watch.lastShopAtSec >= SHOP_TRIP_GAP_SEC)
+		) {
+			watch.lastShopAtSec = now
+			watch.counters.shopTrips += 1
+			fire({
+				kind: "shop.trip",
+				atSec: now,
+				reactive: false,
+				key: `shop:${watch.counters.shopTrips}`,
+				note: `spent ${Math.round(spent)}g`
+			})
+		}
+	}
+
+	/*
+	 * A FIGHT RESOLVES on the QUIET, which is why it is checked here on every tick rather than in
+	 * the event loop. See `FIGHT_MIN_DEATHS`.
+	 */
+	/*
+	 * TWO ENEMIES DOWN is the half of a fight a contest window turns on — see `WindowMark`. It is
+	 * read off the roster rather than off the log, so it is true while they are down and false the
+	 * moment they are not, with no cluster to keep.
+	 */
+	const enemiesDown = tick.players.filter(p => p.team !== tick.me.team && p.dead).length
+	if (!watch.enemiesOpen && enemiesDown >= ENEMIES_DOWN_FREE) {
+		watch.enemiesOpen = true
+		watch.counters.enemiesOpened += 1
+	} else if (watch.enemiesOpen && enemiesDown === 0) watch.enemiesOpen = false
+
+	if (
+		watch.lastKillAtSec !== null &&
+		now - watch.lastKillAtSec >= FIGHT_QUIET_SEC &&
+		watch.clusterKills >= FIGHT_MIN_DEATHS
+	) {
+		watch.fightsSeen += 1
+		fire({
+			kind: "fight.resolved",
+			atSec: watch.lastKillAtSec,
+			reactive: false,
+			key: `fight:${watch.fightsSeen}`,
+			note: `${watch.clusterKills} champions died, quiet since ${Math.round(watch.lastKillAtSec)}s`
+		})
+		watch.clusterKills = 0
+		watch.lastKillAtSec = null
+	} else if (watch.lastKillAtSec !== null && now - watch.lastKillAtSec >= FIGHT_QUIET_SEC) {
+		// A single pick is not a fight. Drop the cluster rather than letting it accumulate all game.
+		watch.clusterKills = 0
+		watch.lastKillAtSec = null
+	}
+
+	/* -------------------------------------------------- his own state */
+	if (prev !== null) {
+		if (prev.me.dead && !tick.me.dead)
+			/*
+			 * Out of the fountain, which is the fork in the road — path back to a camp, walk to the
+			 * objective, or reset again. This is the only turn a death now produces, and in the
+			 * graded run it is the one that produced "that death at dragon was tough but we can't
+			 * change it, so let's reset and run straight to those Voidgrubs while Kayn is resetting
+			 * too": a line about the next thirty seconds rather than the last ten.
+			 */
+			fire({
+				kind: "respawn.self",
+				atSec: now,
+				reactive: true,
+				key: `respawn:${tick.me.deaths}`,
+				note: watch.lastDeathNote === null ? "he is back up" : `back up — ${watch.lastDeathNote}`
+			})
+
+		for (const lv of SPIKE_LEVELS)
+			if (prev.me.level < lv && tick.me.level >= lv)
+				fire({
+					kind: "level.spike",
+					atSec: now,
+					reactive: false,
+					key: `level:${lv}`,
+					note: `level ${lv}`
+				})
+
+		/*
+		 * An item COMPLETING, spotted by the combine rather than by a price. See `ITEM_SPIKE_GOLD`
+		 * for the measurement that replaced the old rule, which fired once in 28 minutes and missed
+		 * both legendaries.
+		 */
+		const spike = itemSpike(prev.me, tick.me)
+		if (spike !== null)
+			fire({
+				kind: "item.completed",
+				atSec: now,
+				reactive: false,
+				key: `item:${spike.name}`,
+				note: `finished ${spike.name} (${spike.gold}g assembled)`
+			})
+	}
+
+	/* -------------------------------------------------- the counterpart */
+	/*
+	 * Where the enemy jungler is, inferred from the only thing this feed can honestly say about
+	 * him: whether anything about him moved. See `COUNTERPART_ABSENT_SEC`.
+	 *
+	 * Both directions are still TRACKED, because the absence clock needs the sightings to run. Only
+	 * the absence is fired.
+	 */
+	const cp = counterpartOf(tick)
+	if (cp !== null) {
+		const cpPrev = prev === null ? null : counterpartOf(prev)
+		const moved =
+			cpPrev === null ||
+			cp.level !== cpPrev.level ||
+			cp.seenCs !== cpPrev.seenCs ||
+			cp.itemCount !== cpPrev.itemCount ||
+			cp.dead !== cpPrev.dead ||
+			cp.kills !== cpPrev.kills ||
+			cp.deaths !== cpPrev.deaths ||
+			cp.assists !== cpPrev.assists
+		if (moved) {
+			// HE IS BACK IN SOMEBODY'S VISION. The transition, not the state — see `WindowMark`.
+			if (watch.counterpartMissing) watch.counters.cpReappearances += 1
+			watch.counterpartSeenAtSec = now
+			watch.counterpartMissing = false
+		} else if (
+			!watch.counterpartMissing &&
+			watch.counterpartSeenAtSec !== null &&
+			now - watch.counterpartSeenAtSec >= COUNTERPART_ABSENT_SEC
+		) {
+			watch.counterpartMissing = true
+			fire({
+				kind: "counterpart.unseen",
+				atSec: now,
+				reactive: false,
+				key: `cp-gone:${Math.round(watch.counterpartSeenAtSec)}`,
+				note: `${cp.champion} unseen for ${Math.round(now - watch.counterpartSeenAtSec)}s`
+			})
+		}
+		if (watch.counterpartSeenAtSec === null) watch.counterpartSeenAtSec = now
+	}
+
+	/* -------------------------------------------------- the contest windows */
+	/*
+	 * THE UNIT. Everything above this point detects; this is the only block that ASKS.
+	 *
+	 * A contest window is one objective instance while the decision about it is still open. The two
+	 * events the second cut used — `objective.window` 45s before a spawn and `objective.contested`
+	 * once it had stood a minute — are still fired, because the brief and the fault panel read their
+	 * notes, but they no longer ask anything. What asks is the WINDOW: once when it opens, and again
+	 * only when `materialDiff` says the game moved underneath it.
+	 *
+	 * That is the whole of the third cut, and the reason for it is one number. Round 2 asked 38
+	 * times and produced three separate drake lines inside nineteen seconds (18:02, 18:08, 18:21)
+	 * from three different event kinds — a Herald take, the counterpart going dark and a level 11 —
+	 * all three of them about the same drake, spawning at 18:41. Three events, one decision. Asking
+	 * per event is how a coach with one thing to say says it three times.
+	 *
+	 * BOTH HALVES ARE GATED ON HIM BEING ALIVE, and the reason is unchanged from the second cut. At
+	 * 13:16 in the graded run a herald window fired while he was 12 seconds into a 21-second death
+	 * and the model answered "you are dead so that is generic" — a turn spent, out loud, saying it
+	 * had nothing. A window he is dead for is not a decision he has. The record is not created, so
+	 * it opens on the first tick he is back up and still inside the window, and is simply lost if
+	 * the whole window passes while he is down, which is the truth.
+	 */
+	const liveObjectives = objectiveStates(tick)
+
+	if (!tick.me.dead)
+		for (const o of liveObjectives) {
+			if (o.upForSec === null) {
+				if (now >= o.spawnSec - OBJECTIVE_LEAD_SEC)
+					fire({
+						kind: "objective.window",
+						atSec: o.spawnSec,
+						reactive: false,
+						windowKey: o.key,
+						key: `window:${o.key}`,
+						note: `${o.what} in ${Math.round(o.spawnSec - now)}s`
+					})
+			} else if (o.upForSec >= OBJECTIVE_STALE_SEC)
+				fire({
+					kind: "objective.contested",
+					atSec: o.spawnSec,
+					reactive: false,
+					windowKey: o.key,
+					key: `standing:${o.key}`,
+					note: `${o.what} up ${Math.round(o.upForSec)}s and untaken`
+				})
+		}
+
+	const reach = opts.reach ?? REACH_UNKNOWN
+	const liveByKey = new Map(liveObjectives.map(o => [o.key, o]))
+
+	/*
+	 * A WINDOW THAT CLOSES WITHOUT AN ASK IS FINE. `objectiveStates` stops returning an instance the
+	 * moment it is taken or leaves the map, and the drake/Baron key carries its own spawn clock, so
+	 * the next instance is a different window and never inherits this one's asks.
+	 */
+	for (const key of [...watch.windows.keys()])
+		if (!liveByKey.has(key)) {
+			watch.windows.delete(key)
+			watch.closedWindows.add(key)
+		}
+
+	const respawnedNow = prev !== null && prev.me.dead && !tick.me.dead
+	/*
+	 * THE SOONEST ONE ONLY, and this is measured rather than tidy.
+	 *
+	 * The first version let a respawn open every window inside `RESPAWN_HORIZON_SEC`, and replayed
+	 * over the graded game that opened Herald at 13:28 — 92 seconds before it spawned, off the back
+	 * of a death that had nothing to do with it — which spent the window's opening ask and DESTROYED
+	 * round 2's useful 14:17 line, "you're a level up on Kayn and Rift Herald spawns in forty
+	 * seconds so start pathing top to contest it". He walks out of the fountain towards one thing.
+	 */
+	const soonest =
+		liveObjectives
+			.filter(o => !watch.closedWindows.has(o.key))
+			.sort((a, b) => a.spawnSec - b.spawnSec)[0] ?? null
+	const respawnTarget =
+		(
+			respawnedNow &&
+			soonest !== null &&
+			!watch.windows.has(soonest.key) &&
+			soonest.spawnSec - now <= RESPAWN_HORIZON_SEC
+		) ?
+			soonest.key
+		:	null
+
+	if (!tick.me.dead)
+		for (const o of liveObjectives) {
+			if (watch.closedWindows.has(o.key)) continue
+			const untilSpawn = o.spawnSec - now
+			const standing = o.upForSec !== null
+			const read = reach(tick, o)
+			/*
+			 * "The range where he could still get there." With no reachability module the flat lead
+			 * decides, exactly as before; with one, the window opens when the objective comes inside
+			 * his own travel time plus the length of the fight he has to arrive for.
+			 */
+			const lead =
+				read.etaSec === null ? OBJECTIVE_LEAD_SEC : read.etaSec + REACH_MARGIN_SEC
+			const inLead = untilSpawn <= lead
+			const record = watch.windows.get(o.key) ?? null
+
+			if (record === null) {
+				// See `RESPAWN_HORIZON_SEC` — the one opening that looks further than the lead.
+				const onRespawn = respawnTarget === o.key
+				if (!standing && !inLead && !onRespawn) continue
+				const opened: WindowRecord = {
+					key: o.key,
+					what: o.what,
+					spawnSec: o.spawnSec,
+					openedAtSec: now,
+					opening: standing ? "standing" : inLead ? "lead" : "respawn",
+					asks: 1,
+					askedMark: { ...watch.counters, reach: read.verdict },
+					reach: read.verdict,
+					reachPending: read.verdict,
+					reachPendingSince: now
+				}
+				watch.windows.set(o.key, opened)
+				fire({
+					kind: "window.open",
+					atSec: o.spawnSec,
+					// A window opened by him leaving the fountain decays in seconds; a clock does not.
+					reactive: opened.opening === "respawn",
+					asks: true,
+					windowKey: o.key,
+					key: `w-open:${o.key}`,
+					note:
+						standing ?
+							`${o.what} up ${Math.round(o.upForSec ?? 0)}s and untaken`
+						:	`${o.what} in ${Math.round(untilSpawn)}s (${opened.opening})`
+				})
+				continue
+			}
+
+			/*
+			 * ONE ASK PER WINDOW — the second one has to be paid for.
+			 *
+			 * `materialDiff` is the price, and every field it compares is a counter or a debounced
+			 * verdict declared in `WindowMark` with the threshold that moves it. Nothing here looks
+			 * at the clock, at his bars, or at the line the model wrote: this is not a rate limit and
+			 * a turn it declines to raise is a question that is not asked, never a sentence that is
+			 * suppressed.
+			 */
+			if (read.verdict !== record.reachPending) {
+				record.reachPending = read.verdict
+				record.reachPendingSince = now
+			}
+			if (
+				read.verdict !== record.reach &&
+				now - record.reachPendingSince >= REACH_FLIP_SEC
+			)
+				record.reach = read.verdict
+
+			const markNow: WindowMark = { ...watch.counters, reach: record.reach }
+			const moved = materialDiff(record.askedMark ?? markNow, markNow)
+			if (moved.length === 0) continue
+			record.askedMark = markNow
+			record.asks += 1
+			watch.askSeq += 1
+			fire({
+				kind: "window.changed",
+				atSec: o.spawnSec,
+				reactive:
+					moved.includes("he died and is back") ||
+					moved.includes("counterpart died") ||
+					moved.includes("two enemies are down"),
+
+				asks: true,
+				windowKey: o.key,
+				key: `w-chg:${o.key}:${watch.askSeq}`,
+				note: `${o.what} ${
+					standing ? `up ${Math.round(o.upForSec ?? 0)}s` : `in ${Math.round(untilSpawn)}s`
+				} — ${moved.join(", ")}`
+			})
+		}
+
+	/* -------------------------------------------------- the opening turn */
+	if (prev === null && now > 0)
+		fire({
+			kind: "game.start",
+			atSec: now,
+			reactive: false,
+			asks: true,
+			key: "start",
+			note: "first look"
+		})
+
+	/*
+	 * DROP CONTEXT THAT HAS GONE STALE — see `CONTEXT_CARRY_SEC`.
+	 *
+	 * Only context. An event with `asks` stays queued until a turn actually carries it, because
+	 * "a death nobody was asked about is the failure this whole file is replacing" and because
+	 * `dueTurn` peeks rather than spends. The pruning is here rather than in `dueTurn` so that
+	 * `dueTurn` stays free of side effects.
+	 *
+	 * SPLICED IN PLACE, NOT REASSIGNED, and this cost an hour. Every caller is written
+	 * `watch.pending.push(...observeTick(watch, tick))`, and JS evaluates the member expression
+	 * BEFORE the arguments — so replacing this array mid-call pushes the events that call just
+	 * returned into the array nobody holds any more. It is the same bug `geminiLive.ts` documents
+	 * against the new-game branch, and it presents identically: the whole game replays as nothing
+	 * but heartbeats, because `game.start` and every window ask are pushed into the orphan.
+	 */
+	for (let i = watch.pending.length - 1; i >= 0; i -= 1) {
+		const e = watch.pending[i]!
+		if (!e.asks && now - e.atSec > CONTEXT_CARRY_SEC) watch.pending.splice(i, 1)
+	}
+
+	watch.prev = tick
+	return out
+}
+
+/* ============================================================ the decision */
+
+export interface TurnReason {
+	/**
+	 * Everything that has happened since the last turn, newest last — the window asks that CAUSED
+	 * it and the context riding along with them. A heartbeat can carry context and usually does.
+	 */
+	events: LiveEvent[]
+	/** True when nothing ASKED and the floor under silence is what raised the turn. */
+	heartbeat: boolean
+	/**
+	 * Whether the caller should pay for the minimap read before building this turn. False as soon
+	 * as ANY pending event is reactive: the read costs 1.3-3.0s and would land the line after the
+	 * moment it is about.
+	 *
+	 * The second cut moved this number a long way without touching the rule. Only two surviving
+	 * kinds are reactive — `respawn.self` and `death.counterpart` — where before it was those plus
+	 * every death and every resource threshold. On the recorded game that takes the share of turns
+	 * declining the read from 42% to 26%, which matters because the reactive turns were the ones
+	 * reaching the model with no position at all.
+	 *
+	 * The third cut inherits the rule unchanged, and the reactive flag now travels with the WINDOW
+	 * event rather than with the thing that changed it: a window opened by him leaving the fountain
+	 * is reactive, and a re-ask bought by a death — his, the counterpart's, or two of the enemy
+	 * team's — is reactive. A window opened by a clock is not, and it is exactly the kind that turns
+	 * "drake in 45s" into "drake in 45s and you are in their topside jungle".
+	 */
+	readMinimap: boolean
+}
+
+/**
+ * Is a turn due? Drains the pending queue when the answer is yes.
+ *
+ * Called on every tick. Answering `null` is the normal case and it is the entire point: the coach
+ * is not asked, so she says nothing, and nothing about her is rate-limited to achieve that.
+ *
+ * `inFlight` defers rather than drops. A turn already awaiting an answer means the socket's thread
+ * is mid-exchange, and interleaving a second one is a correctness problem rather than a volume one
+ * — the events stay queued and go out with the next turn, carrying their own timestamps, so nothing
+ * that happened is lost.
+ *
+ * ## IT PEEKS. `commitTurn` is what spends the queue
+ *
+ * This used to do `watch.pending = []` and `watch.lastTurnAtSec = nowSec` itself, before the caller
+ * had any idea whether the turn went out. The caller's next line is `const sent = await sendTurn()`,
+ * and `sendTurn` returns false on an empty ground-truth block, on a fetch that hits its 4-second
+ * timeout, and on a refused WebSocket send. In every one of those the detected events were already
+ * gone AND the silence floor had been reset — so a death detected during a daemon hiccup was never
+ * asked about at all, in a design whose stated premise is that "a death nobody was asked about is
+ * the failure this file is replacing". The docblock's promise that the events "stay queued and go
+ * out with the next turn" was true only of the `inFlight` path.
+ *
+ * So the decision and the spend are two calls. Nothing here mutates; the caller calls `commitTurn`
+ * once the payload has actually left, and a failed send leaves the queue exactly as it found it.
+ */
+export const dueTurn = (
+	watch: EventWatch,
+	nowSec: number,
+	opts: { inFlight?: boolean; heartbeatSec?: number } = {}
+): TurnReason | null => {
+	if (opts.inFlight === true) return null
+	const heartbeatSec = opts.heartbeatSec ?? HEARTBEAT_SEC
+	const events = watch.pending
+	/*
+	 * THE ONE LINE THE THIRD CUT CHANGED HERE. It used to be `events.length === 0`, so anything
+	 * `observeTick` detected caused a turn. Now only an event that ASKS does — which is a contest
+	 * window opening, a contest window whose fingerprint moved, and the first look at a new game.
+	 * Everything else `observeTick` found is still in this array and still goes out WITH the turn;
+	 * it simply does not summon one.
+	 */
+	const asks = events.filter(e => e.asks)
+	const silentFor = watch.lastTurnAtSec === null ? Infinity : nowSec - watch.lastTurnAtSec
+	if (asks.length === 0 && silentFor < heartbeatSec) return null
+	return {
+		// A COPY, so a caller that never commits cannot hand the queue's own array to something that
+		// keeps it — and so `commitTurn` below can drop exactly what was asked about and no more.
+		events: events.slice(),
+		heartbeat: asks.length === 0,
+		readMinimap: !events.some(e => e.reactive)
+	}
+}
+
+/**
+ * The turn LEFT. Drop what it carried and restart the silence floor.
+ *
+ * Called only after the send succeeded — see `dueTurn`. It removes the events the reason actually
+ * carried rather than emptying the queue, because `observeTick` may have detected another one in
+ * the milliseconds between the decision and the send, and that one has not been asked about.
+ */
+export const commitTurn = (watch: EventWatch, reason: TurnReason, nowSec: number): void => {
+	const spent = new Set(reason.events.map(e => e.key))
+	watch.pending = watch.pending.filter(e => !spent.has(e.key))
+	watch.lastTurnAtSec = nowSec
+}
+
+/** One line naming why the coach was asked. For the panel and the transcript, never for the model. */
+export const describeTurn = (reason: TurnReason): string => {
+	/*
+	 * The ASKS are what this line is for — "why was she asked" is now a different question from
+	 * "what had happened", and printing all of them made a window ask look like six causes. The
+	 * context is counted rather than named so the panel still shows that it went out.
+	 */
+	const asks = reason.events.filter(e => e.asks)
+	const carried = reason.events.length - asks.length
+	const head =
+		asks.length === 0 ? "heartbeat" : asks.map(e => `${e.kind} (${e.note})`).join("; ")
+	return carried === 0 ? head : `${head} [+${carried} carried]`
+}

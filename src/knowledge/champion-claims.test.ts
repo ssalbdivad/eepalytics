@@ -454,7 +454,19 @@ const SANCTIONED = [
 
 const read = (file: string): string => readFileSync(join(CHAMPIONS_DIR, file), "utf8")
 
-const shippedFiles = (): string[] => readdirSync(CHAMPIONS_DIR).filter(f => f.endsWith(".md")).sort()
+/*
+ * The files this register is ABOUT: the ones that ship tagged clauses to the fenced and
+ * cite-or-quiet coaches. A champion file written only as prose for the full-knowledge coach
+ * (`src/review/live-knowledge-full.ts`, which does no clause parsing at all) has nothing here to
+ * pin — every sentence in it is delivered verbatim, so there is no parser step for a claim to go
+ * missing in. Scoping by the clause heading rather than by a hardcoded list keeps the emptied-
+ * directory guard below honest: delete lillia.md's clause block and it drops out of this list and
+ * the register fails, which is exactly what it did the night that mattered.
+ */
+const shippedFiles = (): string[] =>
+	readdirSync(CHAMPIONS_DIR)
+		.filter(f => f.endsWith(".md") && /^##+\s*Live coaching\s*$/im.test(read(f)))
+		.sort()
 
 /** Every clause on disk, in file order within each kind. */
 const clausesOf = (file: string): string[] => {

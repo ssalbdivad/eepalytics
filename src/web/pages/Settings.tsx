@@ -388,7 +388,10 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 													maxWidth: "62ch"
 												}}
 											>
-												<b style={{ color: "var(--gold-dim)" }}>Measured:</b> {m.evidence}
+												<b style={{ color: "var(--gold-dim)" }}>
+													{m.measured ? "Measured:" : "Unmeasured:"}
+												</b>{" "}
+												{m.evidence}
 											</div>
 										</div>
 									</label>

@@ -75,17 +75,20 @@ export const Settings = type({
 	/**
 	 * Which ARCHITECTURE the live coach runs on. See `shared/live-coach-mode.ts` for the run.
 	 *
-	 * `cite-or-quiet` gives her the whole ground-truth block, the frame and the persona under one
-	 * rule — cite it or say nothing. `fenced` is the old shape, where `analysis/live-facts.ts`
-	 * ranks every candidate line in TypeScript and she may only pick from that list.
+	 * `trusted` is the default and the only unmeasured one: the whole brief every few seconds, both
+	 * champions' notes as prose, and nothing telling her what to say or when. `cite-or-quiet` gives
+	 * her the ground-truth block, the frame and the persona under one rule — cite it or say nothing.
+	 * `fenced` is the old shape, where `analysis/live-facts.ts` ranks every candidate line in
+	 * TypeScript and she may only pick from that list.
 	 *
 	 * Measured across 363 real samples from four games, judged blind: the fence spoke on 11 of 102
 	 * turns and cite-or-quiet on 94, with fabrication 0 in both — 81 useful lines a game against 6.
-	 * The fence was never buying the honesty; the citation rule was. It stays selectable because it
-	 * is a measured arm and because a coach that says almost nothing is the right coach for someone
-	 * who wants almost nothing said.
+	 * The fence was never buying the honesty; the citation rule was. Both stay selectable because
+	 * they are measured arms — a stored run has to keep describing a prompt this repo can still
+	 * produce, or the evidence is gone — and because a coach that says almost nothing is the right
+	 * coach for someone who wants almost nothing said.
 	 */
-	liveCoachMode: "'cite-or-quiet'|'fenced'",
+	liveCoachMode: "'trusted'|'cite-or-quiet'|'fenced'",
 
 	/**
 	 * How we reach the League client across the WSL2 boundary. `bridge` is a long-lived
@@ -147,7 +150,7 @@ export const SettingsPatch = type({
 	"coachIntensity?": "0<=number<=1",
 	"liveProvider?": "string",
 	"liveModel?": "string",
-	"liveCoachMode?": "'cite-or-quiet'|'fenced'",
+	"liveCoachMode?": "'trusted'|'cite-or-quiet'|'fenced'",
 	"transport?": "'bridge'|'curl'",
 	"pollIdleMs?": "number",
 	"pollInGameMs?": "number",
