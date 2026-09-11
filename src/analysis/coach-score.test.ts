@@ -522,3 +522,147 @@ describe("the comparative shape", () => {
 		)
 	})
 })
+
+/* ------------------------------------------------- figures said out loud */
+
+/**
+ * The rules that landed after the 17-game corpus was diagnosed.
+ *
+ * That run charged 35% of the coach's lines with carrying a figure the block does not back, and
+ * `scripts/diagnose-unbacked.ts` put 194 of the 194 charged figures into classes: 79% were his own
+ * gold said round, 15% were an objective's clock hung on a person by the attribution rule, 5% were
+ * a level he was told to go and reach. Those are three faults in this file, not three faults in
+ * the coach, and each one is pinned below with the half that must KEEP firing.
+ */
+describe("a figure said the way a person says it", () => {
+	it("accepts his own gold rounded to the hundred", () => {
+		const r = scoreLine({
+			line: "Recall right now to spend that 1200 gold before the drake.",
+			block: BLOCK,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		ok(!r.faults.includes("unbacked-number"), `1180 said as 1200: ${JSON.stringify(r.unbackedNumbers)}`)
+	})
+
+	it("still catches a gold figure that is not a rounding of anything", () => {
+		const r = scoreLine({
+			line: "Recall right now to spend that 2400 gold before the drake.",
+			block: BLOCK,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		ok(r.faults.includes("unbacked-number"), "2400 has no block figure within a hundred of it")
+	})
+
+	it("will not let a rounding reach past its own step", () => {
+		// 1180 -> "1200" is a rounding. 1180 -> "1300" is a different amount of money.
+		const r = scoreLine({
+			line: "Recall right now to spend that 1300 gold before the drake.",
+			block: BLOCK,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		ok(r.faults.includes("unbacked-number"), "1300 is 120 away from 1180 and must stay charged")
+	})
+
+	it("does not let a figure be rounded into a different unit", () => {
+		/*
+		 * The whole risk of the rounding rule is that a ten-thousand-character brief holds enough
+		 * integers that something is always within a hundred. Requiring the unit to be READ on both
+		 * sides is what keeps it a rule: 1180 is gold, so it cannot back "1200 CS".
+		 */
+		const r = scoreLine({
+			line: "You are on 1200 CS, so keep the route running.",
+			block: BLOCK,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		ok(r.faults.includes("unbacked-number"), "a gold figure may not back a CS claim")
+	})
+
+	it("hands an objective's clock to the map and not to him", () => {
+		const r = scoreLine({
+			line: "Recall now to spend your gold before drake spawns in 50 seconds.",
+			block: `${BLOCK}\n- Drake (bot side): up at 15:00, in 48s.`,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		ok(
+			!r.faults.includes("misattributed-number"),
+			`a drake timer has no owner to be wrong about: ${JSON.stringify(r.misattributed)}`
+		)
+	})
+
+	it("keeps a death timer on the person it names", () => {
+		/*
+		 * The map rule must not become an amnesty for every clock. Renekton is the one who is down
+		 * for 19 seconds; putting that clock on Kayn is the exact fault `misattributed-number`
+		 * exists for, and no objective is named in the clause to excuse it.
+		 */
+		const r = scoreLine({
+			line: "Kayn is dead for 20 seconds, so take this camp.",
+			block: BLOCK,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		ok(
+			r.faults.includes("misattributed-number"),
+			`19 seconds is Renekton's, not Kayn's: ${JSON.stringify(r.faults)}`
+		)
+	})
+
+	it("does not charge him for a level he is told to reach", () => {
+		const r = scoreLine({
+			line: "Grab your jungle item and full clear to level 4 before you look at a lane.",
+			block: BLOCK,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		deepStrictEqual(r.unbackedNumbers, [], "a goal level is a plan, not a reading")
+	})
+
+	it("still checks a level that is a reading", () => {
+		const r = scoreLine({
+			line: "Kayn is level 3 and you are ahead of him.",
+			block: BLOCK,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		ok(r.faults.length > 0, `a stated level must still be checked: ${JSON.stringify(r.faults)}`)
+	})
+
+	it("gives the lines under a person's heading to that person", () => {
+		const withHeading = `${BLOCK}\n\nYOU — Lillia, JUNGLE, level 8, side ORDER\nAP 755, AD 25, ability haste 0.`
+		const r = scoreLine({
+			line: "You're at over 700 AP with Deathcap finished, so head to top river.",
+			block: withHeading,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		})
+		deepStrictEqual(r.misattributed, [], "AP 755 sits under YOU — and is his")
+	})
+
+	it("does not let a prose heading adopt the figures under it", () => {
+		const segments = blockSegments(
+			"NEXT — what is coming, joined to where you are\nDrake up at 15:00, in 48s.",
+			ROSTER
+		)
+		const drake = segments.find(s => s.values.has(48))
+		ok(drake !== undefined && drake.owners.length === 0, "a paragraph may not own an objective clock")
+	})
+
+	it("reproduces the old verdict under `literal`, so a stored run stays re-scorable", () => {
+		const input = {
+			line: "Recall right now to spend that 1200 gold before the drake.",
+			block: BLOCK,
+			roster: ROSTER,
+			champions: CHAMPIONS
+		}
+		ok(!scoreLine(input).faults.includes("unbacked-number"), "today's rule accepts the rounding")
+		ok(
+			scoreLine(input, { literal: true }).faults.includes("unbacked-number"),
+			"the pre-fix instrument charged it, and `--literal` must still say so"
+		)
+	})
+})

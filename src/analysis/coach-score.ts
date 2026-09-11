@@ -313,8 +313,36 @@ export const MIN_SIGNIFICANT = 10
 /** `level 9`, `lv9`, `lvl 9` — a single digit that IS a claim, so it escapes MIN_SIGNIFICANT. */
 const LEVEL_PREFIX = /(?:\blevels?|\blvls?|\blv)[^A-Za-z0-9]{0,3}$/i
 
-const isSignificant = (text: string, at: number, value: number): boolean =>
-	value >= MIN_SIGNIFICANT || LEVEL_PREFIX.test(text.slice(Math.max(0, at - 12), at))
+/**
+ * A level that is a GOAL rather than a reading, which `LEVEL_PREFIX` cannot tell apart.
+ *
+ * Measured on the 17-game corpus: 10 of the 185 figures the scorer charged as fabrications were
+ * "full clear to level four", "we want level six", "you beat Fiddlesticks to level six". Every one
+ * is a plan for the next ninety seconds, and a plan cannot be checked against a block that reports
+ * the present — he is level 1 at 0:00 and the instruction is correct BECAUSE he is. Charging it as
+ * an invented figure marks the coach's most ordinary sentence as a lie.
+ *
+ * The shape is a preposition or a want in front of the number, which no state reading has:
+ * "Kayn is level 9", "level 9 to your 8" and "Tryndamere just hit level 9" carry a copula, a
+ * comparison or a bare past-tense verb instead, and all three keep being checked.
+ *
+ * The cost, stated rather than discovered later: "compared to Kayn's level 9" would be exempted by
+ * the "to" and stop being checked. No line of that shape exists in the 17-game corpus, and this is
+ * the direction this file is always wrong in on purpose — a false accusation of fabrication is the
+ * expensive error, and a level is a single digit that `MIN_SIGNIFICANT` already lets through
+ * everywhere else.
+ */
+const LEVEL_GOAL = /\b(?:to|for|want|until|before|by)\b[^.;:!?]{0,18}$/i
+
+const isSignificant = (text: string, at: number, value: number, literal = false): boolean => {
+	if (value >= MIN_SIGNIFICANT) return true
+	const left = text.slice(Math.max(0, at - 12), at)
+	const word = left.match(/(?:\blevels?|\blvls?|\blv)[^A-Za-z0-9]{0,3}$/i)
+	if (word === null || word.index === undefined) return false
+	if (literal) return true
+	// Everything in front of the word "level" itself, so "to level four" reads as the goal it is.
+	return !LEVEL_GOAL.test(text.slice(Math.max(0, at - 40), at - (left.length - word.index)))
+}
 
 /* ========================================================== champion matching */
 
@@ -405,12 +433,151 @@ export const championsNamed = (text: string, vocabulary: readonly string[]): str
 	return [...seen]
 }
 
+/* ============================================================== spoken rounding */
+
+/**
+ * The unit a figure carries, as far as text either side of it can say.
+ *
+ * Needed only by the rounding rule below, and it is what keeps that rule from becoming an amnesty:
+ * "twelve hundred gold" may be rounded from a gold figure in the block and from nothing else. A
+ * figure whose unit cannot be read is `"unknown"`, and `unitsAgree` refuses those outright rather
+ * than treating them as wildcards — see the measurement there for why.
+ */
+export type FigureUnit =
+	| "gold"
+	| "seconds"
+	| "minutes"
+	| "level"
+	| "cs"
+	| "percent"
+	| "hp"
+	| "ap"
+	| "unknown"
+
+const UNIT_AFTER: { unit: FigureUnit; re: RegExp }[] = [
+	{ unit: "gold", re: /^\s*(?:g\b|gold|golds)/i },
+	{ unit: "seconds", re: /^\s*(?:s\b|secs?\b|seconds?\b)/i },
+	{ unit: "minutes", re: /^\s*(?:m\b|mins?\b|minutes?\b)/i },
+	{ unit: "percent", re: /^\s*(?:%|percent\b)/i },
+	{ unit: "cs", re: /^\s*(?:cs\b|creeps?\b|minions?\b)/i },
+	{ unit: "hp", re: /^\s*(?:hp\b|health\b|mana\b)/i },
+	{ unit: "ap", re: /^\s*(?:ap\b|ability power\b)/i }
+]
+
+const UNIT_BEFORE: { unit: FigureUnit; re: RegExp }[] = [
+	{ unit: "level", re: /(?:\blevels?|\blvls?|\blv)[^A-Za-z0-9]{0,3}$/i },
+	{ unit: "gold", re: /\bgold\s+(?:of\s+)?$/i },
+	{ unit: "cs", re: /\bcs\s*$/i },
+	{ unit: "hp", re: /\b(?:hp|health|mana)\s*$/i },
+	{ unit: "ap", re: /\bap\s*$/i }
+]
+
+/** The unit of the figure whose digits start at `at` and read `digits`. */
+export const unitAt = (text: string, at: number, digits: string): FigureUnit => {
+	const after = text.slice(at + digits.length, at + digits.length + 12)
+	for (const { unit, re } of UNIT_AFTER) if (re.test(after)) return unit
+	const before = text.slice(Math.max(0, at - 14), at)
+	for (const { unit, re } of UNIT_BEFORE) if (re.test(before)) return unit
+	return "unknown"
+}
+
+export interface Figure {
+	value: number
+	unit: FigureUnit
+}
+
+/** Every integer in the block, each carrying whatever unit the text around it names. */
+export const blockFigures = (block: string): Figure[] =>
+	[...block.matchAll(/\d+/g)].map(m => ({
+		value: Number(m[0]),
+		unit: unitAt(block, m.index, m[0])
+	}))
+
+/**
+ * A rounding may only be backed by a block figure of the SAME, READABLE unit.
+ *
+ * Measured, and it is the difference between a fix and an amnesty. A brief is ten thousand
+ * characters carrying some three hundred integers, so for any round figure the coach can say there
+ * is almost always SOMETHING within 99 of it somewhere in the payload. Letting `"unknown"` match
+ * anything took the corpus's fabrication rate from 35% to 0.8% — a scorer that finds nothing is
+ * not an improved scorer, it is a broken one. Requiring both units to be read and to agree takes
+ * the same corpus to a number that still has real faults in it.
+ */
+export const unitsAgree = (spoken: FigureUnit, inBlock: FigureUnit): boolean =>
+	spoken !== "unknown" && spoken === inBlock
+
+/**
+ * The coarsest granularity a spoken figure may have been rounded to.
+ *
+ * Capped at 100 on purpose. Without the cap "three thousand gold" would be backed by anything from
+ * 2001 to 3999 — which is not a rounding, it is a different amount of money — and the rule would
+ * stop being a rule. With it, "nearly three thousand" is backed by the 2935 that was actually in
+ * the block and by nothing further away than 2901.
+ */
+export const ROUNDING_CAP = 100
+
+/**
+ * The step `spoken` is round to: a power of ten, or FIVE.
+ *
+ * Five is in here because a spoken clock is rounded to five seconds and nothing else — "dead for
+ * another forty-five seconds" against a block that says `back in 48s`, "in thirty-five seconds"
+ * against 33. Four of the corpus's charged figures are exactly that, and dropping five would leave
+ * the instrument calling the most ordinary thing a person says about a respawn a fabrication.
+ *
+ * It costs almost nothing elsewhere: a five-step reaches four either way, so "1250 gold" still
+ * needs the block to be inside 1246..1254 and "45 CS" still needs 41..49.
+ */
+const granularity = (spoken: number): number => {
+	let g = 1
+	while (spoken % (g * 10) === 0 && g < ROUNDING_CAP) g *= 10
+	return g === 1 && spoken % 5 === 0 ? 5 : g
+}
+
+/**
+ * Is `spoken` a faithful rounding of `exact`?
+ *
+ * ## The measurement that put this here
+ *
+ * On the 17-game corpus the scorer charged 185 figures as fabrications, and **128 of them were his
+ * own gold, rounded**: the block said `1195g in hand` and the coach said "twelve hundred gold". A
+ * further 42 were a timer — the block said `back in 49s` and the coach said "fifty seconds". Not
+ * one of those is a number the model did not have; every one is the number it had, said out loud
+ * the way a person says it.
+ *
+ * A live coach speaks. Nobody says "one thousand one hundred and ninety-five gold", and an
+ * instrument that charges him with lying for not saying it is measuring diction. That is the most
+ * expensive error this file can make, because the whole product decision rests on the rate.
+ *
+ * ## The rule
+ *
+ * `spoken` must be rounder than `exact` — it ends in at least one zero — and the two must sit
+ * inside the granularity that roundness implies: "1200" is round to the hundred, so it may stand
+ * for anything strictly inside 1100..1300, and "50" is round to the ten, so it may stand for
+ * 41..59. Strictly inside, so "1300" can never stand for 1400: a rounding that reaches the next
+ * step up is not a rounding, it is a different figure.
+ *
+ * ## What it still catches, stated so the amnesty is bounded
+ *
+ * A figure with no zero on the end is never a rounding of anything ("1195" must be exact). A
+ * figure more than 99 away from every block figure of its unit is still a fabrication. And
+ * `ROUNDING_CAP` means the reach never exceeds a hundred, whatever the magnitude — "four thousand
+ * gold" is not backed by 3200.
+ */
+export const roundsTo = (spoken: number, exact: number): boolean => {
+	if (spoken === exact) return true
+	const g = granularity(spoken)
+	if (g === 1) return false
+	return Math.abs(spoken - exact) < g
+}
+
 /* ============================================================ block attribution */
 
 export interface Segment {
 	/** Canonical champion names on this segment, plus `"you"` when it is written about him. */
 	owners: string[]
 	values: Set<number>
+	/** The same integers, each carrying the unit the segment's own text gives it. */
+	figures: Figure[]
 }
 
 const SELF = /(?<![A-Za-z])(you|your|yours|you're|youre)(?![A-Za-z])/i
@@ -422,15 +589,49 @@ const SELF = /(?<![A-Za-z])(you|your|yours|you're|youre)(?![A-Za-z])/i
  * line is split again on the interpunct — otherwise every champion would "own" every number on the
  * team line and `misattributed-number` could never fire.
  */
-export const blockSegments = (block: string, roster: readonly string[]): Segment[] => {
+/**
+ * A heading that puts a PERSON at the top of the lines under it.
+ *
+ * The payload writes `YOU — Lillia, JUNGLE, level 13, side CHAOS` and then, on their own lines,
+ * `HP 100% (2698 of 2698)`, `Gold in hand 2041`, `AP 755, AD 25, ability haste 0…`. Every one of
+ * those figures is his and not one of those lines says so, so a line-at-a-time reading leaves them
+ * ownerless and `misattributed-number` fires on a coach who correctly said "you're at over seven
+ * hundred AP". The heading is how English attributes them, and it is how this reads them too.
+ *
+ * It must NAME somebody to count: `NEXT — what is coming…` and `JOINS — computed here so you do
+ * not have to derive them` are prose, and letting a paragraph adopt every ownerless figure beneath
+ * it would hand him the objective schedule.
+ */
+const PERSON_HEADING = /^[A-Z][A-Z0-9' ]{2,} — /
+
+export const blockSegments = (
+	block: string,
+	roster: readonly string[],
+	/** `false` restores the pre-fix, line-at-a-time reading. See `ScoreOptions.literal`. */
+	inheritHeadings = true
+): Segment[] => {
 	const segments: Segment[] = []
-	for (const rawLine of block.split("\n"))
+	let inherited: string[] = []
+	for (const rawLine of block.split("\n")) {
+		if (rawLine.trim() === "") {
+			inherited = []
+			continue
+		}
+		if (inheritHeadings && PERSON_HEADING.test(rawLine)) {
+			const named = championsNamed(rawLine, roster)
+			inherited = named.length === 0 ? [] : SELF.test(rawLine) ? [...named, "you"] : named
+		}
 		for (const piece of rawLine.split(" · ")) {
 			if (piece.trim() === "") continue
 			const owners = championsNamed(piece, roster)
 			if (SELF.test(piece)) owners.push("you")
-			segments.push({ owners, values: new Set(digitsIn(piece)) })
+			segments.push({
+				owners: owners.length === 0 ? inherited : owners,
+				values: new Set(digitsIn(piece)),
+				figures: blockFigures(piece)
+			})
 		}
+	}
 	return segments
 }
 
@@ -771,13 +972,66 @@ const clauseOwner = (
 }
 
 /**
+ * A figure that belongs to the MAP's clock rather than to anybody standing on it.
+ *
+ * `PLAYER_UNIT` already says this, and `clauseOwner` already acts on it — but only when nothing at
+ * all was named before the figure. Measured on the 17-game corpus that guard misses the shape the
+ * coach uses most: *"Recall now to spend your eight hundred gold and refresh your mana before
+ * dragon spawns in forty seconds."* The clause holding the 40 names nobody, so rule 5 carries the
+ * sentence's subject over and charges a drake timer to HIM. Twenty-four of the 185 figures the
+ * scorer called fabrications were that, and every one of the sentences is correct English about a
+ * respawn the block states outright.
+ *
+ * So: a figure in a clock unit, introduced by in/at/for/within, sitting in a clause that names an
+ * objective, has no owner to be wrong about. It is still checked for existence — an invented drake
+ * timer is caught by `unbacked-number` exactly as before; this rule only stops the instrument from
+ * inventing a person to hang it on.
+ *
+ * Deliberately narrow in three ways. The unit must be a clock or unreadable (so "you have 1500
+ * gold, take dragon" is untouched), the figure must follow a preposition (so "Drake 4 to their 0"
+ * is untouched), and an objective must be named INSIDE the same clause — "Kayn is dead for 40
+ * seconds, so start Baron" keeps the 40 on Kayn, which is the claim that sentence actually makes.
+ */
+const OBJECTIVE = /\b(?:drake|dragon|baron|nashor|herald|grubs?|voidgrubs?|elder|soul|scuttle|crab)\b/i
+const TIMER_PREPOSITION = /\b(?:in|at|for|within|until|after|by)\s+(?:about\s+|almost\s+|nearly\s+|another\s+|over\s+|under\s+|roughly\s+)?$/i
+
+export const mapTimer = (line: string, at: number, unit: FigureUnit): boolean => {
+	if (unit !== "seconds" && unit !== "minutes" && unit !== "unknown") return false
+	if (!TIMER_PREPOSITION.test(line.slice(Math.max(0, at - 24), at))) return false
+	let start = 0
+	for (const m of line.matchAll(CLAUSE_SPLIT)) if (m.index !== undefined && m.index < at) start = m.index + m[0].length
+	let end = line.length
+	for (const m of line.matchAll(CLAUSE_SPLIT))
+		if (m.index !== undefined && m.index > at) {
+			end = m.index
+			break
+		}
+	return OBJECTIVE.test(line.slice(start, end))
+}
+
+/**
  * Score one line. Pure: same inputs, same verdict, forever.
  *
  * Order matters in one place only — a champion who is not on the roster is reported as
  * `invented-champion` and then IGNORED by the attribution rules, because "Gnar is 1180 gold" is
  * one fault (there is no Gnar), not two.
  */
-export const scoreLine = (input: ScoreInput): LineScore => {
+export interface ScoreOptions {
+	/**
+	 * Score the way this file did BEFORE the spoken-figure rules landed: a figure must appear in
+	 * the block verbatim, every clock belongs to whoever the clause's subject is, and a level is a
+	 * level whether he has it or is being told to go and get it.
+	 *
+	 * This exists so a before/after on a stored run comes out of ONE implementation. The owner's
+	 * rule is that every run in `data/eval/` stays re-scorable; a comparison that needs a deleted
+	 * copy of the scorer to reproduce is a comparison nobody can check next month. Nothing in the
+	 * app passes it — `scripts/diagnose-unbacked.ts` is the only caller.
+	 */
+	literal?: boolean
+}
+
+export const scoreLine = (input: ScoreInput, opts: ScoreOptions = {}): LineScore => {
+	const literal = opts.literal === true
 	const norm = normalizeNumbers(input.line)
 	if (isSilent(input.line))
 		return {
@@ -799,28 +1053,44 @@ export const scoreLine = (input: ScoreInput): LineScore => {
 
 	/* -- numbers ------------------------------------------------------------ */
 	const known = blockNumbers(input.block)
-	const segments = blockSegments(input.block, input.roster)
+	const segments = blockSegments(input.block, input.roster, !literal)
 	const mentions = championMentions(norm, input.roster).map(m => ({ owner: m.name, index: m.index }))
 	for (const m of norm.matchAll(SELF_TOKEN))
 		if (m.index !== undefined) mentions.push({ owner: "you", index: m.index })
 	mentions.sort((a, b) => a.index - b.index)
 
 	const comparative = comparativeOwners(norm, mentions)
+	const figures = blockFigures(input.block)
 	const unbacked: number[] = []
 	const misattributed: Misattribution[] = []
 	for (const m of norm.matchAll(/\d+/g)) {
 		if (m.index === undefined) continue
 		const value = Number(m[0])
-		if (!isSignificant(norm, m.index, value)) continue
-		if (!known.has(value)) {
+		if (!isSignificant(norm, m.index, value, literal)) continue
+		const unit = unitAt(norm, m.index, m[0])
+		/*
+		 * Exact first, then a rounding of a block figure of the SAME unit. The exact set stays
+		 * unit-blind — tightening it is a separate change with its own measurement, and doing both
+		 * at once would make the before/after uninterpretable.
+		 */
+		const backed =
+			known.has(value) ||
+			(!literal && figures.some(f => unitsAgree(unit, f.unit) && roundsTo(value, f.value)))
+		if (!backed) {
 			unbacked.push(value)
 			continue
 		}
 		// The number is real. Did it end up on the right player?
+		if (!literal && mapTimer(norm, m.index, unit)) continue
 		const owner = comparative.get(m.index) ?? clauseOwner(norm, mentions, m.index)
 		if (owner === null) continue
-		if (!segments.some(s => s.owners.includes(owner) && s.values.has(value)))
-			misattributed.push({ value, claimedOwner: owner })
+		const ownsIt = segments.some(
+			s =>
+				s.owners.includes(owner) &&
+				(s.values.has(value) ||
+					(!literal && s.figures.some(f => unitsAgree(unit, f.unit) && roundsTo(value, f.value))))
+		)
+		if (!ownsIt) misattributed.push({ value, claimedOwner: owner })
 	}
 	if (unbacked.length > 0) faults.push("unbacked-number")
 	if (misattributed.length > 0) faults.push("misattributed-number")
