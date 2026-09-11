@@ -27,6 +27,7 @@
  * PURE. No I/O, no clock, no randomness.
  */
 
+import { clamp } from "./frames.ts"
 import { METRIC_DEFS } from "./metrics.ts"
 import type { Baseline } from "./index.ts"
 import type { Metric } from "../shared/schema/domain.ts"
@@ -61,7 +62,6 @@ export interface Grade {
 	worst: GradeBreakdown[]
 }
 
-const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n))
 
 /**
  * Logistic rather than linear, so the extremes compress.

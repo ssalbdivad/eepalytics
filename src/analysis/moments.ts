@@ -716,12 +716,3 @@ export const captureWindow = (
 	}
 }
 
-/** Corpus-wide signature counts a caller can feed back in as `options.recurrence`. */
-export const momentSignatureCounts = (
-	details: MomentDetail[]
-): Map<string, number> => {
-	const m = new Map<string, number>()
-	for (const d of details) m.set(d.signature, (m.get(d.signature) ?? 0) + 1)
-	return m
-}
-

@@ -208,13 +208,6 @@ const monsterLabel = (e: LcuEvent): string => {
 	return s || t || "elite monster"
 }
 
-/** `ZONE|PHASE|ISOLATION` — the coarse triple used for recurrence, per §8.2. */
-export const signatureOf = (d: {
-	zone: Zone
-	phase: DeathPhase
-	isolation: { verdict: DeathIsolation }
-}): string => `${d.zone}|${d.phase}|${d.isolation.verdict}`
-
 /**
  * Analyse every death the user suffered in one game.
  *

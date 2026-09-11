@@ -151,9 +151,6 @@ export const allEvents = (timeline: LcuTimeline | null | undefined): LcuEvent[] 
 	return out.sort((a, b) => a.timestamp - b.timestamp)
 }
 
-export const eventsOfType = (events: LcuEvent[], type: string): LcuEvent[] =>
-	events.filter(e => e.type === type)
-
 /** Sum of `totalGold` across a team at `ms`, interpolated. `null` outside the window. */
 export const teamGoldAt = (
 	frames: LcuFrame[],

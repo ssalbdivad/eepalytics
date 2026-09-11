@@ -276,9 +276,3 @@ export const enemiesOf = (match: LcuGame, participantId: number): number[] => {
 		.filter(p => p.teamId !== me.teamId)
 		.map(p => p.participantId)
 }
-
-/** `roleConfidence` for the user, the value that lands in `Game.roleConfidence`. */
-export const roleConfidenceOf = (
-	inference: RoleInference,
-	participantId: number
-): Confidence => inference.confidence[participantId] ?? "low"

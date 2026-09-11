@@ -195,18 +195,6 @@ export const truthAt = (
 	return best === null || bestGap > tolSec ? null : { frame: best, gapSec: round1(bestGap) }
 }
 
-/** One seat's row at a clock, or null. Convenience over `truthAt`. */
-export const truthRowAt = (
-	frames: readonly TruthFrame[],
-	participantId: number,
-	atSec: number,
-	tolSec = 35
-): { row: TruthRow; gapSec: number } | null => {
-	const hit = truthAt(frames, atSec, tolSec)
-	const row = hit?.frame.seats[participantId]
-	return hit && row ? { row, gapSec: hit.gapSec } : null
-}
-
 /* =================================================================== events */
 
 export interface TruthEvent {

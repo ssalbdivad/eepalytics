@@ -754,7 +754,3 @@ export const computeMetrics = (
 	return out
 }
 
-/** Convenience: look one up without scanning. */
-export const metricByKey = (metrics: Metric[], key: string): Metric | undefined =>
-	metrics.find(m => m.key === key)
-

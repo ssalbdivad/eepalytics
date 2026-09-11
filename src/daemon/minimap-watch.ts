@@ -23,7 +23,9 @@
  *
  * MEASURED, by replaying that game's 340 real frames through this exact schedule and the shipped
  * reader, then asking the stored 38-turn graded run's own turn times how old their read would have
- * been (`scripts/minimap-watch-replay.ts`; 340 reads, 196 past the fence, 193 placed him):
+ * been (340 reads, 196 past the fence, 193 placed him). The one-off script that ran it was
+ * folded into `scripts/bench-stream.ts`, whose `--no-beat` arm is this table's left column;
+ * the run itself is kept at `data/eval/minimap-watch-replay-js-mtvxb5f4-f81a.json`:
  *
  *                                            shipped           on the journal beat
  *     turns with a position at all          17 of 38  44.7%      30 of 38  78.9%
@@ -82,7 +84,7 @@ const log = makeLogger("minimap-watch")
  * set at the nominal beat therefore refuses a third of the frames for being a few hundredths of a
  * second early, and the delivered cadence collapses to ~7s. Measured, by replaying the shipped
  * reader over every one of those frames and asking the two stored graded runs' own turn times how
- * old their read would have been (`scripts/minimap-watch-replay.ts`, 38-turn run):
+ * old their read would have been (the same 38-turn run as above, kept in `data/eval/`):
  *
  *     floor   reads   read <= 10s   read <= 30s   median age
  *       0s     340      63.2%         78.9%          4.8s
