@@ -195,7 +195,9 @@ export const readFixture = (path: string): Fixture => {
 	const miss = (what: string): never => {
 		throw new Error(
 			`${path} is not a raw-sample fixture: ${what}. ` +
-				`Build one with: node --experimental-strip-types scripts/build-fixture.ts`
+				`Its builder, scripts/build-fixture.ts, was deleted on 2026-09-11 as superseded by ` +
+				`scripts/bench-stream.ts, which replays the raw samples directly and needs no frozen ` +
+				`fixture. The stored fixtures still work; there is no longer a way to make a new one.`
 		)
 	}
 	if (typeof raw.gameId !== "string" || raw.gameId === "") miss("no gameId")
@@ -780,9 +782,11 @@ const main = async (): Promise<void> => {
 				`the frozen fixture:\n  ${drift.slice(0, 8).join(", ")}${drift.length > 8 ? " ..." : ""}\n\n` +
 				`This run would not be replaying the game the fixture froze. The usual cause is that ` +
 				`the corpus grew a game created BEFORE ${fixture.gameId}, moving the farm baseline, or ` +
-				`that renderState/buildFacts changed. Rebuild the fixture:\n` +
-				`  node --experimental-strip-types scripts/build-fixture.ts\n` +
-				`or pass --allow-block-drift to run anyway and record both blocks.\n`
+				`that renderState/buildFacts changed. The fixture CANNOT be rebuilt — ` +
+				`scripts/build-fixture.ts was deleted on 2026-09-11 as superseded by ` +
+				`scripts/bench-stream.ts, which replays the raw samples with no frozen middle step. ` +
+				`Either bench this game there instead, or pass --allow-block-drift to run anyway and ` +
+				`record both blocks.\n`
 		)
 		process.exit(1)
 	}
