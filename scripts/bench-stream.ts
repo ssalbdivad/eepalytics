@@ -152,6 +152,11 @@ import {
 	truthFromRaw
 } from "../src/server/routes/live.ts"
 import { minimapRect, pctOf } from "../src/review/frame-read.ts"
+import type { FrameRead, FrameReadXY, FrameTruth } from "../src/review/frame-read.ts"
+import { WATCH_EVERY_SEC, admit } from "../src/daemon/minimap-watch.ts"
+import { FRAME_FRESH_SEC } from "../src/analysis/live-facts.ts"
+import { DEFAULT_MAX_SKEW_MS, nearestSample } from "./lib/stream.ts"
+import { readVerbatim } from "./e2e-real-game.ts"
 import type { ReachPosition } from "../src/analysis/reach-live.ts"
 import { TEAM_BLUE, TEAM_RED } from "../src/shared/constants.ts"
 import type { Coarse } from "../src/review/frame-read.ts"
@@ -204,6 +209,16 @@ const argN = (name: string, n: number): string => {
 	return v !== undefined && !v.startsWith("--") ? v : ""
 }
 const has = (name: string): boolean => argv.includes(`--${name}`)
+
+/**
+ * `--no-beat` — read the minimap ONLY in front of a turn, the way this instrument did before the
+ * journal-beat watcher existed.
+ *
+ * Kept, and not deleted, because it is the control for the supply change: every stored run before
+ * `data/eval/stream-kayn-reach-20260910.json` was taken under it, and a comparison that cannot
+ * reproduce the old supply cannot say what changing it did.
+ */
+const noBeat = has("no-beat")
 
 /* ================================================================== the arms */
 
@@ -440,34 +455,17 @@ const progressDone = (): void => {
  * cannot use a position, and would have reported "the position work changed nothing" no matter what
  * the position work did.
  *
- * So `readWhere` below does what the browser does: crop the paired journal frame to `minimapRect`,
- * upscale 4x through ffmpeg (the `crop4x` condition every accuracy figure in this repo comes from),
- * call `readMinimap`, and put the result through the SAME `observationFrom` / `pictureLine` /
- * `pictureFix` the route uses. The fence's refusals are kept as refusals. That costs one extra
- * cheap model call per turn and it is the only way the run means anything.
+ * So `readWhere` below does what the DAEMON and the browser do between them: read the minimap off
+ * the journal's own beat with `admit`'s cadence, land each accepted read through the SAME
+ * `observationFrom` / `carryable` / `pictureLine` / `pictureFix` the route uses, and let a turn
+ * fall through to its own read only when the track has nothing fresh — which is exactly what
+ * `POST /api/live/frame-read` does now that `daemon/minimap-watch.ts` exists. The fence's refusals
+ * are kept as refusals.
  */
 
 /* ============================================================ the minimap read */
 
-/**
- * The browser's job, done here: crop, read, fence, and turn the result into the two things the
- * brief takes — the prose `where` and the structured `at`.
- *
- * Run as a PRE-PASS over the turns rather than inline, for one reason: every arm must be handed
- * byte-identical payloads, and a read done inside an arm's loop would give each arm its own roll of
- * a non-deterministic model. One read per turn, shared by every arm, so a difference between two
- * arms is still only the model under test.
- *
- * The stamp is the FRAME's own game clock, which is the strongest form of the thing
- * `frameClockSec` approximates in the app: here the picture's clock is recorded, so there is
- * nothing to extrapolate. Ages therefore come out at the frame-to-sample skew (median ~1.5s), which
- * is what the app achieves when the read is taken on the turn.
- *
- * Refusals are kept as refusals. The fence threw away 43 of 101 reads on this game and was right to
- * — 16 of those were the model pointing at a red-ringed Singed inside his camera box — so a turn
- * whose read is refused gets `where: null` and the brief says it has no position, exactly as the
- * app does.
- */
+/** What one turn ends up knowing about where he is. Built by `readWhere` below. */
 interface TurnWhere {
 	where: string | null
 	at: PositionFix | null
@@ -484,173 +482,313 @@ interface TurnWhere {
 
 const CROP_QUALITY = "3"
 
+/**
+ * THE JOURNAL BEAT, REPLAYED — the supply the shipped daemon has had since `minimap-watch.ts`,
+ * which this instrument did not.
+ *
+ * `readWhere` used to take exactly one read per NON-REACTIVE turn and carry it forward. That was
+ * the app's behaviour when it was written and it is not the app's behaviour now: the daemon reads
+ * the minimap off the journal's own beat (`daemon/minimap-watch.ts`, floor `WATCH_EVERY_SEC`),
+ * whether or not a turn is being taken, and a turn is served from that track when the freshest
+ * accepted read is inside `FRAME_FRESH_SEC` of the crop it would otherwise have paid for.
+ *
+ * The gap between the two is not cosmetic, it is the whole position axis. Counted out of the
+ * payloads stored in `data/eval/stream-kayn-reach-20260910.json`, the graded 28-turn run of game
+ * 5639406342 carried a position on 10 turns and said "WHERE YOU ARE IS NOT IN THIS PAYLOAD" on 18.
+ * Replaying that game's 340 real frames through the shipped reader and the shipped fence
+ * (`scripts/minimap-watch-replay.ts`, stored as `data/eval/minimap-watch-replay-*.json`) and asking
+ * those same 28 turn times how old their read would have been:
+ *
+ *                                     on-turn reads only        on the journal beat
+ *     turns with a position             10 of 28  35.7%           27 of 28  96.4%
+ *     median age of that read                  0-2s                       4.8s
+ *     turns inside FRAME_FRESH_SEC       10 of 28  35.7%           16 of 28  57.1%
+ *     turns inside CARRY_MAX_SEC         10 of 28  35.7%           22 of 28  78.6%
+ *
+ * So a run made without this measured a coach that structurally could not be told where he was on
+ * two thirds of its turns — and the reach clause, which is the one join every line graded useful in
+ * round 2 was built out of, appeared on 3 of 28 turns instead of nearly all of them. That is the
+ * starved-harness failure this repo already named once for `bench-providers --from-samples`:
+ * a comparison run on starved states measures improvisation, not coaching.
+ *
+ * ## What is replayed, and what is not
+ *
+ * - THE CADENCE IS `admit`, imported from the daemon rather than retyped, so the floor, the
+ *   new-game reset and the backwards-clock rule are the shipped ones by construction.
+ * - THE READER AND THE FENCE ARE `readMinimap`, on the same 4x lanczos crop of `minimapRect` at the
+ *   same JPEG quality every accuracy figure in this repo was measured at. Refusals stay refusals.
+ * - THE LANDING IS `observationFrom` -> `carryable`, in tSec order, exactly as `drainMinimapReads`
+ *   lands the watcher's queue. Order is load-bearing: `observationFrom` doubts a read that
+ *   disagrees with the one before it inside `FRAME_FRESH_SEC`, and at a four-second beat that test
+ *   now actually fires, which it never did at one read a minute.
+ * - THE TURN STILL FALLS THROUGH TO ITS OWN READ when the track has nothing inside
+ *   `FRAME_FRESH_SEC` of this turn's frame, because `POST /api/live/frame-read` does exactly that
+ *   rather than refusing. A reactive turn still skips it, as the app does.
+ * - SINGLE-FLIGHT IS NOT SIMULATED. The daemon drops a frame that arrives while a read is out; the
+ *   replay of this game at the shipped floor dropped none, because the floor is 4s and the reader's
+ *   p50 is 1.2s. A machine slow enough to drop frames would have a sparser track than this, never
+ *   a denser one.
+ *
+ * Reads are CACHED to disk by frame id. A re-run of the same window pays nothing, which is what
+ * makes it affordable to re-grade a payload change against the same 339 reads rather than against
+ * a fresh roll of a non-deterministic reader.
+ */
+interface BeatRead {
+	frameId: string
+	/** The FRAME's own game clock — the picture's, never the turn's. */
+	tSec: number
+	read: FrameRead | null
+	xy: FrameReadXY | null
+	reason: string
+	ms: number
+}
+
+/** One accepted, landed read, in the two forms the brief and the arithmetic each need. */
+interface Landed {
+	atSec: number
+	obs: FrameObservation
+	zone: { you: Zone; enemies: Zone[] }
+	pct: ReachPosition | null
+}
+
+const cropFrame = (framePath: string, cropPath: string): boolean => {
+	try {
+		if (existsSync(cropPath)) return true
+		const size = jpegSize(readFileSync(framePath))
+		if (size === null) return false
+		const r = minimapRect(size.width, size.height)
+		execFileSync("ffmpeg", [
+			"-y", "-loglevel", "error", "-i", framePath,
+			"-vf", `crop=${r.w}:${r.h}:${r.x}:${r.y},scale=${r.w * 4}:${r.h * 4}:flags=lanczos`,
+			"-q:v", CROP_QUALITY, cropPath
+		])
+		return existsSync(cropPath)
+	} catch {
+		return false
+	}
+}
+
+/**
+ * Every frame the daemon would have read, read — in `admit`'s order, in a pool, cached on disk.
+ *
+ * The pool is safe where the schedule is not: `admit`'s only inputs are the game clock and the
+ * session, so which frames get read is decided up front and sequentially, and only the model calls
+ * are concurrent. Their results are re-sorted into tSec order before anything lands them, because
+ * the landing rules are stateful and the reading is not.
+ */
+const readJournalBeat = async (
+	stream: BuiltStream,
+	cropDir: string,
+	concurrency = 6
+): Promise<BeatRead[]> => {
+	const cachePath = `${DATA_DIR}/eval/bench-beat-${stream.window.id}.json`
+	const cache = new Map<string, BeatRead>()
+	if (existsSync(cachePath))
+		for (const e of JSON.parse(readFileSync(cachePath, "utf8")) as BeatRead[]) cache.set(e.frameId, e)
+
+	const samples = readVerbatim(stream.window.sampleFile)
+	const frames = [...stream.window.frames].sort((a, b) => a.tSec - b.tSec)
+	mkdirSync(cropDir, { recursive: true })
+
+	const chosen: { frame: (typeof frames)[number]; truth: FrameTruth; cropPath: string }[] = []
+	let lastReadSec: number | null = null
+	let sessionId: string | null = null
+	for (const f of frames) {
+		const verdict = admit(
+			{ enabled: true, inFlight: false, cooldownUntilMs: 0, lastReadSec, sessionId },
+			{ tSec: f.tSec, sessionId: stream.window.id },
+			Date.now()
+		)
+		if (verdict !== "read" && verdict !== "new-game") continue
+		sessionId = stream.window.id
+		/*
+		 * NO TRUTH IS NO READ, and the clock still advances. The daemon fences every read against
+		 * the poll that stamped the frame and refuses an unfenced one; a frame it could not fence
+		 * is a frame it spent nothing on, and pretending it is still "due" would make the next one
+		 * arrive early.
+		 */
+		const near = nearestSample(f.atMs, samples, DEFAULT_MAX_SKEW_MS)
+		lastReadSec = f.tSec
+		if (near === null) continue
+		const cropPath = `${cropDir}/${f.id}-crop4x.jpg`
+		if (!cache.has(f.id) && !cropFrame(f.path, cropPath)) continue
+		chosen.push({
+			frame: f,
+			truth: truthFromRaw(near.sample.data as LiveAllGameData),
+			cropPath
+		})
+	}
+
+	const todo = chosen.filter(c => !cache.has(c.frame.id))
+	if (todo.length > 0) {
+		console.log(
+			`  ${stream.window.id}: journal beat — ${chosen.length} frames due at ${WATCH_EVERY_SEC}s, ` +
+				`${chosen.length - todo.length} cached, reading ${todo.length}`
+		)
+		let next = 0
+		let done = 0
+		await Promise.all(
+			Array.from({ length: Math.min(concurrency, todo.length) }, async () => {
+				for (;;) {
+					const i = next++
+					if (i >= todo.length) return
+					const c = todo[i]!
+					const out = await readMinimap({
+						jpegBase64: readFileSync(c.cropPath).toString("base64"),
+						truth: c.truth
+					})
+					cache.set(c.frame.id, {
+						frameId: c.frame.id,
+						tSec: c.frame.tSec,
+						read: out.read ?? null,
+						xy: out.read === null ? null : out.xy,
+						reason: out.read === null ? out.reason : "read",
+						ms: out.ms
+					})
+					if (++done % 50 === 0) console.log(`    ${done}/${todo.length}`)
+				}
+			})
+		)
+		writeFileSync(cachePath, JSON.stringify([...cache.values()].sort((a, b) => a.tSec - b.tSec), null, "\t"))
+	}
+	return chosen.map(c => cache.get(c.frame.id)!).filter(e => e !== undefined).sort((a, b) => a.tSec - b.tSec)
+}
+
+/**
+ * The daemon's job and the browser's, done here: the beat, then the turn, then the two things the
+ * brief takes — the prose `where` and the structured `at`.
+ *
+ * Run as a PRE-PASS over the turns rather than inline, for one reason: every arm must be handed
+ * byte-identical payloads, and a read done inside an arm's loop would give each arm its own roll of
+ * a non-deterministic model. One supply, shared by every arm, so a difference between two arms is
+ * still only the model under test.
+ *
+ * The stamp is always the FRAME's own game clock, which is the strongest form of the thing
+ * `frameClockSec` approximates in the app: here the picture's clock is recorded, so there is
+ * nothing to extrapolate.
+ *
+ * Refusals are kept as refusals. The fence threw away 43 of 101 reads on this game and was right to
+ * — 16 of those were the model pointing at a red-ringed Singed inside his camera box — so a turn
+ * with nothing accepted behind it gets `where: null` and the brief says it has no position, exactly
+ * as the app does.
+ */
 const readWhere = async (
 	stream: BuiltStream,
 	cropDir: string
 ): Promise<Map<number, TurnWhere>> => {
 	const out = new Map<number, TurnWhere>()
 	mkdirSync(cropDir, { recursive: true })
+	const beat = noBeat ? [] : await readJournalBeat(stream, cropDir)
+	let bi = 0
 	let lastSide: { where: Coarse | null; atSec: number } | null = null
 	/*
-	 * THE ROLLING LAST-KNOWN READ, carried here exactly as `server/routes/live.ts` carries it.
-	 *
-	 * A reactive turn skips the read and used to get NOTHING — 42% of the event-driven turns on this
-	 * game, and the turns where position matters most. The app now hands those turns the last
-	 * accepted read with its age, in the past tense, and an instrument that did not do the same
-	 * would report the position work as changing nothing, which is the identical failure to the
-	 * `where: null` run this pre-pass was written to replace.
-	 *
-	 * `pictureLine` owns the ageing and the tense, and `CARRY_MAX_SEC` owns the far edge, so there
-	 * is no second copy of either rule here — only the memory.
+	 * THE ROLLING LAST-KNOWN READ, carried here exactly as `server/routes/live.ts` carries it —
+	 * `pictureLine` owns the ageing and the tense and `CARRY_MAX_SEC` owns the far edge, so there is
+	 * no second copy of either rule here, only the memory. A REFUSAL does not displace it and does
+	 * not clear it: a refusal is not evidence about where he was eleven seconds ago.
 	 */
-	let carried: {
-		obs: FrameObservation
-		zone: { you: Zone; enemies: Zone[] }
-		teamId: TeamId
-	} | null = null
 	/*
-	 * The same carry, in the units the ARITHMETIC needs. `carried` holds the prose read and its
-	 * zone; a distance to a pit cannot be taken from a zone label, so the accepted read's own
-	 * percentages ride alongside it and age exactly as it does.
+	 * A HOLDER RATHER THAN A `let`, only so the type survives. `land` below writes it from inside a
+	 * closure; a bare `let` read straight afterwards narrows to the initialiser and the whole carry
+	 * types as `never`. Nothing about the rule changes.
 	 */
-	let carriedPct: ReachPosition | null = null
+	const hold: { read: Landed | null } = { read: null }
+	const held = (): Landed | null => hold.read
+	/** `landRead`, without the module-scope globals: the doubt test, the fence, then the carry. */
+	const land = (read: FrameRead, xy: FrameReadXY | null, atSec: number): void => {
+		const obs = observationFrom(read, lastSide, atSec)
+		lastSide = { where: obs.where, atSec: obs.atSec }
+		const zone = read.you === null ? null : { you: read.you, enemies: [...read.enemiesOnMinimap] }
+		if (!carryable(obs, zone) || zone === null) return
+		/*
+		 * The pct is CLEARED rather than left standing when this acceptance has no point of its own.
+		 * A pct from the previous read paired with the new read's age would put a confident travel
+		 * time on a position the app has already replaced — `landRead` has the same line.
+		 */
+		hold.read = { atSec, obs, zone, pct: xy?.you ? { pct: pctOf(xy.you), atSec } : null }
+	}
 	for (const t of stream.turns) {
-		const none = (reason: string, ms = 0): void => {
-			/*
-			 * A turn with no read of its own still gets the carried one, if there is one and it is
-			 * inside `CARRY_MAX_SEC`. A REFUSAL does not displace what is carried and does not
-			 * clear it: it is not evidence about where he was eleven seconds ago.
-			 */
-			if (carried !== null) {
-				const where = pictureLine(carried.obs, t.atSec)
-				if (where !== null) {
-					out.set(t.index, {
-						where,
-						at: pictureFix(carried.obs, carried.zone, t.atSec, carried.teamId),
-						/*
-						 * THE CARRIED READ'S OWN pct AND ITS OWN CLOCK. Not the turn's — the whole
-						 * point of the drift rule is that an old read stops bounding the distance,
-						 * and re-stamping it here would make a 136-second-old position quote a
-						 * confident travel time. `buildReach` decides; this only supplies.
-						 */
-						reach: reachFromLive({
-							raw: t.raw as LiveAllGameData,
-							nowSec: t.atSec,
-							read: carriedPct
-						}),
-						reason: `${reason}; carried ${Math.round(t.atSec - carried.obs.atSec)}s-old read of ${carried.obs.where}`,
-						ms
-					})
-					return
-				}
-			}
-			/*
-			 * NO POSITION IS STILL A REACH QUESTION when he is dead: the origin is his fountain and
-			 * the respawn clock is exact, so this is the one branch where the answer is certain.
-			 */
-			out.set(t.index, {
-				where: null,
-				at: null,
-				reach: reachFromLive({ raw: t.raw as LiveAllGameData, nowSec: t.atSec, read: null }),
-				reason,
-				ms
-			})
-		}
-		if (t.frame === null) {
-			none("no paired frame")
-			continue
-		}
-		/*
-		 * `readMinimap` is skipped in front of a REACTIVE turn in the app, because the read costs
-		 * 1.3-3.0s and a death's premise is 40% stale at one second. The bench honours that: paying
-		 * for a read the app would not have paid for would credit the coach with a position it
-		 * would not have had.
-		 */
-		if (!t.readMinimap) {
-			none("reactive turn — the app skips the read here")
-			continue
-		}
-		const cropPath = `${cropDir}/${t.frame.id}-crop4x.jpg`
-		try {
-			if (!existsSync(cropPath)) {
-				const size = jpegSize(readFileSync(t.frame.path))
-				if (size === null) {
-					none("frame is not a readable JPEG")
-					continue
-				}
-				const r = minimapRect(size.width, size.height)
-				execFileSync("ffmpeg", [
-					"-y", "-loglevel", "error", "-i", t.frame.path,
-					"-vf", `crop=${r.w}:${r.h}:${r.x}:${r.y},scale=${r.w * 4}:${r.h * 4}:flags=lanczos`,
-					"-q:v", CROP_QUALITY, cropPath
-				])
-			}
-		} catch (e) {
-			none(`crop failed: ${e instanceof Error ? e.message : String(e)}`)
-			continue
-		}
-		const truth = truthFromRaw(t.raw as LiveAllGameData)
-		const res = await readMinimap({
-			jpegBase64: readFileSync(cropPath).toString("base64"),
-			truth
-		})
-		if (!res.read) {
-			none(`refused: ${res.reason}`, res.ms)
-			continue
-		}
-		/*
-		 * The FRAME's own clock, not the sample's — the gap between them is `skewMs` and it is the
-		 * read's real age. Smoothing it would report every read as fresher than it was.
-		 *
-		 * CLAMPED INTO THE PAST, and only here. Frames arrive on the WALL clock and samples on the
-		 * GAME clock, so a frame paired to a sample can sit a few tenths of a second AHEAD of it —
-		 * measured on this game, 4 of 8 turns had a negative gap, smallest -1.2s. `pictureLine`
-		 * throws a future stamp away whole, which is exactly right in the app: there the read is
-		 * taken BEFORE the poll it is stamped against, so a stamp in the future can only mean a
-		 * PAUSED game, and a paused game's picture is about somewhere else. A replay cannot produce
-		 * that case and can produce the sub-second one every turn, so leaving it unclamped would
-		 * silently delete about half the reads for a reason that does not exist here — which is a
-		 * second copy of the discard bug this round is fixing, in the instrument instead of the app.
-		 *
-		 * `Math.min` and not `Math.abs`: a picture is never treated as older than it is, and a
-		 * genuinely stale frame still ages out at `FRAME_FRESH_SEC` untouched.
-		 */
-		const takenAtSec = Math.min(t.frame.tSec, t.atSec)
-		const observation = observationFrom(res.read, lastSide, takenAtSec)
-		lastSide = { where: observation.where, atSec: observation.atSec }
-		const zone =
-			res.read.you === null ? null : { you: res.read.you, enemies: [...res.read.enemiesOnMinimap] }
-		const where = pictureLine(observation, t.atSec)
-		/*
-		 * HIS TEAM, from the raw sample this turn was built from — the same source the route uses.
-		 * The label is team-relative now ("own blue-side jungle (top)" / "enemy red-side jungle
-		 * (bot)"), and a bench that defaulted to blue would score red-side games against a payload
-		 * the app does not send.
-		 */
 		const raw = t.raw as LiveAllGameData
+		const truth = truthFromRaw(raw)
 		const mine = (raw.allPlayers ?? []).find(p => p.championName === truth.myChampion)
 		const teamId: TeamId = mine?.team === "CHAOS" ? TEAM_RED : TEAM_BLUE
-		const at = pictureFix(observation, zone, t.atSec, teamId)
-		const pct = res.xy.you === null ? null : { pct: pctOf(res.xy.you), atSec: takenAtSec }
-		if (carryable(observation, zone)) {
-			carried = { obs: observation, zone: zone!, teamId }
-			carriedPct = pct
+		/*
+		 * Every beat read taken at or before this turn, landed in order — the drain, done here.
+		 * Reads that arrive between two turns are landed at the second of them, which is when
+		 * `drainMinimapReads()` runs in the app.
+		 */
+		while (bi < beat.length && beat[bi]!.tSec <= t.atSec) {
+			const b = beat[bi]!
+			bi++
+			if (b.read !== null) land(b.read, b.xy, b.tSec)
 		}
+		/*
+		 * CLAMPED INTO THE PAST, and only here. Frames arrive on the WALL clock and samples on the
+		 * GAME clock, so a frame paired to a sample can sit a few tenths of a second AHEAD of it.
+		 * `pictureLine` throws a future stamp away whole, which is right in the app — there a stamp
+		 * in the future can only mean a PAUSED game — and impossible in a replay, so leaving it
+		 * unclamped would silently delete reads for a reason that does not exist here.
+		 */
+		const frameSec = t.frame === null ? t.atSec : Math.min(t.frame.tSec, t.atSec)
+		const before = held()
+		const servedByWatch = before !== null && Math.abs(frameSec - before.atSec) <= FRAME_FRESH_SEC
+		let ms = 0
+		let took = ""
+		/*
+		 * THE TURN'S OWN READ, taken only when the track cannot serve it — `POST /live/frame-read`
+		 * skips the model call when the watcher's freshest accepted read is inside
+		 * `FRAME_FRESH_SEC` of the crop's own stamp, and FALLS THROUGH when it is not. A REACTIVE
+		 * turn skips it either way: the app does not pay 1.2s in front of a turn whose premise is
+		 * already 40% stale at one second.
+		 */
+		if (!servedByWatch && t.readMinimap && t.frame !== null) {
+			const cropPath = `${cropDir}/${t.frame.id}-crop4x.jpg`
+			if (cropFrame(t.frame.path, cropPath)) {
+				const res = await readMinimap({
+					jpegBase64: readFileSync(cropPath).toString("base64"),
+					truth
+				})
+				ms = res.ms
+				if (res.read === null) took = `turn read refused: ${res.reason}`
+				else {
+					land(res.read, res.xy, frameSec)
+					took = "turn read accepted"
+				}
+			} else took = "turn read skipped: crop failed"
+		} else if (servedByWatch) took = "served from the journal beat"
+		else if (!t.readMinimap) took = "reactive turn — the app skips the read here"
+		else took = "no paired frame"
+
+		const now = held()
+		const age = now === null ? null : Math.round(t.atSec - now.atSec)
+		const where = now === null ? null : pictureLine(now.obs, t.atSec)
+		const reason =
+			now === null ? `${took}; nothing accepted yet this game`
+			: where === null ?
+				`${took}; carried read ${age}s old is ${now.obs.confidence === "low" ? "doubted" : "past CARRY_MAX_SEC"}`
+			:	`${took}; ${age}s-old read of ${now.obs.where}`
 		out.set(t.index, {
 			where,
-			at,
-			reach: reachFromLive({ raw, nowSec: t.atSec, read: pct }),
-			reason:
-				where === null ?
-					observation.where === null ? "read placed nobody"
-					: observation.confidence === "low" ? "two looks disagreed"
-					: `stale (${Math.round(t.atSec - takenAtSec)}s)`
-				:	`placed ${observation.where}`,
-			ms: res.ms
+			at: where === null || now === null ? null : pictureFix(now.obs, now.zone, t.atSec, teamId),
+			/*
+			 * THE CARRIED READ'S OWN pct AND ITS OWN CLOCK. Not the turn's — the whole point of the
+			 * drift rule is that an old read stops bounding the distance, and re-stamping it here
+			 * would make a 136-second-old position quote a confident travel time. `buildReach`
+			 * decides; this only supplies. A turn with NO position is still a reach question when he
+			 * is dead: the origin is his fountain and the respawn clock is exact.
+			 */
+			reach: reachFromLive({
+				raw,
+				nowSec: t.atSec,
+				read: where === null || now === null ? null : now.pct
+			}),
+			reason,
+			ms
 		})
 	}
 	return out
 }
+
 
 const RESYNC_AFTER_SEC = 90
 
