@@ -35,7 +35,7 @@ import {
 	setGameReviewVersion
 } from "../../db/queries.ts"
 import { baselineFromRows, perGameMetrics } from "../../analysis/index.ts"
-import { buildReview, failedReview, seriousWarnings } from "../../review/parse.ts"
+import { buildReview, seriousWarnings } from "../../review/parse.ts"
 import { gamePrompt } from "../../review/prompt.ts"
 import { runCoach } from "../../review/claude.ts"
 import { publish } from "../bus.ts"
@@ -43,6 +43,7 @@ import { BLOB_REVIEW_DIGEST, writeBlob } from "../../db/blobs.ts"
 import { loadCorpus, loadTimeline } from "../corpus.ts"
 import { refreshChampionContextInBackground } from "../../knowledge/research.ts"
 import { buildGameDigest } from "../digest.ts"
+import { deferForCoachError, recordFailedReview } from "./review-failure.ts"
 import { allowlistOf } from "../../review/digest-contract.ts"
 import { enqueueMediaGenerate } from "../queue.ts"
 import type { JobContext, JobOutcome } from "../context.ts"
@@ -139,31 +140,19 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 		signal: ctx.signal
 	})
 
+	/* Everything a stored failure row needs, whichever stage failed. */
+	const failureId = {
+		kind: "game",
+		gameId,
+		model: settings.model,
+		promptHash: prompt.promptHash
+	} as const
+
 	if (!result.ok) {
-		insertReview(
-			failedReview({
-				kind: "game",
-				gameId,
-				model: settings.model,
-				promptHash: prompt.promptHash,
-				error: `${result.code}: ${result.error}`,
-				analysisVersion: ANALYSIS_VERSION,
-				meta: result.meta
-			})
-		)
+		recordFailedReview({ ...failureId, code: result.code, error: result.error, meta: result.meta })
 		publish("error", { gameId, message: `coach failed: ${result.code}` }, gameId)
-		// No `claude` CLI and no API key is a configuration problem, not a flaky call: retrying
-		// it three times in a minute helps nobody.
-		if (result.code === "no-transport")
-			return {
-				defer: {
-					reason:
-						"no way to reach Claude: neither an authenticated `claude` CLI nor ANTHROPIC_API_KEY",
-					untilMs: Date.now() + 30 * 60_000
-				}
-			}
-		if (result.code === "aborted")
-			return { defer: { reason: "cancelled", untilMs: Date.now() + 5_000 } }
+		const deferred = deferForCoachError(result.code)
+		if (deferred) return deferred
 		throw new Error(`${result.code}: ${result.error}`)
 	}
 
@@ -183,17 +172,7 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 	})
 
 	if (!built.ok) {
-		insertReview(
-			failedReview({
-				kind: "game",
-				gameId,
-				model: settings.model,
-				promptHash: prompt.promptHash,
-				error: `${built.code}: ${built.error}`,
-				analysisVersion: ANALYSIS_VERSION,
-				meta: result.meta
-			})
-		)
+		recordFailedReview({ ...failureId, code: built.code, error: built.error, meta: result.meta })
 		throw new Error(`unusable coach output (${built.code}): ${built.error}`)
 	}
 
