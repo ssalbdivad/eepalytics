@@ -174,19 +174,19 @@ describe("response validators", () => {
 		}
 	})
 
-	it("accepts a deferred job carrying its gate reason", () => {
+	it("accepts a deferred job carrying its reason", () => {
 		const out = JobListResponse({
 			jobs: [
 				{
 					id: 12,
-					kind: "replay-capture",
+					kind: "replay-download",
 					gameId: game.gameId,
 					state: "deferred",
-					intrusive: true,
+					intrusive: false,
 					attempts: 0,
 					maxAttempts: 2,
 					priority: 90,
-					lastError: "you're in ChampSelect; needs None/Lobby for 2 min",
+					lastError: "the League client is not running",
 					notBeforeMs: 1_756_802_500_000,
 					deadlineMs: null,
 					createdMs: 1_756_802_400_000,
@@ -317,19 +317,19 @@ describe("formatters", () => {
 	it("surfaces a deferred job's reason verbatim", () => {
 		const job = {
 			id: 1,
-			kind: "replay-capture",
+			kind: "replay-download",
 			gameId: null,
 			state: "deferred",
-			intrusive: true,
+			intrusive: false,
 			attempts: 0,
 			maxAttempts: 2,
 			priority: 90,
-			lastError: "you're in ChampSelect",
+			lastError: "the League client is not running",
 			notBeforeMs: 0,
 			deadlineMs: null,
 			createdMs: 0,
 			updatedMs: 0
 		} as const
-		assert.equal(jobReason(job), "you're in ChampSelect")
+		assert.equal(jobReason(job), "the League client is not running")
 	})
 })

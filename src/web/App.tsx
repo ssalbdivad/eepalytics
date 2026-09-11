@@ -254,7 +254,7 @@ export const App = () => {
 				: route.name === "games" ?
 					<GameList health={h} eventTick={eventTick} />
 				: route.name === "game" ?
-					<GameReview gameId={route.gameId} eventTick={eventTick} health={h} />
+					<GameReview gameId={route.gameId} eventTick={eventTick} />
 				: route.name === "replays" ?
 					<Replays eventTick={eventTick} />
 				: route.name === "trends" ?
