@@ -16,181 +16,74 @@
  *  18:03  window.changed  drake in 39s — another objective fell
  * ```
  *
- * The third one is the best moment in the corpus. Kayn — the enemy jungler, the man being raced —
- * had just taken Herald at the top side, which both LOCATES him and makes the drake spawning in 39
- * seconds free; the ground-truth block at 18:02 carried every ingredient, complete, correct and one
- * second old. The coach said PASS, because it had already spent a sentence at 17:50 on the same
- * drake and another six seconds before that on a Herald that had been standing for nearly three
- * minutes. Three questions, one decision, and the sentence was gone before the decision was worth
- * anything.
+ * Three questions, one decision, and the sentence was gone before the decision was worth anything.
+ * So a standing ask waits a few seconds to see whether something else is about to join it, and the
+ * three go out as one turn carrying all three notes.
  *
- * The opposite failure is in the same game and is bigger. From 4:21 to 7:17 the detector raises
- * NOTHING — two minutes fifty-six seconds — and the drake spawned at 5:00 and stood untaken until
- * roughly 7:20. `objective.contested` sees it, and `asks` is false on it, so the longest open
- * decision in the first ten minutes of the game was the one stretch the coach was never asked
- * about.
+ * ## THE VALUE MODEL THAT USED TO LIVE HERE, AND WHY IT DOES NOT
  *
- * Both failures are the same missing idea: **the schedule has no notion of what an ask is WORTH.**
- * So this file supplies one, and `live-events.ts` spends it.
+ * Until 2026-09-11 this file was 364 lines, and most of them priced an ask: a prize table per
+ * epic, multipliers for the counterpart being dead, for two enemies down and for the reachability
+ * port's verdict, a timing curve, nine carry weights and a cap. `askValue` turned that into one
+ * number, `turnValue` summed a queue into another, and `PREEMPT_RATIO` compared two of them.
+ *
+ * Two measurements retired the whole apparatus, both over the 19-game corpus in
+ * `data/eval/mixfix-corpus-20260911.json` and the blind verdicts beside it.
+ *
+ * **It did not predict quality.** Every one of the 630 judged lines was rejoined to the `askValue`
+ * of the turn that produced it — the detector replayed over the stored samples, turn instants
+ * matching the run 631 of 631 — and correlated against the blind judge's verdict:
+ *
+ * ```
+ *   turnValue x useful      r = 0.099  [0.021, 0.176]   n=630
+ *   askValue  x useful      r = 0.090  [0.012, 0.167]
+ *   within game, pooled     r = 0.111  [0.030, 0.191]
+ * ```
+ *
+ * A hair above zero — and it is not even that, because the whole of it is one kind of turn. The 19
+ * `game.start` asks are the cheapest thing the table prices (`NO_OBJECTIVE_PRIZE`, a flat 10) and
+ * they graded useful 0 times out of 18. Drop them and the correlation is gone:
+ *
+ * ```
+ *   drop game.start                 r = 0.015  [-0.065, 0.094]   n=611
+ *   drop game.start and heartbeat   r = 0.012  [-0.069, 0.093]   n=585
+ *   objective-window turns only     r = 0.017  [-0.070, 0.103]   n=516
+ * ```
+ *
+ * What DOES separate a useful line from a useless one is the KIND of the ask, not its price:
+ * `objective.taken` 91% [83-95] and `shop.trip` 90% [81-95] against `window.open` 67% [50-80] and
+ * `game.start` 0% [0-18]. The prize table orders those almost backwards — `shop.trip` is a carry
+ * weight of 3 and a window opening is 55 to 100.
+ *
+ * **And it changed almost nothing anyway.** Replaying all 19 games three ways — shipped, the same
+ * detector with every value forced flat, and no settle at all — over 617 minutes and 631 turns:
+ *
+ * ```
+ *   shipped                631 turns   settled 11   preempted 1   heartbeat yielded 1
+ *   values flat            631 turns   settled 12   preempted 0   heartbeat yielded 1
+ *   no settle at all       645 turns
+ * ```
+ *
+ * The value model's only behavioural consumer was `PREEMPT_RATIO`, and it fired ONCE in ten hours
+ * of League. Forcing every value flat moves two turn instants out of 631: the one preempted turn
+ * becomes a settled one, twelve seconds later at the outside. `lastTurnValue` and `TurnReason.value`
+ * were written and never read by anything at all.
+ *
+ * So the settle stayed and the price tag went. What is left is a clock: a standing ask waits
+ * `SETTLE_SEC` when another contest window is provably about to open, and nothing else in this
+ * repo has an opinion about what an ask is worth.
  *
  * ## What this is not
  *
- * It is not a rate limit and it does not touch the model. It decides which question to ask and when
- * to ask it, which is the harness's job; every word of the answer, and whether there is an answer at
- * all, stays the model's. Nothing here can suppress a sentence, because nothing here sees one.
+ * It is not a rate limit and it does not touch the model. It decides when to ask, which is the
+ * harness's job; every word of the answer, and whether there is an answer at all, stays the
+ * model's. Nothing here can suppress a sentence, because nothing here sees one.
  *
- * Nor is it a cooldown. There is no floor between turns and none is added: the two mechanisms are a
- * SETTLE — a standing ask waits a few seconds in case something bigger is about to join it — and a
- * PREEMPTION, which is that a materially bigger ask ends the wait immediately. Both act before the
- * question is asked, on a queue of asks the detector has already raised, and neither can drop one:
- * a held ask stays in `watch.pending` and goes out with the turn it waited for, carrying its own
- * timestamp, exactly as `dueTurn`'s existing `inFlight` deferral does.
- *
- * ## Why the values live here and the queue lives there
- *
- * Every number below is computed from the feed at the moment the event is detected — in
- * `observeTick`, where the tick is — and travels on the event as `LiveEvent.value`. By the time
- * `dueTurn` compares two asks it is comparing two numbers and nothing else. That split is what
- * keeps this file free of the tick: it has no imports from `live-events.ts` at all (its inputs are
- * structural), so the dependency runs one way and the value model can be tested on numbers.
+ * Nor is it a cooldown. There is no floor between turns and none is added. The settle acts before
+ * the question is asked, on a queue of asks the detector has already raised, and it cannot drop
+ * one: a held ask stays in `watch.pending` and goes out with the turn it waited for, carrying its
+ * own timestamp, exactly as `dueTurn`'s existing `inFlight` deferral does.
  */
-
-/* ------------------------------------------------------------ the prize */
-
-/**
- * What each epic is worth if he gets it, on one scale.
- *
- * **These five numbers are a ranking, not a measurement, and saying so is the point.** Nothing in
- * this repo measures what a Herald is worth against a drake, and a table that looked derived would
- * be a judgement wearing a measurement's clothes. What IS measured is the ORDER they produce over
- * the corpus — see the replay numbers in the module docblock of `live-events.ts` and the report in
- * `data/eval/`.
- *
- * The order itself is the uncontroversial part of jungle coaching: Baron rewrites what the whole map
- * is allowed to do; Herald is a free tower; a drake is a stack toward something that ends games; the
- * grubs are a tower's worth of damage and they are gone by 14:00.
- *
- * The GAPS are chosen so that being free promotes a contest exactly one tier and never two: a drake
- * the counterpart cannot contest (55 x 1.6 = 88) outranks a Herald nobody has touched (60), and does
- * not outrank a Baron (100), because a Baron nobody is contesting yet is still the bigger decision.
- * `live-schedule.test.ts` asserts both halves, so a re-price that breaks the ordering fails rather
- * than quietly changing what the coach is asked about.
- */
-export const OBJECTIVE_PRIZE: Record<string, number> = {
-	baron: 100,
-	"rift herald": 60,
-	drake: 55,
-	voidgrubs: 40
-}
-
-/**
- * A drake when either team is on three stacks.
- *
- * The one place the prize table is not flat, and it is flat everywhere else deliberately. A fourth
- * drake is a different object from a first: it either wins the soul or denies it, and every jungler
- * knows the difference, which is precisely why a coach that prices them the same reads as a stat
- * sheet. Equal to Baron, because at the soul point they are the same decision.
- */
-export const SOUL_POINT_PRIZE = 100
-
-/** An ask with no objective behind it at all — the blind floor under silence. */
-export const NO_OBJECTIVE_PRIZE = 10
-
-/* ------------------------------------------------ the decisions that are not a pit */
-
-/**
- * What a decision with no objective in it is worth — the SECOND unit, beside the contest window.
- *
- * ## The measurement that produced this block
- *
- * Every one of the seventeen recorded games is a monoculture: 79% of the 529 lines the coach spoke
- * are about an objective, 68% to 95% game by game. That is not the model's taste, and the corpus
- * settles it rather than arguing it. Split those same lines by what RAISED the turn:
- *
- * ```
- *   raised by a contest window (491 lines)   82% objectives  [78-85]
- *   raised by the silence floor  (38 lines)  39% objectives  [26-55]
- * ```
- *
- * The model diversifies the instant it is not standing at a pit clock. It was standing at one
- * almost always, because until this block the only things in the whole detector that could ASK were
- * `window.open`, `window.changed`, `window.standing`, `game.start` and the heartbeat — every one of
- * them an objective or a timeout. 475 of 529 asks carried a window.
- *
- * The cost is measurable in seconds as well as in subject. An objective is standing or inside its
- * lead for 296 of the corpus's 485 minutes; the coach speaks every 45 seconds inside that 61% and
- * every 166 seconds outside it. The complaint that started this app — *nine lines in four minutes,
- * six of them about farm* — is the same shape: the sentences bunch onto one kind of moment.
- *
- * And the material was already there. 367 of the 491 window asks (75%) carried a second event that
- * the schedule could only let RIDE: 187 resolved fights, 123 shop trips, 77 counterpart deaths, 60
- * respawns, 45 completed items, 34 level spikes. `materialDiff` even re-asks about the pit BECAUSE
- * the counterpart died — the counter-jungle window turned into another question about the drake.
- *
- * ## What is priced here, and what is not
- *
- * Three moments, chosen because each opens a decision about the next thirty seconds that is not
- * visible on his screen:
- *
- *   - **the counterpart is down.** The man he is racing is off the map for a known number of
- *     seconds. `AGENTS.md` calls the counterpart the best fact this app has; the enemy's respawn
- *     clock is drawn nowhere in the client, and until now his death only reached the model when a
- *     pit happened to be open (see `contestableObjective`).
- *   - **he is back up.** The fork in the road, in this file's own words — camp, objective, or reset
- *     again. It already fired; it could only ask when an objective sat inside `RESPAWN_HORIZON_SEC`.
- *   - **the spike.** A legendary assembled or a spike level crossed changes what he may contest for
- *     the next minute, and it is the one fact in this list he CAN see, so it is priced lowest.
- *
- * `fight.resolved` is deliberately NOT here. It asked once, in the second cut, and the docblock
- * above `death.counterpart` records the result: *"the largest single source of true-but-useless
- * lines in the graded run."* That is a measurement, and re-running the experiment because the
- * payload has changed since is a separate experiment, not a bug fix. It still rides.
- *
- * ## WHAT THIS DID, AND WHAT IT DID NOT DO
- *
- * Run whole: `bench-stream --games all --arms gemini-http --no-frame` over all 19 recorded games,
- * against a CONTROL of the same working tree with only these three detectors reverted, judged blind
- * by a different model family that never saw which arm a line came from. Both runs are on disk —
- * `data/eval/mixfix-control-20260911.json` and `data/eval/mixfix-corpus-20260911.json`, with their
- * `-judged.json` beside them.
- *
- * ```
- *                     lines   cadence   useful          false          useful/min
- *   control            560    one/66s   77% [73-80]     17% [14-20]    0.70
- *   with field asks    600    one/62s   81% [77-83]     15% [12-18]    0.78
- * ```
- *
- * The 40 extra lines are ALL in the open ground: turns inside an objective window are 433 against
- * 434, one every 46 seconds either way, while the quiet 208 minutes go from 75 turns to 116 — one
- * every 167 seconds to one every 108. And the new questions are the best-scoring ones in the whole
- * corpus: `death.counterpart` graded useful on 94% [80-98] of 33 lines and false on 6% [2-20],
- * against 83% [78-87] and 15% for `window.changed`, which is 52% of every turn the coach gets.
- *
- * **IT DID NOT BREAK THE MONOCULTURE, WHICH IS WHAT IT WAS BUILT FOR.** 78% [74-81] of lines were
- * about an objective before and 78% [75-81] after; counting only the lines where the objective is
- * the ACTION rather than a "before drake" time reference, 52% [48-56] both times. The mix does move
- * at the level of the individual question — a `death.counterpart` ask is 61% [44-75] objectives
- * against `window.open`'s 92% [86-96] — but those asks are 15% of the corpus and the pooled figure
- * does not notice. Two further swings at it are recorded and neither moved it either: the
- * counterpart's death clock leading NEXT (`shared/live-brief.ts`), and narrowing the payload's
- * objective horizon to the schedule's own lead (`PROSPECT_HORIZON_SEC`, run and reverted). Whatever
- * decides that 52%, it is not WHEN the coach is asked and it is not what leads the payload.
- *
- * So what is defended here is the measured thing and not the intended one: more useful sentences
- * per minute, at the same precision, in the stretches that were nearly silent.
- *
- * ## The numbers
- *
- * A ranking, like `OBJECTIVE_PRIZE`, and on the same scale so the two units compare directly. The
- * counterpart sits between the grubs and a drake: bigger than the pit that is gone by 14:00,
- * smaller than the one that stacks toward a soul, and never near a Baron. Nothing promotes these —
- * `askValue`'s multipliers are about a contest — so a standing drake with the counterpart dead
- * (55 x 1.6 = 88) still outranks the counterpart being dead on its own, which is correct: that is
- * the same fact with a pit attached.
- */
-export const FIELD_CP_DOWN = 45
-export const FIELD_RESPAWN_SELF = 25
-export const FIELD_SPIKE = 20
 
 /**
  * The least of the counterpart's death timer that is still a decision.
@@ -201,147 +94,6 @@ export const FIELD_SPIKE = 20
  * he could start and finish, and the ask would be a sentence about a man already walking back.
  */
 export const FIELD_CP_MIN_SEC = 10
-
-/* ------------------------------------------- how open the decision actually is */
-
-/**
- * The counterpart is DEAD, so the thing in the pit is his to take.
- *
- * The biggest single multiplier here, because it is the one fact about a contest that he most often
- * cannot see and the one the post-game reviewer's best objective items all turn on. The graded run's
- * 20:53 line — *"Baron is still free with Kayn dead"* — is this term.
- */
-export const OPEN_CP_DEAD = 1.6
-
-/** Two or more of the enemy team are down. See `ENEMIES_DOWN_FREE` in `live-events.ts`. */
-export const OPEN_TWO_DOWN = 1.35
-
-/**
- * The reachability port's verdict, priced.
- *
- * `cannot` is a heavy discount rather than a zero, because the port is allowed to be wrong and
- * because "you cannot get there, so do the other thing" is a real line. `can` is a light premium:
- * being able to reach an objective is the ordinary case, not news.
- *
- * Until the minimap reader answers anything but `unknown` both of these are inert — every window
- * prices at 1.0 and the ordering below is unchanged. That is the honest default and it is why the
- * port's own docblock refuses to answer `can` on a guess.
- */
-export const REACH_CAN = 1.25
-export const REACH_CANNOT = 0.35
-
-/**
- * How live the decision is, as a function of the clock.
- *
- * A thing STANDING in the pit is a decision he has right now; a thing spawning in forty seconds is
- * a decision he is about to have; a thing ninety seconds out is a route, which is worth asking about
- * on the tick he leaves the fountain and not much otherwise. The boundary at 20 seconds is the point
- * at which a jungler has to already be moving.
- */
-export const TIMING_IMMINENT_SEC = 20
-export const TIMING_LEAD = 0.85
-export const TIMING_FAR = 0.6
-
-/* ------------------------------------------------------ what rides along */
-
-/**
- * What a CONTEXT event adds to the turn that carries it.
- *
- * Context does not ask — see `LiveEvent.asks` — but it is the difference between "drake in 39s" and
- * "drake in 39s and the enemy jungler is top side, because he just took Herald". Both of round 2's
- * useful `objective.taken` lines are that join and nothing else, which is why the enemy's take is
- * the largest entry here and an ally's take, which re-prices the map without locating anybody, is a
- * quarter of it.
- */
-export const CARRY_ENEMY_TAKE = 40
-export const CARRY_ALLY_TAKE = 12
-export const CARRY_CP_DEATH = 35
-export const CARRY_RESPAWN_SELF = 10
-export const CARRY_CP_UNSEEN = 8
-export const CARRY_FIGHT = 6
-export const CARRY_ITEM = 6
-export const CARRY_LEVEL = 5
-export const CARRY_SHOP = 3
-
-/**
- * The most context may add, however much of it is queued.
- *
- * A cap rather than a sum, because otherwise a quiet stretch that accumulates five small notes
- * outranks a Baron standing free, and the coach would be asked about the pile rather than about the
- * decision. 50 is below the gap between the drake and Baron rows of `OBJECTIVE_PRIZE`, so context
- * can promote a contest past its neighbour and can never promote it past the tier above.
- */
-export const CARRY_MAX = 50
-
-/**
- * How fresh a carried note has to be to count toward the value of a turn.
- *
- * `CONTEXT_CARRY_SEC` (90s) is when a note becomes a false premise and is dropped. This is shorter,
- * because a note stops being a REASON to ask well before it becomes a lie: a kill 80 seconds ago is
- * true, sayable, and not why anybody should be asked anything now.
- */
-export const CARRY_FRESH_SEC = 45
-
-/* ------------------------------------------------------------ the value model */
-
-export interface AskFacts {
-	/** The plain noun from `ObjectiveState.what`, or null when the ask is not about an objective. */
-	what: string | null
-	/** Seconds until it spawns; <= 0 or null when it is already standing. */
-	untilSpawnSec: number | null
-	/** Is it up and untaken right now? */
-	standing: boolean
-	/** Is the enemy jungler lying down? */
-	cpDead: boolean
-	/** How many of the enemy team are dead. */
-	enemiesDown: number
-	/** The reachability port's verdict for this objective. */
-	reach: "can" | "cannot" | "unknown"
-	/** The largest drake count either team is holding — the soul point. */
-	drakeStacks: number
-}
-
-/**
- * What this ask can buy him, as one number.
- *
- * `prize x openness x timing`, and the multipliers are taken as a MAXIMUM rather than a product.
- * That is deliberate: the counterpart being dead and two of the enemy being down are usually the
- * same fight, and multiplying them would price one event twice and let a skirmish outrank Baron.
- */
-export const askValue = (f: AskFacts): number => {
-	const base =
-		f.what === null ? NO_OBJECTIVE_PRIZE
-		: f.what === "drake" && f.drakeStacks >= 3 ? SOUL_POINT_PRIZE
-		: (OBJECTIVE_PRIZE[f.what] ?? NO_OBJECTIVE_PRIZE)
-	const open = Math.max(
-		1,
-		f.cpDead ? OPEN_CP_DEAD : 1,
-		f.enemiesDown >= 2 ? OPEN_TWO_DOWN : 1
-	)
-	const reach = f.reach === "can" ? REACH_CAN : f.reach === "cannot" ? REACH_CANNOT : 1
-	const timing =
-		f.standing ? 1
-		: f.untilSpawnSec === null ? TIMING_FAR
-		: f.untilSpawnSec <= TIMING_IMMINENT_SEC ? 1
-		: f.untilSpawnSec <= 45 ? TIMING_LEAD
-		: TIMING_FAR
-	return base * open * reach * timing
-}
-
-/* ------------------------------------------------------------ the decision */
-
-/**
- * The shape `chooseTurn` compares. `LiveEvent` satisfies it structurally, which is how this file
- * stays free of any import from `live-events.ts`.
- */
-export interface ScheduledAsk {
-	asks: boolean
-	reactive: boolean
-	/** When the detector SAW it — not when the thing it is about became true. */
-	seenAtSec: number
-	/** `askValue` for an ask; the carry weight for a context note. */
-	value: number
-}
 
 /**
  * How long a standing ask waits to see whether something bigger is coming.
@@ -360,30 +112,28 @@ export interface ScheduledAsk {
  * Twelve rather than twenty: over the two paired games, 12s coalesces every cluster the corpus
  * contains (the largest real gap inside one is the 6+6 at 17:51-18:03) without reaching across into
  * the next decision, whose nearest neighbour in the corpus is 24 seconds away.
+ *
+ * Over the whole 19-game corpus the settle is a small mechanism honestly measured: 11 turns of 631
+ * waited it out, and without it the corpus raises 645 turns instead of 631.
  */
 export const SETTLE_SEC = 12
 
+/* ------------------------------------------------------------ the decision */
+
 /**
- * How much bigger a late arrival has to be to end the wait early.
- *
- * The preemption half, and the reason the 18:03 turn fires at 18:03 rather than at whatever second
- * the deadline happens to land on. The Herald take promotes the drake ask from 46.8 to 86.8 against
- * the 60 that was on the table when the wait started — a ratio of 1.45 — so at 1.4 the ask goes out
- * BECAUSE it is bigger, which is the property worth having rather than the timing that happens to
- * follow from it.
- *
- * Below about 1.25 ordinary re-prices trip it and the settle stops existing; above about 1.6 only a
- * change of objective tier can, and the join this file was built for does not qualify.
+ * The shape `chooseTurn` compares. `LiveEvent` satisfies it structurally, which is how this file
+ * stays free of any import from `live-events.ts`.
  */
-export const PREEMPT_RATIO = 1.4
+export interface ScheduledAsk {
+	asks: boolean
+	reactive: boolean
+}
 
 export interface TurnChoice {
 	/** Ask now? */
 	fire: boolean
-	/** The value of the best ask on the table, plus what its carried context adds. */
-	value: number
 	/** One word for the fault panel and the bench: why it fired, or why it is waiting. */
-	why: "now" | "reactive" | "preempt" | "settled" | "heartbeat" | "waiting" | "nothing"
+	why: "now" | "reactive" | "settled" | "heartbeat" | "waiting" | "nothing"
 }
 
 /**
@@ -398,8 +148,6 @@ export const chooseTurn = (args: {
 	nowSec: number
 	/** When the oldest un-sent ask was detected, or null when the queue holds no ask. */
 	settleSinceSec: number | null
-	/** The best turn value on the table at that moment — what the wait is being judged against. */
-	settleBestValue: number
 	/** True when the silence floor is what raised this, with nothing asking. */
 	heartbeat: boolean
 	/**
@@ -411,17 +159,16 @@ export const chooseTurn = (args: {
 	settleSec?: number
 }): TurnChoice => {
 	const asks = args.pending.filter(e => e.asks)
-	const value = turnValue(args.pending, args.nowSec)
 	if (asks.length === 0) {
-		if (!args.heartbeat) return { fire: false, value, why: "nothing" }
+		if (!args.heartbeat) return { fire: false, why: "nothing" }
 		/*
 		 * THE HEARTBEAT YIELDS, and it is the cheapest yield in the file.
 		 *
 		 * The floor under silence asks about nothing in particular by construction — that is what it
 		 * is for. So a heartbeat that fires seconds before a real contest window opens spends the
 		 * coach's sentence on the emptiest question available and then hands her the full one too
-		 * late to matter. Game 5639409343 does exactly this at 10:21: a heartbeat worth 8, and the
-		 * drake window opens at 10:27.
+		 * late to matter. Game 5639409343 does exactly this at 10:21: the drake window opens at
+		 * 10:27.
 		 *
 		 * Deferring costs nothing that can be lost. The silence condition stays true on the next
 		 * tick, so the floor is not skipped, only moved by at most `SETTLE_SEC` onto the question
@@ -439,33 +186,14 @@ export const chooseTurn = (args: {
 			opening > args.nowSec &&
 			opening - args.nowSec <= (args.settleSec ?? SETTLE_SEC)
 		)
-			return { fire: false, value, why: "waiting" }
-		return { fire: true, value, why: "heartbeat" }
+			return { fire: false, why: "waiting" }
+		return { fire: true, why: "heartbeat" }
 	}
 	// A decision that decays in seconds cannot afford to wait for a better one.
-	if (asks.some(e => e.reactive)) return { fire: true, value, why: "reactive" }
+	if (asks.some(e => e.reactive)) return { fire: true, why: "reactive" }
 	// Nothing is scheduled to arrive, so there is nothing to wait for. The ordinary case.
-	if (args.settleSinceSec === null) return { fire: true, value, why: "now" }
+	if (args.settleSinceSec === null) return { fire: true, why: "now" }
 	if (args.nowSec - args.settleSinceSec >= (args.settleSec ?? SETTLE_SEC))
-		return { fire: true, value, why: "settled" }
-	if (args.settleBestValue > 0 && value >= args.settleBestValue * PREEMPT_RATIO)
-		return { fire: true, value, why: "preempt" }
-	return { fire: false, value, why: "waiting" }
-}
-
-/**
- * What the whole queue is worth as one turn: the best ask, plus what the fresh context adds.
- *
- * The best ask rather than the sum, because the coach gets one sentence and will spend it on one
- * thing — a second open window does not make the first one more valuable, and summing them is how a
- * quiet stretch full of small notes outranks a Baron standing free.
- */
-export const turnValue = (pending: readonly ScheduledAsk[], nowSec: number): number => {
-	let best = 0
-	let carried = 0
-	for (const e of pending) {
-		if (e.asks) best = Math.max(best, e.value)
-		else if (nowSec - e.seenAtSec <= CARRY_FRESH_SEC) carried += e.value
-	}
-	return best + Math.min(CARRY_MAX, carried)
+		return { fire: true, why: "settled" }
+	return { fire: false, why: "waiting" }
 }

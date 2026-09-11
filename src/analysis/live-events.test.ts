@@ -46,7 +46,7 @@ import {
 	type LiveTick,
 	type ReachFn
 } from "./live-events.ts"
-import { FIELD_CP_DOWN, FIELD_CP_MIN_SEC, SETTLE_SEC } from "./live-schedule.ts"
+import { FIELD_CP_MIN_SEC, SETTLE_SEC } from "./live-schedule.ts"
 
 /*
  * THE TWO NAMES THE CLIENT USES, and the reason this fixture carries both.
@@ -216,7 +216,6 @@ const ev = (e: {
 	note?: string
 	/** When the detector SAW it. Defaults to `atSec`, which is the ordinary case for a context note. */
 	seenAtSec?: number
-	value?: number
 }): LiveEvent => ({
 	kind: e.kind,
 	atSec: e.atSec,
@@ -224,7 +223,6 @@ const ev = (e: {
 	windowKey: null,
 	reactive: e.reactive === true,
 	seenAtSec: e.seenAtSec ?? e.atSec,
-	value: e.value ?? 0,
 	key: e.key,
 	note: e.note ?? ""
 })
@@ -365,7 +363,6 @@ describe("a kill is not a turn", () => {
 		strictEqual(death.asks, true)
 		ok(death.reactive, "a death timer decays in seconds")
 		ok(/down 25s/.test(death.note), death.note)
-		strictEqual(death.value, FIELD_CP_DOWN)
 	})
 
 	/*
@@ -1281,7 +1278,6 @@ describe("the schedule's lookahead and its floor over a standing objective", () 
 		const open = fired.find(e => e.kind === "window.open")!
 		strictEqual(open.atSec, DRAKE_FIRST_SPAWN_SEC)
 		strictEqual(open.seenAtSec, OPENS)
-		ok(open.value > 0, "an ask carries what it is worth, computed where the tick is")
 	})
 
 	it("knows when the next window is due to open, and stops claiming one that is open", () => {

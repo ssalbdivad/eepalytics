@@ -399,27 +399,7 @@ export interface LiveTick {
 	events: TickEvent[]
 }
 
-import {
-	askValue,
-	type AskFacts,
-	type TurnChoice,
-	chooseTurn,
-	turnValue,
-	CARRY_ALLY_TAKE,
-	CARRY_CP_DEATH,
-	CARRY_CP_UNSEEN,
-	CARRY_ENEMY_TAKE,
-	CARRY_FIGHT,
-	CARRY_ITEM,
-	CARRY_LEVEL,
-	CARRY_RESPAWN_SELF,
-	CARRY_SHOP,
-	FIELD_CP_DOWN,
-	FIELD_CP_MIN_SEC,
-	FIELD_RESPAWN_SELF,
-	FIELD_SPIKE,
-	SETTLE_SEC
-} from "./live-schedule.ts"
+import { type TurnChoice, chooseTurn, FIELD_CP_MIN_SEC, SETTLE_SEC } from "./live-schedule.ts"
 
 const readItems = (v: unknown): { names: string[]; prices: number[] } => {
 	const names: string[] = []
@@ -600,15 +580,6 @@ export interface LiveEvent {
 	 * `live-schedule.ts` is entirely a statement about how long it has been waiting.
 	 */
 	seenAtSec: number
-	/**
-	 * What this is worth — `askValue` for an ask, the carry weight for a context note.
-	 *
-	 * Computed HERE, in `observeTick`, because this is where the tick is: the prize, whether the
-	 * counterpart is lying down, how many of the enemy are, how far off the spawn is and what the
-	 * reachability port says are all facts about the feed at the instant of detection. By the time
-	 * `dueTurn` ranks two asks it is comparing two numbers, and `live-schedule.ts` never sees a tick.
-	 */
-	value: number
 	/**
 	 * REACTIVE means the value of the line decays in seconds: a respawn, the counterpart dying. The
 	 * caller skips the minimap read in front of these, because that read costs 1.3-3.0s and
@@ -1055,19 +1026,8 @@ export interface EventWatch {
 	 * after a send arrives, and `commitTurn` clears it when the turn leaves.
 	 */
 	settleSinceSec: number | null
-	/**
-	 * The best turn value that was on the table at that instant — what a later arrival is judged
-	 * against by `PREEMPT_RATIO`.
-	 *
-	 * Frozen at the start of the wait rather than recomputed, and that is the whole mechanism: if it
-	 * tracked the current best it would climb with the very ask that is trying to preempt it, and
-	 * nothing would ever be bigger than the thing it is being compared to.
-	 */
-	settleBestValue: number
 	/** Standing-opportunity asks raised this game. Their dedupe keys, and the bench's tally. */
 	standingAsks: number
-	/** What the last turn that actually LEFT was worth. For the fault panel and the bench only. */
-	lastTurnValue: number | null
 	/** When a standing-opportunity ask was last RAISED — the gate's own clock. */
 	lastStandingAskAtSec: number | null
 	/**
@@ -1105,9 +1065,7 @@ export const newEventWatch = (): EventWatch => ({
 	lastShopAtSec: null,
 	askSeq: 0,
 	settleSinceSec: null,
-	settleBestValue: 0,
 	standingAsks: 0,
-	lastTurnValue: null,
 	lastStandingAskAtSec: null,
 	nextOpeningSec: null
 })
@@ -1187,49 +1145,6 @@ export const objectiveStates = (tick: LiveTick): ObjectiveState[] => {
 		null
 	)
 	return out
-}
-
-/**
- * The largest drake count either team is holding — i.e. how close anybody is to the soul point.
- *
- * Read off the same cumulative event log `objectiveStates` reads, joined to the roster by the
- * killer's name, which is the only place this feed says which side took one. A drake whose killer is
- * not on the roster is counted for nobody rather than guessed at: the number exists to promote a
- * fourth drake above a Baron and a wrong promotion is worse than a missing one.
- */
-export const drakeStacks = (tick: LiveTick): number => {
-	const byTeam = new Map<string, number>()
-	for (const e of tick.events) {
-		if (e.name !== "DragonKill" || e.killer === null) continue
-		const team = tick.players.find(p => p.name === e.killer)?.team ?? null
-		if (team === null) continue
-		byTeam.set(team, (byTeam.get(team) ?? 0) + 1)
-	}
-	return Math.max(0, ...byTeam.values())
-}
-
-/**
- * What a contest window is worth right now — the facts `askValue` prices, read off one tick.
- *
- * Everything here is a fact about the feed at the instant of detection. The judgement about what
- * those facts are WORTH lives in `live-schedule.ts` and nowhere else, which is the split that lets
- * the value table be argued with, and re-priced, without touching the detector.
- */
-export const askFactsFor = (
-	tick: LiveTick,
-	o: ObjectiveState,
-	reachVerdict: "can" | "cannot" | "unknown"
-): AskFacts => {
-	const cp = counterpartOf(tick)
-	return {
-		what: o.what,
-		untilSpawnSec: o.upForSec === null ? o.spawnSec - tick.gameTimeSec : null,
-		standing: o.upForSec !== null,
-		cpDead: cp !== null && cp.dead,
-		enemiesDown: tick.players.filter(p => p.team !== tick.me.team && p.dead).length,
-		reach: reachVerdict,
-		drakeStacks: drakeStacks(tick)
-	}
 }
 
 /**
@@ -1362,14 +1277,13 @@ export const observeTick = (
 	 * The kinds that DO ask pass `asks: true` explicitly, and there are two families of them: the
 	 * four CONTEST WINDOWS at the foot of this function (`window.open`, `window.changed`,
 	 * `window.standing`, `game.start`), and the three FIELD decisions above it — the counterpart
-	 * going down, him coming back up, and a spike. See `FIELD_CP_DOWN` for the corpus measurement
-	 * that added the second family.
+	 * going down, him coming back up, and a spike. See the `fieldAsks` block for the corpus
+	 * measurement that added the second family.
 	 */
 	const fire = (
-		e: Omit<LiveEvent, "asks" | "windowKey" | "seenAtSec" | "value"> & {
+		e: Omit<LiveEvent, "asks" | "windowKey" | "seenAtSec"> & {
 			asks?: boolean
 			windowKey?: string | null
-			value?: number
 		}
 	): boolean => {
 		if (watch.fired.has(e.key)) return false
@@ -1382,8 +1296,7 @@ export const observeTick = (
 			 * NOW, not `atSec`. A window's `atSec` is its spawn and a kill's is the log's own clock;
 			 * the settle needs the moment the question appeared. See `LiveEvent.seenAtSec`.
 			 */
-			seenAtSec: now,
-			value: e.value ?? 0
+			seenAtSec: now
 		})
 		return true
 	}
@@ -1421,9 +1334,7 @@ export const observeTick = (
 		watch.lastShopAtSec = null
 		watch.askSeq = 0
 		watch.settleSinceSec = null
-		watch.settleBestValue = 0
 		watch.standingAsks = 0
-		watch.lastTurnValue = null
 		watch.lastStandingAskAtSec = null
 		watch.nextOpeningSec = null
 	}
@@ -1516,7 +1427,6 @@ export const observeTick = (
 				atSec: e.atSec,
 				reactive: true,
 				asks: window === null,
-				value: window === null ? FIELD_CP_DOWN : CARRY_CP_DEATH,
 				key: `kill:${e.id}`,
 				note: `${championOf(tick, e.killer) ?? e.killer ?? "someone"} killed ${cp.champion}${
 					downFor > 0 ? `, down ${Math.round(downFor)}s` : ""
@@ -1576,7 +1486,6 @@ export const observeTick = (
 				fire({
 					kind: "objective.taken",
 					atSec: e.atSec,
-					value: byEnemy ? CARRY_ENEMY_TAKE : CARRY_ALLY_TAKE,
 				/*
 				 * NOT reactive. A drake that just fell is worth the 1.3-3.0s minimap read in front
 				 * of the turn, because "where was he when it fell" is the entire content of the
@@ -1626,7 +1535,6 @@ export const observeTick = (
 				kind: "shop.trip",
 				atSec: now,
 				reactive: false,
-				value: CARRY_SHOP,
 				key: `shop:${watch.counters.shopTrips}`,
 				note: `spent ${Math.round(spent)}g`
 			})
@@ -1658,7 +1566,6 @@ export const observeTick = (
 			kind: "fight.resolved",
 			atSec: watch.lastKillAtSec,
 			reactive: false,
-			value: CARRY_FIGHT,
 			key: `fight:${watch.fightsSeen}`,
 			note: `${watch.clusterKills} champions died, quiet since ${Math.round(watch.lastKillAtSec)}s`
 		})
@@ -1706,7 +1613,6 @@ export const observeTick = (
 				atSec: now,
 				reactive: true,
 				asks: fieldAsks,
-				value: fieldAsks ? FIELD_RESPAWN_SELF : CARRY_RESPAWN_SELF,
 				key: `respawn:${tick.me.deaths}`,
 				note: watch.lastDeathNote === null ? "he is back up" : `back up — ${watch.lastDeathNote}`
 			})
@@ -1727,7 +1633,6 @@ export const observeTick = (
 					atSec: now,
 					reactive: false,
 					asks: fieldAsks,
-					value: fieldAsks ? FIELD_SPIKE : CARRY_LEVEL,
 					key: `level:${lv}`,
 					note: `level ${lv}`
 				})
@@ -1744,7 +1649,6 @@ export const observeTick = (
 				atSec: now,
 				reactive: false,
 				asks: fieldAsks,
-				value: fieldAsks ? FIELD_SPIKE : CARRY_ITEM,
 				key: `item:${spike.name}`,
 				note: `finished ${spike.name} (${spike.gold}g assembled)`
 			})
@@ -1785,7 +1689,6 @@ export const observeTick = (
 				kind: "counterpart.unseen",
 				atSec: now,
 				reactive: false,
-				value: CARRY_CP_UNSEEN,
 				key: `cp-gone:${Math.round(watch.counterpartSeenAtSec)}`,
 				note: `${cp.champion} unseen for ${Math.round(now - watch.counterpartSeenAtSec)}s`
 			})
@@ -1896,7 +1799,6 @@ export const observeTick = (
 					// A window opened by him leaving the fountain decays in seconds; a clock does not.
 					reactive: opened.opening === "respawn",
 					asks: true,
-					value: askValue(askFactsFor(tick, o, read.verdict)),
 					windowKey: o.key,
 					key: `w-open:${o.key}`,
 					note:
@@ -1970,7 +1872,6 @@ export const observeTick = (
 						 */
 						reactive: false,
 						asks: true,
-						value: askValue(askFactsFor(tick, o, record.reach)),
 						windowKey: o.key,
 						key: `w-stand:${o.key}:${watch.standingAsks}`,
 						note: `${o.what} still up ${Math.round(o.upForSec ?? 0)}s, nothing asked for ${Math.round(
@@ -1986,7 +1887,6 @@ export const observeTick = (
 			fire({
 				kind: "window.changed",
 				atSec: o.spawnSec,
-				value: askValue(askFactsFor(tick, o, record.reach)),
 				reactive:
 					moved.includes("he died and is back") ||
 					moved.includes("counterpart died") ||
@@ -2008,15 +1908,6 @@ export const observeTick = (
 			atSec: now,
 			reactive: false,
 			asks: true,
-			value: askValue({
-				what: null,
-				untilSpawnSec: null,
-				standing: false,
-				cpDead: false,
-				enemiesDown: 0,
-				reach: "unknown",
-				drakeStacks: 0
-			}),
 			key: "start",
 			note: "first look"
 		})
@@ -2065,10 +1956,7 @@ export const observeTick = (
 	watch.nextOpeningSec = nextOpeningSec(watch, liveObjectives, now)
 	if (watch.settleSinceSec === null && out.some(e => e.asks)) {
 		const opening = watch.nextOpeningSec
-		if (opening !== null && opening - now <= SETTLE_SEC) {
-			watch.settleSinceSec = now
-			watch.settleBestValue = turnValue([...watch.pending, ...out], now)
-		}
+		if (opening !== null && opening - now <= SETTLE_SEC) watch.settleSinceSec = now
 	}
 
 	watch.prev = tick
@@ -2103,12 +1991,6 @@ export interface TurnReason {
 	 * "drake in 45s" into "drake in 45s and you are in their topside jungle".
 	 */
 	readMinimap: boolean
-	/**
-	 * What this turn is worth — the best ask on it plus what its fresh context adds. See
-	 * `live-schedule.ts`. For the fault panel, the bench and the settle's own comparison; never
-	 * sent to the model, which is told what is true and decides for itself what is worth saying.
-	 */
-	value: number
 	/** One word naming why it fired now rather than later. `TurnChoice.why`. */
 	why: TurnChoice["why"]
 }
@@ -2168,7 +2050,6 @@ export const dueTurn = (
 		pending: events,
 		nowSec,
 		settleSinceSec: watch.settleSinceSec,
-		settleBestValue: watch.settleBestValue,
 		heartbeat: asks.length === 0,
 		nextOpeningSec: watch.nextOpeningSec,
 		settleSec: opts.settleSec
@@ -2180,7 +2061,6 @@ export const dueTurn = (
 		events: events.slice(),
 		heartbeat: asks.length === 0,
 		readMinimap: !events.some(e => e.reactive),
-		value: choice.value,
 		why: choice.why
 	}
 }
@@ -2196,7 +2076,6 @@ export const commitTurn = (watch: EventWatch, reason: TurnReason, nowSec: number
 	const spent = new Set(reason.events.map(e => e.key))
 	watch.pending = watch.pending.filter(e => !spent.has(e.key))
 	watch.lastTurnAtSec = nowSec
-	watch.lastTurnValue = reason.value
 	/*
 	 * THE WAIT IS OVER because the question was asked. Cleared rather than restarted: the next ask
 	 * starts its own settle when it arrives, so an empty queue never sits on a stale deadline. An
@@ -2205,7 +2084,6 @@ export const commitTurn = (watch: EventWatch, reason: TurnReason, nowSec: number
 	 * has not been waiting, it has just arrived.
 	 */
 	watch.settleSinceSec = null
-	watch.settleBestValue = 0
 }
 
 /** One line naming why the coach was asked. For the panel and the transcript, never for the model. */
