@@ -100,11 +100,36 @@ Three conventions, and they are deliberate:
   hedge around. A confident wrong claim here is worse than a gap, because the coach speaks it as
   knowledge.
 
-On disk as of 2026-09-10: `briar`, `fiddlesticks`, `jarvaniv`, `karthus`, `kayn`, `malphite`,
-`masteryi`, `morgana`, `quinn`, `shaco`, `sylas`, `tryndamere`, `udyr`, `viego`, `wukong`, `zed` —
-written as counterparts; `belveth`, `leesin`, `lillia`, `trundle` — written earlier, for the
-player's own champion. `quinn.md` is deliberately the least confident of them and says so in the
-file.
+### What is on disk, and which of it has ever been exercised
+
+On disk as of 2026-09-11, and this list is checked against the directory rather than remembered:
+
+**Counterparts** — `briar`, `fiddlesticks`, `jarvaniv`, `karthus`, `kayn`, `malphite`, `masteryi`,
+`morgana`, `quinn`, `shaco`, `shyvana`, `sylas`, `tryndamere`, `udyr`, `viego`, `wukong`,
+`xinzhao`, `zed`.
+
+**The player's own champion** — `gwen` and `lillia`, which are the only two champions he plays in
+the recorded corpus; `belveth`, `leesin` and `trundle`, written earlier for champions he has not
+played on record.
+
+**`_default.md`** is neither: it is the role file, and it is treated as *no notes at all* on the
+pre-game brief path.
+
+`quinn.md` is deliberately the least confident of the counterpart files and says so in its own
+closing section.
+
+**Three counterpart files have never been exercised: `jarvaniv`, `quinn` and `wukong`.** No
+recorded game has that champion in it, so no line the coach has ever spoken was shaped by them.
+They are sourced exactly as the rest are and they are kept — a file that is right the first time
+he meets that jungler is worth more than a tidy directory — but the fact is written into each
+file's `source:` header, which a reader sees and the coach never does (`stripHeader` in
+`src/review/live-knowledge-full.ts` drops the header before the prose goes to the model). Say the
+same of `belveth`, `leesin` and `trundle` on the player's side: written, sourced, and never used
+in a game on record.
+
+**Every champion in the corpus now has a file.** That was checked by joining the 19 recorded games'
+champions and counterparts against this directory; `shyvana.md` was written on 2026-09-11 because
+that join found a benchable game with no notes at all.
 
 ## The `## Live coaching` section
 
@@ -112,6 +137,12 @@ A champion file may end with a `## Live coaching` section, and that section is a
 thing from the prose above it**. The prose is sent to the post-game reviewer AND, whole, to the
 default live coach (`src/review/live-knowledge-full.ts`); these lines are spoken out loud,
 mid-game, attached to a fact the live client just proved (`src/shared/champion-advice.ts`).
+
+Five files carry one as of 2026-09-11 — `_default`, `belveth`, `leesin`, `lillia` and `trundle` —
+and no counterpart file does, because the clauses are keyed to the PLAYER's champion and one in a
+counterpart file would never be read. `gwen.md` deliberately does not have one either: the shipped
+mode is `trusted`, which takes the prose and strips this section, so a Gwen clause set would change
+nothing about what he actually hears and would owe the bet register two dozen new entries.
 
 **The tagged clauses are read only by the two ranked coach modes**, `cite-or-quiet` and `fenced`.
 The default `trusted` mode strips this section and takes the prose above it entire — it is prose

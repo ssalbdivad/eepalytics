@@ -1,6 +1,6 @@
 patch: durable
 sourcedAt: 2026-09-10
-source: ability roles from ddragon 16.18.1 MonkeyKing.json (in-game name Wukong) + wiki.leagueoflegends.com/en-us/Wukong. Written for the FULL-KNOWLEDGE live coach as the COUNTERPART file. Prose, numbers allowed, no clause tags.
+source: ability roles from ddragon 16.18.1 MonkeyKing.json (in-game name Wukong) + wiki.leagueoflegends.com/en-us/Wukong. Written for the FULL-KNOWLEDGE live coach as the COUNTERPART file. Prose, numbers allowed, no clause tags. NOT EXERCISED: no recorded game in the corpus has this champion in it, so nothing the coach has ever said was shaped by this file. Written ahead, sourced the same way as the rest, and unverified in the only sense that matters here — nobody has read a line it produced. Header text is stripped before the prose reaches the model (`stripHeader` in src/review/live-knowledge-full.ts), so this label is for a reader, not for the coach.
 ---
 # Wukong — the counterpart, and how Lillia plays against him
 
