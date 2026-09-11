@@ -11,10 +11,10 @@ Do not write tool-specific guidance where shared guidance would do.
 
 **This file is also the product.** Part 2 below is loaded verbatim at runtime by
 `src/review/prompt.ts` and sent as the system prompt for every **review and trend** call.
-(The live voice coach is the one exception: it has its own, much shorter prompt in
-`src/shared/live-prompt.ts`, because it speaks one sentence out loud mid-game rather than
-writing a structured review. Its rules are the same ones — cite or stay quiet — sized for
-speech.)
+(The live voice coach is the one exception: it speaks one sentence out loud mid-game rather
+than writing a structured review, so it has its own, much shorter prompts — one per coach mode,
+in `src/shared/live-coach-mode.ts`, with the legacy `fenced` one in `src/shared/live-prompt.ts`.
+Its rules are the same ones — cite or stay quiet — sized for speech.)
 Editing it changes the coach with no code change. Treat it like UI copy, because
 it is. The extraction markers `<!-- COACH:BEGIN -->` / `<!-- COACH:END -->` are
 load-bearing — do not delete or reorder them.
@@ -27,72 +27,291 @@ load-bearing — do not delete or reorder them.
 (**Gooskaffur#NA1**, `puuid 188dee22-18d6-5752-ba7f-b69cf3d2506e`, NA1). It is a
 jungle-main's coach: it harvests finished games from the local League Client
 (LCU), compresses each match + timeline into a compact digest, asks Claude for
-feedback bound to real timestamps, and cuts screenshots/clips from the replay so
-every point is something you can *watch*, not just read.
+feedback bound to real timestamps, and pins every point to something you can *look
+at* — a drawn Rift map, or the player's own screen from the second it happened.
 
 Three output tiers:
 
 - **Live voice coach** — the flagship. Share your screen and a Gemini Live socket
-  watches it while a coach talks to you out loud, about 0.8s behind.
+  watches it while a coach talks to you out loud, p50 1.15s behind.
 - **Per-game review** — timestamped moments in one game.
 - **Cross-game trends** — goals and patterns across the last N games.
 
-### The live coach, and the rule that makes it work
+### The live coach: what it is given, and who decides what to say
 
-The model gets a screenshot stream AND a **ground-truth block** computed by the
-daemon from the Live Client Data API: the roster, who is dead and for how long,
-the score, gold, and farm against the player's own average. The screenshot is for
-*where things are*; the block is for *what is true*.
+The model gets a screenshot stream AND a **data brief** computed by the daemon from the Live
+Client Data API — both rosters, levels, items, the score, his gold and mana, the event log with
+an age on every entry, his own baselines, objective clocks, and how many seconds each pit is from
+where he is standing. The brief is `src/shared/live-brief.ts`; it is pure, browser-safe and
+deterministic so a bench can replay it byte for byte.
 
-That split is not decoration, it is the whole design. Given pixels alone the coach
-named a champion who was not in the game four times in seven minutes, called a
-teammate a threat, and told a player who was dead on screen to recall. Given a
-block it cannot see past, it stops.
+The split between the two channels is not decoration. Given pixels alone the coach named a
+champion who was not in the game four times in seven minutes, called a teammate a threat, and told
+a player who was dead on screen to recall. Given a brief it cannot see past, it stops.
 
-The facts are **computed in TypeScript and ranked there** (`buildFacts` in
-`src/analysis/live-facts.ts`); the model may only choose one and phrase it. Asking a
-vision model to "be actionable" from a screenshot is how you get *"clear faster,
-you need to use more abilities"* said to someone using abilities on cooldown —
-which happened, and which nothing in the live data could have checked.
+**What is NOT in the brief is the whole of the design.** Nothing in `live-brief.ts` tells the model
+what to say or when to say it. The only editorial content in that file is true statements about the
+feed's own properties — which fields are exact, which are floors, which lie. Deciding what matters
+is the model's job, and adding a rule that decides for it is the change this repo will not take.
 
-**A fact that is not RANKED does not exist.** Measured: with the enemy jungler's
-CS in the block's prose but not in the ranked list, the coach said nothing in 12
-of 12 turns — the prompt's rule is that an empty list means PASS, and the model
-may only speak from that list. Adding something to the block and expecting it to
-be said is the single most common way to change nothing.
+#### The fence is gone. Read this before you put it back.
+
+For most of this app's life the architecture was: `buildFacts` in `src/analysis/live-facts.ts`
+computed and RANKED every candidate line in TypeScript, and `src/shared/live-prompt.ts` permitted
+the model to speak only from that ranked list, with an empty list meaning PASS. That is the
+`fenced` mode. It is still selectable, it is still byte-identical to the arm that was measured, and
+it is **no longer the default**.
+
+Four architectures, ONE model, 363 recorded samples from four real games replayed in order, every
+spoken line judged blind with the arm labels stripped
+(`data/eval/ablation-20260905-073028.json`, re-runnable with `scripts/ablate-autonomy.ts`):
+
+| arm | spoke | fabrication [95%] | useful lines per game |
+|---|---|---|---|
+| FENCED | 11 of 102 | 0 [0–26%] n=14 | 6 |
+| FENCED+SEE | 11 of 102 | 0 [0–26%] n=14 | 6 |
+| CITE-OR-QUIET | 94 of 102 | 0 [0–3%] n=132 | 81 |
+| FREE | 100 of 102 | 20% judged n=140 | 41 |
+
+The fence was never producing BAD coaching — judged blind, its fourteen lines were the best writing
+in the corpus. It produces almost NONE: fourteen lines in 576 turns, and SIX in the whole 0–7
+minute window where a jungler decides his route. Across all eleven recorded games the ranked list
+was EMPTY on 89–97% of turns and on 100% of the first six minutes of every one. A good line every
+two and a half minutes is exactly what "this coach is useless" feels like from the inside, and it
+is what the owner reported for months.
+
+**So the honesty was never coming from the ranked list — it comes from the CITATION RULE.** Removing
+the list while keeping "every number you say must appear verbatim in this message" multiplied useful
+output 13.5-fold with a fabrication interval TIGHTER than the fenced baseline's, tighter because it
+finally said enough to measure. Paced as it ships, cite-or-quiet gives 34 useful lines in a
+36-minute game against the fence's 7.
+
+Permission was not the gag either, and this is the measurement that kills the obvious repair.
+FENCED+SEE is the fenced prompt plus explicit permission to speak from the screenshot, on a
+byte-identical block, and it spoke on exactly the same 3 of 42 frames as FENCED. **The empty list
+is the gag, not the prohibition.** Adding a paragraph granting permission changes nothing while the
+list is still a menu.
+
+The three modes live in `src/shared/live-coach-mode.ts` and the user picks between them:
+
+- **`trusted`** — the default. The full brief, the full champion prose, no ranked list, nothing
+  telling her what to say. **UNMEASURED as an arm**, and the settings page says so in those words:
+  the only honest claim is about what it replaces.
+- **`cite-or-quiet`** — the measured arm above. Keeps the ranker as a PRIORITY HINT, never an
+  allowlist.
+- **`fenced`** — the old architecture, kept because its stored runs are only meaningful if the
+  prompt that produced them still exists.
+
+`CITE_PERSONA` and `CITE_RULE` are lifted byte for byte out of `scripts/ablate-autonomy.ts` and
+`src/shared/live-coach-mode.test.ts` asserts that equality, so a well-meaning reword fails the suite
+rather than quietly invalidating the run that justified the change.
+
+#### WHEN she is asked is now a decision, and it is the open bottleneck
+
+The coach used to speak on a clock: 85 invitations in a 28-minute game at the twenty-second beat,
+282 at the `trusted` six-second one. **A coach asked 85 times has to produce something 85 times, and
+there are not 85 things worth saying in a game of League.** Asked at a moment when nothing has
+changed, the only honest material left is what is already on his screen, so it reads his HUD back.
+That is a property of the question, not of the answer.
+
+`src/analysis/live-events.ts` replaced the timer: the turn fires when the feed says the game moved,
+and then only on a **contestable future state** — something that has not happened yet with a
+decision still open. Firing on "something happened" was measured at 68 turns in 28 minutes, which
+is the timer with extra steps.
+
+The schedule is where the next real gain is, and the failure is specific. At 18:02 of game
+5639406342 the payload was complete, correct and one second old: Kayn at the Herald pit taking it,
+drake in 39 seconds, him 13 seconds away and able to be there 26 seconds before it spawned. Every
+ingredient of the best line this app could produce. **The coach said PASS**, because it had spent
+its sentence at 17:50 and three turns had fired inside twelve seconds. Meanwhile 4:20 to 7:17 is
+2m57s of unbroken silence straddling a drake that stood free from 5:00 — the biggest missed
+counterfactual in the corpus. **Nothing in the schedule knows that a turn about to arrive is worth
+more than the turn in front of it.**
+
+#### What the live feed actually knows — and the two fields that lie
+
+`scripts/audit-live-fields.ts` compares every field the brief renders against the post-game
+timeline, separately for HIM, for ALLIES and for ENEMIES, because a fog gate is a per-player
+property and an average over ten players hides it completely. One game in detail (5639406342) and
+the headline measurements corroborated over the 15 paired games on disk
+(`data/eval/live-field-audit-5639406342*.txt|json`).
+
+**Trustworthy, for everyone including enemies.** Levels (his 100%, allies 100%, enemies 94.5%
+exact — stale by one, never wrong). Kills, deaths and assists (~99% for enemies). Respawn timers
+and the death flags. `wardScore`, exact for all ten, enemies included: vision is not fog-gated.
+`summonerSpells`, 10 of 10 matching the post-game ids — but the LIVE name differs from the
+post-game one ("Primal Smite"), so match on substring, never equality. Item IDENTITY, exact for all
+ten at the whistle (Jaccard 100%) — with the caveat that an empty item list means UNSEEN, not
+unbought. The lane label on every row, smite-consistent 10 of 10. His own `currentGold`, median
+error 0.0g against the timeline.
+
+**Absent, not wrong.** `allPlayers` carries no health, no mana, no gold and no coordinates for
+anyone, ally or enemy. A coach comparing HP across players is inventing the other half.
+
+**`scores.creepScore` is quantized before it leaves the client.** 57,070 observations across every
+sample file on disk, zero not a multiple of ten. Every CS out of this feed is a FLOOR, never a
+count, carrying a −0..−9 bias — his included — and a CS gap built from two of them carries the bias
+twice, −9..+9.
+
+**`scores.creepScore` for the ENEMY JUNGLER is not his farm. It is a visibility counter**: it
+counts only the last hits your own client witnessed, and it never catches up. Measured on Kayn in
+game 5639406342 against the timeline:
+
+|  clock | the client said | the truth | his real CS lead | what the coach told him |
+|---|---|---|---|---|
+|  5:00 | 0 | 32 | −4 | +28 |
+| 10:00 | 20 | 58 | +10 | +48 |
+| 14:00 | 30 | 84 | −4 | +50 |
+| 20:00 | 50 | 125 | −4 | +71 |
+| 25:00 | 60 | 156 | −4 | +92 |
+| 28:00 | 70 | 183 | −18 | +95 |
+
+He was level on farm the entire game and was told he was up ninety. Both FALSE cards in the blinded
+post-game grading of that game trace to this one field, and — the part worth remembering — both had
+hedged correctly while saying it ("a farm lead of at least 81 CS on Kayn by 27:00"). **Hedging
+language cannot repair a wrong quantity.** The only fix is a different source.
+
+It is not one unlucky game. Across the 15 paired games the worst-corrupted enemy CS belongs to the
+**SMITE HOLDER in 15 of 15**, with deficits of −70 to −170. Enemy LANERS' CS is exact beyond the
+floor in a median 90.6% of checkpoints, the same as his own team; the enemy JUNGLER's is exact in
+**3.3%**. The man who farms in fog for a living is the one player this app exists to compare him
+against. `src/analysis/game-truth.ts` is the post-game replacement, and the live brief refuses to
+render the figure at all.
+
+**Item `price` is not what anyone spent.** Summing the item rows recovers a median **0.26** of the
+gold truly earned — range 0.20–0.42 across the ten players of game 5639406342, measured at the
+whistle against `goldSpent` in the post-game blob. **One game, not fifteen:** unlike the CS
+finding, the `--corroborate` pass does not recompute this ratio, so it is n=10 players in one
+game and must not be quoted as a corpus-wide figure until someone extends the audit. Traced on Kayn, the ratio is 1.00 while he
+holds only basic items and collapses to 0.21 the moment components combine, because `price` is the
+item's OWN cost line, not the recipe total — so it is a weak floor and it is **not even monotone**:
+it goes DOWN when he upgrades. No spend total appears in the brief.
 
 #### What earns a sentence, and what does not
 
-The failure this fought for months was not lying, it was **being true and
-useless**. The block is a snapshot of the client, and the client's facts are
-mostly what the player is already looking at, so a coach restricted to them
-recites his own HUD. Two tests decide every line:
+The failure this fought for months was not lying, it was **being true and useless**. The feed's
+facts are mostly what the player is already looking at, so a coach restricted to them recites his
+own HUD. Two tests decide every line:
 
 1. **Not visible** — could he have got it by looking at his screen?
-2. **Not generic** — could this sentence have been said in a different game, or
-   five minutes ago in this one?
+2. **Not generic** — could this sentence have been said in a different game, or five minutes ago
+   in this one?
 
-The lines that pass both compare him to something he cannot see: the **enemy
-jungler**, whose CS, level and completed items are all in `allPlayers` and were
-unused for the app's whole life. His own average encodes his own mistakes, so at
-best it says he is being unusually himself; the counterpart says he is losing a
-race. Then fights (the trade, and whether he was even in it), objective control,
-kill participation, and what the enemy jungler just BOUGHT.
+The lines that pass both compare him to something he cannot see. The **enemy jungler** is still the
+right subject — he is the man being raced — but the race that is REAL in this feed is his **level
+and his completed items**, not his CS. The CS comparison is the one the app shipped for months and
+it was false in every game.
 
-Readouts are gated hard because they otherwise dominate: only the enemy
-*jungler's* death earns a line, gold must have been HELD for minutes and is
-capped per game, and objective timers get a long cooldown. Simulated over a full
-game those three gates moved the coach from a line every 62 seconds — most of
-them things on his screen — to one every 150.
+The other things that pass both tests are joins, and they are computed in TypeScript because a
+model asked to do them from two sections of prose did not: across the 62 lines of game 5639406342
+not one joined his position to an objective clock, while the post-game pack, whose joins are
+arithmetic, produced its best items that way. **Every one of the ten lines graded useful on that
+game was a window crossed with a place crossed with whether he could BE there** — which is why
+`src/analysis/reachability.ts` puts seconds-to-each-pit in the brief. A drake clock is drawn on his
+minimap; how far away he is from the pit is drawn nowhere.
+
+The same reasoning ranks a STANDING objective above a SPAWNING one (`shared/objective-stakes.ts`).
+At 17:56 the Rift Herald had stood untaken for 2m57s and the enemy jungler took it five seconds
+later; the payload carried both facts, put the drake first because the emit order was fixed, and
+eleven of twelve prompt variants said "drake in forty-five seconds" while not one named the Herald.
+That is one ordering decision obeyed twelve times, not twelve models erring alike. Ordering changes
+which line survives the fit and which is read first; it never tells the model what to say. Measured
+over two real games, a standing objective led the payload on 16 turns the coach spoke and it named
+that objective on 7 — a weak effect, reported as one.
+
+#### What the screenshot is worth: not measurable, and 30% of the bill
+
+Two stored results disagreed about the picture, so `scripts/frame-value.ts` settled it on the
+shipped socket — one live socket per arm, round N sent to every arm before round N+1 reaches any of
+them, arm order rotating inside the round, so thread position, wall clock and the replayed state are
+identical and a difference cannot be a difference in two runs. Two runs, five arms, 181 spoken lines,
+all of it in `data/eval/frame-value-20260911-*`.
+
+**The ablation is NULL.** `frame` and `noframe` both scored 10 of 30 useful and 13 of 30 false;
+McNemar's exact on the 10 discordant turns splits 5–5, p = 1.000 on both axes.
+
+**But the run could not have seen a small effect, and this number should govern how every frame
+comparison in this repo is read.** Run the SAME arm twice — same window, same prompt, true
+difference zero — and it agrees with itself on 13 of 30 turns for `useful` and 15 of 30 for
+`false`, and repeats not one of its 30 sentences. At that discordance the exact test needs about 9
+of 10 discordant turns to fall one way, i.e. roughly **27 points of useful rate on one game**. "No
+difference" here means "nothing bigger than a quarter of the scale". `--agree` prints it from any
+two runs sharing an arm.
+
+The picture IS being read: the decoy arm is the only one that moved. A frame from a different minute
+of the same game took `false` from 13 of 30 to 18 of 30 (9 against 4, p = 0.267). Direction says a
+wrong picture actively misleads, so the right one is looked at; magnitude is not established.
+
+**The price is the one hard number here.** One picture adds 1,102 prompt tokens (1,040–1,159). But
+one socket per game keeps every frame in the thread, so a picture sent at 3:00 is re-billed on all
+28 turns after it: 31 pictures cost 543,412 prompt tokens across a 28-minute game — **30% of the
+entire prompt bill, 493× their own marginal price**, plus 6.5MB of JPEG uploaded. The compounding is
+the cost, not the picture. And it is slower: paired turn against turn, the frame arm came back later
+on **28 of 31 turns by a median 345ms**, two-sided sign test p < 0.00001, beside a quality
+difference of exactly zero.
+
+Two candidate fixes for the measured misuses are REFUTED and must not be re-drafted. Sending the
+JPEG after the text rather than before changed nothing (37% useful against 37%, p = 1.000).
+`PICTURE_NOW` — the paragraph telling the coach the frame outranks the text about the present,
+written against *"kite this team fight out"* at 18:39 with him alone in an empty river and *"back
+immediately, you are near spawn"* at 20:53 with him mid-fight taking damage — scored WORSE on both
+axes (23% useful, 60% false, p = 0.424) and did not reduce `contradicted-by-picture`. It lives in
+the bench file, refuted, with its run named, because a refuted candidate with its evidence attached
+is the only thing that stops the same paragraph being written again in six weeks.
+
+One label in those runs is unusable and every report prints its own calibration rather than leaving
+a reader to notice: `only-with-picture` was given to the BLIND arm on 7 of 30 lines, which is
+impossible by construction, against 3 of 30 for the sighted arm. Its error rate is at least 23% and
+it points the wrong way.
+
+#### Position comes from a dedicated read of the minimap, not from the coach's eyes
+
+The twelve-variant tournament that scored the frame-only arm worst ran before this existed, and it
+was asking the picture to supply POSITION by reading two-pixel dots off a downscaled minimap.
+Measured over 20 frames from five real games, three reads each, against hand labels:
+
+| | whole frame | minimap crop, 4× |
+|---|---|---|
+| median position error | 43% | 3% |
+| agrees with itself | 5 of 60 | 48% |
+| his own HALF of the map | 44% | 94% |
+| image tokens | 1,100 | 1,089 |
+
+A 43% median error is a randomly chosen point — on the whole frame the model is confabulating a
+League game, the same thing it does with no image at all. **And the crop is FREE**: a small image is
+padded to the same tile budget, so there is no accuracy-against-cost trade to weigh, and upscaling
+costs nothing either.
+
+What comes back is never believed on its own. The answer is a constrained schema, so the model
+chooses from an enumeration and cannot invent a champion; it is then fenced against the client's own
+truth by `frameReadFaults` and a read that trips any of it is thrown away WHOLE rather than
+repaired. 44% of reads on the graded game were refused and the fence was right every time. The fast
+model reads an ENEMY's zone at 63%, which is not good enough to say out loud, so nothing here
+becomes a claim about where an enemy is — only the coarse half of the map he himself is on, as a
+gate.
+
+A position is only worth anything while it is young: over 94 games and 2,602 frame/event pairs
+(chance agreement 31.8%) a read still names the right HALF on 96.2% of pairs at 0–5s and 92.3% at
+10s, falls to 67.3% at 25–30s, and is a coin flip out to a minute. `CARRY_MAX_SEC` is that knee and
+is where the brief stops printing a position at all.
+
+The read runs on the JOURNAL beat (`src/daemon/minimap-watch.ts`), not in front of a coaching turn,
+and that is a supply decision rather than a latency one. Replaying that game's 340 real frames
+through the shipped reader: turns with a position at all went from 17 of 38 to 30 of 38, turns with
+a FRESH one from 17 of 38 to 24 of 38, median read age from 0–2s to 4.8s, and the cost on the turn's
+critical path from p50 1,510ms to **zero**. A read never costs a line: `offerFrame` returns
+synchronously, never throws, and at most one read is in flight — a frame arriving while one is
+running is DROPPED, because the next frame is five seconds away and is a better picture than the one
+that was waiting.
 
 #### More than one model, and how to tell them apart
 
 There are TWO SHAPES and flattening them would be a lie. **Gemini Live** is a socket: native audio,
-continuous frames, barge-in, a thread the model keeps, about a second. **Everything else** —
-Anthropic, OpenAI, Kimi, GLM, and Gemini over plain HTTPS — is a TURN: send a frame and a block,
-get text, and the browser speaks it with `speechSynthesis`. That is several seconds slower and
-cannot be usefully interrupted, because the sentence was written and paid for before the first
-syllable. The settings screen says so where he chooses.
+continuous frames, barge-in, a thread the model keeps, p50 1.15s. **Everything else** — Anthropic,
+OpenAI, Kimi, GLM, and Gemini over plain HTTPS — is a TURN: send a frame and a brief, get text, and
+the browser speaks it with `speechSynthesis`. That is several seconds slower (2.05s for the
+next-fastest, 20.5s for the slowest) and cannot be usefully interrupted, because the sentence was
+written and paid for before the first syllable. The settings screen says so where he chooses.
 
 Turn-based providers all go through `coachTurn` in `src/review/live-providers.ts`, on the Vercel AI
 SDK. One path is not a convenience, it is the point: **the system prompt is not a parameter there**,
@@ -103,57 +322,111 @@ Model ids are FREE TEXT, and this is not laziness: a default written during this
 as "no longer available to new users" within a minute. A dropdown is a bug that looks like a
 limitation.
 
-Two things measured that will otherwise mislead a comparison. A tight `maxOutputTokens` does not
-shorten a reasoning model, it TRUNCATES it — at 200 tokens one answered "Kayn is 2" and stopped
+Latency on the socket is a property of the THREAD, not of the payload. Regressed over 38 real turns,
+`latency = 1534ms + 64.5ms × turn index − 0.011ms × payload character`, R² = 0.81, and the payload
+term is not significant. So the socket is recycled every eight turns, which costs a median 626ms of
+dead socket and holds the expected latency at about 1,760ms.
+
+Two more things measured that will otherwise mislead a comparison. A tight `maxOutputTokens` does
+not shorten a reasoning model, it TRUNCATES it — at 200 tokens one answered "Kayn is 2" and stopped
 mid-number. And provider-specific thinking options are not ignored when unknown: setting Google's
 `thinkingBudget` to 0 made every turn fail with an invalid-argument error, which for twenty minutes
 looked exactly like a model producing nothing.
 
 #### Evaluate against real games, not reconstructions
 
-`eval-live` and `bench-providers` used to rebuild states from the POST-GAME timeline, which has no
-enemy CS, no items and no roles — the exact facts the coach was rebuilt around. Measured, that
-starved harness reported the coach naming no action in 50% of its lines against roughly 11% on
-states carrying a counterpart. **A model comparison run on starved states measures improvisation,
-not coaching.**
+`eval-live` and `bench-providers` — both since deleted — used to rebuild states from the POST-GAME
+timeline, which has no enemy items and no roles: the exact facts the coach was rebuilt around. Measured, that starved
+harness reported the coach naming no action in 50% of its lines against roughly 11% on states
+carrying a counterpart. **A model comparison run on starved states measures improvisation, not
+coaching.**
 
 So `src/daemon/live-sampler.ts` records the raw `allgamedata` every five seconds of game clock from
 the SUPERVISOR's poll — not the browser's, because a game played with the page closed is the one an
-evaluation most wants. `bench-providers --from-samples latest` replays it through the daemon's own
-`buildLiveState`, so the block under test is byte-identical to the one the coach held.
+evaluation most wants. `scripts/bench-stream.ts` replays it through the daemon's own
+`buildLiveState` and `buildBrief`, so the payload under test is byte-identical to the one the coach
+held, and the ranker is stepped from t=0 even when only a window is sent, because `buildFacts` keeps
+module-scoped memory and a replay that starts in the middle is a different coach.
 
-#### Champion knowledge, and the rule that makes it safe
+**A game that cannot be replayed is DATA.** `discoverWindows()` returns only the windows with paired
+journal frames, and for a month that made a seventeen-game corpus look like a two-game one.
+`discoverBenchable()` returns those, PLUS a text-only window for every game with no paired one, PLUS
+every file that was refused with the reason. A multi-game bench calls the second one. Fifteen games
+are benchable, 4,748 raw samples, thirteen distinct enemy junglers, 23:53 to 42:55.
 
-A line has two halves: the NUMBER, from the client, and the ADVICE, which no
-client can supply. Advice comes from `knowledge/champions/*.md` via
-`src/shared/champion-advice.ts`, keyed BY FACT KIND so it only speaks once the
-client has established the situation — prose in a prompt has nothing tying it to
-the moment, which is how you get *"Viego is your jungle counterpart so watch for
-his ganks"*.
-
-**Advice may not contain a digit, and the parser refuses any clause that does.**
-An earlier general "benchmark" mechanism validated a rule's FORM and never its
-SUBJECT, so a rule meaning *"his flash is usually back in thirty seconds"*
-rendered and was spoken aloud. Cooldowns are unknowable. A mechanism that can
-express a number about the game can express a wrong one, so this one cannot
-express a number at all.
-
-Rate-limiting lives in `buildFacts` too, because a fact that stays true for
-minutes will otherwise be repeated until it is noise: each death is announced
-once, gold once per 800g and only after it has been held, farm once per three
-minutes, a death may not lead two turns running, and state-shaped facts (a level
-gap, an objective deficit, the champion's death note) are said once per game.
+`scripts/bench-stream.ts` always runs a **`mock`** arm, and it is the control that decides whether
+anything else earned its bill: it calls nothing and speaks the payload's first `- ` line verbatim,
+i.e. exactly what the coach would say if the model contributed zero. An arm that does not beat
+`mock` is paying latency for nothing.
 
 `pnpm smoke:live` walks the shipped path end to end — key, token, ground truth, socket, one real
 turn — and names the step that failed. Every one of those steps has broken at least once for a
 different reason, which is why it checks all five rather than only the last.
 
-`src/shared/live-prompt.ts` holds the system prompt, deliberately in `shared/` so
-that `scripts/eval-live.ts` drives the same text. **Change it and re-run the eval**
-(`pnpm eval:live --games 3 --every 30`): it reconstructs real game states from
-stored timelines, runs them through the real Gemini socket, and scores what comes
-back for invented champions, unsupportable claims, unbacked numbers and variety.
-Every prompt rule in that file is a measured failure, not a guess.
+`scripts/eval-live.ts` and `scripts/bench-providers.ts` are DELETED, and `pnpm eval:live` went
+with them — a command that no longer exists is worse than no command, because an agent spends a
+turn discovering it. `src/shared/live-prompt.ts` survives as the **`fenced`** arm's text, and
+`scripts/ablate-autonomy.ts --arms fenced` is what drives it now. Touch that file and re-run the
+ablation: its stored runs are the only reason the fence's numbers above are quotable at all.
+
+#### Champion knowledge: three doors, and only one of them has a digit fence
+
+A line has two halves: the NUMBER, from the client, and the ADVICE, which no client can supply.
+Advice comes from `knowledge/champions/*.md`, and it reaches the model by one of three routes
+depending on the mode.
+
+**The ranked modes (`fenced`, `cite-or-quiet`)** take it through `src/shared/champion-advice.ts`,
+keyed BY FACT KIND so a clause only speaks once the client has established the situation — prose in
+a prompt has nothing tying it to the moment, which is how you get *"Viego is your jungle counterpart
+so watch for his ganks"*. **Advice on this path may not contain a digit, and the parser refuses any
+clause that does.** An earlier general "benchmark" mechanism validated a rule's FORM and never its
+SUBJECT, so a rule meaning *"his flash is usually back in thirty seconds"* rendered and was spoken
+aloud. Cooldowns are unknowable. A mechanism that can express a number about the game can express a
+wrong one, so this one cannot express a number at all.
+
+**The default mode (`trusted`)** takes it through `src/review/live-knowledge-full.ts`: the complete
+prose, his champion's file and the counterpart's and the role file, in the SYSTEM INSTRUCTION, sent
+once for the whole game. This is a different bet and it was made on a measurement.
+`knowledge/champions/lillia.md` is 6,800 characters; `liveChampionKnowledge("Lillia")` handed the
+model 2,566 of them as 27 tagged fragments, because the clause parser rejects any line with a digit
+and keeps only what is under `## Live coaching`. Every route, every item, every *why* was stripped at
+load time, and the `(kind)` tags then labelled each fragment for a ranked-list mechanism the shipped
+mode no longer runs. **The model was receiving numberless half-sentences addressed to a machine that
+was not listening** — which is the whole answer to "why am I barely getting anything
+Lillia-specific". Static context costs the socket nothing, because a system instruction is sent at
+setup; size is not the constraint on this path, accuracy is.
+
+The digit fence is therefore a property of the CLAUSE PATH, not of champion knowledge. Do not
+"restore" it on the prose path, and do not delete the `## Live coaching` sections: the two older
+modes read them, and their stored runs are only meaningful while those clauses exist byte for byte.
+
+Neither fence validates TRUTH. `belveth.md` shipped `death: your stacks die with you`; Death in
+Lavender stacks are permanent and the same file said so two paragraphs earlier. That is why
+`src/knowledge/champion-claims.test.ts` is a bet register: every shipped clause cites a mechanic
+written down with where it was checked.
+
+Rate-limiting still lives in `buildFacts`, because a fact that stays true for minutes will otherwise
+be repeated until it is noise: each death is announced once, gold once per 800g and only after it
+has been held, farm once per three minutes, a death may not lead two turns running, and state-shaped
+facts are offered once per game. Under `trusted` those limits shape what is OFFERED, never what may
+be said.
+
+#### Where the coach stands, honestly
+
+Two full paired games (5639406342 Lillia vs Kayn 28:14, and 5639409343 Lillia vs Fiddlesticks
+31:15): **38 spoken lines, 22 useful (58%), 7 false (18%), p50 1.3s, zero invented enemy
+positions.** Three caveats travel with that number and none of them may be dropped when it is
+quoted:
+
+- it is **not statistically separated** from the previous round's 27% — the Wilson intervals
+  overlap;
+- the merge was graded **UNBLINDED**, by the agent that produced it, and that agent said so;
+- against the measured ceiling of decidable moments it is about **24%**: 82% of spoken lines land
+  on moments that could not have carried a useful line whatever was said.
+
+The same owner's **blinded** grading of the POST-GAME path is **68% useful**, on the same game. The
+gap between 68% and 58% is the honest statement of where this app is, and the schedule is the
+largest known piece of it.
 
 ### Architecture in one breath
 
@@ -167,11 +440,10 @@ src/shared/   types + pure helpers, browser-safe    (schemas, map math, time)
 src/db/       SQLite: migrations, queries, blobs    (NODE ONLY; all SQL lives here)
 src/lcu/      the Windows-interop transport + LCU/live-client clients
 src/rofl/     ROFL2 replay-file decoding
-src/capture/  replay screenshots + clips           (NODE ONLY; drives the game client)
 src/knowledge/champion notes, loaded into reviews  (editable markdown, no code change)
 src/analysis/ metrics, moments, digest              (no LLM, no I/O)
 src/review/   Claude coaching engine + persona loader
-src/daemon/   job queue, gate, poller, jobs/*       (owns every side effect)
+src/daemon/   job queue, poller, journal, jobs/*   (owns every side effect)
 src/server/   Hono HTTP + SSE
 src/web/      React UI
 ```
@@ -179,23 +451,38 @@ src/web/      React UI
 The live coach spans those in a way worth naming, since it is the newest thing here:
 
 ```
-src/shared/live-state.ts      the ground-truth block: types + renderer (pure, shared)
-src/shared/live-prompt.ts     the coach's system prompt (shared with the eval)
-src/shared/champion-advice.ts champion knowledge, keyed by fact kind, digit-free by construction
-src/shared/dragons.ts         the drakes' real names — the API says "Fire", nobody else does
-src/shared/pronounce.ts       say-it-like-this, from editable markdown
-src/analysis/live-facts.ts    buildFacts — every fact, ranked and rate-limited. THE output surface
-src/analysis/coach-score.ts   scores a spoken line for fabrication, mechanically
-src/review/live-providers.ts  every non-socket model, through one AI SDK path  (NODE ONLY)
-src/daemon/live-sampler.ts    records raw allgamedata during a game, so evals replay reality
-scripts/bench-providers.ts    replays fixed states through every model and scores them
-src/analysis/fights.ts        kill clusters: the trade, his participation, what it bought
-src/server/routes/live.ts     buildLiveState — turns the client's JSON into the block
-src/review/gemini-live.ts   holds the API key, mints ephemeral tokens  (NODE ONLY)
-src/web/lib/useScreenShare  the shared screen + frame grabber
-src/web/lib/gameflow.ts     the phase gate: whether anything may be sent at all
-src/web/lib/geminiLive.ts   the WebSocket, audio out, mic in, reconnect
-scripts/eval-live.ts        replays real games through the real socket and scores it
+src/shared/live-brief.ts       THE PER-TURN PAYLOAD under `trusted` — everything the feed knows,
+                               timestamped and delta'd. Tells the model nothing about what to say
+src/shared/live-coach-mode.ts  the three architectures and their system prompts; `trusted` is default
+src/shared/live-prompt.ts      the LEGACY `fenced` prompt — a measured arm, kept byte-identical
+src/shared/live-state.ts       the thin ground-truth block: types + renderer, for the ranked modes
+src/shared/champion-advice.ts  clause-path champion knowledge, keyed by fact kind, digit-free
+src/shared/objective-stakes.ts what an objective is WORTH right now — soul point, standing vs spawning
+src/shared/dragons.ts          the drakes' real names — the API says "Fire", nobody else does
+src/shared/pronounce.ts        say-it-like-this, from editable markdown. SYSTEM INSTRUCTION only
+src/analysis/live-events.ts    WHEN she is asked at all — contestable future state, not a timer
+src/analysis/live-facts.ts     buildFacts — ranked and rate-limited. A PRIORITY HINT, not a fence
+src/analysis/coach-memory.ts   what she already said, the beat log, and how old the enemy's row is
+src/analysis/reachability.ts   seconds from where he stands to each pit — the fact no HUD shows him
+src/analysis/game-truth.ts     the POST-GAME truth for all ten, where the live feed's CS cannot be
+src/analysis/coach-score.ts    scores a spoken line for fabrication, mechanically
+src/analysis/fights.ts         kill clusters: the trade, his participation, what it bought
+src/review/live-knowledge-full.ts  the COMPLETE champion + role prose for `trusted`   (NODE ONLY)
+src/review/read-minimap.ts     one fenced read of a magnified minimap crop            (NODE ONLY)
+src/review/frame-read.ts       the constrained schema and the fence against the client
+src/review/live-providers.ts   every non-socket model, through one AI SDK path        (NODE ONLY)
+src/review/gemini-live.ts      holds the API key, mints ephemeral tokens              (NODE ONLY)
+src/daemon/minimap-watch.ts    reads the minimap on the JOURNAL beat, off the turn's critical path
+src/daemon/live-sampler.ts     records raw allgamedata during a game, so evals replay reality
+src/server/routes/live.ts      buildLiveState + buildBrief — the client's JSON into the payload
+src/web/lib/useScreenShare     the shared screen + frame grabber
+src/web/lib/gameflow.ts        the phase gate: whether anything may be sent at all
+src/web/lib/geminiLive.ts      the WebSocket, audio out, mic in, reconnect, socket recycling
+scripts/lib/stream.ts          discoverBenchable + buildStream: one replay every bench shares
+scripts/bench-stream.ts        replays a real game through every model at once and scores it
+scripts/frame-value.ts         the interleaved frame ablation — what the screenshot is worth
+scripts/audit-live-fields.ts   every rendered field against the post-game truth, by side
+scripts/ablate-autonomy.ts     the four architectures. The run that removed the fence
 ```
 
 **The screen share persists across games; what is GATED is what gets sent.** He shares
@@ -210,9 +497,9 @@ three things start and stop around it, on the client's own gameflow phase
 - **the socket** opens at `ChampSelect` and closes when the game ends. One socket per game,
   not per session: the model keeps the thread, and a socket spanning two games would carry
   game one's roster into game two — the hallucination this app's whole design fights;
-- **a turn** is only sent once there is a ground-truth block to send with the frame, so the
-  draft and the loading screen warm the socket in silence and a failed ground-truth fetch
-  makes her go quiet rather than fall back to reading pixels.
+- **a turn** is only sent once there is a payload to send with the frame, so the draft and the
+  loading screen warm the socket in silence and a failed ground-truth fetch makes her go quiet
+  rather than fall back to reading pixels.
 
 A `MediaStream` in a ref dies with its component, so persistence is a property of **where
 `<ScreenCoach>` is mounted**: `pages/Live.tsx` keeps it at a fixed position in one tree,
@@ -252,18 +539,42 @@ in hand-written SVG, which took three attempts and at one point put them on her 
   `node.exe` bridge over stdio (p50 **2.3 ms**), falling back to
   `/mnt/c/WINDOWS/system32/curl.exe -K -` (~88 ms). Do not "fix" this by swapping
   in `fetch`.
-- **The app does write to the LCU — but only through the gate.** This is not a
-  read-only client. It `POST`s `/lol-replays/v1/rofls/{gameId}/download` to grab a
-  replay before it expires, and it launches replays for screenshot/clip capture.
-  Every one of those side effects goes through **`src/daemon/gate.ts`**, which
-  refuses to act while the user is in champ select, in a live game, or otherwise
-  not idle. Nothing outside `src/daemon/` may write to the LCU or spawn the game
-  client. Never dodge a queue, never accept a ready check, never touch a live
-  match.
-- **Replays expire ~30 minutes after the game ends.** Downloading is *urgent and
-  non-intrusive* (queue it immediately, it costs the user nothing). Capture is
-  *deferred and intrusive* (it takes over the client — it waits for idle, and it
-  is opt-in via `captureEnabled`, default off).
+- **The app writes to the LCU in exactly ONE place, and the standing rule outlived
+  the machinery that enforced it.** This is not a read-only client: it `POST`s
+  `/lol-replays/v1/rofls/{gameId}/download` to grab a replay before it expires.
+  That is the only write, and it is non-intrusive — no window opens, so it is safe
+  mid-game and needs no permission to run. `src/daemon/gate.ts` is **deleted**: the
+  nine-condition idle gate existed for exactly one caller, and that caller is gone
+  (next bullet). Do not read its absence as permission. The rule is unchanged and
+  it now rests on you rather than on a function: **nothing outside `src/daemon/`
+  may write to the LCU or spawn the game client, and nothing anywhere may dodge a
+  queue, accept a ready check, or touch a live match.** Anything that would put a
+  window on the user's screen needs the post-mortem below read first.
+- **Replay CAPTURE is deleted. Read this before proposing it again.** `src/capture/`
+  drove the replay client and its camera to cut screenshots and clips, and it was
+  the one INTRUSIVE job kind. Across the app's entire recorded history it produced
+  **0 done jobs — 4 expired, 2 failed — and not one screenshot on disk.** Two
+  independent reasons, both structural: the camera would not follow the player, and
+  an intrusive job may only run when the user is idle, which is precisely when he
+  sits down to play, so it fired hours late or never. Gone with it: the job kind,
+  the strictly-serial intrusive worker lane, the whole of `src/daemon/gate.ts`, and
+  the `captureEnabled` / `captureMaxPerGame` / `clipSeconds` / `idleGraceMs`
+  settings that configured it. `Job.intrusive` stays in the schema because rows
+  written before the removal still carry `1`, and this app does not rewrite a
+  stored row to tidy a schema. **The lesson is not "gate it better".** The gate
+  worked; what failed is that "wait until the user is idle" resolves to "fire the
+  moment he sits down to play".
+- **What he looks at instead, and why it cannot fail the same way.**
+  `media-generate` draws a Summoner's Rift SVG for every moment and **must never
+  fail** — it is the reason the product works with the client shut, the replay
+  expired, and on a machine whose Replay API does not exist. The frame JOURNAL
+  (`src/daemon/journal.ts`) stores the player's own screen while he is sharing it,
+  which cannot inherit capture's camera bug because those frames ARE what he was
+  looking at. A frame that cannot be placed on the game clock is REJECTED rather
+  than stored: an unplaceable screenshot of someone's desktop is pure liability
+  with no coaching value.
+- **Replays still expire ~30 minutes after the game ends,** so the download stays
+  urgent and is queued the moment a game ends; it costs the user nothing.
 - **Never fabricate a stat.** If a number is not in the digest, it does not go in
   the output. This is enforced mechanically in `src/review/parse.ts` (feedback
   items citing unknown `momentIds`/`metricKeys` are rejected), it is enforced
@@ -278,15 +589,25 @@ in hand-written SVG, which took three attempts and at one point put them on her 
   the UI. Small-sample trends carry their confidence with them or they do not
   ship.
 - **Degrade gracefully.** The League client may be closed, a replay may have
-  expired, capture may fail, Claude may be rate-limited. Nothing crashes; every
-  feature has a defined "unavailable" state.
-- **Known-bad upstream data — do not trust these:**
-  `participants[].timeline.lane` / `.role` (4/10 labelled JUNGLE — infer roles
-  from frame positions + Smite instead), and
-  `ELITE_MONSTER_KILL.assistingParticipantIds` (19% cross-team corruption —
-  `killerId` is reliable). `begIndex`/`endIndex` on match history are silently
-  ignored; you get a server-chosen ~20-game window, so harvest incrementally into
-  SQLite and keep games forever.
+  expired, the player may never have screen-shared, Claude may be rate-limited.
+  Nothing crashes; every feature has a defined "unavailable" state.
+- **Known-bad upstream data — do not trust these.** Each one is measured; the section
+  above carries the numbers.
+  - *Post-game timeline:* `participants[].timeline.lane` / `.role` (4/10 labelled
+    JUNGLE — infer roles from frame positions + Smite instead), and
+    `ELITE_MONSTER_KILL.assistingParticipantIds` (19% cross-team corruption —
+    `killerId` is reliable).
+  - *Match history:* `begIndex`/`endIndex` are silently ignored; you get a
+    server-chosen ~20-game window, so harvest incrementally into SQLite and keep
+    games forever.
+  - *Live Client Data API:* `scores.creepScore` is rounded down to a multiple of ten
+    for EVERYONE (57,070 observations, zero exceptions) — it is a floor, never a
+    count. For the **enemy jungler** it is a visibility counter and not his farm at
+    all: 3.3% exact against 90.6% for enemy laners, and the worst-corrupted row is
+    the smite holder's in 15 of 15 games. Item `price` is the item's own cost line,
+    not the recipe total, so summing it recovers ~0.26 of gold spent (n=10 players,
+    one game) and DROPS when components combine. `allPlayers` carries no health, no mana, no gold and no
+    coordinates for anyone.
 - Prefer shared config over tool-specific config (see the imports at the top).
 - `nub` is the user's own TypeScript runner and is not installed everywhere. If a
   script shelling out to `nub` fails, fall back to `node --experimental-strip-types`.
@@ -605,12 +926,13 @@ schema is supplied with each request. What it holds:
   - `category` — one of `pathing`, `tempo`, `objectives`, `vision`, `farming`,
     `teamfight`, `deaths`, `praise` (free text, but prefer these).
   - `tSec` — the game clock this points at, in **seconds**, or `null` for a
-    whole-game point. An item with a timestamp can be turned into a clip; an item
-    without one cannot. Prefer a timestamp. When the point is genuinely game-wide,
+    whole-game point. An item with a timestamp gets a picture — the drawn Rift map
+    always, plus his own screen from that second when he was sharing it. An item
+    without one gets nothing to look at. Prefer a timestamp. When the point is genuinely game-wide,
     anchor it to the most representative moment rather than inventing a time.
   - `momentIds` — ids copied **verbatim** from `digest.moments[].id`. This is how
-    the app attaches the screenshot or clip. Cite the moment you are talking
-    about; an item with no citation renders as opinion.
+    the app attaches the picture. Cite the moment you are talking about; an item
+    with no citation renders as opinion.
   - `metricKeys` — keys copied **verbatim** from `digest.metrics[].key`.
 - `goals[]` — 1–3 concrete things to try in the next games.
 

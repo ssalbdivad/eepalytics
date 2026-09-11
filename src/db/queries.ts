@@ -15,7 +15,6 @@
 import type { DatabaseSync, StatementSync } from "node:sqlite"
 import { getDb, transact } from "./index.ts"
 import {
-	JOB_INTRUSIVE,
 	JOB_LEASE_MS,
 	JOB_MAX_ATTEMPTS,
 	JOB_PRIORITY,
@@ -1100,7 +1099,7 @@ export const enqueue = (req: JobRequest): number => {
 	)`).run({
 		kind: req.kind,
 		gameId,
-		intrusive: b2i(req.intrusive ?? JOB_INTRUSIVE[req.kind] ?? false),
+		intrusive: b2i(req.intrusive ?? false),
 		priority: req.priority ?? JOB_PRIORITY[req.kind] ?? 100,
 		maxAttempts: req.maxAttempts ?? JOB_MAX_ATTEMPTS[req.kind] ?? 5,
 		notBeforeMs: req.notBeforeMs ?? 0,
@@ -1113,8 +1112,10 @@ export const enqueue = (req: JobRequest): number => {
 
 export interface ClaimOptions {
 	/**
-	 * Whether intrusive jobs (`replay-capture`, which hijacks the League client) may be
-	 * claimed right now. The daemon's gate decides this; the default is NO.
+	 * Whether intrusive jobs may be claimed right now. VESTIGIAL: `replay-capture` was the only
+	 * intrusive kind, it and the gate that guarded it are deleted, and nothing written from here
+	 * on carries `intrusive = 1`. The column and this flag stay because rows written before the
+	 * removal still carry it, and this app does not rewrite a stored row to tidy a schema.
 	 */
 	allowIntrusive?: boolean
 	/** Restrict to specific kinds — how a dedicated worker pool stays in its lane. */
@@ -1338,23 +1339,6 @@ export const queueDepth = (): number =>
 			).get()
 		)?.c
 	)
-
-/** Whether an intrusive job currently holds a lease — gate rule G8. */
-/**
- * Is some OTHER intrusive job holding the client?
- *
- * `exceptJobId` is load-bearing, not a convenience. The worker leases a capture job before
- * running it, and the handler then re-checks the gate mid-flight — so without the exclusion the
- * job sees its own lease, fails G8 with "another capture already holds the client", and settles
- * having done nothing. There was no other capture; there never is. Replay capture could not
- * complete a single run until this took an argument.
- */
-export const intrusiveJobRunning = (exceptJobId?: number): boolean =>
-	plain(
-		prep(
-			"SELECT id FROM job WHERE state = 'leased' AND intrusive = 1 AND id IS NOT ? LIMIT 1"
-		).get(exceptJobId ?? null)
-	) !== null
 
 /**
  * Store a computed grade. Written by `analysis-run` alongside the metrics it was derived from,
