@@ -96,6 +96,112 @@ export const SOUL_POINT_PRIZE = 100
 /** An ask with no objective behind it at all — the blind floor under silence. */
 export const NO_OBJECTIVE_PRIZE = 10
 
+/* ------------------------------------------------ the decisions that are not a pit */
+
+/**
+ * What a decision with no objective in it is worth — the SECOND unit, beside the contest window.
+ *
+ * ## The measurement that produced this block
+ *
+ * Every one of the seventeen recorded games is a monoculture: 79% of the 529 lines the coach spoke
+ * are about an objective, 68% to 95% game by game. That is not the model's taste, and the corpus
+ * settles it rather than arguing it. Split those same lines by what RAISED the turn:
+ *
+ * ```
+ *   raised by a contest window (491 lines)   82% objectives  [78-85]
+ *   raised by the silence floor  (38 lines)  39% objectives  [26-55]
+ * ```
+ *
+ * The model diversifies the instant it is not standing at a pit clock. It was standing at one
+ * almost always, because until this block the only things in the whole detector that could ASK were
+ * `window.open`, `window.changed`, `window.standing`, `game.start` and the heartbeat — every one of
+ * them an objective or a timeout. 475 of 529 asks carried a window.
+ *
+ * The cost is measurable in seconds as well as in subject. An objective is standing or inside its
+ * lead for 296 of the corpus's 485 minutes; the coach speaks every 45 seconds inside that 61% and
+ * every 166 seconds outside it. The complaint that started this app — *nine lines in four minutes,
+ * six of them about farm* — is the same shape: the sentences bunch onto one kind of moment.
+ *
+ * And the material was already there. 367 of the 491 window asks (75%) carried a second event that
+ * the schedule could only let RIDE: 187 resolved fights, 123 shop trips, 77 counterpart deaths, 60
+ * respawns, 45 completed items, 34 level spikes. `materialDiff` even re-asks about the pit BECAUSE
+ * the counterpart died — the counter-jungle window turned into another question about the drake.
+ *
+ * ## What is priced here, and what is not
+ *
+ * Three moments, chosen because each opens a decision about the next thirty seconds that is not
+ * visible on his screen:
+ *
+ *   - **the counterpart is down.** The man he is racing is off the map for a known number of
+ *     seconds. `AGENTS.md` calls the counterpart the best fact this app has; the enemy's respawn
+ *     clock is drawn nowhere in the client, and until now his death only reached the model when a
+ *     pit happened to be open (see `contestableObjective`).
+ *   - **he is back up.** The fork in the road, in this file's own words — camp, objective, or reset
+ *     again. It already fired; it could only ask when an objective sat inside `RESPAWN_HORIZON_SEC`.
+ *   - **the spike.** A legendary assembled or a spike level crossed changes what he may contest for
+ *     the next minute, and it is the one fact in this list he CAN see, so it is priced lowest.
+ *
+ * `fight.resolved` is deliberately NOT here. It asked once, in the second cut, and the docblock
+ * above `death.counterpart` records the result: *"the largest single source of true-but-useless
+ * lines in the graded run."* That is a measurement, and re-running the experiment because the
+ * payload has changed since is a separate experiment, not a bug fix. It still rides.
+ *
+ * ## WHAT THIS DID, AND WHAT IT DID NOT DO
+ *
+ * Run whole: `bench-stream --games all --arms gemini-http --no-frame` over all 19 recorded games,
+ * against a CONTROL of the same working tree with only these three detectors reverted, judged blind
+ * by a different model family that never saw which arm a line came from. Both runs are on disk —
+ * `data/eval/mixfix-control-20260911.json` and `data/eval/mixfix-corpus-20260911.json`, with their
+ * `-judged.json` beside them.
+ *
+ * ```
+ *                     lines   cadence   useful          false          useful/min
+ *   control            560    one/66s   77% [73-80]     17% [14-20]    0.70
+ *   with field asks    600    one/62s   81% [77-83]     15% [12-18]    0.78
+ * ```
+ *
+ * The 40 extra lines are ALL in the open ground: turns inside an objective window are 433 against
+ * 434, one every 46 seconds either way, while the quiet 208 minutes go from 75 turns to 116 — one
+ * every 167 seconds to one every 108. And the new questions are the best-scoring ones in the whole
+ * corpus: `death.counterpart` graded useful on 94% [80-98] of 33 lines and false on 6% [2-20],
+ * against 83% [78-87] and 15% for `window.changed`, which is 52% of every turn the coach gets.
+ *
+ * **IT DID NOT BREAK THE MONOCULTURE, WHICH IS WHAT IT WAS BUILT FOR.** 78% [74-81] of lines were
+ * about an objective before and 78% [75-81] after; counting only the lines where the objective is
+ * the ACTION rather than a "before drake" time reference, 52% [48-56] both times. The mix does move
+ * at the level of the individual question — a `death.counterpart` ask is 61% [44-75] objectives
+ * against `window.open`'s 92% [86-96] — but those asks are 15% of the corpus and the pooled figure
+ * does not notice. Two further swings at it are recorded and neither moved it either: the
+ * counterpart's death clock leading NEXT (`shared/live-brief.ts`), and narrowing the payload's
+ * objective horizon to the schedule's own lead (`PROSPECT_HORIZON_SEC`, run and reverted). Whatever
+ * decides that 52%, it is not WHEN the coach is asked and it is not what leads the payload.
+ *
+ * So what is defended here is the measured thing and not the intended one: more useful sentences
+ * per minute, at the same precision, in the stretches that were nearly silent.
+ *
+ * ## The numbers
+ *
+ * A ranking, like `OBJECTIVE_PRIZE`, and on the same scale so the two units compare directly. The
+ * counterpart sits between the grubs and a drake: bigger than the pit that is gone by 14:00,
+ * smaller than the one that stacks toward a soul, and never near a Baron. Nothing promotes these —
+ * `askValue`'s multipliers are about a contest — so a standing drake with the counterpart dead
+ * (55 x 1.6 = 88) still outranks the counterpart being dead on its own, which is correct: that is
+ * the same fact with a pit attached.
+ */
+export const FIELD_CP_DOWN = 45
+export const FIELD_RESPAWN_SELF = 25
+export const FIELD_SPIKE = 20
+
+/**
+ * The least of the counterpart's death timer that is still a decision.
+ *
+ * A window he cannot act inside is not a window. Riot's death timers run from about 10 seconds at
+ * level 1 to over 50 late, and the reachability arithmetic this repo already ships puts a pit at
+ * 20-30 seconds away from an ordinary jungle position — so under ten seconds left there is nothing
+ * he could start and finish, and the ask would be a sentence about a man already walking back.
+ */
+export const FIELD_CP_MIN_SEC = 10
+
 /* ------------------------------------------- how open the decision actually is */
 
 /**

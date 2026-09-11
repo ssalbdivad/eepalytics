@@ -414,6 +414,10 @@ import {
 	CARRY_LEVEL,
 	CARRY_RESPAWN_SELF,
 	CARRY_SHOP,
+	FIELD_CP_DOWN,
+	FIELD_CP_MIN_SEC,
+	FIELD_RESPAWN_SELF,
+	FIELD_SPIKE,
 	SETTLE_SEC
 } from "./live-schedule.ts"
 
@@ -1354,9 +1358,12 @@ export const observeTick = (
 	const out: LiveEvent[] = []
 	const now = tick.gameTimeSec
 	/*
-	 * `asks` and `windowKey` default to "no" and "none", so every detector below reads exactly as it
-	 * did before the third cut and none of them can cause a turn by accident. The four kinds that DO
-	 * ask pass `asks: true` explicitly, and they are the only four places in this file that do.
+	 * `asks` and `windowKey` default to "no" and "none", so no detector can cause a turn by accident.
+	 * The kinds that DO ask pass `asks: true` explicitly, and there are two families of them: the
+	 * four CONTEST WINDOWS at the foot of this function (`window.open`, `window.changed`,
+	 * `window.standing`, `game.start`), and the three FIELD decisions above it — the counterpart
+	 * going down, him coming back up, and a spike. See `FIELD_CP_DOWN` for the corpus measurement
+	 * that added the second family.
 	 */
 	const fire = (
 		e: Omit<LiveEvent, "asks" | "windowKey" | "seenAtSec" | "value"> & {
@@ -1476,18 +1483,48 @@ export const observeTick = (
 				continue
 			}
 			if (cp === null || victim === null || victim.name !== cp.name) continue
+			if (tick.me.dead) continue
+			/*
+			 * THE COUNTER-JUNGLE WINDOW, and it used to be gated behind a pit.
+			 *
+			 * `contestableObjective(tick)` returned null and this whole event was dropped, so the
+			 * best fact this app has — the man he is racing is off the map, for a number of seconds
+			 * drawn nowhere in his client — existed only while a drake or the grubs happened to be
+			 * inside their own lead. Over the 17-game corpus that is 61% of the clock, and the
+			 * consequence is in `FIELD_CP_DOWN`'s docblock: 79% of everything the coach said was
+			 * about an objective, because an objective was the only thing it was ever asked about.
+			 *
+			 * So the objective is now the NOTE and no longer the gate. A death with a pit beside it
+			 * still says which pit; a death with nothing beside it says how long he is down, which
+			 * is a decision about his camps whether or not anything is standing.
+			 *
+			 * `FIELD_CP_MIN_SEC` is the one thing that can still drop it: a window he cannot act
+			 * inside is not a window. The remaining timer is read off the ROSTER row rather than
+			 * assumed from the kill, because the roster is audited exact for deaths and respawns and
+			 * because a kill seen two ticks late has already spent some of it.
+			 *
+			 * AND IT ASKS ONLY IN THE OPEN GROUND — `fieldAsks`, below. With a pit already open the
+			 * counterpart's death is not a second decision, it is an input to the first one, and
+			 * `materialDiff` already re-asks that pit on exactly this counter. Asking twice for one
+			 * moment is the three-turns-in-twelve-seconds failure this file's third cut removed.
+			 */
 			const window = contestableObjective(tick)
-			if (tick.me.dead || window === null) continue
+			const downFor = victim.dead ? victim.respawn : 0
+			if (window === null && downFor < FIELD_CP_MIN_SEC) continue
 			fire({
 				kind: "death.counterpart",
 				atSec: e.atSec,
 				reactive: true,
-				value: CARRY_CP_DEATH,
+				asks: window === null,
+				value: window === null ? FIELD_CP_DOWN : CARRY_CP_DEATH,
 				key: `kill:${e.id}`,
-				note: `${championOf(tick, e.killer) ?? e.killer ?? "someone"} killed ${cp.champion}, ${
-					window.upForSec === null ?
-						`${window.what} in ${Math.round(window.spawnSec - now)}s`
-					:	`${window.what} up ${Math.round(window.upForSec)}s`
+				note: `${championOf(tick, e.killer) ?? e.killer ?? "someone"} killed ${cp.champion}${
+					downFor > 0 ? `, down ${Math.round(downFor)}s` : ""
+				}${
+					window === null ? ""
+					: window.upForSec === null ?
+						`, ${window.what} in ${Math.round(window.spawnSec - now)}s`
+					:	`, ${window.what} up ${Math.round(window.upForSec)}s`
 				}`
 			})
 			continue
@@ -1634,6 +1671,18 @@ export const observeTick = (
 	}
 
 	/* -------------------------------------------------- his own state */
+	/*
+	 * THE OPEN GROUND: is there a pit in play at all right now?
+	 *
+	 * The field decisions below ask only when there is not. Not a rate limit and not a cooldown —
+	 * it is what makes them a separate UNIT rather than a second opinion about the same moment. A
+	 * spike, a respawn or a counterpart's death while a drake sits inside its own lead is an input
+	 * to the drake decision, it already rides that turn as context, and `materialDiff` re-asks the
+	 * window on two of the three. Replayed over the 17-game corpus the gate is the difference
+	 * between +15% turns and +1%: without it the field asks add 29 turns to the 61% of the clock
+	 * that was already the chattiest, which is volume with no change of subject.
+	 */
+	const fieldAsks = contestableObjective(tick) === null
 	if (prev !== null) {
 		if (prev.me.dead && !tick.me.dead)
 			/*
@@ -1643,22 +1692,42 @@ export const observeTick = (
 			 * change it, so let's reset and run straight to those Voidgrubs while Kayn is resetting
 			 * too": a line about the next thirty seconds rather than the last ten.
 			 */
+			/*
+			 * AND IT ASKS, which it could not do before except by proxy.
+			 *
+			 * `respawnTarget` below already lets a respawn OPEN an objective window when one sits
+			 * inside `RESPAWN_HORIZON_SEC` — so the fork in the road reached the model only when the
+			 * fork happened to have a pit at the end of it. Priced at `FIELD_RESPAWN_SELF`, well
+			 * under every objective, so a respawn that DOES open a window still rides that window's
+			 * value rather than competing with it: both asks land on the same turn.
+			 */
 			fire({
 				kind: "respawn.self",
 				atSec: now,
 				reactive: true,
-				value: CARRY_RESPAWN_SELF,
+				asks: fieldAsks,
+				value: fieldAsks ? FIELD_RESPAWN_SELF : CARRY_RESPAWN_SELF,
 				key: `respawn:${tick.me.deaths}`,
 				note: watch.lastDeathNote === null ? "he is back up" : `back up — ${watch.lastDeathNote}`
 			})
 
+		/*
+		 * THE SPIKE WINDOW. Both halves of it ask, and they are the cheapest asks in the file.
+		 *
+		 * A spike level or an assembled legendary changes what he may contest for the next minute,
+		 * and unlike the counterpart's death timer it is a fact he CAN see — so it is priced lowest
+		 * of the three field decisions and loses to every pit. What it buys is the stretch where
+		 * nothing is open: over the corpus, 189 of 485 minutes carried no objective window at all
+		 * and the coach was asked once every 166 seconds in it.
+		 */
 		for (const lv of SPIKE_LEVELS)
 			if (prev.me.level < lv && tick.me.level >= lv)
 				fire({
 					kind: "level.spike",
 					atSec: now,
 					reactive: false,
-					value: CARRY_LEVEL,
+					asks: fieldAsks,
+					value: fieldAsks ? FIELD_SPIKE : CARRY_LEVEL,
 					key: `level:${lv}`,
 					note: `level ${lv}`
 				})
@@ -1674,7 +1743,8 @@ export const observeTick = (
 				kind: "item.completed",
 				atSec: now,
 				reactive: false,
-				value: CARRY_ITEM,
+				asks: fieldAsks,
+				value: fieldAsks ? FIELD_SPIKE : CARRY_ITEM,
 				key: `item:${spike.name}`,
 				note: `finished ${spike.name} (${spike.gold}g assembled)`
 			})

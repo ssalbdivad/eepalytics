@@ -46,7 +46,7 @@ import {
 	type LiveTick,
 	type ReachFn
 } from "./live-events.ts"
-import { SETTLE_SEC } from "./live-schedule.ts"
+import { FIELD_CP_DOWN, FIELD_CP_MIN_SEC, SETTLE_SEC } from "./live-schedule.ts"
 
 /*
  * THE TWO NAMES THE CLIENT USES, and the reason this fixture carries both.
@@ -81,7 +81,15 @@ const raw = (opts: {
 	/** How many of the enemy's two NON-jungle rows are lying down. See `ENEMIES_DOWN_FREE`. */
 	enemiesDead?: number
 	items?: Array<{ displayName: string; price: number }>
-	enemyJungle?: { level?: number; cs?: number; dead?: boolean; deaths?: number; items?: number }
+	enemyJungle?: {
+		level?: number
+		cs?: number
+		dead?: boolean
+		/** Seconds left on his death timer. The only field `FIELD_CP_MIN_SEC` reads. */
+		respawn?: number
+		deaths?: number
+		items?: number
+	}
 	events?: Array<Record<string, unknown>>
 }) => ({
 	gameData: { gameTime: opts.t },
@@ -119,7 +127,7 @@ const raw = (opts: {
 			position: "JUNGLE",
 			level: opts.enemyJungle?.level ?? 1,
 			isDead: opts.enemyJungle?.dead === true,
-			respawnTimer: 0,
+			respawnTimer: opts.enemyJungle?.respawn ?? 0,
 			scores: {
 				kills: 0,
 				// The SCOREBOARD, which is where `WindowMark.cpDeaths` reads. The kill log is a
@@ -315,22 +323,70 @@ describe("a kill is not a turn", () => {
 	})
 
 	/*
-	 * THE COUNTERPART'S DEATH IS GATED ON THERE BEING SOMETHING TO TAKE.
+	 * THE COUNTERPART'S DEATH USED TO BE GATED ON THERE BEING SOMETHING TO TAKE, and the 17-game
+	 * corpus is what removed the gate.
 	 *
-	 * It is the one death he very likely did not see, but on its own it is only a fact about a man
-	 * who is not on his screen. What makes it worth a question is the window it opens, and in the
-	 * graded game the three sampled counterpart deaths split exactly on that: 20:53 with Baron
-	 * standing was useful, 25:39 while HE was also dead was useless, and 28:12 with the next drake
-	 * and the next Baron both more than a minute away was false.
+	 * The old reasoning survives in the window case and is still asserted below: in the graded game
+	 * the three sampled counterpart deaths split on the window — 20:53 with Baron standing was
+	 * useful, 25:39 while HE was also dead was useless, 28:12 with both pits over a minute away was
+	 * false. What that reasoning missed is that "nothing to take" was read as "nothing to decide".
+	 * His camps are something to take. Over the corpus the gate is one of the three reasons 79% of
+	 * everything the coach said was about an objective — see `FIELD_CP_DOWN`.
+	 *
+	 * So the shape now is: with a pit open it is CONTEXT on that pit's own re-ask (`materialDiff`
+	 * carries "counterpart died"), and with no pit open it is the ask itself.
 	 */
 	it("the counterpart's death fires when there is a window it opens", () => {
 		const kinds = run([{ t: 260 }, { t: 270, events: [kill(1, 265, CP_BARE)] }])
 		ok(kinds.includes("death.counterpart"), kinds.join(","))
 	})
 
-	it("the counterpart's death asks nothing with no objective in reach", () => {
-		const kinds = run([{ t: 100 }, { t: 110, events: [kill(1, 105, CP_BARE)] }])
-		ok(!kinds.includes("death.counterpart"), kinds.join(","))
+	it("with a pit open it rides the pit rather than asking twice", () => {
+		const events = runEvents([
+			{ t: 260 },
+			{ t: 270, events: [kill(1, 265, CP_BARE)], enemyJungle: { dead: true, respawn: 30 } }
+		])
+		const death = events.find(e => e.kind === "death.counterpart")
+		ok(death !== undefined, events.map(e => e.kind).join(","))
+		strictEqual(death.asks, false)
+		ok(
+			asked(events).includes("window.changed") || asked(events).includes("window.open"),
+			"the moment still raises a turn, framed as the pit it changed"
+		)
+	})
+
+	it("with no pit open it is the counter-jungle window, and it asks", () => {
+		const events = runEvents([
+			{ t: 100 },
+			{ t: 110, events: [kill(1, 105, CP_BARE)], enemyJungle: { dead: true, respawn: 25 } }
+		])
+		const death = events.find(e => e.kind === "death.counterpart")
+		ok(death !== undefined, events.map(e => e.kind).join(","))
+		strictEqual(death.asks, true)
+		ok(death.reactive, "a death timer decays in seconds")
+		ok(/down 25s/.test(death.note), death.note)
+		strictEqual(death.value, FIELD_CP_DOWN)
+	})
+
+	/*
+	 * A window he cannot act inside is not a window. Riot's death timers start near ten seconds and
+	 * the reach arithmetic puts a pit 20-30s from an ordinary jungle position, so under the floor
+	 * there is nothing he could start and finish.
+	 */
+	it("a death timer too short to act inside asks nothing", () => {
+		const events = runEvents([
+			{ t: 100 },
+			{
+				t: 110,
+				events: [kill(1, 105, CP_BARE)],
+				enemyJungle: { dead: true, respawn: FIELD_CP_MIN_SEC - 1 }
+			}
+		])
+		strictEqual(
+			events.some(e => e.kind === "death.counterpart"),
+			false,
+			events.map(e => e.kind).join(",")
+		)
 	})
 
 	it("the counterpart's death asks nothing while he is dead himself", () => {
@@ -825,7 +881,15 @@ describe("the window is the unit", () => {
 		deepStrictEqual(opened, ["grubs:480"])
 	})
 
-	it("a respawn with nothing inside the horizon asks nothing at all", () => {
+	/*
+	 * A respawn with no pit inside the horizon used to ask NOTHING, and this test asserted it. The
+	 * 17-game corpus is what changed it: the fork in the road reached the model only when the fork
+	 * happened to have a drake at the end of it, which is one of the three ways the schedule turned
+	 * the whole coach into an objective reciter. See `FIELD_RESPAWN_SELF`. What is asserted now is
+	 * the pair of guarantees that replaced it — it asks in its own right, and it still does not
+	 * open a window it cannot reach.
+	 */
+	it("a respawn with nothing inside the horizon asks about itself, and opens no window", () => {
 		const log = [
 			{ EventID: 1, EventName: "DragonKill", EventTime: 300 },
 			{ EventID: 2, EventName: "HordeKill", EventTime: 450 }
@@ -834,8 +898,29 @@ describe("the window is the unit", () => {
 			{ t: 380, dead: true, events: log },
 			{ t: 400, events: log }
 		])
-		deepStrictEqual(asked(events), ["game.start"], events.map(e => e.kind).join(","))
-		ok(events.some(e => e.kind === "respawn.self"), "still detected, still carried")
+		deepStrictEqual(
+			asked(events),
+			["game.start", "respawn.self"],
+			events.map(e => e.kind).join(",")
+		)
+		strictEqual(events.filter(e => e.kind === "window.open").length, 0)
+	})
+
+	/*
+	 * The other half of the same rule, and the half that keeps the volume flat: a field decision
+	 * inside an open contest window is an INPUT to that window, not a second question about the
+	 * same moment. It still rides — `materialDiff` re-asks the pit on the counterpart's death — and
+	 * it does not raise a turn of its own.
+	 */
+	it("a respawn inside an open window rides it rather than asking twice", () => {
+		const log = [{ EventID: 1, EventName: "DragonKill", EventTime: 300 }]
+		const events = runEvents([
+			{ t: 590, dead: true, events: log },
+			{ t: 610, events: log }
+		])
+		const respawn = events.find(e => e.kind === "respawn.self")
+		ok(respawn !== undefined, events.map(e => e.kind).join(","))
+		strictEqual(respawn.asks, false, "the drake is standing; the fork is context")
 	})
 
 	/*

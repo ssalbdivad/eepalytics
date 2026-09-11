@@ -1871,7 +1871,22 @@ const movedBlock = (s: Scene): string | null => {
 const DRAKE_SIDE = "bot side"
 const BARON_SIDE = "top side"
 
-/** How far ahead an objective is worth a line. Beyond this it is a fact about the map, not a decision. */
+/**
+ * How far ahead an objective is worth a line. Beyond this it is a fact about the map, not a decision.
+ *
+ * NARROWING THIS WAS TRIED, AND IT DID NOTHING. Measured on the 19 recorded games: 94% of turns put
+ * at least one `- Drake/Baron/...` line on this list, a mean of 1.47 of them, so a pit sat on the
+ * action list at essentially every instant — including the 39% of the clock the schedule considers
+ * to have no contest open at all. The obvious repair is to use the SCHEDULE's boundary here
+ * (`OBJECTIVE_LEAD_SEC`, 45s, or reach plus margin) and demote anything beyond it to one sentence
+ * that keeps the clock but not the bullet. Run whole through `bench-stream --games all`
+ * (`data/eval/mixfix-horizon-20260911.json`, judged blind beside its own control on byte-identical
+ * turns) it moved the objective-bullet rate from 94% to 77% of turns and moved the coach NOT AT ALL:
+ * 78% [75-81] of lines about an objective before, 77% [74-80] after; 52% [48-56] where the objective
+ * is the ACTION rather than a "before drake" time reference, both times. Useful 81% [77-83] -> 79%
+ * [75-82], false 15% -> 17%. So the horizon is not what makes the coach an objective reciter, and
+ * the run is on disk rather than the change.
+ */
 const PROSPECT_HORIZON_SEC = 150
 
 /**
@@ -2232,6 +2247,45 @@ const nextBlock = (
 	for (const st of orderStakes(stakes)) lines.push(st.text)
 
 	/*
+	 * THE COUNTERPART'S OWN DEATH CLOCK LEADS THE SECTION, ahead of every pit.
+	 *
+	 * This is the same ordering argument `orderStakes` was built on, applied one rung further out,
+	 * and it comes from the same kind of evidence. `objective-stakes.ts` records that eleven of
+	 * twelve prompt variants said "drake in forty-five seconds" while a Herald had stood free for
+	 * 2m57s — one ordering decision obeyed twelve times. The 17-game corpus shows the wider version
+	 * of it: 79% of 529 spoken lines were about an objective, and split by what raised the turn,
+	 * 82% [78-85] of the lines raised by a pit clock against 39% [26-55] of the lines raised when
+	 * there was no pit to stand at. The model reads what is in front of it.
+	 *
+	 * The two facts are not equally available to him, and that is the whole justification. A PIT'S
+	 * SPAWN CLOCK IS ON HIS MINIMAP — the game draws it, which is why a coach can say it in any game
+	 * at any clock. HOW MANY SECONDS THE ENEMY JUNGLER HAS LEFT ON HIS TIMER IS DRAWN NOWHERE: the
+	 * client shows the kill feed once and then nothing. Under this app's own two tests it passes
+	 * both where the spawn clock fails the first, and `AGENTS.md` names the counterpart the best
+	 * fact the app has.
+	 *
+	 * It also EXPIRES, which no pit line in this section does. A drake forty seconds out is forty
+	 * seconds out for the next tick too; a corpse with eighteen seconds on it is a different
+	 * decision in ten.
+	 *
+	 * Nothing here says he should be talked about. `fit` drops from the END, so being first is the
+	 * difference between surviving the budget and not; the choice of what to spend the sentence on
+	 * stays the model's, exactly as it does between a standing Herald and a spawning drake.
+	 *
+	 * AND IT DID NOT MOVE THE MIX, which is worth saying beside the argument for it. Measured over
+	 * the 19 games, on the turns where the counterpart is actually down: 89% [82-93] of lines about
+	 * an objective without this line, 82% [75-87] with it — a difference the intervals do not
+	 * separate. `analysis/live-schedule.ts`'s `FIELD_CP_DOWN` carries the whole result, including
+	 * the two other swings at the same target that also did nothing. It is kept because it states a
+	 * fact that belongs on this list and states it once instead of twice, not because it works.
+	 */
+	const cpDown = s.counterpart !== null && s.counterpart.dead ? s.counterpart : null
+	if (cpDown !== null)
+		lines.unshift(
+			`- ${cpDown.champion} — the enemy jungler — is DEAD, back in ${r0(cpDown.respawn)}s. Nothing in his client shows him this timer.`
+		)
+
+	/*
 	 * Deaths and respawn timers are NOT fog-gated and are read, not extrapolated — audited exact for
 	 * him, his team and the enemy alike. So this is the hardest fact in the payload and it belongs
 	 * beside the timers rather than in a roster row: a pit with three of them down is a different
@@ -2260,7 +2314,8 @@ const nextBlock = (
 	 * thousand characters away and absent from a delta entirely, and this compact line is the one
 	 * the objective clocks sit beside. So the team rides with the name, here, where it is read.
 	 */
-	const down = s.players.filter(p => p.dead && p.name !== s.me.name)
+	/* The counterpart is already the head line above; naming him twice reads as two men down. */
+	const down = s.players.filter(p => p.dead && p.name !== s.me.name && p.name !== cpDown?.name)
 	if (down.length > 0)
 		lines.push(
 			`- Down right now (${s.me.dead ? `and YOU, for ${r0(s.me.respawn)}s more` : "NOT you — you are ALIVE"}): ${down

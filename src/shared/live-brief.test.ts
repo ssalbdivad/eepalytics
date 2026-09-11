@@ -686,6 +686,42 @@ test("a dead counterpart is stated beside the objective clock, with his timer", 
 	assert.match(next, /Voidgrubs \(top side\): up at 8:00/)
 })
 
+/**
+ * THE ORDER, which is the whole of the second fix and is the same argument `orderStakes` was built
+ * on. That file records eleven of twelve prompt variants saying "drake in forty-five seconds" while
+ * a Herald stood free for 2m57s, because the drake line was written first. The 17-game corpus is
+ * the wider version: 82% [78-85] of the lines raised by a pit clock were about an objective against
+ * 39% [26-55] of the lines raised when there was no pit to stand at.
+ *
+ * The counterpart's remaining death timer is the one clock in this section that his client draws
+ * NOWHERE and the one that expires, so it leads — and `fit` drops from the end, which is what makes
+ * leading different from merely being present.
+ */
+test("a dead counterpart leads NEXT, ahead of every pit", () => {
+	const raw = structuredClone(cur) as { gameTime: number; data: Record<string, any> }
+	for (const p of raw.data.allPlayers)
+		if (p.championName === "Briar") {
+			p.isDead = true
+			p.respawnTimer = 24.4
+		}
+	const next = buildDelta({
+		raw,
+		gameTimeSec: raw.gameTime,
+		previous: { raw: prev, gameTimeSec: prev.gameTime },
+		feedNotes: false
+	})!.text.split("\n\n").find(x => x.startsWith("NEXT"))!
+	const bullets = next.split("\n").filter(l => l.startsWith("- "))
+	assert.match(bullets[0]!, /^- Briar — the enemy jungler — is DEAD, back in 24s\./, bullets.join(" | "))
+	assert.match(bullets[0]!, /Nothing in his client shows him this timer/)
+	/* and he is named once, not twice: the down-list below drops the man who is already the head. */
+	assert.equal(bullets.filter(l => /Briar/.test(l)).length, 1, bullets.join(" | "))
+})
+
+test("a live counterpart adds no head line at all", () => {
+	const next = withFix().text.split("\n\n").find(x => x.startsWith("NEXT"))!
+	assert.ok(!/is DEAD, back in/.test(next), next)
+})
+
 test("an objective beyond the horizon is not rendered at all", () => {
 	const next = withFix().text.split("\n\n").find(x => x.startsWith("NEXT"))!
 	/* 5:59, so Baron at 20:00 is 14 minutes out: a fact about the map, not a decision. */
