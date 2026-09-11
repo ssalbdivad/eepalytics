@@ -123,7 +123,10 @@
  *      measured from the socket's own `usageMetadata`). But one socket per game keeps every frame
  *      in the thread, so the 31 pictures cost 543,412 prompt tokens across the game — 30% of the
  *      whole prompt bill, 493 times the marginal price of the pictures themselves — plus 6.5MB of
- *      JPEG uploaded.
+ *      JPEG uploaded. And it is SLOW: paired turn against paired turn, the frame arm came back
+ *      later on 28 of 31 turns by a median 345ms, sign test p < 0.00001 — about a quarter of the
+ *      p50 this app is already trying to cut, and the only effect anywhere in this file that
+ *      separates at all.
  *   7. Two things fell out that are nobody's arm. Under `trusted` on the event schedule the coach
  *      spoke on **every one of 31 turns** and never once passed, so any comparison of the
  *      speak-or-pass decision has no variance in it. And the frame at 0:00 of this game is a
@@ -1153,6 +1156,28 @@ const report = (run: RunFile): void => {
 			`    => dropping the frame saves ${(frameTotal - blindTotal).toLocaleString()} prompt tokens per game, ` +
 			`${((100 * (frameTotal - blindTotal)) / frameTotal).toFixed(0)}% of the prompt bill`
 	)
+	/*
+	 * AND THE LATENCY, PAIRED — the one axis where the picture has a clearly measured cost.
+	 *
+	 * A sign test rather than a mean, because the two arms are the same turn seconds apart and the
+	 * question is simply which of the two came back first. On the ablation run the frame arm was
+	 * slower on 28 of 31 turns by a median 345ms, p < 0.00001 — about a quarter of the p50 the app
+	 * is already trying to cut. That is the only effect in this whole file that separates.
+	 */
+	const lat: number[] = []
+	for (const t of run.turns) {
+		const a = run.calls.find(c => c.arm === "frame" && c.index === t.index)
+		const b = run.calls.find(c => c.arm === "noframe" && c.index === t.index)
+		if (a && b && a.error === null && b.error === null) lat.push(a.latencyMs - b.latencyMs)
+	}
+	if (lat.length > 0) {
+		const slower = lat.filter(x => x > 0).length
+		const sign = mcnemar(lat.map(x => ({ a: x > 0, b: x < 0 })))
+		console.log(
+			`    latency   the frame arm was slower on ${slower} of ${lat.length} turns, ` +
+				`median ${med(lat)}ms (sign test p ${sign.p < 0.0001 ? "< 0.0001" : sign.p.toFixed(4)})`
+		)
+	}
 	console.log(
 		"  The compounding is the point: one socket per game keeps every frame in the thread, so a picture\n" +
 			"  sent at 3:00 is re-billed on all 28 turns after it. That is what makes the per-game figure\n" +
