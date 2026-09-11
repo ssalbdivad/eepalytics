@@ -33,14 +33,16 @@ import { BLOBS_DIR, DATA_DIR } from "../shared/constants.ts"
 export const BLOB_MATCH = "match"
 export const BLOB_TIMELINE = "timeline"
 export const BLOB_LIVE = "live"
-export const BLOB_DIGEST = "digest"
 /**
  * The digest as it was actually SENT to the coach, written by `review-game`.
  *
- * Distinct from `BLOB_DIGEST`, which `analysis-run` overwrites whenever a game is re-analysed.
- * Baselines are a rolling window over recent games, so a digest rebuilt later is not the one the
- * review was written against — auditing a stored review against a fresh build reports correct
- * quotes as violations. Keeping the sent bytes is what makes that audit sound.
+ * This is the only digest archived, and it is archived at SEND time on purpose. Baselines are a
+ * rolling window over recent games, so a digest rebuilt later is not the one the review was
+ * written against — auditing a stored review against a fresh build reports correct quotes as
+ * violations. Keeping the sent bytes is what makes that audit sound.
+ *
+ * Games analysed before 2026-09 also have a `digest.json.gz` beside this one, from a second
+ * digest builder that nothing ever read back. It is not written any more; old copies are inert.
  */
 export const BLOB_REVIEW_DIGEST = "review-digest"
 

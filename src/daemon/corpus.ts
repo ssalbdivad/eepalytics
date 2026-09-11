@@ -127,15 +127,3 @@ export const corpusDeaths = (entries: readonly CorpusEntry[]): DeathAnalysis[] =
 	}
 	return out
 }
-
-/** championId -> name, from whatever the ingest layer cached. */
-export const championNameMap = (
-	names: Record<string, string>
-): Record<number, string> => {
-	const out: Record<number, string> = {}
-	for (const [id, name] of Object.entries(names)) {
-		const n = Number(id)
-		if (Number.isFinite(n)) out[n] = name
-	}
-	return out
-}

@@ -1,5 +1,5 @@
 /**
- * `analysis-run` — turn one game's stored match + timeline into metrics, moments and a digest.
+ * `analysis-run` — turn one game's stored match + timeline into metrics, moments and a grade.
  *
  * `src/analysis/` is a pure function over JSON: no database, no files, no network. That split
  * is deliberate (it is the part that has to be *right*, so it has to be testable without a
@@ -12,8 +12,10 @@
  * CORPUS DEATHS every death looks like a one-off instead of the fourth repetition of the same
  * mistake — which is the difference between a stat and a coaching point.
  *
- * The digest is written to a blob here rather than rebuilt at review time, so the exact bytes
- * the coach saw are recoverable later.
+ * What this job does NOT produce is the coach's digest. That is built at review time by
+ * `review-game`, from these persisted rows, and the bytes it sent are archived there as
+ * `BLOB_REVIEW_DIGEST` — baselines are a rolling window, so only the sent bytes are an
+ * honest record of what the coach was told.
  *
  * NODE ONLY.
  */
@@ -21,12 +23,9 @@
 import { uncoachableReason } from "../../shared/coachable.ts"
 import { ANALYSIS_VERSION } from "../../shared/constants.ts"
 import { Metric, Moment, parseOrThrow } from "../../shared/schema/domain.ts"
-import { BLOB_DIGEST, writeBlob } from "../../db/blobs.ts"
 import {
 	getGame,
-	getParticipants,
 	getSettings,
-	kvGet,
 	replaceMetrics,
 	replaceMoments,
 	setGameAnalysisVersion,
@@ -37,7 +36,6 @@ import { analyzeGame, baselineFromRows, perGameMetrics } from "../../analysis/in
 import { gradeGame } from "../../analysis/grade.ts"
 import { publish } from "../bus.ts"
 import {
-	championNameMap,
 	corpusDeaths,
 	forgetGame,
 	loadCorpus,
@@ -95,19 +93,11 @@ export const runAnalysisJob = async (ctx: JobContext): Promise<JobOutcome> => {
 		`analysing with a ${corpus.length}-game baseline and ${deaths.length} prior deaths`
 	)
 
-	const championNames = championNameMap(
-		kvGet<Record<string, string>>("championNames", {})
-	)
-	const riotIds: Record<number, string> = {}
-	for (const p of getParticipants(gameId)) if (p.riotId) riotIds[p.participantId] = p.riotId
-
 	const result = analyzeGame({
 		match,
 		timeline,
 		baseline,
 		corpusDeaths: deaths,
-		championNames,
-		riotIds,
 		momentLimit: settings.maxMomentsPerGame
 	})
 
@@ -136,9 +126,6 @@ export const runAnalysisJob = async (ctx: JobContext): Promise<JobOutcome> => {
 	const role = result.roles.roles[result.userId]
 	const confidence = result.roles.confidence[result.userId]
 	if (role) setGameRole(gameId, role, confidence ?? "low")
-
-	// Keep the exact bytes the coach will see, so a review stays explainable months later.
-	writeBlob(gameId, BLOB_DIGEST, result.digest)
 
 	setGameAnalysisVersion(gameId, ANALYSIS_VERSION)
 

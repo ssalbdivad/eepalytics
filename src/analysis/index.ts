@@ -13,7 +13,6 @@ export * from "./metrics.ts"
 export * from "./deaths.ts"
 export * from "./moments.ts"
 export * from "./trends.ts"
-export * from "./digest.ts"
 
 import { ANALYSIS_VERSION, USER_PUUID } from "../shared/constants.ts"
 import type { LcuGame, LcuTimeline } from "../shared/schema/lcu.ts"
@@ -22,7 +21,6 @@ import { analyzeDeaths, clusterDeaths, signatureCounts, type DeathAnalysis, type
 import { computeMetrics, type Baseline } from "./metrics.ts"
 import { selectMomentsDetailed, type MomentDetail } from "./moments.ts"
 import { findUser, inferRoles, type RoleInference } from "./roles.ts"
-import { buildGameDigest, type GameDigest } from "./digest.ts"
 
 export interface AnalyzeGameInput {
 	match: LcuGame
@@ -35,8 +33,6 @@ export interface AnalyzeGameInput {
 	 */
 	corpusDeaths?: DeathAnalysis[]
 	puuid?: string
-	championNames?: Record<number, string>
-	riotIds?: Record<number, string>
 	momentLimit?: number
 }
 
@@ -49,7 +45,6 @@ export interface AnalyzeGameResult {
 	patterns: DeathPattern[]
 	momentDetails: MomentDetail[]
 	moments: Moment[]
-	digest: GameDigest
 }
 
 /**
@@ -86,19 +81,6 @@ export const analyzeGame = (input: AnalyzeGameInput): AnalyzeGameResult | null =
 		{ recurrence, topN: input.momentLimit ?? 8 }
 	)
 
-	const digest = buildGameDigest({
-		match,
-		roles,
-		userId,
-		metrics,
-		moments: momentDetails,
-		deaths,
-		patterns,
-		baseline,
-		championNames: input.championNames,
-		riotIds: input.riotIds
-	})
-
 	return {
 		analysisVersion: ANALYSIS_VERSION,
 		userId,
@@ -107,7 +89,6 @@ export const analyzeGame = (input: AnalyzeGameInput): AnalyzeGameResult | null =
 		deaths,
 		patterns,
 		momentDetails,
-		moments: momentDetails.map(d => d.moment),
-		digest
+		moments: momentDetails.map(d => d.moment)
 	}
 }

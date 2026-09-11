@@ -1,10 +1,11 @@
 /**
- * The shape `src/analysis/digest.ts` must hand the coach.
+ * The shape the coach is handed. `src/daemon/digest.ts` is the only producer.
  *
- * The analysis unit owns the *producer*; this file is the *consumer's* contract, written
- * here so the review unit can be built and tested without waiting on it. The integration
- * pass should reconcile the two — if `src/analysis/digest.ts` exports equivalent types,
- * delete these and import from there instead.
+ * This is the *consumer's* contract and it lives in the review unit on purpose: the prompt
+ * decides what it can render, and the daemon builds to that from persisted rows. There was
+ * once a second, richer digest builder under `src/analysis/`; nothing ever read its output
+ * and it has been deleted, so these types have exactly one producer and no reconciliation
+ * left to do.
  *
  * Three deliberate design decisions live in this file:
  *

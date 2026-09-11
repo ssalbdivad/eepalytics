@@ -1,12 +1,14 @@
 /**
  * Building the digest the coach actually reads.
  *
- * WHY THIS FILE EXISTS: the two sibling units met in the middle and did not quite touch.
- * `src/analysis/digest.ts` produces a rich `csk.game-digest/1` object; `src/review/prompt.ts`
- * renders `src/review/digest-contract.ts`'s `GameDigest`, which is a different shape (its own
- * header asks for exactly this reconciliation). The daemon is the integration point, so the
- * conversion lives here — built from the PERSISTED metrics, moments and participants, which
- * are the same numbers the UI shows. One source of truth, three consumers.
+ * WHY THIS FILE EXISTS: `src/review/prompt.ts` renders `src/review/digest-contract.ts`'s
+ * `GameDigest`, and something has to build one. It is built here, from the PERSISTED metrics,
+ * moments and participants — the same rows the UI shows — so the review and the screen can
+ * never disagree about a number. One source of truth, three consumers.
+ *
+ * There was a second builder in `src/analysis/digest.ts` that produced a richer
+ * `csk.game-digest/1` object. Nothing ever read it back, so it is gone; this is the only
+ * digest the coach has ever actually been sent.
  *
  * THE RULE THIS FILE ENFORCES: `dataGaps` is mandatory and is populated with what the LCU
  * genuinely cannot tell us. The coach is forbidden from inventing a ward count; the only way
