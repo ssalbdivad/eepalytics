@@ -74,11 +74,6 @@ export const forgetGame = (gameId: number): void => {
 	timelineCache.delete(gameId)
 }
 
-export const clearCorpusCache = (): void => {
-	matchCache.clear()
-	timelineCache.clear()
-}
-
 export interface CorpusEntry extends TrendGameInput {
 	gameId: number
 	row: Game

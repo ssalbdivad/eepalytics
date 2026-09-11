@@ -411,12 +411,3 @@ export const buildTrendDigest = (input: BuildTrendDigestInput): TrendDigest => {
 		notes: [...(input.notes ?? [])]
 	}
 }
-
-/** The ids a feedback item may cite. Anything else the model writes is a fabrication. */
-export const allowlistFor = (
-	metrics: readonly Metric[],
-	moments: readonly Moment[]
-): { momentIds: Set<string>; metricKeys: Set<string> } => ({
-	momentIds: new Set(moments.map(m => m.id)),
-	metricKeys: new Set(metrics.map(m => m.key))
-})

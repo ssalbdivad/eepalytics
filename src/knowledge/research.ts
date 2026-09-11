@@ -306,9 +306,6 @@ export const researchChampion = async (
  */
 const inFlight = new Set<string>()
 
-/** Exposed so the daemon can report what it is doing, and so tests can assert quiescence. */
-export const researchInFlight = (): string[] => [...inFlight]
-
 /**
  * Bring a champion's notes up to date if they are behind, and say whether anything changed.
  *

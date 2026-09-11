@@ -156,5 +156,3 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
 export const GLOSSARY_TERMS: { term: string; key: string }[] = Object.entries(GLOSSARY)
 	.flatMap(([key, entry]) => [key, ...(entry.aliases ?? [])].map(term => ({ term, key })))
 	.sort((a, b) => b.term.length - a.term.length)
-
-export const defineTerm = (key: string): string => GLOSSARY[key]?.definition ?? ""

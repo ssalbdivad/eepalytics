@@ -8,7 +8,6 @@
 
 import { ROLE_LABELS } from "../../shared/schema/domain.ts"
 import type {
-	Band,
 	Confidence,
 	FeedbackSeverity,
 	Job,
@@ -53,9 +52,6 @@ export const fmtCompact = (n: number): string => {
 	return String(Math.round(n))
 }
 
-export const fmtPct = (fraction: number, digits = 0): string =>
-	Number.isFinite(fraction) ? `${(fraction * 100).toFixed(digits)}%` : "--"
-
 /** How many decimals a metric's unit deserves. Gold is never shown to a tenth. */
 const unitDigits = (unit: string): number => {
 	switch (unit) {
@@ -88,15 +84,6 @@ export const fmtMetricDelta = (m: Metric): string =>
 
 /* =============================================================== labels */
 
-export const bandClass = (band: Band): string => `band-${band}`
-
-export const BAND_LABEL: Record<Band, string> = {
-	good: "above your average",
-	ok: "around your average",
-	bad: "below your average",
-	unknown: "not enough history to rank"
-}
-
 export const CONFIDENCE_LABEL: Record<Confidence, string> = {
 	high: "measured",
 	medium: "derived from per-minute frames",
@@ -106,12 +93,6 @@ export const CONFIDENCE_LABEL: Record<Confidence, string> = {
 /** Short chip text. `high` gets no chip at all: certainty is the default, doubt is the news. */
 export const confidenceChip = (c: Confidence): string | null =>
 	c === "high" ? null : c === "medium" ? "derived" : "inferred"
-
-export const SEVERITY_LABEL: Record<FeedbackSeverity, string> = {
-	info: "note",
-	minor: "minor",
-	major: "major"
-}
 
 export const SEVERITY_RANK: Record<FeedbackSeverity, number> = {
 	major: 0,
