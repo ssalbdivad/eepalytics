@@ -16,6 +16,8 @@
  * instruction; THIS is the per-turn payload, so it stays a few thousand characters, not tens.
  */
 import { dragonPhrase } from "./dragons.ts"
+import { drakeStakes, orderStakes, stakesClause } from "./objective-stakes.ts"
+import type { Stake } from "./objective-stakes.ts"
 
 /*
  * PRONUNCIATIONS ARE NOT RENDERED HERE, AND THAT IS THE FIX, NOT AN OMISSION.
@@ -760,6 +762,23 @@ const GRUBS_SPAWN_SEC = 480
 /** Latest HORDE kill in the corpus is 13:13, so nothing here contradicts the 14:00 despawn. */
 const GRUBS_GONE_SEC = 840
 const HERALD_SPAWN_SEC = 900
+/**
+ * WHEN THE RIFT HERALD LEAVES — measured, because without it this file claimed one that was not there.
+ *
+ * The grubs had a despawn gate from the day they were written and the Herald never did, so an
+ * untaken Herald was rendered as STANDING for the rest of the game. On the paired stream of game
+ * 5639409343 nobody took it, and the payload said "Rift Herald (top side): UP since 15:00 and
+ * untaken for 8m58s" at 23:58 — four minutes after it had left the map. Seven turns of that run
+ * carried the sentence, and `orderStakes` then put it at the TOP of every one of them, because a
+ * standing objective outranks a spawning one and nothing was bounding how long it could stand.
+ * The coach ignored it on all seven, which was correct, and the ordering it was ignoring was mine.
+ *
+ * The number is the corpus's, not the patch notes'. Across all 96 stored timelines there are 91
+ * RIFTHERALD kills: the earliest is 15:27, and THIRTEEN of them land on exactly 19:45 with two
+ * frame-rounded stragglers at 19:48 and 19:51. A pile-up that size at one clock is the despawn
+ * being recorded as a kill, which is the same shape `GRUBS_GONE_SEC` was measured from.
+ */
+const HERALD_GONE_SEC = 1185
 /**
  * The first drake, which used to have no gate at all — see `nextBlock`.
  *
@@ -1838,12 +1857,28 @@ const BARON_SIDE = "top side"
 /** How far ahead an objective is worth a line. Beyond this it is a fact about the map, not a decision. */
 const PROSPECT_HORIZON_SEC = 150
 
-/** "in 45s" / "up since 12:19, untaken 1m15s" — the two shapes a prospect ever has. */
-const prospect = (label: string, side: string, atSec: number, now: number, standingNote: string): string | null => {
+/**
+ * "in 45s" / "up since 12:19, untaken 1m15s" — the two shapes a prospect ever has, as a `Stake` so
+ * `orderStakes` can rank it.
+ *
+ * The TEXT of both shapes is unchanged from when this returned a string. What moved is that the
+ * line now carries which of the two it is, as a number, so the ordering is arithmetic instead of
+ * the order the four calls happen to appear in below. See `shared/objective-stakes.ts` for the
+ * measurement that made the old order indefensible.
+ */
+const prospect = (label: string, side: string, atSec: number, now: number, standingNote: string): Stake | null => {
 	if (atSec > now + PROSPECT_HORIZON_SEC) return null
 	return atSec > now ?
-			`- ${label} (${side}): up at ${clock(atSec)}, in ${dur(atSec - now)}.`
-		:	`- ${label} (${side}): UP since ${clock(atSec)} and ${standingNote} for ${dur(now - atSec)}.`
+			{
+				text: `- ${label} (${side}): up at ${clock(atSec)}, in ${dur(atSec - now)}.`,
+				standingSinceSec: null,
+				spawnsAtSec: atSec
+			}
+		:	{
+				text: `- ${label} (${side}): UP since ${clock(atSec)} and ${standingNote} for ${dur(now - atSec)}.`,
+				standingSinceSec: atSec,
+				spawnsAtSec: null
+			}
 }
 
 /**
@@ -2102,32 +2137,82 @@ const nextBlock = (
 	 * (earliest kill across the 94 stored games is 5:33), so that sentence was false for the first
 	 * five minutes of every game — the window in which a jungler is most likely to path for it.
 	 */
+	/*
+	 * COLLECTED, THEN ORDERED — see `shared/objective-stakes.ts`.
+	 *
+	 * These four calls stay in schedule order because that is the order a reader of this file
+	 * expects to find them in. `orderStakes` below decides which one the MODEL reads first, and it
+	 * ranks a standing objective above a spawning one regardless of which was written here. The two
+	 * orders were the same thing until it was measured that they must not be.
+	 */
+	const stakes: Stake[] = []
+
 	const drakes = s.events.filter(e => e.name === "DragonKill")
 	const lastDrake = drakes.at(-1) ?? null
-	const drakeAt = lastDrake === null ? DRAKE_FIRST_SPAWN_SEC : lastDrake.t + DRAKE_RESPAWN_SEC
+	/*
+	 * WHO HOLDS WHAT, AND WHAT THE NEXT ONE IS WORTH — off the event log, which is the strongest
+	 * channel in this feed and the only one that carries `DragonType` and `KillerName`.
+	 *
+	 * `isMine` resolves the killer through the roster this brief already read. A name that is not on
+	 * it returns null and is counted for neither side: an unresolvable take may understate a soul
+	 * point, and may never invent one.
+	 */
+	const stak = drakeStakes(
+		drakes.map(e => ({
+			tSec: e.t,
+			killerName: str(e.raw.KillerName) ?? "",
+			type: str(e.raw.DragonType)
+		})),
+		killer => {
+			const p = s.players.find(x => x.name === killer)
+			return p === undefined ? null : p.team === s.me.team
+		}
+	)
+	/*
+	 * The Elder's respawn is 360 seconds and every other drake's is 300. Using one constant for both
+	 * put every post-soul drake clock a full minute early — untriggered so far only because no
+	 * recorded game reached a second Elder.
+	 */
+	const drakeAt = lastDrake === null ? DRAKE_FIRST_SPAWN_SEC : lastDrake.t + stak.respawnSec
 	const drakeLine = prospect("Drake", DRAKE_SIDE, drakeAt, now, "untaken")
-	if (drakeLine !== null) lines.push(drakeLine)
+	if (drakeLine !== null)
+		stakes.push({ ...drakeLine, text: `${drakeLine.text} ${stakesClause(stak)}` })
 
 	const grubs = s.events.filter(e => e.name === "HordeKill")
 	if (now < GRUBS_GONE_SEC) {
 		const line =
 			grubs.length === 0 ?
 				prospect("Voidgrubs", BARON_SIDE, GRUBS_SPAWN_SEC, now, "untouched by anyone")
-			:	`- Voidgrubs (${BARON_SIDE}): ${grubs.length} taken, last at ${clock(grubs.at(-1)!.t)}.`
-		if (line !== null) lines.push(line)
+			:	/*
+				 * A counted-out row is neither standing nor spawning, so it sorts last on its own
+				 * without a rule. It is history with a clock on it, which is exactly where it belongs
+				 * once somebody has taken them.
+				 */
+				{
+					text: `- Voidgrubs (${BARON_SIDE}): ${grubs.length} taken, last at ${clock(grubs.at(-1)!.t)}.`,
+					standingSinceSec: null,
+					spawnsAtSec: null
+				}
+		if (line !== null) stakes.push(line)
 	}
 
 	const herald = s.events.filter(e => e.name === "HeraldKill")
-	if (herald.length === 0) {
+	/*
+	 * The same despawn gate the grubs have had all along. Past 19:45 an untaken Herald is not a
+	 * standing objective, it is a thing that left — see `HERALD_GONE_SEC`.
+	 */
+	if (herald.length === 0 && now < HERALD_GONE_SEC) {
 		const line = prospect("Rift Herald", BARON_SIDE, HERALD_SPAWN_SEC, now, "untaken")
-		if (line !== null) lines.push(line)
+		if (line !== null) stakes.push(line)
 	}
 
 	const barons = s.events.filter(e => e.name === "BaronKill")
 	const lastBaron = barons.at(-1) ?? null
 	const baronAt = lastBaron === null ? BARON_SPAWN_SEC : lastBaron.t + BARON_RESPAWN_SEC
 	const baronLine = prospect("Baron", BARON_SIDE, baronAt, now, "untaken")
-	if (baronLine !== null) lines.push(baronLine)
+	if (baronLine !== null) stakes.push(baronLine)
+
+	for (const st of orderStakes(stakes)) lines.push(st.text)
 
 	/*
 	 * Deaths and respawn timers are NOT fog-gated and are read, not extrapolated — audited exact for
