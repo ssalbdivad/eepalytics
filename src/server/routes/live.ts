@@ -1484,7 +1484,7 @@ export const observeLiveSample = (data: LiveAllGameData | null, gameTimeSec: num
  * ## Every mode, and the old arms are still byte-identical
  *
  * How a name SOUNDS is orthogonal to which architecture decides what to say, so the guide rides on
- * all three modes. The measured arms are unaffected: `scripts/ablate-autonomy.ts` and the benches
+ * all three modes. The measured arms are unaffected: `src/review/ablation-arms.ts` and the benches
  * build their prompts from `liveCoachSystemPrompt` directly, and that function's output for
  * `fenced` and `cite-or-quiet` is unchanged to the byte — this composition happens one level up,
  * in the thing the live socket is handed.

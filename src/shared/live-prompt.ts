@@ -11,8 +11,8 @@
  * reword it, and `shared/live-coach-mode.test.ts` will fail if you do.
  *
  * It lives in `shared/` rather than beside the socket because the benches drive the same prompt
- * against real game states. `scripts/ablate-autonomy.ts --arms fenced` is what drives it now;
- * `scripts/eval-live.ts`, which used to, is deleted.
+ * against real game states. `scripts/bench-stream.ts --arms <provider>@fenced` is what drives it
+ * now; `eval-live.ts` and `ablate-autonomy.ts`, which used to, are both deleted.
  *
  * ## What this text is answering
  *

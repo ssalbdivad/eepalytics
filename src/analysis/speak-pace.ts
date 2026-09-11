@@ -21,9 +21,13 @@
  *
  * ## The sweep
  *
- * `scripts/ablate-autonomy.ts --pace-sweep data/eval/pace-grid20.json` replays 110 real recorded
- * turns of that game — the coach's own sentences, in order, on a 19.8-second grid — and applies
- * each candidate floor to what she actually said. `data/eval/pace-sweep-grid20.json` is the run:
+ * A sweep replayed 110 real recorded turns of that game — the coach's own sentences, in order, on
+ * a 19.8-second grid — and applied each candidate floor to what she actually said. It ran through
+ * `scripts/ablate-autonomy.ts --pace-sweep`, and NEITHER its input (`data/eval/pace-grid20.json`)
+ * nor its output (`data/eval/pace-sweep-grid20.json`) is on disk; the script was retired on
+ * 2026-09-11. So the table below is the whole surviving record and it cannot be re-derived — say
+ * that plainly rather than citing a file that is gone. To re-decide the floor, sweep a
+ * `bench-stream` run's transcript instead:
  *
  *     floor    lines   per min   busiest 4 min   min gap   median gap
  *     none       103      2.84        13            18s        19s

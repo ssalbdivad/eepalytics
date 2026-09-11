@@ -64,7 +64,8 @@ it is **no longer the default**.
 
 Four architectures, ONE model, 363 recorded samples from four real games replayed in order, every
 spoken line judged blind with the arm labels stripped
-(`data/eval/ablation-20260905-073028.json`, re-runnable with `scripts/ablate-autonomy.ts`):
+(`data/eval/ablation-20260905-073028.json`, re-gradable with `scripts/blind-judge.ts`; its four
+arms are kept as data in `src/review/ablation-arms.ts`):
 
 | arm | spoke | fabrication [95%] | useful lines per game |
 |---|---|---|---|
@@ -102,7 +103,7 @@ The three modes live in `src/shared/live-coach-mode.ts` and the user picks betwe
 - **`fenced`** — the old architecture, kept because its stored runs are only meaningful if the
   prompt that produced them still exists.
 
-`CITE_PERSONA` and `CITE_RULE` are lifted byte for byte out of `scripts/ablate-autonomy.ts` and
+`CITE_PERSONA` and `CITE_RULE` are lifted byte for byte out of `src/review/ablation-arms.ts` and
 `src/shared/live-coach-mode.test.ts` asserts that equality, so a well-meaning reword fails the suite
 rather than quietly invalidating the run that justified the change.
 
@@ -365,9 +366,12 @@ different reason, which is why it checks all five rather than only the last.
 
 `scripts/eval-live.ts` and `scripts/bench-providers.ts` are DELETED, and `pnpm eval:live` went
 with them — a command that no longer exists is worse than no command, because an agent spends a
-turn discovering it. `src/shared/live-prompt.ts` survives as the **`fenced`** arm's text, and
-`scripts/ablate-autonomy.ts --arms fenced` is what drives it now. Touch that file and re-run the
-ablation: its stored runs are the only reason the fence's numbers above are quotable at all.
+turn discovering it. `scripts/ablate-autonomy.ts` is DELETED too, as of 2026-09-11, along with `eval-useful.ts`,
+`e2e-coach.ts`, `e2e-real-game.ts` and `probe-vision.ts` — `bench-stream.ts` asks all five
+questions on better inputs. `src/shared/live-prompt.ts` survives as the **`fenced`** arm's text and
+`scripts/bench-stream.ts --arms <provider>@fenced` is what drives it now. Do not reword it: the
+stored runs are the only reason the fence's numbers above are quotable at all, and
+`src/shared/live-coach-mode.test.ts` fails if the text moves.
 
 #### Champion knowledge: three doors, and only one of them has a digit fence
 
@@ -482,7 +486,10 @@ scripts/lib/stream.ts          discoverBenchable + buildStream: one replay every
 scripts/bench-stream.ts        replays a real game through every model at once and scores it
 scripts/frame-value.ts         the interleaved frame ablation — what the screenshot is worth
 scripts/audit-live-fields.ts   every rendered field against the post-game truth, by side
-scripts/ablate-autonomy.ts     the four architectures. The run that removed the fence
+scripts/probe-minimap.ts       how accurate a minimap read is — the one thing bench-stream cannot grade
+scripts/blind-judge.ts         re-grades a stored ablation run, labels stripped
+scripts/read-frame-ablation.ts  reads the four stored frame/no-frame runs whose writer is gone
+src/review/ablation-arms.ts    the four architectures, as DATA. The run that removed the fence
 ```
 
 **The screen share persists across games; what is GATED is what gets sent.** He shares

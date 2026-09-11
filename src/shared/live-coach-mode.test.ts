@@ -6,7 +6,7 @@
  *    spoke on 94 of 102 turns with zero fabrications. A prompt that has since been "improved" by
  *    a paragraph is a prompt that was never measured, and the run stops justifying it — silently,
  *    because a reworded prompt still looks exactly like the one in the results file. So the text
- *    is asserted byte-for-byte against `scripts/ablate-autonomy.ts`'s own `ARMS` export.
+ *    is asserted byte-for-byte against `src/review/ablation-arms.ts`, which holds that run's arms as frozen data.
  *
  * 2. **The block surgery still finds the fence.** Every replacement is a literal string lifted out
  *    of `renderState`. If that function is edited — it is owned elsewhere and it moves — a
@@ -20,7 +20,7 @@ import { type } from "arktype"
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import { test } from "node:test"
-import { ARMS, championKnowledge } from "../../scripts/ablate-autonomy.ts"
+import { ABLATION_ARMS as ARMS, ablationChampionKnowledge as championKnowledge } from "../review/ablation-arms.ts"
 import { parseChampionClauses } from "./champion-advice.ts"
 import {
 	CITE_BLOCK_REPAIRS,
@@ -30,6 +30,7 @@ import {
 	LIST_HINT,
 	LIVE_COACH_MODES,
 	TRUSTED_KNOWLEDGE_HEADING,
+	TRUSTED_CLOSE,
 	TRUSTED_PROMPT,
 	downLine,
 	liveCoachSystemPrompt,
@@ -199,7 +200,7 @@ test("every mode in the picker carries its own number", () => {
 /**
  * `trusted` is added BESIDE the measured arms, never over them.
  *
- * The two tests above already pin each measured prompt to `scripts/ablate-autonomy.ts`, which is
+ * The two tests above already pin each measured prompt to `src/review/ablation-arms.ts`, which is
  * where a reword would do its damage. This one pins the thing those cannot see: that adding a mode
  * did not change what the other two RETURN. A stored run only keeps justifying a default while the
  * repo can still emit the exact bytes that were scored.
@@ -220,9 +221,34 @@ test("trusted appends the caller's knowledge whole, with no parsing and no digit
 	const md = readFileSync("knowledge/champions/lillia.md", "utf8")
 	const out = liveCoachSystemPrompt({ mode: "trusted", championKnowledge: md })
 	assert.equal(out.startsWith(TRUSTED_PROMPT), true)
-	assert.equal(out.endsWith(md), true)
+	assert.equal(out.includes(md), true)
 	assert.equal(out.includes(TRUSTED_KNOWLEDGE_HEADING), true)
-	assert.equal(liveCoachSystemPrompt({ mode: "trusted" }), TRUSTED_PROMPT)
+	assert.equal(liveCoachSystemPrompt({ mode: "trusted" }), `${TRUSTED_PROMPT}${TRUSTED_CLOSE}`)
+})
+
+/**
+ * The close is LAST, and that is the whole of the change it makes.
+ *
+ * Measured on the assembled prompt for the game this app is benched on: before it, the single
+ * mention of PASS sat 43% of the way into 48,112 characters with 27,573 characters of champion
+ * notes after it, and the socket declined on 0 of 241 recorded turns. An instruction that is only
+ * reachable through two champion guides is an instruction the model reads once and then reads
+ * twenty thousand characters of things to say. So the test is positional, not textual: the knowledge
+ * may grow to any size and this section still comes after it.
+ */
+test("the close is the last instruction, after the champion knowledge", () => {
+	const md = readFileSync("knowledge/champions/lillia.md", "utf8")
+	const out = liveCoachSystemPrompt({ mode: "trusted", championKnowledge: md })
+	assert.equal(out.endsWith(TRUSTED_CLOSE), true)
+	assert.equal(out.indexOf(md) < out.indexOf(TRUSTED_CLOSE), true)
+	// It names what the two replies DO and never when to use either: no frequency, no trigger, no
+	// subject. A word from that family appearing here is the fence coming back in a new place.
+	for (const banned of ["often", "usually", "most turns", "only when", "unless", "should"])
+		assert.equal(
+			TRUSTED_CLOSE.toLowerCase().includes(banned),
+			false,
+			`the close became a rule about when: ${banned}`
+		)
 })
 
 /**

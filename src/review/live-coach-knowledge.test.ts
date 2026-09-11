@@ -7,7 +7,7 @@
 
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { championKnowledge } from "../../scripts/ablate-autonomy.ts"
+import { ablationChampionKnowledge as championKnowledge } from "./ablation-arms.ts"
 import { liveChampionKnowledge } from "./live-coach-knowledge.ts"
 
 test("Lillia's knowledge is byte-identical to what the ablation measured", () => {

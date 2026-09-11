@@ -5,7 +5,9 @@
  *
  * Four architectures, ONE model, 363 recorded samples from four real games replayed IN ORDER, and
  * every spoken line judged blind with the arm labels stripped. The run is
- * `data/eval/ablation-20260905-073028.json`, verbatim, and `scripts/ablate-autonomy.ts` re-runs it.
+ * `data/eval/ablation-20260905-073028.json`, verbatim. Its arms are kept as data in
+ * `src/review/ablation-arms.ts`; `scripts/blind-judge.ts` re-grades the stored run, and
+ * `scripts/bench-stream.ts` is what runs an architecture comparison now.
  *
  *     arm             spoke        fabrication [95%]        useful lines per game
  *     FENCED          11 of 102    0 [0-26%]  n=14          6
@@ -67,9 +69,10 @@
  * ## Where this text came from, and why it may not be reworded
  *
  * `CITE_PERSONA` and `CITE_RULE` below are the measured arm's system prompt, byte for byte, lifted
- * out of `scripts/ablate-autonomy.ts`. `src/shared/live-coach-mode.test.ts` asserts that equality
- * against the script's own `ARMS` export, so a well-meaning edit here fails the suite rather than
- * quietly invalidating the run that justified the change. Anything added for the shipped app —
+ * out of the 2026-09-05 ablation. `src/shared/live-coach-mode.test.ts` asserts that equality
+ * against `src/review/ablation-arms.ts`, which holds that run's arms as frozen data, so a
+ * well-meaning edit here fails the suite rather than quietly invalidating the run that justified
+ * the change. Anything added for the shipped app —
  * the list hint, the two prohibitions the judge found — lives in `LIST_HINT`, appended after, so
  * the measured text and the shipped delta can always be told apart.
  */
@@ -86,7 +89,7 @@ export type LiveCoachMode = "trusted" | "cite-or-quiet" | "fenced"
  * `trusted` ships as the default and is the only mode that is NOT a measured arm.
  *
  * The two below it are, and they stay byte-identical forever — `live-coach-mode.test.ts` asserts
- * both against `scripts/ablate-autonomy.ts`. Everything new lives in `TRUSTED_PROMPT`, added
+ * both against `src/review/ablation-arms.ts`. Everything new lives in `TRUSTED_PROMPT`, added
  * beside them rather than over them, so the run that justified `cite-or-quiet` still describes a
  * prompt this repo can produce.
  */
@@ -641,6 +644,107 @@ game, and repetition is what he tuned out well before anything false ever reache
 **To say nothing at all, reply with exactly: PASS**`
 
 /**
+ * The last thing in the trusted instructions, and it describes the OUTPUT channel the way the rest
+ * of the prompt describes the input ones.
+ *
+ * ## The measurement that produced it
+ *
+ * The coach has two replies available and used one of them 241 consecutive times. Across every
+ * socket run on disk since the knowledge files landed — `frame-value-20260911-ablation.json` (three
+ * arms, 31 turns each, one of them blind and one of them shown a decoy frame),
+ * `frame-value-20260911-fixes.json` (three more) and the two paired games in
+ * `integrate-socket-both-asrecords.json` (58) — **0 of 241 turns ended in a PASS.** The turn-based
+ * path is barely different: 11 silences in 529 lines over all 17 games. A coach that cannot decline
+ * cannot be selective, and precision is half of what this app is for.
+ *
+ * Three things were true of the prompt those runs were sent, and all three are mechanical rather
+ * than matters of taste:
+ *
+ *   1. **PASS was named exactly once in 48,112 characters, 43% of the way in, with 27,573
+ *      characters of champion notes after it.** Before the counterpart files existed the same
+ *      instruction had 18,828 characters after it, and the socket run of that night
+ *      (`r3-5639406342.json`, `r3-5639409343.json`) declined on 8 of 46 turns. That is one
+ *      confounded comparison and not a controlled one — the brief was rewritten in between — but
+ *      it is the only variation in the record, and it runs the right way.
+ *   2. **On the socket the model emits AUDIO, so "reply with exactly: PASS" asks it to SAY a word
+ *      in order to say nothing** — in a prompt that has just told it every word it writes is played
+ *      out loud over his game. That reads as a contradiction, and nothing anywhere told it
+ *      otherwise. What actually happens is in `web/lib/geminiLive.ts`: the chunks are buffered, the
+ *      transcript is checked for a leading `pass`, and the audio is dropped before it reaches the
+ *      speakers. The turn-based path drops it one line earlier, before `record` and `noteSpoken`.
+ *   3. **A PASS leaves no trace anywhere the model can see.** Neither transport records one, so
+ *      `WHAT YOU HAVE ALREADY SAID THIS GAME` is a list of the turns it SPOKE on and of no others.
+ *      Every payload therefore hands the model a history of itself that is 100% speech, which is a
+ *      behavioural precedent nobody wrote and nobody intended.
+ *
+ * ## IT DID NOT WORK, and that is measured too
+ *
+ * `data/eval/restraint-close-20260911.json`, the same two paired games replayed through the real
+ * socket with this section in place: **0 PASSes in 62 asks.** The coach spoke on every turn of both
+ * games, exactly as it did on the 241 before it. Whatever is stopping restraint, it is not that the
+ * token was unreachable and it is not that the model believed declining would be spoken aloud.
+ *
+ * The one hypothesis with observational support behind it went with it. The last socket run that
+ * ever declined (8 of 46, the night of 09-10) predates the counterpart champion file, so 20 turns of
+ * the same game were replayed with that file withheld — `data/eval/restraint-nocp-20260911.json`,
+ * arm `gemini-live@trusted+nocp` — and that is **0 of 20** as well. If the true rate were the 17%
+ * of that night, a run of 20 would show none of them 2.4% of the time. The champion notes are not
+ * the gag either.
+ *
+ * What is left of the difference between the era that declined and the era that does not is the
+ * PAYLOAD and the SCHEDULE, neither of which this file owns. Both point the same way: the event
+ * schedule asks when something has just happened, and the rewritten brief hands the model that
+ * something, already joined, on every one of those turns. A turn six seconds after the last one is
+ * raised BECAUSE a drake fell, and the payload's first section says so. Declining then is not
+ * restraint, it is refusing to mention a fresh fact the harness asked about — and the payload sizes
+ * say the growth is not the cause either (a median 3,050 characters here against 3,010 and 3,069 on
+ * the two runs that declined). The next person to try this should look at the ASK, not the prompt.
+ *
+ * ## It is kept, and the grounds are truthfulness rather than effect
+ *
+ * Nothing below may be described as an improvement, because nothing here improved anything. It is
+ * retained because every sentence in it is TRUE and the prompt without it was not: a model told
+ * that everything it writes is played aloud, and then told to reply PASS, has been told something
+ * this app does not do. It costs nothing measurable either: the run above scores 81% of its lines
+ * clean on every mechanical axis and 98% correct, and the same blind no-frame judge that graded the
+ * pre-change run of these two games 39 of 58 useful graded this one 45 of 62 — 73% [60-82] against
+ * 67% [54-78], two intervals that overlap almost entirely. 906 characters bought no restraint;
+ * delete it and take the bytes back if that trade is not worth the truth.
+ *
+ * ## Why it says what it says, and why it stops where it stops
+ *
+ * This is not a rule about when to be quiet, and it must never become one: that is the fence, it is
+ * banned, and it was measured producing fourteen lines in 576 turns. There is no frequency here, no
+ * trigger, no subject, no cadence and no "often it will not be" — the decision is untouched and
+ * stays the model's. What changes is that the model now knows what the two replies DO, the same way
+ * it already knows what a floored CS figure and a fog-gated item row do.
+ *
+ * It is appended AFTER the champion knowledge rather than written into `TRUSTED_PROMPT` for the
+ * same reason: the instruction that defines the only way to decline should not be buried under two
+ * champion guides full of things to say. `socketSystemPrompt` still adds the pronunciation guide
+ * after it, which is a lookup table and not an instruction; this remains the last thing in the
+ * prompt that asks anything of the model, at 89% of its depth instead of 43%.
+ */
+export const TRUSTED_CLOSE = `
+
+## How a turn ends
+
+A turn ends one of two ways, and this app does something different with each.
+
+**A sentence** is played out loud, over his game, a moment after you write it. It is recorded, it
+comes back to you in WHAT YOU HAVE ALREADY SAID, and it starts the clock that spaces your lines
+apart.
+
+**The single word PASS** is none of that. It is a control token this app intercepts: the audio is
+dropped before it reaches his speakers, nothing is recorded, nothing is written into your own
+history, and that clock does not start. He never learns the turn happened. PASS is not a quieter
+way of speaking — it is the turn ending with nothing said and nothing spent.
+
+One consequence worth knowing, because it is about a section you are handed: your record of your
+own lines lists the turns you SPOKE on and no others. It is what you have already told him. It is
+not a count of how these turns have gone.`
+
+/**
  * The heading the caller's champion knowledge arrives under.
  *
  * Plural and unfenced on purpose: the caller (`review/live-coach-knowledge.ts`, on the Node side)
@@ -669,7 +773,7 @@ export interface LiveCoachPromptOptions {
 export const liveCoachSystemPrompt = ({ mode, championKnowledge = "" }: LiveCoachPromptOptions): string =>
 	mode === "fenced" ? LIVE_COACH_SYSTEM_PROMPT
 	: mode === "trusted" ?
-		`${TRUSTED_PROMPT}${championKnowledge ? `${TRUSTED_KNOWLEDGE_HEADING}${championKnowledge}` : ""}`
+		`${TRUSTED_PROMPT}${championKnowledge ? `${TRUSTED_KNOWLEDGE_HEADING}${championKnowledge}` : ""}${TRUSTED_CLOSE}`
 	:	`${CITE_PERSONA}${CITE_RULE}${LIST_HINT}${championKnowledge}`
 
 /**

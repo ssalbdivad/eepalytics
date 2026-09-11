@@ -189,8 +189,9 @@ export interface CoachTurnResult {
 /**
  * Build the SDK model handle. Kept separate so the provider list stays declarative.
  *
- * EXPORTED as `modelHandleFor` for one caller: the judge in `scripts/e2e-real-game.ts`, which
- * grades a coach line and therefore needs its OWN system prompt. It deliberately does not go
+ * EXPORTED as `modelHandleFor` for the callers that are not the live coach — `scripts/postgame-arm.ts`
+ * sends a whole frozen bundle, and the retired `e2e-real-game.ts` judge graded a coach line. Both
+ * need their OWN system prompt. It deliberately does not go
  * through `coachTurn` — `coachTurn`'s whole invariant is that the system prompt is not a
  * parameter, and a judge sharing the coach's prompt would be grading the coach against its own
  * opinion of itself. Sharing only the provider plumbing keeps that invariant intact while still
@@ -218,7 +219,8 @@ export const modelHandleFor = async (p: ProviderInfo, key: string, model: string
  * still not a parameter — the invariant survives the mode picker. Every provider asked with the
  * same mode and champion is asked exactly the same words by construction, so a model comparison
  * cannot accidentally have varied the prompt; and the one axis a caller can move is an arm that
- * `scripts/ablate-autonomy.ts` measured rather than a sentence somebody typed.
+ * the 2026-09-05 ablation measured rather than a sentence somebody typed. Those arms are kept as
+ * data in `src/review/ablation-arms.ts`; the script that ran them is retired.
  */
 export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult> => {
 	const started = Date.now()

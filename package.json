@@ -30,8 +30,7 @@
 		"diagnose:unbacked": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/diagnose-unbacked.ts",
 		"pack": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/game-pack.ts",
 		"smoke:live": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/smoke-live.ts",
-		"probe:vision": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/probe-vision.ts --check bare,blind",
-		"e2e:game": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/e2e-real-game.ts"
+		"read:frame-ablation": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/read-frame-ablation.ts"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "^4.0.49",

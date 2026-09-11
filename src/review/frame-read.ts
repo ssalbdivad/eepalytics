@@ -77,8 +77,8 @@
  * error of 43% of the map's width is a randomly chosen point, the counts settle at four and five,
  * and the zones come back as top lane, mid lane, bot lane. It agreed with its own previous answer
  * about where the enemies were on 5 of 60 pairs of reads of the same picture. That is the same
- * behaviour `scripts/probe-vision.ts` found by removing the image entirely — a plausible answer,
- * six times out of six. So the coach was never going to say anything true about position from the
+ * behaviour the retired `probe-vision.ts` found by removing the image entirely — a plausible
+ * answer, six times out of six. So the coach was never going to say anything true about position from the
  * frame it is being sent, however the prompt were written.
  *
  * **2. Cropping to the minimap and upscaling it is what makes it see, and it is FREE.** Gemini bills

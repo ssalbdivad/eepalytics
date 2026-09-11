@@ -1,12 +1,12 @@
 /**
- * The parts of `scripts/ablate-autonomy.ts` that decide what the ablation MEANS.
+ * The measured ablation arms, pinned — the shipped prompt IS the one the run was taken over.
  *
- * The code under test lives in `scripts/`; the test lives here because `pnpm test` runs the `src`
- * tree, following `src/review/e2e-real-game.test.ts`. Importing the script is free — everything
- * with a side effect is inside `main`, gated on `import.meta.main`.
+ * The arms live in `./ablation-arms.ts` as frozen data. Their driver,
+ * `scripts/ablate-autonomy.ts`, was retired on 2026-09-11 once `bench-stream.ts` superseded it as
+ * an instrument; the TEXT is not superseded by anything, because it is what
+ * `data/eval/ablation-20260905-073028.json` measured.
  *
- * What is worth testing here is not the arithmetic. It is the three claims the run's headline
- * rests on:
+ * Three claims the run's headline rests on, and none of them is arithmetic:
  *
  *   1. arms 3 and 4 see the SAME ground truth as arms 1 and 2, minus exactly the fence — if the
  *      surgery took a fact with it, "the unfenced arm said something new" is meaningless;
@@ -14,31 +14,28 @@
  *      baseline is not the baseline;
  *   3. the champion knowledge handed to the unfenced arms carries no digits, which is the one rule
  *      that keeps `cite-or-quiet` honest about numbers by construction rather than by obedience.
+ *
+ * A reworded arm fails here. That is the feature: it is where somebody decides whether the stored
+ * number still describes the prompt that ships.
  */
 
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import { liveCoachSystemPrompt } from "../shared/live-coach-mode.ts"
-import { liveChampionKnowledge } from "../review/live-coach-knowledge.ts"
+import { liveChampionKnowledge } from "./live-coach-knowledge.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../shared/live-prompt.ts"
 import { renderState } from "../shared/live-state.ts"
 import type { VisionState } from "../shared/live-state.ts"
 import {
-	ARMS,
-	REPAIRS,
-	armTurns,
-	championKnowledge,
+	ABLATION_ARMS as ARMS,
+	ABLATION_PROMPT_FINGERPRINTS as FINGERPRINTS,
+	ABLATION_REPAIRS as REPAIRS,
+	FINGERPRINT_CHAMPION,
+	promptSha,
+	ablationChampionKnowledge as championKnowledge,
 	countRankedFacts,
-	isSpecific,
-	median,
-	pacedRow,
-	picturePhrases,
-	quantile,
-	statsFor,
-	stripRankedList,
-	subjectOf
-} from "../../scripts/ablate-autonomy.ts"
-import type { Cell, CellTurn } from "../../scripts/ablate-autonomy.ts"
+	stripRankedList
+} from "./ablation-arms.ts"
 
 const state = (unseen: string[]): VisionState => ({
 	clock: "9:40",
@@ -186,169 +183,51 @@ test("a champion with no notes contributes nothing rather than an empty heading"
 	assert.equal(championKnowledge("Nobodyatall"), "")
 })
 
-/* ------------------------------------------------------------------ the scoring */
-
-test("isSpecific means the line could not have been said about another game", () => {
-	const roster = ["Lillia", "Urgot", "Briar", "Ornn"]
-	assert.equal(isSpecific("Briar is 23 up on you, finish the clear", roster, "Lillia"), true)
-	assert.equal(isSpecific("Briar is ahead, finish the clear", roster, "Lillia"), true)
-	assert.equal(isSpecific("lock in, you have got this", roster, "Lillia"), false)
-	// His OWN champion does not make a line specific — every line of his is about Lillia.
-	assert.equal(isSpecific("keep the Lillia clear moving", roster, "Lillia"), false)
-})
-
-test("subjectOf partitions rather than overlaps, and prefers the sharper subject", () => {
-	assert.equal(subjectOf("Briar is down 27 seconds, take their camps"), "respawn-window")
-	assert.equal(subjectOf("Drake is back in fifty five seconds, be there"), "objective")
-	assert.equal(subjectOf("you are 30 CS up on Briar, keep the route moving"), "counterpart-race")
-	assert.equal(subjectOf("finish the clear before you look at a lane"), "farm")
-	assert.equal(subjectOf("you have 1017 gold sitting there, go spend it"), "gold")
-	assert.equal(subjectOf("lock in and keep going"), "other")
-})
-
-test("picturePhrases only fires on things the block never states", () => {
-	assert.deepEqual(picturePhrases("Briar is down 27 seconds"), [])
-	assert.equal(picturePhrases("he is on the minimap in your blue side").length > 0, true)
-	assert.equal(picturePhrases("you are in a corridor with no exit").length > 0, true)
-})
-
-/* ----------------------------------------------------------------- the statistics */
-
-const turn = (over: Partial<CellTurn>): CellTurn => ({
-	stateId: "s",
-	tSec: 0,
-	clock: "0:00",
-	rankedFacts: 0,
-	framePath: null,
-	line: "",
-	ok: true,
-	ms: 100,
-	silent: false,
-	faults: [],
-	fabricated: false,
-	inventedChampions: [],
-	unbackedNumbers: [],
-	misattributed: [],
-	movement: [],
-	subject: "other",
-	picturePhrases: [],
-	specific: true,
-	useful: true,
-	...over
-})
-
-test("silences are excluded from every rate, not scored as clean", () => {
-	const cell: Cell = {
-		set: "paired",
-		arm: "x",
-		withFrame: false,
-		turns: [
-			turn({ silent: true, useful: false, specific: false }),
-			turn({ silent: true, useful: false, specific: false }),
-			turn({ line: "a", fabricated: true, faults: ["unbacked-number"], useful: false })
-		]
-	}
-	const s = statsFor(cell, 1)
-	assert.equal(s.spoke, 1)
-	// One spoken line, and it fabricated. A per-TURN rate would have said 33%.
-	assert.equal(s.fabrication.n, 1)
-	assert.equal(s.fabrication.p, 1)
-	assert.equal(s.spokeRate.p, 1 / 3)
-})
-
-test("a failed call is an error, never a PASS", () => {
-	const cell: Cell = {
-		set: "paired",
-		arm: "x",
-		withFrame: false,
-		turns: [turn({ ok: false, silent: true, reason: "429" }), turn({ line: "a" })]
-	}
-	const s = statsFor(cell, 1)
-	assert.equal(s.errors, 1)
-	assert.equal(s.spokeRate.n, 1, "the failed call is not in the denominator")
-})
-
-test("median and quantile survive an empty sample", () => {
-	assert.equal(median([]), 0)
-	assert.equal(quantile([], 0.9), 0)
-	assert.equal(median([3, 1, 2]), 2)
-	assert.equal(quantile([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 0.9), 10)
-})
-
-/* ------------------------------------------------------- the paced re-read */
+/* ------------------------------------------------------- the run's own record */
 
 /**
- * `--paced` re-reads a stored run with the speak floor applied, and it decides the DEFAULT, so the
- * two things it could get wrong quietly are worth pinning: which turn a floor lets through, and
- * what the denominator means once some turns are never asked.
+ * Every arm against the fingerprint the RUN recorded, not against a copy somebody typed.
+ *
+ * This is the pin that survives a `fenced` arm defined by reference. Three arms own their words
+ * here and reproduce the measured sha exactly; two are `LIVE_COACH_SYSTEM_PROMPT` plus a
+ * supplement, and have already drifted from it — see `ABLATION_PROMPT_FINGERPRINTS`. Both columns
+ * are asserted, so a reword fails whichever half it moves, and the drift cannot grow unremarked.
  */
-
-const pacedTurn = (tSec: number, over: Partial<CellTurn> = {}): CellTurn => ({
-	stateId: `s-${tSec}`,
-	tSec,
-	clock: `${Math.floor(tSec / 60)}:${String(tSec % 60).padStart(2, "0")}`,
-	rankedFacts: 0,
-	framePath: null,
-	line: "a line",
-	ok: true,
-	ms: 1,
-	silent: false,
-	faults: [],
-	fabricated: false,
-	inventedChampions: [],
-	unbackedNumbers: [],
-	misattributed: [],
-	movement: [],
-	subject: "farm",
-	picturePhrases: [],
-	specific: true,
-	useful: true,
-	...over
+test("every arm still emits the exact text its fingerprint claims", () => {
+	for (const arm of ARMS) {
+		const fp = FINGERPRINTS[arm.id]
+		assert.ok(fp, `${arm.id} has no recorded fingerprint — add one or the arm is unpinned`)
+		const text = arm.system(FINGERPRINT_CHAMPION)
+		assert.equal(
+			promptSha(text),
+			fp.today.sha,
+			`${arm.id} was reworded: ${fp.today.chars} chars became ${text.length}. If that is deliberate, ` +
+				`re-run the ablation — the stored numbers describe the old text.`
+		)
+		assert.equal(text.length, fp.today.chars, `${arm.id} length moved`)
+	}
 })
 
-test("the floor keeps the EARLIEST line in its window, never the best one", () => {
-	const turns = [0, 20, 40, 60, 80].map(t => pacedTurn(t))
-	const r = pacedRow("x", turns, 45)
-	// 0 speaks; 20 and 40 are inside the floor; 60 is the next one asked at all.
-	assert.deepEqual(r.spokenAt, [0, 60])
-	assert.equal(r.asked, 2, "a suppressed turn is never sent to the model")
-	assert.equal(r.offered, 5)
+test("the three arms that own their words are byte-identical to the measured run", () => {
+	for (const id of ["cite-or-quiet", "free", "shipped"]) {
+		const fp = FINGERPRINTS[id]!
+		assert.equal(fp.drift, "", `${id} is supposed to be frozen and now claims a drift`)
+		assert.equal(fp.today.sha, fp.measured.sha, `${id} no longer matches the 2026-09-05 run`)
+		assert.equal(fp.today.chars, fp.measured.chars)
+	}
 })
 
-test("PASS costs nothing — a silent turn does not start the floor running", () => {
-	const turns = [pacedTurn(0, { silent: true, useful: false }), pacedTurn(20)]
-	const r = pacedRow("x", turns, 45)
-	assert.deepEqual(r.spokenAt, [20], "the PASS at 0 must not have blocked the line at 20")
-	assert.equal(r.asked, 2)
-	assert.equal(r.spoke, 1)
-})
-
-test("a paced rate is out of the turns actually ASKED, not the whole grid", () => {
-	const turns = [0, 20, 40, 60].map(t => pacedTurn(t, t === 60 ? { silent: true, useful: false } : {}))
-	const r = pacedRow("x", turns, 45)
-	assert.equal(r.offered, 4)
-	assert.equal(r.asked, 2)
-	assert.equal(r.spokeRate.n, 2, "the 20s and 40s turns were never sent, so they are not PASSes")
-	assert.equal(r.spokeRate.p, 0.5)
-})
-
-test("the unpaced row is the same transcript with no floor", () => {
-	const turns = [0, 20, 40].map(t => pacedTurn(t))
-	const r = pacedRow("x", turns, null)
-	assert.equal(r.paced, false)
-	assert.equal(r.spoke, 3)
-	assert.equal(r.asked, 3)
-	assert.equal(r.usefulLines, 3)
-})
-
-test("armTurns takes one turn per game clock, prefers the frame-bearing cell, and sorts", () => {
-	const cells: Cell[] = [
-		{ set: "paired", arm: "a", withFrame: true, turns: [pacedTurn(40, { line: "with picture" })] },
-		{ set: "paired", arm: "a", withFrame: false, turns: [pacedTurn(40, { line: "blind" })] },
-		{ set: "late", arm: "a", withFrame: false, turns: [pacedTurn(80), pacedTurn(60)] },
-		{ set: "late", arm: "b", withFrame: false, turns: [pacedTurn(10, { line: "other arm" })] }
-	]
-	const t = armTurns(cells, "a")
-	assert.deepEqual(t.map(x => x.tSec), [40, 60, 80])
-	assert.equal(t[0]!.line, "with picture", "the blind copy of a paired state is a second condition, not a second turn")
+/*
+ * The honest half. `fenced` points AT `live-prompt.ts` rather than holding a copy of it, so it
+ * cannot drift from itself and nothing noticed when that module grew 3,692 characters. The
+ * assertion is therefore that the drift is EXACTLY the known one: re-freezing the old text would
+ * quietly change what `--arms fenced` means in the next run to make an old number look current.
+ */
+test("the two arms that point at the live prompt are drifted, and say so", () => {
+	for (const id of ["fenced", "fenced-see"]) {
+		const fp = FINGERPRINTS[id]!
+		assert.notEqual(fp.drift, "", `${id} must name why it is not the measured text`)
+		assert.notEqual(fp.today.sha, fp.measured.sha, `${id} matches the run again — delete the drift note`)
+		assert.equal(fp.today.chars - fp.measured.chars, 3692, `${id}'s drift from the measured text moved`)
+	}
 })

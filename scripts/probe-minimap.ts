@@ -1,6 +1,16 @@
 /**
  * What can actually be read off the minimap, with numbers.
  *
+ * ## KEPT in the 2026-09-11 harness consolidation, and this is the question it still answers
+ *
+ * Six harnesses were retired that day because `bench-stream.ts` asks their question better. This
+ * one survived because nothing else asks its question at all: **how accurate is a minimap read,
+ * against ground truth the model never saw and against itself?** `src/review/read-minimap.ts` and
+ * `src/daemon/minimap-watch.ts` both SHIP on the answer, and a shipped channel whose error rate
+ * cannot be re-derived is a channel nobody can argue with. `bench-stream` consumes the read; it
+ * does not grade it. `minimap-track.ts` produces a whole-game position track; it does not grade it
+ * either. Its scorer is pinned in `scripts/probe-minimap.test.ts`, beside it.
+ *
  * ## The question
  *
  * `src/review/frame-read.ts` explains why a vision pre-pass is worth building at all: the coach
@@ -141,7 +151,7 @@ export const blockClockSec = (block: string): number | null => {
 /**
  * The fence's five facts, read out of a block the daemon wrote.
  *
- * A regex over a rendered block is the same hazard `probe-vision.ts` records: a silent no-match
+ * A regex over a rendered block is the same hazard the retired `probe-vision.ts` recorded: a silent no-match
  * would leave the probe scoring reads against a truth of zeroes and reporting a fabrication rate of
  * zero. So this returns null rather than a default when any line is missing, the caller drops the
  * frame, and the test pins it against real block text.
@@ -368,7 +378,7 @@ const ask = async (model: string, key: string, frame: Frame, condition: string):
 		}
 	} catch (e) {
 		/*
-		 * A thrown call is a row, never the end of the run. `probe-vision.ts` records the same
+		 * A thrown call is a row, never the end of the run. The retired `probe-vision.ts` recorded the same
 		 * lesson: one transient socket discarded every result already measured.
 		 */
 		return { json: null, ms: Date.now() - started, imageTokens: 0, error: String(e) }
