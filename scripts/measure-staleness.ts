@@ -30,7 +30,7 @@
 
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from "node:fs"
 import { DATA_DIR } from "../src/shared/constants.ts"
-import { coachStateFrom } from "./eval-useful.ts"
+import { coachStateFrom, readVerbatim } from "./lib/stream.ts"
 import { premiseOf, speechDurationSec, stalenessOf, stateAt } from "../src/analysis/timeliness.ts"
 import type { CoachState, PremiseKind, StaleKind } from "../src/analysis/timeliness.ts"
 
@@ -109,10 +109,8 @@ const main = async (): Promise<void> => {
 		const mod = (await import(
 			`../src/server/routes/live.ts?staleness=${game}`
 		)) as typeof import("../src/server/routes/live.ts")
-		const rows = readFileSync(`${dir}/${file}`, "utf8")
-			.split("\n")
-			.filter(l => l.trim() !== "")
-			.map(l => JSON.parse(l) as { atMs: number; gameTime: number; data: unknown })
+		// One reader for every recorded sample in `scripts/` — see `lib/stream.ts`.
+		const rows = readVerbatim(`${dir}/${file}`)
 		const states: CoachState[] = []
 		for (const row of rows) {
 			const s = coachStateFrom(row)

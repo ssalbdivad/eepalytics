@@ -209,56 +209,18 @@ export const readFixture = (path: string): Fixture => {
 
 /* ===================================================================== replay */
 
-export interface RawSample {
-	/** 1-based line in the ndjson, so a checkpoint points at bytes a human can go read. */
-	line: number
-	atMs: number
-	gameTime: number
-	data: unknown
-}
-
 /**
- * The verbatim stream, keeping line numbers.
+ * The ndjson reader and the historical farm baseline now live in `scripts/lib/stream.ts`.
  *
- * Duplicated from `scripts/build-fixture.ts` on purpose: `readSamples` in the sampler drops torn
- * lines silently and returns no line numbers, and `sampleLine` is the fixture's join key.
+ * They were defined here and imported UPWARD by the library, by `game-pack.ts` and by
+ * `minimap-track.ts` — a driver that four other files depended on. Same functions, moved down
+ * one level; re-exported here so `src/review/e2e-real-game.test.ts` keeps pinning them from the
+ * file that owns the fixture format they serve.
  */
-export const readVerbatim = (path: string): RawSample[] => {
-	const out: RawSample[] = []
-	const lines = readFileSync(path, "utf8").split("\n")
-	for (let i = 0; i < lines.length; i++) {
-		const raw = lines[i]!
-		if (raw.trim() === "") continue
-		try {
-			const o = JSON.parse(raw) as { atMs: number; gameTime: number; data: unknown }
-			out.push({ line: i + 1, atMs: o.atMs, gameTime: o.gameTime, data: o.data })
-		} catch {
-			// The tail of a killed daemon. Everything before it is still good.
-		}
-	}
-	return out
-}
-
-/**
- * His rolling farm average as the daemon would have had it DURING this game.
- *
- * Games created after this one are excluded, not merely this game itself, because the corpus on
- * disk keeps growing and letting the future set the average would make the block's
- * `Farm baseline:` line a number that never existed at the time. Same rule, same numbers, as
- * `scripts/build-fixture.ts` — and if the two ever disagree the block assertion below fires.
- */
-export const baselineDuring = (gameId: string) => {
-	const db = new DatabaseSync(DB_PATH, { readOnly: true })
-	const row = db.prepare("SELECT gameCreationMs FROM game WHERE gameId = ?").get(Number(gameId)) as
-		| { gameCreationMs: number | bigint }
-		| undefined
-	db.close()
-	const createdMs = Number(row?.gameCreationMs ?? 0)
-	const corpus = loadCorpus(200)
-		.filter(e => createdMs === 0 || Number(e.row.gameCreationMs) < createdMs)
-		.slice(0, 20)
-	return { baseline: corpus.length > 0 ? baselineFromRows(perGameMetrics(corpus)) : null, games: corpus.length }
-}
+import { baselineDuring, championVocabulary, readVerbatim } from "./lib/stream.ts"
+import type { RawSample } from "./lib/stream.ts"
+export { baselineDuring, readVerbatim }
+export type { RawSample }
 
 export interface ReplayedState {
 	block: string
@@ -470,25 +432,6 @@ export interface TurnResult {
 const clockText = (sec: number): string =>
 	`${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(Math.floor(sec % 60)).padStart(2, "0")}`
 
-/** Every champion the client knows, for the invented-champion check. Empty disables that fault. */
-const championVocabulary = (): { names: string[]; source: string } => {
-	try {
-		const db = new DatabaseSync(DB_PATH, { readOnly: true })
-		const row = db.prepare("SELECT value FROM kv WHERE key = 'championNames'").get() as
-			| { value: string }
-			| undefined
-		db.close()
-		if (row) {
-			const names = Object.values(JSON.parse(row.value) as Record<string, string>).filter(
-				n => typeof n === "string" && n !== ""
-			)
-			if (names.length > 0) return { names, source: `${DB_PATH} kv.championNames` }
-		}
-	} catch {
-		/* the daemon may be mid-write, or the DB may not exist in this checkout */
-	}
-	return { names: [], source: "" }
-}
 
 /* ====================================================================== judge */
 

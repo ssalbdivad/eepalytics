@@ -3,8 +3,8 @@
  *
  * ## Why a new instrument
  *
- * Everything this repo measures about the live coach is measured on TEXT: `coach-score.ts` reads
- * the transcript, `eval-live.ts` judges the transcript, `bench-providers.ts` compares transcripts.
+ * Everything else this repo measures about the live coach is measured on TEXT: `coach-score.ts`
+ * reads the transcript, `blind-judge.ts` judges it, `bench-stream.ts` compares transcripts.
  * The player's complaint is about AUDIO — "52s" heard as "fifty two seds", champion names
  * "insanely wrong" — and a transcript cannot see that. `outputAudioTranscription` is Google's own
  * read-back of the audio and it NORMALISES: it writes "52 seconds" whether the voice said

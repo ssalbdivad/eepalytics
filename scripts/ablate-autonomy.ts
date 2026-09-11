@@ -1,6 +1,18 @@
 /**
  * How much usefulness is the fence costing?
  *
+ * ## THE ANSWER CHANGED WHAT SHIPS — read this before the design notes below
+ *
+ * This run is why `DEFAULT_LIVE_COACH_MODE` is `trusted` and not `fenced`. Everything written
+ * below in the present tense — "the shipped live coach is FENCED", arm 1 "exactly what ships" —
+ * describes the app AS IT WAS WHEN THIS WAS WRITTEN, and is kept that way on purpose: a harness
+ * rewritten after its own result no longer documents the thing it measured. `fenced` spoke 11 of
+ * 102 turns, `cite-or-quiet` 94 of 102 with a TIGHTER fabrication interval, and the fence came
+ * out. See `src/shared/live-coach-mode.ts` for what ships now.
+ *
+ * This script is also the only remaining driver of `src/shared/live-prompt.ts`
+ * (`--arms fenced`); `scripts/eval-live.ts`, which used to be, is deleted.
+ *
  * ## The question
  *
  * The shipped live coach is FENCED: `analysis/live-facts.ts` computes and ranks every candidate
@@ -98,6 +110,7 @@
 import { createHash } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { championVocabulary } from "./lib/stream.ts"
 import { DATA_DIR, DB_PATH } from "../src/shared/constants.ts"
 import { renderState } from "../src/shared/live-state.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../src/shared/live-prompt.ts"
@@ -753,24 +766,6 @@ const runTurn = async (system: string, block: string, frame: string | null): Pro
 
 /* ==================================================================== the cells */
 
-const championVocabulary = (): { names: string[]; source: string } => {
-	try {
-		const db = new DatabaseSync(DB_PATH, { readOnly: true })
-		const row = db.prepare("SELECT value FROM kv WHERE key = 'championNames'").get() as
-			| { value: string }
-			| undefined
-		db.close()
-		if (row) {
-			const names = Object.values(JSON.parse(row.value) as Record<string, string>).filter(
-				n => typeof n === "string" && n !== ""
-			)
-			if (names.length > 0) return { names, source: `${DB_PATH} kv.championNames` }
-		}
-	} catch {
-		/* the daemon may be mid-write */
-	}
-	return { names: [], source: "" }
-}
 
 export interface CellTurn {
 	stateId: string

@@ -97,11 +97,6 @@ const has = (name: string): boolean => argv.includes(`--${name}`)
 
 /* ================================================== the one reimplementation */
 
-const OBJECTIVE_EVENTS = new Set(["DragonKill", "BaronKill", "HeraldKill"])
-const DRAGON_RESPAWN_SEC = 300
-const BARON_RESPAWN_SEC = 360
-const HERALD_RESPAWN_SEC = 360
-
 interface RawSample {
 	atMs: number
 	gameTime: number
@@ -109,110 +104,14 @@ interface RawSample {
 }
 
 /**
- * The recorded client payload, untyped on purpose.
+ * `coachStateFrom` now lives in `scripts/lib/stream.ts`.
  *
- * `schema/live.ts` types what the app CONSUMES; a recorded sample is whatever the client wrote on
- * the patch it was running, and a harness that refuses to parse an old sample because a field
- * moved would throw away the only real games on disk. `buildLiveStateForBench` does the same thing
- * one line later with its own cast.
+ * It was defined here and imported upward by the library, which made a superseded driver a
+ * dependency of the one place every harness joins frames to samples. Same function, moved down;
+ * re-exported so `src/analysis/eval-useful.test.ts` keeps pinning it here.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Any = any
-
-const lastEventTime = (d: Any, name: string, respawn: number, now: number): number | null => {
-	const ev: Any[] = d?.events?.Events ?? []
-	for (let i = ev.length - 1; i >= 0; i--)
-		if (ev[i].EventName === name && ev[i].EventTime !== undefined)
-			return Math.round(ev[i].EventTime + respawn - now)
-	return null
-}
-
-/**
- * The raw sample as the STALENESS check needs it.
- *
- * This is the only thing in this file that restates logic the daemon owns, and it is deliberate:
- * `timeliness.ts` must be able to check a premise against a state the RANKER did not produce, or
- * it is checking the ranker's opinion of the world against itself. Structurally `CoachState` is a
- * subset of `FactInput`, so the two agree by construction on every field that matters; what is not
- * shared is the derivation, which is the point.
- *
- * `pace` is null for the same reason `buildLiveStateForBench` leaves it null: a recorded sample
- * carries the client's facts and not his rolling average, so the two CS rules are structurally
- * absent from any replay. That is a real hole in this instrument and it is stated in the report
- * rather than hidden — six of the nine lines he quit on were exactly those rules.
- */
-export const coachStateFrom = (row: RawSample): CoachState | null => {
-	const d = row.data as Any
-	const id = d?.activePlayer?.riotId ?? d?.activePlayer?.summonerName ?? ""
-	const me = (d?.allPlayers ?? []).find((p: Any) => (p.riotId ?? p.summonerName ?? "") === id)
-	if (!me) return null
-	const mine = me.team
-	const others = (d.allPlayers ?? []).filter((p: Any) => p !== me)
-	const enemies = others.filter((p: Any) => p.team !== mine)
-	// Declared position first, Smite second — the same order `live.ts` uses, and for the same reason.
-	const jungler =
-		enemies.find((p: Any) => (p.position ?? "").toUpperCase() === "JUNGLE") ??
-		enemies.find((p: Any) =>
-			[
-				p.summonerSpells?.summonerSpellOne?.displayName,
-				p.summonerSpells?.summonerSpellTwo?.displayName
-			].some((n: string) => (n ?? "").toLowerCase() === "smite")
-		)
-	const now = row.gameTime
-	let mineN = 0
-	let theirs = 0
-	for (const e of (d.events?.Events ?? []) as Any[]) {
-		if (!OBJECTIVE_EVENTS.has(e.EventName)) continue
-		const k = (d.allPlayers ?? []).find(
-			(p: Any) => p.riotId === e.KillerName || p.summonerName === e.KillerName
-		)
-		if (!k) continue
-		if (k.team === mine) mineN += 1
-		else theirs += 1
-	}
-	return {
-		nowSec: now,
-		meDeadForSec: me.isDead ? (me.respawnTimer ?? 0) : null,
-		deadEnemies: enemies
-			.filter((p: Any) => p.isDead && (p.respawnTimer ?? 0) > 0)
-			.map((p: Any) => ({
-				champion: p.championName ?? "an enemy",
-				respawnSec: p.respawnTimer ?? 0,
-				isJungler: (p.position ?? "").toUpperCase() === "JUNGLE"
-			})),
-		currentGold: d.activePlayer?.currentGold ?? null,
-		pace: null,
-		myCs: me.scores?.creepScore,
-		meLevel: me.level,
-		counterpart:
-			jungler ?
-				{ champion: jungler.championName, cs: jungler.scores?.creepScore, level: jungler.level }
-			:	null,
-		counterpartItems: ((jungler?.items ?? []) as Any[])
-			.filter(i => !i.consumable && (i.price ?? 0) >= 2000 && i.displayName)
-			.map(i => i.displayName as string),
-		objectiveCount: { mine: mineN, theirs },
-		enemyObjectives: ((d.events?.Events ?? []) as Any[])
-			.filter(e => OBJECTIVE_EVENTS.has(e.EventName))
-			.filter(e => {
-				const k = (d.allPlayers ?? []).find(
-					(p: Any) => (p.riotId ?? p.summonerName) === e.KillerName
-				)
-				// An unresolvable killer counts for nobody, never against him.
-				return k ? k.team !== mine : false
-			})
-			.map(e => ({ name: e.EventName as string, atSec: (e.EventTime ?? 0) as number })),
-		alliesAlive:
-			(me.isDead ? 0 : 1) + others.filter((p: Any) => p.team === mine && !p.isDead).length,
-		enemiesAlive: enemies.filter((p: Any) => !p.isDead).length,
-		drakeBackInSec: lastEventTime(d, "DragonKill", DRAGON_RESPAWN_SEC, now),
-		baronBackInSec: lastEventTime(d, "BaronKill", BARON_RESPAWN_SEC, now),
-		heraldBackInSec: lastEventTime(d, "HeraldKill", HERALD_RESPAWN_SEC, now),
-		killSecs: ((d.events?.Events ?? []) as Any[])
-			.filter(e => e.EventName === "ChampionKill")
-			.map(e => (e.EventTime ?? 0) as number)
-	}
-}
+import { coachStateFrom } from "./lib/stream.ts"
+export { coachStateFrom }
 
 /* ==================================================================== replay */
 

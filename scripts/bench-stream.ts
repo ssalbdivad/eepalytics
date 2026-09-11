@@ -105,6 +105,11 @@
  *     ... scripts/bench-stream.ts --window latest --arms mock,gemini-http,anthropic --turns 12
  *
  *     --window <id|all|latest>   which paired frame+sample window to replay (default: latest)
+ *     --games <all|text|paired|ids>  MULTI-GAME: replay one window per GAME, pooled AND per game.
+ *                                `all` is every benchable game on disk (paired first, then the
+ *                                text-only ones); `text`/`paired` are the two halves; anything else
+ *                                is a comma list of gameIds or window ids. Overrides --window, and
+ *                                with no --turns it sends every turn the detector raises
  *     --list                     print the discovered windows and the arm keys, then exit
  *     --arms a,b,c               arm ids; `@mode` picks the architecture (`anthropic@trusted`),
  *                                suffix +noframe for a blind twin of the same arm
@@ -139,7 +144,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, dirname } from "node:path"
 import { DATA_DIR } from "../src/shared/constants.ts"
-import { buildStream, discoverWindows } from "./lib/stream.ts"
+import { buildStream, discoverBenchable, discoverWindows } from "./lib/stream.ts"
+import type { RejectedSegment } from "./lib/stream.ts"
 import { HEARTBEAT_SEC } from "../src/analysis/live-events.ts"
 import { execFileSync } from "node:child_process"
 import { jpegSize } from "./lib/stream.ts"
@@ -156,7 +162,7 @@ import type { FrameRead, FrameReadXY, FrameTruth } from "../src/review/frame-rea
 import { WATCH_EVERY_SEC, admit } from "../src/daemon/minimap-watch.ts"
 import { FRAME_FRESH_SEC } from "../src/analysis/live-facts.ts"
 import { DEFAULT_MAX_SKEW_MS, nearestSample } from "./lib/stream.ts"
-import { readVerbatim } from "./e2e-real-game.ts"
+import { readVerbatim } from "./lib/stream.ts"
 import type { ReachPosition } from "../src/analysis/reach-live.ts"
 import { TEAM_BLUE, TEAM_RED } from "../src/shared/constants.ts"
 import type { Coarse } from "../src/review/frame-read.ts"
@@ -1418,6 +1424,15 @@ interface RunFile {
 		gameId: string
 		champion: string
 		sampleFile: string
+		/**
+		 * `paired` (frames and samples) or `text-only` (samples, no frames). Absent on every run
+		 * written before 2026-09-11, all of which were paired — `summarize` reads it that way.
+		 */
+		kind?: "paired" | "text-only"
+		/** The game's own length. Not `tSecTo`, which on a paired window is the span of the FRAMES. */
+		gameDurationSec?: number
+		/** The enemy jungler, as `buildBrief` locked onto him. Null when no turn could name one. */
+		counterpart?: string | null
 		medianSkewMs: number
 		tSecFrom: number
 		tSecTo: number
@@ -1427,8 +1442,14 @@ interface RunFile {
 		 * Everything `buildStream` could not fix and therefore SAID. Kept in the file as well as
 		 * printed: a caveat that lives only in a terminal buffer is a caveat that is gone by the
 		 * time anyone reads the run back.
+		 *
+		 * OPTIONAL because the runs from 2026-09-08 predate the field, and the type saying otherwise
+		 * was not free: `printWhat` read `w.warnings.some(...)` straight off it, so `--summarize` on
+		 * any of those stored runs died with `Cannot read properties of undefined` after printing
+		 * four lines of the report. A measurement that cannot be re-read is a measurement that was
+		 * not kept.
 		 */
-		warnings: string[]
+		warnings?: string[]
 		turns: {
 			index: number
 			atSec: number
@@ -1493,7 +1514,10 @@ const printWhat = (run: RunFile, arms: readonly Arm[], calls: number): void => {
 				`\n    ${w.turns.length} turns ${clockOf(w.turns[0]?.atSec ?? 0)}–${clockOf(w.turns[w.turns.length - 1]?.atSec ?? 0)}` +
 				` of a window covering ${clockOf(w.tSecFrom)}–${clockOf(w.tSecTo)}` +
 				`\n    ${w.stepped} samples stepped through the ranker (its rate limiting is memory — a replay that skips turns is a different coach)` +
-				`\n    frames: ${w.turns.filter(t => t.framePath !== null).length}/${w.turns.length} turns carry a real paired frame, median skew ${w.medianSkewMs}ms` +
+				(w.kind === "text-only" ?
+					`\n    TEXT-ONLY: this game has no journal frames at all, so no turn carries an image. The` +
+					`\n      block, the ranked list and the brief are the shipped ones; the frame axis is not measured here.`
+				:	`\n    frames: ${w.turns.filter(t => t.framePath !== null).length}/${w.turns.length} turns carry a real paired frame, median skew ${w.medianSkewMs}ms`) +
 				`\n    source: ${w.sampleFile}`
 		)
 		/*
@@ -1526,7 +1550,7 @@ const printWhat = (run: RunFile, arms: readonly Arm[], calls: number): void => {
 					// started emitting it, and is printed by the loop below. An older run has only
 					// this line, so the reason goes here rather than pointing at a warning that
 					// is not in the file.
-					(w.warnings.some(x => x.includes("Farm baseline: NONE")) ?
+					((w.warnings ?? []).some(x => x.includes("Farm baseline: NONE")) ?
 						`\n       (Why, in full, in the stored warning below.)`
 					:	`\n       \`paceReading\` returns null before 4:00 outside a 10/14/20-minute checkpoint` +
 						`\n       window, so the block carried no average regardless of the corpus.`)
@@ -1538,7 +1562,7 @@ const printWhat = (run: RunFile, arms: readonly Arm[], calls: number): void => {
 		 * it, so a fight at 6:12 of window two is silently suppressed by a fight at 6:12 of window
 		 * one. Swallowing that would make an arm look quiet when the harness was the quiet one.
 		 */
-		for (const warning of w.warnings)
+		for (const warning of w.warnings ?? [])
 			console.log(
 				`    !! ${warning
 					.split("\n")
@@ -1589,11 +1613,34 @@ const emptyListMeans = (mode: LiveCoachMode): string =>
 		" — trusted HAS no ranked list by design, so `prioritised` is unmeasured, never failed"
 	:	" — cite-or-quiet does NOT make this a PASS: the block invites a line from the block itself"
 
+/**
+ * The point past which printing every line stops being evidence and starts being a wall.
+ *
+ * A one- or two-game run prints in full, which is what every graded run on disk did and what the
+ * section exists for: every bug this catches survived a green percentage, and the only way to catch
+ * it was to read the sentences. Seventeen games at 530 turns is 2,100 lines of terminal, which
+ * nobody reads and which pushes the tables it is supposed to qualify off the top of the scrollback.
+ * Past the threshold the first game prints in full and the rest are named, with the one command
+ * that shows them — never summarised, never sampled, because a "representative" selection made by
+ * this script is this script's opinion of its own output.
+ */
+const LINES_IN_FULL_WINDOWS = 2
+
 /** 2. THE LINES. First, and in full, because every bug this catches survived a green percentage. */
 const printLines = (run: RunFile, scores: readonly ArmScore[], verbose: boolean): void => {
 	console.log(`\n${RULE}\nTHE LINES — the same instant, every arm, side by side\n${RULE}`)
 	const width = Math.max(...scores.map(s => s.arm.id.length), 8)
-	for (const w of run.windows) {
+	const full = verbose || run.windows.length <= LINES_IN_FULL_WINDOWS
+	const shown = full ? run.windows : run.windows.slice(0, 1)
+	if (!full)
+		console.log(
+			`\n  ${run.windows.length} games in this run. Printing ${shown[0]?.id ?? ""} in full; the other` +
+				`\n  ${run.windows.length - 1} games' lines are in the run JSON, every one of them, and print with` +
+				`\n      --summarize <that file> --verbose` +
+				`\n  Nothing is sampled or summarised here — a "representative" selection would be this script's` +
+				`\n  opinion of its own output, which is the one thing this section exists to not be.`
+		)
+	for (const w of shown) {
 		if (run.windows.length > 1) console.log(`\n### ${w.id}`)
 		for (const t of w.turns) {
 			console.log(
@@ -1801,6 +1848,135 @@ const printAxes = (scores: readonly ArmScore[], run: RunFile): void => {
 	}
 }
 
+/**
+ * 4b. PER GAME, beside the pooled figure — the section a fifteen-game run exists for.
+ *
+ * ## Why a pooled rate on its own is not an answer
+ *
+ * Every headline this app has produced was a pooled rate over one or two games, and a pooled rate
+ * is a weighted average whose weights nobody chose. A 43-minute game raises about twice as many
+ * turns as a 24-minute one, so it carries about twice the vote; an arm that is excellent on the
+ * long games and broken on the short ones reports the same number as an arm that is even. Worse,
+ * the failure this instrument is meant to catch — a game where the coach fell apart — is exactly
+ * the failure pooling launders, because fifteen games of 70% and one of 0% pool to 66%.
+ *
+ * So both are printed, side by side, and the POOLED row carries the Wilson interval while the
+ * per-game rows do not. That asymmetry is deliberate: an interval on a 20-line game is so wide it
+ * invites a claim it cannot support, and the per-game rows are here to be READ as a spread, not
+ * tested one at a time. The spread line under the table is the honest summary of them — worst game,
+ * best game, and how many games could be measured on that axis at all.
+ *
+ * ## What a row is
+ *
+ * One transcript, scored by `scoreTranscript` as its own transcript — never pooled into a
+ * neighbouring game's. `not-generic` and `not-redundant` both look for a near-duplicate elsewhere
+ * in the transcript they are handed, and two lines from two different games are not a redundancy he
+ * ever heard: pooling the lines would invent one. `scoreArm` already scores this way, per window
+ * and per repetition; this section just stops throwing the per-window verdicts away.
+ */
+const printPerGame = (scores: readonly ArmScore[], run: RunFile): void => {
+	if (run.windows.length < 2) return
+	console.log(`\n${RULE}\nPER GAME — the pooled rate above is a weighted average; this is the spread it hides\n${RULE}`)
+	const byId = new Map(run.windows.map(w => [w.id, w]))
+	for (const s of scores) {
+		console.log(`\n  ${s.arm.id}`)
+		console.log(
+			`  ${pad("game", 12)}${pad("champ", 7)}${pad("vs", 13)}${pad("src", 7)}${padL("len", 6)}${padL("turns", 6)}` +
+				`${padL("spoke", 6)}${padL("pass", 5)}${padL("err", 4)}  ${AXES.map(a => pad(a.slice(0, 11), 13)).join("")}${pad("verdict", 8)}`
+		)
+		for (const pw of s.perWindow) {
+			// `#r2` is appended by `scoreArm` when a run has repeats; the window is the part before it.
+			const w = byId.get(pw.windowId.replace(/#r\d+$/, ""))
+			const mine = s.records.filter(r => r.windowId === (w?.id ?? pw.windowId))
+			const ok = mine.filter(r => r.error === null)
+			/*
+			 * `src` is in the table and not only in the corpus print above it, because the two rows
+			 * that read oddest in this section are the two the reader most needs a reason for: a
+			 * text-only game cannot move the frame axis at all, and a game whose samples start late
+			 * carries a coach memory that is not the coach's. Both are properties of the ROW.
+			 */
+			const src =
+				w?.kind === "text-only" ?
+					(w.tSecFrom ?? 0) > 30 ? "text!"
+					:	"text"
+				:	"paired"
+			console.log(
+				`  ${pad(w?.gameId ?? pw.windowId, 12)}${pad(w?.champion ?? "", 7)}${pad(w?.counterpart ?? "?", 13)}${pad(src, 7)}` +
+					`${padL(clockOf(w?.gameDurationSec ?? 0), 6)}${padL(String(mine.length), 6)}` +
+					`${padL(String(ok.filter(r => !isSilence(r.text)).length), 6)}` +
+					`${padL(String(ok.filter(r => isSilence(r.text)).length), 5)}` +
+					`${padL(String(mine.length - ok.length), 4)}  ` +
+					AXES.map(a => {
+						const i = pw.verdict.rates[a].interval
+						return pad(i.n === 0 ? "--" : `${i.k}/${i.n} ${pct(i)}`, 13)
+					}).join("") +
+					pad(pw.verdict.verdict, 8)
+			)
+		}
+		console.log(
+			`  ${pad("POOLED", 12)}${pad("", 7)}${pad("", 13)}${pad("", 7)}${padL("", 6)}${padL(String(s.attempted), 6)}` +
+				`${padL(String(s.spoken), 6)}${padL(String(s.silent), 5)}${padL(String(s.errors), 4)}  ` +
+				AXES.map(a => pad(`${s.axes[a].k}/${s.axes[a].n} ${pct(s.axes[a])}`, 13)).join("")
+		)
+		console.log(
+			`  ${pad("  95% CI", 12)}${pad("", 7)}${pad("", 13)}${pad("", 7)}${padL("", 6)}${padL("", 6)}${padL("", 6)}${padL("", 5)}${padL("", 4)}  ` +
+				AXES.map(a => pad(ci(s.axes[a]) || "--", 13)).join("")
+		)
+		/*
+		 * THE SPREAD, which is the whole reason this section exists.
+		 *
+		 * A game with n = 0 on an axis is not a zero — it is a game where the axis could not be
+		 * checked — so it is excluded from the min/max and counted separately. Folding it in as 0%
+		 * would report a collapse that is really an absence of evidence, which is the same mistake
+		 * as scoring `unmeasured` as a fail.
+		 */
+		for (const a of AXES) {
+			const usable = s.perWindow.filter(pw => pw.verdict.rates[a].interval.n > 0)
+			if (usable.length === 0) {
+				console.log(`  ${pad(a, 15)}not measured in any game (n = 0 everywhere) — this says nothing about the arm.`)
+				continue
+			}
+			const ps = usable.map(pw => pw.verdict.rates[a].interval.p)
+			const lo = Math.min(...ps)
+			const hi = Math.max(...ps)
+			const worst = usable.find(pw => pw.verdict.rates[a].interval.p === lo)!
+			const best = usable.find(pw => pw.verdict.rates[a].interval.p === hi)!
+			const wid = byId.get(worst.windowId.replace(/#r\d+$/, ""))
+			const bid = byId.get(best.windowId.replace(/#r\d+$/, ""))
+			console.log(
+				`  ${pad(a, 15)}${padL(`${(100 * lo).toFixed(0)}%`, 5)} (${wid?.gameId ?? worst.windowId}) … ` +
+					`${padL(`${(100 * hi).toFixed(0)}%`, 4)} (${bid?.gameId ?? best.windowId})` +
+					`  over ${usable.length} of ${s.perWindow.length} game(s)` +
+					(usable.length < s.perWindow.length ?
+						`; ${s.perWindow.length - usable.length} could not be measured on this axis`
+					:	"")
+			)
+		}
+		const poor = s.perWindow.filter(pw => pw.verdict.verdict === "poor")
+		if (poor.length > 0) {
+			console.log(
+				`\n    ${poor.length} of ${s.perWindow.length} game(s) scored "poor" as a TRANSCRIPT — a judgment about the` +
+					`\n    whole sitting, not about any one line. Every threshold that was crossed, with its number:`
+			)
+			for (const pw of poor) {
+				const w = byId.get(pw.windowId.replace(/#r\d+$/, ""))
+				console.log(`      ${w?.gameId ?? pw.windowId}  ${pw.verdict.spoken} lines, ${pw.verdict.linesPerMin.toFixed(2)}/min`)
+				for (const problem of pw.verdict.problems) console.log(`        · ${wrap(problem, 84, " ".repeat(10))}`)
+			}
+		}
+	}
+	console.log(
+		`\n  src: "paired" has journal frames, "text" has none (so the frame axis is not measured on it),` +
+			`\n  "text!" additionally means the sampler started mid-game, so that row's coach MEMORY is not` +
+			`\n  the live coach's — every announce-once and cooldown in \`buildFacts\` is missing its first` +
+			`\n  minutes. Read a low rate there as partly the recording, not only the arm.` +
+			`\n\n  A per-game row has no interval on purpose: on a 20-line game it is wide enough to cover almost` +
+			`\n  any claim, and the rows are here to be read as a SPREAD. The interval is on the POOLED row, and` +
+			`\n  the pooled row is a weighted average — a 43-minute game raises about twice the turns of a` +
+			`\n  24-minute one and carries about twice the vote.`
+	)
+}
+
 /** 5. Errors and silences. An error is not a silence and must never be scored as one. */
 const printFailures = (scores: readonly ArmScore[]): void => {
 	console.log(`\n${RULE}\nERRORS AND SILENCES\n${RULE}\n`)
@@ -1916,6 +2092,90 @@ const sheetLines = (run: RunFile, records: readonly CallRecord[]): SheetLine[] =
 	})
 }
 
+/* ================================================================== corpus */
+
+/**
+ * What is on disk, what is benchable, and WHAT IS NOT — the last of those being the point.
+ *
+ * Printed by `--list`, and again at the top of any `--games` run, because a multi-game table with
+ * fifteen rows invites exactly one question — "where are the other two?" — and the answer has to be
+ * on the same page as the table. Every row in the refused section names a file a human can open.
+ */
+const printCorpus = (
+	paired: readonly StreamWindow[],
+	textOnly: readonly StreamWindow[],
+	rejected: readonly RejectedSegment[],
+	selected?: ReadonlySet<string>
+): void => {
+	const all = [...paired, ...textOnly]
+	console.log(
+		`\n${all.length} benchable game(s) on disk — ${paired.length} with journal frames, ${textOnly.length} text-only:\n`
+	)
+	console.log(
+		`  ${pad("", 2)}${pad("id", 30)}${pad("game", 12)}${pad("champ", 8)}${pad("kind", 11)}` +
+			`${padL("samples", 8)}${padL("length", 8)}${padL("covered", 14)}${padL("frames", 7)}${padL("skew", 9)}`
+	)
+	for (const w of all)
+		console.log(
+			`  ${pad(selected === undefined ? "" : selected.has(w.gameId) ? "*" : " ", 2)}` +
+				`${pad(w.id, 30)}${pad(w.gameId, 12)}${pad(w.champion, 8)}${pad(w.kind ?? "paired", 11)}` +
+				`${padL(String(w.samples ?? 0), 8)}${padL(clockOf(w.gameDurationSec ?? 0), 8)}` +
+				`${padL(`${clockOf(w.firstSampleSec ?? 0)}–${clockOf(w.lastSampleSec ?? 0)}`, 14)}` +
+				`${padL(String(w.frames.length), 7)}${padL(w.frames.length === 0 ? "—" : `${w.medianSkewMs}ms`, 9)}`
+		)
+	console.log(
+		`\n  "covered" is the span of the RAW SAMPLES, which is what a turn is built from; "frames" and` +
+			`\n  "skew" are the journal pictures, and a text-only game has none — its turns carry a block and` +
+			`\n  no image, so the frame axis is not measured on it and everything else is.`
+	)
+	const late = all.filter(w => (w.firstSampleSec ?? 0) > 30)
+	for (const w of late)
+		console.log(
+			`\n  !! ${w.id} (game ${w.gameId}) begins at ${clockOf(w.firstSampleSec ?? 0)}: the sampler was started` +
+				`\n     mid-game. The turns are real client JSON, but the coach's MEMORY is not — every` +
+				`\n     announce-once and every cooldown in \`buildFacts\` is a function of a stream whose first` +
+				`\n     ${clockOf(w.firstSampleSec ?? 0)} was never recorded. Read a fact that fires there as possibly one the live` +
+				`\n     coach would already have spent.`
+		)
+	if (rejected.length === 0) return
+	console.log(`\n  ${rejected.length} file(s) on disk that are NOT a benchable game:\n`)
+	for (const r of rejected)
+		console.log(
+			`  ${pad(basename(r.file), 34)}${pad(r.gameId ?? "—", 12)}${padL(String(r.samples), 8)}  ` +
+				wrap(r.why, 78, " ".repeat(58))
+		)
+}
+
+/**
+ * Which games `--games` asked for.
+ *
+ * `all` puts the paired windows first because they are the ones two graded runs already exist for,
+ * so a reader scanning the per-game table meets the familiar games before the new ones. Anything
+ * that is not one of the three words is a comma list, and both a gameId and a window id resolve —
+ * he has typed both, and refusing one of them to keep the parser tidy buys nothing.
+ */
+const selectGames = (
+	spec: string,
+	paired: readonly StreamWindow[],
+	textOnly: readonly StreamWindow[]
+): StreamWindow[] => {
+	if (spec === "all") return [...paired, ...textOnly]
+	if (spec === "paired") return [...paired]
+	if (spec === "text") return [...textOnly]
+	const want = spec
+		.split(",")
+		.map(x => x.trim())
+		.filter(x => x !== "")
+	const all = [...paired, ...textOnly]
+	const out: StreamWindow[] = []
+	for (const key of want) {
+		const hit = all.find(w => w.gameId === key || w.id === key)
+		if (!hit) throw new Error(`--games: nothing on disk matches "${key}" (not a gameId and not a window id)`)
+		if (!out.includes(hit)) out.push(hit)
+	}
+	return out
+}
+
 /* ==================================================================== main */
 
 /**
@@ -2021,6 +2281,7 @@ const summarize = (path: string, verbose: boolean): void => {
 	printLatency(scores, run.everySec)
 	printPayload(scores)
 	printAxes(scores, run)
+	printPerGame(scores, run)
 	printFailures(scores)
 	console.log(`\nre-printed ${path} — no model was called.`)
 }
@@ -2040,32 +2301,34 @@ const main = async (): Promise<void> => {
 		return
 	}
 
-	const windows = discoverWindows()
+	/*
+	 * THE WHOLE CORPUS, not only the half the browser happened to photograph.
+	 *
+	 * `paired` is what this script could see before 2026-09-10 and is returned unchanged, in the
+	 * same order, so `--window <id>` still selects the same window it always did. `textOnly` is one
+	 * window per game that has raw samples and no frames — thirteen of the seventeen games on disk,
+	 * every one of them a whole game the daemon's own poll recorded with the page closed. `rejected`
+	 * is every file that is NOT a benchable game, with the reason, because a game that cannot be
+	 * replayed is data and dropping it silently is how a corpus of seventeen looked like a corpus of
+	 * two for a month.
+	 */
+	const { paired, textOnly, rejected } = discoverBenchable()
+	const windows = paired
 
 	if (has("list")) {
-		console.log(`\n${windows.length} window(s) where a REAL frame and REAL raw client data exist for the same instant:\n`)
-		console.log(`  ${pad("id", 30)}${pad("game", 14)}${pad("champion", 12)}${padL("frames", 7)}${padL("from", 8)}${padL("to", 8)}${padL("skew", 9)}`)
-		for (const w of windows)
-			console.log(
-				`  ${pad(w.id, 30)}${pad(w.gameId, 14)}${pad(w.champion, 12)}${padL(String(w.frames.length), 7)}` +
-					`${padL(clockOf(w.tSecFrom), 8)}${padL(clockOf(w.tSecTo), 8)}${padL(`${w.medianSkewMs}ms`, 9)}`
-			)
+		printCorpus(paired, textOnly, rejected)
 		console.log(`\n  arms available on this machine:\n`)
 		for (const id of ["mock", ...PROVIDERS.filter(p => p.id !== "mock").map(p => p.id), GEMINI_LIVE]) {
 			const { available, why } = armAvailability(id)
 			console.log(`  ${pad(id, 16)}${pad(armDefaultModel(id) || "(pass --models)", 40)}${available ? "yes" : `MISSING — ${why}`}`)
 		}
-		console.log(
-			`\n  Everything else on disk is unpaired: the sampler started recording after most journal frames` +
-				`\n  were written, so the big frame runs have no raw client data and most sample files have no pixels.`
-		)
 		return
 	}
 
-	if (windows.length === 0)
+	if (paired.length + textOnly.length === 0)
 		throw new Error(
-			"no paired windows on disk. A window needs a journal frame and a raw allgamedata sample for the " +
-				"same instant; run --list to see what stream.ts found."
+			"no benchable games on disk. A game needs raw allgamedata samples in data/live-samples and a " +
+				"row in the `game` table; run --list to see what stream.ts found and why it refused the rest."
 		)
 
 	/* ----------------------------------------------------------- selection */
@@ -2078,15 +2341,31 @@ const main = async (): Promise<void> => {
 	 * because every number it prints is about a game the reader did not ask for.
 	 */
 	const want = arg("window", "latest")
+	const wantGames = arg("games", "")
 	const lastFrameMs = (w: StreamWindow): number =>
 		w.frames.reduce((m, f) => (f.atMs > m ? f.atMs : m), 0)
+	/*
+	 * `--games` IS THE MULTI-GAME INSTRUMENT, and it is a separate flag rather than a new word for
+	 * `--window` on purpose.
+	 *
+	 * `--window all` has always meant "every PAIRED window" and two graded runs on disk were taken
+	 * with it; quietly widening it to seventeen games would make those two runs' argv lines mean
+	 * something they did not mean when they were run. So the old flag keeps the old corpus and the
+	 * new flag names the new one.
+	 */
 	const chosen =
-		want === "all" ? windows
+		wantGames !== "" ? selectGames(wantGames, paired, textOnly)
+		: want === "all" ? windows
 		: want === "latest" ?
 			[[...windows].sort((a, b) => lastFrameMs(a) - lastFrameMs(b))[windows.length - 1]!]
-		: windows.filter(w => w.id === want)
+		: [...paired, ...textOnly].filter(w => w.id === want)
 	if (chosen.length === 0)
-		throw new Error(`no window called "${want}". Run --list; ids are ${windows.map(w => w.id).join(", ")}`)
+		throw new Error(
+			wantGames !== "" ?
+				`--games "${wantGames}" matched nothing. Run --list; it takes all|text|paired or a comma list of gameIds/window ids.`
+			:	`no window called "${want}". Run --list; ids are ${[...paired, ...textOnly].map(w => w.id).join(", ")}`
+		)
+	if (wantGames !== "") printCorpus(paired, textOnly, rejected, new Set(chosen.map(w => w.gameId)))
 
 	const everySec = Number(arg("every", "20"))
 	/*
@@ -2097,7 +2376,22 @@ const main = async (): Promise<void> => {
 	const schedule = (arg("schedule", "events") === "timer" ? "timer" : "events") as "timer" | "events"
 	const stride = Number(arg("stride", "1"))
 	const heartbeatSec = Number(arg("heartbeat", String(HEARTBEAT_SEC)))
-	const turnsWanted = Number(arg("turns", "8"))
+	/*
+	 * `--turns` is a COST CAP and its default is different for the two instruments.
+	 *
+	 * Eight is right for `--window`: a paid comparison of six arms on one game is a bill, and eight
+	 * turns is what a reader can actually read side by side. It is wrong for `--games`, where the
+	 * question is whether a rate holds up across fifteen games and a cap of eight would bench the
+	 * first two minutes of each of them — the part of a game where the ranked list is empty, the
+	 * farm baseline is NONE and nothing has happened yet. So a `--games` run with no explicit
+	 * `--turns` sends every turn the detector raises, and the run prints the total before paying.
+	 */
+	const turnsWanted =
+		has("turns") ? Number(arg("turns", "8"))
+		: wantGames !== "" ? Number.MAX_SAFE_INTEGER
+		: 8
+	/** What to PRINT for a cap that means "no cap"; `9007199254740991` in a report is a defect. */
+	const turnsText = turnsWanted === Number.MAX_SAFE_INTEGER ? "every due turn" : String(turnsWanted)
 	const fromSec = Number(arg("from", "0"))
 	const repeats = Math.max(1, Number(arg("repeats", "1")))
 	const concurrency = Math.max(1, Number(arg("concurrency", "1")))
@@ -2143,6 +2437,19 @@ const main = async (): Promise<void> => {
 	 */
 	const requireFrame = has("require-frame")
 	/*
+	 * `--require-frame` on a text-only game asks for the empty set, and it would get it SILENTLY:
+	 * every candidate is filtered out, the game contributes no turns, and the per-game table simply
+	 * has fewer rows than the corpus table printed twenty lines above it. Refused instead, by name.
+	 */
+	const frameless = chosen.filter(w => w.kind === "text-only")
+	if (requireFrame && frameless.length > 0)
+		throw new Error(
+			`--require-frame cannot be combined with ${frameless.length} text-only game(s) ` +
+				`(${frameless.map(w => w.id).join(", ")}): they have no journal frames at all, so every ` +
+				"turn would be filtered out and they would vanish from the table without a word. Drop " +
+				"--require-frame, or select only paired games with --games paired."
+		)
+	/*
 	 * `--no-read` restores the old behaviour where the position was never read. Kept runnable
 	 * because the two stored runs on disk were graded that way, and a re-run meant to be compared
 	 * with one of them has to be able to match it.
@@ -2164,8 +2471,8 @@ const main = async (): Promise<void> => {
 		throw new Error(
 			schedule === "events" ?
 				`no turns to send: the detector raised ${streams.reduce((a, s) => a + s.scheduled.length, 0)} ` +
-					`turn(s) and --turns ${turnsWanted} --stride ${stride} --from ${fromSec} kept none`
-			:	`no turns to send (--every ${everySec} --from ${fromSec} --turns ${turnsWanted})`
+					`turn(s) and --turns ${turnsText} --stride ${stride} --from ${fromSec} kept none`
+			:	`no turns to send (--every ${everySec} --from ${fromSec} --turns ${turnsText})`
 		)
 	if (schedule === "events")
 		for (const s of streams) {
@@ -2200,6 +2507,9 @@ const main = async (): Promise<void> => {
 			gameId: s.window.gameId,
 			champion: s.window.champion,
 			sampleFile: s.window.sampleFile,
+			kind: s.window.kind ?? "paired",
+			gameDurationSec: s.window.gameDurationSec ?? 0,
+			counterpart: s.turns.find(t => t.counterpart !== null)?.counterpart ?? null,
 			medianSkewMs: s.window.medianSkewMs,
 			tSecFrom: s.window.tSecFrom,
 			tSecTo: s.window.tSecTo,
@@ -2367,6 +2677,7 @@ const main = async (): Promise<void> => {
 	printLatency(scores, everySec)
 	printPayload(scores)
 	printAxes(scores, run)
+	printPerGame(scores, run)
 	printFailures(scores)
 
 	/* --------------------------------------------------------------- keep */
