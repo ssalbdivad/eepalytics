@@ -402,10 +402,13 @@ export type Review = typeof Review.infer
 /**
  * A picture or clip attached to a moment.
  *
- * `kind: "map"` with `source: "generated"` is the ALWAYS-AVAILABLE fallback: an SVG the app
- * renders from timeline positions when real replay capture is impossible — the client is
- * closed, the replay expired, capture was declined, or the user simply has capture disabled.
- * Every moment must be showable; only some can be screenshotted.
+ * `kind: "map"` with `source: "generated"` is the ALWAYS-AVAILABLE floor: an SVG the app renders
+ * from timeline positions, needing nothing but the timeline it already stored. Every moment must
+ * be showable; only the ones the player was screen-sharing through get a real frame beside it.
+ *
+ * `screenshot` rows now come from the frame JOURNAL — his own screen. `clip` is vestigial: the
+ * replay-capture path that produced clips is deleted and never once finished a job, and the kind
+ * stays only so historical rows still parse.
  */
 export const MediaKind = type("'screenshot'|'clip'|'map'")
 export type MediaKind = typeof MediaKind.infer
@@ -444,7 +447,7 @@ export type Media = typeof Media.infer
 
 /** Job kinds, in dependency order. Mirrors `JOB_KINDS` in ../constants.ts. */
 export const JobKind = type(
-	"'match-ingest'|'replay-download'|'analysis-run'|'review-game'|'review-trend'|'replay-capture'|'media-generate'"
+	"'match-ingest'|'replay-download'|'analysis-run'|'review-game'|'review-trend'|'media-generate'"
 )
 export type JobKind = typeof JobKind.infer
 
@@ -467,7 +470,11 @@ export const Job = type({
 	kind: JobKind,
 	gameId: "number|null",
 	state: JobState,
-	/** Only `replay-capture` is intrusive — it takes over the user's client. */
+	/**
+	 * Historical. No job kind is intrusive any more — `replay-capture`, the only one that ever
+	 * was, is gone. The field stays because rows written before it went still carry `1`, and
+	 * rewriting a stored row to make the schema tidier is not a thing this app does.
+	 */
 	intrusive: "boolean",
 	attempts: "number",
 	maxAttempts: "number",

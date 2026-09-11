@@ -311,6 +311,36 @@ export const minimapDrift = (
  */
 export type Admission = "read" | "new-game" | "busy" | "cooldown" | "paced" | "off"
 
+/**
+ * Whether a verdict may actually START a read, given whether one is already out.
+ *
+ * `admit` answers a different question from this one, deliberately: it answers "what IS this
+ * frame", and it tests the game boundary ABOVE every gate because a new session has to roll the
+ * track even when the watcher is busy, cooling down or inside its cadence floor. That is right, and
+ * on its own it broke the promise one line of this module's docblock makes and one comment in
+ * `resetMinimapWatch` repeats: at most one read is ever in flight.
+ *
+ * The path: a read for game N is out when game N+1's first frame arrives. `admit` says `new-game`,
+ * `offerFrame` resets the track — correctly — and then falls straight through to `inFlight = true`
+ * and a SECOND `run`. The first one to finish clears the flag while the other is still running, so
+ * the next frame four seconds later starts a third beside it, and the steady state from there is
+ * two paid reads in flight for the rest of the game.
+ *
+ * Two concurrent reads is not only twice the bill. They can RESOLVE OUT OF ORDER, and every rule
+ * downstream of `takeMinimapReads` is written on the premise that they do not: `observationFrom`
+ * doubts a read that disagrees with "the one before it", `landRead` overwrites the carry
+ * unconditionally, and `drainMinimapReads`'s own docblock calls the ordering load-bearing. An older
+ * read landing last replaces a newer carry with a staler one and can flip `lastFrameSide`
+ * backwards, which manufactures the `low` verdict that means silence.
+ *
+ * So the reset and the read are two decisions. The boundary is still noticed on the frame it
+ * arrives on — the track is rolled, the cooldown cleared, game N's reads dropped — and the READ
+ * waits for the next frame, which is four seconds away and is a better picture anyway. That is the
+ * same trade `"busy"` already makes on every other frame.
+ */
+export const startsRead = (verdict: Admission, inFlight: boolean): boolean =>
+	(verdict === "read" || verdict === "new-game") && !inFlight
+
 export const admit = (
 	state: {
 		enabled: boolean
@@ -371,6 +401,12 @@ export const offerFrame = (input: {
 		if (verdict === "busy") return void counts.skippedBusy++
 		if (verdict === "cooldown") return void counts.skippedCooldown++
 		if (verdict === "paced") return void counts.skippedPaced++
+		/*
+		 * The boundary has been taken; the READ still has to wait for the wire. See `startsRead` —
+		 * a `new-game` frame that arrives while game N's read is still out would otherwise start a
+		 * second one beside it, which is the one thing this module promises never to do.
+		 */
+		if (!startsRead(verdict, inFlight)) return void counts.skippedBusy++
 
 		inFlight = true
 		lastReadSec = input.tSec

@@ -2,9 +2,12 @@
  * The one definition of "what is true" during a live game.
  *
  * Pure and browser-safe on purpose. It is rendered into the prompt the live coach is given, it is
- * served to the page by `GET /api/live/ground-truth`, and `scripts/eval-live.ts` reconstructs it
- * from stored timelines to score prompt changes. Three consumers, one shape — a second copy is a
- * copy that drifts, and the whole point of this block is that the model can trust it.
+ * served to the page by `GET /api/live/ground-truth`, and the benches replay it from recorded
+ * samples to score prompt changes. One shape for every consumer — a second copy is a copy that
+ * drifts, and the whole point of this block is that the model can trust it.
+ *
+ * Note on scope: this is the THIN block the two ranked modes (`fenced`, `cite-or-quiet`) are given.
+ * The default `trusted` mode is handed `shared/live-brief.ts` instead, which is a superset.
  *
  * It used to live in `review/live-vision.ts` beside the periodic-glance coach. That coach was
  * measured against the realtime one and deleted; this outlived it because it was never really

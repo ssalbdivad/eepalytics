@@ -27,7 +27,10 @@ import {
 	CITE_PERSONA,
 	CITE_RULE,
 	DEFAULT_LIVE_COACH_MODE,
+	LIST_HINT,
 	LIVE_COACH_MODES,
+	TRUSTED_KNOWLEDGE_HEADING,
+	TRUSTED_PROMPT,
 	downLine,
 	liveCoachSystemPrompt,
 	renderBlockForMode,
@@ -170,9 +173,9 @@ test("the fenced block never grows a down line", () => {
 
 /* ----------------------------------------------------------------- the setting */
 
-test("cite-or-quiet is the default and both modes are accepted by the schema", () => {
-	assert.equal(DEFAULT_LIVE_COACH_MODE, "cite-or-quiet")
-	assert.equal(DEFAULT_SETTINGS.liveCoachMode, "cite-or-quiet")
+test("trusted is the default and every mode is accepted by the schema", () => {
+	assert.equal(DEFAULT_LIVE_COACH_MODE, "trusted")
+	assert.equal(DEFAULT_SETTINGS.liveCoachMode, "trusted")
 	for (const m of LIVE_COACH_MODES) {
 		const patch = SettingsPatch({ liveCoachMode: m.id })
 		assert.equal(patch instanceof type.errors, false, `the schema rejects a mode the picker offers: ${m.id}`)
@@ -188,5 +191,60 @@ test("every mode in the picker carries its own number", () => {
 		assert.equal(m.blurb.length > 40, true)
 		assert.equal(/[0-9]/.test(m.evidence), true, `${m.id} claims something with no figure behind it`)
 	}
-	assert.deepEqual(LIVE_COACH_MODES.map(m => m.id).sort(), ["cite-or-quiet", "fenced"])
+	assert.deepEqual(LIVE_COACH_MODES.map(m => m.id).sort(), ["cite-or-quiet", "fenced", "trusted"])
+})
+
+/* -------------------------------------------------------------------- trusted */
+
+/**
+ * `trusted` is added BESIDE the measured arms, never over them.
+ *
+ * The two tests above already pin each measured prompt to `scripts/ablate-autonomy.ts`, which is
+ * where a reword would do its damage. This one pins the thing those cannot see: that adding a mode
+ * did not change what the other two RETURN. A stored run only keeps justifying a default while the
+ * repo can still emit the exact bytes that were scored.
+ */
+test("adding trusted left both measured modes byte-identical", () => {
+	assert.equal(liveCoachSystemPrompt({ mode: "fenced" }), LIVE_COACH_SYSTEM_PROMPT)
+	assert.equal(liveCoachSystemPrompt({ mode: "cite-or-quiet" }), `${CITE_PERSONA}${CITE_RULE}${LIST_HINT}`)
+	assert.equal(
+		liveCoachSystemPrompt({ mode: "cite-or-quiet", championKnowledge: "\n\nK" }),
+		`${CITE_PERSONA}${CITE_RULE}${LIST_HINT}\n\nK`
+	)
+	assert.equal(renderBlockForMode(FULL, "fenced"), renderState(FULL))
+})
+
+test("trusted appends the caller's knowledge whole, with no parsing and no digit filter", () => {
+	// The bug this mode exists to fix: 6800 characters of lillia.md arrived as 2566 of numberless
+	// fragments, because the clause parser drops every clause carrying a digit. Prose goes through.
+	const md = readFileSync("knowledge/champions/lillia.md", "utf8")
+	const out = liveCoachSystemPrompt({ mode: "trusted", championKnowledge: md })
+	assert.equal(out.startsWith(TRUSTED_PROMPT), true)
+	assert.equal(out.endsWith(md), true)
+	assert.equal(out.includes(TRUSTED_KNOWLEDGE_HEADING), true)
+	assert.equal(liveCoachSystemPrompt({ mode: "trusted" }), TRUSTED_PROMPT)
+})
+
+/**
+ * The audit, as an assertion rather than as a claim in a commit message.
+ *
+ * Every string here is a guardrail the owner asked to be removed twice, and each one is quoted
+ * from the prompt it was removed from. A future edit that reintroduces the phrasing — the empty
+ * list, the citation gate, the screen prohibition — fails here instead of quietly turning the
+ * fence back on inside a mode named "trusted".
+ */
+test("the trusted prompt carries no fence", () => {
+	for (const banned of [
+		"ranked list",
+		"the correct answer is PASS",
+		"must appear verbatim",
+		"you may not say",
+		"never describe what he can see",
+		"context, not a source",
+		"ONE sentence"
+	])
+		assert.equal(TRUSTED_PROMPT.includes(banned), false, `a guardrail survived the audit: ${banned}`)
+	// The honest half is still there: the data facts, and the refusal to assert the unknowable.
+	for (const kept of ["floored to a multiple of ten", "COMBINE cost", "no coordinates", "PASS"])
+		assert.equal(TRUSTED_PROMPT.includes(kept), true, `the honest half was cut too: ${kept}`)
 })

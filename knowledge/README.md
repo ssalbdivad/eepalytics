@@ -9,16 +9,25 @@ Everything in here is *general champion knowledge*. **None of it is measured fro
 game.** The app's whole guarantee is that a number in a review came from the digest, and a
 guide cannot be checked against anything.
 
-So the prompt fences these notes hard:
+So the prompt fences these notes hard, on every path that reads them:
 
 - they may justify **a fix** — "full clear first, Lillia's clear accelerates as she chains camps";
-- they may **never** become a number, a stat, or a claim about what happened in the game;
+- they may **never** become a number, a stat, or a claim about what happened in the game. A base
+  clear time written here is context about the champion; it is never a measurement of his game;
 - if a note and the digest disagree, **the digest wins and the note is dropped**.
 
-That fence is why these are prose about how a champion works, and never build paths, item
-names, rune pages or numbers. The timeline has no item purchases (see `AGENTS.md`), so a build
-recommendation could never be checked against what he actually did — it would be advice
-floating free of evidence, which is the exact failure mode this app exists to avoid.
+**That fence is about the USER's game, and the distinction decides what you may write.** A note
+may never become a number about HIM, and it may never grade his build path, his runes or his
+skill order: the LCU timeline carries none of those (see `AGENTS.md`), so a recommendation about
+them could not be checked against what he actually did — advice floating free of evidence, the
+exact failure this app exists to avoid.
+
+What the fence does **not** ban is prose that carries a number, or an item named on the **enemy
+jungler**. The live client reports item IDENTITY exactly once a player has been seen — Jaccard
+100% against the post-game blob, all ten players — so "he finished Sunfire, he wants to sit on
+you" is a reading of a fact the coach was handed, not a guess. That is the whole point of a
+counterpart file. The two sections below say it again in their own terms; this paragraph exists
+so the opening does not appear to forbid them.
 
 ## The same files run the pre-game brief
 
@@ -58,12 +67,58 @@ source: model-knowledge | <url> | <author>
 power spikes, what the champion is for. Those survive patches. Anything that *doesn't* survive
 a patch does not belong in this directory at all.
 
+## Counterpart files — what "know your enemy jungler" means
+
+The coach's central comparison is against the **enemy jungler**, and `fullKnowledge` in
+`src/review/live-knowledge-full.ts` loads two champion files per game: his, and the counterpart's.
+
+A file here is therefore read in one of two roles, and the newer ones are written for the second.
+
+**The race that is real in the live feed is LEVEL and ITEMS, not CS.** The client's
+`scores.creepScore` for the enemy jungler is a count of what the player's own team witnessed him
+kill — measured at 70 against a true 183 by the end of one game, and exact in 3.3% of checkpoints
+across fifteen paired games. The app does not render it anywhere, so a counterpart file that leans
+on a farm comparison is writing about a number the coach will never be given. Write about what his
+level and his completed items mean instead; both of those are exact once he has been seen.
+
+A **counterpart file** answers, in prose, the questions a jungler actually has about the other
+jungler: what the clear looks like and how fast, the power spikes named **by level and by item
+rather than by clock**, how they gank and what makes it fail, what their presence means for drake
+and grubs, what their items TELL you when they show up in the live client's feed, and — the section
+that earns the file — **how the Lillia matchup actually plays**: who wins the early duel, who wins
+the race, and when she may contest a crab or an objective and when she must not.
+
+Three conventions, and they are deliberate:
+
+- **No `## Live coaching` section.** Those tagged clauses are keyed to the PLAYER's champion
+  (`src/server/routes/live.ts` parses `championNote(me.championName)`), so clauses in a counterpart
+  file would never be read. The full-knowledge path strips the section anyway.
+- **Numbers are allowed, mechanics are preferred.** These files are prose for a reader, not clauses
+  for a parser, so the digit fence does not apply — but a mechanic you are sure of still beats a
+  number you are guessing, and anything patch-mobile says so in the sentence.
+- **Every file ends by saying what it left out.** A gap named in the file is a gap the coach can
+  hedge around. A confident wrong claim here is worse than a gap, because the coach speaks it as
+  knowledge.
+
+On disk as of 2026-09-10: `briar`, `fiddlesticks`, `jarvaniv`, `karthus`, `kayn`, `malphite`,
+`masteryi`, `morgana`, `quinn`, `shaco`, `sylas`, `tryndamere`, `udyr`, `viego`, `wukong`, `zed` —
+written as counterparts; `belveth`, `leesin`, `lillia`, `trundle` — written earlier, for the
+player's own champion. `quinn.md` is deliberately the least confident of them and says so in the
+file.
+
 ## The `## Live coaching` section
 
 A champion file may end with a `## Live coaching` section, and that section is a **different
-thing from the prose above it**. The prose is sent to the post-game reviewer; these lines are
-spoken out loud, mid-game, attached to a number the live client just proved
-(`src/shared/champion-advice.ts`).
+thing from the prose above it**. The prose is sent to the post-game reviewer AND, whole, to the
+default live coach (`src/review/live-knowledge-full.ts`); these lines are spoken out loud,
+mid-game, attached to a fact the live client just proved (`src/shared/champion-advice.ts`).
+
+**The tagged clauses are read only by the two ranked coach modes**, `cite-or-quiet` and `fenced`.
+The default `trusted` mode strips this section and takes the prose above it entire — it is prose
+for a reader, not clauses for a parser. So the digit fence below is a property of the CLAUSE
+PATH, not of champion knowledge: the prose may carry numbers and always could. Keep the clause
+sections on disk byte-identical anyway, because the stored runs that justified those two modes
+are only meaningful while the text they were given still exists.
 
 The format is `<fact kind>: <clause>`, one per line, and the rules are hard:
 
@@ -71,7 +126,7 @@ The format is `<fact kind>: <clause>`, one per line, and the rules are hard:
   situation it is about. Unknown keys are ignored rather than trusted.
 - **No digits.** A clause with a number in it is refused at load time, and a spelled-out number
   used as a game fact is the same fabrication with the fence walked around.
-- **A clause completes a sentence the client started** — "Kayn is 23 CS up on you — *your clear
+- **A clause completes a sentence the client started** — "Kayn just finished Sunfire — *your clear
   only gets faster while it keeps running, so finish the whole route*". `death` is the exception
   and stands alone.
 - **Three or more clauses per kind**, different in content rather than in phrasing. One clause per

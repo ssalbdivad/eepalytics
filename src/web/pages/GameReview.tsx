@@ -385,9 +385,10 @@ export const GameReview = ({ gameId, eventTick }: GameReviewProps) => {
 						</div>
 						{media.length === 0 ?
 							<div className="dim" style={{ fontSize: 12.5 }}>
-								No screenshots or clips for this game yet. Capture takes over the League
-								client, so it only runs when you're out of a game — and every coaching point
-								below works without it.
+								No screenshots or clips for this game yet. Frames come from the frame
+								journal — the screenshots the browser posts while you screen-share with the
+								live coach open — so a game played without it has none, and every coaching
+								point below works without them.
 							</div>
 						:	<div className="media-strip">
 								{media.map(m => (

@@ -99,11 +99,18 @@ describe("claiming", () => {
 		assert.equal(first?.kind, "match-ingest", "ingest (10) outranks review (40)")
 	})
 
+	/**
+	 * No job kind is intrusive any more — `replay-capture` was the only one and it is gone. The
+	 * GUARD stays, and so does this test, because rows written before that still carry
+	 * `intrusive = 1` and the default claim must never pick one up. `intrusive` is settable on
+	 * the request, so the row under test here is the same row the SQL would meet.
+	 */
 	it("never hands an intrusive job to a worker that was not cleared for one", () => {
-		enqueueJob({ kind: "replay-capture", gameId: 7 })
+		enqueueJob({ kind: "media-generate", gameId: 7, intrusive: true })
+		assert.equal(claim(), null, "the default claim refuses it")
 		assert.equal(claim({ allowIntrusive: false }), null)
-		const job = claim({ allowIntrusive: true, kinds: ["replay-capture"] })
-		assert.equal(job?.kind, "replay-capture")
+		const job = claim({ allowIntrusive: true })
+		assert.equal(job?.kind, "media-generate")
 		assert.equal(job?.intrusive, true)
 	})
 
@@ -152,10 +159,10 @@ describe("outcomes", () => {
 	})
 
 	it("defer does NOT consume an attempt — 'not now' is not a failure", () => {
-		enqueueJob({ kind: "replay-capture", gameId: 15 })
-		const job = claim({ allowIntrusive: true })!
+		enqueueJob({ kind: "replay-download", gameId: 15 })
+		const job = claim()!
 		assert.equal(job.attempts, 1)
-		defer(job, "gate G6: capture is switched off", Date.now() + 60_000)
+		defer(job, "gate G6: the client is not idle", Date.now() + 60_000)
 		const after = getJob(job.id)!
 		assert.equal(after.state, "deferred")
 		assert.equal(after.attempts, 0, "a job waiting on the gate must not look like a crash")

@@ -32,7 +32,7 @@ export const VisionBadge = ({ watched, watchable, size = "md" }: VisionBadgeProp
 			`This review includes a visual pass: the coach read real replay frames for ${watched} moment${watched === 1 ? "" : "s"} and commented on execution — ability use, kiting, fight entry. Those notes are marked "watched". Everything else came from the game's data.`
 		: state === "ready" ?
 			"Replay frames have been captured for this game but nothing has been watched yet. The visual pass is the only way to get feedback on ability usage and kiting — none of that is in the game's data."
-		:	"DATA ONLY. This review is built from the timeline: positions once a minute, kills, objectives, end-of-game stats. It contains nothing about how you used abilities, how you kited, or how you entered fights — that information does not exist in any data the client exposes. Capture replay frames to get it."
+		:	"DATA ONLY. This review is built from the timeline: positions once a minute, kills, objectives, end-of-game stats. It contains nothing about how you used abilities, how you kited, or how you entered fights — that information does not exist in any data the client exposes. Play with the live coach open so the frame journal records your screen, and it will."
 
 	return (
 		<span className={`csk-vision csk-vision--${state} csk-vision--${size}`} title={title}>

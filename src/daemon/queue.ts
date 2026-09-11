@@ -9,7 +9,7 @@
  * Two facts drive every scheduling decision here:
  *   * A `.rofl` is dropped by the client 30 minutes after the game ends, so `replay-download`
  *     carries a HARD deadline and, once missed, is `expired` forever rather than retried.
- *   * Only `replay-capture` is intrusive. Everything else — including the download POST —
+ *   * Nothing is intrusive any more. Everything — including the download POST —
  *     runs happily while the user is in champ select for their next game.
  *
  * NODE ONLY.
@@ -123,10 +123,6 @@ export const enqueueTrendReview = (): number =>
 
 export const enqueueMediaGenerate = (gameId: number): number =>
 	enqueueJob({ kind: "media-generate", gameId })
-
-/** Intrusive. Queued freely; `gate.ts` decides whether it may ever actually start. */
-export const enqueueReplayCapture = (gameId: number): number =>
-	enqueueJob({ kind: "replay-capture", gameId, priority: JOB_PRIORITY["replay-capture"] })
 
 /* ============================================================== claiming */
 

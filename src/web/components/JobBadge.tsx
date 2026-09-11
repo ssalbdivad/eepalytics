@@ -27,7 +27,6 @@ const KIND_LABEL: Record<JobKind, string> = {
 	"analysis-run": "Analysis",
 	"review-game": "Coach",
 	"review-trend": "Trends",
-	"replay-capture": "Capture",
 	"media-generate": "Media"
 }
 

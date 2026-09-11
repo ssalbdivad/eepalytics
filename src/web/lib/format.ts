@@ -142,7 +142,6 @@ export const JOB_KIND_LABEL: Record<JobKind, string> = {
 	"analysis-run": "Analyze",
 	"review-game": "Coach review",
 	"review-trend": "Trend review",
-	"replay-capture": "Capture clips",
 	"media-generate": "Render media"
 }
 

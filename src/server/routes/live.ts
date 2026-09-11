@@ -5,8 +5,8 @@
  *
  * This reads the in-game Live Client Data API on :2999, which serves information already on the
  * player's own screen. Nothing is written, no input is sent, nothing is automated — the same
- * category as the overlays people already run. `src/daemon/gate.ts` guards WRITES to the client
- * and launching it; there is nothing here for it to protect.
+ * category as the overlays people already run. The app no longer writes to the client at all —
+ * `src/daemon/gate.ts`, which used to guard those writes, was deleted along with the last of them.
  *
  * ## No model call
  *
@@ -415,10 +415,10 @@ export const championFromSession = (
 /**
  * The facts, and the memory that keeps them from repeating.
  *
- * Both live in `analysis/live-facts.ts` — pure, tested, and shared with `scripts/eval-live.ts`.
- * They used to be inlined here and hand-copied into the eval with the tuning constants re-typed
- * as bare literals, which meant the eval was scoring a lookalike of the coach rather than the
- * coach. One definition, or the measurement is fiction.
+ * Both live in `analysis/live-facts.ts` — pure, tested, and shared with the benches. They used to
+ * be inlined here and hand-copied into the eval with the tuning constants re-typed as bare
+ * literals, which meant the eval was scoring a lookalike of the coach rather than the coach. One
+ * definition, or the measurement is fiction.
  *
  * Module-level memory is right for this daemon: one local user, one game at a time. It is reset
  * whenever there is no game.
@@ -438,13 +438,17 @@ const adviceCursor = newAdviceCursor()
 /*
  * WHERE THE PICTURE ENTERS. Three variables, and the reason each of them exists.
  *
- * The coach may only speak from the ranked list `buildFacts` returns, and until now every candidate
- * in that list was computed from the game client. Measured: two coaching arms of 14 turns, identical
- * blocks and prompt, differing only in whether the frame was attached, made the same speak-or-PASS
- * call on 13 of 14 turns — while the same model read the clock off those same frames 6 times in 6.
- * The screenshot was being looked at and had nowhere to land. `POST /api/live/frame-read` is the
- * landing, `buildFacts` decides what if anything it is worth, and these hold the one observation in
- * between.
+ * When this was written the coach could only speak from the ranked list `buildFacts` returns, and
+ * every candidate in that list was computed from the game client. Measured: two coaching arms of 14
+ * turns, identical blocks and prompt, differing only in whether the frame was attached, made the
+ * same speak-or-PASS call on 13 of 14 turns — while the same model read the clock off those same
+ * frames 6 times in 6. The screenshot was being looked at and had nowhere to land.
+ *
+ * The list is no longer a fence (`shared/live-coach-mode.ts`, default `trusted`) and this seam
+ * outlived it: a position read has to be MADE somewhere whatever reads it, because the coach's own
+ * view of a downscaled minimap is at chance. `POST /api/live/frame-read` and `daemon/minimap-watch.ts`
+ * are where it is made, `buildFacts` still decides what it is worth for the ranked modes, and
+ * `buildBrief` renders it for the default one. These hold the one observation in between.
  *
  * Module-level for the same reason `factMemory` is: one local user, one game at a time, one process.
  */
@@ -1744,10 +1748,10 @@ export const createLiveRoute = (): Hono => {
 	 * `/lol-gameflow/v1/session`, which publishes both comps, every declared position and every
 	 * player's summoner spells from champ select onward — verified against the live client.
 	 *
-	 * READ-ONLY, like the rest of this file. `src/daemon/gate.ts` guards writes and launching the
-	 * client; there is nothing here for it to protect. It matters that this stays true: the gate
-	 * exists partly to keep this app out of champ select, and this endpoint is *in* champ select.
-	 * It looks and it does not touch.
+	 * READ-ONLY, like the rest of this file, and now the only thing keeping that true. The gate
+	 * that used to enforce it (`src/daemon/gate.ts`) is deleted, because the writes it guarded are
+	 * gone. It matters that this stays true: this endpoint runs *in* champ select, which is exactly
+	 * where the gate refused to let the app act. It looks and it does not touch.
 	 *
 	 * Every state answers 200. Client closed, sitting in the lobby, locked in but the client has
 	 * not published selections yet — all of them are normal, and a poller that sees a 500 while a
@@ -1938,11 +1942,13 @@ export const createLiveRoute = (): Hono => {
 	 *
 	 * ## What this is for
 	 *
-	 * It is the seam the screenshot has never had. `analysis/live-facts.ts` computes and ranks every
-	 * line the coach may speak, an empty list means PASS, and every candidate in that list was
+	 * It is the seam the screenshot has never had. When it was built, `analysis/live-facts.ts` ranked
+	 * every line the coach could speak, an empty list meant PASS, and every candidate in that list was
 	 * computed from the game client — so measured, a coaching turn with the JPEG attached and one
 	 * without made the same speak-or-PASS decision on 13 of 14 turns and paraphrased each other where
-	 * both spoke. The frame was being looked at and had nowhere to land. It lands here.
+	 * both spoke. The frame was being looked at and had nowhere to land. It lands here. The fence has
+	 * since gone (default mode `trusted`); the read still has to be made and fenced against the
+	 * client, and `daemon/minimap-watch.ts` now also makes it on the journal beat.
 	 *
 	 * ## What it accepts, and why it is a POST rather than a model call
 	 *
@@ -2645,7 +2651,7 @@ export const createLiveRoute = (): Hono => {
 /**
  * Rebuild a block from a recorded `allgamedata` sample, for the benchmark.
  *
- * Exported so `scripts/bench-providers.ts` replays states through the SAME code the daemon runs,
+ * Exported so `scripts/bench-stream.ts` replays states through the SAME code the daemon runs,
  * rather than a second reconstruction that could quietly drift from it. A comparison whose harness
  * builds a different block from the coach's is measuring a different thing.
  *
@@ -2662,11 +2668,10 @@ export const buildLiveStateForBench = (
 	 * like: the daemon always has a baseline from `loadCorpus`, and the `Farm baseline:` line is
 	 * where several of the measured inventions came from ("ahead of your usual pace of 85"). A
 	 * fixture meant to be 1:1 with a real game has to be able to carry it, so
-	 * `scripts/build-fixture.ts` passes the corpus baseline with the replayed game EXCLUDED —
-	 * including it would let the game being replayed set its own average.
+	 * a bench passes the corpus baseline with the replayed game EXCLUDED — including it would let
+	 * the game being replayed set its own average.
 	 *
-	 * Defaulting to null keeps `scripts/bench-providers.ts` byte-identical to what it replayed
-	 * before.
+	 * Defaulting to null keeps a replay byte-identical to what it replayed before.
 	 */
 	baseline: ReturnType<typeof baselineFromRows> | null = null
 ): VisionState | null => {

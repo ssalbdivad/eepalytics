@@ -333,7 +333,7 @@ const GameRow = ({ game: g, jobs, headline, now }: GameRowProps) => {
 								`Watched: the coach read replay frames for ${g.watchedMoments} moment(s) and coached execution — abilities, kiting, fight entry.`
 							: (g.frameMoments ?? 0) > 0 ?
 								`Frames captured for ${g.frameMoments} moment(s), but none watched yet. Open the game and hit Watch.`
-							:	"Data only — no replay frames captured, so nothing about ability usage or kiting. Open the game to capture some."
+							:	"Data only — this game has no journal frames, so nothing about ability usage or kiting. Screen-share with the live coach open while you play and the next one will."
 						}
 					>
 						👁

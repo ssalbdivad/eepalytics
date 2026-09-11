@@ -10,7 +10,7 @@
 
 import { describe, it } from "node:test"
 import { deepStrictEqual, strictEqual } from "node:assert/strict"
-import { WATCH_EVERY_SEC, admit, minimapDrift } from "./minimap-watch.ts"
+import { WATCH_EVERY_SEC, admit, minimapDrift, startsRead } from "./minimap-watch.ts"
 import { MINIMAP_TIMEOUT_MS } from "../review/read-minimap.ts"
 import type { WatchedRead } from "./minimap-watch.ts"
 import type { FrameRead } from "../review/frame-read.ts"
@@ -93,6 +93,43 @@ describe("admit", () => {
 
 	it("does not read the same second twice", () => {
 		strictEqual(admit(state({ lastReadSec: 100 }), frame(100), NOW_MS), "paced")
+	})
+})
+
+describe("startsRead", () => {
+	/*
+	 * The bug this pins, end to end.
+	 *
+	 * `admit` tests the game boundary above every other gate on purpose, so a new session reads
+	 * `new-game` even while a read for the previous game is still out. `offerFrame` used to take
+	 * that verdict straight to `inFlight = true` and a second `run`, which breaks the single-flight
+	 * promise this module's docblock makes — and then keeps breaking it, because whichever read
+	 * finishes first clears the flag while the other is still going, so the next frame starts a
+	 * third beside it.
+	 *
+	 * Two reads in flight can resolve OUT OF ORDER, and `drainMinimapReads`, `observationFrom` and
+	 * `landRead` are all written on the premise that reads arrive in order and exactly once.
+	 */
+	it("takes the boundary but not the read when a read for the last game is still out", () => {
+		const busyBoundary = state({ inFlight: true })
+		strictEqual(admit(busyBoundary, frame(3, "js-b"), NOW_MS), "new-game")
+		strictEqual(startsRead("new-game", true), false)
+	})
+
+	it("reads the first frame of a new game when nothing is in flight, which is the usual case", () => {
+		strictEqual(startsRead("new-game", false), true)
+	})
+
+	it("never lets a plain read start beside one already running", () => {
+		// Belt for `admit`'s own braces: `"busy"` already covers this, and a `read` verdict can
+		// only be produced with `inFlight` false. Pinned so a future reorder cannot make it a lie.
+		strictEqual(startsRead("read", true), false)
+		strictEqual(startsRead("read", false), true)
+	})
+
+	it("starts nothing for the three verdicts that mean no", () => {
+		for (const v of ["busy", "cooldown", "paced", "off"] as const)
+			strictEqual(startsRead(v, false), false)
 	})
 })
 

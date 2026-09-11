@@ -41,6 +41,27 @@ Everything below is a best effort at the community pronunciation. **Correct anyt
 wrong when you hear it** — you have the game running and this file exists precisely so that
 judgement is yours rather than mine.
 
+## It shipped switched off, for weeks
+
+Recorded on game 5639406342 (Lillia into Kayn, 28 minutes, the first full paired stream this app
+has): **zero of 715 ground-truth blocks carried a pronunciation section, and neither did the system
+instruction.** The block had stopped rendering the guide on purpose — that is the "BRY-er is still
+at 0 CS" story above — and the system instruction never started rendering it: `liveCoachSystemPrompt`
+was called directly by the token route, and `renderPronunciationGuide` had no caller anywhere in
+`src/`. Every unit test on it passed the whole time, because every unit worked.
+
+So the audio model free-styled ten champion names for 28 minutes, and the player's verdict on that
+game's coaching was "a total disaster". The guide is now composed by `socketSystemPrompt` in
+`src/server/routes/live.ts`, one line from the mint, and the test that guards it asserts on that
+function's output for a roster read off a real recorded sample rather than on the renderer.
+
+## Names not yet covered, on purpose
+
+That same game and his last twenty carry champions this file has no row for because **I do not know
+how the community says them and a wrong respelling is worse than none**: Locke, Mel, Yunara,
+Zaahen. If one of those comes out wrong in a game, add the line — that is exactly the judgement this
+file leaves to you.
+
 ## Names
 
 Aatrox = AY-trox
@@ -48,22 +69,31 @@ Ahri = AH-ree
 Akali = uh-KAH-lee
 Akshan = AK-shan
 Alistar = AL-ih-star
+Ambessa = am-BESS-uh
 Amumu = ah-MOO-moo
 Anivia = uh-NIV-ee-uh
 Aphelios = uh-FEE-lee-os
+Ashe = ASH
 Aurelion Sol = aw-REE-lee-on SOL
 Aurora = uh-ROR-uh
 Azir = AH-zeer
 Bel'Veth = BELL-veth
+Braum = BRAWM
 Briar = BRY-er
+Caitlyn = KAYT-lin
 Camille = kuh-MEEL
 Cassiopeia = cass-ee-oh-PEE-uh
 Cho'Gath = CHO-gath
+Darius = DAIR-ee-us
 Dr. Mundo = doctor MUN-doh
+Draven = DRAY-ven
+Ekko = EK-oh
 Elise = eh-LEESE
 Evelynn = EV-uh-lin
 Ezreal = EZ-ree-al
+Fiddlesticks = FID-ul-stiks
 Fiora = fee-OR-uh
+Garen = GAIR-en
 Gnar = NAR
 Gragas = GRAH-gas
 Hecarim = HEK-uh-rim
@@ -78,25 +108,32 @@ Kai'Sa = KY-suh
 Kalista = kuh-LIS-tuh
 Karthus = KAR-thus
 Kassadin = KAS-uh-din
+Katarina = kat-uh-REE-nuh
 Kayn = KANE
 Kha'Zix = kah-ZIKS
 Kog'Maw = KOG-maw
 K'Sante = kuh-SAHN-tay
 LeBlanc = luh-BLONK
+Leona = lee-OH-nuh
 Lillia = LILL-ee-uh
 Lissandra = lih-SAN-druh
 Lucian = LOO-shun
+Lulu = LOO-loo
 Malzahar = MAL-zuh-har
 Maokai = mah-OH-kai
 Milio = MEE-lee-oh
 Mordekaiser = MOR-deh-kai-zer
+Morgana = mor-GAH-nuh
 Naafiri = nah-FEER-ee
 Nasus = NAY-sus
 Nautilus = NAW-tih-lus
+Neeko = NEE-koh
 Nidalee = NID-uh-lee
 Nilah = NEE-lah
 Nunu & Willump = NOO-noo and WILL-umb
+Olaf = OH-laff
 Orianna = or-ee-AH-nuh
+Ornn = ORN
 Qiyana = kee-YAH-nuh
 Rakan = RAH-kahn
 Rek'Sai = reck-SIGH
@@ -106,6 +143,7 @@ Rengar = REN-gar
 Ryze = RIZE
 Samira = suh-MEE-ruh
 Sejuani = seh-JWAH-nee
+Senna = SEN-uh
 Seraphine = SER-uh-feen
 Shaco = SHAH-ko
 Shyvana = shih-VAH-nuh
@@ -113,23 +151,28 @@ Singed = SINJD
 Sion = SY-on
 Sivir = SIH-veer
 Skarner = SKAR-ner
+Smolder = SMOLE-der
 Soraka = so-RAH-kuh
 Sylas = SY-lus
 Syndra = SIN-druh
 Tahm Kench = TAHM KENCH
 Taliyah = TAH-lee-yah
 Taric = TAR-ik
+Teemo = TEE-moh
 Tristana = tris-TAH-nuh
 Trundle = TRUN-dul
 Tryndamere = TRIN-duh-meer
 Udyr = YOO-deer
 Urgot = UR-got
 Varus = VAIR-us
+Vayne = VAYN
 Veigar = VAY-gar
 Vel'Koz = VEL-koz
+Vi = VY
 Viego = vee-AY-go
 Vladimir = VLAD-ih-meer
 Volibear = VOL-ee-bair
+Warwick = WAR-wick
 Wukong = WOO-kong
 Xayah = ZY-uh
 Xerath = ZEER-ath

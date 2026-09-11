@@ -171,6 +171,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { DATA_DIR } from "../src/shared/constants.ts"
 import { buildStream, discoverWindows } from "./lib/stream.ts"
+import { HEARTBEAT_SEC } from "../src/analysis/live-events.ts"
 import type { BuiltStream, StreamTurn, StreamWindow } from "./lib/stream.ts"
 import { protocolFor, readWhere } from "./bench-stream.ts"
 import type { Arm, TurnWhere } from "./bench-stream.ts"
@@ -1212,7 +1213,7 @@ const rejudgeStored = async (path: string): Promise<void> => {
 		turns: 999,
 		requireFrame: false,
 		schedule: "events",
-		heartbeatSec: 90
+		heartbeatSec: HEARTBEAT_SEC
 	})
 
 	/* -- match stored turns to rebuilt turns by clock, and say what did not match -- */
@@ -1335,7 +1336,7 @@ const main = async (): Promise<void> => {
 		turns: turnsWanted,
 		requireFrame: false,
 		schedule: "events",
-		heartbeatSec: 90
+		heartbeatSec: HEARTBEAT_SEC
 	})
 	for (const w of stream.warnings ?? []) console.log(`WARNING  ${w}`)
 

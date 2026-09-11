@@ -3,8 +3,8 @@
  *
  * ## Why this exists
  *
- * `scripts/eval-live.ts` and `scripts/bench-providers.ts` reconstruct game states from the
- * POST-GAME timeline, which is the only record the app kept. That timeline does not contain the
+ * `scripts/eval-live.ts` and `scripts/bench-providers.ts` (both since deleted) reconstructed game
+ * states from the POST-GAME timeline, which was the only record the app kept. That timeline does not contain the
  * enemy jungler's CS, anyone's items, anyone's role, or the live event feed — so every replayed
  * state is missing exactly the facts the coach was rebuilt around.
  *

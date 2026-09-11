@@ -8,8 +8,9 @@
  * produce noise about something that cannot be recovered.
  *
  * It is NOT intrusive. Nothing launches, no window opens; the client downloads a file in the
- * background while the user is in champ select for their next game. (`/rofls/{id}/watch`,
- * which DOES hijack the machine, belongs to `replay-capture` and is gated separately.)
+ * background while the user is in champ select for their next game. This is now the app's ONLY
+ * write to the League client: `/rofls/{id}/watch`, which does hijack the machine, belonged to
+ * `replay-capture`, and that job and its idle gate are both deleted.
  *
  * HONEST STATUS: the POST bodies here are UNVERIFIED. The research proved the routes exist
  * (a GET against them returns 405 WRONG_METHOD rather than 404) but deliberately never called

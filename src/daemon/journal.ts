@@ -30,6 +30,7 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { randomBytes } from "node:crypto"
 import { DATA_DIR } from "../shared/constants.ts"
+import type { LiveAllGameData } from "../shared/schema/live.ts"
 import { isCoachable } from "../shared/coachable.ts"
 import { lcu } from "./lcu.ts"
 import { makeLogger } from "./log.ts"
@@ -88,11 +89,22 @@ const readLive = async (): Promise<{
 	championName: string | null
 	riotId: string | null
 	gameMode: string | null
+	/**
+	 * The whole poll, carried out so that a caller who needs more of it than the four fields above
+	 * does not have to make a SECOND one inside the same beat.
+	 *
+	 * The one caller is the minimap watcher, and what it needs is the fence's five facts — who is
+	 * dead, how many are alive — AT THE SHUTTER. Those change inside a five-second beat, so fencing
+	 * a frame against the coaching turn's cached poll would be a looser fence than the POST path's,
+	 * and the fence is the one thing about this read that is not allowed to move.
+	 */
+	raw: LiveAllGameData
 } | null> => {
 	const handle = await lcu()
 	if (!handle) return null
 	const data = await handle.live.allGameData().catch(() => null)
-	const t = data?.gameData?.gameTime
+	if (!data) return null
+	const t = data.gameData?.gameTime
 	if (typeof t !== "number") return null
 	const riotId = data?.activePlayer?.riotId ?? data?.activePlayer?.summonerName ?? null
 	const me = riotId ? (data?.allPlayers ?? []).find(p => (p.riotId ?? p.summonerName) === riotId) : null
@@ -100,7 +112,8 @@ const readLive = async (): Promise<{
 		gameTimeSec: t,
 		championName: me?.championName ?? null,
 		riotId,
-		gameMode: data?.gameData?.gameMode ?? null
+		gameMode: data?.gameData?.gameMode ?? null,
+		raw: data
 	}
 }
 
@@ -122,6 +135,28 @@ export const writeFrame = async (input: {
 	jpeg: Buffer
 	/** The ground-truth block the coach was holding, when there was one. */
 	truth?: string | null
+	/**
+	 * A frame that LANDED, handed on to whoever wants to look at it.
+	 *
+	 * The minimap watcher is the caller, and this seam exists so that the watcher never has to make
+	 * a poll of its own. Everything it needs — the file, the game clock the journal stamped it with,
+	 * and the raw `allgamedata` those came from — is already in hand here, and a second LCU read per
+	 * five-second beat is traffic this repo explicitly refuses to add.
+	 *
+	 * CALLED SYNCHRONOUSLY AND EXPECTED TO RETURN THAT WAY. Its exceptions are swallowed and its
+	 * return value ignored: nothing downstream of a stored frame may cost the journal a write, and a
+	 * nice-to-have throwing inside a live game must not reach the caller as a failed upload.
+	 *
+	 * Only fired when the clock came from a LIVE read. An interpolated stamp means the poll failed,
+	 * which means there is no truth to fence a reading against — and an unfenced read is exactly
+	 * what this app refuses to hold.
+	 */
+	onStored?: (stored: {
+		framePath: string
+		tSec: number
+		sessionId: string
+		raw: LiveAllGameData
+	}) => void
 }): Promise<FrameResult> => {
 	try {
 		if (input.jpeg.length === 0) return { ok: false, code: "bad-frame", reason: "empty frame" }
@@ -174,6 +209,16 @@ export const writeFrame = async (input: {
 			bytes: input.jpeg.length
 		})
 		touchJournalSession(session)
+
+		if (live && input.onStored) {
+			try {
+				input.onStored({ framePath: path, tSec: gameTimeSec, sessionId: session, raw: live.raw })
+			} catch (err) {
+				// The frame is already on disk and in the table. Whatever this was, it is not worth
+				// telling the browser its upload failed.
+				log.warn(`onStored failed: ${err instanceof Error ? err.message : String(err)}`)
+			}
+		}
 
 		return { ok: true, sessionId: session, tSec: gameTimeSec, clock }
 	} catch (err) {

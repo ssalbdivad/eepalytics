@@ -119,7 +119,8 @@
  *                                runnable for comparison on one game
  *     --stride N                 under `events`, send every Nth due turn. COST ONLY — the skipped
  *                                turns are questions not asked, and their events ride the next turn
- *     --heartbeat SEC            floor under silence for the event schedule (default 90)
+ *     --heartbeat SEC            floor under silence for the event schedule (default HEARTBEAT_SEC,
+ *                                180s — what the shipped coach runs; pass it only to measure something else)
  *     --every SEC                turn cadence in game-clock seconds, `--schedule timer` only
  *     --turns N                  how many checkpoints to send (default 8 — cost discipline)
  *     --from SEC                 game clock to start sending at (the ranker is stepped from 0 regardless)

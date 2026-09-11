@@ -14,15 +14,19 @@
  *      speak-or-PASS decision matched on 13 of 14 turns, and where both spoke the lines were
  *      near-verbatim paraphrases. Every spoken line in both arms was derivable from the block.
  *
- * That is not a model failing, it is this repo's own architecture working exactly as written.
- * `analysis/live-facts.ts` computes and RANKS every candidate line in TypeScript and the prompt
- * lets the model speak only from that list — an empty list means PASS. Not one ranked fact is
- * computed from pixels, so the picture cannot reach the coach's mouth, by construction. The owner
- * spent ten games concluding the coach was not looking at his screen. It was looking, and it had
- * nowhere to put what it saw.
+ * That was not a model failing, it was this repo's architecture of the time working exactly as
+ * written. `analysis/live-facts.ts` computed and RANKED every candidate line in TypeScript and the
+ * prompt let the model speak only from that list — an empty list meant PASS. Not one ranked fact
+ * was computed from pixels, so the picture could not reach the coach's mouth, by construction. The
+ * owner spent ten games concluding the coach was not looking at his screen. It was looking, and it
+ * had nowhere to put what it saw.
  *
- * This module is the somewhere: a closed-question read of the frame whose output is shaped to
- * become ranked facts, sitting beside the client's facts under the same fence.
+ * THE FENCE IS GONE (`shared/live-coach-mode.ts`, default `trusted`) and this module outlived it,
+ * for a reason the ablation did not change: a model reading two-pixel dots off a whole downscaled
+ * frame lands a median 43% of the map's width from the truth, i.e. at chance. Position has to come
+ * from a dedicated, magnified, CONSTRAINED read whether or not anything downstream is a menu. What
+ * changed is where the answer goes — it is rendered into the brief as prose and as a structured
+ * `PositionFix`, rather than being converted into ranked facts.
  *
  * ## What the frame knows that the client does not
  *
@@ -286,6 +290,31 @@ const ANCHOR: Record<Zone, Pos> = {
  * a real failure mode with no cheap detector, and it is written here rather than discovered later.)
  */
 export const zoneLabel = (zone: Zone): string => zoneOf(ANCHOR[zone])
+
+/**
+ * The same zone, labelled for the side he is ACTUALLY ON. This is what a sentence uses.
+ *
+ * `zoneLabel` is absolute and must stay that way — the reader answers about a picture and the
+ * minimap does not rotate, so "blue-side jungle (top)" is something the pixels can settle and
+ * "your jungle" is not. But absolute is not what a coaching line means. On a red-side game
+ * `- You: blue-side jungle (top)` is a man standing in the ENEMY jungle, and nothing in the live
+ * payload resolves it: the delta carries no team side at all and the full brief says only
+ * `side ORDER` / `side CHAOS` with no ORDER-is-blue mapping anywhere. So the one distinction a
+ * jungler's whole death-location coaching turns on was left to the model to guess, and half the
+ * time the guess inverts.
+ *
+ * `forTeam` documents this flip as happening "exactly once, here, where his team id is known from
+ * the client" — and it never happened at all: `forTeam`'s only callers were its own tests. This is
+ * that flip, done where the team id is known, and it goes through `zoneOf` rather than `forTeam` so
+ * the ownership word and the side word come from one call and cannot disagree.
+ *
+ *   zoneLabelForTeam("ENEMY_JUNGLE_TOP", TEAM_BLUE) -> "enemy red-side jungle (top)"
+ *   zoneLabelForTeam("ENEMY_JUNGLE_TOP", TEAM_RED)  -> "own red-side jungle (top)"
+ *
+ * The absolute half is KEPT in the string. It is the part the picture verified, and dropping it
+ * would leave a label nothing can be checked against later.
+ */
+export const zoneLabelForTeam = (zone: Zone, teamId: TeamId): string => zoneOf(ANCHOR[zone], teamId)
 
 /** Every zone label, in enum order — the exact answer set handed to the model. */
 export const zoneLabels = (): string[] => READ_ZONES.map(zoneLabel)

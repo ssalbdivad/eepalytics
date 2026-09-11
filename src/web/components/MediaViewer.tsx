@@ -110,8 +110,9 @@ export const MediaViewer = ({ media, activeId, onClose }: MediaViewerProps) => {
 				</div>
 				<div className="csk-lightbox__stage">
 					<div className="csk-empty">
-						No screenshots or clips exist for this yet. Capture is deferred until you are out
-						of a game, and every moment always has a drawn map fallback.
+						No screenshots or clips exist for this yet. Frames come from the frame journal,
+						which only records while you screen-share, and every moment always has a drawn map
+						fallback.
 					</div>
 				</div>
 			</div>

@@ -172,6 +172,11 @@ export interface ScreenShare {
 	grabFrame: () => string | null
 	/** The minimap alone, cropped and upscaled for a reader. Null whenever `grabFrame` would be. */
 	grabMinimap: () => string | null
+	/**
+	 * The images one coaching turn should send, in order: the frame, then the minimap crop.
+	 *
+	 * Empty when there is no picture at all. See the implementation for what was measured.
+	 */
 	/** What the last few grabs actually produced. See {@link ScreenShareHealth}. */
 	health: ScreenShareHealth
 }
@@ -258,7 +263,33 @@ export const useScreenShare = (): ScreenShare => {
 		teardown()
 	}, [teardown])
 
+	/**
+	 * Already sharing? Then this is a no-op, and that is the whole point.
+	 *
+	 * The share is designed to outlive a game — he picks his monitor once and it carries across the
+	 * whole session. But `start()` used to call `getDisplayMedia` unconditionally, so anything that
+	 * called it a second time — the Share button pressed between two games, a re-arm after the
+	 * gameflow gate flipped, a retry after an unrelated error — put the OS screen picker in front of
+	 * a man who is already sharing his screen. He then has to find the right monitor again, and the
+	 * stream he already had is replaced by an identical one for no gain.
+	 *
+	 * The check is on the TRACK, not on the `sharing` flag: the flag is React state and can be stale
+	 * or out of step after a remount, while `readyState === "live"` is the browser's own answer to
+	 * "is this capture still running". A track that has ended reads `"ended"` and falls through to a
+	 * real prompt, which is correct — that share is genuinely gone.
+	 *
+	 * Re-publishing the state rather than returning silently matters for the case this exists to
+	 * fix: if the flag had drifted false while the track was alive, the caller pressed Share BECAUSE
+	 * the UI told him he was not sharing, and the honest repair is to correct the UI.
+	 */
 	const start = useCallback(async () => {
+		const live = streamRef.current?.getVideoTracks()[0]
+		if (live && live.readyState === "live") {
+			setSharing(true)
+			setEnded(false)
+			setError(null)
+			return
+		}
 		try {
 			if (typeof navigator === "undefined" || navigator.mediaDevices?.getDisplayMedia === undefined)
 				throw new TypeError("getDisplayMedia is not available in this window")

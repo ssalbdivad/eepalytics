@@ -34,6 +34,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { mayspeak, newPaceMemory, noteSpoken, SPEAK_FLOOR_SEC } from "../../analysis/speak-pace.ts"
+import {
+	describeTurn,
+	dueTurn,
+	commitTurn,
+	HEARTBEAT_SEC,
+	newEventWatch,
+	observeTick,
+	type EventWatch,
+	type LiveTick
+} from "../../analysis/live-events.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../../shared/live-prompt.ts"
 import { runCoachTurn, SystemVoice } from "./turnCoach.ts"
 
@@ -76,6 +86,105 @@ const IN_RATE = 16_000
  * block no longer carried by the time it would have been spoken. See `analysis/speak-pace.ts`.
  */
 const paceFloorSec = SPEAK_FLOOR_SEC
+
+/**
+ * Under `trusted` there is NO floor and the beat is six seconds. Both halves are the mandate.
+ *
+ * The floor above is a rate limit, and a rate limit is a guardrail: it decides WHEN the coach may
+ * speak, from outside, on a clock that cannot see the game. Every reason it existed was a property
+ * of the ranked list — announce-once facts, a block of six figures repeated until they were noise.
+ * `trusted` has no list, and its brief carries an age on every event, so the model can see for
+ * itself that nothing has changed. If it talks too much that is a prompt result to measure, not a
+ * timer to reinstate. `SPEAK_FLOOR_SEC` stays exactly as it is for the two older modes, which is
+ * where it was measured.
+ *
+ * Six seconds, not twenty: a socket turn answers in ~1.15s p50, so a six-second beat leaves five
+ * seconds of slack and still lets the coach react inside the fight rather than after it. It is also
+ * the journal's own frame cadence (5s), so the picture is never more than a beat stale. Faster than
+ * that buys nothing — the Live Client Data API itself only moves in whole-second ticks — and costs
+ * an image per turn, which is what this socket bills for.
+ */
+const TRUSTED_TURN_MS = 6_000
+
+/*
+ * NOTE: under `trusted` this no longer SCHEDULES anything. That arm is asked when the game moves —
+ * see the beat effect below and `analysis/live-events.ts`. The constant stays because it is still
+ * the initial `turnMs` the hook reports, and because the two older modes are unchanged.
+ */
+
+/**
+ * How often the FEED is looked at under `trusted` — which is not how often the coach is asked.
+ *
+ * This is the fast, cheap half of the event-driven coach: `GET /api/live/tick` is a stateless
+ * projection of the one `allgamedata` poll the daemon makes anyway, so looking at it costs a local
+ * round trip and nothing else. No minimap read, no brief built, no announce-once state consumed.
+ * `analysis/live-events.ts` diffs it and answers one question — did the game move — and only when
+ * it says yes is a turn built and sent.
+ *
+ * Two seconds because the expensive part of a reactive line is already 1.2s of model latency, and
+ * a death is worth hearing about inside the respawn timer rather than after it: 2s of detection
+ * plus ~1.2s to answer lands the line about 3s after he hits the floor, while he is still looking
+ * at the grey screen. Faster buys nothing this feed can supply — the Live Client Data API moves in
+ * whole-second ticks and the daemon's own sampler runs at 5s.
+ */
+const EVENT_TICK_MS = 2_000
+
+/**
+ * The longest a turn may be considered in flight before the flag is disbelieved.
+ *
+ * Generous on purpose: the socket's own p50 is 1.15s and its slowest graded answer was well under
+ * ten, so fifteen seconds cannot cut a real turn short — it only recovers a flag that was never
+ * cleared, which is a bug and not a slow model.
+ */
+const BUSY_MAX_MS = 15_000
+
+/**
+ * HOW MANY TURNS ONE SOCKET MAY HOLD BEFORE IT IS RECYCLED — and the measurement that says the
+ * thread, and nothing else, is what made the coach slow.
+ *
+ * ## What was measured
+ *
+ * The 38-turn run of game 5639406342 (`data/eval/stream-kayn-events2-20260910.json`) is one socket
+ * from 0:00 to 28:12. Latency against turn index and against payload size, together, over those 38
+ * turns:
+ *
+ *     latency = 1534ms + 64.5ms x turn index - 0.011ms x payload character      R2 = 0.81
+ *
+ * The turn-index term is t = 12.3 (p well under 1e-9). The payload term is t = -0.2 — not
+ * significant and the WRONG SIGN — and on the 23-turn run of the same game it is +0.0014ms per
+ * character, also not significant. The payload did not grow either: chars against turn index is
+ * +1.1 per turn, R2 = 0.00002. Nor does the answer's length explain anything (r = 0.01).
+ *
+ * By thirds of the run the p50 went 1937ms, 2853ms, 3571ms while the median payload went 1958,
+ * 1926, 1918 characters. The thread grew; nothing else did.
+ *
+ * ## Why capping it is the fix, and what it costs
+ *
+ * Eight turns holds the expected latency at 1534 + 64.5 x 3.5 = 1760ms and the worst turn of a
+ * cycle at 1985ms, against a measured run p50 of 2718ms and a last-third p50 of 3571ms. It also
+ * stops the growth being UNBOUNDED, which matters more than the average: the coach was slowest in
+ * the last ten minutes of the game, which is when a jungler's decisions are worth the most.
+ *
+ * A recycle was priced against the real endpoint, three times: mint the ephemeral token 207-620ms,
+ * open the socket 106-182ms, `setupComplete` 255-273ms with a system instruction of realistic
+ * size — 567-1063ms end to end, median 626ms. At eight turns that is four recycles in a 38-turn
+ * game, about 2.5 seconds of dead socket, and it is spent immediately after a `turnComplete`,
+ * which is the furthest point from the next turn: the event schedule's gaps are 40-100 seconds.
+ *
+ * ## Why this does not break the one-socket-per-game rule
+ *
+ * That rule exists so that game one's roster cannot reach game two. A reset INSIDE one game cannot
+ * do that — it can only lose context, never mix it — and what it loses is carried elsewhere by
+ * construction: the coach's own past lines and the accumulated narrative live in the daemon's
+ * `coach-memory.ts` and are rendered into every payload, and the next payload after a recycle is a
+ * full brief because `connect` arms `resyncRef`. A full brief is 8-15KB against a delta's 2.2KB
+ * and costs nothing by the regression above — the 11.4KB brief at 17:56 of the stored run came
+ * back in 2255ms against a trend line of 2950ms.
+ *
+ * What genuinely does not survive is a spoken exchange with him, so a recycle waits: never while
+ * she is answering a question, and never while the microphone is open.
+ */
+const THREAD_MAX_TURNS = 8
 
 /** The wall clock, in seconds, for the pace floor. See `paceFloorSec` for why it is not game time. */
 const nowSec = (): number => Date.now() / 1000
@@ -289,6 +398,19 @@ class PcmPlayer {
 	}
 }
 
+/** One turn's worth of daemon-computed truth: what to send, and the clock it was true at. */
+export interface TruthTurn {
+	/** The payload — the full brief on a resync, the delta otherwise. Empty means "no turn". */
+	text: string
+	/** The game clock the daemon polled, or null when it could not answer one. */
+	gameTimeSec: number | null
+	/**
+	 * Which turn of this sequence the payload is, echoed back on the transcript POST so the daemon
+	 * can measure latency against the block a line actually answered. See `turnRef`.
+	 */
+	turn?: number
+}
+
 export interface GeminiLiveOptions {
 	/**
 	 * Which model to speak through. `gemini-live` is the socket; anything else is an HTTPS turn.
@@ -301,7 +423,7 @@ export interface GeminiLiveOptions {
 	provider?: string
 	model?: string
 	/**
-	 * Fetches the current ground-truth block. Called once per turn, and ONLY per turn.
+	 * Fetches this turn's payload. Called once per turn, and ONLY per turn.
 	 *
 	 * Async, and that matters. It used to be a synchronous read of a value polled every 5s — but
 	 * building the block CONSUMES state: each death is announced once, gold once per step. Polling
@@ -309,20 +431,54 @@ export interface GeminiLiveOptions {
 	 * before the coach ever saw one. Computing it at the moment it is used makes those the same
 	 * event.
 	 *
-	 * **An empty string means "do not take this turn at all"** — see `beat()`.
+	 * **An empty `text` means "do not take this turn at all"** — see `beat()`.
+	 *
+	 * `resync` says the model's thread holds nothing, and only this side can know it: a new socket
+	 * is a new thread, and the daemon sees a stream of identical-looking polls either way. Under
+	 * `trusted` the daemon answers a resync with the FULL brief and every other turn with a delta,
+	 * so getting this wrong is the difference between a coach that has a roster and one that is
+	 * being told what changed about a game it was never introduced to.
+	 *
+	 * `gameTimeSec` comes back beside the text because the page has no other source for it. It
+	 * holds a socket and a screenshot; the clock only ever existed on the daemon's side of the
+	 * wire, which is why all 154 stored transcript rows have a null one.
 	 */
-	groundTruth: () => Promise<string>
+	groundTruth: (req?: { resync?: boolean }) => Promise<TruthTurn>
 	/** Crop the minimap, have the daemon read it, and store the observation. Optional. */
 	readMinimap?: () => Promise<void>
+	/**
+	 * One cheap, stateless look at the live feed — `GET /api/live/tick`.
+	 *
+	 * This is what makes the coach speak on EVENTS instead of on a clock. It is polled at
+	 * `EVENT_TICK_MS`, diffed by `analysis/live-events.ts`, and a turn is built only when the diff
+	 * says the game moved. Deliberately separate from `groundTruth`, which consumes state on every
+	 * call and may therefore only be called when a turn is actually going out.
+	 *
+	 * Absent, or under the two older modes, the beat falls back to the fixed timer it always had.
+	 */
+	liveTick?: () => Promise<LiveTick | null>
 	/** Supplies a JPEG data URL of the shared screen, or null when not sharing. */
 	grabFrame: () => string | null
+	/** The architecture in Settings. `trusted` removes the pace floor and quickens the beat. */
+	coachMode?: string
 }
 
 export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	const [status, setStatus] = useState<GeminiStatus>("off")
 	const [lines, setLines] = useState<GeminiLine[]>([])
 	const [error, setError] = useState<string | null>(null)
-	const [turnMs, setTurnMs] = useState(DEFAULT_TURN_MS)
+	const trusted = opts.coachMode === "trusted"
+	const floorSec = trusted ? 0 : paceFloorSec
+	const [turnMs, setTurnMs] = useState(trusted ? TRUSTED_TURN_MS : DEFAULT_TURN_MS)
+	/* The mode arrives from `GET /api/settings`, i.e. after the first render, so the initial state
+	 * above is a guess that has to be corrected once. Only the DEFAULT is reset — a beat the user
+	 * moved by hand is his. */
+	const lastTrusted = useRef(trusted)
+	useEffect(() => {
+		if (lastTrusted.current === trusted) return
+		lastTrusted.current = trusted
+		setTurnMs(trusted ? TRUSTED_TURN_MS : DEFAULT_TURN_MS)
+	}, [trusted])
 	const [micOn, setMicOn] = useState(false)
 	/**
 	 * Reported rather than estimated. This streams video continuously and bills per image, so the
@@ -410,12 +566,90 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	 */
 	const truthInFlight = useRef("")
 	/**
+	 * The game clock the last payload was true at, so every transcript row can carry one.
+	 *
+	 * A ref rather than state because nothing renders it and a re-render between a line arriving
+	 * and it being posted would be a way to file a line under the wrong second. Null until a turn
+	 * has actually landed, which is honest: before the first payload this page does not know what
+	 * time it is in the game, and it must not guess.
+	 */
+	const clockRef = useRef<number | null>(null)
+	/**
+	 * The `turn` number of that same payload, echoed back with every line she speaks.
+	 *
+	 * The daemon measured latency against the block it served MOST RECENTLY, which for anything
+	 * slower than the socket is not the block the line answers — at a 20.5s p50 against a ~25s
+	 * beat, one or two turns have gone out in the meantime, and every follow-through window built
+	 * from that latency opened a whole turn early. The daemon cannot see which turn a reply
+	 * belongs to; only the page can, because only the page holds both.
+	 *
+	 * Stamped at SEND time beside `truthInFlight` and `clockRef`, for the same reason they are:
+	 * the pairing is with what she was given, not with what is true when she finishes talking.
+	 */
+	const turnRef = useRef<number | null>(null)
+	/**
+	 * Whether the next payload has to be the FULL brief.
+	 *
+	 * True whenever the model is holding a thread that contains nothing — a fresh socket, a
+	 * reconnect, or a turn that was built and then never left the page. A delta into an empty
+	 * thread is a description of a change to a game the model was never shown, which is a worse
+	 * failure than the roster dump it replaces. It is cleared only once a payload has actually
+	 * been fetched, so a run of failed fetches keeps asking for the whole picture.
+	 */
+	const resyncRef = useRef(true)
+	/**
 	 * When she last actually SPOKE, so `paceFloorSec` can be applied.
 	 *
 	 * A ref rather than state: nothing renders it, and a re-render between the decision and the
 	 * send would be a way for two turns to pass the same floor.
 	 */
 	const paceRef = useRef(newPaceMemory())
+	/**
+	 * What the coach has been shown of the feed, and what it has already been asked about.
+	 *
+	 * One watch per GAME, not per session. `analysis/live-events.ts` resets itself when the clock
+	 * goes backwards, and both `connect` and `start` reset it too — a socket spanning two games
+	 * would otherwise carry game one's fired keys into game two and swallow its first death.
+	 */
+	const watchRef = useRef<EventWatch>(newEventWatch())
+	/**
+	 * True while the model is mid-answer. Used to DEFER a turn, never to drop one.
+	 *
+	 * Interleaving two turns on one socket thread is a correctness problem rather than a volume
+	 * one: the second arrives while the first is still being spoken, and the model answers a
+	 * question about a game state it has already been shown a newer version of. Events detected in
+	 * the meantime stay queued in the watch and ride out with the next turn carrying their own
+	 * timestamps, so nothing that happened goes unasked.
+	 */
+	const modelBusy = useRef(false)
+	/**
+	 * When `modelBusy` was set, so a turn that never completes cannot mute the coach for the game.
+	 *
+	 * The flag is cleared in exactly two places — `turnComplete` and `connect` — and the comment on
+	 * the `connect` one already names the failure mode for its own path: a socket that dies
+	 * mid-answer never delivers `turnComplete`. The socket does not have to die for that to happen.
+	 * A barge-in is handled at `sc.interrupted` with `player.silence()` and nothing else, and a
+	 * server error frame arrives with no `turnComplete` either; on a socket that stays open,
+	 * `dueTurn`'s `inFlight` guard is then true forever and the coach is live, watching, and
+	 * structurally unable to be asked anything again while the panel reads "live".
+	 *
+	 * So the flag carries a timestamp and `BUSY_MAX_MS` is the bound. It is not a rate limit and it
+	 * cannot suppress anything: it only stops a stuck flag from suppressing everything.
+	 */
+	const busySinceMs = useRef(0)
+	/** Why the coach was last asked. Panel copy — never sent to the model. */
+	const [lastAsk, setLastAsk] = useState<string | null>(null)
+	/**
+	 * How many turns this socket has carried, and whether the close it is about to see is ours.
+	 *
+	 * `turnsOnSocket` counts SENDS rather than answers, because a turn that left the page is a turn
+	 * the thread now holds whatever comes back. `recycling` is read in two places: `onclose`, which
+	 * must skip the retry ladder and its error copy for a close we asked for, and `sendTurn`, which
+	 * must not build a payload for a socket that is on its way out — a block is built by consuming
+	 * announce-once facts, so a turn that cannot be sent costs the coach those facts for good.
+	 */
+	const turnsOnSocket = useRef(0)
+	const recycling = useRef(false)
 	/** Non-null while a reconnect is pending, so `stop` can cancel it. */
 	const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const attemptRef = useRef(0)
@@ -441,7 +675,19 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				const res = await fetch("/api/live/gemini/transcript", {
 					method: "POST",
 					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ text, fromUser, groundTruth }),
+					/*
+					 * `gameTimeSec` is the fix for a measured hole: every one of the 154 stored
+					 * transcript rows has a null clock, because `record` never sent one. Without it
+					 * a line cannot be placed against the game — no follow-through check, no "you
+					 * are STILL low on mana", and no way to line a transcript up with a frame.
+					 */
+					body: JSON.stringify({
+						text,
+						fromUser,
+						groundTruth,
+						gameTimeSec: clockRef.current,
+						turn: turnRef.current
+					}),
 					keepalive: true
 				})
 				// A 4xx/5xx resolves rather than throws, and used to count as saved.
@@ -542,7 +788,19 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 * the opening minutes are where a jungler decides his route.
 			 */
 			paceRef.current = newPaceMemory()
+			// One game, one event watch, for the same reason. See `watchRef`.
+			watchRef.current = newEventWatch()
 		}
+		/*
+		 * Cleared on EVERY connect, retry included, and deliberately outside the block above.
+		 *
+		 * A socket that dies mid-answer never delivers `turnComplete`, so the flag that says "the
+		 * model is talking" would stay set across the reconnect and `dueTurn` would defer forever —
+		 * a coach that is live, watching, and structurally unable to be asked anything again. A
+		 * brand new socket has no turn in flight by definition, so this is a fact about the wire
+		 * rather than a workaround.
+		 */
+		modelBusy.current = false
 		setError(null)
 		setStatus(isRetry ? "reconnecting" : "connecting")
 		try {
@@ -564,6 +822,24 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				return
 			}
 
+			/*
+			 * A NEW SOCKET IS A NEW THREAD, so the first payload on it has to be the full brief.
+			 *
+			 * Armed here rather than in the heartbeat effect because this is the one place that
+			 * runs exactly once per socket. The heartbeat also restarts when the beat interval or
+			 * the pace floor changes in Settings, and those are not a new thread — re-sending the
+			 * whole roster because a slider moved is the payload bloat this protocol removes.
+			 *
+			 * It covers reconnects for free, which is the case that matters: the model comes back
+			 * holding nothing, and the delta it would otherwise be handed reads as a report on a
+			 * game it has never seen.
+			 */
+			resyncRef.current = true
+			clockRef.current = null
+			turnRef.current = null
+			/* A new socket is a new thread, so the count that decides when to recycle starts over. */
+			turnsOnSocket.current = 0
+			recycling.current = false
 			const ws = new WebSocket(`${tok.wsUrl}?access_token=${encodeURIComponent(tok.token)}`)
 			wsRef.current = ws
 
@@ -666,7 +942,11 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				 * The player started talking, so stop talking over them. This is the whole reason
 				 * a live socket feels different from a glance: it can be interrupted.
 				 */
-				if (sc.interrupted) player.silence()
+				if (sc.interrupted) {
+					player.silence()
+					/* An interrupted turn never reaches `turnComplete`, so this is where it ends. */
+					modelBusy.current = false
+				}
 
 				if (sc.inputTranscription?.text) {
 					const said = sc.inputTranscription.text
@@ -737,6 +1017,9 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 						for (const chunk of pendingAudio.current) player.play(chunk)
 					const wasAnswer = answering.current
 					answering.current = false
+					/* The model is free again, so the event loop may ask about whatever queued up
+					 * while it was talking. See `modelBusy`. */
+					modelBusy.current = false
 					const declined =
 						!wasAnswer && (turnDecided.current === "pass" || /^pass\b/i.test(text))
 					partialRef.current = ""
@@ -756,6 +1039,33 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 						record(text, false, truthInFlight.current)
 						setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
 					}
+					/*
+					 * AND THEN, IF THE THREAD IS FULL, RECYCLE IT. See `THREAD_MAX_TURNS`.
+					 *
+					 * Here rather than at send time because this is the one instant the socket is
+					 * idle by definition — she has finished speaking, `modelBusy` has just been
+					 * cleared, and the next turn is a detected event away, which on the stored run
+					 * is 40-100 seconds. A recycle costs about 626ms of dead socket and it is spent
+					 * in that gap.
+					 *
+					 * It waits on a conversation, because a conversation is the one thing the
+					 * thread holds that nothing else does: his typed question and her answer to it
+					 * are not in the daemon's memory of the game, and the microphone being open
+					 * means one is about to happen.
+					 */
+					if (
+						turnsOnSocket.current >= THREAD_MAX_TURNS &&
+						!answering.current &&
+						micRef.current === null &&
+						wantLiveRef.current
+					) {
+						recycling.current = true
+						try {
+							wsRef.current?.close(1000)
+						} catch {
+							/* already closing — `onclose` still runs, and it reads the flag */
+						}
+					}
 				}
 			}
 
@@ -767,6 +1077,22 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				wsRef.current = null
 				if (!wantLiveRef.current) {
 					setStatus("off")
+					return
+				}
+				/*
+				 * OUR OWN CLOSE, so: straight back up, no delay, no error copy, and the retry
+				 * ladder untouched.
+				 *
+				 * `attemptRef` is deliberately not incremented. It is the budget for a socket that
+				 * is genuinely failing, and spending a rung of it every eight turns would leave a
+				 * real outage two thirds of the way through its ladder before it began. A recycle
+				 * that itself fails to come back is an ordinary failure and gets the ordinary
+				 * treatment on the NEXT close.
+				 */
+				if (recycling.current) {
+					recycling.current = false
+					setStatus("reconnecting")
+					void connect(true)
 					return
 				}
 				/*
@@ -813,10 +1139,49 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		if (!turnBased || !wantLiveRef.current) return
 		let alive = true
 		let inFlight = false
+		/**
+		 * WHEN to ask, on a path that had lost its answer to that question.
+		 *
+		 * Under `trusted` the socket effect asks the event detector and this one asked a
+		 * `setInterval`. That was fine while both paths carried `SPEAK_FLOOR_SEC`; `trusted` removed
+		 * the floor here (`floorSec` is 0) because the EVENT SCHEDULE replaced it — and the event
+		 * schedule lives only in the socket effect. So a non-socket provider under the default mode
+		 * beat every `TRUSTED_TURN_MS` with no floor at all: about 282 asks in a 28-minute game,
+		 * strictly more chatter than the 20-second beat plus 45-second floor it replaced, and the
+		 * shape he switched an earlier version off over — nine lines in four minutes.
+		 *
+		 * The fix is the schedule, not the floor back. `dueTurn` is transport-agnostic: it reads a
+		 * projected tick and answers whether anything happened. So this path runs the same detector,
+		 * on the same 2-second poll, and the two architectures differ in transport alone — which is
+		 * the whole claim `coachTurn`'s no-prompt-parameter invariant is there to protect.
+		 *
+		 * The two older modes keep their timer and their floor, byte for byte. Their measurements
+		 * were taken against that cadence and changing it would silently invalidate them.
+		 */
+		const scheduled = async (): Promise<boolean> => {
+			if (!trusted) return mayspeak(paceRef.current, nowSec(), "standing", { floorSec }).speak
+			const projected = await optsRef.current.liveTick?.()
+			// No feed, no decision — :2999 answers nothing during the draft and the loading screen.
+			if (!projected) return false
+			const fired = observeTick(watchRef.current, projected)
+			watchRef.current.pending.push(...fired)
+			const reason = dueTurn(watchRef.current, projected.gameTimeSec, { heartbeatSec: HEARTBEAT_SEC })
+			if (!reason) return false
+			setLastAsk(describeTurn(reason))
+			/*
+			 * COMMITTED HERE rather than after the send, unlike the socket path, and the difference
+			 * is honest: this loop's `inFlight` latch already stops a second turn while one is out,
+			 * and the send below has three separate early returns after this point (no ground truth,
+			 * a provider error, a PASS). Holding the queue open across all of them would re-ask the
+			 * same events on the next 2-second tick for as long as the block stayed empty.
+			 */
+			commitTurn(watchRef.current, reason, projected.gameTimeSec)
+			return true
+		}
 		const tick = async () => {
 			if (!alive || inFlight) return
 			// The same floor the socket applies, for the same reason and before the same fetch.
-			if (!mayspeak(paceRef.current, nowSec(), "standing", { floorSec: paceFloorSec }).speak) return
+			if (!(await scheduled())) return
 			/*
 			 * READ THE MINIMAP FIRST, because the block is built from it.
 			 *
@@ -836,10 +1201,22 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 * it says today without one.
 			 */
 			await optsRef.current.readMinimap?.()
-			const truth = await optsRef.current.groundTruth()
+			/*
+			 * ALWAYS a resync on this path, and that is not a shortcut.
+			 *
+			 * A turn-based provider has no thread: `coachTurn` posts one frame and one block and
+			 * gets text back, so nothing it was told last turn is still in front of it. A delta
+			 * sent here would be the only thing the model ever saw of the game. The protocol's
+			 * saving is real on the socket and does not exist off it, which is the same split the
+			 * settings screen already draws between the two shapes.
+			 */
+			const turn = await optsRef.current.groundTruth({ resync: true })
+			const truth = turn.text
 			// The same rule the socket path follows: no facts, no turn. Without it the coach is
 			// back to reading pixels, which is the failure the block exists to prevent.
 			if (truth.trim() === "") return
+			clockRef.current = turn.gameTimeSec
+			turnRef.current = turn.turn ?? null
 			inFlight = true
 			try {
 				const shot = optsRef.current.grabFrame()
@@ -869,14 +1246,15 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				inFlight = false
 			}
 		}
-		const id = setInterval(() => void tick(), turnMs)
+		/* The detector needs a 2-second look at the world; a timer coach needs its own beat. */
+		const id = setInterval(() => void tick(), trusted ? EVENT_TICK_MS : turnMs)
 		void tick()
 		return () => {
 			alive = false
 			clearInterval(id)
 			voiceRef.current?.silence()
 		}
-	}, [turnBased, opts.provider, opts.model, turnMs, record, status])
+	}, [turnBased, trusted, opts.provider, opts.model, turnMs, floorSec, record, status])
 
 	const start = useCallback(() => {
 		if (!turnBased) return connect(false)
@@ -890,15 +1268,44 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		player.forgetPlayed()
 		// One game, one pace memory — the same reset `connect` does for the socket path.
 		paceRef.current = newPaceMemory()
+		watchRef.current = newEventWatch()
+		modelBusy.current = false
 		setStatus("live")
 		return undefined
 	}, [turnBased, connect])
 
 	/**
-	 * The heartbeat that makes it speak.
+	 * What makes it speak — and, under `trusted`, WHEN.
 	 *
-	 * Video alone produces silence — the model has no reason to take a turn. This sends the
-	 * computed ground truth on a timer, which is both the trigger and the facts.
+	 * Video alone produces silence: the model has no reason to take a turn, so something has to
+	 * hand it a frame and the ground-truth block and ask. The question is only what schedules that.
+	 *
+	 * ## Two schedulers, and why the old one is still here
+	 *
+	 * `cite-or-quiet` and `fenced` keep the fixed timer and the pace floor, byte for byte. Both
+	 * were measured with that beat and both stay runnable as comparisons; changing when they are
+	 * asked would silently invalidate every number either of them produced.
+	 *
+	 * `trusted` — the shipped arm — is asked when the GAME MOVES. `analysis/live-events.ts` polls
+	 * a cheap stateless projection of the feed every `EVENT_TICK_MS`, diffs it, and answers one
+	 * question: did something happen that changes what he should do next. A death, a respawn, the
+	 * counterpart dying, a fight resolving, an objective falling or coming up, a level that unlocks
+	 * something, an item finishing, a resource bar crossing a line, the counterpart surfacing after
+	 * a minute of nothing — and a 90-second floor under silence so a quiet stretch is not silent
+	 * forever.
+	 *
+	 * **This is not a rate limit and it is not a guardrail.** Nothing here reads a line, suppresses
+	 * a line, or tells the model what to say; a turn it declines is silence exactly as before, and
+	 * the length cap and the block are unchanged. What changes is the moment the question is asked,
+	 * which was always the harness's decision and was always arbitrary.
+	 *
+	 * The reason it matters is a counting argument. At the shipped 20s beat the coach is asked 85
+	 * times in a 28-minute game and at `TRUSTED_TURN_MS` it is asked 282; the post-game reviewer,
+	 * graded blind on the same game, picks SEVEN items and scored 68% useful against this coach's
+	 * 0/10. There are not 85 things worth saying in a game of League, so a coach asked 85 times
+	 * spends most of them reading his own HUD back to him. Replayed over the fourteen recorded
+	 * games in `data/live-samples/`, the event schedule asks 40-92 times against the timer's
+	 * 64-129 — and, far more to the point, asks at moments the feed can name.
 	 */
 	useEffect(() => {
 		if (status !== "live") return
@@ -937,16 +1344,36 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		 * picture stops riding inside the turn. Do not switch this to streaming to fix a silence;
 		 * the silence was never here (it was the output path — see `PcmPlayer.unlock`).
 		 */
-		const beat = async () => {
+		/**
+		 * Build one turn and send it. Both schedulers end here; nothing else sends a heartbeat.
+		 *
+		 * `withMinimap` is the ONE thing the event schedule can decide that a timer never could.
+		 * The read costs 1.3-3.0s in front of the turn, which `analysis/live-facts.ts` measured as
+		 * affordable for standing premises (5% stale at one second) and unaffordable for reactive
+		 * ones (40% stale at one second). On a timer every turn had to pay it, because a timer does
+		 * not know what the turn is about. `analysis/live-events.ts` does, so a death, a respawn or
+		 * a resource threshold now skips it and lands about three seconds after the thing happened,
+		 * while a drake window or a finished item still pays for a read of where he is standing.
+		 */
+		const sendTurn = async (withMinimap: boolean): Promise<boolean> => {
 			/*
-			 * THE FLOOR, before anything is fetched or sent. See `paceFloorSec`.
+			 * NOTHING IS BUILT FOR A SOCKET THAT IS ON ITS WAY OUT.
 			 *
-			 * The tier argument is left at its default: the loudest ranked fact's tier is a property
-			 * of the block, which has not been fetched yet — and the exemption it would feed is
-			 * measured inert (one extra line in a 36-minute game) and refused in
-			 * `analysis/speak-pace.ts` anyway.
+			 * The check is here, in front of the minimap read and the ground-truth fetch, because
+			 * both of those are expensive and the second one is DESTRUCTIVE: `buildFacts` announces
+			 * a death, a gold threshold or an objective once per game, so a block that is built and
+			 * then cannot be sent costs the coach those facts permanently. Returning false leaves
+			 * the detected events pending and the next two-second tick asks again, by which time
+			 * the new socket has been up for a second or more.
+			 *
+			 * The socket's own state is checked as well as the flag, and that is the belt: the flag
+			 * is cleared when the old socket closes and the new one does not exist until the token
+			 * has been minted, which is 207-620ms later. Reading `readyState` covers that window,
+			 * and it covers every other reason there is no wire — a reconnect ladder mid-rung, a
+			 * socket that died between two ticks — where the old code built the whole block first
+			 * and lost its announce-once facts to a `send` that returned false.
 			 */
-			if (!mayspeak(paceRef.current, nowSec(), "standing", { floorSec: paceFloorSec }).speak) return
+			if (recycling.current || wsRef.current?.readyState !== WebSocket.OPEN) return false
 			/*
 			 * READ THE MINIMAP FIRST, because the block is built from it.
 			 *
@@ -955,18 +1382,12 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 * fired and forgotten either: `FRAME_FRESH_SEC` is ten seconds and turns are twenty
 			 * apart, so an un-awaited read is always stale by the turn that wants it.
 			 *
-			 * The cost is the reader's own latency in front of a turn — measured 1.3 to 2.0
-			 * seconds, capped at three. That is affordable HERE and nowhere else: the read feeds
-			 * only standing facts (it gates the unspent-gold line while he is in the fountain, and
-			 * the objective windows), and standing facts were measured 5% stale at one second and
-			 * 10% at five. It would not be affordable in front of a reactive line, which is 40%
-			 * stale at one second already.
-			 *
 			 * A failed read costs the coach a GATE and never a line: `buildFacts` says exactly what
 			 * it says today without one.
 			 */
-			await optsRef.current.readMinimap?.()
-			const truth = await optsRef.current.groundTruth()
+			if (withMinimap) await optsRef.current.readMinimap?.()
+			const turn = await optsRef.current.groundTruth({ resync: resyncRef.current })
+			const truth = turn.text
 			/*
 			 * NO FACTS, NO TURN.
 			 *
@@ -981,7 +1402,17 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 * champions who were not in the game. Going quiet is the honest failure, the panel says
 			 * so, and she picks straight back up on the next beat that has a block.
 			 */
-			if (truth.trim() === "") return
+			if (truth.trim() === "") return false
+			/*
+			 * Cleared only now, and only on a payload that actually arrived.
+			 *
+			 * The daemon has answered the resync, so the next turn may be a delta. A failed or
+			 * empty fetch leaves it armed, because nothing reached the thread and a delta against
+			 * a picture the model was never given is the failure this flag exists to prevent.
+			 */
+			resyncRef.current = false
+			clockRef.current = turn.gameTimeSec
+			turnRef.current = turn.turn ?? null
 			truthInFlight.current = truth
 			const frame = optsRef.current.grabFrame()
 			const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = []
@@ -999,13 +1430,121 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			 * consumed to build it. A skipped turn is not a crisis; a run of them is the coach
 			 * being off while the panel says "live".
 			 */
-			if (!send({ clientContent: { turns: [{ role: "user", parts }], turnComplete: true } }))
+			if (!send({ clientContent: { turns: [{ role: "user", parts }], turnComplete: true } })) {
 				setDroppedTurns(n => n + 1)
+				/*
+				 * The payload was built and never left the page, so the thread does not hold it.
+				 * If that was the full brief, the next delta would describe changes to a game the
+				 * model has never been shown — so ask for the whole picture again.
+				 */
+				resyncRef.current = true
+				return false
+			}
+			/* The thread now holds this turn whatever comes back of it. See `THREAD_MAX_TURNS`. */
+			turnsOnSocket.current += 1
+			return true
 		}
-		const id = setInterval(() => void beat(), turnMs)
-		void beat()
+
+		/*
+		 * THE OLDER MODES: the fixed timer and the pace floor, unchanged.
+		 *
+		 * `cite-or-quiet` and `fenced` were both measured with exactly this schedule, and both stay
+		 * runnable as comparisons. Moving when they are asked would silently invalidate every
+		 * number either of them produced, which is the one thing a comparison arm may not do.
+		 */
+		if (!trusted) {
+			const beat = async () => {
+				/*
+				 * THE FLOOR, before anything is fetched or sent. See `paceFloorSec`.
+				 *
+				 * The tier argument is left at its default: the loudest ranked fact's tier is a
+				 * property of the block, which has not been fetched yet — and the exemption it
+				 * would feed is measured inert (one extra line in a 36-minute game) and refused in
+				 * `analysis/speak-pace.ts` anyway.
+				 */
+				if (!mayspeak(paceRef.current, nowSec(), "standing", { floorSec }).speak) return
+				await sendTurn(true)
+			}
+			const id = setInterval(() => void beat(), turnMs)
+			void beat()
+			return () => clearInterval(id)
+		}
+
+		/*
+		 * THE EVENT SCHEDULE. See this effect's docblock for what it is and what it is not.
+		 *
+		 * `looking` guards only against overlapping FETCHES — a slow tick must not stack a second
+		 * poll on top of itself. Whether a turn is due is `dueTurn`'s decision, and it defers on
+		 * `modelBusy` rather than dropping, so an event detected while she is still talking rides
+		 * out with the next turn instead of being lost.
+		 */
+		let looking = false
+		const look = async () => {
+			if (looking) return
+			looking = true
+			try {
+				const tick = await optsRef.current.liveTick?.()
+				/*
+				 * NO FEED, NO DECISION — and specifically no heartbeat either.
+				 *
+				 * :2999 answers nothing during the draft and the loading screen, which is most of
+				 * the time this socket is open before the clock starts. Letting the floor fire
+				 * against a feed that does not exist would send exactly the pixels-only turn that
+				 * `sendTurn`'s empty-block guard exists to stop, once every ninety seconds.
+				 */
+				if (!tick) return
+				/*
+				 * TWO STATEMENTS, and the split is load-bearing.
+				 *
+				 * `watchRef.current.pending.push(...observeTick(...))` evaluates the member
+				 * expression BEFORE the arguments, so when `observeTick`'s new-game branch replaces
+				 * `watch.pending` with a fresh array the events that same call returned were pushed
+				 * onto the detached one. Proven by replaying the real two-game session
+				 * js-mtvxb5f4-f81a: at clock 0 of game two `observeTick` returns `["game.start"]`,
+				 * `pending` has already been swapped, and the live array ends at length 0. Only one
+				 * `EventWatch` spanning two games reaches it, so it is the backstop that was broken
+				 * rather than the usual path — which is exactly the kind of bug nothing notices.
+				 */
+				const fired = observeTick(watchRef.current, tick)
+				watchRef.current.pending.push(...fired)
+				/* A turn older than `BUSY_MAX_MS` is not in flight any more, whatever the flag says. */
+				if (modelBusy.current && Date.now() - busySinceMs.current > BUSY_MAX_MS)
+					modelBusy.current = false
+				const reason = dueTurn(watchRef.current, tick.gameTimeSec, {
+					inFlight: modelBusy.current,
+					heartbeatSec: HEARTBEAT_SEC
+				})
+				if (!reason) return
+				setLastAsk(describeTurn(reason))
+				/*
+				 * Marked before the send rather than after the answer, because the answer can begin
+				 * streaming back in well under the time a state update takes. It is cleared on
+				 * `turnComplete`, and also here if the payload never left the page — a turn that
+				 * was not sent has nothing to wait for.
+				 */
+				modelBusy.current = true
+				busySinceMs.current = Date.now()
+				const sent = await sendTurn(reason.readMinimap)
+				/*
+				 * THE QUEUE IS SPENT ONLY IF THE PAYLOAD LEFT.
+				 *
+				 * `dueTurn` used to drain `pending` and reset the silence floor itself, before this
+				 * line ran. `sendTurn` returns false on an empty ground-truth block, on a fetch that
+				 * hits its 4-second timeout, and on a refused socket send — and each of those then
+				 * threw away the events AND bought ninety seconds of silence. A death detected
+				 * during a daemon hiccup was never asked about, which is the one failure the event
+				 * schedule exists to prevent.
+				 */
+				if (sent) commitTurn(watchRef.current, reason, tick.gameTimeSec)
+				else modelBusy.current = false
+			} finally {
+				looking = false
+			}
+		}
+		const id = setInterval(() => void look(), EVENT_TICK_MS)
+		void look()
 		return () => clearInterval(id)
-	}, [status, turnMs, send])
+	}, [status, turnMs, floorSec, trusted, send])
 
 	/** Push-to-talk: hold the mic open and let Gemini's own VAD decide when you stopped. */
 	const setMic = useCallback(
@@ -1098,6 +1637,14 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 		blindTurns,
 		/** Turns that never left the page because the socket was not open. */
 		droppedTurns,
+		/**
+		 * Why she was last asked anything — "death.self (Kayn killed Lillia)", "heartbeat".
+		 *
+		 * On screen because the event schedule is invisible otherwise: a coach that has been quiet
+		 * for a minute looks identical to a coach that has broken, and the difference is exactly
+		 * what this string says. Panel copy. It is never sent to the model.
+		 */
+		lastAsk,
 		/** How her voice is produced, which decides whether "no sound played" is diagnosable. */
 		voice: turnBased ? ("system" as const) : ("socket" as const),
 		unlockAudio,

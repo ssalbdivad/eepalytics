@@ -3,9 +3,9 @@
  *
  * This is the join that makes "show me exactly what to do differently" work. The coach only
  * ever emits `momentIds` — it is never told media ids, because the media may not exist yet
- * when it runs. `media-generate` draws one map SVG per moment, and `replay-capture` may add
- * real screenshots and clips much later, or never. So the item-to-picture link CANNOT be
- * frozen at review time; it is resolved on read by `withMomentMedia`.
+ * when it runs. `media-generate` draws one map SVG per moment, and the frame JOURNAL may add a
+ * real frame of the player's own screen much later, or never. So the item-to-picture link CANNOT
+ * be frozen at review time; it is resolved on read by `withMomentMedia`.
  *
  * The regression this defends: `FeedbackCard` renders only media whose id appears in
  * `item.mediaIds`. That list is written by the capture pipeline and was empty on every real

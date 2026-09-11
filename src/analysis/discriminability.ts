@@ -75,7 +75,8 @@
  * cannot see it.
  *
  * Pure: no model call, no file, no clock. The judge is injected, so the whole thing is unit
- * testable against a stub judge and the script `scripts/probe-generic.ts` supplies the real one.
+ * testable against a stub judge, and a caller supplies the real one. (`scripts/probe-generic.ts`
+ * did; it is deleted. `scripts/blind-judge.ts` is the judge the repo still ships.)
  */
 import { normalizeNumbers, wilson } from "./coach-score.ts"
 import type { Interval } from "./coach-score.ts"

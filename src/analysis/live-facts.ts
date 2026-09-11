@@ -1,12 +1,27 @@
 /**
- * What the live coach is allowed to say, decided here rather than by the model.
+ * What the live coach is OFFERED, ranked and rate-limited here rather than left to the model.
+ *
+ * ## READ THIS FIRST: this list is no longer a fence
+ *
+ * Everything below was written while `buildFacts` was an ALLOWLIST — the model could speak only
+ * from this list and an empty list meant PASS. It is not that any more. `DEFAULT_LIVE_COACH_MODE`
+ * is `trusted`, which does not read this list at all, and `cite-or-quiet` reads it as a PRIORITY
+ * HINT. Only the legacy `fenced` mode still treats it as a menu.
+ *
+ * The reason is measured and it is in `shared/live-coach-mode.ts`: the fence produced fourteen
+ * lines in 576 turns and an empty list on 89-97% of turns across eleven games, while the honesty
+ * it was credited with came from the CITATION RULE, which survives without it. Every present-tense
+ * "the coach may only speak from this list" in the prose below is therefore a description of the
+ * `fenced` arm, kept because that arm's stored runs are only meaningful while the text that
+ * produced them still exists. The rate limits are the part that still governs every mode — they
+ * bound what is OFFERED, and under `trusted` the model decides the rest.
  *
  * ## Why this is code and not prompt text
  *
  * Asked to "be actionable" from a screenshot, a vision model invents. The real session that
  * prompted all of this produced *"clear faster, you need to use more abilities"* said to someone
  * using abilities on cooldown — a claim nothing in the live data could have checked. So the model
- * does not derive facts. It is handed a short ranked list and may choose one and phrase it.
+ * is not asked to derive a FIGURE: every number in this list is computed from the client.
  *
  * ## Why the rate limiting is here too
  *
@@ -64,8 +79,8 @@
  * `shared/live-prompt.ts` — it is `shared/live-state.ts` that decides whether it is printed at all
  * between the measured 10/14/20-minute checkpoints, and that is the durable fix.
  *
- * Note for anyone re-running this: `buildLiveStateForBench` passes NO baseline, so `pace` is null
- * in every state the shipped `scripts/bench-providers.ts --from-samples` replay produces — which
+ * Note for anyone re-running this: `buildLiveStateForBench` defaults to NO baseline, so `pace` is
+ * null in every state a replay that does not pass one produces — which
  * makes both CS rules structurally dead there, the farm one and the race one that needs his CS to
  * subtract from. The benchmark cannot see the subject this player quit over.
  *
@@ -724,6 +739,15 @@ export interface FrameObservation {
 	 * Staleness is decided in `buildFacts` rather than by the caller, for the same reason the rate
 	 * limits are: a producer that decides for itself whether it is still fresh is a second copy of a
 	 * rule, and this file is where the rules about what may be said live.
+	 *
+	 * WHICH PUTS THE WHOLE FIELD IN THE PRODUCER'S HANDS, and the producer got it wrong for the
+	 * life of the feature. `POST /api/live/frame-read` stamped every read with the clock of the
+	 * PREVIOUS ground-truth poll, because that was the only clock the route had cached — and a turn
+	 * reads the minimap BEFORE it fetches the block, so that poll is a whole beat old. At the ranked
+	 * modes' twenty-second beat that is an age of 21-23 seconds against `FRAME_FRESH_SEC` of ten:
+	 * the test below this line never once passed in a real game, and the reader ran, and was paid
+	 * for, and was discarded, on every turn of every game. `frameClockSec` in `server/routes/live.ts`
+	 * is what makes the stamp mean what this comment has always said it means.
 	 */
 	atSec: number
 	/**

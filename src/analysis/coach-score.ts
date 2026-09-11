@@ -5,9 +5,10 @@
  *
  * The owner's question is *"how much of the hallucination is the model?"* — and the only way to
  * answer it is to hold the prompt, the ground-truth block and the frame constant and vary only
- * the model. That makes the scorer the instrument. `scripts/bench-providers.ts` drives the
- * providers; everything that decides whether a line was a fabrication lives here, pure, so it can
- * be unit tested against lines that SHOULD and should NOT trip each rule.
+ * the model. That makes the scorer the instrument. `scripts/bench-stream.ts` drives the providers
+ * (`scripts/bench-providers.ts`, which used to, is deleted); everything that decides whether a line
+ * was a fabrication lives here, pure, so it can be unit tested against lines that SHOULD and should
+ * NOT trip each rule.
  *
  * **A scorer that flatters one model is worse than no scorer.** So every rule below is stated
  * precisely enough to be argued with, each one names the measured failure it exists to catch, and
@@ -23,9 +24,9 @@
  *
  * ## The one thing this file does NOT do
  *
- * It does not judge tone, warmth, variety or repetition. Those need a judge, they are measured
- * that way in `scripts/eval-live.ts`, and folding a subjective score into a mechanical one is how
- * a benchmark stops being arguable.
+ * It does not judge tone, warmth, variety or repetition. Those need a judge — `scripts/blind-judge.ts`
+ * is it — and folding a subjective score into a mechanical one is how a benchmark stops being
+ * arguable.
  */
 
 /* ============================================================== the faults */

@@ -17,11 +17,12 @@
 
 import { strictEqual } from "node:assert/strict"
 import { describe, test } from "node:test"
-import { championFromSession } from "./live.ts"
+import { championFromSession, counterpartFromSession } from "./live.ts"
+import { fullKnowledge } from "../../review/live-knowledge-full.ts"
 import type { GameflowSession } from "../../shared/schema/lcu.ts"
 
 const ME = "188dee22-18d6-5752-ba7f-b69cf3d2506e"
-const CHAMPIONS: Record<number, string> = { 876: "Lillia", 48: "Trundle", 64: "Lee Sin" }
+const CHAMPIONS: Record<number, string> = { 876: "Lillia", 48: "Trundle", 64: "Lee Sin", 233: "Briar" }
 const nameOf = (id: number): string => CHAMPIONS[id] ?? ""
 
 interface Seat {
@@ -104,5 +105,70 @@ describe("the champion the socket's prompt is built for", () => {
 	test("is empty when the rosters do not contain his puuid — nothing there is his", () => {
 		const s = session([{ puuid: "someone-else", championId: 876, position: "JUNGLE" }], [THEM_JUNGLE])
 		strictEqual(championFromSession(s, nameOf), "")
+	})
+})
+
+/**
+ * The OTHER half of the same prompt, which was missing for the life of every socket.
+ *
+ * `lockedCounterpart` read `allgamedata` on :2999 and stopped. The socket's system instruction is
+ * minted exactly once, at ChampSelect, which is precisely when :2999 answers nothing — so
+ * `fullKnowledge({ champion, counterpart: null })` dropped the whole `# THE ENEMY JUNGLER` section
+ * for the whole game, while `TRUSTED_PROMPT` told the model "both junglers' champion notes are at
+ * the end of these instructions, in full". The turn-based route resolved it per turn and DID get
+ * it, so `trusted` was two different prompts depending on transport — the exact confound
+ * `coachTurn`'s no-prompt-parameter invariant exists to prevent.
+ */
+describe("the enemy jungler the socket's prompt is built for", () => {
+	const BRIAR_JUNGLE: Seat = { puuid: "enemy-jg", championId: 233, position: "JUNGLE" }
+
+	test("is known at champion select, where the socket's prompt is minted", () => {
+		strictEqual(counterpartFromSession(session([ME_JUNGLE], [BRIAR_JUNGLE]), nameOf), "Briar")
+	})
+
+	test("falls back to the lone enemy Smite holder when nobody declared a position", () => {
+		/*
+		 * Most solo-queue drafts. `buildMatchupBrief` identifies him by Smite alone in that case,
+		 * which needs the spell NAME — so this pins that a spell lookup is actually passed, which
+		 * `championFromSession` does not need and deliberately stubs.
+		 */
+		const s = session(
+			[{ puuid: ME, championId: 876, position: "" }],
+			[
+				{ puuid: "enemy-jg", championId: 233, position: "" },
+				{ puuid: "enemy-top", championId: 48, position: "" }
+			]
+		)
+		s.gameData!.playerChampionSelections = [
+			{ puuid: ME, championId: 876, spell1Id: 4, spell2Id: 11 },
+			{ puuid: "enemy-jg", championId: 233, spell1Id: 4, spell2Id: 11 },
+			{ puuid: "enemy-top", championId: 48, spell1Id: 4, spell2Id: 12 }
+		]
+		strictEqual(counterpartFromSession(s, nameOf), "Briar")
+	})
+
+	test("is null rather than a guess when the counterpart is ambiguous", () => {
+		const s = session([ME_JUNGLE], [{ puuid: "enemy-top", championId: 48, position: "TOP" }])
+		s.gameData!.playerChampionSelections = [
+			{ puuid: ME, championId: 876, spell1Id: 4, spell2Id: 11 },
+			{ puuid: "enemy-top", championId: 48, spell1Id: 4, spell2Id: 12 }
+		]
+		strictEqual(counterpartFromSession(s, nameOf), null)
+	})
+
+	test("is null in the lobby and after the game", () => {
+		for (const phase of ["None", "Lobby", "EndOfGame"])
+			strictEqual(counterpartFromSession(session([ME_JUNGLE], [BRIAR_JUNGLE], { phase }), nameOf), null)
+	})
+
+	/* The reason all of the above matters: the section it unlocks in the prompt that actually ships. */
+	test("the ChampSelect prompt carries the matchup half", () => {
+		const s = session([ME_JUNGLE], [BRIAR_JUNGLE])
+		const prompt = fullKnowledge({
+			champion: championFromSession(s, nameOf),
+			counterpart: counterpartFromSession(s, nameOf)
+		})
+		strictEqual(prompt.includes("# YOUR CHAMPION: Lillia"), true)
+		strictEqual(prompt.includes("# THE ENEMY JUNGLER: Briar"), true, "the matchup notes are missing")
 	})
 })

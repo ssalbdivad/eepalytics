@@ -37,6 +37,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useGeminiLive } from "../lib/geminiLive.ts"
+import type { LiveTick } from "../../analysis/live-events.ts"
 import { useGameflow, standbyReason } from "../lib/gameflow.ts"
 import { liveFaults, topFault } from "../lib/liveFaults.ts"
 import { useScreenShare } from "../lib/useScreenShare.ts"
@@ -63,8 +64,18 @@ const isWslElectron = (): boolean => {
 	return /Electron/i.test(ua) && /Linux/i.test(ua)
 }
 
-/** How often she is invited to speak. She stays quiet unless she has something. */
-const TURN_CHOICES = [10, 20, 40]
+/**
+ * How often she is invited to speak, for the modes that still work on a clock.
+ *
+ * 6 is here because `trusted` forces the beat to `TRUSTED_TURN_MS` (6,000ms), which matched none of
+ * the three older buttons — so the interval row rendered with nothing selected under the shipped
+ * default, and any click moved the beat to at least 10s. A default the UI cannot express is a
+ * default the user cannot get back to.
+ *
+ * The row is now HIDDEN under `trusted`, which is asked when the game moves rather than on any
+ * interval. It stays for `cite-or-quiet` and `fenced`, which keep the timer they were measured on.
+ */
+const TURN_CHOICES = [6, 10, 20, 40]
 
 /**
  * How often a frame is written to the journal.
@@ -360,6 +371,8 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	const settings = useResource(signal => api.settings(signal), [])
 	const liveProvider = settings.data?.liveProvider ?? "gemini-live"
 	const liveModel = settings.data?.liveModel ?? ""
+	// The architecture, forwarded so the socket can drop the pace floor under `trusted`.
+	const coachMode = settings.data?.liveCoachMode ?? ""
 
 	const gem = useGeminiLive({
 		provider: liveProvider,
@@ -386,6 +399,29 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 		 * so there is no silence for the player to misread as the coach being broken, and nothing
 		 * for him to act on. The daemon logs the reason.
 		 */
+		/**
+		 * One cheap look at the live feed, so the coach can be asked when the GAME moves.
+		 *
+		 * Deliberately NOT `groundTruth`. That call consumes state on the daemon — it advances the
+		 * delta's baseline and the turn sequence — so it may only be made when a turn is actually
+		 * going out; polling it to look for a death would mean the next real turn's delta covered
+		 * two seconds instead of the ninety since she last spoke. `GET /api/live/tick` touches
+		 * nothing and is a projection of the same `allgamedata` poll the daemon makes anyway.
+		 *
+		 * Swallowed, like the minimap read and for the same reason: a failed look costs a
+		 * DECISION, not a line. `analysis/live-events.ts` simply sees no movement this tick, the
+		 * 90-second floor under silence still applies, and the next look picks it up.
+		 */
+		liveTick: async () => {
+			try {
+				const r = await fetch("/api/live/tick", { signal: AbortSignal.timeout(3000) })
+				if (!r.ok) return null
+				const j = (await r.json()) as { tick?: LiveTick | null }
+				return j.tick ?? null
+			} catch {
+				return null
+			}
+		},
 		readMinimap: async () => {
 			const crop = share.grabMinimap()
 			if (crop === null) return
@@ -400,9 +436,21 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				/* a gate, not a line */
 			}
 		},
-		groundTruth: async () => {
+		groundTruth: async req => {
 			try {
-				const r = await fetch("/api/live/ground-truth", { signal: AbortSignal.timeout(4000) })
+				/*
+				 * `?resync=1` is the page telling the daemon that the model's thread holds nothing.
+				 *
+				 * The daemon owns the turn sequence — it is the only side that knows what it has
+				 * already sent — but it cannot see a socket being replaced, and a reconnect gives
+				 * Gemini a completely fresh thread. So the one bit only this side knows travels in
+				 * the query string, and the daemon answers it with the full brief instead of a
+				 * delta. Absent, this is a normal turn.
+				 */
+				const r = await fetch(
+					`/api/live/ground-truth${req?.resync === true ? "?resync=1" : ""}`,
+					{ signal: AbortSignal.timeout(4000) }
+				)
 				/*
 				 * A 500 RESOLVES. It does not throw, so the old code fell through to `j.text` being
 				 * undefined and returned "" with the failure flag still reading OK — a daemon that
@@ -410,11 +458,32 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				 * game. Status first, then the body.
 				 */
 				if (!r.ok) throw new Error(`HTTP ${r.status}`)
-				const j = (await r.json()) as { inGame?: boolean; text?: string }
+				const j = (await r.json()) as {
+					inGame?: boolean
+					text?: string
+					gameTimeSec?: number | null
+					turn?: number
+				}
 				setTruthFails(0)
 				if (j.text) {
 					truthRef.current = j.text
-					return j.text
+					/*
+					 * The clock rides back with the block because the page has no other source for
+					 * one. It is what finally lets a transcript row say when it was said — every
+					 * stored row until now has a null `gameTimeSec`, which is what made the coach's
+					 * own history unusable as memory.
+					 */
+					return {
+						text: j.text,
+						gameTimeSec: typeof j.gameTimeSec === "number" ? j.gameTimeSec : null,
+						/*
+						 * Carried back out on the transcript POST, so the daemon can date a line
+						 * against the block it answered rather than against whatever it served
+						 * most recently. It matters most for the slow turn-based providers, where
+						 * a reply routinely lands after the next turn has gone out.
+						 */
+						...(typeof j.turn === "number" ? { turn: j.turn } : {})
+					}
 				}
 			} catch {
 				/*
@@ -437,9 +506,10 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 			 * on every beat of champion select and the loading screen, where there is no :2999 data
 			 * by definition. Going quiet costs one turn and cannot be wrong.
 			 */
-			return ""
+			return { text: "", gameTimeSec: null }
 		},
-		grabFrame: share.grabFrame
+		grabFrame: share.grabFrame,
+		coachMode
 	})
 
 	const [question, setQuestion] = useState("")
@@ -895,16 +965,29 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 						</button>
 					)}
 
-					<span className="csk-screen__label">Checks in every</span>
-					{TURN_CHOICES.map(sec => (
-						<button
-							key={sec}
-							className={`csk-screen__int ${gem.turnMs === sec * 1000 ? "on" : ""}`}
-							onClick={() => gem.setTurnMs(sec * 1000)}
-						>
-							{sec}s
-						</button>
-					))}
+					{/*
+					 * The interval picker is only shown for the modes that HAVE an interval.
+					 *
+					 * Under `trusted` the coach is asked when the game moves — a death, an
+					 * objective, a fight resolving, a level that unlocks something — with a
+					 * 90-second floor under silence. Leaving a "checks in every 6s" control on
+					 * screen there would be a lie about how the shipped coach works, and one the
+					 * player would reasonably act on when she seemed too quiet.
+					 */}
+					{coachMode !== "trusted" && (
+						<>
+							<span className="csk-screen__label">Checks in every</span>
+							{TURN_CHOICES.map(sec => (
+								<button
+									key={sec}
+									className={`csk-screen__int ${gem.turnMs === sec * 1000 ? "on" : ""}`}
+									onClick={() => gem.setTurnMs(sec * 1000)}
+								>
+									{sec}s
+								</button>
+							))}
+						</>
+					)}
 
 					{(gem.status === "live" || gem.status === "reconnecting") && (
 						<button
@@ -931,6 +1014,18 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 							watching · {gem.usage.turns} check-in{gem.usage.turns === 1 ? "" : "s"}
 							{gem.usage.totalTokens > 0 ?
 								` · ${Math.round(gem.usage.totalTokens / 1000)}k tokens`
+							:	""}
+							{/*
+							 * WHY she was last asked, when there is an event schedule to explain.
+							 *
+							 * An event-driven coach that has said nothing for a minute is
+							 * indistinguishable on screen from one that has broken, and that
+							 * ambiguity is what gets a working feature switched off. This is the
+							 * one line that tells them apart. It is panel copy and never reaches
+							 * the model.
+							 */}
+							{coachMode === "trusted" && gem.lastAsk !== null ?
+								` · asked on ${gem.lastAsk.slice(0, 60)}`
 							:	""}
 						</span>
 					)}

@@ -148,7 +148,24 @@ export interface BriefInput {
  * to, and a fence whose refusals still reach the payload as a low-confidence value is not a fence.
  */
 export interface PositionFix {
-	/** ABSOLUTE prose, e.g. "blue-side base" — never "your jungle". Rendered verbatim. */
+	/**
+	 * The zone as PROSE, already resolved for the side he is on. Rendered verbatim.
+	 *
+	 * "own blue-side jungle (top)", "enemy red-side jungle (bot)" — both halves, and both halves
+	 * are load-bearing. The absolute half ("blue-side") is what the PICTURE settled: the minimap
+	 * does not rotate, so blue's base is bottom-left in every frame whoever is playing, and it is
+	 * the only thing a read of pixels can honestly assert. The ownership word ("own" / "enemy") is
+	 * what the sentence MEANS, and it comes from the live feed's `ORDER`/`CHAOS`, one layer up in
+	 * `server/routes/live.ts` where the team id is known.
+	 *
+	 * This doc used to say ABSOLUTE, never "your jungle", and the route minted the label with
+	 * `zoneLabel` to match. On a red-side game — 8 of the 20 recorded games here — `You: blue-side
+	 * jungle (top)` is a man standing in the ENEMY jungle, and nothing else in this payload settles
+	 * it: the full brief says `side CHAOS` with no CHAOS-is-red mapping anywhere and the delta
+	 * carries no side at all. So the one distinction a jungler's whole death-location coaching
+	 * turns on was left for the model to guess, and half the time the guess inverts. See
+	 * `zoneLabelForTeam` in `review/frame-read.ts` for the flip and `pictureFix` for the caller.
+	 */
 	label: string
 	/** The granularity a jungler's decision turns on; `review/frame-read.ts`'s `Coarse`, structurally. */
 	coarse: "topside" | "botside" | "mid" | "base"

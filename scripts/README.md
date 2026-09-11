@@ -44,6 +44,7 @@ If the new question is really a new one, add a row.
 | file | the question it answers |
 |---|---|
 | `lib/sheet.ts` | **THE sheet builder.** The blinded human grading sheet as one HTML file, plus its key and the reveal. Three callers: `bench-stream`, `frame-value`, `postgame-sheet`. Never write a second one. |
+| `judge-corpus.ts` | Grades every line a `bench-stream --games ...` run spoke, blinded and shuffled, and reports useful/false/generic PER GAME as well as pooled. Judges against the stored PAYLOAD only, because 13 of the 17 games have no frames — so its false rate is a floor, not the truth. |
 | `blind-judge.ts` | The reader for the 2026-09-05 ablation corpus (`ablation-*.json`, `blind-*.json`), and the seeded shuffle every sheet imports. |
 | `rescore-runs.ts` | What did a stored run SAY, and how does it score against today's scorer? The reader for the ~30 `run*/final*/confirm` files from 2026-09-04 whose writer (`eval-live.ts`) was deleted. |
 | `audit-citations.ts` | Do the reviews already in the database pass the citation and baseline checks? |

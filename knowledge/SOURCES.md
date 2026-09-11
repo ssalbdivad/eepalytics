@@ -44,10 +44,16 @@ fence in `knowledge/README.md`: things that shape **the fix**. Specifically —
 - **Yes:** clear routes and their frequency, clear times, power-spike levels, what the champion
   wants from a fight, where the champion is vulnerable, matchup shape against a specific enemy
   jungler.
-- **No:** item builds, rune pages, skill order as a *grading* criterion. The LCU timeline has
-  none of those, so the coach could never check what the user actually did — advice about them
-  would float free of evidence, which is the exact failure this app exists to prevent. (Skill
-  and ability *roles* are fine; "he should have maxed W" is not.)
+- **No:** item builds, rune pages, skill order as a *grading* criterion **for the user**. The
+  LCU timeline has none of those, so the post-game coach could never check what he actually did —
+  advice about them would float free of evidence, which is the exact failure this app exists to
+  prevent. (Skill and ability *roles* are fine; "he should have maxed W" is not.)
+  - The one exception, and it runs the other way: **what a finished item on the ENEMY jungler
+    means** is fair game and is the point of a counterpart file. The live client reports item
+    IDENTITY exactly once that player has been seen (Jaccard 100% against the post-game blob for
+    all ten players), so "he has Sunfire, he wants to sit on you" is a reading of a fact the coach
+    was handed. Its `price` is not: summed, item prices recover roughly a quarter of gold spent,
+    so never write a rule that turns items into a gold total.
 - **No numbers that could be mistaken for measurements of his game.** A champion's base clear
   time is context. It is never a stat about him.
 

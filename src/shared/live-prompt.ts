@@ -1,9 +1,18 @@
 /**
- * The live coach's standing instructions — one definition, used by the app and by the eval.
+ * The live coach's standing instructions for the LEGACY `fenced` mode.
  *
- * It lives in `shared/` rather than beside the socket because `scripts/eval-live.ts` drives the
- * same prompt against real game states and scores what comes back. A prompt with two copies is a
- * prompt that gets tuned in one of them.
+ * ## This is not what ships any more
+ *
+ * `DEFAULT_LIVE_COACH_MODE` is `trusted` (`shared/live-coach-mode.ts`). This text is the `fenced`
+ * arm: it permits the model to speak only from the ranked list `analysis/live-facts.ts` returns,
+ * with an empty list meaning PASS. Measured, that produced fourteen lines in 576 turns and an
+ * empty list on 89-97% of turns. It is kept BYTE-IDENTICAL because the stored runs that justified
+ * removing it are only meaningful while the text that produced them still exists — so do not
+ * reword it, and `shared/live-coach-mode.test.ts` will fail if you do.
+ *
+ * It lives in `shared/` rather than beside the socket because the benches drive the same prompt
+ * against real game states. `scripts/ablate-autonomy.ts --arms fenced` is what drives it now;
+ * `scripts/eval-live.ts`, which used to, is deleted.
  *
  * ## What this text is answering
  *
