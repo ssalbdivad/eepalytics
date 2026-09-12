@@ -95,20 +95,73 @@ describe("readSamples", () => {
 })
 
 describe("pruneSamples", () => {
-	it("drops the oldest first once the directory outgrows its ceiling", async () => {
-		// Age alone does not bound disk: a real game is about 11 MB and a heavy week inside the
-		// retention window would be a gigabyte.
-		const { SAMPLE_MAX_BYTES } = await import("./live-sampler.ts")
-		ok(SAMPLE_MAX_BYTES > 0)
-		strictEqual(typeof SAMPLE_MAX_BYTES, "number")
+	it("has a ceiling, and it is the only bound left", async () => {
+		const mod = await import("./live-sampler.ts")
+		ok(mod.SAMPLE_MAX_BYTES > 0)
+		strictEqual(typeof mod.SAMPLE_MAX_BYTES, "number")
+		/*
+		 * THE AGE BOUND IS GONE AND MUST STAY GONE. Asserting its absence is not pedantry: it was
+		 * removed because it had already destroyed one corpus and was thirteen hours from
+		 * destroying six more games, and the obvious "fix" for a full disk is to put it back.
+		 * Whoever does should have to delete this line and read why first.
+		 */
+		strictEqual(
+			(mod as Record<string, unknown>).SAMPLE_KEEP_DAYS,
+			undefined,
+			"an age bound on this directory deletes evidence; size is the bound — see live-sampler.ts"
+		)
 	})
 
-	it("keeps recent files and removes stale ones", () => {
+	it("keeps every game when the directory is under the ceiling, however old", () => {
 		sampleLive({ gameId: "js-fresh", gameTimeSec: 10, data: {} })
-		strictEqual(pruneSamples(Date.now()), 0)
+		// The default ceiling is 600 MB and this directory holds a few bytes, so nothing goes.
+		strictEqual(pruneSamples(), 0)
 		ok(sampleCount("js-fresh") > 0)
-		// Far enough in the future that everything on disk is past the window.
-		ok(pruneSamples(Date.now() + 400 * 86_400_000) > 0)
+		/*
+		 * And age genuinely cannot evict any more. Before this change the same call with a clock
+		 * 400 days ahead deleted the lot; there is no clock in the signature to move now, and a
+		 * roomy ceiling keeps everything no matter what the mtimes say.
+		 */
+		strictEqual(pruneSamples(), 0)
+		ok(sampleCount("js-fresh") > 0)
+	})
+
+	it("drops the oldest first, and only once the ceiling is actually crossed", () => {
+		const before = readdirSync(SAMPLE_DIR).filter(f => /-t\d+\.ndjson$/.test(f))
+		ok(before.length >= 2, "need at least two recorder files to order an eviction")
+		// A ceiling of one byte is below any real directory, so everything the prune MAY take, it
+		// takes — which is the set this asserts, not the ordering's cutoff.
+		const gone = pruneSamples(1)
+		ok(gone > 0, "a ceiling under the directory size must evict something")
+		const left = readdirSync(SAMPLE_DIR).filter(f => /-t\d+\.ndjson$/.test(f))
+		strictEqual(left.length, 0, "every recorder file is fair game under a one-byte ceiling")
+	})
+
+	it("never deletes a file the recorder did not write, at any size", () => {
+		/*
+		 * A real loss, not a hypothetical. `split-01..04.ndjson` and the multi-game capture they
+		 * were cut from sat in this directory as the paired evaluation corpus; a daemon restart
+		 * on 2026-09-12 aged all five out and no copy existed anywhere else. The recorder's own
+		 * files always carry the `-t<stamp>` game key, so that pattern is the whole permission.
+		 *
+		 * That guard covered only what a human had placed, which on the same day was measured to
+		 * be the smaller half of the problem — the recorder's own files ARE the corpus now. The
+		 * age bound is gone for that reason; this test pins the half that survives it.
+		 */
+		writeFileSync(`${SAMPLE_DIR}/split-03.ndjson`, '{"gameTime":1}\n')
+		writeFileSync(`${SAMPLE_DIR}/notes.md`, "hand written\n")
+		sampleLive({ gameId: "js-doomed", gameTimeSec: 10, data: {} })
+
+		// A one-byte ceiling: past every bound the prune still has.
+		pruneSamples(1)
+
+		const left = readdirSync(SAMPLE_DIR)
+		ok(left.includes("split-03.ndjson"), "a hand-placed fixture must survive the prune")
+		ok(left.includes("notes.md"), "a non-sample file must survive the prune")
+		ok(
+			!left.some(f => /^js-doomed-t\d+\.ndjson$/.test(f)),
+			"the recorder's own file must still be evictable on size"
+		)
 	})
 })
 

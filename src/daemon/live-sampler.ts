@@ -44,8 +44,30 @@ export const SAMPLE_DIR = `${DATA_DIR}/live-samples`
  */
 export const SAMPLE_EVERY_SEC = 5
 
-/** Games older than this are pruned. Samples are a debugging and evaluation aid, not history. */
-export const SAMPLE_KEEP_DAYS = 7
+/**
+ * THERE IS NO AGE BOUND ANY MORE, and removing it is the whole point of this constant's absence.
+ *
+ * The premise of an age bound was the sentence that used to sit here: "samples are a debugging and
+ * evaluation aid, not history." That stopped being true when `scripts/bench-stream.ts` became the
+ * only harness — every game it can bench is a file in this directory and nothing else on the
+ * machine holds the raw client JSON. `--games all` reads exactly these, so an aged-out game is a
+ * game whose numbers can never be re-derived, and this project's rule is that a stored measurement
+ * is never deleted.
+ *
+ * This is not hypothetical twice over. `isRecorderFile` below records the first loss — four
+ * hand-placed corpus games destroyed by a routine restart on 2026-09-12 — and the guard it added
+ * covered only files a human had placed. The recorder's OWN files were by then the corpus: measured
+ * at 02:28 the same day, six of the twenty-eight benchable games sat between 6.10 and 6.46 days
+ * against this seven-day bound, among them the ONLY paired Gwen game (370 samples, 48 journal
+ * frames) and the negative control for the `+noown` knowledge ablation. The next daemon start
+ * inside thirteen hours would have taken all six, for the second time in one day.
+ *
+ * `SAMPLE_MAX_BYTES` is kept and is now the only bound, because disk was the only thing age was
+ * ever protecting and the ceiling protects it directly: measured, the whole corpus is 275 MB of
+ * 600. The failure mode is therefore "the directory grows until someone looks at it" rather than
+ * "it silently destroys evidence", which is the right way round — the same trade the comment on
+ * `isRecorderFile` argued for and then only half applied.
+ */
 
 /**
  * A ceiling on the whole directory, because age alone does not bound disk.
@@ -76,6 +98,32 @@ const gameStamp = (gameTimeSec: number): string =>
 let current: SamplerState | null = null
 
 const pathFor = (gameId: string): string => `${SAMPLE_DIR}/${gameId}.ndjson`
+
+/**
+ * Whether the RECORDER wrote this file, and therefore whether the prune may delete it.
+ *
+ * `pruneSamples` used to delete anything in the directory old enough or big enough to qualify,
+ * and that is not safe, because this directory holds two different kinds of file. The recorder
+ * writes `<sessionId>-t<stamp>.ndjson` and owns those completely — they are a debugging aid and
+ * are meant to age out. But the measurement work also PLACES files here by hand: `split-01..04`
+ * were one multi-game capture cut into its four games, and they were the paired corpus that
+ * `scripts/lib/stream.ts`, `scripts/measure-staleness.ts` and six tests in `coach-memory.test.ts`
+ * and `stream.test.ts` all read by name.
+ *
+ * On 2026-09-12 a routine daemon restart deleted all five of them — the four splits and the
+ * multi-game source they were cut from — because they were more than seven days old. Nothing
+ * else on the machine held a copy. The stored RESULTS in `data/eval/` survive, but the raw
+ * client JSON behind them does not, so those four games' numbers can never be re-derived. Six
+ * tests went from passing to skipped in the same restart, which is the only reason it was
+ * noticed at all.
+ *
+ * So the prune is now allowed to delete only files matching the recorder's own naming. Anything
+ * a human put here is left alone at any age and counts against no ceiling. The bounds still do
+ * their job — every file the recorder has ever written matches — and the failure mode changes
+ * from "silently destroys evidence" to "the directory grows until someone looks at it", which is
+ * the right way round for a directory whose whole purpose is keeping measurements re-derivable.
+ */
+const isRecorderFile = (name: string): boolean => /-t\d+\.ndjson$/.test(name)
 
 /**
  * Record one sample, if enough game time has passed.
@@ -214,13 +262,19 @@ export const readSamples = (gameId: string): { atMs: number; gameTime: number; d
 }
 
 /**
- * Drop stale sample files, by age and then by total size. Called on daemon start.
+ * Drop sample files once the directory outgrows its ceiling. Called on daemon start.
  *
- * Two bounds because one is not enough: age alone leaves a heavy week unbounded, and size alone
- * would keep a month-old game forever if he stopped playing. Age first, then oldest-first until
- * the directory fits.
+ * SIZE IS THE ONLY BOUND — see the note where `SAMPLE_KEEP_DAYS` used to be. A month-old game is
+ * kept forever on purpose now: if he stopped playing, that game is the whole corpus. Oldest first
+ * once the ceiling is crossed, so the game he just played is the last thing to go.
+ *
+ * The ceiling is a PARAMETER rather than a read of the constant so that the eviction it performs
+ * can be tested at all. It defaults to `SAMPLE_MAX_BYTES` and the daemon never passes anything, so
+ * the shipped behaviour is the constant; a test can hand it a ceiling of a few bytes instead of
+ * writing 600 MB to prove the ordering. The parameter it replaces was `now`, which existed only
+ * for the age bound that is gone.
  */
-export const pruneSamples = (now = Date.now()): number => {
+export const pruneSamples = (maxBytes = SAMPLE_MAX_BYTES): number => {
 	if (!existsSync(SAMPLE_DIR)) return 0
 	let gone = 0
 	const drop = (p: string): void => {
@@ -234,11 +288,12 @@ export const pruneSamples = (now = Date.now()): number => {
 
 	const live: { path: string; mtime: number; size: number }[] = []
 	for (const f of readdirSync(SAMPLE_DIR)) {
+		// Not ours, not ours to delete — see `isRecorderFile`.
+		if (!isRecorderFile(f)) continue
 		const p = `${SAMPLE_DIR}/${f}`
 		try {
 			const st = statSync(p)
-			if (now - st.mtimeMs > SAMPLE_KEEP_DAYS * 86_400_000) drop(p)
-			else live.push({ path: p, mtime: st.mtimeMs, size: st.size })
+			live.push({ path: p, mtime: st.mtimeMs, size: st.size })
 		} catch {
 			// Raced with something else; nothing to do.
 		}
@@ -248,7 +303,7 @@ export const pruneSamples = (now = Date.now()): number => {
 	// Oldest first, so the game he just played is the last thing to go.
 	live.sort((a, b) => a.mtime - b.mtime)
 	for (const f of live) {
-		if (total <= SAMPLE_MAX_BYTES) break
+		if (total <= maxBytes) break
 		drop(f.path)
 		total -= f.size
 	}
