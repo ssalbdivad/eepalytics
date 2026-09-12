@@ -22,7 +22,8 @@ export const HANDLERS: Record<JobKind, JobHandler> = {
 	"media-generate": runMediaGenerate
 }
 
-export const handlerFor = (kind: JobKind): JobHandler | null => HANDLERS[kind] ?? null
+export const handlerFor = (kind: string): JobHandler | null =>
+	HANDLERS[kind as JobKind] ?? null
 
 export {
 	runAnalysisJob,

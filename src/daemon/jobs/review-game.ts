@@ -35,11 +35,19 @@ import {
 	setGameReviewVersion
 } from "../../db/queries.ts"
 import { baselineFromRows, perGameMetrics } from "../../analysis/index.ts"
+import { journalFramesForGame } from "../../db/journal-frames.ts"
+import { buildGamePack, renderPack } from "../../review/pack.ts"
+import {
+	POSTGAME_MODEL,
+	chooseFrames,
+	postgameArmAvailable,
+	runPostgameCoach
+} from "../../review/postgame-call.ts"
 import { buildReview, seriousWarnings } from "../../review/parse.ts"
 import { gamePrompt } from "../../review/prompt.ts"
 import { runCoach } from "../../review/claude.ts"
 import { publish } from "../bus.ts"
-import { BLOB_REVIEW_DIGEST, writeBlob } from "../../db/blobs.ts"
+import { BLOB_GAME_PACK, BLOB_REVIEW_DIGEST, writeBlob } from "../../db/blobs.ts"
 import { loadCorpus, loadTimeline } from "../corpus.ts"
 import { refreshChampionContextInBackground } from "../../knowledge/research.ts"
 import { buildGameDigest } from "../digest.ts"
@@ -91,24 +99,80 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 
 	/* ---- the exact bytes the coach will see ---- */
 	const corpus = loadCorpus(settings.gamesForTrends, { excludeGameId: gameId })
+	const participants = getParticipants(gameId)
+	const timeline = loadTimeline(gameId)
+
+	/*
+	 * THE PACK, and why it is built here rather than in its own job.
+	 *
+	 * It is a pure read of blobs already on disk — measured at 40 ms for a 28-minute game — so a
+	 * separate job would add a queue hop, a lease and a failure mode to save nothing. What it buys
+	 * is the one number the app has been getting wrong: the counterpart's CS, level and gold, off
+	 * the post-game timeline where they are exact for all ten players, instead of the live feed's
+	 * visibility counter that read 70 against a true 183 and produced both of the two items he
+	 * graded false out of 37.
+	 */
+	const pack = buildGamePack({
+		game,
+		participants,
+		timeline,
+		frames: journalFramesForGame(gameId)
+	})
+	const packText = renderPack(pack)
+
+	/*
+	 * THE PICTURES. `chooseFrames` picks at decision moments out of the pack's own event list, so
+	 * a frame and the sentence about it cannot drift apart.
+	 *
+	 * An empty list is the normal case — he screen-shares about one game in thirty — and it is
+	 * not a failure: the review then goes out on the pack and the digest alone, and the prompt's
+	 * "no replay frames, stay on the numbers" section stays switched on, which is exactly the
+	 * honest posture for a game nobody watched.
+	 */
+	const chosen = chooseFrames(pack)
+
+	/*
+	 * The cheap arm, when this machine has a key for it.
+	 *
+	 * Measured on the identical frozen 16-frame bundle: flash 43 s, pro 129 s, sonnet 155 s,
+	 * gpt-5 161 s, opus 330 s — and the five were indistinguishable on the blinded grading. The
+	 * model is not a lever on quality and is a large one on how long he waits, so the default is
+	 * the fast one and the slow path is the FALLBACK rather than the other way round.
+	 *
+	 * `runCoach` (the `claude` CLI) cannot carry an image at all, so a game with frames has only
+	 * one transport that can use them.
+	 */
+	const useCheapArm = postgameArmAvailable()
+	const model = useCheapArm ? POSTGAME_MODEL : settings.model
+
 	const digest = buildGameDigest({
 		game,
-		participants: getParticipants(gameId),
+		participants,
 		metrics,
 		moments,
-		timeline: loadTimeline(gameId),
+		timeline,
 		baseline: baselineFromRows(perGameMetrics(corpus)),
-		// Real captured frames only. A generated map diagram illustrates position, which the
-		// data already covers; it is not evidence of execution and must not unlock claims about it.
-		hasFrames: listMediaForGame(gameId).some(
-			m => m.source === "replay" && m.kind === "screenshot"
-		),
+		/*
+		 * Frames now means JOURNAL frames — his own screen, recorded while he played — and not
+		 * the replay screenshots this field was written for. Replay capture produced zero media in
+		 * the app's entire history and its job is gone, so the old test was false for every game
+		 * and every review carried the "nobody has watched this game" section even when sixteen
+		 * pictures of it were about to be attached. The old test is kept beside the new one
+		 * because a historical game may still have real replay screenshots on disk.
+		 */
+		hasFrames:
+			chosen.length > 0 ||
+			listMediaForGame(gameId).some(m => m.source === "replay" && m.kind === "screenshot"),
 		analysisVersion: ANALYSIS_VERSION
 	})
 
 	const prompt = gamePrompt(digest, {
 		intensity: settings.coachIntensity,
-		model: settings.model
+		model,
+		pack: packText,
+		// The pictures are not hashed; their identity is. Two runs that attached different frames
+		// are different reviews, two that attached the same ones must not re-bill.
+		frameKey: chosen.map(c => c.frame.id).join(",")
 	})
 
 	if (reviewExistsForPrompt(gameId, prompt.promptHash)) {
@@ -121,30 +185,63 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 		existing &&
 		existing.status !== "failed" &&
 		existing.promptHash === prompt.promptHash &&
-		existing.model === settings.model
+		existing.model === model
 	) {
 		setGameReviewVersion(gameId, REVIEW_VERSION)
 		return { note: "already reviewed at this exact prompt" }
 	}
 
 	ctx.progress(
-		`asking ${settings.model} to review game ${gameId} (${Math.round(prompt.approxChars / 1000)}k chars)`
+		`asking ${model} to review game ${gameId} (${Math.round(prompt.approxChars / 1000)}k chars, ${chosen.length} frame(s))`
 	)
 
-	const result = await runCoach({
-		system: prompt.system,
-		user: prompt.user,
-		model: settings.model,
-		schema: prompt.schema,
-		label: `review-game:${gameId}:job${ctx.job.id}`,
-		signal: ctx.signal
-	})
+	const cli = () =>
+		runCoach({
+			system: prompt.system,
+			user: prompt.user,
+			model: settings.model,
+			schema: prompt.schema,
+			label: `review-game:${gameId}:job${ctx.job.id}`,
+			signal: ctx.signal
+		})
+
+	/*
+	 * One call, then one fallback, and the fallback is never silent.
+	 *
+	 * A provider outage must not cost him the debrief — the CLI path is authenticated against his
+	 * own subscription and does not depend on a key file — but the arm that answered has to end up
+	 * in the stored row, because the model is part of the prompt hash and a review attributed to
+	 * the wrong one would be re-used for the wrong prompt forever.
+	 */
+	let result =
+		useCheapArm ?
+			await runPostgameCoach({
+				system: prompt.system,
+				user: prompt.user,
+				frames: chosen,
+				...(ctx.signal ? { signal: ctx.signal } : {})
+			})
+		:	await cli()
+	let answeredBy = useCheapArm ? model : settings.model
+	if (useCheapArm && !result.ok && result.code !== "aborted") {
+		ctx.log.warn("the cheap arm failed; falling back to the CLI", {
+			gameId,
+			model,
+			code: result.code,
+			err: result.error
+		})
+		const retry = await cli()
+		if (retry.ok) {
+			result = retry
+			answeredBy = settings.model
+		}
+	}
 
 	/* Everything a stored failure row needs, whichever stage failed. */
 	const failureId = {
 		kind: "game",
 		gameId,
-		model: settings.model,
+		model: answeredBy,
 		promptHash: prompt.promptHash
 	} as const
 
@@ -160,7 +257,7 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 		raw: result.data,
 		kind: "game",
 		gameId,
-		model: settings.model,
+		model: answeredBy,
 		promptHash: prompt.promptHash,
 		// Derived from the DIGEST, not the raw rows: the digest restated every baseline
 		// from the live corpus, and the allowlist has to police the figures the coach was
@@ -189,6 +286,19 @@ export const runGameReviewJob = async (ctx: JobContext): Promise<JobOutcome> => 
 	// report figures the coach copied correctly as fabrications — which it did, six of them in
 	// one review, before this was moved.
 	writeBlob(gameId, BLOB_REVIEW_DIGEST, digest)
+	// The pack goes beside it, with the frames that were actually attached named in it, so the
+	// debrief screen can show the evidence without rebuilding anything.
+	writeBlob(gameId, BLOB_GAME_PACK, {
+		...pack,
+		attachedFrames: chosen.map(c => ({
+			id: c.frame.id,
+			tSec: c.frame.tSec,
+			clock: c.frame.clock,
+			momentSec: c.momentSec,
+			gapSec: c.gapSec,
+			because: c.because
+		}))
+	})
 	setGameReviewVersion(gameId, REVIEW_VERSION)
 
 	const loud = seriousWarnings(built.warnings)

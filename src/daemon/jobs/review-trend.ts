@@ -27,6 +27,11 @@ import { perGameMetrics, trendDetailsFromRows } from "../../analysis/index.ts"
 import { buildReview, seriousWarnings } from "../../review/parse.ts"
 import { trendPrompt } from "../../review/prompt.ts"
 import { runCoach } from "../../review/claude.ts"
+import {
+	POSTGAME_MODEL,
+	postgameArmAvailable,
+	runPostgameCoach
+} from "../../review/postgame-call.ts"
 import { publish } from "../bus.ts"
 import { loadCorpus } from "../corpus.ts"
 import { buildTrendDigest } from "../digest.ts"
@@ -82,33 +87,81 @@ export const runTrendReviewJob = async (ctx: JobContext): Promise<JobOutcome> =>
 		]
 	})
 
+	/*
+	 * THE SAME CHEAP ARM THE PER-GAME REVIEW USES.
+	 *
+	 * The trend call carries no pictures — it is text across a window of games — so nothing here
+	 * needs a multimodal transport. It takes this path anyway because the two reviews must not
+	 * quietly run on different models: `promptHash` covers the model, so a trend written by the
+	 * CLI and a game review written by flash are two different prompts describing one window,
+	 * and comparing them later would be comparing arms rather than games.
+	 *
+	 * Measured on this machine, same day: the CLI path answered the trend in 38.3 s and billed
+	 * $0.1129; the per-game reviews on the cheap arm answered in a p50 of 19.6 s over 42 calls
+	 * with zero failures. The provider reports no cost for the cheap arm at all, so the saving
+	 * is stated as the CLI bill avoided rather than as a figure nobody handed us.
+	 *
+	 * `runCoach` stays as the FALLBACK, exactly as in `review-game`: it authenticates against
+	 * his own subscription and does not depend on a key file, so a provider outage costs him a
+	 * slower trend rather than no trend.
+	 */
+	const useCheapArm = postgameArmAvailable()
+	const model = useCheapArm ? POSTGAME_MODEL : settings.model
+
 	const prompt = trendPrompt(digest, {
 		intensity: settings.coachIntensity,
-		model: settings.model
+		model
 	})
 
 	if (reviewExistsForPrompt(null, prompt.promptHash))
 		return { note: "the same window was already summarised; no call made" }
 
 	ctx.progress(
-		`asking ${settings.model} for trends across ${games.length} games ` +
+		`asking ${model} for trends across ${games.length} games ` +
 			`(${series.filter(s => s.trendable).length} trendable metrics)`
 	)
 
-	const result = await runCoach({
-		system: prompt.system,
-		user: prompt.user,
-		model: settings.model,
-		schema: prompt.schema,
-		label: `review-trend:job${ctx.job.id}`,
-		signal: ctx.signal
-	})
+	const cli = () =>
+		runCoach({
+			system: prompt.system,
+			user: prompt.user,
+			model: settings.model,
+			schema: prompt.schema,
+			label: `review-trend:job${ctx.job.id}`,
+			signal: ctx.signal
+		})
+
+	// One call, then one fallback, and the arm that ANSWERED is what gets stored — the model is
+	// part of the prompt hash, so a review attributed to the wrong one would be re-used for the
+	// wrong prompt forever.
+	let result =
+		useCheapArm ?
+			await runPostgameCoach({
+				system: prompt.system,
+				user: prompt.user,
+				frames: [],
+				...(ctx.signal ? { signal: ctx.signal } : {})
+			})
+		:	await cli()
+	let answeredBy = useCheapArm ? model : settings.model
+	if (useCheapArm && !result.ok && result.code !== "aborted") {
+		ctx.log.warn("the cheap arm failed on the trend; falling back to the CLI", {
+			model,
+			code: result.code,
+			err: result.error
+		})
+		const retry = await cli()
+		if (retry.ok) {
+			result = retry
+			answeredBy = settings.model
+		}
+	}
 
 	/* Everything a stored failure row needs, whichever stage failed. */
 	const failureId = {
 		kind: "trend",
 		gameId: null,
-		model: settings.model,
+		model: answeredBy,
 		promptHash: prompt.promptHash
 	} as const
 
@@ -123,7 +176,7 @@ export const runTrendReviewJob = async (ctx: JobContext): Promise<JobOutcome> =>
 		raw: result.data,
 		kind: "trend",
 		gameId: null,
-		model: settings.model,
+		model: answeredBy,
 		promptHash: prompt.promptHash,
 		// A trend item cites metric SERIES, never a single game's moment ids.
 		allowed: {

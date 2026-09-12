@@ -278,6 +278,8 @@ const blockFor = (it: Item): string => {
 			out.push(
 				`  ${e.clock} ${e.name} ${e.killer ?? ""}${e.victim ? ` -> ${e.victim}` : ""}` +
 					`${e.dragonName ? ` ${e.dragonName}` : ""}${e.turret ? " (a turret)" : ""}` +
+					/* `e.assisters` is already empty on a drake/baron/herald/grub — the pack quarantines
+					 * the feed's list there rather than rendering it. See `assistersAreReadable`. */
 					`${e.assisters.length ? ` [assists: ${e.assisters.join(", ")}]` : ""}${e.involvesHim ? "   <- HIM" : ""}`
 			)
 

@@ -21,7 +21,7 @@
  */
 
 import { uncoachableReason } from "../../shared/coachable.ts"
-import { ANALYSIS_VERSION } from "../../shared/constants.ts"
+import { ANALYSIS_VERSION, JOB_PRIORITY } from "../../shared/constants.ts"
 import { Metric, Moment, parseOrThrow } from "../../shared/schema/domain.ts"
 import {
 	getGame,
@@ -42,7 +42,7 @@ import {
 	loadMatch,
 	loadTimeline
 } from "../corpus.ts"
-import { enqueueGameReview, enqueueMediaGenerate, enqueueTrendReview } from "../queue.ts"
+import { enqueueGameReview, enqueueJob, enqueueMediaGenerate, enqueueTrendReview } from "../queue.ts"
 import { shouldRefreshTrend } from "../reconcile.ts"
 import type { JobContext, JobOutcome } from "../context.ts"
 
@@ -149,7 +149,29 @@ export const runAnalysisJob = async (ctx: JobContext): Promise<JobOutcome> => {
 	/* ---- chain ---- */
 	if (capped.length > 0) enqueueMediaGenerate(gameId)
 	if (settings.autoReviewNewGames) {
-		enqueueGameReview(gameId)
+		/*
+		 * THE GAME HE JUST PLAYED JUMPS THE BACKLOG.
+		 *
+		 * Every review-game job carries the same priority, and `claimNextJob` orders by
+		 * `priority ASC, id ASC` — so with 110 un-reviewed games on this machine, the review of
+		 * the game that ended ninety seconds ago queues behind up to twenty backfills that
+		 * reconcile swept in, and he alt-tabs to a spinner while the app writes about last
+		 * Tuesday. Half an hour is far longer than the pipeline's whole p50 and far shorter than
+		 * any backfill, so it separates the two cleanly without needing a flag threaded down
+		 * from the supervisor.
+		 *
+		 * Deliberately only a PRIORITY. The backfill still runs, it just runs second, which is
+		 * the correct relationship rather than a queue the user has to manage.
+		 */
+		const freshMs = 30 * 60_000
+		const fresh = Date.now() - game.endedAtMs < freshMs
+		if (fresh)
+			enqueueJob({
+				kind: "review-game",
+				gameId,
+				priority: JOB_PRIORITY["review-game"] - 5
+			})
+		else enqueueGameReview(gameId)
 		if (shouldRefreshTrend(settings.gamesForTrends)) enqueueTrendReview()
 	}
 

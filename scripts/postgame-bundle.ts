@@ -395,12 +395,15 @@ const chooseFrames = (pack: any, cap: number) => {
 	}
 	for (const o of objectives) {
 		if (o.structure) continue
-		const assists = o.assisters?.length ? ` (assists: ${o.assisters.join(", ")})` : ""
+		/* No assist list on a neutral, and no "not present" either. `hePresent` is now the killer,
+		 * so its false branch means "he did not land it" and never "he was absent" — the feed's
+		 * assist list, which is the only thing that could have said absent, names the other team
+		 * 22.9% of the time (`assistersAreReadable`). */
 		cands.push({
 			tSec: o.tSec,
 			weight: 90,
 			why: "neutral objective",
-			what: `${o.takenBy} took ${o.kind}${assists} — he was ${o.hePresent ? "PRESENT" : "not present"}`,
+			what: `${o.takenBy} took ${o.kind} — he ${o.hePresent ? "landed it" : "did not land it"}`,
 			objective: o
 		})
 	}

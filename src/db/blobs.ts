@@ -35,6 +35,17 @@ export const BLOB_TIMELINE = "timeline"
  */
 export const BLOB_REVIEW_DIGEST = "review-digest"
 
+/**
+ * The post-game pack as it was SENT, written by `review-game` beside the digest.
+ *
+ * Same reasoning as the digest: the pack is rebuildable from the timeline, which does not move,
+ * but the JOURNAL does — frames are pruned by retention, and `journal_frame.path` rows already
+ * point at a directory this install renamed away from. Archiving the sent bytes is what lets the
+ * debrief screen render the exact evidence the coach was holding, months later, without a rebuild
+ * that might quietly differ. Cheap: 10 KB of text, gzipped, per game.
+ */
+export const BLOB_GAME_PACK = "game-pack"
+
 /** Absolute path of a blob. */
 export const blobPath = (gameId: number, name: string): string =>
 	`${BLOBS_DIR}/${gameId}/${name}.json.gz`

@@ -37,7 +37,7 @@ import { COACH_CATEGORIES } from "./parse.ts"
  * The persona text is hashed separately, so editing `AGENTS.md` already invalidates on its
  * own — this is for changes to the code in this file.
  */
-export const PROMPT_TEMPLATE_VERSION = 3
+export const PROMPT_TEMPLATE_VERSION = 4
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 /** `src/review/prompt.ts` -> repo root. Overridable for tests and for a packaged install. */
@@ -241,6 +241,24 @@ export interface PromptOptions {
 	model?: string
 	/** Inject a persona (tests). Otherwise read from `AGENTS.md`. */
 	persona?: Persona
+	/**
+	 * The post-game pack, rendered — `renderPack()` from `./pack.ts`.
+	 *
+	 * It goes in as a SECTION of the user prompt rather than replacing the digest, because the
+	 * digest is what the citation allowlist is built from: moment ids, metric keys and every
+	 * baseline figure are policed against it by `parse.ts`, and swapping the body out would
+	 * quietly disable that. The pack adds what the digest cannot carry — the counterpart's exact
+	 * CS, gold and level off the timeline, and where he was when each objective fell.
+	 */
+	pack?: string
+	/**
+	 * The frames attached to this call, as a stable fingerprint (their ids, in order).
+	 *
+	 * Only the fingerprint is hashed, never the bytes. Two reviews of one game that attached
+	 * different pictures are different reviews and must not reuse each other's answer; two that
+	 * attached the same pictures are the same call and must not re-bill.
+	 */
+	frameKey?: string
 }
 
 export interface BuiltPrompt {
@@ -271,12 +289,20 @@ const systemFor = (persona: Persona, intensity: number): string =>
 export const gamePrompt = (digest: GameDigest, opts: PromptOptions = {}): BuiltPrompt => {
 	const persona = opts.persona ?? loadPersona()
 	const intensity = clamp01(opts.intensity)
-	const user = renderGame(digest)
+	const user = renderGame(digest, opts.pack)
 	return {
 		system: systemFor(persona, intensity),
 		user,
 		schema: COACH_JSON_SCHEMA,
-		promptHash: promptHash({ persona: persona.text, kind: "game", model: opts.model, digest, intensity }),
+		promptHash: promptHash({
+			persona: persona.text,
+			kind: "game",
+			model: opts.model,
+			digest,
+			intensity,
+			pack: opts.pack,
+			frameKey: opts.frameKey
+		}),
 		persona,
 		approxChars: user.length
 	}
@@ -334,6 +360,10 @@ export const promptHash = (
 		model?: string
 		digest?: unknown
 		intensity?: number
+		/** The rendered pack, when one was sent. Its text IS what the model saw. */
+		pack?: string
+		/** The ids of the frames attached, in order. See `PromptOptions.frameKey`. */
+		frameKey?: string
 	} = {}
 ): string =>
 	createHash("sha256")
@@ -345,6 +375,8 @@ export const promptHash = (
 				kind: parts.kind ?? null,
 				model: parts.model ?? null,
 				intensity: parts.intensity ?? null,
+				pack: parts.pack ?? null,
+				frameKey: parts.frameKey ?? null,
 				digest: stableDigest(parts.digest ?? null)
 			}),
 			"utf8"
@@ -457,7 +489,16 @@ const SAMPLING_NOTE = `Positions come from timeline frames sampled once per ${Ma
 	FRAME_INTERVAL_MS / 1000
 )} seconds; the median distance travelled between two samples is about 28% of the map. Anything about who was near whom, or where someone walked between samples, is an interpolation. Moments marked confidence "low" depend on that interpolation — hedge them.`
 
-const renderGame = (d: GameDigest): string => {
+/**
+ * `pack` is the post-game pack from `./pack.ts`, rendered, or undefined.
+ *
+ * It is pushed in BEFORE `OUTPUT_RULES` rather than appended at the end, so the last thing the
+ * model reads is still how to answer. Where the two sources overlap the pack wins and says so:
+ * the digest's enemy-jungler figures are end-of-game totals from the match, and the pack's are
+ * per-minute rows off the timeline — same source, finer grain, and neither of them is the live
+ * feed's visibility counter.
+ */
+const renderGame = (d: GameDigest, pack?: string): string => {
 	const g = d.game
 	const teamId = g.teamId
 	const user = d.players.find(p => p.isUser)
@@ -665,6 +706,8 @@ out of the corrective voice, which is the correct outcome rather than a failure.
 
 End the review by telling him that watching the replay frames is how he gets feedback on ability
 usage, kiting and fight execution — the things this data cannot reach.`)
+
+	if (pack !== undefined && pack.trim() !== "") sections.push(pack)
 
 	sections.push(OUTPUT_RULES)
 	sections.push(
