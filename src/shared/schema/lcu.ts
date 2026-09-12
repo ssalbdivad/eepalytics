@@ -48,19 +48,6 @@ export const parseOrNull = <t>(t: Type<t>, data: unknown): t | null => {
 
 /* ============================================================== identity */
 
-/** `GET /lol-summoner/v1/current-summoner`. `summonerName` is `""` now — use gameName#tagLine. */
-export const CurrentSummoner = type({
-	puuid: "string",
-	"gameName?": "string",
-	"tagLine?": "string",
-	"summonerId?": "number",
-	"accountId?": "number",
-	"displayName?": "string",
-	"profileIconId?": "number",
-	"summonerLevel?": "number"
-})
-export type CurrentSummoner = typeof CurrentSummoner.infer
-
 /** The riotId form the Live Client Data API and our UI both use. */
 export const riotIdOf = (s: {
 	gameName?: string
@@ -114,12 +101,6 @@ const COACHING_PHASES: ReadonlySet<string> = new Set([
 
 export const isCoachingPhase = (phase: string | null): boolean =>
 	phase !== null && COACHING_PHASES.has(phase)
-
-/** `GET /lol-gameflow/v1/watch` — how you tell a REPLAY apart from a live game. */
-export const GameflowWatchPhase = type(
-	"'None'|'WatchStarted'|'WatchInProgress'|'WatchFailedToLaunch'"
-)
-export type GameflowWatchPhase = typeof GameflowWatchPhase.infer
 
 /**
  * One row of `gameData.teamOne` / `gameData.teamTwo`.
@@ -197,25 +178,6 @@ export const GameflowSession = type({
 export type GameflowSession = typeof GameflowSession.infer
 
 /* =============================================================== replays */
-
-/**
- * `GET /lol-replays/v1/configuration` — the gate for everything replay-related.
- * `minutesUntilReplayConsideredLost` was 30 when measured; do not hardcode it, read it.
- */
-export const ReplayConfiguration = type({
-	"gameVersion?": "string",
-	"isInTournament?": "boolean",
-	"isLoggedIn?": "boolean",
-	"isPatching?": "boolean",
-	"isPlayingGame?": "boolean",
-	"isPlayingReplay?": "boolean",
-	"isReplaysEnabled?": "boolean",
-	"isReplaysForEndOfGameEnabled?": "boolean",
-	"isReplaysForMatchHistoryEnabled?": "boolean",
-	"minServerVersion?": "string",
-	"minutesUntilReplayConsideredLost?": "number"
-})
-export type ReplayConfiguration = typeof ReplayConfiguration.infer
 
 /**
  * `LolReplaysMetadataState`, complete, read from the client's own type table.

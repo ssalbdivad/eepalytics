@@ -189,10 +189,6 @@ export const parseRoflFilename = (
 	}
 }
 
-/** The canonical name the client would give this game. */
-export const roflFileName = (platformId: string, gameId: number): string =>
-	`${platformId}-${gameId}.rofl`
-
 /* ============================================================ stat coercion */
 
 const int = (raw: Record<string, string>, key: string, fallback = 0): number => {

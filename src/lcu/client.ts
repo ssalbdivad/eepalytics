@@ -13,30 +13,24 @@
  */
 
 import type { Type } from "arktype"
-import { PLATFORM_ID, USER_PUUID } from "../shared/constants.ts"
+import { USER_PUUID } from "../shared/constants.ts"
 import type {
 	ChampionSummary as ChampionSummaryType,
-	CurrentSummoner as CurrentSummonerType,
 	GameflowPhase as GameflowPhaseType,
 	GameflowSession as GameflowSessionType,
-	GameflowWatchPhase as GameflowWatchPhaseType,
 	LcuGame as LcuGameType,
 	LcuMatchHistory as LcuMatchHistoryType,
 	LcuTimeline as LcuTimelineType,
-	ReplayConfiguration as ReplayConfigurationType,
 	ReplayMetadata as ReplayMetadataType,
 	SummonerSpellSummary as SummonerSpellSummaryType
 } from "../shared/schema/lcu.ts"
 import {
 	ChampionSummary,
-	CurrentSummoner,
 	GameflowPhase,
 	GameflowSession,
-	GameflowWatchPhase,
 	LcuGame,
 	LcuMatchHistory,
 	LcuTimeline,
-	ReplayConfiguration,
 	ReplayMetadata,
 	SummonerSpellSummary,
 	parseOrThrow
@@ -81,12 +75,6 @@ export class LcuClient {
 		return this.transport.request(method, path, body, opts)
 	}
 
-	/* -------------------------------------------------------------- identity */
-
-	async currentSummoner(): Promise<CurrentSummonerType> {
-		return this.#getJson("/lol-summoner/v1/current-summoner", CurrentSummoner, "current-summoner")
-	}
-
 	/** True when the client answers at all. Used by health checks; never throws. */
 	async ping(): Promise<boolean> {
 		try {
@@ -119,19 +107,6 @@ export class LcuClient {
 		if (typeof checked === "string") return checked
 		this.#warn(`unknown gameflow phase ${JSON.stringify(value)} — treating it as "busy"`)
 		return value as GameflowPhaseType
-	}
-
-	/** `"None"` unless a REPLAY is playing. This is how you tell a replay from a live game. */
-	async gameflowWatch(): Promise<GameflowWatchPhaseType> {
-		const res = expectOk(
-			await this.transport.request("GET", "/lol-gameflow/v1/watch"),
-			"gameflow-watch"
-		)
-		const value = jsonOf(res, "gameflow-watch")
-		const checked = GameflowWatchPhase(value)
-		if (typeof checked === "string") return checked
-		this.#warn(`unknown watch phase ${JSON.stringify(value)} — treating it as "busy"`)
-		return value as GameflowWatchPhaseType
 	}
 
 	/**
@@ -176,15 +151,6 @@ export class LcuClient {
 		)
 	}
 
-	/** Newest-first gameIds from the current history window. Convenience over `matchHistory`. */
-	async recentGameIds(puuid = this.puuid): Promise<number[]> {
-		const history = await this.matchHistory(puuid)
-		return history.games.games
-			.map(g => g.gameId)
-			.filter(id => Number.isFinite(id))
-			.sort((a, b) => b - a)
-	}
-
 	/** Full 10-participant match. `null` on 404, which means "no such gameId", not "expired". */
 	async game(gameId: number): Promise<LcuGameType | null> {
 		return this.#getJsonOrNull(
@@ -208,28 +174,7 @@ export class LcuClient {
 		)
 	}
 
-	/* ---------------------------------------------------------------- ranked */
-
-	/** Raw because the shape is 10 KB of queue maps we only cherry-pick from. */
-	async rankedStats(): Promise<unknown> {
-		const res = await this.transport.request("GET", "/lol-ranked/v1/current-ranked-stats")
-		if (res.status === 404) return null
-		return jsonOf(expectOk(res, "ranked-stats"), "ranked-stats")
-	}
-
 	/* --------------------------------------------------------------- replays */
-
-	/**
-	 * The gate for everything replay-related: `isPlayingGame`, `isPlayingReplay`, `isPatching`,
-	 * and `minutesUntilReplayConsideredLost` (30 when measured — read it, do not hardcode it).
-	 */
-	async replayConfiguration(): Promise<ReplayConfigurationType> {
-		return this.#getJson(
-			"/lol-replays/v1/configuration",
-			ReplayConfiguration,
-			"replay-configuration"
-		)
-	}
 
 	/**
 	 * `null` means the client has no LOCAL metadata record for this game yet — POST
@@ -242,32 +187,6 @@ export class LcuClient {
 			ReplayMetadata,
 			`replay-metadata ${gameId}`
 		)
-	}
-
-	/** Where the client writes `.rofl` files, as a WINDOWS path. */
-	async roflPath(): Promise<string> {
-		const res = expectOk(
-			await this.transport.request("GET", "/lol-replays/v1/rofls/path"),
-			"rofls-path"
-		)
-		const value = jsonOf(res, "rofls-path")
-		if (typeof value !== "string")
-			throw new LcuTransportError("PROTOCOL", `rofls/path was not a string: ${res.body}`)
-		return value
-	}
-
-	/** @deprecated Spelling kept only because an early contract named it this. Use `roflPath`. */
-	rooflPath(): Promise<string> {
-		return this.roflPath()
-	}
-
-	async roflPathDefault(): Promise<string> {
-		const res = expectOk(
-			await this.transport.request("GET", "/lol-replays/v1/rofls/path/default"),
-			"rofls-path-default"
-		)
-		const value = jsonOf(res, "rofls-path-default")
-		return typeof value === "string" ? value : ""
 	}
 
 	/**
@@ -312,16 +231,6 @@ export class LcuClient {
 		)
 	}
 
-	/** MUTATES (client-local). Rescan the replays folder so on-disk files are recognised. */
-	async scanReplays(): Promise<void> {
-		expectOk(
-			await this.transport.request("POST", "/lol-replays/v1/rofls/scan", undefined, {
-				timeoutMs: 20_000
-			}),
-			"scan replays"
-		)
-	}
-
 	/* ----------------------------------------------------------- static data */
 
 	/**
@@ -341,18 +250,6 @@ export class LcuClient {
 			`asset ${assetPath}`
 		)
 		return res.buffer ?? Buffer.from(res.body, "utf8")
-	}
-
-	/** Stream an asset straight to a WSL path (icons, splash art). */
-	async assetToFile(assetPath: string, destWslPath: string): Promise<number> {
-		const res = expectOk(
-			await this.transport.request("GET", assetPath, undefined, {
-				toFile: destWslPath,
-				timeoutMs: 60_000
-			}),
-			`asset ${assetPath} -> ${destWslPath}`
-		)
-		return res.bytes
 	}
 
 	/** A JSON asset, optionally validated. `items.json` is 683 KB; `skins.json` is 5.9 MB. */
@@ -377,23 +274,6 @@ export class LcuClient {
 		)) as ChampionSummaryType
 	}
 
-	/** 420 entries — the authoritative queue table, far better than any hardcoded map. */
-	async queues(): Promise<unknown> {
-		return this.assetJson("/lol-game-data/assets/v1/queues.json")
-	}
-
-	async items(): Promise<unknown> {
-		return this.assetJson("/lol-game-data/assets/v1/items.json")
-	}
-
-	async perks(): Promise<unknown> {
-		return this.assetJson("/lol-game-data/assets/v1/perks.json")
-	}
-
-	async summonerSpells(): Promise<unknown> {
-		return this.assetJson("/lol-game-data/assets/v1/summoner-spells.json")
-	}
-
 	/**
 	 * The same file, validated: `id` -> Flash / Smite / Teleport / … .
 	 *
@@ -406,11 +286,6 @@ export class LcuClient {
 			"/lol-game-data/assets/v1/summoner-spells.json",
 			SummonerSpellSummary
 		)) as SummonerSpellSummaryType
-	}
-
-	/** `NA1-5631300987.rofl` — the on-disk filename convention. */
-	roflFileName(gameId: number, platformId = PLATFORM_ID): string {
-		return `${platformId}-${gameId}.rofl`
 	}
 
 	/* ---------------------------------------------------------------- inner */
