@@ -185,7 +185,7 @@ const run = (ticks: Array<Parameters<typeof raw>[0]>): LiveEventKind[] =>
 /** The same run, with the flag that decides everything. See `LiveEvent.asks`. */
 const runEvents = (
 	ticks: Array<Parameters<typeof raw>[0]>,
-	opts: { reach?: ReachFn } = {}
+	opts: { reach?: ReachFn; asksBeforeFifthCut?: boolean } = {}
 ): LiveEvent[] => {
 	const watch = newEventWatch()
 	const out: LiveEvent[] = []
@@ -283,7 +283,7 @@ describe("a kill is not a turn", () => {
 			{ t: 100 },
 			{ t: 110, events: [kill(1, 105, ME_BARE)], dead: true }
 		])
-		deepStrictEqual(asked(events), ["game.start"])
+		deepStrictEqual(asked(events), [])
 		ok(!events.some(e => e.kind === "respawn.self"), "he is still down")
 	})
 
@@ -353,16 +353,27 @@ describe("a kill is not a turn", () => {
 		)
 	})
 
-	it("with no pit open it is the counter-jungle window, and it asks", () => {
+	/*
+	 * THE FIFTH CUT, and the measurement is at the fire site. In the open ground this asked, and
+	 * over the 28-game corpus it was the only ask kind producing more wrong lines than useful ones
+	 * — 31 to 16, wrong 66% [52-78] against 25% [22-28] pooled, because with no pit to talk about
+	 * the sentence is nothing but a death clock and the model speaks the remaining half of it as
+	 * the elapsed one in 26 of 26 measurable cases.
+	 *
+	 * It is still DETECTED, still reactive, and still carries the timer, because the note rides the
+	 * next turn and because putting the ask back is one word once the clock is spoken correctly.
+	 */
+	it("with no pit open it carries the counter-jungle window without asking", () => {
 		const events = runEvents([
 			{ t: 100 },
 			{ t: 110, events: [kill(1, 105, CP_BARE)], enemyJungle: { dead: true, respawn: 25 } }
 		])
 		const death = events.find(e => e.kind === "death.counterpart")
 		ok(death !== undefined, events.map(e => e.kind).join(","))
-		strictEqual(death.asks, true)
+		strictEqual(death.asks, false)
 		ok(death.reactive, "a death timer decays in seconds")
 		ok(/down 25s/.test(death.note), death.note)
+		deepStrictEqual(asked(events), [], "nothing else is invented to fill the gap")
 	})
 
 	/*
@@ -415,7 +426,7 @@ describe("a kill is not a turn", () => {
 			{ t: 120, events: [kill(1, 101, ALLY_BARE), kill(2, 102, CP_BARE)] },
 			{ t: 160, events: [kill(1, 101, ALLY_BARE), kill(2, 102, CP_BARE)] }
 		])
-		deepStrictEqual(asked(events), ["game.start"])
+		deepStrictEqual(asked(events), [])
 		ok(
 			events.some(e => e.kind === "fight.resolved"),
 			"it is still detected, because a window it could change would want it"
@@ -704,7 +715,7 @@ describe("the window is the unit", () => {
 			{ t: 275, level: 6 },
 			{ t: 288, level: 6 }
 		])
-		deepStrictEqual(asked(events), ["game.start", "window.open"])
+		deepStrictEqual(asked(events), ["window.open"])
 		ok(
 			events.some(e => e.kind === "level.spike"),
 			"the level is still detected — it rides the turn, it just does not cause one"
@@ -728,7 +739,7 @@ describe("the window is the unit", () => {
 			{ t: 262 },
 			{ t: 275, events: [kill(1, 270, CP_BARE)], enemyJungle: { deaths: 1 } }
 		])
-		deepStrictEqual(asked(events), ["game.start", "window.open", "window.changed"])
+		deepStrictEqual(asked(events), ["window.open", "window.changed"])
 		const chg = events.find(e => e.kind === "window.changed")!
 		strictEqual(chg.windowKey, "drake:300")
 		ok(/counterpart died/.test(chg.note), chg.note)
@@ -895,11 +906,7 @@ describe("the window is the unit", () => {
 			{ t: 380, dead: true, events: log },
 			{ t: 400, events: log }
 		])
-		deepStrictEqual(
-			asked(events),
-			["game.start", "respawn.self"],
-			events.map(e => e.kind).join(",")
-		)
+		deepStrictEqual(asked(events), ["respawn.self"], events.map(e => e.kind).join(","))
 		strictEqual(events.filter(e => e.kind === "window.open").length, 0)
 	})
 
@@ -988,13 +995,44 @@ describe("the window is the unit", () => {
 		ok(watch.pending.some(e => e.asks), "the window ask is still waiting for a turn")
 	})
 
+	/*
+	 * THE BEFORE COLUMN HAS TO STAY DERIVABLE, so the knob that produces it is pinned here.
+	 *
+	 * `scripts/measure-asks.ts --before` is what re-derives the 879-turn table the fifth cut was
+	 * made on. If this knob silently stopped restoring either ask, that script would keep printing
+	 * a table and the table would quietly become the AFTER one with a "before" label on it — the
+	 * worst failure an instrument has, because nothing looks broken.
+	 */
+	it("the before-the-fifth-cut knob puts both asks back, and only under the knob", () => {
+		const opening = [{ t: 100 }]
+		const death = [
+			{ t: 100 },
+			{ t: 110, events: [kill(1, 105, CP_BARE)], enemyJungle: { dead: true, respawn: 25 } }
+		]
+		deepStrictEqual(asked(runEvents(opening)), [])
+		deepStrictEqual(asked(runEvents(death)), [])
+		deepStrictEqual(asked(runEvents(opening, { asksBeforeFifthCut: true })), ["game.start"])
+		deepStrictEqual(asked(runEvents(death, { asksBeforeFifthCut: true })), [
+			"game.start",
+			"death.counterpart"
+		])
+	})
+
+	/*
+	 * THE FIRST LOOK STARTS THE CLOCK AND ASKS NOTHING — the fifth cut, asserted from both ends.
+	 *
+	 * The seeding is the load-bearing half. The floor reads `lastTurnAtSec === null` as an infinite
+	 * silence, so an opening look that stopped asking without seeding would fire a HEARTBEAT on the
+	 * very first tick — the same 0:00 line the cut is removing, with less in front of it.
+	 */
 	it("a quiet stretch is only broken by the floor", () => {
 		const watch = newEventWatch()
 		watch.pending.push(...observeTick(watch, tickOf({ t: 100 })))
-		commitTurn(watch, dueTurn(watch, 100)!, 100)
+		strictEqual(dueTurn(watch, 100), null, "the first look is not a question")
+		strictEqual(watch.lastTurnAtSec, 100, "but it does start the silence floor")
 		for (const t of [120, 140, 160, 180, 200, 220])
 			watch.pending.push(...observeTick(watch, tickOf({ t })))
-		// The opening look is spent; the drake window is still 80 seconds from being a decision.
+		// The drake window is still 80 seconds from being a decision.
 		strictEqual(dueTurn(watch, 220), null, "nothing has happened since the first look")
 		const beat = dueTurn(watch, 100 + HEARTBEAT_SEC + 1)
 		ok(beat !== null && beat.heartbeat)

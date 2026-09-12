@@ -533,8 +533,12 @@ export const projectTick = (data: LiveAllGameData | null | undefined): LiveTick 
  * left inert. `respawn.self`, `objective.taken` and the rest are still here and still fire, because
  * a material change has to be DETECTED before it can be compared and because their notes ride the
  * turn — what changed in the third cut is that `asks` is false on all of them, so they ride a
- * turn and never cause one. Read this list with `LiveEvent.asks` next to it: five kinds ask, eight
- * carry.
+ * turn and never cause one. Read this list with `LiveEvent.asks` next to it.
+ *
+ * The FIFTH cut demoted two more, on the 28-game corpus with every turn rejoined to the ask that
+ * raised it. `game.start` produced 0 useful lines in 28 games and `death.counterpart` was the only
+ * ask in the corpus with more wrong lines than useful ones; both now ride a turn and cause none.
+ * The numbers, and the condition for putting either back, are at their own fire sites.
  *
  * `objective.window` and `objective.contested` are GONE, and they are the fourth cut's deletion
  * rather than another demotion. Once the window record owned the asking they detected nothing the
@@ -545,20 +549,21 @@ export const projectTick = (data: LiveAllGameData | null | undefined): LiveTick 
  * the next person to read this list counts fourteen kinds of attention and there were twelve.
  */
 export type LiveEventKind =
-	/* ---- the five that ASK. Every one of them is one contest window. ---- */
-	| "game.start"
+	/* ---- the three that ASK unconditionally. Every one of them is one contest window. ---- */
 	| "window.open"
 	| "window.changed"
 	| "window.standing"
 	| "heartbeat"
-	/* ---- the rest are MATERIAL and CONTEXT. They ride a turn; they never cause one. ---- */
-	| "death.counterpart"
+	/* ---- the two FIELD decisions, which ask only in the open ground. See `fieldAsks`. ---- */
 	| "respawn.self"
+	| "level.spike"
+	| "item.completed"
+	/* ---- the rest are MATERIAL and CONTEXT. They ride a turn; they never cause one. ---- */
+	| "game.start"
+	| "death.counterpart"
 	| "objective.taken"
 	| "fight.resolved"
 	| "shop.trip"
-	| "level.spike"
-	| "item.completed"
 	| "counterpart.unseen"
 
 export interface LiveEvent {
@@ -1274,18 +1279,24 @@ export const observeTick = (
 	 * `Infinity` turns the standing-opportunity ask off, so a bench can replay the schedule as it
 	 * stood before the fourth cut and the comparison stays re-derivable from the same samples
 	 * forever. It is never passed by the app.
+	 *
+	 * `asksBeforeFifthCut` is the same idea for the fifth: it puts the opening look and the
+	 * counter-jungle window back as QUESTIONS. The fifth cut removed them on a table of 879 stored
+	 * turns, and a table nobody can reproduce next month is a table nobody should have believed —
+	 * so `scripts/measure-asks.ts --before` replays the schedule as it stood, from the same samples,
+	 * and the before column stays derivable rather than quoted. Also never passed by the app.
 	 */
-	opts: { reach?: ReachFn; standingSilenceSec?: number } = {}
+	opts: { reach?: ReachFn; standingSilenceSec?: number; asksBeforeFifthCut?: boolean } = {}
 ): LiveEvent[] => {
 	const out: LiveEvent[] = []
 	const now = tick.gameTimeSec
 	/*
 	 * `asks` and `windowKey` default to "no" and "none", so no detector can cause a turn by accident.
-	 * The kinds that DO ask pass `asks: true` explicitly, and there are two families of them: the
-	 * four CONTEST WINDOWS at the foot of this function (`window.open`, `window.changed`,
-	 * `window.standing`, `game.start`), and the three FIELD decisions above it — the counterpart
-	 * going down, him coming back up, and a spike. See the `fieldAsks` block for the corpus
-	 * measurement that added the second family.
+	 * The kinds that DO ask pass it explicitly, and there are two families of them: the three
+	 * CONTEST WINDOWS at the foot of this function (`window.open`, `window.changed`,
+	 * `window.standing`), and the FIELD decisions above it — him coming back up, and a spike, level
+	 * or item. See the `fieldAsks` block for the corpus measurement that added the second family,
+	 * and the `death.counterpart` fire site for the one the fifth cut took back out of it.
 	 */
 	const fire = (
 		e: Omit<LiveEvent, "asks" | "windowKey" | "seenAtSec"> & {
@@ -1421,10 +1432,49 @@ export const observeTick = (
 			 * assumed from the kill, because the roster is audited exact for deaths and respawns and
 			 * because a kill seen two ticks late has already spent some of it.
 			 *
-			 * AND IT ASKS ONLY IN THE OPEN GROUND — `fieldAsks`, below. With a pit already open the
-			 * counterpart's death is not a second decision, it is an input to the first one, and
-			 * `materialDiff` already re-asks that pit on exactly this counter. Asking twice for one
-			 * moment is the three-turns-in-twelve-seconds failure this file's third cut removed.
+			 * AND IT NO LONGER ASKS AT ALL — the fifth cut, and the one that cost a real line.
+			 *
+			 * With a pit already open it never did: the counterpart's death is an input to that pit's
+			 * decision, `materialDiff` re-asks the pit on exactly this counter, and asking twice for
+			 * one moment is the three-turns-in-twelve-seconds failure the third cut removed. What is
+			 * new is the OPEN GROUND, where this was the whole question — and where it was measured
+			 * to be the worst ask in the app.
+			 *
+			 * Over the 28-game corpus (`data/eval/integrate3-corpus-20260912.json`), every turn
+			 * rejoined to the ask that raised it and graded by TWO instruments — the blind judge
+			 * beside the run, and `scripts/lib/payload-claims.ts`, which subtracts the payload's own
+			 * death clocks out of the sentence in code:
+			 *
+			 * ```
+			 *   death.counterpart   47 turns   wrong 66% [52-78]   clean-useful 34% [22-48]
+			 *   every ask pooled   879 turns   wrong 25% [22-28]   clean-useful 69% [66-72]
+			 * ```
+			 *
+			 * Both intervals are separated from the pooled rate, and it is the ONLY ask kind in the
+			 * corpus that produces more wrong lines than useful ones — 31 against 16.
+			 *
+			 * WHY it is the one that breaks is structural, and it is the reason this is a cut rather
+			 * than a note for whoever owns the prompt. A death has two clocks running opposite ways
+			 * (`down Ns` elapsed, `back in Ns` remaining) and the model speaks the remaining one as
+			 * if it were the elapsed one: measured here, 26 of 26 of this ask's clock claims are
+			 * contradicted or inversion-shaped, a rate no other ask approaches. Every other ask
+			 * SURVIVES that, because it has a second thing to talk about — a pit, a spawn, an item —
+			 * and `window.changed` on the identical premise still comes out 71% clean. This one asks
+			 * in the open ground precisely when there is no pit, so the elapsed figure is the entire
+			 * sentence, and a sentence built out of one number the model reads backwards is wrong
+			 * whatever else is true about it.
+			 *
+			 * The cost is real and is stated rather than hidden: 16 clean-useful lines over 28 games,
+			 * 0.57 per game, against 1.11 wrong lines per game removed. And it gives back some of the
+			 * objective monoculture the field asks were added to break — 80% of turns carried an
+			 * objective ask before this, 88% after.
+			 *
+			 * IT IS REVERSIBLE IN ONE WORD, and the condition for reversing it is written down: if a
+			 * corpus re-run ever shows the ELAPSED figure being spoken (re-derive with
+			 * `scripts/measure-deadclock.ts`), then 21 of the 31 wrong lines here were wrong only in
+			 * their number, this ask's clean rate goes to roughly 79%, and `asks: fieldAsks` should
+			 * come back. Until then it rides a turn and never causes one, which is this file's
+			 * standing idiom for a detector worth keeping and an ask worth not making.
 			 */
 			const window = contestableObjective(tick)
 			const downFor = victim.dead ? victim.respawn : 0
@@ -1433,7 +1483,7 @@ export const observeTick = (
 				kind: "death.counterpart",
 				atSec: e.atSec,
 				reactive: true,
-				asks: window === null,
+				asks: opts.asksBeforeFifthCut === true && window === null,
 				key: `kill:${e.id}`,
 				note: `${championOf(tick, e.killer) ?? e.killer ?? "someone"} killed ${cp.champion}${
 					downFor > 0 ? `, down ${Math.round(downFor)}s` : ""
@@ -1595,6 +1645,10 @@ export const observeTick = (
 	 * window on two of the three. Replayed over the 17-game corpus the gate is the difference
 	 * between +15% turns and +1%: without it the field asks add 29 turns to the 61% of the clock
 	 * that was already the chattiest, which is volume with no change of subject.
+	 *
+	 * The counterpart's death USED to be the third of these and is no longer any of them — see its
+	 * own fire site above. It was the one field decision whose entire sentence was a death clock,
+	 * and it was measured wrong 66% [52-78] of the time it opened the coach's mouth.
 	 */
 	const fieldAsks = contestableObjective(tick) === null
 	if (prev !== null) {
@@ -1908,16 +1962,53 @@ export const observeTick = (
 			})
 		}
 
-	/* -------------------------------------------------- the opening turn */
-	if (prev === null && now > 0)
+	/* -------------------------------------------------- the opening look */
+	/*
+	 * THE FIRST LOOK STARTS THE SILENCE FLOOR. IT IS NOT A QUESTION — the fifth cut.
+	 *
+	 * It asked until 2026-09-12, and what it bought was one line per game at 0:00 that could have
+	 * been written before the game was drafted. Over the 28-game corpus in
+	 * `data/eval/integrate3-corpus-20260912.json`, joined turn-for-turn to the blind verdicts
+	 * beside it, `game.start` raised 28 turns and produced:
+	 *
+	 * ```
+	 *   clean-useful   0 of 28   0% [0-12]      against 69% [66-72] pooled over every other ask
+	 *   generic       26 of 28
+	 * ```
+	 *
+	 * Verbatim, and these are four different games: *"Buy your jungle item and head out to guard
+	 * your entrance"*, *"Grab your jungle item and trinket, then head out to set up your full
+	 * clear"*, *"Buy your starter item and head out to start a full clear"*, *"Buy your jungle pet
+	 * and ward, then head out so we can set up your full clear on tempo"*. At 0:00 the feed holds a
+	 * roster, two level ones and no gold spent, so there is nothing to say that is about THIS game
+	 * — which is the one test a line has to pass. It is the HUD recital in its purest form: the
+	 * ask was empty, so the model filled it from nowhere in particular.
+	 *
+	 * Zero useful lines is the cheapest cut in this file: nothing measurable is lost.
+	 *
+	 * `lastTurnAtSec` is seeded here BECAUSE the event stops asking. The heartbeat measures silence
+	 * from the last turn and reads `null` as "forever", so an opening look that no longer raises a
+	 * turn would hand the floor an infinite silence and fire a HEARTBEAT on the first tick instead
+	 * — the same 0:00 line with less material in front of it. Seeded, the floor runs from the
+	 * game's own start, and the first heartbeat lands where it already lands today (3:01 in 29 of
+	 * the corpus's turns) rather than at the loading screen.
+	 *
+	 * The event still fires and still rides the first turn that goes out, because the fault panel
+	 * and the bench read its note and because a thing that is DETECTED can be compared later.
+	 */
+	if (prev === null && now > 0) {
 		fire({
 			kind: "game.start",
 			atSec: now,
 			reactive: false,
-			asks: true,
+			asks: opts.asksBeforeFifthCut === true,
 			key: "start",
 			note: "first look"
 		})
+		// The floor is seeded only when the look is silent. Under the knob the look takes a turn of
+		// its own and `commitTurn` sets this, exactly as it did before the cut.
+		if (opts.asksBeforeFifthCut !== true && watch.lastTurnAtSec === null) watch.lastTurnAtSec = now
+	}
 
 	/*
 	 * DROP CONTEXT THAT HAS GONE STALE — see `CONTEXT_CARRY_SEC`.

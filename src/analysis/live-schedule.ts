@@ -86,12 +86,20 @@
  */
 
 /**
- * The least of the counterpart's death timer that is still a decision.
+ * The least of the counterpart's death timer worth DETECTING in the open ground.
  *
  * A window he cannot act inside is not a window. Riot's death timers run from about 10 seconds at
  * level 1 to over 50 late, and the reachability arithmetic this repo already ships puts a pit at
  * 20-30 seconds away from an ordinary jungle position — so under ten seconds left there is nothing
- * he could start and finish, and the ask would be a sentence about a man already walking back.
+ * he could start and finish, and the note would be about a man already walking back.
+ *
+ * It gated an ASK until the fifth cut; `death.counterpart` no longer asks anything (see its fire
+ * site in `live-events.ts` for the 47 turns that took it out), so what this now decides is whether
+ * the death is carried as context at all. Left where it is: the threshold is a statement about
+ * when the fact stops being actionable, and that is true of a carried note as much as of a
+ * question. Raising it was tested against the same corpus and is not the fix — the ask's wrong
+ * lines are spread across every bucket of the remaining timer, and the 45s-and-over bucket is its
+ * BEST one (15 useful of 27) rather than its worst.
  */
 export const FIELD_CP_MIN_SEC = 10
 
