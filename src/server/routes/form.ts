@@ -12,8 +12,7 @@ import { getSettings, recentFeedbackItems, recentGrades } from "../../db/queries
 import { rollingAverage } from "../../analysis/grade.ts"
 import { focusAreas } from "../../analysis/focus.ts"
 import { FormResponse } from "../../shared/schema/api.ts"
-import { send } from "../respond.ts"
-import { intQuery } from "../respond.ts"
+import { intQuery, send } from "../respond.ts"
 
 export const createFormRoute = (): Hono => {
 	const app = new Hono()

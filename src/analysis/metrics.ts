@@ -8,8 +8,11 @@
  * Bands are ALWAYS relative to the user's own rolling baseline (`trends.rollingBaseline`),
  * never to invented "pro benchmarks". With fewer than `MIN_BASELINE_GAMES` games of history
  * the band is `"unknown"` and `vsBaseline` is `null`: we will not colour a number we cannot
- * rank. The threshold is half a standard deviation of the user's own spread, which is stated
- * in the `explain` string so it can be argued with.
+ * rank. The threshold is half a standard deviation of the user's own spread — `BAND_Z` below,
+ * and that is the only place it is written down. Three comments in this file used to claim the
+ * rule was also SAID somewhere the reader could argue with it (in every `explain`, or once in
+ * "the digest's `baselineNote`"); it never was, `baselineNote` has never existed, and the coach
+ * is handed a bare `band good` with nothing saying what would have made it `ok`.
  *
  * ## Confidence
  *  - `high`   — an end-of-game stat or an exact event (`killerId`, `CHAMPION_KILL`).
@@ -174,7 +177,12 @@ export type Baseline = Record<string, BaselineStat>
 /** Below this many prior games we refuse to band. Five is already thin; say so in the copy. */
 export const MIN_BASELINE_GAMES = 5
 
-/** Half a standard deviation of the user's own spread. Stated in every banded `explain`. */
+/**
+ * Half a standard deviation of the user's own spread.
+ *
+ * NOT stated in the output. The `explain` suffix gives him the mean, the sd and this game's
+ * delta, which is enough to recompute the band but does not name the cutoff.
+ */
 export const BAND_Z = 0.5
 
 /* =============================================================== helpers */
@@ -401,7 +409,8 @@ const bandFor = (
 	const z = vs / stat.sd
 	const dir = d.higherIsBetter ? 1 : -1
 	const band: Band = z * dir > BAND_Z ? "good" : z * dir < -BAND_Z ? "bad" : "ok"
-	// The banding rule itself is stated once, in the digest's `baselineNote` — not 37 times here.
+	// The suffix is the same sentence whether the band came out good, ok or bad: the mean, the
+	// sd and the delta. Saying "and that is more than half an sd" 37 times per digest is noise.
 	return { band, vsBaseline: vs, suffix: base }
 }
 

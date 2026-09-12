@@ -18,7 +18,8 @@
  * NODE ONLY.
  */
 
-import { ANALYSIS_VERSION, REVIEW_VERSION } from "../shared/constants.ts"
+import { readdirSync } from "node:fs"
+import { ANALYSIS_VERSION, REPLAY_DIR_WSL, REVIEW_VERSION } from "../shared/constants.ts"
 import { isListEntry } from "../shared/schema/lcu.ts"
 import {
 	countMoments,
@@ -30,11 +31,9 @@ import {
 	getSettings,
 	getTrendReview,
 	listGames,
-	mediaCounts
+	mediaCounts,
+	setGameReplayState
 } from "../db/queries.ts"
-import { readdirSync } from "node:fs"
-import { REPLAY_DIR_WSL } from "../shared/constants.ts"
-import { setGameReplayState } from "../db/queries.ts"
 import { fetchMatchHistory, roflExistsOnDisk, roflPathFor } from "./lcu.ts"
 import {
 	enqueueAnalysis,
@@ -196,7 +195,7 @@ export const reconcile = async (): Promise<ReconcileReport> => {
  * Filenames are `{platformId}-{gameId}.rofl`. Only games we know about are adopted — a replay
  * for somebody else's match, or one from before this install, is left alone.
  */
-export const adoptOnDiskReplays = (limit = 200): number[] => {
+const adoptOnDiskReplays = (limit = 200): number[] => {
 	const adopted: number[] = []
 	let names: string[]
 	try {
