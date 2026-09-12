@@ -510,6 +510,20 @@ button.csk-chip:focus-visible {
 	font-size: var(--fs-1);
 	cursor: pointer;
 	transition: border-color 0.12s, color 0.12s;
+	/*
+	 * The suggestions are whole sentences, and a flex item sized to its own max-content does not
+	 * shrink back down for them. Measured in the 380px popout: two of the four chips painted to
+	 * 387px and 379px against a 365px page, on one line each, with the page reporting no
+	 * horizontal overflow — so the tail of "Show me every death and what they had in common."
+	 * was cut off at the page edge and there was nothing to scroll to reach it. The chip stayed
+	 * clickable, which is the bad case: a button whose label is a truncated question.
+	 *
+	 * Capping at the container and letting the sentence wrap is the whole fix. Left-aligned
+	 * because a wrapped question centred in a pill reads as a caption, not a control.
+	 */
+	max-width: 100%;
+	white-space: normal;
+	text-align: left;
 }
 .csk-chat-suggest button:hover {
 	border-color: var(--gold-dim);
