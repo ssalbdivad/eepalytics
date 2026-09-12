@@ -9,7 +9,8 @@ import assert from "node:assert/strict"
 import { existsSync, readFileSync } from "node:fs"
 import { test } from "node:test"
 import { HP_LOW, MANA_LOW } from "../analysis/live-events.ts"
-import { buildBrief, buildDelta, clock, DELTA_HARD_CAP, HP_LOW_BAND, MANA_LOW_BAND } from "./live-brief.ts"
+import { buildBrief, buildDelta, clock, DELTA_HARD_CAP, FEED_NOTES, HP_LOW_BAND, MANA_LOW_BAND } from "./live-brief.ts"
+import { TRUSTED_PROMPT } from "./live-coach-mode.ts"
 
 /*
  * THE CAP IS IMPORTED RATHER THAN TYPED OUT, because these four assertions are about the payload
@@ -1294,4 +1295,83 @@ test("the feed notes say which clock is which, once", () => {
 	const notes = b.text.split("\n\n").find(x => x.startsWith("WHAT THIS FEED IS"))!
 	assert.match(notes, /A death carries TWO clocks here and they run opposite ways/)
 	assert.match(notes, /`down Ns` is how long the player has ALREADY been dead/)
+})
+
+/*
+ * THE DROP IS NOT FREE, AND THE COMMENT THAT SAID IT WAS IS WHY THIS EXISTS.
+ *
+ * `feedNotes: false` removes 1,190 characters a turn from the payload, and both the caller in
+ * `src/server/routes/live.ts` and the block itself asserted that every bullet was already in
+ * `TRUSTED_PROMPT`, paid once in the system instruction.
+ *
+ * Checked bullet by bullet on 2026-09-12, that is true of ten of the eleven — the prompt restates
+ * them in its own words, at its own length: the CS floor, the counterpart CS visibility counter,
+ * enemy level accuracy, that no bar but his own is reported, that spend cannot be recovered from
+ * item prices, that item lists are what is held, that the feed has no coordinates, that nobody's
+ * cooldowns are knowable, that a ward score is not a ward map, and what the screenshot is.
+ *
+ * IT IS NOT TRUE OF THE ELEVENTH. The prompt names exactly one death clock — "every respawn timer
+ * … with his timer counting down" — and never says that the payload also carries how long a man
+ * has ALREADY been dead, that the two run opposite ways, or that neither can be turned into the
+ * other. On the dropped path nothing anywhere distinguishes them.
+ *
+ * That is the standing candidate cause for the night's largest unfixed defect: the payload now
+ * carries a watched elapsed figure for 129 of 129 identifiable subjects, and the coach still
+ * speaks the REMAINING figure as if it were elapsed in 117 of 129 lines — 91% [84-95], UP from
+ * 88% [82-93] before the payload was fixed. Fixing the input changed nothing about the output.
+ *
+ * These tests do not assert the gap is right. They assert what the gap IS, so that a reader asking
+ * "does the model get told this?" gets the answer from the tree rather than from a comment, and so
+ * that closing it fails here loudly and forces a corpus re-run rather than landing as an
+ * unmeasured prompt change.
+ */
+test("every probe still matches its own feed note, so rewording a bullet fails here first", () => {
+	const probes = [
+		"floored to a multiple of ten",
+		"counts only the farm your own client",
+		"94.5% exact for enemies",
+		"Nobody's health, mana or gold is reported except his own",
+		"What anyone has SPENT is NOT knowable",
+		"what a player is HOLDING now",
+		"no coordinates for anyone",
+		"There are no cooldowns and no summoner-spell timers",
+		"TWO clocks here and they run opposite ways",
+		"not a ward map",
+		"a real look at his screen"
+	]
+	assert.equal(probes.length, FEED_NOTES.length)
+	for (const probe of probes)
+		assert.ok(FEED_NOTES.some(n => n.includes(probe)), `no feed note contains "${probe}" any more`)
+})
+
+test("the two-clock note is the one the trusted prompt does not restate, by every phrase it has", () => {
+	/*
+	 * Eight probes, not one: a single phrase could miss a restatement in the prompt's own words,
+	 * which is how the other ten survive. The prompt contains NONE of these, so the explanation of
+	 * the two clocks reaches the model on the payload path and on no other path at all.
+	 */
+	for (const phrase of [
+		"TWO clocks",
+		"opposite ways",
+		"back in",
+		"respawns in",
+		"down Ns",
+		"already been dead",
+		"elapsed NOT KNOWN",
+		"down at least"
+	])
+		assert.ok(
+			!TRUSTED_PROMPT.includes(phrase),
+			`"${phrase}" is now in TRUSTED_PROMPT — the gap is closed, so re-run the dead-clock corpus before shipping it`
+		)
+})
+
+test("the prompt does name the countdown clock, which is why one number on its own reads as safe", () => {
+	/*
+	 * The gap is not that deaths are unmentioned — that would be obvious. It is that ONE of two
+	 * opposite clocks is named and the other is not, which is the shape that produces a confident
+	 * wrong number rather than a refusal.
+	 */
+	assert.match(TRUSTED_PROMPT, /respawn timer/)
+	assert.match(TRUSTED_PROMPT, /timer counting down/)
 })

@@ -1500,6 +1500,31 @@ const situation = (
 
 /* ================================================================ the full brief */
 
+/**
+ * The feed notes, hoisted to module scope so a test can read them.
+ *
+ * These are PROPERTIES OF THE FEED, not instructions about speech: what a number in this payload
+ * means, and which numbers the payload does not contain. Nothing here tells the coach what to say
+ * or when. Every one was checked against the recorded samples.
+ *
+ * Hoisted because `feedNotes: false` drops the whole block on the claim that the system prompt
+ * already carries it, and that claim was wrong for four of these eleven — see `buildBrief`.
+ * A constant can be diffed against the prompt; eleven string literals nested in a push cannot.
+ */
+export const FEED_NOTES: readonly string[] = [
+	"- Every player's CS is floored to a multiple of ten, so a reported 40 means somewhere in 40-49. Verified across 57,070 readings with zero exceptions. For him, his team and the enemy LANERS that floor is the only error and the figure is otherwise his farm.",
+	"- The enemy JUNGLER's CS is a different thing wearing the same name: it counts only the farm your own client witnessed. Over one full recorded game it read 0 / 20 / 30 / 50 / 60 / 70 at five-minute marks where the truth was 32 / 58 / 84 / 125 / 156 / 183. It is not rendered anywhere in this payload and no comparison may be built from it.",
+	"- Levels are exact for him and his team, and 94.5% exact for enemies over that game (93.5-97.0% across fourteen), worst error two levels and every error transient. This is the counterpart race that is real.",
+	"- Nobody's health, mana or gold is reported except his own. The Live Client Data API puts all three under `activePlayer` and nowhere else: an ally's row and an enemy's row carry level, K/D/A, CS, ward score, items and whether the player is DEAD, and carry no bars at all. That anyone else is low, hurt or out of mana is not a thing this feed can say.",
+	"- Nobody's current gold is reported except his own. What anyone has SPENT is NOT knowable: summing the item rows' prices recovers 0.27 of the gold truly earned, because a component consumed into a legendary contributes only its own row. No spend total appears in this payload.",
+	"- Item lists are what a player is HOLDING now, and the names are exact. An enemy's empty list means he has not been SEEN, not that he has bought nothing.",
+	"- There are no positions anywhere in this feed. It contains no coordinates for anyone, including him. Any position in this payload came from READING THE MINIMAP and says so on its own line, with its age.",
+	"- There are no cooldowns and no summoner-spell timers.",
+	"- A death carries TWO clocks here and they run opposite ways. `back in Ns` and `respawns in Ns` are what is LEFT of the timer, and that is the only one the feed states. `down Ns` is how long the player has ALREADY been dead, which this app watched happen — `down at least Ns` when it saw the body rather than the kill, and `elapsed NOT KNOWN` when it did not watch him go down at all. Neither figure can be turned into the other: respawn length changes with game time and nothing in this app knows it.",
+	"- Ward score is a score, not a ward map: it says nothing about where anything was placed.",
+	"- The screenshot accompanying this brief is a real look at his screen. What is plainly visible on it — who is on screen, what he is attacking, his own bars, the chat, the kill banners, the minimap pings — is readable. What is off screen is not in the picture and not in this brief."
+]
+
 export const buildBrief = (input: BriefInput): LiveBrief | null => {
 	const s = readScene(input)
 	if (!s) return null
@@ -1631,25 +1656,34 @@ export const buildBrief = (input: BriefInput): LiveBrief | null => {
 	 * against the recorded samples: 3630 CS readings across a real game, every one a multiple of
 	 * ten; levels 1 through 20 all observed, so levels are NOT quantised the way CS is.
 	 *
-	 * On a socket every one of these nine bullets is already in the system instruction, which is
-	 * paid once, so `feedNotes: false` drops 1,190 characters a turn that say nothing new. It
-	 * defaults to ON so the two stored runs and every existing caller keep what they were graded on.
+	 * `feedNotes: false` drops 1,190 characters a turn on the ground that the socket's system
+	 * instruction already carries them. Checked bullet by bullet on 2026-09-12 that holds for TEN
+	 * of the eleven — `TRUSTED_PROMPT` restates each in its own words, at its own length.
+	 *
+	 * IT DOES NOT HOLD FOR THE ELEVENTH. The prompt names exactly one death clock ("every respawn
+	 * timer ... with his timer counting down") and never says the payload also carries how long a
+	 * man has ALREADY been dead, that the two run opposite ways, or that neither can be converted
+	 * into the other. Not one of that bullet's eight distinctive phrases appears in the prompt.
+	 *
+	 * That is the standing candidate cause for the largest defect still open here: the payload now
+	 * carries a watched elapsed figure for 129 of 129 identifiable subjects, and the coach still
+	 * speaks the REMAINING figure as if it were elapsed in 117 of 129 lines — 91% [84-95], UP from
+	 * 88% [82-93] before the payload was fixed. Fixing the input changed nothing about the output,
+	 * and this is the only text that ever explained the difference.
+	 *
+	 * A candidate, not a conclusion: restoring it has not been run against a corpus, and a prompt
+	 * change this repo has not re-evaluated is indistinguishable from a guess. `FEED_NOTES` is
+	 * hoisted to module scope and `live-brief.test.ts` pins which bullet is missing and by which
+	 * phrases, so closing the gap fails loudly rather than landing unmeasured.
+	 *
+	 * It defaults to ON so the two stored runs and every existing caller keep what they were
+	 * graded on.
 	 */
 	if (input.feedNotes !== false)
 		sections.push(
 			[
 				"WHAT THIS FEED IS",
-				"- Every player's CS is floored to a multiple of ten, so a reported 40 means somewhere in 40-49. Verified across 57,070 readings with zero exceptions. For him, his team and the enemy LANERS that floor is the only error and the figure is otherwise his farm.",
-				"- The enemy JUNGLER's CS is a different thing wearing the same name: it counts only the farm your own client witnessed. Over one full recorded game it read 0 / 20 / 30 / 50 / 60 / 70 at five-minute marks where the truth was 32 / 58 / 84 / 125 / 156 / 183. It is not rendered anywhere in this payload and no comparison may be built from it.",
-				"- Levels are exact for him and his team, and 94.5% exact for enemies over that game (93.5-97.0% across fourteen), worst error two levels and every error transient. This is the counterpart race that is real.",
-				"- Nobody's health, mana or gold is reported except his own. The Live Client Data API puts all three under `activePlayer` and nowhere else: an ally's row and an enemy's row carry level, K/D/A, CS, ward score, items and whether the player is DEAD, and carry no bars at all. That anyone else is low, hurt or out of mana is not a thing this feed can say.",
-				"- Nobody's current gold is reported except his own. What anyone has SPENT is NOT knowable: summing the item rows' prices recovers 0.27 of the gold truly earned, because a component consumed into a legendary contributes only its own row. No spend total appears in this payload.",
-				"- Item lists are what a player is HOLDING now, and the names are exact. An enemy's empty list means he has not been SEEN, not that he has bought nothing.",
-				"- There are no positions anywhere in this feed. It contains no coordinates for anyone, including him. Any position in this payload came from READING THE MINIMAP and says so on its own line, with its age.",
-				"- There are no cooldowns and no summoner-spell timers.",
-				"- A death carries TWO clocks here and they run opposite ways. `back in Ns` and `respawns in Ns` are what is LEFT of the timer, and that is the only one the feed states. `down Ns` is how long the player has ALREADY been dead, which this app watched happen — `down at least Ns` when it saw the body rather than the kill, and `elapsed NOT KNOWN` when it did not watch him go down at all. Neither figure can be turned into the other: respawn length changes with game time and nothing in this app knows it.",
-				"- Ward score is a score, not a ward map: it says nothing about where anything was placed.",
-				"- The screenshot accompanying this brief is a real look at his screen. What is plainly visible on it — who is on screen, what he is attacking, his own bars, the chat, the kill banners, the minimap pings — is readable. What is off screen is not in the picture and not in this brief."
+				...FEED_NOTES
 			].join("\n")
 		)
 

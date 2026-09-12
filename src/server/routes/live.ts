@@ -2493,10 +2493,16 @@ export const createLiveRoute = (): Hono => {
 						said: renderSaidWithin(coachMemory, nowSec, SAID_BUDGET).split("\n").slice(1),
 						narrative: memoryNarrative(nowSec),
 						/*
-						 * The feed notes are dropped from the payload, not moved: every bullet of
-						 * that 1,190-character block is already in `TRUSTED_PROMPT`, which rides
-						 * once in the socket's system instruction. Sending it again every turn was
-						 * 26% of a payload spent restating the standing instructions.
+						 * The feed notes are dropped from the payload on the ground that they are
+						 * already in `TRUSTED_PROMPT`, which rides once in the socket's system
+						 * instruction — sending them again every turn was 26% of a payload spent
+						 * restating standing instructions.
+						 *
+						 * TRUE OF TEN OF THE ELEVEN, and false of the one that matters. The prompt
+						 * never names the ELAPSED death clock — see `FEED_NOTES` in live-brief.ts
+						 * and the three tests that pin it. On this path nothing tells the model
+						 * that `down 4s` and `back in 24s` are different clocks, and it speaks the
+						 * second as the first in 91% [84-95] of the lines that state one.
 						 */
 						feedNotes: false
 					})
