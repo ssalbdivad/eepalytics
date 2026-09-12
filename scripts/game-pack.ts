@@ -66,6 +66,7 @@ import { DATA_DIR, DB_PATH } from "../src/shared/constants.ts"
 import { dragonPhrase } from "../src/shared/dragons.ts"
 import { fromMinimapPct, half, type Half, type TeamId } from "../src/shared/map.ts"
 import type { LcuTimeline } from "../src/shared/schema/lcu.ts"
+import { assistersAreReadable } from "../src/shared/schema/live.ts"
 import { clockText, rebaseFramePath, segment } from "./lib/stream.ts"
 import { baselineDuring, readVerbatim } from "./lib/stream.ts"
 import type { RawSample } from "./lib/stream.ts"
@@ -454,7 +455,15 @@ interface GameEvent {
 	killerSide: "his" | "enemy" | null
 	victim: string | null
 	victimHandle: string | null
+	/** Readable. EMPTY on a neutral objective — see `assistersAreReadable`. */
 	assisters: string[]
+	/**
+	 * The raw `Assisters` the feed sent on a NEUTRAL objective, kept only so the corruption stays
+	 * measurable (`tallies.objectives.feedAssistsContradictedByDeath` counts the takes that name
+	 * him as an assister at a clock the client itself says he was dead). Named for what it is so
+	 * nobody renders it. Empty on every other kind of event, where `assisters` is the field.
+	 */
+	neutralAssistersUnusable: string[]
 	dragonType: string | null
 	dragonName: string | null
 	stolen: boolean
@@ -639,7 +648,14 @@ const buildPack = () => {
 				killerSide,
 				victim: e.VictimName ? resolveName(e.VictimName, roster) : null,
 				victimHandle: e.VictimName ?? null,
-				assisters: (e.Assisters ?? []).map(a => resolveName(a, roster)),
+				assisters:
+					assistersAreReadable(e.EventName ?? "") ?
+						(e.Assisters ?? []).map(a => resolveName(a, roster))
+					:	[],
+				neutralAssistersUnusable:
+					assistersAreReadable(e.EventName ?? "") ?
+						[]
+					:	(e.Assisters ?? []).map(a => resolveName(a, roster)),
 				dragonType: e.DragonType ?? null,
 				dragonName: e.DragonType ? dragonPhrase(e.DragonType) : null,
 				stolen: e.Stolen === "True",
@@ -651,7 +667,7 @@ const buildPack = () => {
 				involvesHim:
 					killerRaw === handleOf(me) ||
 					e.VictimName === handleOf(me) ||
-					(e.Assisters ?? []).includes(handleOf(me))
+					(assistersAreReadable(e.EventName ?? "") && (e.Assisters ?? []).includes(handleOf(me)))
 			}
 		})
 		.sort((a, b) => a.tSec - b.tSec)
@@ -956,13 +972,19 @@ const buildPack = () => {
 				takenBy: e.killer,
 				takenBySide: e.killerSide === "his" ? "his team" : e.killerSide === "enemy" ? "enemy" : "not a champion",
 				assisters: e.assisters,
+				/* Quarantined, not rendered. They exist so the count below stays derivable. */
+				neutralAssistersUnusable: e.neutralAssistersUnusable,
+				feedListedHimUnusably: e.neutralAssistersUnusable.includes(myChampion),
 				stolen: e.stolen,
 				structure: e.turret ?? e.inhib ?? null,
 				/* The structure id names the side it BELONGED to — TOrder is his own, TChaos the enemy's.
 				 * The lane/tier encoding (L0/L1/L2, P1..P5) is NOT decoded, because nobody here has
 				 * verified what those digits mean and a guessed lane is a fabricated fact. */
 				structureBelongedTo: side === null ? null : side === hisTeam ? "his team" : "enemy",
-				hePresent: e.assisters.includes(myChampion) || e.killer === myChampion,
+				/* The KILLER, plus a readable assist list. A neutral contributes its killer and
+				 * nothing else: its assist list is the corrupt one, and "he was PRESENT" is exactly
+				 * the sentence that field cannot support. */
+				hePresent: e.killer === myChampion || e.assisters.includes(myChampion),
 				/** A drake/grub/herald/baron, as opposed to a structure. Assist lists differ in kind. */
 				isNeutral: NEUTRAL_EVENTS.has(e.name),
 				whereHeWas: joinPosition(e.tSec, track.reads),
@@ -1276,7 +1298,7 @@ const buildPack = () => {
 			byKindToEnemy: tally(neutral.filter(e => e.killerSide === "enemy"), objectiveKindOf),
 			heWasCreditedOn: neutralRows.filter(o => o.heTookIt).length,
 			creditMeansKillerOnly:
-				"ELITE_MONSTER_KILL.assistingParticipantIds names an opposing-team player 19% of the time, so it is not read at all. 'Credited' here means he landed the kill.",
+				"Neither channel's assist list is read on a neutral: the timeline's assistingParticipantIds names an opposing-team player in 23.1% of assisted takes and the live feed's Assisters in 22.9%. 'Credited' here means he landed the kill.",
 			fellWhileHeWasDead: neutralRows.filter(o => o.heWasDead).length,
 			/* A NEW measurement, and an unwelcome one: the live feed's assist list has the same
 			 * defect AGENTS.md records in the timeline's. Counted here as the number of neutral
@@ -1285,10 +1307,10 @@ const buildPack = () => {
 			 * source to prove. In this game it is the 10:22 voidgrub, taken 3 seconds into a
 			 * 20-second death timer. */
 			feedAssistsContradictedByDeath: objectives.filter(
-				o => o.isNeutral && o.hePresent && o.hisState.dead
+				o => o.feedListedHimUnusably && o.hisState.dead
 			).length,
 			feedAssistsContradictedByDeathAt: objectives
-				.filter(o => o.isNeutral && o.hePresent && o.hisState.dead)
+				.filter(o => o.feedListedHimUnusably && o.hisState.dead)
 				.map(o => `${o.clock} ${o.kind}`),
 			fellWhileHeWasDeadAt: neutralRows.filter(o => o.heWasDead).map(o => `${o.clock} ${o.name}`),
 			fellWhileHeWasInTheOtherHalf: positionedNeutral.filter(o => o.whereHeWas?.half === "enemy")
@@ -1807,15 +1829,20 @@ const render = (pack: Pack): string => {
 	w(`The join the live coach could never make. "he was" is whichever channel is nearer in time —`)
 	w(`the exact timeline frame or the minimap read — and it names the channel and the gap.`)
 	w()
-	w(`ASSIST LISTS ON NEUTRAL OBJECTIVES ARE NOT TRUSTWORTHY IN EITHER CHANNEL. AGENTS.md records`)
-	w(`19% cross-team corruption in the timeline's ELITE_MONSTER_KILL.assistingParticipantIds, and`)
-	w(`the LIVE FEED has the same defect: measured in this game, ${pack.tallies.objectives.feedAssistsContradictedByDeath} neutral ${pack.tallies.objectives.feedAssistsContradictedByDeath === 1 ? "objective lists" : "objectives list"} him`)
-	w(`as an assister at a clock where the client itself reports him DEAD. Credit on a neutral means`)
-	w(`the KILLER and nothing softer — see tallies.objectives.heWasCreditedOn.`)
+	w(`ASSIST LISTS ON NEUTRAL OBJECTIVES ARE NOT READ, IN EITHER CHANNEL. Measured across the whole`)
+	w(`store: the timeline's ELITE_MONSTER_KILL.assistingParticipantIds names the other team in 183`)
+	w(`of 791 assisted takes (23.1% [20.3-26.2], 112 games) and the live feed's own Assisters in 54`)
+	w(`of 236 (22.9% [18.0-28.6], 36 games) — the same defect at the same rate down two channels,`)
+	w(`and confined to the neutrals in both (0 of 2,289 live champion kills, 0 of 550 structures).`)
+	w(`In THIS game, ${pack.tallies.objectives.feedAssistsContradictedByDeath} neutral ${pack.tallies.objectives.feedAssistsContradictedByDeath === 1 ? "take lists" : "takes list"} him as an assister at a clock the client itself`)
+	w(`reports him DEAD. Credit on a neutral means the KILLER and nothing softer — see`)
+	w(`tallies.objectives.heWasCreditedOn.`)
 	w()
 	for (const o of pack.objectives) {
 		w(`${pad(o.clock, 7)} ${pad(o.kind, 14)} ${pad(`${o.takenBy} (${o.takenBySide})`, 26)}${o.stolen ? " STOLEN" : ""}`)
 		if (o.assisters.length > 0) w(`        assists: ${o.assisters.join(", ")}`)
+		else if (o.neutralAssistersUnusable.length > 0)
+			w(`        assists: NOT AVAILABLE — the feed sent a list and it is the corrupt one`)
 		if (o.structure) w(`        structure ${o.structure} — belonged to ${o.structureBelongedTo}; lane/tier digits NOT decoded (unverified)`)
 		w(
 			`        he was: ${o.heWasDead.dead ? "DEAD at this instant — everything below is from before he died: " : ""}${
@@ -1833,8 +1860,9 @@ const render = (pack: Pack): string => {
 		)
 		w(
 			`        his state: lvl ${o.hisState.level}, ${o.hisState.cs} CS, ${o.hisState.kda}, ${o.hisState.goldInHand}g${o.hisState.dead ? `, DEAD with ${o.hisState.respawnSec}s left` : ""}${
-				o.hePresent && !o.isNeutral ? ", and he is credited on this take"
-				: o.hePresent ? ", and the feed lists him as an assister — SEE THE WARNING ABOVE, that list is not trustworthy on a neutral"
+				o.hePresent ? ", and he is credited on this take"
+				: o.feedListedHimUnusably ?
+					", and the feed lists him as an assister — SEE THE WARNING ABOVE, that list is not trustworthy on a neutral and is not read"
 				: ""
 			} — read from the sample ${o.hisState.sampleGapSec}s away`
 		)
@@ -1948,6 +1976,51 @@ const describe = (ev: GameEvent): string => {
 	return `${ev.name}${ev.killer ? ` (${ev.killer})` : ""}`
 }
 
+/**
+ * `--db` — render the pack the SHIPPED path builds, for any game, with no session.
+ *
+ * Everything above needs four channels (raw samples, journal frames, a Gemini read of the
+ * minimap, the live coach's transcript) and three of them only exist when he screen-shared. That
+ * is right for an evaluation and impossible for the daemon, which has to produce a debrief for
+ * every game — so `src/review/pack.ts` builds the same joins out of the database alone and
+ * `review-game` sends it on every review.
+ *
+ * This flag exists so the two are comparable rather than merely coexisting: run it against the
+ * game he graded and diff the counterpart columns against the TRUTH section above. It writes
+ * `data/eval/pack-db-<gameId>.txt` so it can never overwrite a stored measurement.
+ */
+const mainFromDb = async (): Promise<void> => {
+	const gameId = Number(arg("game", "0"))
+	if (!Number.isFinite(gameId) || gameId <= 0) throw new Error("--db needs --game <id>")
+	const [{ getGame, getParticipants }, { journalFramesForGame }, { loadTimeline }, pack] =
+		await Promise.all([
+			import("../src/db/queries.ts"),
+			import("../src/db/journal-frames.ts"),
+			import("../src/daemon/corpus.ts"),
+			import("../src/review/pack.ts")
+		])
+	const game = getGame(gameId)
+	if (!game) throw new Error(`no game ${gameId} in the database`)
+	const built = pack.buildGamePack({
+		game,
+		participants: getParticipants(gameId),
+		timeline: loadTimeline(gameId),
+		frames: journalFramesForGame(gameId)
+	})
+	const outDir = join(DATA_DIR, "eval")
+	mkdirSync(outDir, { recursive: true })
+	const jsonPath = join(outDir, `pack-db-${gameId}.json`)
+	const textPath = join(outDir, `pack-db-${gameId}.txt`)
+	writeFileSync(jsonPath, JSON.stringify(built, null, "\t"))
+	writeFileSync(textPath, pack.renderPack(built))
+	console.log(
+		`${textPath}  ${(statSync(textPath).size / 1024).toFixed(0)} KB\n` +
+			`${built.source.timelineFrames} timeline frames · ${built.objectives.length} objectives · ` +
+			`${built.deaths.length} deaths · ${built.frames.length} journal frames · ` +
+			`counterpart ${built.counterpart?.championName ?? "UNKNOWN"}`
+	)
+}
+
 const main = (): void => {
 	const pack = buildPack()
 	const outDir = join(DATA_DIR, "eval")
@@ -1965,4 +2038,7 @@ const main = (): void => {
 	)
 }
 
-if (import.meta.main) main()
+if (import.meta.main) {
+	if (process.argv.includes("--db")) await mainFromDb()
+	else main()
+}

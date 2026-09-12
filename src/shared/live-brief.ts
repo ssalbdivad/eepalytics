@@ -16,6 +16,7 @@
  * instruction; THIS is the per-turn payload, so it stays a few thousand characters, not tens.
  */
 import { dragonPhrase } from "./dragons.ts"
+import { assistersAreReadable } from "./schema/live.ts"
 import { drakeStakes, orderStakes, stakesClause } from "./objective-stakes.ts"
 import type { Stake } from "./objective-stakes.ts"
 
@@ -702,7 +703,11 @@ const namer = (players: Player[]) => {
 
 const describeEvent = (e: Ev, who: (v: unknown) => string): string | null => {
 	const k = e.raw
-	const assists = arr(k.Assisters).map(who)
+	/* A drake line said "(assists: Kayn, Ashe)" about the team that had just LOST the drake, because
+	 * the feed's `Assisters` on a neutral is everyone who damaged it — 22.9% of them name the other
+	 * team (`assistersAreReadable`). The four neutral cases below therefore render the killer and
+	 * nothing softer; kills and structures, measured clean in 0 of 2,289 and 0 of 550, keep theirs. */
+	const assists = assistersAreReadable(e.name) ? arr(k.Assisters).map(who) : []
 	const withAssists = assists.length > 0 ? ` (assists: ${assists.join(", ")})` : ""
 	switch (e.name) {
 		case "ChampionKill":
@@ -1746,7 +1751,7 @@ const newEventsBlock = (s: Scene): string | null => {
 		const names = [
 			str(e.raw.KillerName),
 			str(e.raw.VictimName),
-			...arr(e.raw.Assisters).map(a => str(a))
+			...(assistersAreReadable(e.name) ? arr(e.raw.Assisters).map(a => str(a)) : [])
 		].filter((n): n is string => n !== null)
 		return names.some(n => n === s.me.name || (s.counterpart !== null && n === s.counterpart.name))
 	}

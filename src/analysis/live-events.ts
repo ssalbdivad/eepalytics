@@ -304,6 +304,7 @@
  * samples in `data/live-samples/` — see `scripts/bench-events.ts`, which is where the turn counts
  * quoted above and in that script's output come from.
  */
+import { assistersAreReadable } from "../shared/schema/live.ts"
 import type { LiveAllGameData } from "../shared/schema/live.ts"
 
 /* ============================================================ the tick */
@@ -500,7 +501,13 @@ export const projectTick = (data: LiveAllGameData | null | undefined): LiveTick 
 			atSec: num(e.EventTime) ?? gameTimeSec,
 			killer: str(e.KillerName),
 			victim: str(e.VictimName),
-			assisters: arr(e.Assisters).map(a => str(a) ?? "").filter(a => a !== ""),
+			/* Empty on a drake, baron, herald or voidgrub: the feed's list there is everyone who
+			 * damaged the monster and names the other team 22.9% of the time. See
+			 * `assistersAreReadable`. Nothing downstream may launder it back in. */
+			assisters:
+				assistersAreReadable(name) ?
+					arr(e.Assisters).map(a => str(a) ?? "").filter(a => a !== "")
+				:	[],
 			dragonType: str(e.DragonType),
 			stolen: str(e.Stolen) !== null && str(e.Stolen) !== "False"
 		})

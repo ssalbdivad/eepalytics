@@ -190,10 +190,55 @@ export const LiveGameStats = type({
 export type LiveGameStats = typeof LiveGameStats.infer
 
 /**
+ * The four neutral monsters, by the live feed's own event names.
+ *
+ * They are grouped because their `Assisters` list is the one field on a live event that is not
+ * the quantity its name claims — see `assistersAreReadable`.
+ */
+export const NEUTRAL_OBJECTIVE_EVENTS: ReadonlySet<string> = new Set([
+	"DragonKill",
+	"BaronKill",
+	"HeraldKill",
+	"HordeKill"
+])
+
+/**
+ * **May this event's `Assisters` list be read?** False for a drake, baron, herald or voidgrub, and
+ * true for everything else. Call it at the point the list is read; do not read the raw field.
+ *
+ * `AGENTS.md` has recorded for this app's whole life that the POST-GAME timeline's
+ * `ELITE_MONSTER_KILL.assistingParticipantIds` names an opposing-team player 19% of the time. The
+ * live feed's `Assisters` is a DIFFERENT field arriving over a different channel, so it was
+ * measured separately rather than assumed guilty, over every recorded `allgamedata` sample in
+ * `data/live-samples` (36 games, 322 neutral-objective events, 236 of them carrying a non-empty
+ * list):
+ *
+ *     channel                              assisted events   naming the other team
+ *     live feed Assisters                        236          54 = 22.9% [18.0-28.6]
+ *     timeline assistingParticipantIds           791         183 = 23.1% [20.3-26.2]   (112 games)
+ *
+ * The same defect, at the same rate, in both channels. It is also confined to the neutrals in
+ * both: `ChampionKill` was clean in 0 of 2,289 live events and 0 of 5,633 timeline kills, and
+ * structures in 0 of 550 and 0 of 786. The list on a neutral is evidently everyone who DAMAGED the
+ * monster — which is why it reached seven names live and nine in the timeline, on teams of five.
+ *
+ * There is no gate that repairs it. A list of four same-team names can still be wrong, because the
+ * enemy who chipped the drake is simply absent from the visible half of the error; gating on
+ * "more than four" or "both teams" would catch 54 of the 236 and silently pass the rest as fact.
+ * So the field is not read at all here, exactly as `truthEvents` already refuses the timeline's.
+ * Credit on a neutral means the KILLER, which both channels get right.
+ */
+export const assistersAreReadable = (eventName: string): boolean =>
+	!NEUTRAL_OBJECTIVE_EVENTS.has(eventName)
+
+/**
  * One entry of `GET /liveclientdata/eventdata`. Names are riotIds, not participantIds —
  * join to the post-game timeline on riotId.
  *
  * `EventID` increases monotonically; poll with `?eventID=N` and dedupe on it.
+ *
+ * `Assisters` IS NOT READABLE ON A NEUTRAL OBJECTIVE — 22.9% of them name the other team. Go
+ * through `assistersAreReadable` above, which carries the measurement.
  */
 export const LiveEvent = type({
 	EventID: "number",
