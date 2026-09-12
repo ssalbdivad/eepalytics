@@ -89,12 +89,13 @@ export interface BriefInput {
 	 * a coach reaches for is the elapsed one, so the model converted one into the other: across the
 	 * 28 stored games 153 spoken lines state an elapsed death time, 71 contradict the client's own
 	 * kill log, the error is one-sided (101 overstate, 4 understate), and 101 of 115 spoke a number
-	 * within ten seconds of the `back in N` figure printed beside it. Nothing was fabricated — the
+	 * within ten seconds of the `back in N` figure printed beside it (that field is now rendered
+	 * `respawns in Ns`, beside a `died Ns ago` that did not exist then). Nothing was fabricated — the
 	 * payload gave one number and the sentence needed the other.
 	 *
 	 * Owned by the caller for the same reason `said` and `narrative` are: it needs a record across
 	 * samples and this file holds two. `analysis/coach-memory.ts`'s `deathsSeen`. A champion with no
-	 * entry was not watched going down and renders as `elapsed NOT KNOWN` — never as a subtraction
+	 * entry was not watched going down and renders as `time since death NOT KNOWN` — never as a subtraction
 	 * from a respawn schedule, which is a patch value this app may not hardcode.
 	 */
 	deathsSeen?: Readonly<Record<string, DeathSeen | undefined>> | null
@@ -433,6 +434,29 @@ type Downed = (p: Player) => string
  * HOW LONG HE HAS ALREADY BEEN DEAD, beside the time left — two different figures, and the payload
  * used to print only the second.
  *
+ * BOTH CLOCKS NAME THEIR OWN DIRECTION, and the honest note is that this changed NOTHING and is
+ * kept anyway.
+ *
+ * The pair used to render `down 4s, back in 24s` — two bare numbers on one line, where the larger,
+ * later one reads like the answer to "how long has he been down". The standing theory for the
+ * night's largest defect was that the coach was picking the wrong half of it.
+ * `scripts/measure-deadclock-replay.ts` re-asked the 93 turns where that appeared to happen, as a
+ * 2x2 of this wording against a system prompt that names both clocks:
+ *
+ *   down/back in  + prompt as shipped   72/76 = 95% [87-98]     down/back in  + prompt names both  72/75 = 96% [89-99]
+ *   died/respawns + prompt as shipped   71/74 = 96% [89-99]     died/respawns + prompt names both  70/75 = 93% [85-97]
+ *
+ * Four cells on top of each other, and the elapsed figure was spoken 0 of 75 times in every one.
+ * The coach was never reading the wrong half: 0 of the 93 stored lines [0-4] frame anything as a
+ * claim about the past, and 92% [85-96] are "X is dead for N seconds, so do Y right now" — the
+ * REMAINING figure, correct, driving a correct decision, in a sentence a listener can read
+ * backwards. A payload cannot fix a wording.
+ *
+ * So this is kept on two grounds and neither is effect. It is better English at four characters a
+ * line; and the same 2x2 is the evidence that changing it does not perturb the coach, which is what
+ * makes a corpus written in the new wording comparable to the ones written in the old.
+ * `scripts/lib/payload-claims.ts` reads both, and a test pins that the two parse identically.
+ *
  * Every dead clock in this file renders both from here, because the inversion was not a property of
  * one line: 83 of the contradicted claims named the enemy jungler and 48 named somebody else, so
  * fixing the counterpart's line alone would have left half the defect standing.
@@ -455,9 +479,9 @@ const downClock = (now: number, players: Player[], seen: BriefInput["deathsSeen"
 	}
 	return p => {
 		const d = twice.has(p.champion) ? undefined : seen?.[p.champion]
-		if (d === undefined || d === null || d.atSec > now) return "elapsed NOT KNOWN"
+		if (d === undefined || d === null || d.atSec > now) return "time since death NOT KNOWN"
 		const el = r0(Math.max(0, now - d.atSec))
-		return d.exact ? `down ${el}s` : `down at least ${el}s`
+		return d.exact ? `died ${el}s ago` : `died at least ${el}s ago`
 	}
 }
 
@@ -631,7 +655,7 @@ const counterpartClause = (
 	 */
 	const age = full || seenAtSec === null ? ` ${rowAge(c, now, seenAtSec, watchedFromSec)}.` : ""
 	const live = c.dead || full ? "His death and respawn are live;" : ""
-	return `${c.champion}: ${c.dead ? `DEAD, ${down(c)}, back in ${r0(c.respawn)}s` : "alive"}, lvl ${c.level} — ${race}.${full ? ` ${c.kills}/${c.deaths}/${c.assists}.` : ""} ${build}.${live === "" ? "" : ` ${live}`}${age}`
+	return `${c.champion}: ${c.dead ? `DEAD, ${down(c)}, respawns in ${r0(c.respawn)}s` : "alive"}, lvl ${c.level} — ${race}.${full ? ` ${c.kills}/${c.deaths}/${c.assists}.` : ""} ${build}.${live === "" ? "" : ` ${live}`}${age}`
 }
 
 /**
@@ -1467,7 +1491,7 @@ const situation = (
 	 */
 	bits.push(
 		c === null ? "This feed labels no enemy jungler this game."
-		:	`Counterpart ${c.champion}: ${c.dead ? `DEAD, ${s.downFor(c)}, back in ${r0(c.respawn)}s` : "alive"}, lvl ${c.level} — ${
+		:	`Counterpart ${c.champion}: ${c.dead ? `DEAD, ${s.downFor(c)}, respawns in ${r0(c.respawn)}s` : "alive"}, lvl ${c.level} — ${
 				c.level === s.me.level ? "level with you"
 				: s.me.level > c.level ? `${s.me.level - c.level} below you`
 				: `${c.level - s.me.level} above you`
@@ -1520,7 +1544,7 @@ export const FEED_NOTES: readonly string[] = [
 	"- Item lists are what a player is HOLDING now, and the names are exact. An enemy's empty list means he has not been SEEN, not that he has bought nothing.",
 	"- There are no positions anywhere in this feed. It contains no coordinates for anyone, including him. Any position in this payload came from READING THE MINIMAP and says so on its own line, with its age.",
 	"- There are no cooldowns and no summoner-spell timers.",
-	"- A death carries TWO clocks here and they run opposite ways. `back in Ns` and `respawns in Ns` are what is LEFT of the timer, and that is the only one the feed states. `down Ns` is how long the player has ALREADY been dead, which this app watched happen — `down at least Ns` when it saw the body rather than the kill, and `elapsed NOT KNOWN` when it did not watch him go down at all. Neither figure can be turned into the other: respawn length changes with game time and nothing in this app knows it.",
+	"- A death carries TWO clocks here and they run opposite ways. `respawns in Ns` is what is LEFT of the timer, and that is the only one the feed states. `died Ns ago` is how long the player has ALREADY been dead, which this app watched happen — `died at least Ns ago` when it saw the body rather than the kill, and `time since death NOT KNOWN` when it did not watch him go down at all. Neither figure can be turned into the other: respawn length changes with game time and nothing in this app knows it.",
 	"- Ward score is a score, not a ward map: it says nothing about where anything was placed.",
 	"- The screenshot accompanying this brief is a real look at his screen. What is plainly visible on it — who is on screen, what he is attacking, his own bars, the chat, the kill banners, the minimap pings — is readable. What is off screen is not in the picture and not in this brief."
 ]
@@ -1912,7 +1936,7 @@ const movedBlock = (s: Scene): string | null => {
 			if (p.deaths !== q.deaths) bits.push(`DIED (${q.deaths}->${p.deaths})`)
 			if (p.kills !== q.kills) bits.push(`killed someone (${q.kills}->${p.kills})`)
 			if (p.assists !== q.assists) bits.push(`assist (${q.assists}->${p.assists})`)
-			if (p.dead !== q.dead) bits.push(p.dead ? `DEAD, ${s.downFor(p)}, back in ${r0(p.respawn)}s` : "respawned")
+			if (p.dead !== q.dead) bits.push(p.dead ? `DEAD, ${s.downFor(p)}, respawns in ${r0(p.respawn)}s` : "respawned")
 			const bought = p.items.filter(i => !q.items.some(j => j.name === i.name))
 			if (bought.length > 0) bits.push(`BOUGHT ${bought.map(i => i.name).join(", ")}`)
 			else if (p.items.length !== q.items.length) bits.push(`items ${q.items.length}->${p.items.length}`)
@@ -2143,13 +2167,13 @@ const prospectHead = (
 	 * carries. Sending both cost 220 duplicated characters a turn inside a 1,500-character cap, and
 	 * what those characters evicted was the memory. What an objective decision needs from him is
 	 * whether he can be at the pit: his death and his respawn timer, which are read straight off the
-	 * feed and are NOT fog-gated, and his level. "Kayn DEAD, back in 24s" against "drake in 45s" is
+	 * feed and are NOT fog-gated, and his level. "Kayn DEAD, respawns in 24s" against "drake in 45s" is
 	 * the single most decidable pair in this payload.
 	 */
 	/*
 	 * The counterpart in FULL here rather than in NOW, because this is where a decision about a pit
 	 * consumes him. His death and his respawn are read straight off the feed and are not fog-gated,
-	 * so "Kayn DEAD, back in 24s" against "drake in 45s" is the most decidable pair in this payload;
+	 * so "Kayn DEAD, respawns in 24s" against "drake in 45s" is the most decidable pair in this payload;
 	 * his level and his build are the race that replaced the CS race, and the age on the end is what
 	 * makes them safe to quote.
 	 *
@@ -2398,7 +2422,7 @@ const nextBlock = (
 	const cpDown = s.counterpart !== null && s.counterpart.dead ? s.counterpart : null
 	if (cpDown !== null)
 		lines.unshift(
-			`- ${cpDown.champion} — the enemy jungler — is DEAD, ${s.downFor(cpDown)}, back in ${r0(cpDown.respawn)}s. Nothing in his client shows him this timer.`
+			`- ${cpDown.champion} — the enemy jungler — is DEAD, ${s.downFor(cpDown)}, respawns in ${r0(cpDown.respawn)}s. Nothing in his client shows him this timer.`
 		)
 
 	/*
@@ -2439,7 +2463,7 @@ const nextBlock = (
 			}): ${down
 				.map(
 					p =>
-						`${p.champion} (${p.team === s.me.team ? "YOUR team" : "ENEMY"}) ${s.downFor(p)}, back in ${r0(p.respawn)}s`
+						`${p.champion} (${p.team === s.me.team ? "YOUR team" : "ENEMY"}) ${s.downFor(p)}, respawns in ${r0(p.respawn)}s`
 				)
 				.join("; ")}.`
 		)

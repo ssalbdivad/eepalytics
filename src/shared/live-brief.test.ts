@@ -694,7 +694,7 @@ test("a dead counterpart is stated beside the objective clock, with his timer", 
 		at: { label: "blue-side base", coarse: "base", atSec: raw.gameTime }
 	})!.text.split("\n\n").find(x => x.startsWith("NEXT"))!
 	/* BOTH CLOCKS, and they run opposite ways: 9 seconds gone, 24 to come. */
-	assert.match(next, /Briar: DEAD, down 9s, back in 24s/)
+	assert.match(next, /Briar: DEAD, died 9s ago, respawns in 24s/)
 	assert.match(next, /Voidgrubs \(top side\): up at 8:00/)
 })
 
@@ -724,7 +724,7 @@ test("a dead counterpart leads NEXT, ahead of every pit", () => {
 		deathsSeen: { Briar: { atSec: raw.gameTime - 9, exact: true } }
 	})!.text.split("\n\n").find(x => x.startsWith("NEXT"))!
 	const bullets = next.split("\n").filter(l => l.startsWith("- "))
-	assert.match(bullets[0]!, /^- Briar — the enemy jungler — is DEAD, down 9s, back in 24s\./, bullets.join(" | "))
+	assert.match(bullets[0]!, /^- Briar — the enemy jungler — is DEAD, died 9s ago, respawns in 24s\./, bullets.join(" | "))
 	assert.match(bullets[0]!, /Nothing in his client shows him this timer/)
 	/* and he is named once, not twice: the down-list below drops the man who is already the head. */
 	assert.equal(bullets.filter(l => /Briar/.test(l)).length, 1, bullets.join(" | "))
@@ -1102,7 +1102,7 @@ test("every name in the down-list carries the team it is on", () => {
 	const names = line.slice(line.indexOf(":") + 1).split("; ")
 	assert.ok(names.length > 0, line)
 	/* And how long each has been down, beside what is left of his timer. */
-	for (const n of names) assert.match(n, /\((YOUR team|ENEMY)\) down \d+s, back in \d+s/, `${n} in ${line}`)
+	for (const n of names) assert.match(n, /\((YOUR team|ENEMY)\) died \d+s ago, respawns in \d+s/, `${n} in ${line}`)
 })
 
 test("a dead player is announced as dead everywhere, and his corpse's bars are not printed", () => {
@@ -1116,14 +1116,14 @@ test("a dead player is announced as dead everywhere, and his corpse's bars are n
 	const seen = { Lillia: { atSec: cur.gameTime - 6, exact: true } }
 	const d = buildDelta({ raw, gameTimeSec: cur.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime }, feedNotes: false, deathsSeen: seen })!
 	const now = d.text.split("\n\n")[0]!.split("\n")[1]!
-	assert.match(now, /^\d+:\d\d\. YOU ARE DEAD — down 6s, 14s until you are up\./, now)
+	assert.match(now, /^\d+:\d\d\. YOU ARE DEAD — died 6s ago, 14s until you are up\./, now)
 	assert.match(now, /corpse reads 0 HP and 0 mana/, now)
 	assert.ok(!/HP 0%/.test(now), now)
-	assert.match(d.text, /You: [^\n]*DEAD, down 6s, 14s more/)
+	assert.match(d.text, /You: [^\n]*DEAD, died 6s ago, 14s more/)
 
 	const b = buildBrief({ raw, gameTimeSec: cur.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime }, deathsSeen: seen })!
 	const you = b.text.split("\n\n").find(s => s.startsWith("YOU — Lillia"))!
-	assert.match(you.split("\n")[1]!, /^HE IS DEAD RIGHT NOW — down 6s — and respawns in 14s\./)
+	assert.match(you.split("\n")[1]!, /^HE IS DEAD RIGHT NOW — died 6s ago — and respawns in 14s\./)
 })
 
 /**
@@ -1211,7 +1211,7 @@ test("no bar claims what the number buys", () => {
 
 /* ================================================================ the dead clock, both ways
  *
- * The payload used to state a death ONE WAY ROUND — `back in Ns`, the time remaining — and the
+ * The payload used to state a death ONE WAY ROUND — the time remaining — and the
  * sentence a coach reaches for is the elapsed one. Measured over the 28 stored games: 153 spoken
  * lines state an elapsed death time, 71 of them contradict the client's own kill log, and the error
  * is one-sided — 101 overstate against 4 that understate, with 101 of 115 speaking a number within
@@ -1239,7 +1239,7 @@ test("every remaining-time figure in the payload has an elapsed figure beside it
 	]) {
 		const lines = timerLines(payload.text)
 		assert.ok(lines.length > 0, "the fixture has dead men in it")
-		for (const l of lines) assert.match(l, /down (?:at least )?\d+s|elapsed NOT KNOWN/, l)
+		for (const l of lines) assert.match(l, /died (?:at least )?\d+s ago|time since death NOT KNOWN/, l)
 	}
 })
 
@@ -1256,9 +1256,9 @@ test("an unwatched death renders NOT KNOWN and no elapsed number anywhere", () =
 		previous: { raw: prev, gameTimeSec: prev.gameTime },
 		feedNotes: false
 	})!
-	const line = d.text.split("\n").find(l => /Lissandra/.test(l) && /back in/.test(l))!
-	assert.match(line, /Lissandra \(ENEMY\) elapsed NOT KNOWN, back in 3s/)
-	assert.ok(!/down \d+s/.test(d.text), d.text)
+	const line = d.text.split("\n").find(l => /Lissandra/.test(l) && /respawns in/.test(l))!
+	assert.match(line, /Lissandra \(ENEMY\) time since death NOT KNOWN, respawns in 3s/)
+	assert.ok(!/died \d+s ago/.test(d.text), d.text)
 })
 
 test("an instant taken off the sample edge says at least, because it is a bound", () => {
@@ -1269,7 +1269,7 @@ test("an instant taken off the sample edge says at least, because it is a bound"
 		feedNotes: false,
 		deathsSeen: { Lissandra: { atSec: LISSANDRA_DIED, exact: false } }
 	})!
-	assert.match(d.text, /Lissandra \(ENEMY\) down at least 13s, back in 3s/)
+	assert.match(d.text, /Lissandra \(ENEMY\) died at least 13s ago, respawns in 3s/)
 })
 
 /*
@@ -1287,43 +1287,49 @@ test("a mirror matchup is NOT KNOWN rather than one man's death dating the other
 		feedNotes: false,
 		deathsSeen: { Lissandra: { atSec: LISSANDRA_DIED, exact: true } }
 	})!
-	assert.match(d.text, /Lissandra \(ENEMY\) elapsed NOT KNOWN/)
+	assert.match(d.text, /Lissandra \(ENEMY\) time since death NOT KNOWN/)
 })
 
 test("the feed notes say which clock is which, once", () => {
 	const b = buildBrief({ raw: cur, gameTimeSec: cur.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime } })!
 	const notes = b.text.split("\n\n").find(x => x.startsWith("WHAT THIS FEED IS"))!
 	assert.match(notes, /A death carries TWO clocks here and they run opposite ways/)
-	assert.match(notes, /`down Ns` is how long the player has ALREADY been dead/)
+	assert.match(notes, /`died Ns ago` is how long the player has ALREADY been dead/)
 })
 
 /*
- * THE DROP IS NOT FREE, AND THE COMMENT THAT SAID IT WAS IS WHY THIS EXISTS.
+ * THE GAP IS REAL, AND IT IS NOT THE CAUSE. Both halves were measured; both are pinned here.
  *
- * `feedNotes: false` removes 1,190 characters a turn from the payload, and both the caller in
- * `src/server/routes/live.ts` and the block itself asserted that every bullet was already in
- * `TRUSTED_PROMPT`, paid once in the system instruction.
+ * `feedNotes: false` drops eleven bullets from every payload on the claim that `TRUSTED_PROMPT`
+ * already carries them. Checked bullet by bullet on 2026-09-12 that is true of ten and false of the
+ * eleventh: the prompt names exactly one death clock ("every respawn timer … with his timer
+ * counting down") and never mentions the elapsed half. That was the standing candidate cause for
+ * the coach speaking the REMAINING figure as if it were elapsed in 91% [84-95] of the lines that
+ * state a death duration.
  *
- * Checked bullet by bullet on 2026-09-12, that is true of ten of the eleven — the prompt restates
- * them in its own words, at its own length: the CS floor, the counterpart CS visibility counter,
- * enemy level accuracy, that no bar but his own is reported, that spend cannot be recovered from
- * item prices, that item lists are what is held, that the feed has no coordinates, that nobody's
- * cooldowns are knowable, that a ward score is not a ward map, and what the screenshot is.
+ * IT WAS TESTED AND IT IS NOT THE CAUSE. `scripts/measure-deadclock-replay.ts` took the 93 turns
+ * where that actually happened and re-asked the same arm, as a 2x2 of payload wording against
+ * prompt (`data/eval/deadclock-replay-before|after-20260912.json`):
  *
- * IT IS NOT TRUE OF THE ELEVENTH. The prompt names exactly one death clock — "every respawn timer
- * … with his timer counting down" — and never says that the payload also carries how long a man
- * has ALREADY been dead, that the two run opposite ways, or that neither can be turned into the
- * other. On the dropped path nothing anywhere distinguishes them.
+ *   payload `down 4s, back in 24s`      prompt as shipped       72/76 = 95% [87-98]
+ *   payload `died 4s ago, respawns in`  prompt as shipped       71/74 = 96% [89-99]
+ *   payload `down 4s, back in 24s`      prompt names both       72/75 = 96% [89-99]
+ *   payload `died 4s ago, respawns in`  prompt names both       70/75 = 93% [85-97]
  *
- * That is the standing candidate cause for the night's largest unfixed defect: the payload now
- * carries a watched elapsed figure for 129 of 129 identifiable subjects, and the coach still
- * speaks the REMAINING figure as if it were elapsed in 117 of 129 lines — 91% [84-95], UP from
- * 88% [82-93] before the payload was fixed. Fixing the input changed nothing about the output.
+ * Four cells on top of each other, and the ELAPSED figure was spoken 0 times out of 75 in every one
+ * of them. Neither the wording nor the prompt is what decides this, so the prompt bullet was
+ * written, measured, and REVERTED rather than shipped for nothing.
  *
- * These tests do not assert the gap is right. They assert what the gap IS, so that a reader asking
- * "does the model get told this?" gets the answer from the tree rather than from a comment, and so
- * that closing it fails here loudly and forces a corpus re-run rather than landing as an
- * unmeasured prompt change.
+ * WHAT IT IS INSTEAD is visible once the sentences are classified rather than their numbers: of the
+ * 93 stored lines the 91% was computed from, 0 [0-4] are framed as a claim about the past. None say
+ * "has been dead", none say "died N seconds ago". 92% [85-96] are the bare form — "Viego is dead for
+ * fourteen seconds, so take this dragon right now" — which is the remaining figure used as a WINDOW,
+ * with the right number and the right decision, in an English sentence a listener can read
+ * backwards. The clock is not inverted. The phrasing is ambiguous, and that is a different defect
+ * with a different owner: nothing in the payload can fix how a sentence is worded.
+ *
+ * These tests keep both facts in the tree: the prompt still names one clock and not the other, and
+ * anyone who closes that gap should know it has already been tried.
  */
 test("every probe still matches its own feed note, so rewording a bullet fails here first", () => {
 	const probes = [
@@ -1344,33 +1350,37 @@ test("every probe still matches its own feed note, so rewording a bullet fails h
 		assert.ok(FEED_NOTES.some(n => n.includes(probe)), `no feed note contains "${probe}" any more`)
 })
 
-test("the two-clock note is the one the trusted prompt does not restate, by every phrase it has", () => {
+test("the trusted prompt still names one death clock and not the other, and that was measured harmless", () => {
 	/*
 	 * Eight probes, not one: a single phrase could miss a restatement in the prompt's own words,
-	 * which is how the other ten survive. The prompt contains NONE of these, so the explanation of
-	 * the two clocks reaches the model on the payload path and on no other path at all.
+	 * which is how the other ten bullets survive being dropped. The prompt contains NONE of these.
+	 *
+	 * This is no longer a suspected defect. Closing it was run as its own arm and moved the number
+	 * 95% -> 96% and 96% -> 93% on the two payload wordings, i.e. nothing, on 75 lines a cell. If
+	 * you are about to close it anyway, close it for a reason that is not this one, and re-run
+	 * `scripts/measure-deadclock-replay.ts` rather than assuming the old prior still stands.
 	 */
 	for (const phrase of [
 		"TWO clocks",
 		"opposite ways",
-		"back in",
 		"respawns in",
-		"down Ns",
+		"died Ns ago",
 		"already been dead",
-		"elapsed NOT KNOWN",
-		"down at least"
+		"time since death NOT KNOWN",
+		"died at least"
 	])
 		assert.ok(
 			!TRUSTED_PROMPT.includes(phrase),
-			`"${phrase}" is now in TRUSTED_PROMPT — the gap is closed, so re-run the dead-clock corpus before shipping it`
+			`"${phrase}" is now in TRUSTED_PROMPT — that arm was measured at no effect, so re-run scripts/measure-deadclock-replay.ts before shipping it`
 		)
 })
 
-test("the prompt does name the countdown clock, which is why one number on its own reads as safe", () => {
+test("the prompt does name the countdown clock, which is why one number on its own read as safe", () => {
 	/*
-	 * The gap is not that deaths are unmentioned — that would be obvious. It is that ONE of two
-	 * opposite clocks is named and the other is not, which is the shape that produces a confident
-	 * wrong number rather than a refusal.
+	 * Kept because the asymmetry is what made the gap worth testing at all: ONE of two opposite
+	 * clocks named and the other not is the shape that should produce a confident wrong number. It
+	 * did not, and a test that only checked for absence would pass if deaths left the prompt
+	 * entirely.
 	 */
 	assert.match(TRUSTED_PROMPT, /respawn timer/)
 	assert.match(TRUSTED_PROMPT, /timer counting down/)

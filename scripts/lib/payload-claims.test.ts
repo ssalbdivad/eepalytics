@@ -31,11 +31,42 @@ ENEMY TEAM (besides their jungler)
 - Draven (BOTTOM, lvl 7) 2/0/0, 60 CS, ward score 0.0. Items: no items
 - Lulu (UTILITY, lvl 5) 0/1/0, 0 CS, ward score 1.5 DEAD, respawns in 20s. Items: no items`
 
-/** The same instant as the block renders it NOW: both clocks at every site. */
+/**
+ * The same instant with both clocks, in the wording of the 2026-09-12 corpora — `down Ns, back in
+ * Ns`. KEPT, because every stored run under `data/eval/` is written in it and a reader must be able
+ * to re-derive those figures with today's checker.
+ */
 const NEW = OLD.replace("Kayn: DEAD, back in 12s", "Kayn: DEAD, down 21s, back in 12s").replace(
 	"ward score 1.5 DEAD, respawns in 20s",
 	"ward score 1.5 DEAD, down at least 9s, respawns in 20s"
 )
+
+/** The same instant in the wording the brief renders TODAY: each clock naming its own direction. */
+const SHIPPED = OLD.replace("Kayn: DEAD, back in 12s", "Kayn: DEAD, died 21s ago, respawns in 12s").replace(
+	"ward score 1.5 DEAD, respawns in 20s",
+	"ward score 1.5 DEAD, died at least 9s ago, respawns in 20s"
+)
+
+/*
+ * TWO WORDINGS, ONE CHECKER, and the reason is that the stored corpora cannot be re-rendered. The
+ * clock phrasing changed on 2026-09-12 after the old pair was measured and found unreadable in
+ * 95% [87-98] of the lines that state an elapsed death time; every run on disk is in the old
+ * wording and every run after it is in the new one. A checker that understood only one of them
+ * would silently report `not-stated` for half the evidence in this repo.
+ */
+test("the same instant parses identically in the stored wording and the shipped one", () => {
+	const a = readPayload(NEW)
+	const b = readPayload(SHIPPED)
+	for (const champ of ["Kayn", "Lulu"]) {
+		const x = a.dead.find(d => d.champion === champ)!
+		const y = b.dead.find(d => d.champion === champ)!
+		assert.deepEqual(
+			{ e: y.elapsedSec, k: y.elapsedKind, r: y.remainingSec },
+			{ e: x.elapsedSec, k: x.elapsedKind, r: x.remainingSec },
+			champ
+		)
+	}
+})
 
 test("reads the roster, both clocks and the game clock off a rendered block", () => {
 	const f = readPayload(NEW)

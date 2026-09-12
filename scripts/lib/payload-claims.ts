@@ -92,10 +92,10 @@ const num = (s: string | undefined): number | null => {
  */
 const elapsedOf = (clause: string | undefined): { sec: number | null; kind: DeadClock["elapsedKind"] } => {
 	if (clause === undefined || clause === "") return { sec: null, kind: "not-stated" }
-	const atLeast = /down at least (\d+)s/.exec(clause)
-	if (atLeast) return { sec: num(atLeast[1]), kind: "at-least" }
-	const exact = /down (\d+)s/.exec(clause)
-	if (exact) return { sec: num(exact[1]), kind: "exact" }
+	const atLeast = /(?:down at least (\d+)s|died at least (\d+)s ago)/.exec(clause)
+	if (atLeast) return { sec: num(atLeast[1] ?? atLeast[2]), kind: "at-least" }
+	const exact = /(?:down (\d+)s|died (\d+)s ago)/.exec(clause)
+	if (exact) return { sec: num(exact[1] ?? exact[2]), kind: "exact" }
 	return { sec: null, kind: "not-stated" }
 }
 
@@ -109,13 +109,13 @@ const elapsedOf = (clause: string | undefined): { sec: number | null; kind: Dead
  */
 const DEAD_SITES: readonly RegExp[] = [
 	// "Counterpart Kayn: DEAD, down 9s, back in 14s, lvl 6 — ..." and the NEXT block's bare "Kayn: DEAD, ..."
-	/(?:^|\n|Counterpart )([A-Z][A-Za-z0-9'&.]*(?: [A-Z][A-Za-z0-9'&.]*)?): DEAD, (?:(down(?: at least)? \d+s|elapsed NOT KNOWN), )?back in (\d+)s/g,
+	/(?:^|\n|Counterpart )([A-Z][A-Za-z0-9'&.]*(?: [A-Z][A-Za-z0-9'&.]*)?): DEAD, (?:(down(?: at least)? \d+s|died(?: at least)? \d+s ago|elapsed NOT KNOWN|time since death NOT KNOWN), )?(?:back in|respawns in) (\d+)s/g,
 	// "- Olaf (TOP, lvl 3) 2/1/0, 0 CS, ward score 0.0 DEAD, down 5s, respawns in 1s."
-	/- ([A-Z][A-Za-z0-9'&.]*(?: [A-Z][A-Za-z0-9'&.]*)?) \([A-Z]+, lvl \d+\)[^\n]*? DEAD, (?:(down(?: at least)? \d+s|elapsed NOT KNOWN), )?respawns in (\d+)s/g,
+	/- ([A-Z][A-Za-z0-9'&.]*(?: [A-Z][A-Za-z0-9'&.]*)?) \([A-Z]+, lvl \d+\)[^\n]*? DEAD, (?:(down(?: at least)? \d+s|died(?: at least)? \d+s ago|elapsed NOT KNOWN|time since death NOT KNOWN), )?respawns in (\d+)s/g,
 	// "- Viego — the enemy jungler — is DEAD, down 5s, back in 14s."
-	/- ([A-Z][A-Za-z0-9'&.]*(?: [A-Z][A-Za-z0-9'&.]*)?) — the enemy jungler — is DEAD, (?:(down(?: at least)? \d+s|elapsed NOT KNOWN), )?back in (\d+)s/g,
+	/- ([A-Z][A-Za-z0-9'&.]*(?: [A-Z][A-Za-z0-9'&.]*)?) — the enemy jungler — is DEAD, (?:(down(?: at least)? \d+s|died(?: at least)? \d+s ago|elapsed NOT KNOWN|time since death NOT KNOWN), )?(?:back in|respawns in) (\d+)s/g,
 	// "- Down right now (NOT you — you are ALIVE): Mordekaiser (ENEMY) down 5s, back in 1s, ..."
-	/([A-Z][A-Za-z0-9'&.]*(?: [A-Z][A-Za-z0-9'&.]*)?) \((?:ENEMY|YOUR team)\) (?:(down(?: at least)? \d+s|elapsed NOT KNOWN), )?back in (\d+)s/g
+	/([A-Z][A-Za-z0-9'&.]*(?: [A-Z][A-Za-z0-9'&.]*)?) \((?:ENEMY|YOUR team)\) (?:(down(?: at least)? \d+s|died(?: at least)? \d+s ago|elapsed NOT KNOWN|time since death NOT KNOWN), )?(?:back in|respawns in) (\d+)s/g
 ]
 
 const ROSTER_ROW = /- ([A-Z][A-Za-z0-9'&.]*(?: [A-Z][A-Za-z0-9'&.]*)?) \([A-Z]+, lvl \d+\)/g
