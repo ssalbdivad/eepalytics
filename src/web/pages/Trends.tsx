@@ -282,11 +282,19 @@ export const Trends = ({ eventTick }: TrendsProps) => {
 					 *
 					 * Nothing is removed: the table lists all of them with their sparkline, mean,
 					 * interval and verdict, which is what "at a glance" is for, and either group
-					 * opens to the full charts in one click. The noisy half starts closed because by
-					 * its own label no direction can be claimed from it.
+					 * opens to the full charts in one click.
+					 *
+					 * BOTH GROUPS START CLOSED, and the trendable one did not until a screenshot of
+					 * the shipped page was actually read. Open, it drew 19 cards below the table and
+					 * every one of them printed the same four-line verdict paragraph — "the LEVEL is
+					 * stable enough to quote (needs n>=10, CV<=0.6) … no direction may be claimed" —
+					 * with only the digits differing. Nineteen repetitions of one sentence is not a
+					 * disclosure, it is the page, which is exactly what the comment above says this
+					 * section is not. The summary line already carries what the group means; the
+					 * cards are for the one metric he came to look at.
 					 */}
 					{trendable.length > 0 ?
-						<details className="trend-group" open>
+						<details className="trend-group">
 							<summary>
 								<span className="t">Stable enough to read</span>
 								<span className="n">{trendable.length}</span>
