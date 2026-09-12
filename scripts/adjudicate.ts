@@ -90,12 +90,32 @@
  * presupposes. Lines whose every clause is an instruction come back with no claims, and are
  * reported as their own bucket rather than folded into either side.
  *
+ * ## CORRECTED 2026-09-12: this file had the inversion too, and finding 1 below was wrong
+ *
+ * `other.dead.timer` matched an ELAPSED claim ("Kayn is down for thirty-seven seconds") and checked
+ * it against `respawnTimer`, which is what is LEFT. Six claims were certified VERIFIED that way,
+ * five of them by a margin the corrected reading convicts outright — at 20:53 Kayn had been down
+ * three seconds, not thirty-seven. The elapsed half is knowable and exact: `CHAMPION_KILL` in the
+ * post-game timeline states the instant of every death, so elapsed is `now - that instant`.
+ *
+ * That matters far beyond one check. This is the record every judge in this repo is scored against,
+ * so while it was inverted it CERTIFIED the exact error a judge was being blamed for missing, and
+ * scored any judge that caught the inversion as wrong for catching it. The two errors — a judge
+ * that misses it, a record that blesses it — cancel, which is why the total looked accurate.
+ *
+ * Re-run on the same inputs, the record moves from **47 VERIFIED / 0 CONTRADICTED** to **42 / 5**,
+ * and the no-frame judge's agreement with it moves from 39/47 (83% [70-91]) to 34/47 (72% [58-83]).
+ * The stored 2026-09-11 file is untouched; the corrected run is beside it. Findings 1 and 2 below
+ * are kept AS THEY WERE WRITTEN, because a corrected measurement means nothing without the number
+ * it corrects, and the correction is stated at the top of each.
+ *
  * ## What it found, 2026-09-11 (`data/eval/adjudicate-20260911.json`)
  *
  * 100 claims came out of the 58 lines — 92 off the feed and the event log, 8 about position. Two
  * lines assert nothing checkable at all.
  *
- *  1. **THE RECORD CONTRADICTS NOTHING THE COACH SAID.** 47 lines VERIFIED, 0 CONTRADICTED, 9
+ *  1. **WRONG, see the correction above — the record contradicts five of them.** As written:
+ *     **THE RECORD CONTRADICTS NOTHING THE COACH SAID.** 47 lines VERIFIED, 0 CONTRADICTED, 9
  *     UNDECIDABLE, 2 NO-CLAIM. Every death timer, respawn count, gold figure, item, level
  *     comparison, objective timer and kill attribution checked out — 87 verified feed and event
  *     claims against none contradicted. Read "low" and "full" against the app's OWN bands instead
@@ -104,7 +124,8 @@
  *     somewhere in 0-9%, against the 22% the no-frame judge gave it and the 55% the with-frame
  *     judge gave it. BOTH JUDGES OVERCOUNT; one of them overcounts by a factor of six.
  *
- *  2. **OF THE EIGHTEEN LINES THAT FLIPPED, THE RECORD CALLS NONE OF THEM FALSE.** Fifteen are
+ *  2. **Its 83% is a 72% under the corrected record; the ORDERING it establishes survives.** As
+ *     written: **OF THE EIGHTEEN LINES THAT FLIPPED, THE RECORD CALLS NONE OF THEM FALSE.** Fifteen are
  *     fine (83% [61-94]) and three cannot be settled. The one line that flipped the other way is
  *     fine too. Scored on the 47 lines the record can settle, the no-frame judge is right 39 times
  *     (83% [70-91]) and the with-frame judge 24 (51% [37-65]); paired, 16 lines the no-frame judge
@@ -137,6 +158,26 @@
  *     sampling interval itself, not this file being cautious. Every rate above should be read with
  *     that width attached.
  *
+ * ## What the corrected record says about the JUDGE, 2026-09-12
+ *
+ * `--noframe <judge-corpus output>` scores any no-frame judge against this record. Run over the
+ * same 47 decidable lines, with the elapsed clock read the right way round:
+ *
+ *     the stored 2026-09-11 judge          34/47  72% [58-83]
+ *     + champion notes + death-clock rule  37/47  79% [65-88]   paired +6/-3, McNemar p = 0.51
+ *     + the rule scoped to death clocks    42/47  89% [77-95]   paired +10/-2, McNemar p = 0.039
+ *
+ * Two things have to be said about that last row or it reads as stronger than it is. The scoping
+ * sentence was written after watching the middle row move three POSITION lines to "false" on this
+ * same corpus, so its 89% is a repair selected on the data it is scored against and is not an
+ * independent test. And against the record AS IT STOOD — the inverted one — the same judge scores
+ * 79% against the stored judge's 83%, i.e. it looks slightly WORSE. That is the whole shape of this
+ * problem: a judge that misses the inversion and a record that blesses it agree with each other,
+ * and fixing only one of them makes the pair look further apart.
+ *
+ * Under the corrected record the fixed judge convicts all five inversions; the stored judge called
+ * every one of them USEFUL.
+ *
  * ## Usage
  *
  *     node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning \
@@ -144,6 +185,9 @@
  *
  *     --lines <path>   the 58 socket records (default data/eval/integrate-socket-both-asrecords.json)
  *     --judges <path>  the paired judge file  (default data/eval/judge-sees-the-frame-20260911.json)
+ *     --noframe <path> a `scripts/judge-corpus.ts` output whose verdicts REPLACE the no-frame side
+ *                      of that pairing, joined on (windowId, clock). How a changed judge is scored
+ *                      against the record without a second copy of this file.
  *     --out <path>     where the adjudication goes (default data/eval/adjudicate-<stamp>.json)
  *     --verbose        print every claim of every line, not just the summary
  *
@@ -186,6 +230,19 @@ const has = (name: string): boolean => argv.includes(`--${name}`)
 
 const LINES_PATH = arg("lines", `${DATA_DIR}/eval/integrate-socket-both-asrecords.json`)
 const JUDGES_PATH = arg("judges", `${DATA_DIR}/eval/judge-sees-the-frame-20260911.json`)
+/*
+ * SCORE A DIFFERENT NO-FRAME JUDGE against the same record, without a second copy of this file.
+ *
+ * `--noframe <judge-corpus output>` swaps the no-frame side of the pairing for the verdicts in a
+ * `scripts/judge-corpus.ts` output, joined on (windowId, clock) — the key that file already
+ * carries. That is the whole point of the comparison this script exists for: the judge is the
+ * instrument every rate in this repo rests on, so "did the change make it agree with the record
+ * more often" has to be a command, not an afternoon of joining JSON by hand.
+ *
+ * The with-frame side is untouched, so the paired McNemar below still compares the same two
+ * populations it always did.
+ */
+const NOFRAME_PATH = arg("noframe", "")
 const STAMP = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)
 const OUT_PATH = arg("out", `${DATA_DIR}/eval/adjudicate-${STAMP}.json`)
 const VERBOSE = has("verbose")
@@ -680,6 +737,30 @@ const playerAt = (g: GameTruth, champion: string, atSec: number) => {
 	return hit && key ? { ...hit, p: hit.s.players[key]! } : null
 }
 
+/**
+ * WHEN he actually died, from the post-game kill log — the elapsed half of a death clock.
+ *
+ * ## This file had the inversion too, and it blessed six of the coach's
+ *
+ * `other.dead.timer` matched "X is down for N seconds" — an ELAPSED claim — and checked N against
+ * `respawnTimer`, which is what is LEFT. Those are opposite figures. Six claims across the two
+ * games were marked VERIFIED that way, including "Kayn is down for thirty-seven seconds" at 20:53
+ * against a payload whose only death figure was thirty-seven seconds REMAINING. The record that
+ * every judge in this repo is scored against therefore certified the exact error the judge was
+ * being blamed for missing, and a judge that caught it was scored WRONG for catching it.
+ *
+ * The elapsed figure is knowable and it is exact: `CHAMPION_KILL` in the post-game timeline states
+ * the instant of every death. So elapsed is `now - that instant`, subject to the player still
+ * being down and to no later death having intervened. Nothing here derives one clock from the
+ * other — respawn length grows with game time and is a patch value this app may not hardcode.
+ */
+export const deathInstant = (g: GameTruth, champion: string, atSec: number): number | null => {
+	const deaths = g.events.filter(
+		e => e.kind === "kill" && e.victim !== null && norm(e.victim.championName) === norm(champion) && e.atSec <= atSec
+	)
+	return deaths.at(-1)?.atSec ?? null
+}
+
 const eventsBetween = (g: GameTruth, fromSec: number, toSec: number): TruthEvent[] =>
 	g.events.filter(e => e.atSec >= fromSec && e.atSec <= toSec)
 
@@ -1060,14 +1141,37 @@ const RULES: Rule[] = [
 		channel: "feed",
 		mood: "assert",
 		re: /\b([A-Z][a-zA-Z']+) is (?:down|dead) for ([a-z-]+|\d+) seconds\b/i,
+		/*
+		 * ELAPSED against ELAPSED. See `deathInstant`: this check used to compare the claim against
+		 * the respawn timer, which runs the other way, and certified six inversions as VERIFIED.
+		 *
+		 * The kill log is the only source for the elapsed half. When it has no death for this
+		 * champion — a champion who died before the timeline this app stored, or a name the seats
+		 * do not carry — the claim is UNDECIDABLE rather than verified against the wrong figure.
+		 * The old reading is printed in the evidence either way, so the correction can be SEEN in
+		 * the file rather than asserted in a commit message.
+		 */
 		check: (m, c) => {
 			const other = playerAt(c.g, m[1]!, c.atSec)
 			const want = numOf(m[2]!)
 			if (!other || want === null) return null
-			const ok = other.p.dead && Math.abs(other.p.respawn - want) <= 8
+			if (!other.p.dead)
+				return {
+					verdict: "CONTRADICTED",
+					evidence: `${m[1]} at ${fmtClock(other.s.atSec)} (feed, ${other.gapSec}s from the line): ALIVE, against a claimed ${want}s dead`
+				}
+			const died = deathInstant(c.g, m[1]!, c.atSec)
+			const elapsed = died === null ? null : Math.round(c.atSec - died)
+			const remaining = Math.round(other.p.respawn)
+			const oldReading = `the pre-2026-09-12 reading of this check compared it against the ${remaining}s REMAINING and would have said ${Math.abs(remaining - want) <= 8 ? "VERIFIED" : "CONTRADICTED"}`
+			if (elapsed === null)
+				return {
+					verdict: "UNDECIDABLE",
+					evidence: `${m[1]} is DEAD at ${fmtClock(other.s.atSec)} with ${remaining}s left, but the kill log carries no death for him before this instant, so how long he had ALREADY been dead is not knowable — against a claimed ${want}s elapsed. ${oldReading}`
+				}
 			return {
-				verdict: ok ? "VERIFIED" : "CONTRADICTED",
-				evidence: `${m[1]} at ${fmtClock(other.s.atSec)} (feed, ${other.gapSec}s from the line): ${other.p.dead ? `DEAD, ${Math.round(other.p.respawn)}s to respawn` : "ALIVE"}, against a claimed ${want}s`
+				verdict: Math.abs(elapsed - want) <= 8 ? "VERIFIED" : "CONTRADICTED",
+				evidence: `${m[1]} died at ${fmtClock(died!)} (kill log, exact), so at ${fmtClock(c.atSec)} he had been down ${elapsed}s with ${remaining}s left — against a claimed ${want}s ELAPSED. ${oldReading}`
 			}
 		}
 	},
@@ -1526,6 +1630,29 @@ for (const w of lines.windows) games.set(w.id, loadGame(w.id, Number(w.gameId), 
 
 const gameIdOf = (windowId: string): string => lines.windows.find(w => w.id === windowId)?.gameId ?? ""
 
+const swapped =
+	NOFRAME_PATH === "" ? null : (
+		readJson<{ judge?: string; judgePrompt?: string; lines: { windowId: string; clock: string; verdict: string; why: string }[] }>(
+			NOFRAME_PATH
+		)
+	)
+/*
+ * An UNGRADED line has no no-frame verdict at all and must not silently keep the old file's. It
+ * becomes `unverifiable`, which is the one verdict that is neither "false" nor a claim of
+ * usefulness, and the count is printed so a reader knows how many lines it happened to.
+ */
+const swapMisses: string[] = []
+const noFrameFor = (r: LineRecord, fallback: JudgeVerdict | undefined): JudgeVerdict | undefined => {
+	if (!swapped) return fallback
+	const hit = swapped.lines.find(l => l.windowId === r.windowId && l.clock === r.clock)
+	if (!hit) {
+		swapMisses.push(`${r.windowId} ${r.clock}`)
+		return fallback
+	}
+	const v = hit.verdict === "ungraded" ? "unverifiable" : hit.verdict
+	return { verdict: v as JudgeVerdict["verdict"], why: hit.why }
+}
+
 const judgeOf = (gameId: string, clock: string): JudgeLine | null =>
 	judges.lines.find(l => l.gameId === gameId && l.clock === clock) ?? null
 
@@ -1557,7 +1684,7 @@ const adjudicated: Adjudicated[] = lines.records.map(r => {
 		strictVerdict: verdictOfLine(claims.map(c => ({ ...c, verdict: c.strictVerdict ?? c.verdict }))),
 		payloadHadPosition: !r.payload.includes("WHERE YOU ARE IS NOT IN THIS PAYLOAD"),
 		withFrame: j?.withFrame ?? null,
-		noFrame: j?.noFrame ?? null,
+		noFrame: noFrameFor(r, j?.noFrame) ?? null,
 		fight,
 		shop,
 		where: (() => {
@@ -1629,7 +1756,18 @@ const out = {
 		"(exact per-minute positions for all ten players, interpolated only under a kinematic bound that " +
 		"reports when it cannot decide) and data/live-samples/<window>.ndjson (the raw allgamedata every 5s).",
 	ranAt: new Date().toISOString(),
-	inputs: { lines: LINES_PATH, judges: JUDGES_PATH },
+	inputs: {
+		lines: LINES_PATH,
+		judges: JUDGES_PATH,
+		...(swapped ?
+			{
+				noFrameSwappedFor: NOFRAME_PATH,
+				noFrameJudge: swapped.judge ?? "unknown",
+				noFramePrompt: swapped.judgePrompt ?? "unknown",
+				noFrameLinesNotFound: swapMisses
+			}
+		:	{})
+	},
 	method: {
 		positions:
 			`every map point satisfying dist(p, anchor) <= anchor.radius + ${FLASH_SLACK} + speed * |t - anchor.t| for EVERY ` +

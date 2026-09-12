@@ -14,7 +14,8 @@
 
 import { equal } from "node:assert/strict"
 import { test } from "node:test"
-import { mcnemarExact, numOf, vagueBand, verdictOfLine } from "./adjudicate.ts"
+import { deathInstant, mcnemarExact, numOf, vagueBand, verdictOfLine } from "./adjudicate.ts"
+import type { TruthEvent } from "../src/analysis/game-truth.ts"
 
 const claim = (verdict: "VERIFIED" | "CONTRADICTED" | "UNDECIDABLE") =>
 	({ kind: "k", clause: "c", mood: "assert", channel: "feed", verdict, evidence: "" }) as const
@@ -61,4 +62,25 @@ test("numOf reads the spoken forms the coach actually uses", () => {
 	equal(numOf("two thousand"), 2000)
 	equal(numOf("thousand"), 1000)
 	equal(numOf("banana"), null)
+})
+
+/**
+ * The elapsed half of a death clock, which this file used to read off the respawn timer — the
+ * figure that runs the other way. Six claims across the two adjudicated games were certified
+ * VERIFIED by that inversion, five of them by a margin the corrected reading convicts.
+ */
+const kill = (atSec: number, champion: string): TruthEvent =>
+	({ atSec, kind: "kill", victim: { championName: champion } }) as unknown as TruthEvent
+
+test("deathInstant takes the LAST death before the instant, and nothing after it", () => {
+	const g = { events: [kill(100, "Kayn"), kill(300, "Kayn"), kill(400, "Kayn"), kill(250, "Lulu")] } as never
+	equal(deathInstant(g, "Kayn", 350), 300)
+	equal(deathInstant(g, "Kayn", 99), null)
+	equal(deathInstant(g, "Lulu", 350), 250)
+})
+
+test("deathInstant matches the champion loosely enough for the feed's spelling", () => {
+	const g = { events: [kill(60, "MonkeyKing")] } as never
+	equal(deathInstant(g, "Monkey King", 90), 60)
+	equal(deathInstant(g, "Lulu", 90), null)
 })
