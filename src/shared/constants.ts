@@ -156,6 +156,21 @@ export const FRAME_INTERVAL_MS = 60_000
 /** Median inter-frame displacement measured at 4082 units (~28% of the map). */
 export const FRAME_MEDIAN_DISPLACEMENT = 4082
 
+/**
+ * How far from a moment a JOURNAL frame may be and still be evidence for it.
+ *
+ * The journal records one frame every 5s of game clock, so ±15s is up to seven pictures either
+ * side of the moment — enough for the visual pass to see what CHANGED, which is what it is asked
+ * to read, rather than one still. Wider than this and the picture is of a different fight, which
+ * is worse than showing none: it would illustrate a claim with unrelated evidence.
+ *
+ * Shared because three places have to agree on it or the UI lies: the games list counts how many
+ * moments have frames, the review screen decides whether to offer "Watch this moment", and the
+ * watch route picks the frames the model actually reads. `web/pages/Debrief.tsx` uses a tighter
+ * 15s for a single illustrative still and is a different question.
+ */
+export const WATCH_FRAME_WINDOW_SEC = 15
+
 /** Laning-phase sampling window used by role inference and early-game metrics. */
 export const LANING_START_SEC = 120
 export const LANING_END_SEC = 570

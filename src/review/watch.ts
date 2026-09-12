@@ -32,9 +32,7 @@
 import { spawn } from "node:child_process"
 import type { Moment } from "../shared/schema/domain.ts"
 import { fmtClock } from "../shared/time.ts"
-import { errText, makeLogger } from "../daemon/log.ts"
-
-const log = makeLogger("watch")
+import { errText } from "../daemon/log.ts"
 
 const CLI_TIMEOUT_MS = Number((process.env.EEPALYTICS_WATCH_TIMEOUT_MS ?? process.env.CSK_WATCH_TIMEOUT_MS) ?? 300_000)
 

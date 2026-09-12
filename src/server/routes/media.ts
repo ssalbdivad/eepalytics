@@ -21,7 +21,8 @@ import { createReadStream, statSync } from "node:fs"
 import { Readable } from "node:stream"
 import { extname, resolve, sep } from "node:path"
 import { resolveDataPath } from "../../db/blobs.ts"
-import { getMedia, journalFrameById} from "../../db/queries.ts"
+import { getMedia, journalFrameById } from "../../db/queries.ts"
+import { resolveJournalPath } from "../../daemon/journal.ts"
 import { DATA_DIR, MEDIA_DIR } from "../../shared/constants.ts"
 import { fail, notFound } from "../respond.ts"
 import type { Context } from "hono"
@@ -183,7 +184,9 @@ export const createMediaRoutes = (): Hono => {
 	const frameById = (c: Context) => {
 		const frame = journalFrameById(c.req.param("id") ?? "")
 		if (!frame) return fail(c, 404, "no such frame", "not-found")
-		const abs = resolve(frame.path)
+		// `resolveJournalPath` forgives a path stored before the app was renamed on disk; the
+		// containment check below still runs on whatever it hands back.
+		const abs = resolve(resolveJournalPath(frame.path))
 		if (!isInside(resolve(DATA_DIR), abs))
 			return fail(c, 403, "that frame points outside the data directory", "media-path-escape")
 		return sendFile(c, abs, { contentType: "image/jpeg" })

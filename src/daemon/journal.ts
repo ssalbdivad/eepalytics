@@ -27,7 +27,7 @@
  * NODE ONLY — owns files and the database.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { randomBytes } from "node:crypto"
 import { DATA_DIR } from "../shared/constants.ts"
 import type { LiveAllGameData } from "../shared/schema/live.ts"
@@ -46,6 +46,30 @@ import {
 const log = makeLogger("journal")
 
 export const JOURNAL_DIR = `${DATA_DIR}/journal`
+
+/**
+ * Resolve a STORED frame path against the journal this install actually has.
+ *
+ * `journal_frame.path` holds an ABSOLUTE path, unlike `media.path` and the blob columns, which
+ * hold a DATA_DIR-relative one and survive a move for free. That asymmetry went unnoticed until
+ * the app was renamed: 503 of 2591 stored frames still point at `/home/ssalb/coachskaffur/...`,
+ * a directory that no longer exists. The JPEGs are all present under the new name — only the
+ * pointer rotted — and `GET /api/frames/:id` answered 403 for every one of them, because a path
+ * outside the data directory is exactly what the containment check is there to refuse.
+ *
+ * So the stored row is left alone (rewriting stored rows is not a thing this app does) and the
+ * READ is made tolerant: anything from the `journal/` segment onward is rebased onto this
+ * install's `JOURNAL_DIR`. The caller still runs its containment check on what comes back, so a
+ * genuinely hostile stored path is refused exactly as before — this only forgives the app having
+ * moved on disk, which is the one case where the absolute path is wrong and the file is fine.
+ */
+export const resolveJournalPath = (stored: string): string => {
+	if (existsSync(stored)) return stored
+	const cut = stored.lastIndexOf("/journal/")
+	if (cut === -1) return stored
+	const rebased = `${JOURNAL_DIR}${stored.slice(cut + "/journal".length)}`
+	return existsSync(rebased) ? rebased : stored
+}
 
 /**
  * How far the game clock may jump BACKWARDS before this is considered a different game.

@@ -1,32 +1,39 @@
 /**
- * `POST /api/games/:gameId/watch` — look at the captured frames for one moment.
+ * `POST /api/games/:gameId/watch` — look at the recorded frames for one moment.
  *
  *   GET  /api/games/:gameId/watch  -> { notes }
  *
- * ON DEMAND ONLY, and never automatic. The visual pass needs captured frames, capture takes
- * over the League client, and the user was clear that the game launching itself is the worst
- * thing this app can do. So nothing here queues a capture: it works with frames that already
- * exist and says plainly when there are none.
+ * ON DEMAND ONLY, and never automatic: the model call costs money and takes about a minute, and
+ * nobody wants either spent on a moment they were not asking about.
+ *
+ * THE FRAMES COME FROM THE JOURNAL — the screenshots the browser posts while the player shares
+ * his screen. This route used to read `media` rows with `source = 'replay'`, which was replay
+ * capture's output. That feature is deleted, and it never wrote one row in the app's whole
+ * history, so this endpoint could only ever answer 409 — and the 409 told the user to "run a
+ * capture on this game first", which is an instruction for a button that no longer exists.
+ * `WatchGamePanel` on the review screen has said "frames come from the frame journal" since the
+ * amputation; this is the half that was never moved.
  *
  * Runs inline rather than through the queue for the same reason chat does — it touches Claude
- * and SQLite, not the League client, so the gate has nothing to protect here.
+ * and SQLite, not the League client.
  */
 
 import { Hono } from "hono"
-import { dirname } from "node:path"
+import { existsSync } from "node:fs"
+import { dirname, resolve } from "node:path"
 import {
+	framesForGame,
 	getGame,
 	getMetrics,
 	getMoments,
 	getReview,
-	listMediaForGame,
 	listWatchNotes,
 	upsertWatchNote
 } from "../../db/queries.ts"
-import { resolveDataPath } from "../../db/blobs.ts"
 import { championNote } from "../../knowledge/index.ts"
 import { watchMoment } from "../../review/watch.ts"
 import { fail, intParam, notFound, send } from "../respond.ts"
+import { DATA_DIR, WATCH_FRAME_WINDOW_SEC } from "../../shared/constants.ts"
 import { WatchListResponse } from "../../shared/schema/api.ts"
 import type { WatchNote } from "../../shared/schema/domain.ts"
 
@@ -58,20 +65,48 @@ export const createWatchRoutes = (): Hono => {
 		const moment = getMoments(gameId).find(m => m.id === momentId)
 		if (!moment) return notFound(c, `moment ${momentId}`)
 
-		// Only REAL frames. A generated map diagram shows position, which the data review already
-		// covers; it says nothing about execution, and feeding it to a visual pass would produce
-		// confident prose about a picture that contains no new information.
-		const frames = listMediaForGame(gameId)
-			.filter(m => m.momentId === momentId && m.source === "replay" && m.kind === "screenshot")
+		/*
+		 * Only REAL frames — his own screen, recorded while he played. A generated map diagram
+		 * shows position, which the data review already covers; it says nothing about execution,
+		 * and feeding it to a visual pass would produce confident prose about a picture that
+		 * contains no new information.
+		 *
+		 * A window rather than an exact match, because a journal frame is stamped with the game
+		 * clock it was taken at and lands where it lands — nothing aims it at a moment. Sorted by
+		 * time because the prompt asks the model to read what CHANGED between them.
+		 */
+		const recorded = framesForGame(gameId)
+			.filter(f => Math.abs(f.tSec - moment.tSec) <= WATCH_FRAME_WINDOW_SEC)
 			.sort((a, b) => a.tSec - b.tSec)
+
+		/*
+		 * A ROW IS NOT A PICTURE, and the two come apart.
+		 *
+		 * `journal_frame.path` is stored absolute, and 356 rows in this database point into a
+		 * directory that stopped existing when the app was renamed. Those rows are a true record
+		 * that a frame was taken and a false promise that it can be looked at. Handing the model a
+		 * path it cannot read would fail deep inside the CLI with a message about a missing file;
+		 * checking here lets the refusal say which of the two things went wrong.
+		 *
+		 * The containment check is `media.ts`'s, for its reason: a stored path is not trusted to
+		 * stay inside the data directory just because this app wrote it.
+		 */
+		const dataRoot = resolve(DATA_DIR)
+		const frames = recorded
+			.map(f => ({ path: resolve(f.path), tSec: f.tSec }))
+			.filter(f => f.path.startsWith(`${dataRoot}/`) && existsSync(f.path))
 
 		if (frames.length === 0)
 			return fail(
 				c,
 				409,
-				"no replay frames captured for this moment yet — run a capture on this game first",
+				recorded.length === 0 ?
+					`no recorded frames within ${WATCH_FRAME_WINDOW_SEC}s of this moment`
+				:	`${recorded.length} frames were recorded around this moment, but the files are no longer on disk`,
 				"no-frames",
-				"Capture takes over the League client, so it only runs when you ask for it and the client is idle."
+				recorded.length === 0 ?
+					"Frames come from the live coach's journal — share your screen while you play and the games after that one will have them."
+				:	"Nothing can recover them. Later games recorded with the live coach open are unaffected."
 			)
 
 		const metrics = getMetrics(gameId)
@@ -91,10 +126,11 @@ export const createWatchRoutes = (): Hono => {
 			championName: game.championName,
 			role: game.role,
 			moment,
-			frames: frames.map(f => ({ path: resolveDataPath(f.path), tSec: f.tSec })),
+			// Already absolute and already checked to exist — see the containment check above.
+			frames,
 			context,
 			championNotes: note && !note.isDefault ? note.text : null,
-			mediaDir: dirname(resolveDataPath(frames[0]!.path))
+			mediaDir: dirname(frames[0]!.path)
 		})
 
 		const stored: WatchNote = {
