@@ -199,6 +199,34 @@ export const deathClockBlock = (facts: PayloadFacts): string => {
 	].join("\n")
 }
 
+/**
+ * HOW A DURATION IS FRAMED, which is a different question from which figure it carries.
+ *
+ * A number can be checked by subtraction; what the sentence MEANT by it cannot. "Viego is dead for
+ * fourteen seconds" is a claim about the past to one listener and a fourteen-second window to
+ * another, and `scripts/measure-deadclock-replay.ts` established on 93 stored lines that the coach
+ * means the second: it pairs the figure with something to do NOW, every time, and 0 [0-4] of those
+ * lines say "has been dead" or "died N seconds ago".
+ *
+ *   `past`   an unambiguous time-since-death — "has been dead for", "died N seconds ago";
+ *   `window` an unambiguous remaining figure — "for another N", "N more seconds";
+ *   `bare`   "dead for N seconds", which is neither, and is what the coach almost always says.
+ *
+ * A `bare` line carrying the REMAINING figure is not a wrong number. It is a right number in a
+ * sentence a listener can read backwards, and that is a different defect with a different fix. It
+ * lives here rather than in either instrument because BOTH of them convict a bare line, and two
+ * copies of this regex would drift into two different headline rates.
+ */
+export type Framing = "past" | "window" | "bare"
+
+const PAST_FRAMING = /\b(?:has|have|had|'s|s)\s+been\s+(?:dead|down|gone)\b|\bdied\b[^.]{0,24}\bago\b|\bfor the last\b|\balready been\b/i
+const WINDOW_FRAMING = /\bfor\s+(?:another|the next)\b|\b(?:more|another)\s+seconds?\b|\bseconds?\s+(?:more|left|remaining)\b/i
+
+export const framingOf = (answer: string): Framing =>
+	PAST_FRAMING.test(answer) ? "past"
+	: WINDOW_FRAMING.test(answer) ? "window"
+	: "bare"
+
 export type ClaimVerdict = "SUPPORTED" | "CONTRADICTED" | "UNSUPPORTED"
 
 export interface ClockClaim {

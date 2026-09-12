@@ -25,9 +25,15 @@
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { isSilent, wilson } from "../src/analysis/coach-score.ts"
 import { deathsSeen, newMemory, observe } from "../src/analysis/coach-memory.ts"
+import { framingOf } from "./lib/payload-claims.ts"
+import type { Framing } from "./lib/payload-claims.ts"
 import type { MemoryState } from "../src/analysis/coach-memory.ts"
 
-/** "dead FOR n seconds" — elapsed. The payload only ever rendered "back in n", which is remaining. */
+/**
+ * "dead FOR n seconds" — the phrasing this instrument counts. It reads as elapsed, and
+ * `framingOf` below says it is `bare`: neither an unambiguous past claim nor an unambiguous window.
+ * The payload states the REMAINING figure as `respawns in Ns` (`back in Ns` before `ed3310f`).
+ */
 const ELAPSED =
 	/\b(?:dead|down|gone)\s+(?:for|since)\s+(?:over\s+|about\s+|nearly\s+|more than\s+)?([a-z0-9-]+)\s*(?:seconds|secs|s\b)/i
 
@@ -128,6 +134,9 @@ const rows: {
 	payloadElapsedSec: number | null
 	deadThatTurn: number
 	unwatchedThatTurn: string[]
+	/** The whole spoken line, so framing is classified from the sentence and not from `said`. */
+	text: string
+	framing: Framing
 }[] = []
 
 /** The payload's figure for one man, from the line that names him. Null when the payload has none. */
@@ -135,13 +144,21 @@ const figureFor = (payload: string, subject: string, what: RegExp): number | nul
 	for (const line of payload.split("\n")) {
 		if (!new RegExp(`\\b${subject}\\b`, "i").test(line)) continue
 		const m = line.match(what)
-		if (m !== null) return Number(m[1])
+		if (m !== null) return Number(m.slice(1).find(g => g !== undefined))
 	}
 	return null
 }
 
 const REMAINING_FIGURE = /(?:back in|respawns in) (\d+)s/
-const ELAPSED_FIGURE = /down (?:at least )?(\d+)s/
+/*
+ * BOTH WORDINGS, because the payload's own words changed under this instrument and the series must
+ * not break at the seam. `down 4s` is what `live-brief.ts` rendered up to and including
+ * `integrate3-corpus-20260912.json`; `died 4s ago` is what it renders now (`ed3310f`, kept because
+ * `measure-deadclock-replay.ts` measured the two 95% vs 96% apart on the same 93 turns, i.e. at
+ * nothing). Reading only the old form would report `payload carried an elapsed figure: 0%` on
+ * every later run and look exactly like the fix having been reverted.
+ */
+const ELAPSED_FIGURE = /(?:down (?:at least )?(\d+)s|died (?:at least )?(\d+)s ago)/
 
 for (const [label, file, arm] of RUNS) {
 	const run = JSON.parse(readFileSync(file, "utf8"))
@@ -209,7 +226,9 @@ for (const [label, file, arm] of RUNS) {
 			payloadRemainingSec: subject === null ? null : figureFor(payload, subject, REMAINING_FIGURE),
 			payloadElapsedSec: subject === null ? null : figureFor(payload, subject, ELAPSED_FIGURE),
 			deadThatTurn: dead.length,
-			unwatchedThatTurn: dead.filter(c => seen[c] === undefined)
+			unwatchedThatTurn: dead.filter(c => seen[c] === undefined),
+			text,
+			framing: framingOf(text)
 		})
 	}
 }
@@ -244,6 +263,21 @@ for (const [label] of RUNS) {
 			mine.filter(r => r.payloadElapsedSec !== null).length,
 			mine.length
 		)}`
+	)
+	/*
+	 * AND HOW THE SENTENCE FRAMED IT, which is the column that decides what the percentage above
+	 * MEANS. `measure-deadclock-replay.ts` re-asked 93 of these turns as a 2x2 of payload wording
+	 * against a prompt naming both clocks and moved the rate from 95% to 96% to 93% — four cells on
+	 * top of each other. The figure is not being converted; the sentence is ambiguous. A `bare` line
+	 * carrying the remaining figure is a right number a listener can read backwards, and the two
+	 * rows above convict it as though it were a wrong number about the past. Print them together or
+	 * the headline overstates itself.
+	 */
+	console.log(
+		`    framing — past ${pct(mine.filter(r => r.framing === "past").length, mine.length)}, window ${pct(
+			mine.filter(r => r.framing === "window").length,
+			mine.length
+		)}, bare ${pct(mine.filter(r => r.framing === "bare").length, mine.length)}`
 	)
 }
 console.log("")

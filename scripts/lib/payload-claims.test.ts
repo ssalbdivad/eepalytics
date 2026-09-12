@@ -7,7 +7,7 @@
  */
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { clockClaims, deathClockBlock, mechanicalVerdict, readPayload } from "./payload-claims.ts"
+import { clockClaims, deathClockBlock, framingOf, mechanicalVerdict, readPayload } from "./payload-claims.ts"
 
 /** A block in the shape `live-brief.ts` rendered BEFORE the both-clocks fix: remaining only. */
 const OLD = `NOW
@@ -192,4 +192,24 @@ test("readPayload recovers both clocks from a block the real renderer wrote", as
 	assert.equal(liss.elapsedKind, "exact")
 	assert.equal(liss.elapsedSec, Math.round(cur.gameTime - 346))
 	assert.ok(liss.remainingSec !== null && liss.remainingSec >= 0)
+})
+
+/*
+ * The three cases the dead-clock headline turns on. Across 410 elapsed-phrasing lines in three
+ * stored corpora, `past` is 0 and every single line the kill-log check convicted is `bare` — so a
+ * test that let `bare` drift into `past` would silently restate a 45% wrong-number rate about
+ * sentences that never made a claim about the past.
+ */
+test("framingOf calls an unambiguous time-since-death a past claim", () => {
+	assert.equal(framingOf("Viego has been dead for fourteen seconds, so take dragon."), "past")
+	assert.equal(framingOf("Viego died fourteen seconds ago, so take dragon."), "past")
+})
+
+test("framingOf calls an unambiguous remaining figure a window", () => {
+	assert.equal(framingOf("Viego is down for another fourteen seconds, so take dragon."), "window")
+	assert.equal(framingOf("Viego has fourteen seconds left, so take dragon."), "window")
+})
+
+test("framingOf calls the form the coach almost always speaks bare", () => {
+	assert.equal(framingOf("Viego is dead for fourteen seconds, so pull dragon right now."), "bare")
 })

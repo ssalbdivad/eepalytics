@@ -87,6 +87,8 @@
  */
 import { readFileSync, writeFileSync } from "node:fs"
 import { wilson } from "../src/analysis/coach-score.ts"
+import { framingOf } from "./lib/payload-claims.ts"
+import type { Framing } from "./lib/payload-claims.ts"
 import { coachTurn } from "../src/review/live-providers.ts"
 import type { ProviderId } from "../src/review/live-providers.ts"
 
@@ -290,15 +292,9 @@ type Verdict = "spoke-remaining" | "spoke-elapsed" | "spoke-other" | "unreadable
  * A `bare` line carrying the REMAINING figure is not a wrong number. It is a right number in a
  * sentence a listener can read backwards, and that is a different defect with a different fix.
  */
-type Framing = "past" | "window" | "bare"
-
-const PAST_FRAMING = /\b(?:has|have|had|'s|s)\s+been\s+(?:dead|down|gone)\b|\bdied\b[^.]{0,24}\bago\b|\bfor the last\b|\balready been\b/i
-const WINDOW_FRAMING = /\bfor\s+(?:another|the next)\b|\b(?:more|another)\s+seconds?\b|\bseconds?\s+(?:more|left|remaining)\b/i
-
-export const framingOf = (answer: string): Framing =>
-	PAST_FRAMING.test(answer) ? "past"
-	: WINDOW_FRAMING.test(answer) ? "window"
-	: "bare"
+/* `framingOf` and its two regexes moved to `scripts/lib/payload-claims.ts` so that
+ * `measure-deadclock.ts` classifies a stored line by the same rule this file classifies a
+ * re-asked one. Imported above. */
 
 const near = (a: number, b: number): boolean => Math.abs(a - b) <= 10
 
