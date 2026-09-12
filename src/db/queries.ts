@@ -19,7 +19,8 @@ import {
 	JOB_MAX_ATTEMPTS,
 	JOB_PRIORITY,
 	JOB_RETRY_BASE_MS,
-	JOB_RETRY_MAX_MS
+	JOB_RETRY_MAX_MS,
+	WATCH_FRAME_WINDOW_SEC
 } from "../shared/constants.ts"
 import type {
 	ChatMessage,
@@ -37,6 +38,7 @@ import type {
 	ParticipantSummary,
 	Review
 } from "../shared/schema/domain.ts"
+import { isCoachable } from "../shared/coachable.ts"
 import { DEFAULT_SETTINGS } from "../shared/schema/settings.ts"
 import type { Settings } from "../shared/schema/settings.ts"
 
@@ -329,14 +331,41 @@ export const gamesNeedingReview = (reviewVersion: number, limit = 20): number[] 
 		.map(r => num((r as Row).gameId))
 
 /** Games missing one of their raw blobs — i.e. still needing ingestion. */
+/**
+ * Games still missing a match or timeline blob, newest first.
+ *
+ * UNCOACHABLE GAMES ARE EXCLUDED, and that is the whole point of the filter. `match-ingest`
+ * writes a stub row with no blobs so a replay download can start, and relies on this query to
+ * re-queue the game until the full match arrives — correct for a real game, and an infinite
+ * loop for one where it never will. The LCU never returns a full match for a Practice Tool
+ * game, so all eleven that this returned on the machine it was written on were PRACTICETOOL,
+ * every one re-queued every five minutes since 2 September: about 5,300 of 8,475 rows in the
+ * `job` table, with the matching `app_event` rows and log lines, all of it for work that was
+ * refused the instant it ran.
+ *
+ * The rule is `uncoachableReason`, not a second copy of it in SQL — the daemon and the UI have
+ * to agree on what a real game is, and a game the app will not coach is by definition not one
+ * it should be chasing blobs for. Over-fetches before filtering so a backlog of practice games
+ * cannot starve the limit of real ones.
+ */
 export const gamesNeedingIngest = (limit = 50): number[] =>
 	prep(
-		`SELECT gameId FROM game
+		`SELECT gameId, queueId, gameMode, gameType, gameDurationSec FROM game
 		 WHERE matchBlob IS NULL OR timelineBlob IS NULL
 		 ORDER BY gameCreationMs DESC LIMIT ?`
 	)
-		.all(limit)
-		.map(r => num((r as Row).gameId))
+		.all(limit * 4)
+		.map(r => plain(r) as Row)
+		.filter(r =>
+			isCoachable({
+				gameMode: str(r.gameMode),
+				gameType: str(r.gameType),
+				queueId: num(r.queueId),
+				gameDurationSec: num(r.gameDurationSec)
+			})
+		)
+		.slice(0, limit)
+		.map(r => num(r.gameId))
 
 export const setGameBlobs = (
 	gameId: number,
@@ -403,33 +432,6 @@ export const setGameRole = (
 		"UPDATE game SET role = ?, roleConfidence = ?, updatedMs = ? WHERE gameId = ?"
 	).run(role, confidence, Date.now(), gameId)
 }
-
-/** Raw blob paths for a game, for the ingest/analysis handlers. */
-export const getGameBlobPaths = (
-	gameId: number
-): { matchBlob: string | null; timelineBlob: string | null; liveBlob: string | null } => {
-	const row = plain(
-		prep("SELECT matchBlob, timelineBlob, liveBlob FROM game WHERE gameId = ?").get(
-			gameId
-		)
-	)
-	return {
-		matchBlob: row ? nullableStr(row.matchBlob) : null,
-		timelineBlob: row ? nullableStr(row.timelineBlob) : null,
-		liveBlob: row ? nullableStr(row.liveBlob) : null
-	}
-}
-
-/** Replays we could still download: on disk or downloadable, past their expiry check. */
-export const gamesWithReplayState = (
-	state: Game["replayState"],
-	limit = 100
-): Game[] =>
-	prep(
-		`SELECT ${GAME_COLUMNS} FROM game WHERE replayState = ? ORDER BY endedAtMs DESC LIMIT ?`
-	)
-		.all(state, limit)
-		.map(r => rowToGame({ ...(r as Row) }))
 
 /** Replay files older than the retention window, for pruning. */
 export const gamesForRetentionPrune = (olderThanMs: number): Game[] =>
@@ -529,27 +531,6 @@ export const getParticipants = (gameId: number): ParticipantSummary[] =>
 	prep("SELECT * FROM participant WHERE gameId = ? ORDER BY participantId")
 		.all(gameId)
 		.map(r => rowToParticipant({ ...(r as Row) }))
-
-/** The user's own row. */
-export const getUserParticipant = (gameId: number): ParticipantSummary | null => {
-	const row = plain(
-		prep("SELECT * FROM participant WHERE gameId = ? AND isUser = 1").get(gameId)
-	)
-	return row ? rowToParticipant(row) : null
-}
-
-/** The raw LCU stats blob we kept verbatim, for anything the domain type does not model. */
-export const getParticipantStats = (
-	gameId: number,
-	participantId: number
-): Record<string, unknown> | null => {
-	const row = plain(
-		prep(
-			"SELECT statsJson FROM participant WHERE gameId = ? AND participantId = ?"
-		).get(gameId, participantId)
-	)
-	return row ? json<Record<string, unknown>>(row.statsJson, {}) : null
-}
 
 /* =============================================================== metrics */
 
@@ -688,17 +669,6 @@ export const replaceMoments = (gameId: number, moments: readonly Moment[]): void
 export const getMoments = (gameId: number): Moment[] =>
 	prep("SELECT * FROM moment WHERE gameId = ? ORDER BY tSec")
 		.all(gameId)
-		.map(r => rowToMoment({ ...(r as Row) }))
-
-export const getMoment = (id: string): Moment | null => {
-	const row = plain(prep("SELECT * FROM moment WHERE id = ?").get(id))
-	return row ? rowToMoment(row) : null
-}
-
-/** The `n` most severe moments in a game — the capture queue's shortlist. */
-export const topMoments = (gameId: number, limit: number): Moment[] =>
-	prep("SELECT * FROM moment WHERE gameId = ? ORDER BY severity DESC, tSec LIMIT ?")
-		.all(gameId, limit)
 		.map(r => rowToMoment({ ...(r as Row) }))
 
 export const countMoments = (gameId: number): number =>
@@ -859,11 +829,6 @@ export const getReview = (gameId: number): Review | null => {
 	return row ? rowToReview(row, loadItems(str(row.id))) : null
 }
 
-export const getReviewById = (id: string): Review | null => {
-	const row = plain(prep("SELECT * FROM review WHERE id = ?").get(id))
-	return row ? rowToReview(row, loadItems(str(row.id))) : null
-}
-
 /** The newest cross-game review. `null` before one has ever been generated. */
 export const getTrendReview = (): Review | null => {
 	const row = plain(
@@ -1010,19 +975,6 @@ export const withMomentMedia = (review: Review | null): Review | null => {
 		})
 	}
 }
-
-export const countMedia = (gameId: number): number =>
-	num(plain(prep("SELECT count(*) AS c FROM media WHERE gameId = ?").get(gameId))?.c)
-
-/** How many REAL (non-generated) captures a game already has, against the per-game budget. */
-export const countCapturedMedia = (gameId: number): number =>
-	num(
-		plain(
-			prep(
-				"SELECT count(*) AS c FROM media WHERE gameId = ? AND source = 'replay'"
-			).get(gameId)
-		)?.c
-	)
 
 export const deleteMedia = (id: string): void => {
 	prep("DELETE FROM media WHERE id = ?").run(id)
@@ -1370,11 +1322,18 @@ export const recentGrades = (limit = 20): { gameId: number; score: number; rank:
 		}))
 
 /**
- * Per game: how many moments have real captured frames, and how many have been watched.
+ * Per game: how many moments have a real frame to look at, and how many have been watched.
  *
  * Two counts rather than a boolean because they are three different states the user has to be
- * able to tell apart — nothing captured, captured but not looked at, and actually watched — and
+ * able to tell apart — nothing recorded, recorded but not looked at, and actually watched — and
  * each has a different next action.
+ *
+ * THE FRAMES COME FROM THE JOURNAL. This counted `media` rows with `source = 'replay'` until
+ * now, which was the replay-capture pipeline's output: that feature is deleted, and it never
+ * wrote a single row in the app's whole history (checked — zero, against 1157 generated maps).
+ * So this count was structurally pinned at 0, the eye badge on the games list could only ever
+ * show "data only", and the review screen's offer to watch a moment could never appear. The
+ * journal is where the pictures actually are, and the panels above it already say so.
  */
 export const visionCounts = (): Map<number, { frames: number; watched: number }> => {
 	const out = new Map<number, { frames: number; watched: number }>()
@@ -1384,10 +1343,14 @@ export const visionCounts = (): Map<number, { frames: number; watched: number }>
 		out.set(gameId, row)
 	}
 	for (const r of prep(
-		`SELECT gameId, count(DISTINCT momentId) AS n FROM media
-		 WHERE source = 'replay' AND kind = 'screenshot' AND momentId IS NOT NULL
-		 GROUP BY gameId`
-	).all())
+		`SELECT m.gameId AS gameId, count(*) AS n FROM moment m
+		  WHERE EXISTS (
+		        SELECT 1 FROM journal_frame f
+		          JOIN journal_session s ON s.id = f.sessionId
+		         WHERE s.gameId = m.gameId
+		           AND abs(f.tSec - m.tSec) <= ?)
+		  GROUP BY m.gameId`
+	).all(WATCH_FRAME_WINDOW_SEC))
 		bump(num((r as Row).gameId), "frames", num((r as Row).n))
 	for (const r of prep(
 		"SELECT gameId, count(*) AS n FROM watch_note WHERE status = 'ok' GROUP BY gameId"
@@ -1431,11 +1394,6 @@ export const putSettings = (patch: Partial<Settings>): Settings => {
 		}
 	})
 	return getSettings()
-}
-
-/** Drop every stored override, returning to defaults. */
-export const resetSettings = (): void => {
-	prep("DELETE FROM settings").run()
 }
 
 /* =================================================================== kv */
@@ -1492,64 +1450,6 @@ export const latestEventId = (): number =>
 
 export const pruneEvents = (beforeMs: number): number =>
 	prep("DELETE FROM app_event WHERE atMs < ?").run(beforeMs).changes as number
-
-/* ========================================================= live sessions */
-
-export const startLiveSession = (gameId: number, startedMs = Date.now()): void => {
-	prep(
-		`INSERT INTO live_session (gameId, startedMs, sampleCount, lastEventId)
-		 VALUES (?, ?, 0, -1)
-		 ON CONFLICT(gameId) DO NOTHING`
-	).run(gameId, startedMs)
-}
-
-export const updateLiveSession = (
-	gameId: number,
-	patch: { sampleCount?: number; lastEventId?: number; endedMs?: number | null }
-): void => {
-	prep(
-		`UPDATE live_session SET
-			sampleCount = coalesce(@sampleCount, sampleCount),
-			lastEventId = coalesce(@lastEventId, lastEventId),
-			endedMs = coalesce(@endedMs, endedMs)
-		 WHERE gameId = @gameId`
-	).run({
-		gameId,
-		sampleCount: patch.sampleCount ?? null,
-		lastEventId: patch.lastEventId ?? null,
-		endedMs: patch.endedMs ?? null
-	})
-}
-
-export const getLiveSession = (
-	gameId: number
-): { gameId: number; startedMs: number; endedMs: number | null; sampleCount: number; lastEventId: number } | null => {
-	const row = plain(prep("SELECT * FROM live_session WHERE gameId = ?").get(gameId))
-	return row
-		? {
-				gameId: num(row.gameId),
-				startedMs: num(row.startedMs),
-				endedMs: nullableNum(row.endedMs),
-				sampleCount: num(row.sampleCount),
-				lastEventId: num(row.lastEventId)
-			}
-		: null
-}
-
-/* ============================================================== cascade */
-
-/**
- * Delete a game and everything hanging off it. Foreign keys cascade participants, metrics,
- * moments, reviews, feedback and media rows; the caller is responsible for the FILES
- * (blobs, media, .rofl) since those live outside the database.
- */
-export const deleteGame = (gameId: number): void => {
-	transact(() => {
-		prep("DELETE FROM job WHERE gameId = ?").run(gameId)
-		prep("DELETE FROM live_session WHERE gameId = ?").run(gameId)
-		prep("DELETE FROM game WHERE gameId = ?").run(gameId)
-	})
-}
 
 /* ================================================================== chat */
 
@@ -1623,13 +1523,6 @@ export const listWatchNotes = (gameId: number): WatchNote[] =>
 	prep("SELECT * FROM watch_note WHERE gameId = ? ORDER BY createdMs")
 		.all(gameId)
 		.map(r => rowToWatchNote({ ...(r as Row) }))
-
-export const getWatchNote = (gameId: number, momentId: string): WatchNote | null => {
-	const row = plain(
-		prep("SELECT * FROM watch_note WHERE gameId = ? AND momentId = ?").get(gameId, momentId)
-	)
-	return row ? rowToWatchNote(row) : null
-}
 
 /** One note per (game, moment) — re-watching replaces rather than accumulates. */
 export const upsertWatchNote = (n: WatchNote): void => {

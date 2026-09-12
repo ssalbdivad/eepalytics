@@ -15,11 +15,7 @@
  * NODE ONLY.
  */
 
-import {
-	JOB_PRIORITY,
-	REPLAY_DOWNLOAD_MIN_SLACK_MS,
-	REPLAY_EXPIRY_MS
-} from "../shared/constants.ts"
+import { REPLAY_DOWNLOAD_MIN_SLACK_MS, REPLAY_EXPIRY_MS } from "../shared/constants.ts"
 import type { Job, JobKind, JobRequest, JobState } from "../shared/schema/domain.ts"
 import {
 	cancelJob,

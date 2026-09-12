@@ -37,6 +37,7 @@ import * as queue from "./queue.ts"
 import { reconcile, reconcileFinishedGame } from "./reconcile.ts"
 import { startSupervisor } from "./supervisor.ts"
 import type { Supervisor } from "./supervisor.ts"
+import { describeSettingsOverrides } from "../shared/schema/settings.ts"
 import { startWorkers } from "./workers.ts"
 import type { WorkerPool } from "./workers.ts"
 import { existsSync, readFileSync } from "node:fs"
@@ -257,9 +258,15 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 		sync: () => runReconcile("api"),
 		onSettingsChange: next => {
 			// Poll intervals apply without a restart.
+			//
+			// The overrides go in the SAME line, so a save that switches the review path off is
+			// in the log beside the games it stops reviewing rather than only discoverable by
+			// reading the settings table eight days later.
 			log.info("settings changed", {
 				model: next.model,
-				transport: next.transport
+				transport: next.transport,
+				autoReviewNewGames: next.autoReviewNewGames,
+				overrides: describeSettingsOverrides(next) || "none"
 			})
 			publish("daemon", { settingsChanged: true })
 		},
@@ -281,6 +288,20 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 
 	ready = true
 	publish("daemon", { state: "started", version: DAEMON_VERSION })
+
+	/*
+	 * SAY WHAT THIS INSTALL IS NOT RUNNING ON DEFAULTS.
+	 *
+	 * A settings row outranks the code default forever, and nothing used to announce that. One
+	 * stored `autoReviewNewGames: false` switched the post-game review path off on 2026-09-04;
+	 * the code default, the schema and the README all still read `true`, so every place a person
+	 * would look agreed with itself and disagreed with the running app. Thirty games later
+	 * nobody had noticed. The disagreement is legitimate — he is allowed to turn things off —
+	 * but it now has to be visible, here and on the Settings screen.
+	 */
+	const overrides = describeSettingsOverrides(getSettings())
+	if (overrides === "") log.info("settings: every field is on its code default")
+	else log.info(`settings overridden: ${overrides}`)
 
 	// The first reconcile runs BEHIND the listener so the UI is reachable immediately, even
 	// when the client is closed and the LCU calls are going to time out.

@@ -18,7 +18,7 @@
  */
 
 import { JOB_LEASE_MS } from "../shared/constants.ts"
-import type { Job, JobKind } from "../shared/schema/domain.ts"
+import type { Job } from "../shared/schema/domain.ts"
 import { getSettings } from "../db/queries.ts"
 import { publish, sleep, sleepUntilWake, wake } from "./bus.ts"
 import { handlerFor } from "./jobs/index.ts"
@@ -33,7 +33,7 @@ const IDLE_POLL_MS = 1_000
 
 export interface PoolStatus {
 	running: number
-	inFlight: { id: number; kind: JobKind; gameId: number | null; sinceMs: number }[]
+	inFlight: { id: number; kind: string; gameId: number | null; sinceMs: number }[]
 }
 
 export interface WorkerPool {

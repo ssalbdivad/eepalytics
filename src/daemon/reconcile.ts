@@ -46,6 +46,14 @@ import {
 } from "./queue.ts"
 import { errText, makeLogger } from "./log.ts"
 
+/**
+ * How far back the automatic review sweep will reach.
+ *
+ * Long enough to cover a daemon that was off overnight, short enough that switching the
+ * feature on can never be a hundred-review bill. See the sweep itself for the argument.
+ */
+const REVIEW_SWEEP_WINDOW_MS = 24 * 60 * 60_000
+
 const log = makeLogger("reconcile")
 
 export interface ReconcileReport {
@@ -134,11 +142,33 @@ export const reconcile = async (): Promise<ReconcileReport> => {
 		enqueueAnalysis(gameId)
 	}
 
-	if (settings.autoReviewNewGames)
+	/*
+	 * THE SWEEP IS A SAFETY NET FOR THE FORWARD PATH, NOT A BACKFILL.
+	 *
+	 * `analysis-run` chains straight into `review-game`, so a game he just played is already
+	 * queued by the time this runs. What this catches is the game whose chain was broken — the
+	 * daemon was down when it ended, the analysis version moved, a review failed and the retry
+	 * budget reset. All of those are recent by construction.
+	 *
+	 * Unbounded it is something else entirely. This machine holds 110 games below the current
+	 * `REVIEW_VERSION`, and `autoReviewNewGames` is a checkbox labelled "review each game as it
+	 * finishes" — ticking it must not commission a hundred and ten model calls. It did before
+	 * this window existed: the sweep runs every five minutes and takes twenty games a pass, so
+	 * the backlog would have gone out inside half an hour, billed, behind the game he was
+	 * actually waiting on.
+	 *
+	 * Backfilling the archive is a real and separate thing to want, and it belongs behind its
+	 * own deliberate action rather than behind the automatic switch.
+	 */
+	if (settings.autoReviewNewGames) {
+		const oldestMs = Date.now() - REVIEW_SWEEP_WINDOW_MS
 		for (const gameId of gamesNeedingReview(REVIEW_VERSION, 20)) {
+			const game = getGame(gameId)
+			if (!game || game.endedAtMs < oldestMs) continue
 			report.reviews.push(gameId)
 			enqueueGameReview(gameId)
 		}
+	}
 
 	/* ---- 4. the always-available visual ---- */
 	// A generated map image is the fallback that makes the product work with capture off, so a

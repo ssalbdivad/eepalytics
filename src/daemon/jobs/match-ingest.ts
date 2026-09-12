@@ -104,6 +104,28 @@ const toParticipantRows = (game: LcuGame): ParticipantUpsert[] => {
 }
 
 /**
+ * How long to wait before asking the client again for a match it does not have yet.
+ *
+ * THIRTY SECONDS FOR EVERYTHING was costing the debrief real time. The client assembles a match
+ * within a minute or two of the game ending; measured across 36 recent games the wall clock from
+ * game-over to `ingestedAtMs` has a p50 of 43 s and a p90 of 109 s, and at a flat 30 s cadence the
+ * only instants a game can land on are 0, 30, 60 and 90 — so roughly half of that p50 is the app
+ * sleeping through an answer that was already available.
+ *
+ * Ten seconds for the first two minutes, which is where every game that is going to resolve does,
+ * then back to thirty. The cost is a handful of extra history reads on a transport whose p50 is
+ * 2.3 ms, against a supervisor that is already polling every 2 s during a game; the benefit is
+ * about fifteen seconds off the front of every debrief. After two minutes the tight cadence is
+ * buying nothing and `stuckFloorMs` in the queue widens it further anyway.
+ */
+const RETRY_TIGHT_MS = 10_000
+const RETRY_TIGHT_WINDOW_MS = 2 * 60_000
+const RETRY_SLACK_MS = 30_000
+
+const ingestRetryMs = (createdMs: number, now = Date.now()): number =>
+	now - createdMs < RETRY_TIGHT_WINDOW_MS ? RETRY_TIGHT_MS : RETRY_SLACK_MS
+
+/**
  * Only chase a replay we do not already have.
  *
  * `match-ingest` re-runs every time reconcile finds an incomplete game, and a game the client
@@ -135,7 +157,7 @@ export const runMatchIngest = async (ctx: JobContext): Promise<JobOutcome> => {
 		return {
 			defer: {
 				reason: "the client does not have this game yet",
-				untilMs: Date.now() + 30_000
+				untilMs: Date.now() + ingestRetryMs(ctx.job.createdMs)
 			}
 		}
 
@@ -203,7 +225,7 @@ export const runMatchIngest = async (ctx: JobContext): Promise<JobOutcome> => {
 		return {
 			defer: {
 				reason: `only ${game.participants.length} participant(s) returned; the client is still assembling this match`,
-				untilMs: Date.now() + 30_000
+				untilMs: Date.now() + ingestRetryMs(ctx.job.createdMs)
 			}
 		}
 	}
