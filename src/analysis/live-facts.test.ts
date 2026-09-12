@@ -8,6 +8,7 @@
  */
 
 import { deepStrictEqual, ok, strictEqual } from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import { describe, it } from "node:test"
 import {
 	buildFacts,
@@ -18,12 +19,15 @@ import {
 	FRAME_FRESH_SEC,
 	GOLD_NAG_SEC,
 	GOLD_STEP,
+	LEVEL_HOLD_SEC,
+	LEVEL_MIN_SEC,
 	MAX_FACTS,
 	MIN_GAP_SEC,
 	ROUTINE_GAP_SEC,
 	CLOCK_BACK_SEC,
 	SOCKET_PIPE_SEC,
 	TURN_PIPE_SEC,
+	VISION_MIN_SEC,
 	WINDOW_MIN_SEC
 } from "./live-facts.ts"
 import type { FactInput, FactMemory } from "./live-facts.ts"
@@ -938,7 +942,8 @@ describe("buildFacts — one subject at a time", () => {
 		 */
 		const spoken = session(30, nowSec => ({
 			pace: { cs: Math.round(nowSec / 6), expected: Math.round(nowSec / 3), exact: true },
-			counterpart: { champion: "Karthus", cs: Math.round(nowSec / 3) }
+			counterpart: { champion: "Karthus", ward: 40 },
+			meWard: 5
 		}))
 		const farmLines = spoken.flatMap(t => t.lines).filter(f => /CS/.test(f))
 		const minutes = (30 * TURN_SEC) / 60
@@ -948,18 +953,23 @@ describe("buildFacts — one subject at a time", () => {
 		)
 	})
 
-	it("never offers his own pace and the enemy jungler's CS in the same list", () => {
+	it("never offers two CS baselines in one list", () => {
 		/*
 		 * THE CONTRADICTION, at its source. Two baselines for the same subject in one message is
 		 * what produced "your 20 farm is not pacing to match your average of 30" and, twenty-five
 		 * seconds later, "your 20 farm is not pacing to match your 28 CS average" — same CS, two
 		 * averages, and no line in any block ever said either pair. Offer one CS fact or none.
+		 *
+		 * The counterpart's CS was the second baseline and is now deleted outright, so this holds
+		 * by construction — which is a reason to keep asserting it, not to stop.
 		 */
 		const out = buildFacts(
 			input({
 				nowSec: 900,
 				pace: { cs: 100, expected: 140, exact: true },
-				counterpart: { champion: "Karthus", cs: 160 }
+				counterpart: { champion: "Karthus", level: 12, ward: 40 },
+				meLevel: 10,
+				meWard: 5
 			}),
 			newFactMemory()
 		)
@@ -994,34 +1004,34 @@ describe("buildFacts — one subject at a time", () => {
 		deepStrictEqual(next, [], "a window and a respawn timer are one topic")
 	})
 
-	it("prefers the comeback to the deficit rather than saying both", () => {
-		/*
-		 * "you've pulled 12 CS back on Karthus" beside "Karthus is 14 CS up on you" is the coach
-		 * arguing with itself about one race. The encouraging one wins outright.
-		 */
+	/*
+	 * THE COMEBACK LINE IS GONE WITH THE RACE IT WAS ABOUT.
+	 *
+	 * "you've pulled 12 CS back on Karthus" was the best encouragement this coach had, and it was
+	 * built on the enemy jungler's `creepScore` — a count of what this player's own client
+	 * witnessed, which read 70 against a true 183 over one audited game. A swing in that number is
+	 * a swing in how much of Karthus's farm he happened to SEE, so the comeback was as likely to
+	 * be a report on his own vision as on his own clear. It is not replaceable by a better
+	 * threshold, and nothing here pretends otherwise.
+	 */
+	it("makes no comeback claim about the enemy jungler's farm, at any gap", () => {
 		const mem = newFactMemory()
-		const behind = buildFacts(
-			input({
-				nowSec: 600,
-				pace: { cs: 60, expected: 70, exact: true },
-				counterpart: { champion: "Karthus", cs: 100 }
-			}),
-			mem
+		const lines = [600, 600 + ROUTINE_GAP_SEC * 2, 600 + ROUTINE_GAP_SEC * 4].flatMap(nowSec =>
+			buildFacts(
+				input({
+					nowSec,
+					pace: { cs: 60 + nowSec / 10, expected: 70 + nowSec / 10, exact: true },
+					counterpart: { champion: "Karthus", level: 11, ward: 30 },
+					meLevel: 11,
+					meWard: 28
+				}),
+				mem
+			)
 		)
-		ok(behind.some(f => /Karthus is 40 CS up on you/.test(f)), behind.join(" | "))
-		const back = buildFacts(
-			input({
-				nowSec: 600 + ROUTINE_GAP_SEC * 2,
-				pace: { cs: 110, expected: 130, exact: true },
-				counterpart: { champion: "Karthus", cs: 130 }
-			}),
-			mem
-		)
-		ok(back.some(f => /pulled 20 CS back/.test(f)), back.join(" | "))
 		strictEqual(
-			back.some(f => /is 20 CS up on you/.test(f)),
+			lines.some(f => /pulled .* back on/.test(f) || /up on Karthus/.test(f)),
 			false,
-			`both spins on one race: ${back.join(" | ")}`
+			lines.join(" | ")
 		)
 	})
 })
@@ -1072,49 +1082,121 @@ describe("buildFacts — a withheld fact is delayed, never deleted", () => {
 	})
 })
 
-describe("buildFacts — the race is news when it turns against him", () => {
-	it("does not recite a lead that is growing on its own", () => {
+/*
+ * THE VISION RACE — what the counterpart comparison is now measured on.
+ *
+ * `wardScore` is the one cross-player field the audit found exact for enemies: over all ten
+ * players of game 5639406342 the live float sat a median 0.7 above the post-game integer, which
+ * is the post-game figure being floored. It is the only race left that is both true and invisible.
+ */
+describe("buildFacts — the vision race", () => {
+	const cp = (ward: number): Partial<FactInput> => ({
+		counterpart: { champion: "Karthus", ward },
+		meWard: 5
+	})
+
+	it("names the counterpart's ward-score lead once it is worth a sentence", () => {
+		const out = buildFacts(input({ nowSec: VISION_MIN_SEC, ...cp(30) }), newFactMemory())
+		ok(
+			out.some(f => /Karthus is 25 points of vision score up on you/.test(f)),
+			out.join(" | ")
+		)
+	})
+
+	it("says nothing about a gap inside the noise of one trinket charge", () => {
+		const out = buildFacts(input({ nowSec: VISION_MIN_SEC, ...cp(9) }), newFactMemory())
+		strictEqual(out.some(f => /vision score/.test(f)), false, out.join(" | "))
+	})
+
+	it("waits for the game to be old enough for a ward score to mean anything", () => {
+		const out = buildFacts(input({ nowSec: VISION_MIN_SEC - 60, ...cp(40) }), newFactMemory())
+		strictEqual(out.some(f => /vision score/.test(f)), false, out.join(" | "))
+	})
+
+	it("does not recite a gap that is widening on its own", () => {
 		/*
-		 * Replayed over a real game this produced "you're 20 CS up on Karthus", then 40, 50, 60,
-		 * 100 and 130 — six lines, every cooldown respected, reciting a lead that was widening
-		 * without him doing anything about it. That is the widening-number nag this file already
-		 * refuses to do with his own pace, wearing the counterpart's name.
+		 * The exact failure the retired CS race left behind: six lines reciting a number that grew
+		 * without him doing anything about it. Said once here, deliberately.
 		 */
 		const mem = newFactMemory()
 		const spoken = session(
 			40,
-			nowSec => ({
-				pace: { cs: Math.round(nowSec / 3), expected: Math.round(nowSec / 3), exact: true },
-				// His lead grows steadily; Karthus falls further behind every turn.
-				counterpart: { champion: "Karthus", cs: Math.round(nowSec / 3) - Math.round(nowSec / 20) }
-			}),
+			nowSec => ({ counterpart: { champion: "Karthus", ward: nowSec / 20 }, meWard: 5 }),
 			mem,
-			600
+			VISION_MIN_SEC
 		)
-		const races = spoken.flatMap(t => t.lines).filter(f => /CS up on Karthus/.test(f))
-		strictEqual(races.length, 1, `a widening lead is one line, not many: ${races.join(" | ")}`)
+		const races = spoken.flatMap(t => t.lines).filter(f => /vision score up on you/.test(f))
+		strictEqual(races.length, 1, `a widening gap is one line, not many: ${races.join(" | ")}`)
 	})
 
-	it("still raises the race when it gets worse", () => {
+	it("never says a lead — there is no decision in being ahead on wards", () => {
+		const out = buildFacts(
+			input({ nowSec: VISION_MIN_SEC, counterpart: { champion: "Karthus", ward: 2 }, meWard: 40 }),
+			newFactMemory()
+		)
+		strictEqual(out.some(f => /vision score/.test(f)), false, out.join(" | "))
+	})
+})
+
+/*
+ * THE LEVEL RACE, and the hold rule that makes an enemy level safe to quote.
+ *
+ * `level` is exact for him and his allies and 94.5% for enemies. The 5.5% is staleness with a
+ * shape: a frozen row is wrong by at most two, always too LOW, and snaps to truth on sight. Too
+ * low on the enemy row invents a lead for him, which is the direction the deleted CS counter lied
+ * in, so the same care applies.
+ */
+describe("buildFacts — the level race", () => {
+	const held = LEVEL_MIN_SEC + LEVEL_HOLD_SEC
+
+	it("will not quote a level gap that has not survived the hold", () => {
 		const mem = newFactMemory()
-		const first = buildFacts(
+		const out = buildFacts(
+			input({ nowSec: LEVEL_MIN_SEC, counterpart: { champion: "Karthus", level: 12 }, meLevel: 10 }),
+			mem
+		)
+		strictEqual(out.some(f => /levels/.test(f)), false, out.join(" | "))
+	})
+
+	it("quotes it once the same gap is still there after the hold", () => {
+		const mem = newFactMemory()
+		buildFacts(
+			input({ nowSec: LEVEL_MIN_SEC, counterpart: { champion: "Karthus", level: 12 }, meLevel: 10 }),
+			mem
+		)
+		const out = buildFacts(
+			input({ nowSec: held, counterpart: { champion: "Karthus", level: 12 }, meLevel: 10 }),
+			mem
+		)
+		ok(out.some(f => /Karthus is 2 levels up on you/.test(f)), out.join(" | "))
+	})
+
+	it("forgets the hold when the gap closes, so a flicker never accumulates one", () => {
+		/*
+		 * A stale enemy row reads a level or two behind and CORRECTS ITSELF on the next sighting.
+		 * Measured on game 5639406342, Kayn read low at 2:00, 3:00, 6:00, 11:00 and 20:00 and read
+		 * exactly right at the whistle. Every one of those is a gap that appears and closes, and
+		 * the clock has to go back to zero each time or five artefacts add up to a claim.
+		 */
+		const mem = newFactMemory()
+		buildFacts(
+			input({ nowSec: LEVEL_MIN_SEC, counterpart: { champion: "Karthus", level: 12 }, meLevel: 10 }),
+			mem
+		)
+		// Sighted: the row snaps and the gap is gone.
+		buildFacts(
 			input({
-				nowSec: 600,
-				pace: { cs: 100, expected: 100, exact: true },
-				counterpart: { champion: "Karthus", cs: 120 }
+				nowSec: LEVEL_MIN_SEC + LEVEL_HOLD_SEC - 5,
+				counterpart: { champion: "Karthus", level: 10 },
+				meLevel: 10
 			}),
 			mem
 		)
-		ok(first.some(f => /Karthus is 20 CS up on you/.test(f)), first.join(" | "))
-		const worse = buildFacts(
-			input({
-				nowSec: 600 + 300,
-				pace: { cs: 130, expected: 130, exact: true },
-				counterpart: { champion: "Karthus", cs: 165 }
-			}),
+		const out = buildFacts(
+			input({ nowSec: held, counterpart: { champion: "Karthus", level: 12 }, meLevel: 10 }),
 			mem
 		)
-		ok(worse.some(f => /Karthus is 35 CS up on you/.test(f)), `it got worse: ${worse.join(" | ")}`)
+		strictEqual(out.some(f => /levels/.test(f)), false, out.join(" | "))
 	})
 })
 
@@ -1706,5 +1788,161 @@ describe("buildFacts — a turn provider may not carry a reactive line", () => {
 			pipeSec: TURN_PIPE_SEC
 		})
 		deepStrictEqual(out, [plain(heard(55, plain, TURN_PIPE_SEC))])
+	})
+})
+
+/**
+ * THE GUARD. If this file ever cites the enemy jungler's CS again, this fails.
+ *
+ * Not a style test. `scores.creepScore` on an ENEMY row is a count of what THIS player's client
+ * witnessed, and the audit in `scripts/audit-live-fields.ts` put it at 70 against a true 183 over
+ * one full game, exact at 2 of 29 checkpoints against 29 of 29 for every other player in the
+ * lobby. It is the one field in the feed whose error lands on the one comparison this app was
+ * built to make, and it lands in the direction that flatters him — "you are at least 91 CS up on
+ * Kayn", said to a man 18 CS behind, on the game he graded 0/10.
+ *
+ * The field is still in the payload and it is still the most tempting thing in it, so the rule is
+ * asserted three ways: the input type does not carry it, no sentence this function returns pairs
+ * the counterpart with a CS figure, and the source of the two files on the coach's path does not
+ * read an enemy's `creepScore` at all.
+ */
+describe("buildFacts — the enemy jungler's CS may never come back", () => {
+	it("never pairs the counterpart with a CS figure, over a whole simulated game", () => {
+		/*
+		 * Driven with every counterpart field populated and moving, because the failure this
+		 * guards was not one rule — it was three (the race, the swing and the settle) all reading
+		 * one field. A replacement rule that reached for it again would be a fourth.
+		 */
+		const mem = newFactMemory()
+		const spoken = session(
+			60,
+			nowSec => ({
+				pace: { cs: Math.round(nowSec / 6), expected: Math.round(nowSec / 3), exact: true },
+				counterpart: {
+					champion: "Karthus",
+					level: 6 + Math.floor(nowSec / 120),
+					ward: nowSec / 30,
+					killShare: 0.6,
+					items: ["Hubris"]
+				},
+				meLevel: 5 + Math.floor(nowSec / 130),
+				meWard: nowSec / 90,
+				myKillShare: 0.2
+			}),
+			mem,
+			60
+		)
+		const lines = spoken.flatMap(t => t.lines)
+		ok(lines.length > 0, "the session has to actually say things for this to prove anything")
+		const offenders = lines.filter(f => /Karthus/.test(f) && /\bCS\b/.test(f))
+		deepStrictEqual(offenders, [], `a counterpart CS comparison came back: ${offenders.join(" | ")}`)
+	})
+
+	it("does not accept a counterpart CS even when a caller tries to pass one", () => {
+		/*
+		 * The type forbids it, and a type is erased at runtime — `--experimental-strip-types` means
+		 * a JavaScript caller, a JSON fixture or a cast lands the field on the object anyway. So
+		 * the behaviour is asserted with the field actually present.
+		 */
+		const mem = newFactMemory()
+		const cp = { champion: "Karthus", level: 12, ward: 30 }
+		Object.assign(cp, { cs: 70 })
+		const out = buildFacts(
+			input({
+				nowSec: 1200,
+				pace: { cs: 160, expected: 150, exact: true },
+				counterpart: cp,
+				meLevel: 12,
+				meWard: 5
+			}),
+			mem
+		)
+		strictEqual(
+			out.some(f => /Karthus/.test(f) && /\bCS\b/.test(f)),
+			false,
+			out.join(" | ")
+		)
+	})
+
+	it("reads no enemy creepScore anywhere on the coach's path", () => {
+		/*
+		 * The two files the spoken line is actually built from. The live board renders a labelled
+		 * "CS he has been seen to clear" for the human, which is a different thing and lives
+		 * elsewhere; nothing the MODEL is handed may carry the number at all.
+		 */
+		for (const file of ["src/analysis/live-facts.ts", "src/shared/live-state.ts"]) {
+			const src = readFileSync(file, "utf8")
+			const code = src
+				// Comments are where the measurement is written down, so they must be free to name it.
+				.replace(/\/\*[\s\S]*?\*\//g, "")
+				.replace(/\/\/[^\n]*/g, "")
+			strictEqual(/creepScore/.test(code), false, `${file} reads creepScore in code`)
+			strictEqual(
+				/counterpart[^\n]*\bcs\b/.test(code),
+				false,
+				`${file} puts a cs field on the counterpart`
+			)
+		}
+	})
+})
+
+/**
+ * HIS OWN SPIKE — the sentence the model kept trying to say and could not support.
+ *
+ * "hit recall to finish your Liandry's Torment" was the largest cluster of false live lines, and
+ * the arithmetic behind it is now exact (`shared/items.ts`). What is asserted here is the GATE:
+ * the line may only exist when a back actually turns his gold into the item.
+ */
+describe("buildFacts — what he is about to finish", () => {
+	const near = (over: Partial<FactInput>): string[] =>
+		buildFacts(input({ nowSec: 640, currentGold: 1067, ...over }), newFactMemory())
+
+	it("names the item and the exact gold when a back would finish it", () => {
+		const out = near({ myBuild: { target: "Liandry's Torment", remaining: 800, ready: true } })
+		ok(
+			out.some(f => /Liandry's Torment is 800 gold away and you have 1067/.test(f)),
+			out.join(" | ")
+		)
+	})
+
+	it("stays quiet when he cannot afford the rest of it", () => {
+		/*
+		 * The measured failure, exactly: at 10:39 of one recorded game the coach said "take one
+		 * camp right out of base for the seventy gold you need to finish Liandry's" while he held
+		 * 731g against 800 left to pay. The number in that sentence was invented; the gap was 69.
+		 */
+		const out = near({ currentGold: 731, myBuild: { target: "Liandry's Torment", remaining: 800, ready: true } })
+		strictEqual(out.some(f => /Liandry/.test(f)), false, out.join(" | "))
+	})
+
+	it("stays quiet when pieces still have to be BOUGHT, however much gold he has", () => {
+		/*
+		 * "recall right now to finish your Zhonya's with that twenty-nine hundred gold", said nine
+		 * times across the corpus while a Needlessly Large Rod and two Amplifying Tomes were still
+		 * in the shop. Gold is not the only thing between him and the item, and `ready` is the part
+		 * the old payload could not express at all.
+		 */
+		const out = near({
+			currentGold: 2900,
+			myBuild: { target: "Zhonya's Hourglass", remaining: 2650, ready: false }
+		})
+		strictEqual(out.some(f => /Zhonya/.test(f)), false, out.join(" | "))
+	})
+
+	it("says it once per item and never nags", () => {
+		const mem = newFactMemory()
+		const b = { target: "Liandry's Torment", remaining: 800, ready: true }
+		const first = buildFacts(input({ nowSec: 640, currentGold: 1067, myBuild: b }), mem)
+		ok(first.some(f => /Liandry/.test(f)), first.join(" | "))
+		const again = buildFacts(
+			input({ nowSec: 640 + ROUTINE_GAP_SEC * 3, currentGold: 1500, myBuild: b }),
+			mem
+		)
+		strictEqual(again.some(f => /Liandry/.test(f)), false, again.join(" | "))
+	})
+
+	it("has nothing to say when nothing is in progress", () => {
+		const out = near({ myBuild: null })
+		strictEqual(out.some(f => /gold away/.test(f)), false, out.join(" | "))
 	})
 })

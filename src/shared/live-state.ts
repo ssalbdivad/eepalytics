@@ -149,6 +149,24 @@ export interface VisionState {
 		cs?: number
 		dead?: boolean
 		respawnSec?: number
+		/**
+		 * How many items he has FINISHED, and what he is part-way through.
+		 *
+		 * The count is not a count of item ROWS. A row can be a component, a trinket or a potion,
+		 * and the client says nothing about which — `price` is the item's own cost line, so the
+		 * old test for "legendary" called Liandry's Torment (800) a component and Needlessly Large
+		 * Rod (1200) a legendary. `shared/items.ts` decides it from the recipe.
+		 *
+		 * It is here because its ABSENCE was an invitation. "keep farming toward your second item"
+		 * was said to a man holding five item rows and one finished item; the ordinal was
+		 * unsupportable either way, and a model that is not given a count will make one out of the
+		 * row count it can see. Now the count is stated and the ordinal is checkable.
+		 */
+		itemsCompleted?: number
+		/** The pair of boots, if he has any. Counted apart, the way a player counts them. */
+		boots?: string
+		/** What he is closest to finishing, and the exact gold left to pay for it. */
+		building?: { target: string; remaining: number; ready: boolean } | null
 	}
 	/**
 	 * His farm against his own average at this point in the game, or null when there is no
@@ -192,13 +210,24 @@ export interface VisionState {
 	 */
 	counterpart: {
 		champion: string
-		/** Floored to a multiple of ten, exactly as his own is — so the gap between them is too. */
-		cs?: number
+		/**
+		 * Level. Exact for him and his allies; 94.5% for enemies, and the 5.5% is staleness with a
+		 * shape — an unsighted row is frozen at its last sighting, is wrong by at most two, and
+		 * snaps to truth the moment he is seen. `analysis/live-facts.ts` holds it for thirty
+		 * seconds before quoting it, which is what separates a stale level from a real gap.
+		 */
 		level?: number
+		/**
+		 * Ward score. EXACT for enemies — the one cross-player number in this feed with no fog gate.
+		 *
+		 * Audited for all ten players of game 5639406342: the live float sat a median 0.7 above the
+		 * post-game integer, which is the post-game figure being floored rather than an error.
+		 */
+		ward?: number
 		/*
 		 * Item COUNT is deliberately absent. The only signal the client gives is `price`, so
 		 * "completed items" would be a threshold guess dressed as a fact, and a guess spoken in a
-		 * confident voice is the exact failure this app exists to avoid. CS and level are exact.
+		 * confident voice is the exact failure this app exists to avoid.
 		 */
 		/** True when the role came from Smite rather than a declared position. */
 		inferred?: boolean
@@ -251,17 +280,19 @@ export const renderState = (s: VisionState): string => {
 	const me = s.me
 	const hp = me.hp !== undefined && me.maxHp !== undefined ? `${Math.round(me.hp)}/${Math.round(me.maxHp)} HP` : ""
 	/*
-	 * The jungle race, worked out HERE rather than left as a subtraction for the model.
+	 * THERE IS NO JUNGLE CS RACE IN THIS BLOCK ANY MORE, and this is the only note it gets.
 	 *
-	 * Both figures are floored, so the difference the model would compute by eye is always a
-	 * multiple of ten and always up to nine wrong in either direction. On 612 real blocks from four
-	 * games every single reported gap was a multiple of ten — there is no state in which subtracting
-	 * these two numbers gives a true one.
+	 * It was worked out here rather than left to the model, which was the right instinct applied to
+	 * the wrong number. The arithmetic was never the problem: the enemy jungler's `creepScore` is a
+	 * count of what this player's own client WITNESSED, so it read 70 against a true 183 in the game
+	 * he graded 0/10 and it produced "you are at least 91 CS up on Kayn" while he was 18 CS behind.
+	 * A floored figure can be stated honestly as a floor; a witness counter cannot be stated
+	 * honestly at all. The counterpart clause below says so in the payload, so a model that goes
+	 * looking for his farm finds the reason it is absent instead of a gap to fill.
+	 *
+	 * His OWN CS is still floored and still compared to his own average, which is the comparison
+	 * `csGap` was written for and the one that survives.
 	 */
-	const race =
-		me.cs !== undefined && s.counterpart && s.counterpart.cs !== undefined ?
-			csGap(me.cs, s.counterpart.cs, true)
-		:	null
 	const pace = s.pace ? csGap(s.pace.cs, s.pace.expected, false) : null
 	return `## Ground truth (from the game client — these are FACTS, the screenshot is not)
 
@@ -272,7 +303,20 @@ You: ${me.champion}${me.level ? ` lv${me.level}` : ""} ${me.k ?? 0}/${me.d ?? 0}
 	}${hp ? `, ${hp}` : ""}${me.gold !== undefined ? `, ${Math.round(me.gold)} gold` : ""}${
 		me.dead ? `, DEAD${me.respawnSec ? ` (respawn in ${Math.round(me.respawnSec)} seconds)` : ""}` : ""
 	}
-
+${
+		me.itemsCompleted === undefined ?
+			""
+		:	`Build: ${me.itemsCompleted} finished ${me.itemsCompleted === 1 ? "item" : "items"}${
+				me.boots ? ` plus ${me.boots}` : ", no boots"
+			}${
+				me.building ?
+					me.building.ready ?
+						`. Closest to finishing: ${me.building.target}, ${me.building.remaining} gold away with every remaining piece already in his bags.`
+					:	`. Closest to finishing: ${me.building.target}, ${me.building.remaining} gold away, and some of it still has to be bought in pieces.`
+				:	"."
+			} That count is FINISHED items, worked out from the recipes — not a count of item slots, which also hold components, a trinket and potions. What he has SPENT is not knowable from this feed at any resolution, so do not say it.
+`
+	}
 ${
 		/*
 		 * THE PRONUNCIATION GUIDE IS NO LONGER IN THE BLOCK, and this is why.
@@ -292,17 +336,9 @@ ${
 		s.counterpart ?
 			`Enemy jungler right now: ${s.counterpart.champion}${
 				s.counterpart.inferred ? " (identified by Smite, so treat the role as a strong guess)" : ""
-			}${s.counterpart.cs !== undefined ? `, ${csPhrase(s.counterpart.cs)}` : ""}${
-				s.counterpart.level !== undefined ? `, level ${s.counterpart.level}` : ""
-			}. This is the man he is racing, and comparing him to it is the most useful thing you can do. It says how much has been cleared and NEVER where anyone is. His GOLD is not listed and is not knowable — the client does not report an enemy's gold, so any gold figure you have belongs to the player.${
-				race ?
-					csGapWorthSaying(race) ?
-						race.direction === "ahead" ?
-							` The race, worked out from those two floors: he is at least ${race.certain} CS BEHIND you.`
-						:	` The race, worked out from those two floors: he is at least ${race.certain} CS AHEAD of you.`
-					:	" The race, worked out from those two floors: the two of you are inside the client's rounding of each other, so nobody can say who is ahead — do not."
-				:	""
-			}
+			}${s.counterpart.level !== undefined ? `, level ${s.counterpart.level}` : ""}${
+				s.counterpart.ward !== undefined ? `, ward score ${s.counterpart.ward.toFixed(1)}` : ""
+			}. This is the man he is racing. It NEVER says where anyone is. His GOLD is not listed and is not knowable — the client does not report an enemy's gold, so any gold figure you have belongs to the player. HIS FARM IS NOT LISTED EITHER, and its absence is deliberate: this feed reports an enemy jungler's CS as a count of what the player's own client witnessed, not as his farm, and measured against the post-game truth for one full game it read 70 where the truth was 183. Do not compare their farm, do not estimate his, and do not treat a missing number as a small one. The level and the ward score above are the parts of this race that are exact.
 
 `
 		:	""

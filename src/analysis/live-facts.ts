@@ -215,6 +215,7 @@ export type FactSubject =
 	| "farm"
 	| "gold"
 	| "levels"
+	| "vision"
 	| "build"
 	| "kill-share"
 	| "praise"
@@ -312,47 +313,76 @@ const ENEMY_OBJECTIVE_WORTH_SAYING_SEC = 45
 const DISASTER_QUIET_SEC = 90
 
 /**
- * How far apart the two junglers must be before it is worth saying. Under this it is one camp of
- * timing noise, and a coach that reads out a four-CS difference is the farm nag with a new subject.
+ * THE JUNGLE CS RACE IS GONE, and this is the measurement that killed it.
+ *
+ * It was the fact this app was built around: his CS against the enemy jungler's, both off the
+ * client, neither visible without holding TAB. The field it rested on is not a farm count. The
+ * live client's `scores.creepScore` for an ENEMY counts only what HIS OWN CLIENT WITNESSED, so it
+ * is a visibility counter wearing a farm counter's name, and it never repays what it missed —
+ * measured in `scripts/audit-live-fields.ts` against the server's timeline for game 5639406342:
+ *
+ *     min      the feed said      the truth was
+ *      5           0                  32
+ *     10          20                  58
+ *     14          30                  84
+ *     20          50                 125
+ *     25          60                 156
+ *     28          70                 183
+ *
+ * Exact at 2 of 29 checkpoints once the client's flooring is divided out, against 29 of 29 for him
+ * and for every one of the other eight players. The counterpart is the ONLY row that lies, because
+ * he is the only player who farms in fog for a living — which is to say the error lands precisely
+ * on the one comparison this file existed to make, and it lands in the direction that flatters
+ * him. That produced "you are at least 91 CS up on Kayn" while he was 18 CS behind, and 24 of the
+ * 63 lines of the game he graded 0/10 leaned on it.
+ *
+ * It is not fixable live. A sighting does not re-sync the counter — over 61 observed moves the
+ * deficit still ran a median 56 and a worst 113, landing on truth 0 times out of 7 at the
+ * counterpart's own moves — because the number is an accumulator of witnessed kills rather than a
+ * snapshot that snaps. Post-game it IS fixable and is already fixed: `review/pack.ts` reads both
+ * junglers' CS from the timeline, which Riot computes server-side with no fog, and the pack for
+ * that same game shows Kayn on 183.
+ *
+ * What replaces it, below, is the rest of the audit's verdict. LEVEL is exact for him and his
+ * allies and 94.5% for enemies, and its errors are transient and self-repairing: an enemy row is
+ * frozen at its last sighting and SNAPS to truth the moment he is seen, so every level error in
+ * that game was gone by the whistle. WARD SCORE is exact for all ten, enemies included, with the
+ * live float sitting a median 0.7 above the post-game floor of the same number — vision is not fog
+ * gated at all. K/D/A and the death flags are exact for everyone. Those are the races that are
+ * real, and they are the ones this file now runs.
  */
-const RACE_MIN_GAP = 14
 
 /**
- * When the jungle CS race stops being a QUESTION, and is therefore retired for the game.
+ * A level gap this size is a real power difference rather than one camp of timing.
  *
- * Measured over all four of his recorded games, and it is the mechanism behind the repetition:
- *
- *     game       him            his CS/min   counterpart      theirs
- *     split-01   Lillia 300        8.5       Karthus 160       4.5
- *     split-02   Lillia 300        8.4       Zed 100           2.8
- *     split-03   Lillia 220        6.0       Briar 90          2.4
- *     split-04   Lillia 180        6.1       Tryndamere 110    3.7
- *
- * **He wins it four games out of four, by about a factor of two, and is ahead by minute five in
- * every one.** So the block's only cross-player comparison returns the same verdict on every turn
- * of every game, and the advice that follows ("keep clearing") is the same on every turn too. In a
- * real Opus run, 30 of 38 lines in the first seven minutes were this race and 28 of them ended on
- * some rewording of *keep the route running*.
- *
- * That is worse than repetition: the coach spends its whole life praising THE ONE THING HE IS
- * ALREADY BEST AT IN THE LOBBY. A fact that has stopped being a question is not information, and
- * refining it — tighter thresholds, better phrasing — only polishes the most useless thing it says.
- *
- * So: once he has led by a decisive margin for long enough, the race is settled and stays retired
- * until it FLIPS. Un-retiring on a flip is the point — a settled race becoming a question again is
- * genuinely worth hearing, and it is the only time this fact ever was.
+ * Two is the classic solo-queue coinflip a jungler should decline, and it is also the audit's
+ * WORST observed enemy-level error, which is why the hold rule below exists rather than a bigger
+ * threshold: a gap of two that is an artefact disappears on the next sighting, and a gap of two
+ * that is real does not.
  */
-const RACE_SETTLED_GAP = 30
-const RACE_SETTLED_HOLD_SEC = 120
-
-/** Before this the clear has barely started and the gap is whoever pathed to the bigger camp. */
-const RACE_MIN_SEC = 5 * 60
+export const LEVEL_MIN_GAP = 2
 
 /**
- * A level gap this size is a real power difference rather than one camp of timing, and it is the
- * gate on saying "don't". Two levels is the classic solo-queue coinflip a jungler should decline.
+ * How long a level gap must SURVIVE before it may be spoken.
+ *
+ * The audit's enemy `level` column is exact at 94.5% and wrong by at most two, always in the
+ * direction of stale-and-low, and always transiently: Kayn read a level behind at 2:00, 3:00,
+ * 6:00, 11:00 and 20:00 and read exactly right at the whistle. Every one of those was a row that
+ * had not been seen recently and corrected itself as soon as it was.
+ *
+ * A threshold cannot tell those apart; TIME can. The enemy's row only moves when his client
+ * witnesses it, so a gap that is still there two polls later has survived at least one chance to
+ * be corrected. Thirty seconds is five of the supervisor's six-second polls.
  */
-const RESTRAINT_LEVEL_GAP = 2
+export const LEVEL_HOLD_SEC = 30
+
+/**
+ * Before this there has not been enough game for a gap to mean anything.
+ *
+ * Kept from the retired CS race for the same reason it was chosen there: early levels are whoever
+ * pathed to the bigger camp, and an enemy row that has never been sighted still reads level 1.
+ */
+export const LEVEL_MIN_SEC = 5 * 60
 
 /**
  * Between objective calls.
@@ -389,29 +419,42 @@ const OBJECTIVES_MIN_GAP = 2
 /** Before this there have not been enough objectives for a count to mean anything. */
 const OBJECTIVES_MIN_SEC = 8 * 60
 
-/** Game-clock seconds between counterpart mentions. */
+/** Game-clock seconds between counterpart mentions, whatever the counterpart fact is. */
 const RACE_COOLDOWN_SEC = 150
 
 /**
- * How much of a deficit he must claw back before it is worth celebrating.
+ * The vision race: how far behind on ward score before it is worth a sentence.
  *
- * Smaller than the gap that earns a criticism, deliberately: a recovery is harder than a decline
- * and he should hear about it sooner. Said once, because the point is the turnaround rather than
- * a running commentary on the same race.
+ * This is the replacement the field audit actually earns. `wardScore` is exact for all ten players
+ * — the live float sits a median 0.7 above the post-game integer, which is the post-game figure
+ * being floored and not an error — and enemies are included, because vision score is not fog
+ * gated. It is the only cross-player number left in this feed that is both exact for the enemy
+ * jungler and invisible to the player: his own is on the scoreboard under TAB, the counterpart's
+ * is on the same screen, and nobody holds TAB mid-clear to compare two floats.
+ *
+ * Ten points is roughly three wards that lived, or one sweeper clear. Below that it is the noise
+ * of who happened to walk past a ward, and a coach reading out a four-point vision difference is
+ * the farm nag with a new subject — the sentence this file has had to write twice already.
  */
-const RACE_SWING = 10
+export const VISION_MIN_GAP = 10
 
 /**
- * How much the race must have turned AGAINST him before it is worth raising a second time.
+ * Before this a ward-score gap is one trinket charge.
  *
- * Against him, not merely different. Replayed over a real game, an unsigned "the gap moved" test
- * produced "you're 20 CS up on Karthus", then 40, 50, 60, 100 and 130 — six lines reciting a lead
- * that was growing on its own, which is the same widening-number nag this file already refuses to
- * do with his farm pace, wearing the counterpart's name. A lead getting bigger is not news and
- * carries no decision; the race getting worse is both. The good-news case has its own rule and its
- * own sentence: the swing, above, which fires when he claws a real deficit back.
+ * Later than the level gate because vision accrues on a slower clock: the score counts ward
+ * lifetime, so a lead taken at 5:00 is mostly the fact that one of the two junglers warded first.
  */
-const RACE_GAP_MOVED = 8
+export const VISION_MIN_SEC = 10 * 60
+
+/**
+ * How much the vision gap must have WORSENED before it is worth raising a second time.
+ *
+ * Against him, not merely different — the lesson the CS race left behind before it was deleted.
+ * Replayed over a real game, an unsigned "the gap moved" test produced "you're 20 CS up on
+ * Karthus", then 40, 50, 60, 100 and 130: six lines reciting a lead that was growing on its own.
+ * A lead getting bigger is not news and carries no decision; the gap getting worse is both.
+ */
+export const VISION_GAP_WORSE = 8
 
 /** Game-clock seconds between farm-pace mentions. */
 export const FARM_COOLDOWN_SEC = 180
@@ -556,29 +599,36 @@ export interface FactMemory {
 	/** When it first crossed the threshold — the duration is measured from here, not the mention. */
 	goldSinceSec: number
 	lastFarmAtSec: number
-	/** When the counterpart gap was last raised, and how big it was then. */
+	/** When ANY counterpart comparison was last raised — one cooldown across all of them. */
 	lastRaceAtSec: number
-	lastRaceGap: number
+	/** The ward-score gap last SAID, so a restatement can require the news to have got worse. */
+	lastVisionGap: number
 	/**
-	 * The clock at which he first held a decisive jungle-CS lead, or 0 when he does not hold one.
+	 * When the current level gap was first SEEN, or 0 when there is no gap.
 	 *
-	 * Not a boolean, because the race must be able to become a QUESTION again: he wins this race in
-	 * four recorded games out of four, so a one-way latch would retire the fact in every game and
-	 * never bring it back, and a settled race flipping is the only time it was ever worth hearing.
+	 * The enemy `level` column is exact 94.5% of the time and its errors are transient — a frozen
+	 * row that snaps back the moment its player is sighted. A threshold cannot separate a stale
+	 * level from a real one; surviving `LEVEL_HOLD_SEC` of wall clock can, because the row has had
+	 * chances to correct itself and did not take them. Reset to 0 the moment the gap closes, so a
+	 * gap that flickers never accumulates the hold it needs.
 	 */
-	raceSettledSince: number
+	levelGapSince: number
 	/** Said once each per game — a level gap is a state, not an event, and restating it is nagging. */
 	saidRestraint: boolean
 	saidLevelGap: boolean
+	/** The level LEAD, said once — see the block that pushes it for why it is not said twice. */
+	saidLevelLead: boolean
 	/** Legendary items already announced for the counterpart, and whether a baseline exists yet. */
 	seenCounterpartItems: Set<string>
+	/** His OWN builds already called affordable, by item name — said once each, never as a nag. */
+	saidAffordable: Set<string>
 	sawCounterpartBuild: boolean
 	/** Said once per game — a participation gap is a pattern, not an event. */
 	saidKillShare: boolean
 	/** The champion's death note is a property of the champion, so it is said once. */
 	saidOwnDeath: boolean
-	/** The comeback is celebrated once — the point is the turnaround, not a commentary. */
-	saidSwing: boolean
+	/** The vision gap is a standing state, so the first mention is the one that lands. */
+	saidVision: boolean
 	/** The objective deficit is a state, said once. */
 	saidObjectives: boolean
 	/** How many gold reminders this game — hard-capped, because it is the least valuable fact. */
@@ -654,15 +704,17 @@ export const newFactMemory = (): FactMemory => ({
 	goldSinceSec: 0,
 	lastFarmAtSec: 0,
 	lastRaceAtSec: 0,
-	lastRaceGap: 0,
-	raceSettledSince: 0,
+	lastVisionGap: 0,
+	levelGapSince: 0,
 	saidRestraint: false,
 	saidLevelGap: false,
+	saidLevelLead: false,
 	seenCounterpartItems: new Set(),
+	saidAffordable: new Set(),
 	sawCounterpartBuild: false,
 	saidKillShare: false,
 	saidOwnDeath: false,
-	saidSwing: false,
+	saidVision: false,
 	saidObjectives: false,
 	goldMentions: 0,
 	lastObjectiveAtSec: 0,
@@ -812,16 +864,45 @@ export interface FactInput {
 	objectiveCount?: { mine: number; theirs: number }
 	counterpart: {
 		champion: string
-		cs?: number
+		/**
+		 * HIS CS IS NOT HERE AND MAY NOT BE ADDED BACK. See the block above `LEVEL_MIN_GAP`.
+		 *
+		 * The field exists in the payload and is the most tempting thing in it. It is a count of
+		 * what this player's own client witnessed, it read 70 against a true 183, and it produced
+		 * the sign-flipped line behind the game he graded 0/10. `live-facts.test.ts` fails if any
+		 * fact this function emits ever names a CS figure beside the counterpart's champion.
+		 */
 		level?: number
 		inferred?: boolean
 		/** Legendary items he has finished, by NAME, newest last. */
 		items?: string[]
 		/** His share of his team's kills, 0-1. Exact: every K/D/A is in the block. */
 		killShare?: number
+		/**
+		 * His ward score. Exact for enemies — vision is the one cross-player number with no fog
+		 * gate, audited exact for all ten players in game 5639406342.
+		 */
+		ward?: number
 	} | null
 	/** His own level, for the gap against the counterpart. */
 	meLevel?: number
+	/** His own ward score, for the vision race. Exact. */
+	meWard?: number
+	/**
+	 * What HE is part-way through building, worked out in `shared/items.ts` and handed in finished.
+	 *
+	 * The one build sentence a coach actually wants to say is *"back now and you finish the
+	 * spike"*, and it was the largest cluster of FALSE lines in the graded live corpus — "hit
+	 * recall to finish your Liandry's Torment" said to a man holding Fated Ashes and Haunting
+	 * Guise, over and over. The model was not hallucinating the item; it was doing arithmetic the
+	 * payload could not support, because the client reports an item's own cost line and not what
+	 * the recipe costs, so nothing in the feed could say what was left to pay.
+	 *
+	 * That number is static, Riot publishes it, and it is now vendored. `remaining` is exact.
+	 * `ready` means every remaining PIECE is already in his bags and the rest is the combine fee —
+	 * which is what makes a back a decision rather than a shopping trip.
+	 */
+	myBuild?: { target: string; remaining: number; ready: boolean } | null
 	/** His own share of his team's kills, 0-1. */
 	myKillShare?: number
 	/**
@@ -1083,93 +1164,47 @@ export const buildFacts = (
 		}
 	}
 
+	/*
+	 * THE VISION RACE — the counterpart comparison that survives the field audit.
+	 *
+	 * `wardScore` is exact for every player in the feed, enemies included: audited against the
+	 * post-game figure for all ten players of game 5639406342, the live float sat a median 0.7
+	 * above the post-game integer, which is the post-game number being floored rather than an
+	 * error. Vision has no fog gate, because a ward's lifetime is a property of the ward and not
+	 * of who is looking at it.
+	 *
+	 * It passes both of the tests in AGENTS.md, which the farm-pace line never quite did. Not
+	 * visible: his own ward score is under TAB and the counterpart's is on the same screen, and
+	 * nobody holds TAB mid-clear to compare two floats. Not generic: it names the man he is racing
+	 * and a number that is different in every game.
+	 *
+	 * BEHIND ONLY, deliberately. A vision LEAD over the enemy jungler carries no decision — there
+	 * is nothing to do about it except what he is already doing — and the retired CS race is the
+	 * standing proof of what happens when a coach is allowed to narrate a lead: six lines reciting
+	 * a number that grew on its own.
+	 */
 	const race: Fact[] = []
 	if (
 		input.counterpart &&
-		input.counterpart.cs !== undefined &&
-		input.pace !== null &&
-		input.nowSec >= RACE_MIN_SEC
+		input.counterpart.ward !== undefined &&
+		input.meWard !== undefined &&
+		input.nowSec >= VISION_MIN_SEC &&
+		!mem.saidVision
 	) {
-		const gap = input.counterpart.cs - input.pace.cs
-		const worsened = gap - mem.lastRaceGap
-		/*
-		 * A SWING is the best encouragement available, and it is exact.
-		 *
-		 * Praise today only fires on a multikill or an objective — things he already knows he did.
-		 * Clawing back a deficit against the man he is racing is invisible: it happens across
-		 * minutes, neither number is on screen, and it is the one moment encouragement actually
-		 * lands, because it is evidence that what he changed worked.
-		 *
-		 * Only counts as a swing if he was genuinely behind before, so the first mention of a game
-		 * can never be one.
-		 */
-		const swung =
-			mem.lastRaceAtSec > 0 &&
-			mem.lastRaceGap >= RACE_MIN_GAP &&
-			mem.lastRaceGap - gap >= RACE_SWING &&
-			!mem.saidSwing
-		if (swung) {
-			/*
-			 * Into `race`, NOT into `praise`.
-			 *
-			 * Praise ranks last because the game already announced it — a dragon and a multikill
-			 * both come with a banner and a sound, so the line adds warmth and no information. A CS
-			 * comeback has no banner and no sound; it is the same invisible race fact as the
-			 * deficit, with the sign the other way round. Ranked as praise it lost to "you're 20 CS
-			 * down on your own pace" on the same turn, which is the coach reporting a recovery as a
-			 * shortfall.
-			 */
-			// Read the old gap BEFORE overwriting it — the whole line is the difference between them.
-			const was = mem.lastRaceGap
-			race.push({
-				text:
-					gap <= 0 ?
-						`you were ${was} CS down on ${input.counterpart.champion} and you're ahead now`
-					:	`you've pulled ${was - gap} CS back on ${input.counterpart.champion}`,
-				subject: "farm",
-				tier: "standing",
-				commit: () => {
-					mem.saidSwing = true
-					mem.lastRaceGap = gap
-					mem.lastRaceAtSec = input.nowSec
-				}
-			})
-		}
-		/*
-		 * NOT alongside the swing. Both sentences are the same two CS numbers with opposite spins —
-		 * "you've pulled 12 CS back on Karthus" next to "Karthus is 14 CS up on you" is a coach
-		 * arguing with itself, and the subject filter would silently drop one of them anyway. The
-		 * comeback is the better line, so it wins outright rather than by ordering.
-		 */
-		/*
-		 * Settle it, or un-settle it. `raceSettledSince` is the clock at which he first held a
-		 * decisive lead; the race retires once that has stood for `RACE_SETTLED_HOLD_SEC`, and the
-		 * moment the lead is no longer decisive the clock resets and the fact is live again.
-		 */
-		if (gap <= -RACE_SETTLED_GAP) {
-			if (mem.raceSettledSince === 0) mem.raceSettledSince = input.nowSec
-		} else mem.raceSettledSince = 0
-		const raceSettled =
-			mem.raceSettledSince !== 0 && input.nowSec - mem.raceSettledSince >= RACE_SETTLED_HOLD_SEC
-
+		const gap = Math.round(input.counterpart.ward - input.meWard)
 		if (
-			!swung &&
-			!raceSettled &&
-			Math.abs(gap) >= RACE_MIN_GAP &&
+			gap >= VISION_MIN_GAP &&
 			(mem.lastRaceAtSec === 0 || input.nowSec - mem.lastRaceAtSec >= RACE_COOLDOWN_SEC) &&
-			(mem.lastRaceAtSec === 0 || worsened >= RACE_GAP_MOVED)
+			(mem.lastVisionGap === 0 || gap - mem.lastVisionGap >= VISION_GAP_WORSE)
 		) {
-			const who = input.counterpart.champion
 			race.push({
-				text:
-					gap > 0 ?
-						withAdvice(`${who} is ${gap} CS up on you`, input.advice?.["race-behind"])
-					:	withAdvice(`you're ${-gap} CS up on ${who}`, input.advice?.["race-ahead"]),
-				subject: "farm",
+				text: `${input.counterpart.champion} is ${gap} points of vision score up on you — he is seeing the map you are walking around in`,
+				subject: "vision",
 				tier: "standing",
 				commit: () => {
+					mem.saidVision = true
+					mem.lastVisionGap = gap
 					mem.lastRaceAtSec = input.nowSec
-					mem.lastRaceGap = gap
 				}
 			})
 		}
@@ -1216,6 +1251,39 @@ export const buildFacts = (
 	 * An item appearing IS an event, which is what makes it punchy rather than a readout.
 	 */
 	const build: Fact[] = []
+	/*
+	 * HIS OWN SPIKE, and the exact gold between him and it.
+	 *
+	 * This is the sentence the model tried to say dozens of times and got wrong every time —
+	 * "recall now to finish your Liandry's" while he held two of its three parts and could not
+	 * afford the third, or while he held none of them. It is a good sentence. It was unsupportable
+	 * only because the feed reports an item's own cost line rather than its recipe total, so there
+	 * was no way to compute what was left to pay. `shared/items.ts` computes it from Riot's own
+	 * static data and it is exact.
+	 *
+	 * `ready` is the gate that makes this a decision rather than a shopping list: every remaining
+	 * PIECE is already in his bags, so a back turns gold into the item with no detour. Once per
+	 * item per game — a spike he has been told about twice is a nag, and the second telling adds
+	 * nothing the first did not.
+	 */
+	if (
+		input.myBuild &&
+		input.myBuild.ready &&
+		input.currentGold !== null &&
+		input.currentGold >= input.myBuild.remaining &&
+		!mem.saidAffordable.has(input.myBuild.target)
+	) {
+		const b = input.myBuild
+		build.push({
+			text: withAdvice(
+				`${b.target} is ${b.remaining} gold away and you have ${Math.round(input.currentGold)} — the rest of it is already in your bags`,
+				input.advice?.build
+			),
+			subject: "build",
+			tier: "standing",
+			commit: () => mem.saidAffordable.add(b.target)
+		})
+	}
 	if (input.counterpart?.items) {
 		const hadBaseline = mem.sawCounterpartBuild
 		for (const item of input.counterpart.items) {
@@ -1236,41 +1304,93 @@ export const buildFacts = (
 		mem.sawCounterpartBuild = true
 	}
 
+	/*
+	 * THE LEVEL RACE, and the hold rule that makes an enemy's level safe to quote.
+	 *
+	 * This is the other half of what replaces the CS race, and it is the half the audit actually
+	 * endorses: `level` is exact for him and his allies at every one of 29 checkpoints, and 94.5%
+	 * for enemies. The 5.5% is not noise, it is STALENESS with a shape — an unsighted enemy row is
+	 * frozen at its last sighting, so the error is always in the direction of too low, is at most
+	 * two, and SNAPS to truth the moment he is seen. Kayn read a level behind at 2:00, 3:00, 6:00,
+	 * 11:00 and 20:00 and read exactly right at the whistle.
+	 *
+	 * A frozen row therefore invents a gap that FAVOURS him, which is the same direction the CS
+	 * counter lied in, and saying "you're two levels down" off a stale row is the same kind of
+	 * mistake with the sign the other way. `LEVEL_HOLD_SEC` is the fix that a bigger threshold is
+	 * not: the gap has to still be there after the row has had several chances to correct itself.
+	 */
 	const restraint: Fact[] = []
 	if (input.counterpart && input.counterpart.level !== undefined && input.meLevel !== undefined) {
 		const down = input.counterpart.level - input.meLevel
+		// Held, in place, before anything is said: the clock starts at the first sighting of a gap
+		// this size or bigger, and any turn without one puts it back to zero.
+		if (Math.abs(down) >= LEVEL_MIN_GAP) {
+			if (mem.levelGapSince === 0) mem.levelGapSince = input.nowSec
+		} else mem.levelGapSince = 0
+		const held = mem.levelGapSince !== 0 && input.nowSec - mem.levelGapSince >= LEVEL_HOLD_SEC
 		const objectiveUp =
 			(input.drakeBackInSec !== null && input.drakeBackInSec <= OBJECTIVE_SOON_SEC) ||
 			(input.baronBackInSec !== null && input.baronBackInSec <= OBJECTIVE_SOON_SEC)
-		if (down >= RESTRAINT_LEVEL_GAP && objectiveUp && !mem.saidRestraint) {
-			restraint.push({
-				text: withAdvice(
-					// The champion clause supplies the reason not to take it, so the fact stays short.
-					// Both the champion note and the role default carry a restraint clause, so the
-					// "don't" is never lost.
-					`you're ${down} levels down on ${input.counterpart.champion}`,
-					input.advice?.restraint
-				),
-				subject: "levels",
-				// The objective is up NOW; in a minute this is a stat about a fight already taken.
-				tier: "expiring",
-				commit: () => {
-					mem.saidRestraint = true
-				}
-			})
-		} else if (down >= RESTRAINT_LEVEL_GAP && !mem.saidLevelGap) {
-			restraint.push({
-				text: withAdvice(
-					`${input.counterpart.champion} is ${down} levels up on you`,
-					input.advice?.restraint
-				),
-				subject: "levels",
-				// No objective in the window: a level gap is a state that will still be true later.
-				tier: "standing",
-				commit: () => {
-					mem.saidLevelGap = true
-				}
-			})
+		if (held && input.nowSec >= LEVEL_MIN_SEC) {
+			if (down >= LEVEL_MIN_GAP && objectiveUp && !mem.saidRestraint) {
+				restraint.push({
+					text: withAdvice(
+						// The champion clause supplies the reason not to take it, so the fact stays
+						// short. Both the champion note and the role default carry a restraint
+						// clause, so the "don't" is never lost.
+						`you're ${down} levels down on ${input.counterpart.champion}`,
+						input.advice?.restraint
+					),
+					subject: "levels",
+					// The objective is up NOW; in a minute this is a stat about a fight already taken.
+					tier: "expiring",
+					commit: () => {
+						mem.saidRestraint = true
+					}
+				})
+			} else if (down >= LEVEL_MIN_GAP && !mem.saidLevelGap) {
+				restraint.push({
+					text: withAdvice(
+						`${input.counterpart.champion} is ${down} levels up on you`,
+						input.advice?.["race-behind"] ?? input.advice?.restraint
+					),
+					subject: "levels",
+					// No objective in the window: a level gap is a state that will still be true later.
+					tier: "standing",
+					commit: () => {
+						mem.saidLevelGap = true
+						mem.lastRaceAtSec = input.nowSec
+					}
+				})
+			} else if (
+				-down >= LEVEL_MIN_GAP &&
+				!mem.saidLevelLead &&
+				(mem.lastRaceAtSec === 0 || input.nowSec - mem.lastRaceAtSec >= RACE_COOLDOWN_SEC)
+			) {
+				/*
+				 * THE LEAD, said once, and only because the advice clause turns it into a decision.
+				 *
+				 * The retired CS race is the argument for the once: he won that one in four games
+				 * out of four and the coach spent its life praising the thing he was already best
+				 * at. A level lead is a genuine question — measured on his own recorded games it is
+				 * held in both directions rather than one — and every `race-ahead` clause in
+				 * `knowledge/champions/` names what to SPEND it on, which is the part he cannot get
+				 * off his HUD. Without a clause there is nothing but a number, so it stays quiet.
+				 */
+				if (input.advice?.["race-ahead"])
+					restraint.push({
+						text: withAdvice(
+							`you're ${-down} levels up on ${input.counterpart.champion}`,
+							input.advice["race-ahead"]
+						),
+						subject: "levels",
+						tier: "standing",
+						commit: () => {
+							mem.saidLevelLead = true
+							mem.lastRaceAtSec = input.nowSec
+						}
+					})
+			}
 		}
 	}
 

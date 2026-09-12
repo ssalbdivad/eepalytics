@@ -58,6 +58,7 @@ import { pronunciationsFor, renderPronunciationGuide } from "../../shared/pronou
 import type { Pronunciation } from "../../shared/pronounce.ts"
 import { dragonPhrase } from "../../shared/dragons.ts"
 import { hasSmite } from "../../shared/smite.ts"
+import { inventoryOf, nextSpike, roleOf } from "../../shared/items.ts"
 import { getGame, getSettings, listGames, recentFeedbackItems } from "../../db/queries.ts"
 import { dismissDebrief, dismissedDebrief, lastGameEnded } from "../../daemon/postgame.ts"
 import { matchesMarker, postGameDebrief } from "../../shared/postgame.ts"
@@ -137,14 +138,18 @@ import type { VisionState, VisionStatePlayer } from "../../shared/live-state.ts"
 import { fail, send } from "../respond.ts"
 
 /** Event names that mark an objective take we can time a respawn from. */
-/**
- * What counts as a finished item for the purpose of being worth a sentence.
+/*
+ * `LEGENDARY_ITEM_GOLD = 2000` USED TO LIVE HERE, and deleting it is the whole of the build fix.
  *
- * The client reports `price` and nothing else about completeness, so this is a threshold and it is
- * treated as one: it decides whether to MENTION an item, never what to claim about it. The line
- * names the item, so the number never reaches him.
+ * It gated "the counterpart just finished X" on the client's `price`, described in its own comment
+ * as "the only completeness signal the client gives". It was not a completeness signal at all:
+ * `price` is the item's OWN cost line (`gold.base`, verified equal on all 215 items this app has
+ * ever observed), so it is small for a legendary that combines cheaply and large for an expensive
+ * raw component. At a 2,000g gate, Liandry's Torment (800), Riftmaker (950) and Hubris (750) were
+ * all below it and Needlessly Large Rod (1200) and B. F. Sword (1300) were above.
+ *
+ * `shared/items.ts` answers it from the recipe instead. See the note beside `items:` below.
  */
-const LEGENDARY_ITEM_GOLD = 2000
 
 const OBJECTIVE_EVENTS = new Set(["DragonKill", "BaronKill", "HeraldKill"])
 
@@ -957,29 +962,15 @@ const buildLiveState = (
 		 * of 26, and the four it missed — `lastOfferedAtSec`, `lastSubjects`, `lastSeenSec`,
 		 * `lastFarmBehind` — were the global speech budget itself, so game two would open believing
 		 * the coach had just spoken. `resetFactMemory` cannot go stale that way.
+		 *
+		 * The hand-written list survived beside the call for a while, which was worse than either:
+		 * two resets, one of them stale, and the stale one naming fields that no longer exist. It
+		 * is deleted. `resetFactMemory` assigns a fresh `newFactMemory()` over the object in place,
+		 * so every field is covered by construction and a new field needs no edit here.
 		 */
 		resetFactMemory(factMemory)
 		resetFightMemory(fightMemory)
 		resetFrameState()
-		factMemory.lastFarmCs = 0
-		factMemory.lastGoldAtSec = 0
-		factMemory.goldSinceSec = 0
-		factMemory.praiseSaid.clear()
-		factMemory.lastRaceAtSec = 0
-		factMemory.lastRaceGap = 0
-		factMemory.saidRestraint = false
-		factMemory.saidLevelGap = false
-		factMemory.saidKillShare = false
-		factMemory.saidOwnDeath = false
-		factMemory.saidSwing = false
-		factMemory.saidObjectives = false
-		factMemory.goldMentions = 0
-		factMemory.lastObjectiveAtSec = 0
-		factMemory.sawCounterpartBuild = false
-		factMemory.seenCounterpartItems.clear()
-		factMemory.lastLedWithDeath = false
-		factMemory.lastGoldMentioned = 0
-		factMemory.lastFarmAtSec = 0
 		resetAdviceCursor(adviceCursor)
 		return null
 	}
@@ -1131,15 +1122,24 @@ const buildLiveState = (
 			if (!bySmite) return null
 			return {
 				champion: bySmite.championName ?? "their jungler",
-				// Floored the same way his own is, so the gap between the two is a multiple of ten and
-				// is worth ±9 less than it looks. `renderState` states the part that survives.
-				...(bySmite.scores?.creepScore !== undefined ? { cs: bySmite.scores.creepScore } : {}),
+				/*
+				 * HIS CS IS NOT HERE. It used to be, and it was the worst field in this file.
+				 *
+				 * `scores.creepScore` on an ENEMY row counts only the farm this player's own client
+				 * witnessed. Audited against the server timeline for game 5639406342 it read
+				 * 0/20/30/50/60/70 at the five-minute marks where the truth was 32/58/84/125/156/183,
+				 * exact at 2 of 29 checkpoints against 29 of 29 for every non-jungler in the lobby,
+				 * and it does not re-sync on sight because it is an accumulator rather than a
+				 * snapshot. It produced "you are at least 91 CS up on Kayn" while he was 18 behind.
+				 * `analysis/live-facts.ts` carries the full measurement; nothing may put it back.
+				 */
 				...(bySmite.level !== undefined ? { level: bySmite.level } : {}),
 				/*
-				 * Legendary items by NAME. `price` is the only completeness signal the client gives,
-				 * so it gates what is worth mentioning — but the line names the item rather than
-				 * counting them, so no threshold is ever spoken as a fact.
+				 * Ward score. Exact for enemies, unlike the farm counter above — vision has no fog
+				 * gate, and the audit put all ten players' live float a median 0.7 above the
+				 * post-game integer, which is the post-game figure being floored.
 				 */
+				...(bySmite.scores?.wardScore !== undefined ? { ward: bySmite.scores.wardScore } : {}),
 				...(() => {
 					// Share of his own team's kills. Exact — every K/A is in the block.
 					const theirKills = enemies.reduce((n, p) => n + (p.scores?.kills ?? 0), 0)
@@ -1150,8 +1150,19 @@ const buildLiveState = (
 							}
 						:	{}
 				})(),
+				/*
+				 * The items he has FINISHED, by name, decided by the recipe rather than by `price`.
+				 *
+				 * The old test was `price >= 2000`, and `price` is the item's own cost line. At that
+				 * gate Liandry's Torment (800), Riftmaker (950) and Hubris (750) were all "not
+				 * legendary" and Needlessly Large Rod (1200) and B. F. Sword (1300) were — so the
+				 * one build line this coach has was announcing components and swallowing the
+				 * legendaries. `shared/items.ts` reads the recipe instead: an item is finished when
+				 * nothing further can be bought for it, which needs no threshold and cannot be the
+				 * wrong number.
+				 */
 				items: (bySmite.items ?? [])
-					.filter(i => !i.consumable && (i.price ?? 0) >= LEGENDARY_ITEM_GOLD && i.displayName)
+					.filter(i => i.itemID !== undefined && i.displayName && roleOf(i.itemID) === "completed")
 					.map(i => i.displayName!),
 				...(byRole ? {} : { inferred: true })
 			}
@@ -1170,7 +1181,24 @@ const buildLiveState = (
 			a: me.scores?.assists,
 			cs: me.scores?.creepScore,
 			dead: me.isDead,
-			respawnSec: me.respawnTimer
+			respawnSec: me.respawnTimer,
+			...(() => {
+				/*
+				 * FINISHED items, boots and what he is part-way through — from the recipes, not
+				 * from the slot count and never from `price`. See `shared/items.ts`.
+				 */
+				const ids = (me.items ?? []).map(i => i.itemID).filter((n): n is number => n !== undefined)
+				const inv = inventoryOf(ids)
+				const best = nextSpike(ids)
+				return {
+					itemsCompleted: inv.completed.length,
+					...(inv.boots ? { boots: inv.boots.name } : {}),
+					building:
+						best ?
+							{ target: best.name, remaining: best.remaining, ready: best.missing.length === 0 }
+						:	null
+				}
+			})()
 		},
 		/*
 		 * The enemy jungler, by declared position, falling back to Smite.
@@ -1258,6 +1286,27 @@ const buildLiveState = (
 					return rotatingAdvice(clauses, adviceCursor)
 				})(),
 				meLevel: me.level,
+				/* His own ward score, for the vision race. Exact, like everyone else's. */
+				meWard: me.scores?.wardScore,
+				/*
+				 * What he is closest to finishing, by what he has already sunk into it.
+				 *
+				 * `nextSpike` orders the candidates by how much of each he already owns and keeps
+				 * only the finished items and boots. Ordering by what is LEFT would put a 550g
+				 * Kindlegem above an 800g Liandry's Torment that already has 2,200g of his gold in
+				 * it, and keeping the components would have him walking to base for a 200g Fiendish
+				 * Codex — both measured on the recorded games. `buildFacts` decides whether what
+				 * comes back is worth a sentence.
+				 */
+				myBuild: (() => {
+					const ids = (me.items ?? [])
+						.map(i => i.itemID)
+						.filter((n): n is number => n !== undefined)
+					const best = nextSpike(ids)
+					return best ?
+							{ target: best.name, remaining: best.remaining, ready: best.missing.length === 0 }
+						:	null
+				})(),
 				objectiveCount: (() => {
 					let mineN = 0
 					let theirs = 0

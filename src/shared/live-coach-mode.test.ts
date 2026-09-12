@@ -47,7 +47,7 @@ const state = (over: Partial<VisionState> = {}): VisionState => ({
 	me: { champion: "Lillia", level: 8, k: 2, d: 1, a: 3, cs: 88, gold: 1017 },
 	pace: { cs: 88, expected: 96, exact: true, source: "your own average: 96" },
 	pronounce: [],
-	counterpart: { champion: "Briar", cs: 111, level: 9 },
+	counterpart: { champion: "Briar", level: 9 },
 	allies: [{ champion: "Urgot", level: 8, k: 0, d: 0, a: 0 }],
 	enemies: [{ champion: "Ornn", level: 9, k: 1, d: 0, a: 2 }],
 	recentEvents: [],
@@ -118,7 +118,7 @@ test("cite mode removes the fence's instructions and keeps every fact", () => {
 	assert.equal(out.includes("prefer these"), false, "the list still reads as a menu")
 	assert.equal(out.includes("take every timer from the list below"), false)
 	// Nothing above the list was touched: the figures are all still there, verbatim.
-	for (const fact of ["88 CS against 96", "111 CS", "1017 gold", "Briar", "Urgot", "Ornn", "Clock 9:40"])
+	for (const fact of ["88 CS against 96", "1017 gold", "Briar", "Urgot", "Ornn", "Clock 9:40"])
 		assert.equal(out.includes(fact), true, `the surgery took a fact with it: ${fact}`)
 	for (const u of FULL.unseen) assert.equal(out.includes(u), true, `ranked fact lost: ${u}`)
 })

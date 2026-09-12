@@ -81,24 +81,41 @@ describe("renderState", () => {
  */
 describe("the enemy jungler line", () => {
 	it("is in the block whenever a counterpart is known", () => {
-		const out = renderState(base({ counterpart: { champion: "Karthus", cs: 120, level: 15 } }))
+		const out = renderState(base({ counterpart: { champion: "Karthus", level: 15, ward: 23.2 } }))
 		ok(out.includes("Enemy jungler right now: Karthus"), out.slice(0, 400))
-		ok(out.includes("120 CS"))
 		ok(out.includes("level 15"))
+		ok(out.includes("ward score 23.2"))
 	})
 
 	it("says the role is a guess when it came from Smite", () => {
 		const out = renderState(
-			base({ counterpart: { champion: "Karthus", cs: 120, level: 15, inferred: true } })
+			base({ counterpart: { champion: "Karthus", level: 15, inferred: true } })
 		)
 		ok(/strong guess/i.test(out), "an inferred role must be hedged in the sentence")
 	})
 
 	it("states that an enemy's gold is not knowable, so the gap cannot be filled", () => {
-		// A gap gets filled: with the enemy's CS and level present and gold absent, the coach
-		// attributed HIS gold to the enemy out loud.
-		const out = renderState(base({ counterpart: { champion: "Karthus", cs: 120 } }))
+		// A gap gets filled: with the enemy's level present and gold absent, the coach attributed
+		// HIS gold to the enemy out loud.
+		const out = renderState(base({ counterpart: { champion: "Karthus", level: 15 } }))
 		ok(/gold is not listed and is not knowable/i.test(out))
+	})
+
+	/*
+	 * The counterpart's FARM is gone, and its absence is asserted rather than assumed.
+	 *
+	 * The feed reports an enemy jungler's `creepScore` as a count of what this player's own client
+	 * witnessed: 70 against a true 183 over one audited game, exact at 2 of 29 checkpoints, and the
+	 * source of "you are at least 91 CS up on Kayn" said to a man 18 CS behind. A block that leaves
+	 * the number out without saying why leaves a gap, and a model fills a gap — so the payload
+	 * carries the refusal.
+	 */
+	it("never puts a CS figure next to the enemy jungler, and says why it is missing", () => {
+		const out = renderState(base({ counterpart: { champion: "Karthus", level: 15, ward: 23.2 } }))
+		const line = out.split("\n").find(l => l.startsWith("Enemy jungler right now:")) ?? ""
+		ok(line !== "", out.slice(0, 400))
+		strictEqual(/\d+\s*CS/.test(line.split("HIS FARM IS NOT LISTED")[0] ?? ""), false, line)
+		ok(/read 70 where the truth was 183/.test(line), "the refusal states its own measurement")
 	})
 
 	it("says nothing at all when there is no counterpart", () => {
@@ -180,20 +197,10 @@ describe("the block never states a CS it cannot support", () => {
 		strictEqual(you.includes(", 120 CS"), false, "no bare CS count on the You line")
 	})
 
-	it("renders the enemy jungler's farm as a floor as well", () => {
-		const out = withFarm({ counterpart: { champion: "Briar", cs: 0 } })
-		ok(out.includes("Briar, under 10 CS"), "a jungler at a reported zero has up to nine")
-	})
-
-	it("works the race out itself rather than leaving two floors to be subtracted", () => {
-		const out = withFarm({ counterpart: { champion: "Briar", cs: 140, level: 12 } })
-		ok(/at least 11 CS AHEAD of you/.test(out), out.slice(0, 900))
-		strictEqual(out.includes("20 CS AHEAD"), false, "the reported gap is not the gap")
-	})
-
-	it("says who is ahead is unknowable when the two junglers are inside one quantum", () => {
-		const out = withFarm({ counterpart: { champion: "Briar", cs: 130, level: 12 } })
-		ok(/nobody can say who is ahead/.test(out))
+	it("renders no farm for the enemy jungler at all, at any value", () => {
+		const out = withFarm({ counterpart: { champion: "Briar", level: 12, ward: 9.4 } })
+		strictEqual(/Briar[^\n]*\d+ CS/.test(out), false, "the witness counter is not a farm figure")
+		ok(/Do not compare their farm/.test(out))
 	})
 
 	it("states the certain part of the pace gap, not the reported one", () => {
