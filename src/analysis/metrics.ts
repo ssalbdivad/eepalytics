@@ -22,11 +22,10 @@
 
 import { TEAM_BLUE } from "../shared/constants.ts"
 import { dist, half, type Pos, type TeamId } from "../shared/map.ts"
-import type { LcuEvent, LcuGame, LcuTimeline } from "../shared/schema/lcu.ts"
+import type { LcuGame, LcuTimeline } from "../shared/schema/lcu.ts"
 import type { Band, Confidence, Metric } from "../shared/schema/domain.ts"
 import {
 	allEvents,
-	clamp,
 	framesOf,
 	interpScalar,
 	lastFrameMs,
@@ -439,7 +438,6 @@ export const computeMetrics = (
 	const oppId = laneOpponent(roles, match, userId)
 	const role = roles.roles[userId] ?? "UNKNOWN"
 	const durMin = durationMin(match)
-	const lastMs = lastFrameMs(frames)
 
 	const push = (
 		key: string,

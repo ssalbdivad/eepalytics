@@ -68,8 +68,12 @@ const EAR_TIPS = { left: 88, right: 535 }
 /**
  * Splash sizes. The art is 1024² and that is more than any splash needs, so it ships downscaled —
  * a 1.3MB PNG behind a window that appears for under a second is a poor trade.
+ *
+ * 1024 was in this list and produced `splash-1024.png`, a byte-identical copy of the art that
+ * `emit("lillia-art.png", ...)` below already writes — 1.3 MB twice over, in both public dirs,
+ * with no consumer. A resize to the source's own size is not a downscale.
  */
-const SPLASH_SIZES = [512, 1024]
+const SPLASH_SIZES = [512]
 
 app.disableHardwareAcceleration()
 

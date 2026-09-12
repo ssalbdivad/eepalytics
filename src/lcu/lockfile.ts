@@ -146,19 +146,6 @@ export const isPidAlive = async (pid: number): Promise<boolean> => {
 	}
 }
 
-/**
- * `{ lockfile, stale }`. `stale: true` means the file exists but its process is gone — treat
- * it exactly like "no client": every request to that port will refuse the connection.
- */
-export const readLockfileChecked = async (
-	path = LOCKFILE_PATH
-): Promise<{ lockfile: Lockfile | null; stale: boolean }> => {
-	const lockfile = await readLockfile(path)
-	if (!lockfile) return { lockfile: null, stale: false }
-	const alive = await isPidAlive(lockfile.pid)
-	return { lockfile: alive ? lockfile : null, stale: !alive }
-}
-
 /* -------------------------------------------------------------- watching */
 
 export interface WatchLockfileOptions {

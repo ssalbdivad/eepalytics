@@ -58,8 +58,7 @@ export const LEAGUE_DIR = setting("LEAGUE_DIR") ?? "/mnt/c/Games/Riot Games/Leag
 /** NOTE: this file has NO trailing newline. `name:pid:PORT:PASSWORD:https` */
 export const LOCKFILE_PATH = `${LEAGUE_DIR}/lockfile`
 
-/** Where the client puts .rofl files. Both spellings of the same directory. */
-export const REPLAY_DIR_WIN = "C:/Users/ssalb/Documents/League of Legends/Replays"
+/** Where the client puts .rofl files, as WSL sees it. */
 export const REPLAY_DIR_WSL = "/mnt/c/Users/ssalb/Documents/League of Legends/Replays"
 
 /** WSL2 cannot reach Windows 127.0.0.1 over TCP; all League traffic goes through interop. */
@@ -73,14 +72,16 @@ export const WIN_NODE_CANDIDATES = [
 export const LCU_AUTH_USER = "riot"
 /** The in-game Live Client Data API. No auth, self-signed cert, only up while InProgress. */
 export const LIVE_CLIENT_PORT = 2999
-export const LIVE_CLIENT_ORIGIN = `https://127.0.0.1:${LIVE_CLIENT_PORT}`
 
-/** The user. Verified this session. */
+/**
+ * The user. Verified this session.
+ *
+ * Games are matched on PUUID and nothing else: `summonerName` is "" everywhere in the modern LCU
+ * and `accountId` is 0, so the display name is decoration. The Riot id, game name, tag line and
+ * summoner id were all carried here as constants and NOTHING read any of them, which is why they
+ * are gone — a stale identity nobody reads is worse than no identity at all.
+ */
 export const USER_PUUID = setting("PUUID") ?? "188dee22-18d6-5752-ba7f-b69cf3d2506e"
-export const USER_RIOT_ID = setting("RIOT_ID") ?? "Gooskaffur#NA1"
-export const USER_GAME_NAME = "Gooskaffur"
-export const USER_TAG_LINE = "NA1"
-export const USER_SUMMONER_ID = 122474706
 export const PLATFORM_ID = "NA1"
 
 /**
@@ -204,6 +205,3 @@ export const queueName = (queueId: number): string =>
  */
 export const patchOf = (gameVersion: string): string =>
 	gameVersion.split(".").slice(0, 2).join(".")
-
-/** DDragon minimap for Summoner's Rift. Verified 200 OK, 512x512. */
-export const MINIMAP_URL = "https://ddragon.leagueoflegends.com/cdn/16.17.1/img/map/map11.png"

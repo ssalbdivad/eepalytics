@@ -4,6 +4,3 @@ data/
 *.log
 .env
 .DS_Store
-
-# Generated from public/icon.svg by `pnpm icon`. Regenerate rather than review the diffs;
-# the SVG is the source of truth.
