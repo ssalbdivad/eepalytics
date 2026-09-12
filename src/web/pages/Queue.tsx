@@ -2,13 +2,18 @@
  * The queue exists to make deferral legible.
  *
  * Almost everything this app does happens in the background, and the single most common
- * question is "why is nothing happening". The answer is always a gate reason recorded on a
- * job, so this screen prints those reasons verbatim rather than paraphrasing them into a
+ * question is "why is nothing happening". The answer is always a reason the handler recorded on
+ * the job, so this screen prints those reasons VERBATIM rather than paraphrasing them into a
  * spinner.
+ *
+ * It used to paraphrase them, through a `humanReason` translator that matched on the intrusive
+ * gate's phrasings — "you're in a game", "a replay is already playing". That gate is gone with
+ * replay capture, none of those strings can be written any more, and the one reason that IS
+ * still written ("League client is closed") was the one its patterns missed. It was also dead
+ * code: the rows render `jobReason` from `lib/format.ts` and never called it.
  */
 
 import { useMemo, useState } from "react"
-import type { HealthResponse } from "../../shared/schema/api.ts"
 import type { Game, Job, JobState } from "../../shared/schema/domain.ts"
 import { isTerminal } from "../../shared/schema/domain.ts"
 import { api } from "../lib/api.ts"
@@ -23,6 +28,7 @@ import {
 	JOB_STATE_LABEL
 } from "../lib/format.ts"
 import { JobBadge } from "../components/JobBadge.tsx"
+import { Blank, Broken, Loading } from "../components/States.tsx"
 
 const GROUPS: { state: JobState[]; title: string; blurb: string }[] = [
 	{ state: ["leased"], title: "Running now", blurb: "" },
@@ -31,36 +37,11 @@ const GROUPS: { state: JobState[]; title: string; blurb: string }[] = [
 	{ state: ["done", "failed", "expired"], title: "Finished", blurb: "" }
 ]
 
-/**
- * Turn a job's deferral reason into something a person can act on.
- *
- * Reasons arrive as whatever the handler wrote, sometimes still carrying the old `gate G1+G2:`
- * prefix from a stored job row. The prefix is stripped and the phrasings this app actually
- * produces are translated; anything unrecognised passes through verbatim, because a mystery is
- * better than a lie.
- */
-const humanReason = (reason: string | null): string | null => {
-	if (!reason) return null
-	const body = reason.replace(/^gate\s+G[\d+G]*:\s*/i, "")
-
-	if (/a game is in progress|client is in (InProgress|ChampSelect|Matchmaking|ReadyCheck)/i.test(body))
-		return "You're in a game — this will start once you're back at the lobby."
-	if (/a replay is already playing/i.test(body))
-		return "A replay is already open in League. Close it and this will start."
-	if (/not running|client is not running/i.test(body))
-		return "League isn't open. Start it and this will begin on its own."
-	if (/deadline passed/i.test(body))
-		return "Timed out waiting for a chance to run. Ask for it again later."
-	// Unknown reasons pass through rather than being swallowed — a mystery is better than a lie.
-	return body
-}
-
 export interface QueueProps {
-	health: HealthResponse | null
 	eventTick: number
 }
 
-export const Queue = ({ health, eventTick }: QueueProps) => {
+export const Queue = ({ eventTick }: QueueProps) => {
 	const jobs = useResource(signal => api.jobs(signal), [eventTick])
 	const games = useResource(signal => api.games(200, signal), [eventTick])
 	const now = useNow(1000)
@@ -76,6 +57,17 @@ export const Queue = ({ health, eventTick }: QueueProps) => {
 
 	const all = jobs.data?.jobs ?? []
 	const active = all.filter(j => !isTerminal(j.state))
+	/*
+	 * What the page will actually PAINT, which is not the same as what it tracks.
+	 *
+	 * The empty state used to key off `all.length === 0`. That is almost never true — the job
+	 * table keeps its history, so the steady state of this app is a hundred `done` rows and
+	 * nothing pending. With "show completed" off (the default) every group then filtered itself
+	 * down to zero, each returned null, and the page rendered a header reading "0 active · 100
+	 * tracked" above a completely blank screen with no explanation. Count what survives the
+	 * filter instead.
+	 */
+	const visible = all.filter(j => showDone || j.state !== "done")
 
 	return (
 		<div className="page">
@@ -86,7 +78,7 @@ export const Queue = ({ health, eventTick }: QueueProps) => {
 					{jobs.refreshing ? " · refreshing…" : ""}
 				</div>
 				<div className="spacer" />
-				<label className="dim" style={{ fontSize: 12.5, display: "flex", gap: 6, alignItems: "center" }}>
+				<label className="dim" style={{ fontSize: "var(--fs-2)", display: "flex", gap: 6, alignItems: "center" }}>
 					<input
 						type="checkbox"
 						checked={showDone}
@@ -100,35 +92,38 @@ export const Queue = ({ health, eventTick }: QueueProps) => {
 				<button onClick={jobs.reload}>Refresh</button>
 			</div>
 
-			{jobs.error ?
-				<div className="notice bad" style={{ marginBottom: 12 }}>
-					<span className="icon">✗</span>
-					<div>
-						<strong>Can't read the queue.</strong> {jobs.error}
-					</div>
-				</div>
-			:	null}
+			{jobs.error ? <Broken title="Can't read the queue." message={jobs.error} /> : null}
 
-			{sync.error ?
-				<div className="notice bad" style={{ marginBottom: 12 }}>
-					<span className="icon">✗</span>
-					<div>{sync.error}</div>
-				</div>
-			:	null}
+			{sync.error ? <Broken title="Sync failed." message={sync.error} /> : null}
 
-			{all.length === 0 && !jobs.loading ?
-				<div className="empty">
-					<h2>Queue is empty</h2>
-					<p>
-						Nothing is pending. New games queue their own ingest, download, analysis and review
-						jobs the moment they end.
-					</p>
-					<div className="actions">
+			{/*
+			 * This page had the empty state and the broken state and no loading state, so a first
+			 * paint against a slow daemon was a header reading "0 active · 0 tracked" over nothing
+			 * at all — which is the same picture as a queue that is genuinely empty, and the
+			 * opposite claim about what the daemon is doing. Job rows are a fixed height, so the
+			 * shimmer is the shape of what is coming.
+			 */}
+			{jobs.loading ? <Loading rows={5} height={52} label="Reading the queue" /> : null}
+
+			{visible.length === 0 && !jobs.loading ?
+				<Blank
+					title="Queue is empty"
+					actions={
 						<a className="btn" href={href.games}>
 							Back to games
 						</a>
-					</div>
-				</div>
+					}
+				>
+					Nothing is pending. New games queue their own ingest, download, analysis and review
+					jobs the moment they end.
+					{all.length > 0 ?
+						<div className="faint" style={{ marginTop: "var(--sp-2)" }}>
+							{all.length} finished job{all.length === 1 ? "" : "s"}{" "}
+							{all.length === 1 ? "is" : "are"} hidden — tick <strong>show completed</strong> to
+							read them.
+						</div>
+					:	null}
+				</Blank>
 			:	GROUPS.map(group => {
 					const rows = all
 						.filter(j => group.state.includes(j.state))
@@ -140,9 +135,7 @@ export const Queue = ({ health, eventTick }: QueueProps) => {
 							<div className="section-title">
 								{group.title} <span className="chip muted">{rows.length}</span>
 								<span className="rule" />
-								<span className="faint" style={{ textTransform: "none", letterSpacing: 0 }}>
-									{group.blurb}
-								</span>
+								<span className="gloss">{group.blurb}</span>
 							</div>
 							<div className="job-rows">
 								{rows.map(j => (
@@ -180,17 +173,6 @@ const JobRow = ({ job, game, now }: { job: Job; game: Game | null; now: number }
 					<span className="dim" style={{ fontWeight: 500 }}>
 						{subject}
 					</span>
-					{job.intrusive ?
-						// "intrusive" is this codebase's word for it, not the user's. Say what
-						// actually happens: it opens their game and drives it.
-						<span
-							className="chip warn"
-							style={{ marginLeft: 8 }}
-							title="This job opens League and controls it for a few minutes to record your replay. It waits until you are out of a game, and it stops if you start one."
-						>
-							opens your game
-						</span>
-					:	null}
 				</div>
 				<div className={cls("sub", job.state === "deferred" && "reason")}>
 					{JOB_STATE_LABEL[job.state]}

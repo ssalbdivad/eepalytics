@@ -8,6 +8,11 @@
  *   failed → shows the error, and the attempt count that got there
  *   replay-download → shows time left against its 30-minute `deadlineMs`, because that one
  *                     genuinely expires and is never retried
+ *
+ * It does NOT render `job.intrusive`. That flag is vestigial — `replay-capture` was the only job
+ * that ever set it and it is gone — but six rows in the database still carry a 1, and the badge
+ * used to print "⚠ opens your game" over them. Nothing in this build can open the game, so that
+ * was a warning about a thing that cannot happen.
  */
 
 import type { Job, JobKind, JobState } from "../../shared/schema/domain.ts"
@@ -40,7 +45,7 @@ const STATE_LABEL: Record<JobState, string> = {
 }
 
 export const JobBadge = ({ job, showGame = true, nowMs = Date.now() }: JobBadgeProps) => {
-	const kind = KIND_LABEL[job.kind] ?? job.kind
+	const kind = KIND_LABEL[job.kind as JobKind] ?? job.kind
 	const state = STATE_LABEL[job.state] ?? job.state
 
 	const meta: string[] = []
@@ -75,14 +80,6 @@ export const JobBadge = ({ job, showGame = true, nowMs = Date.now() }: JobBadgeP
 			<span className="csk-job__dot" />
 			<span className="csk-job__kind">{kind}</span>
 			<span>{state}</span>
-			{job.intrusive && (
-				<span
-					className="csk-job__meta csk-job__meta--intrusive"
-					title="Opens League and controls it for a few minutes to record your replay. It only runs while you are out of a game, and stops if you start one."
-				>
-					⚠ opens your game
-				</span>
-			)}
 			{metaText && (
 				<span className="csk-job__meta" title={metaText}>
 					{metaText.length > 46 ? `${metaText.slice(0, 45)}…` : metaText}

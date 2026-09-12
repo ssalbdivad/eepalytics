@@ -1,15 +1,48 @@
 /*
- * eepalytics — dark, dense, League-adjacent.
+ * eepalytics — the design system.
  *
- * Palette notes: the golds are the client's own (#c8aa6e / #f0e6d2), the teal is hextech,
- * and the surface stack is deliberately near-black so that champion art and the minimap
- * are the only saturated things on screen. Everything is on an 8px rhythm.
+ * ## The five rules everything here follows
  *
- * Components under src/web/components own their internals; the tokens, bands, chips and
- * button styles below are shared vocabulary so the two halves of the UI match.
+ * 1. ONE TYPE SCALE. Nine steps, `--fs-0` … `--fs-8`, no half-pixels and nothing off-scale.
+ *    Size carries hierarchy; weight and colour only reinforce it. A screen that needs a tenth
+ *    step needs fewer things on it instead.
+ *
+ * 2. ONE SPACING SCALE on a 4px base, `--sp-1` … `--sp-7`. Gaps between sections come from
+ *    `.stack`, not from a `marginBottom` typed into a component. Two surfaces a page apart
+ *    should not breathe differently because two people picked 14 and 16.
+ *
+ * 3. COLOUR MEANS ONE THING EACH. Hue is reserved for VALENCE and for ATTENTION:
+ *      gold   — the player: his own figures, his own baseline, and the primary action
+ *      green  — better than his own baseline; a win
+ *      red    — worse than his own baseline; a loss; a major coaching point
+ *      amber  — needs attention now (a warning, a minor coaching point)
+ *      blue   — a neutral note (info severity)
+ *      teal   — objectives, neutral map furniture, and the live socket
+ *    Nothing else gets a hue. Decoration is a surface step or a hairline, never a colour.
+ *
+ * 4. UNCERTAINTY IS TEXTURE, NEVER HUE. Anything interpolated, unverified, synthetic or too
+ *    noisy to call is drawn dashed and desaturated (`.uncertain`, `--dash`). It used to be
+ *    amber and red, which collided head-on with rule 3: a LOW-confidence GOOD metric rendered
+ *    a red mark beside a green number and read as bad news. Hue says "how it went"; texture
+ *    says "how well we know".
+ *
+ * 5. A MEASURED FIGURE AND A JUDGEMENT NEVER LOOK ALIKE. Measurements are mono, tabular and
+ *    bright (`.num`); judgements are sans, lowercase, dim and carry the words "coach's call"
+ *    (`.judged`). This is the product's whole character — "down 41 CS at 16:00" is checkable
+ *    and "impact: high" is an opinion — so the interface has to carry the difference without
+ *    being read.
+ *
+ * Palette notes: the golds are the client's own (#c8aa6e / #f0e6d2), the teal is hextech, and
+ * the surface stack is deliberately near-black so that champion art and the minimap are the
+ * only saturated things on screen.
+ *
+ * Components under src/web/components own their internals, but they draw from THESE tokens —
+ * `components.css` aliases its `--csk-*` names onto the ones below so the two halves of the UI
+ * cannot drift into two slightly different darks.
  */
 
 :root {
+	/* ---------------------------------------------------------- surfaces */
 	--bg: #07090e;
 	--bg-grad: radial-gradient(1200px 600px at 50% -10%, #101827 0%, #07090e 60%);
 	--panel: #0e1219;
@@ -17,12 +50,18 @@
 	--panel-3: #1a2030;
 	--line: #232a39;
 	--line-soft: #1a202c;
+	/* The hairline a hovered or focused surface moves to, and the one rule-4 draws dashed. */
+	--line-hover: #2c3546;
+	--line-dash: #39415a;
 
+	/* ------------------------------------------------------------- text */
 	--text: #e7e9ef;
 	--text-2: #a9b1c3;
 	--dim: #737d92;
 	--faint: #4d5568;
 
+	/* ------------------------------------------------------------- hues */
+	/* Each of these means exactly one thing — see rule 3 at the top. */
 	--gold: #c8aa6e;
 	--gold-bright: #f0e6d2;
 	--gold-dim: #7a6740;
@@ -42,9 +81,47 @@
 	--sev-minor: #e8b13d;
 	--sev-info: #4a9edb;
 
+	/* --------------------------------------------------- type scale (9) */
+	/*
+	 * 10 · 11 · 12 · 13 · 14 · 16 · 19 · 24 · 32. Body is --fs-4. Anything smaller than
+	 * --fs-0 is unreadable over a dark ground and anything between two steps is a decision
+	 * somebody made once and nobody can repeat.
+	 */
+	--fs-0: 10px; /* eyebrow: uppercase, tracked, always a LABEL and never content */
+	--fs-1: 11px; /* meta: timestamps, provenance, footnotes */
+	--fs-2: 12px; /* controls: buttons, chips, table cells */
+	--fs-3: 13px; /* dense body: rows, help text */
+	--fs-4: 14px; /* body */
+	--fs-5: 16px; /* lead: card titles, the fix line */
+	--fs-6: 19px; /* section heading, coach headline */
+	--fs-7: 24px; /* page title */
+	--fs-8: 32px; /* the one hero figure a screen is allowed */
+
+	/* Figures get their own three steps so a number never lands between text sizes. */
+	--fs-num-sm: 13px;
+	--fs-num: 18px;
+	--fs-num-lg: 28px;
+
+	--tracking-eyebrow: 0.09em;
+
+	/* ------------------------------------------------- space scale (4px) */
+	--sp-1: 4px;
+	--sp-2: 8px;
+	--sp-3: 12px;
+	--sp-4: 16px;
+	--sp-5: 24px;
+	--sp-6: 32px;
+	--sp-7: 48px;
+
+	/* The gap between two sections of a page. One number, one place. */
+	--gap-section: var(--sp-4);
+
+	/* ------------------------------------------------------------ shape */
 	--radius: 10px;
 	--radius-sm: 6px;
 	--shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.35);
+	/* Rule 4's one border: everything uncertain wears it. */
+	--dash: 1px dashed var(--line-dash);
 
 	--mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, monospace;
 	--sans: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -82,9 +159,14 @@ body {
 	background-attachment: fixed;
 	color: var(--text);
 	font-family: var(--sans);
-	font-size: 14px;
-	line-height: 1.45;
+	font-size: var(--fs-4);
+	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
+	/*
+	 * Every digit the same width, everywhere, forever. This app is a column of numbers that are
+	 * compared down the page; proportional figures make 187 and 111 different lengths and the
+	 * eye stops being able to scan a list of rows.
+	 */
 	font-variant-numeric: tabular-nums;
 }
 
@@ -103,6 +185,18 @@ h4 {
 	margin: 0;
 	font-weight: 650;
 	letter-spacing: -0.01em;
+}
+h1 {
+	font-size: var(--fs-7);
+}
+h2 {
+	font-size: var(--fs-6);
+}
+h3 {
+	font-size: var(--fs-5);
+}
+h4 {
+	font-size: var(--fs-4);
 }
 
 ::selection {
@@ -123,8 +217,8 @@ h4 {
 	z-index: 50;
 	display: flex;
 	align-items: center;
-	gap: 18px;
-	padding: 0 20px;
+	gap: var(--sp-5);
+	padding: 0 var(--sp-5);
 	height: 52px;
 	/*
 	 * The bar itself must NOT scroll. Making it the scroll container let the right-hand status
@@ -149,12 +243,12 @@ h4 {
 	gap: 8px;
 	font-weight: 750;
 	letter-spacing: -0.02em;
-	font-size: 15px;
+	font-size: var(--fs-5);
 	color: var(--gold-bright);
 }
 .brand small {
 	font-weight: 500;
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--faint);
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
@@ -172,11 +266,11 @@ h4 {
 }
 
 .nav a {
-	padding: 6px 12px;
+	padding: 6px var(--sp-3);
 	border-radius: var(--radius-sm);
 	color: var(--text-2);
 	font-weight: 550;
-	font-size: 13px;
+	font-size: var(--fs-3);
 	border: 1px solid transparent;
 }
 .nav a:hover {
@@ -190,7 +284,7 @@ h4 {
 }
 .nav a .count {
 	margin-left: 6px;
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--gold);
 }
 
@@ -211,7 +305,7 @@ h4 {
 	border-radius: 999px;
 	background: var(--panel-2);
 	border: 1px solid var(--line);
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	color: var(--text-2);
 	white-space: nowrap;
 }
@@ -253,27 +347,48 @@ h4 {
 	}
 }
 
+/*
+ * The page is a STACK, not a pile of components each nudging itself down with its own margin.
+ *
+ * Every top-level child is separated by exactly one `--gap-section`, set here, once. Before
+ * this, six surfaces carried `style={{ marginBottom: 14 }}` and two carried 12 and 20, so the
+ * rhythm of a screen depended on which component happened to render — which is precisely the
+ * kind of low-grade noise that makes an interface feel busy without anything on it being wrong.
+ */
 .page {
 	flex: 1;
 	width: 100%;
 	max-width: 1500px;
 	margin: 0 auto;
-	padding: 22px 20px 80px;
+	padding: var(--sp-5) var(--sp-5) var(--sp-7);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-section);
+}
+
+/* A nested stack, for a column inside a page that wants the same rhythm. */
+.stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-section);
+}
+.stack--tight {
+	gap: var(--sp-2);
 }
 
 .page-head {
 	display: flex;
 	align-items: flex-end;
-	gap: 14px;
-	margin-bottom: 16px;
+	gap: var(--sp-3);
 	flex-wrap: wrap;
 }
 .page-head h1 {
-	font-size: 21px;
+	font-size: var(--fs-7);
+	line-height: 1.15;
 }
 .page-head .sub {
 	color: var(--dim);
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	padding-bottom: 2px;
 }
 .page-head .spacer {
@@ -290,19 +405,37 @@ h4 {
 }
 
 .panel-pad {
-	padding: 16px;
+	padding: var(--sp-4);
 }
 
+/*
+ * The one heading style inside a panel: an eyebrow, a hairline, and optionally a plain-language
+ * gloss. Small and quiet on purpose — a panel's title should say what you are looking at and
+ * then get out of the way of the numbers, which is the opposite of how a heading usually works.
+ */
 .section-title {
-	font-size: 10.5px;
-	letter-spacing: 0.13em;
+	font-size: var(--fs-0);
+	letter-spacing: var(--tracking-eyebrow);
 	text-transform: uppercase;
 	color: var(--faint);
 	font-weight: 700;
-	margin-bottom: 10px;
+	margin-bottom: var(--sp-3);
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--sp-2);
+}
+/*
+ * The gloss beside a section title — "compared with your own recent games, never with a ladder
+ * average". Six call sites each re-set `textTransform` and `letterSpacing` inline to undo the
+ * eyebrow; it is a real part of the vocabulary, so it gets a name.
+ */
+.section-title .gloss {
+	text-transform: none;
+	letter-spacing: 0;
+	font-weight: 500;
+	color: var(--faint);
+	font-size: var(--fs-1);
+	min-width: 0;
 }
 .section-title .rule {
 	flex: 1;
@@ -313,7 +446,7 @@ h4 {
 button,
 .btn {
 	font: inherit;
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	font-weight: 600;
 	color: var(--text);
 	background: var(--panel-2);
@@ -330,7 +463,7 @@ button,
 button:hover:not(:disabled),
 .btn:hover {
 	background: var(--panel-3);
-	border-color: #303a4d;
+	border-color: var(--line-hover);
 }
 button:disabled {
 	opacity: 0.45;
@@ -371,7 +504,7 @@ select:focus-visible {
 
 .btn-sm {
 	padding: 3px 8px;
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 }
 
 .chip {
@@ -380,7 +513,7 @@ select:focus-visible {
 	gap: 5px;
 	padding: 2px 7px;
 	border-radius: 4px;
-	font-size: 10.5px;
+	font-size: var(--fs-0);
 	font-weight: 650;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
@@ -412,22 +545,6 @@ select:focus-visible {
 	color: var(--faint);
 }
 
-.chip-sev-major {
-	border-color: rgba(224, 82, 95, 0.45);
-	color: var(--sev-major);
-	background: rgba(224, 82, 95, 0.1);
-}
-.chip-sev-minor {
-	border-color: rgba(232, 177, 61, 0.4);
-	color: var(--sev-minor);
-	background: rgba(232, 177, 61, 0.08);
-}
-.chip-sev-info {
-	border-color: rgba(74, 158, 219, 0.35);
-	color: var(--sev-info);
-	background: rgba(74, 158, 219, 0.08);
-}
-
 .band-good {
 	color: var(--band-good);
 }
@@ -437,8 +554,187 @@ select:focus-visible {
 .band-bad {
 	color: var(--band-bad);
 }
-.band-unknown {
-	color: var(--band-unknown);
+
+/* ------------------------------------------------- measured vs judged */
+/*
+ * Rule 5 of the system, made into two classes.
+ *
+ * `.num` is a MEASUREMENT: something read off the timeline, the end-of-game block or the live
+ * feed, which he could in principle go and check. Mono, tabular, bright, with its unit set
+ * smaller and dimmer so the figure itself is what the eye lands on.
+ *
+ * `.judged` is the coach's OPINION: impact, actionability, whether a trade was worth it. Sans,
+ * lowercase, dim, italic label. It must never acquire mono digits — an ordinal reads as a
+ * judgement but a monospaced figure reads as a measurement, and this app's one unforgivable
+ * failure is dressing the second up as the first.
+ */
+.num {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	color: var(--text);
+	letter-spacing: -0.01em;
+}
+
+.judged {
+	font-family: var(--sans);
+	font-size: var(--fs-1);
+	color: var(--dim);
+	font-style: normal;
+}
+
+/* ------------------------------------------------------- uncertainty */
+/*
+ * Rule 4. Interpolated, unverified, synthetic, or too noisy to call — all of it is drawn the
+ * same way and NONE of it is drawn in a hue. A dashed edge and a desaturated fill are legible
+ * at a glance, survive being next to a green number, and cannot be confused with "this is bad".
+ */
+.uncertain {
+	border: var(--dash) !important;
+	color: var(--dim);
+	background: repeating-linear-gradient(
+		135deg,
+		transparent 0 6px,
+		rgba(255, 255, 255, 0.016) 6px 12px
+	);
+}
+.chip.uncertain {
+	background: repeating-linear-gradient(
+		135deg,
+		var(--panel-2) 0 6px,
+		rgba(255, 255, 255, 0.02) 6px 12px
+	);
+	color: var(--dim);
+}
+/* Inline, inside a sentence: "you *looked* alone out there". */
+.hedge {
+	border-bottom: var(--dash);
+	color: var(--text-2);
+	cursor: help;
+}
+
+/* ------------------------------------------------------- data tables */
+/*
+ * One table treatment for the whole app.
+ *
+ * Three things make a table of figures scannable and all three were missing: the numeric
+ * columns are right-aligned and monospaced so the digits line up into a column you can read
+ * down; the header is an eyebrow rather than another row of body text; and the rules between
+ * rows are hairlines, because a full border on every cell draws a grid and the eye then reads
+ * the grid instead of the numbers.
+ */
+.table-wrap {
+	overflow-x: auto;
+	/* A table is the one thing allowed to be wider than the page — inside itself. */
+	max-width: 100%;
+}
+.dtable {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--fs-2);
+}
+.dtable th {
+	text-align: left;
+	font-size: var(--fs-0);
+	text-transform: uppercase;
+	letter-spacing: var(--tracking-eyebrow);
+	color: var(--faint);
+	font-weight: 700;
+	padding: var(--sp-2) var(--sp-3);
+	border-bottom: 1px solid var(--line);
+	white-space: nowrap;
+}
+.dtable td {
+	padding: var(--sp-2) var(--sp-3);
+	border-bottom: 1px solid var(--line-soft);
+	vertical-align: middle;
+	white-space: nowrap;
+}
+.dtable tbody tr:last-child td {
+	border-bottom: none;
+}
+.dtable tbody tr:hover {
+	background: var(--panel-2);
+}
+/* Figures: right-aligned and monospaced so they stack into a readable column. */
+.dtable th.num-col,
+.dtable td.num-col {
+	text-align: right;
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+}
+.dtable td.num-col {
+	color: var(--text);
+}
+/* Actions live at the right edge of a row, always. */
+.dtable td:last-child,
+.dtable th:last-child {
+	text-align: right;
+}
+.dtable .win {
+	color: var(--win);
+	font-weight: 600;
+}
+.dtable .loss {
+	color: var(--loss);
+	font-weight: 600;
+}
+
+/* ------------------------------------------------- the three states */
+/*
+ * Every surface in this app has exactly three failure-adjacent states and they used to be
+ * drawn eight different ways: a bare `<div className="dim">no data</div>` here, a centred
+ * `.empty` block there, a red `.notice` for a thing that was merely absent. They now have one
+ * shape each, and the shape says which state it is before a word is read.
+ *
+ *   .state--loading  a shimmer the size of what is coming — never a spinner, because a
+ *                    spinner says "wait" without saying what for
+ *   .state--empty    quiet, centred, and it always names the reason and the way out
+ *   .state--broken   left-aligned, red-edged, and it prints what actually failed
+ */
+.state {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+	border-radius: var(--radius-sm);
+}
+.state--empty {
+	align-items: center;
+	text-align: center;
+	padding: var(--sp-6) var(--sp-4);
+	color: var(--dim);
+	font-size: var(--fs-3);
+}
+.state--empty .state__title {
+	color: var(--text-2);
+	font-size: var(--fs-4);
+	font-weight: 600;
+}
+.state--empty .state__why {
+	max-width: 58ch;
+	color: var(--dim);
+}
+.state--empty .state__do {
+	margin-top: var(--sp-2);
+	display: flex;
+	gap: var(--sp-2);
+	flex-wrap: wrap;
+	justify-content: center;
+}
+/* Inline variant: a state inside a panel that already has a heading. */
+.state--inline {
+	padding: var(--sp-4) var(--sp-3);
+	align-items: flex-start;
+	text-align: left;
+}
+.state--inline .state__do {
+	justify-content: flex-start;
+}
+/* A `<Broken>` renders inside a `.notice`, where the actions need their own air. */
+.notice .state__do {
+	display: flex;
+	gap: var(--sp-2);
+	flex-wrap: wrap;
+	margin-top: var(--sp-2);
 }
 
 .mono {
@@ -451,9 +747,6 @@ select:focus-visible {
 .faint {
 	color: var(--faint);
 }
-.nowrap {
-	white-space: nowrap;
-}
 
 hr.rule {
 	border: 0;
@@ -463,15 +756,35 @@ hr.rule {
 
 /* --------------------------------------------------- notices & states */
 
+/*
+ * A route that renders nothing but a banner still has to sit inside the page's gutter.
+ *
+ * `.page` is what supplies this app's margins, and a screen whose error or loading state
+ * returns a bare `.notice` or `.empty` — the debrief does, for both — becomes a direct child of
+ * the shell instead. The banner then ran edge to edge across a 1500px window while every other
+ * state on the same screen was inset by `--sp-5`, which reads as a different application having
+ * taken over. Rather than make every page remember the wrapper, the shell gives a route-root
+ * state the box `.page` would have given it: same max width, same gutter, same rhythm.
+ */
+.app > .notice,
+.app > .empty,
+.app > .state,
+.app > .skeleton-stack {
+	width: calc(100% - var(--sp-5) * 2);
+	max-width: calc(1500px - var(--sp-5) * 2);
+	margin: var(--sp-5) auto var(--sp-7);
+}
+
 .notice {
 	display: flex;
-	gap: 10px;
+	gap: var(--sp-3);
 	align-items: flex-start;
-	padding: 11px 14px;
+	padding: var(--sp-3) var(--sp-4);
 	border-radius: var(--radius-sm);
 	border: 1px solid var(--line);
 	background: var(--panel-2);
-	font-size: 13px;
+	font-size: var(--fs-3);
+	line-height: 1.55;
 	color: var(--text-2);
 }
 .notice .icon {
@@ -500,7 +813,7 @@ hr.rule {
 .notice pre {
 	margin: 6px 0 0;
 	font-family: var(--mono);
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--dim);
 	white-space: pre-wrap;
 	word-break: break-word;
@@ -508,34 +821,42 @@ hr.rule {
 	overflow: auto;
 }
 
+/*
+ * The PAGE-level empty: a whole screen with nothing on it, which is a different problem from a
+ * panel with nothing in it. It gets room, a real heading, and usually numbered steps — "no
+ * games yet" is onboarding, not a status. Inside a panel use `.state--empty` (or `<Blank>`),
+ * which is the same voice at a quarter of the size.
+ */
 .empty {
 	text-align: center;
-	padding: 56px 24px;
+	padding: var(--sp-7) var(--sp-5);
 	color: var(--dim);
 }
 .empty h2 {
 	color: var(--text);
-	font-size: 18px;
-	margin-bottom: 8px;
+	font-size: var(--fs-6);
+	margin-bottom: var(--sp-2);
 }
 .empty p {
-	max-width: 560px;
-	margin: 0 auto 8px;
-	font-size: 13.5px;
+	max-width: 58ch;
+	margin: 0 auto var(--sp-2);
+	font-size: var(--fs-3);
+	line-height: 1.6;
 }
 .empty ol {
-	max-width: 560px;
-	margin: 18px auto;
+	max-width: 58ch;
+	margin: var(--sp-4) auto;
 	text-align: left;
-	font-size: 13px;
+	font-size: var(--fs-3);
 	line-height: 1.9;
 	color: var(--text-2);
 }
 .empty .actions {
-	margin-top: 18px;
+	margin-top: var(--sp-4);
 	display: flex;
-	gap: 10px;
+	gap: var(--sp-2);
 	justify-content: center;
+	flex-wrap: wrap;
 }
 
 .skeleton {
@@ -549,9 +870,16 @@ hr.rule {
 		background-position: -200% 0;
 	}
 }
-.skeleton-row {
-	height: 78px;
-	margin-bottom: 8px;
+/* A shimmer stack the shape of the thing that is coming. */
+.skeleton-stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+}
+@media (prefers-reduced-motion: reduce) {
+	.skeleton {
+		animation: none;
+	}
 }
 
 /* ----------------------------------------------------------- filters */
@@ -559,9 +887,21 @@ hr.rule {
 .filters {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--sp-2);
 	flex-wrap: wrap;
-	margin-bottom: 14px;
+}
+
+/*
+ * The pager under the games list. Centred rather than right-aligned: it is the end of the list,
+ * not a toolbar, and a control that sits under the last row's right edge reads as belonging to
+ * that row.
+ */
+.pager {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--sp-3);
+	padding: var(--sp-4) 0 var(--sp-2);
 }
 
 .seg {
@@ -591,7 +931,7 @@ input[type="number"],
 input[type="search"],
 select {
 	font: inherit;
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	background: var(--panel);
 	color: var(--text);
 	border: 1px solid var(--line);
@@ -613,19 +953,31 @@ input[type="checkbox"] {
 }
 
 /* --------------------------------------------------------- game list */
+/*
+ * The scannable row.
+ *
+ * The figures used to be an inline flex of sentences — "KDA 5/3/7 1.4 KDA · CS 187 6.2/m · VS
+ * 22 · DMG 18.4k · Gold 12.3k" — so every row's numbers started at a different x and nothing
+ * could be compared down the list without reading each row in full. That is the failure mode
+ * this screen exists to avoid: he opens it to find WHICH game hurt, which is a comparison.
+ *
+ * They are now a fixed five-track grid with the unit in the label and the figure in tabular
+ * mono, so the CS column is a column. The grade and the result sit together on the right,
+ * because both answer "how did it go" as opposed to "what happened in it".
+ */
 
 .game-rows {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--sp-2);
 }
 
 .game-row {
 	display: grid;
 	grid-template-columns: 52px minmax(150px, 1fr) auto;
-	gap: 14px;
+	gap: var(--sp-4);
 	align-items: center;
-	padding: 12px 14px;
+	padding: var(--sp-3) var(--sp-4);
 	background: var(--panel);
 	border: 1px solid var(--line);
 	border-left: 3px solid var(--line);
@@ -633,8 +985,7 @@ input[type="checkbox"] {
 	cursor: pointer;
 	transition:
 		border-color 0.12s ease,
-		background 0.12s ease,
-		transform 0.12s ease;
+		background 0.12s ease;
 	text-align: left;
 	width: 100%;
 	font: inherit;
@@ -642,8 +993,7 @@ input[type="checkbox"] {
 }
 .game-row:hover {
 	background: var(--panel-2);
-	border-color: #2c3546;
-	transform: translateX(1px);
+	border-color: var(--line-hover);
 }
 .game-row.win {
 	border-left-color: var(--win);
@@ -664,7 +1014,7 @@ input[type="checkbox"] {
 	background: var(--panel-3);
 	border: 1px solid var(--line);
 	border-radius: 4px;
-	font-size: 10px;
+	font-size: var(--fs-0);
 	padding: 0 4px;
 	color: var(--text-2);
 	font-family: var(--mono);
@@ -672,33 +1022,71 @@ input[type="checkbox"] {
 
 .game-row .main {
 	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 }
 .game-row .line1 {
 	display: flex;
 	align-items: baseline;
-	gap: 8px;
+	gap: var(--sp-2);
 	flex-wrap: wrap;
+	font-size: var(--fs-2);
 }
 .game-row .name {
 	font-weight: 680;
-	font-size: 14.5px;
+	font-size: var(--fs-5);
 	color: var(--text);
+	letter-spacing: -0.01em;
 }
-.game-row .line2 {
+
+/* The aligned figure grid. Fixed tracks — `1fr` would re-fit per row and defeat the point. */
+.stat-row {
+	display: grid;
+	/*
+	 * Per-column widths, not `repeat(5, …)`. KDA carries a second reading that can be the word
+	 * "Perfect" rather than a ratio, and on one equal track it ran under the CS column; the
+	 * others are three or four characters and were being given room they never use.
+	 */
+	grid-template-columns: 116px 92px 68px 80px 72px;
+	justify-content: start;
+	column-gap: var(--sp-3);
+	row-gap: var(--sp-2);
+}
+.stat-cell {
 	display: flex;
-	gap: 14px;
-	flex-wrap: wrap;
-	margin-top: 3px;
-	font-size: 12.5px;
-	color: var(--text-2);
+	flex-direction: column;
+	gap: 1px;
+	min-width: 0;
 }
-.game-row .line2 b {
+.stat-cell .k {
+	font-size: var(--fs-0);
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	color: var(--faint);
+	font-weight: 600;
+	white-space: nowrap;
+}
+.stat-cell .v {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: var(--fs-3);
 	color: var(--text);
-	font-weight: 650;
+	white-space: nowrap;
+	/* A long secondary reading truncates inside its own cell rather than over the next one. */
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
+/* The secondary reading of the same measurement — a rate, a ratio — never the same weight. */
+.stat-cell .v em {
+	font-style: normal;
+	color: var(--faint);
+	font-size: var(--fs-1);
+	margin-left: 4px;
+}
+
 .game-row .hook {
-	margin-top: 6px;
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	color: var(--gold);
 	font-style: italic;
 	display: -webkit-box;
@@ -707,7 +1095,6 @@ input[type="checkbox"] {
 	overflow: hidden;
 }
 .game-row .badges {
-	margin-top: 7px;
 	display: flex;
 	gap: 6px;
 	flex-wrap: wrap;
@@ -718,12 +1105,12 @@ input[type="checkbox"] {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: 4px;
+	gap: 6px;
 	text-align: right;
 }
 .game-row .result {
 	font-weight: 750;
-	font-size: 13px;
+	font-size: var(--fs-3);
 	letter-spacing: 0.06em;
 }
 .game-row .result.win {
@@ -733,75 +1120,26 @@ input[type="checkbox"] {
 	color: var(--loss);
 }
 .game-row .when {
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	color: var(--dim);
 }
 .game-row .go {
 	color: var(--faint);
-	font-size: 12px;
+	font-size: var(--fs-1);
 }
 
-/* ------------------------------------------------------ game review */
+/* Under ~620px five fixed tracks no longer fit; they wrap to a grid of three. */
+@media (max-width: 620px) {
+	.stat-row {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
 
-.review-head {
-	display: flex;
-	gap: 16px;
-	align-items: center;
-	padding: 14px 16px;
-	margin-bottom: 14px;
-	flex-wrap: wrap;
-}
-.review-head .title {
-	display: flex;
-	flex-direction: column;
-	gap: 3px;
-	min-width: 200px;
-}
-.review-head h1 {
-	font-size: 20px;
-	display: flex;
-	align-items: baseline;
-	gap: 9px;
-	flex-wrap: wrap;
-}
-.review-head .meta {
-	color: var(--dim);
-	font-size: 12.5px;
-	display: flex;
-	gap: 10px;
-	flex-wrap: wrap;
-}
-.review-head .score {
-	margin-left: auto;
-	display: flex;
-	gap: 20px;
-	align-items: center;
-}
-.review-head .stat {
-	text-align: center;
-}
-.review-head .stat .v {
-	font-size: 17px;
-	font-weight: 700;
-	font-family: var(--mono);
-}
-.review-head .stat .k {
-	font-size: 10px;
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	color: var(--faint);
-}
-.review-head .actions {
-	display: flex;
-	gap: 8px;
-	align-items: center;
-	flex-wrap: wrap;
-}
+/* ----------------------------------------- the coach block (trends) */
 
 .coach {
 	position: relative;
-	padding: 18px 20px;
-	margin-bottom: 14px;
+	padding: var(--sp-5);
 	background:
 		linear-gradient(180deg, rgba(200, 170, 110, 0.07) 0%, rgba(200, 170, 110, 0) 70%),
 		var(--panel);
@@ -810,7 +1148,7 @@ input[type="checkbox"] {
 	border-radius: var(--radius);
 }
 .coach .who {
-	font-size: 10.5px;
+	font-size: var(--fs-0);
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
 	color: var(--gold-dim);
@@ -818,20 +1156,20 @@ input[type="checkbox"] {
 	margin-bottom: 7px;
 }
 .coach .headline {
-	font-size: 19px;
+	font-size: var(--fs-6);
 	font-weight: 700;
 	line-height: 1.32;
 	color: var(--gold-bright);
 	letter-spacing: -0.015em;
 }
 .coach .encouragement {
-	margin-top: 9px;
+	margin-top: var(--sp-2);
 	color: var(--text-2);
-	font-size: 13.5px;
-	max-width: 90ch;
+	font-size: var(--fs-4);
+	max-width: 76ch;
 }
 .coach .goals {
-	margin: 14px 0 0;
+	margin: var(--sp-4) 0 0;
 	padding: 0;
 	list-style: none;
 	display: flex;
@@ -840,9 +1178,9 @@ input[type="checkbox"] {
 }
 .coach .goals li {
 	display: flex;
-	gap: 10px;
+	gap: var(--sp-3);
 	align-items: flex-start;
-	font-size: 13.5px;
+	font-size: var(--fs-3);
 	color: var(--text);
 	background: var(--panel-2);
 	border: 1px solid var(--line);
@@ -853,58 +1191,19 @@ input[type="checkbox"] {
 .coach .goals li .n {
 	font-family: var(--mono);
 	color: var(--gold);
-	font-size: 12px;
+	font-size: var(--fs-1);
 	padding-top: 1px;
+	/* "GOAL 1" is one token. It was wrapping onto two lines inside its own flex item. */
+	flex: none;
+	white-space: nowrap;
 }
 .coach .foot {
-	margin-top: 12px;
-	font-size: 11px;
+	margin-top: var(--sp-3);
+	font-size: var(--fs-1);
 	color: var(--faint);
 	display: flex;
-	gap: 12px;
+	gap: var(--sp-3);
 	flex-wrap: wrap;
-}
-
-.review-body {
-	display: grid;
-	grid-template-columns: minmax(320px, 460px) minmax(340px, 1fr);
-	gap: 14px;
-	align-items: start;
-}
-@media (max-width: 1100px) {
-	.review-body {
-		grid-template-columns: 1fr;
-	}
-}
-
-.left-col,
-.right-col {
-	display: flex;
-	flex-direction: column;
-	gap: 14px;
-}
-.left-col {
-	position: sticky;
-	top: 66px;
-}
-@media (max-width: 1100px) {
-	.left-col {
-		position: static;
-	}
-}
-
-.cursor-bar {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	font-size: 12px;
-	color: var(--dim);
-}
-.cursor-bar .t {
-	font-family: var(--mono);
-	font-size: 15px;
-	color: var(--gold-bright);
-	font-weight: 650;
 }
 
 .feedback-list {
@@ -912,67 +1211,75 @@ input[type="checkbox"] {
 	flex-direction: column;
 	gap: 10px;
 }
-.feedback-slot {
-	border-radius: var(--radius);
-	border: 1px solid transparent;
-	transition:
-		border-color 0.14s ease,
-		box-shadow 0.14s ease;
-	cursor: pointer;
-}
-.feedback-slot.selected {
-	border-color: var(--gold-dim);
-	box-shadow: 0 0 0 1px rgba(200, 170, 110, 0.18);
-}
-
-.media-strip {
-	display: flex;
-	gap: 8px;
-	flex-wrap: wrap;
-}
-.media-thumb {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	align-items: flex-start;
-	padding: 7px 10px;
-	background: var(--panel-2);
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-	cursor: pointer;
-	font-size: 11.5px;
-}
-.media-thumb:hover {
-	border-color: var(--gold-dim);
-}
-.media-thumb .t {
-	font-family: var(--mono);
-	color: var(--gold);
-}
-.media-thumb .k {
-	color: var(--faint);
-	font-size: 10px;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-}
-
 /* ------------------------------------------------------------ trends */
+
+/*
+ * A disclosure around each half of the charts, styled like a section title so the page reads
+ * the same as it did when both grids were always open. The count sits in the summary because
+ * "Too noisy to call" with no number attached gives no idea what opening it costs.
+ */
+.trend-group > summary {
+	display: flex;
+	align-items: baseline;
+	gap: var(--sp-3);
+	cursor: pointer;
+	list-style: none;
+	padding: var(--sp-2) 0;
+	border-bottom: 1px solid var(--line);
+}
+.trend-group > summary::-webkit-details-marker {
+	display: none;
+}
+.trend-group > summary::before {
+	content: "▸";
+	color: var(--dim);
+	font-size: var(--fs-2);
+	flex: none;
+}
+.trend-group[open] > summary::before {
+	content: "▾";
+}
+.trend-group > summary .t {
+	font-size: var(--fs-4);
+	font-weight: 650;
+	letter-spacing: -0.01em;
+}
+.trend-group > summary .n {
+	font-family: var(--mono);
+	font-size: var(--fs-1);
+	color: var(--gold);
+	flex: none;
+}
+.trend-group > summary .gloss {
+	font-size: var(--fs-1);
+	color: var(--faint);
+	min-width: 0;
+}
+.trend-group[open] > .trend-grid {
+	margin-top: var(--sp-4);
+}
 
 .trend-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-	gap: 14px;
+	/*
+	 * 300px rather than 360: at 1500px this is four columns instead of three, which is a third
+	 * off the height of a 19-chart group for no loss of legibility — the charts are 480 wide in
+	 * their own viewBox and scale.
+	 */
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: var(--gap-section);
 }
 
 .trend-card {
-	padding: 14px;
+	padding: var(--sp-4);
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: var(--sp-3);
 }
+/* Rule 4: too noisy to call is DASHED, never amber. */
 .trend-card.untrendable {
 	border-style: dashed;
-	border-color: #2e3446;
+	border-color: var(--line-dash);
 	background: repeating-linear-gradient(
 			135deg,
 			rgba(255, 255, 255, 0.012) 0 10px,
@@ -987,29 +1294,33 @@ input[type="checkbox"] {
 	flex-wrap: wrap;
 }
 .trend-card .head h3 {
-	font-size: 14px;
+	font-size: var(--fs-4);
 }
 .trend-card .head .mean {
 	margin-left: auto;
 	font-family: var(--mono);
-	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+	font-size: var(--fs-3);
 	color: var(--text);
 }
 .trend-card .note {
-	font-size: 12px;
+	font-size: var(--fs-2);
 	color: var(--dim);
 	border-left: 2px solid var(--line);
-	padding-left: 9px;
+	padding-left: var(--sp-2);
+	line-height: 1.55;
 }
 .trend-card.untrendable .note {
-	border-left-color: var(--warn);
+	border-left-style: dashed;
+	border-left-color: var(--line-dash);
 	color: var(--text-2);
 }
 
 /* ------------------------------------------------------------- queue */
 
 .job-group {
-	margin-bottom: 20px;
+	display: flex;
+	flex-direction: column;
 }
 .job-rows {
 	display: flex;
@@ -1019,9 +1330,9 @@ input[type="checkbox"] {
 .job-row {
 	display: grid;
 	grid-template-columns: auto minmax(150px, 1fr) auto auto;
-	gap: 12px;
+	gap: var(--sp-3);
 	align-items: center;
-	padding: 9px 13px;
+	padding: var(--sp-2) var(--sp-3);
 	background: var(--panel);
 	border: 1px solid var(--line);
 	border-radius: var(--radius-sm);
@@ -1029,12 +1340,19 @@ input[type="checkbox"] {
 .job-row .what {
 	min-width: 0;
 }
+/*
+ * `display: block` because two callers build this row out of `<span>`s rather than `<div>`s —
+ * the moment lists on the review page. Without it the title and its sub-line ran together on
+ * one line: "Enemy took riftherald at 15:40Objective missed · river (bot)".
+ */
 .job-row .kind {
+	display: block;
 	font-weight: 640;
-	font-size: 13px;
+	font-size: var(--fs-3);
 }
 .job-row .sub {
-	font-size: 11.5px;
+	display: block;
+	font-size: var(--fs-1);
 	color: var(--dim);
 	margin-top: 2px;
 	word-break: break-word;
@@ -1043,7 +1361,7 @@ input[type="checkbox"] {
 	color: var(--warn);
 }
 .job-row .when {
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	color: var(--faint);
 	white-space: nowrap;
 }
@@ -1057,32 +1375,99 @@ input[type="checkbox"] {
 
 /* ---------------------------------------------------------- settings */
 
+/*
+ * Two columns at most.
+ *
+ * `minmax(380px, 1fr)` gave three on a wide monitor, and the panels are wildly uneven — "The
+ * coach" is ten fields of explanatory prose and "Replays" is two — so the third column was a
+ * third of the screen holding nothing, while the prose ran in 380px gutters. Two columns of
+ * ~640px read as paragraphs and the ragged bottom edge halves.
+ */
 .settings-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-	gap: 14px;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+	gap: var(--gap-section);
 	align-items: start;
+	max-width: 1180px;
+}
+
+/* -------------------------------------------------- a choice with reasons */
+/*
+ * A radio whose option needs a paragraph and its evidence. Settings had this three times over
+ * as a nest of inline styles with its own font sizes; the sizes drifted off the scale and the
+ * selected state was a hand-written border string.
+ */
+.choice {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0 var(--sp-3);
+	align-items: start;
+	padding: var(--sp-3);
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--line-soft);
+	background: transparent;
+	cursor: pointer;
+}
+.choice:hover {
+	border-color: var(--line);
+}
+.choice.on {
+	border-color: var(--gold-dim);
+	background: var(--panel-2);
+}
+.choice input {
+	margin-top: 3px;
+}
+.choice__title {
+	font-size: var(--fs-3);
+	font-weight: 600;
+	color: var(--text);
+}
+.choice__blurb {
+	font-size: var(--fs-1);
+	color: var(--dim);
+	margin-top: 3px;
+	max-width: 62ch;
+	line-height: 1.55;
+}
+/* What was measured about this option, as opposed to what it claims. */
+.choice__evidence {
+	font-size: var(--fs-1);
+	color: var(--faint);
+	margin-top: var(--sp-1);
+	max-width: 62ch;
+	line-height: 1.55;
+}
+.choice__evidence b {
+	color: var(--gold-dim);
+}
+
+/* A short status line under a control: the result of a test, a save, a check. */
+.field-status {
+	margin-top: 6px;
+	font-size: var(--fs-2);
 }
 
 .field {
 	display: grid;
 	grid-template-columns: 1fr auto;
-	gap: 4px 14px;
+	gap: var(--sp-1) var(--sp-4);
 	align-items: center;
-	padding: 11px 0;
+	padding: var(--sp-3) 0;
 	border-bottom: 1px solid var(--line-soft);
 }
 .field:last-child {
 	border-bottom: 0;
 }
 .field .label {
-	font-size: 13px;
+	font-size: var(--fs-3);
 	font-weight: 600;
 	color: var(--text);
 }
 .field .help {
 	grid-column: 1 / -1;
-	font-size: 11.5px;
+	font-size: var(--fs-1);
+	line-height: 1.55;
 	color: var(--dim);
 	max-width: 62ch;
 }
@@ -1105,7 +1490,7 @@ input[type="checkbox"] {
 	gap: 12px;
 }
 .slider-row .ends {
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--faint);
 	white-space: nowrap;
 }
@@ -1113,11 +1498,10 @@ input[type="checkbox"] {
 .save-bar {
 	position: sticky;
 	bottom: 0;
-	margin-top: 16px;
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	padding: 11px 14px;
+	gap: var(--sp-3);
+	padding: var(--sp-3) var(--sp-4);
 	background: rgba(14, 18, 25, 0.94);
 	backdrop-filter: blur(10px);
 	border: 1px solid var(--line);
@@ -1130,8 +1514,8 @@ input[type="checkbox"] {
 .kv {
 	display: grid;
 	grid-template-columns: auto 1fr;
-	gap: 6px 16px;
-	font-size: 12.5px;
+	gap: 6px var(--sp-4);
+	font-size: var(--fs-2);
 }
 .kv dt {
 	color: var(--dim);
@@ -1139,7 +1523,7 @@ input[type="checkbox"] {
 .kv dd {
 	margin: 0;
 	font-family: var(--mono);
-	font-size: 12px;
+	font-size: var(--fs-2);
 	color: var(--text);
 	word-break: break-all;
 }
@@ -1152,8 +1536,7 @@ input[type="checkbox"] {
 
 /* ------------------------------------------------- selection affordances */
 
-.job-row.selected,
-.media-thumb.selected {
+.job-row.selected {
 	border-color: var(--gold-dim);
 	background: var(--panel-2);
 	box-shadow: 0 0 0 1px rgba(200, 170, 110, 0.16);
@@ -1165,51 +1548,18 @@ input[type="checkbox"] {
 
 /* ============================================================== replays */
 /*
+ * The replay list is a `.dtable` like every other table in the app — this file used to carry a
+ * second, near-identical table implementation for this one screen.
+ *
  * The coverage chip is the important column: it is the difference between a review with
- * timestamps and map positions, and one that only ever saw end-of-game totals. Colour it like
- * a band so it reads at a glance rather than needing the tooltip.
+ * timestamps and map positions, and one that only ever saw end-of-game totals. "Stats only" is
+ * a LIMIT OF THE DATA, not a warning, so it is dashed and neutral rather than amber — see rule
+ * 4. Amber here said "something is wrong"; nothing is wrong, there is simply less of it.
  */
-
-.replay-table {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 12.5px;
-}
-.replay-table th {
-	text-align: left;
-	font-size: 10.5px;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: var(--dim);
-	font-weight: 600;
-	padding: 10px 12px;
-	border-bottom: 1px solid var(--line);
-	white-space: nowrap;
-}
-.replay-table td {
-	padding: 9px 12px;
-	border-bottom: 1px solid var(--line-soft);
-	vertical-align: middle;
-	white-space: nowrap;
-}
-.replay-table tbody tr:last-child td {
-	border-bottom: none;
-}
-.replay-table tbody tr:hover {
-	background: var(--panel-2);
-}
-.replay-table .win {
-	color: var(--win);
-	font-weight: 600;
-}
-.replay-table .loss {
-	color: var(--loss);
-	font-weight: 600;
-}
 
 .cov {
 	display: inline-block;
-	font-size: 10.5px;
+	font-size: var(--fs-0);
 	padding: 3px 9px;
 	border-radius: 999px;
 	border: 1px solid var(--line);
@@ -1217,16 +1567,20 @@ input[type="checkbox"] {
 	background: var(--panel-2);
 	color: var(--text-2);
 	cursor: help;
+	white-space: nowrap;
 }
 .cov--full {
 	border-left-color: var(--band-good);
 }
 .cov--stats {
-	border-left-color: var(--warn);
+	border-style: dashed;
+	border-color: var(--line-dash);
+	border-left-width: 3px;
+	color: var(--dim);
 }
 .cov--none {
 	border-left-color: var(--band-unknown);
-	color: var(--dim);
+	color: var(--faint);
 }
 
 /* ================================================================= form */
@@ -1247,15 +1601,10 @@ input[type="checkbox"] {
 	flex-direction: column;
 	gap: 3px;
 }
-.csk-form__avg-label {
-	font-size: 10px;
-	text-transform: uppercase;
-	letter-spacing: 0.07em;
-	color: var(--dim);
-}
 .csk-form__avg-value {
 	font-family: var(--mono);
-	font-size: 34px;
+	font-variant-numeric: tabular-nums;
+	font-size: var(--fs-8);
 	line-height: 1;
 	color: var(--gold-bright);
 	display: flex;
@@ -1263,17 +1612,17 @@ input[type="checkbox"] {
 	gap: 9px;
 }
 .csk-form__avg-value em {
-	font-size: 13px;
+	font-size: var(--fs-3);
 	font-style: normal;
 }
 .csk-form__avg-value em.up { color: var(--win); }
 .csk-form__avg-value em.down { color: var(--loss); }
 .csk-form__avg-note {
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--faint);
 }
 .csk-form__verdict {
-	font-size: 14px;
+	font-size: var(--fs-4);
 	color: var(--text);
 	margin-top: 2px;
 }
@@ -1283,15 +1632,16 @@ input[type="checkbox"] {
 	gap: 5px;
 }
 .csk-form__recent-label {
-	font-size: 10px;
+	font-size: var(--fs-0);
 	text-transform: uppercase;
-	letter-spacing: 0.07em;
-	color: var(--dim);
+	letter-spacing: var(--tracking-eyebrow);
+	color: var(--faint);
+	font-weight: 600;
 }
 .csk-form__chips { display: flex; gap: 5px; }
 .csk-form__chip {
 	font-family: var(--mono);
-	font-size: 12px;
+	font-size: var(--fs-2);
 	font-weight: 700;
 	padding: 5px 9px;
 	border-radius: var(--radius-sm);
@@ -1300,8 +1650,8 @@ input[type="checkbox"] {
 	color: var(--text-2);
 	cursor: help;
 }
-.csk-form__chip.r-sp { color: #ffd98a; border-color: #c8aa6e; }
-.csk-form__chip.r-s  { color: #f0e6d2; border-color: var(--gold-dim); }
+.csk-form__chip.r-sp { color: #ffd98a; border-color: var(--gold); }
+.csk-form__chip.r-s  { color: var(--gold-bright); border-color: var(--gold-dim); }
 .csk-form__chip.r-a  { color: var(--win); border-color: rgba(51,185,133,0.45); }
 .csk-form__chip.r-b  { color: var(--blue); border-color: rgba(74,158,219,0.4); }
 .csk-form__chip.r-d  { color: var(--warn); border-color: rgba(232,177,61,0.4); }
@@ -1322,12 +1672,12 @@ input[type="checkbox"] {
 .csk-focus__head {
 	display: flex;
 	align-items: center;
-	gap: 9px;
-	font-size: 13px;
+	gap: var(--sp-2);
+	font-size: var(--fs-3);
 }
 .csk-focus__n {
 	font-family: var(--mono);
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--gold);
 	border: 1px solid var(--gold-dim);
 	border-radius: 50%;
@@ -1339,14 +1689,14 @@ input[type="checkbox"] {
 	flex: none;
 }
 .csk-focus__count {
-	font-size: 10.5px;
+	font-size: var(--fs-0);
 	color: var(--dim);
 	font-family: var(--mono);
 }
 .csk-focus__fixes {
 	margin: 6px 0 0;
 	padding-left: 17px;
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	line-height: 1.55;
 	color: var(--text-2);
 }
@@ -1354,7 +1704,7 @@ input[type="checkbox"] {
 .csk-focus__link {
 	display: inline-block;
 	margin-top: 5px;
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--dim);
 }
 .csk-focus__link:hover { color: var(--gold); }
@@ -1411,7 +1761,6 @@ body.is-live {
 .live h1,
 .live h2,
 .live h3,
-.live__log,
 .csk-screen {
 	-webkit-user-select: text;
 	user-select: text;
@@ -1604,42 +1953,6 @@ body.is-live {
 /* Own line. Inline it ran straight into the end of the sentence: "...screaming.15 games". */
 .live--wide .live__focus-row em { display: block; margin-top: 3px; }
 
-/* Window controls: a frameless window has no titlebar, so the page supplies them. */
-
-/* Wide-mode stat strip: the figures worth reading from across a desk. */
-.live__stats {
-	display: flex;
-	gap: 44px;
-	margin-top: 30px;
-	padding-top: 22px;
-	border-top: 1px solid var(--line-soft);
-	flex-wrap: wrap;
-}
-.live__stat { display: flex; flex-direction: column; gap: 4px; }
-.live__stat .v {
-	font-family: var(--mono);
-	font-size: 46px;
-	line-height: 1;
-	color: var(--gold-bright);
-}
-.live__stat .v.warn { color: var(--warn); }
-.live__stat .k {
-	font-size: 11px;
-	text-transform: uppercase;
-	letter-spacing: 0.07em;
-	color: var(--dim);
-}
-
-/* Compact stat strip: the numbers are the point of the small window too, so they show at both
-   sizes — just smaller, tighter, and without the borrowed breathing room of wide mode. */
-.live--compact .live__stats {
-	gap: 20px;
-	margin-top: 14px;
-	padding-top: 12px;
-}
-.live--compact .live__stat .v { font-size: 26px; }
-.live--compact .live__stat .k { font-size: 9px; }
-
 /* ========================================================= screen coach */
 
 .csk-screen {
@@ -1750,16 +2063,6 @@ body.is-live {
 .live--wide .live__cols { flex: 1 1 auto; }
 .live--wide .live__main { display: flex; flex-direction: column; }
 
-.live--wide .live__stats {
-	gap: 0;
-	margin-top: auto;          /* push the numbers to the bottom of the available space */
-	padding-top: 26px;
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
-}
-.live--wide .live__stat .v { font-size: 78px; letter-spacing: -0.02em; }
-.live--wide .live__stat .k { font-size: 12px; letter-spacing: 0.09em; }
-
 /* An objective timer is the one thing worth shouting about — it is time-critical and cheap to
    act on, unlike everything else here. */
 .live--wide .live__nudge--objective {
@@ -1771,14 +2074,3 @@ body.is-live {
 }
 .live--wide .live__nudge--objective .live__icon { font-size: 26px; }
 .live--wide .live__nudge--objective .live__nudge-src { padding-left: 42px; }
-
-/*
- * The coach block is hidden in compact mode, never unmounted.
- *
- * `display: none` rather than a `size === "wide" &&` guard: unmounting stops every MediaStream
- * track and closes the Gemini WebSocket, so collapsing the overlay — with the button whose
- * tooltip offers to grow it onto a second monitor — used to end the coaching session outright.
- */
-.live__coach--hidden {
-	display: none;
-}

@@ -19,7 +19,7 @@ import type { ChatMessage, Media, Metric, Moment } from "../../shared/schema/dom
 import { API } from "../../shared/schema/api.ts"
 import { api, errorMessage } from "../lib/api.ts"
 import { fmtClock } from "../../shared/time.ts"
-import { MOMENT_KIND_LABEL, momentColor } from "./MiniMap.tsx"
+import { MOMENT_KIND_LABEL, momentColor } from "../lib/format.ts"
 import "./components.css"
 
 export interface CoachChatProps {
@@ -86,11 +86,11 @@ const Citations = ({
 							key={p.id}
 							className="csk-chat-shot"
 							onClick={() => onPick(cited.find(c => c.id === p.momentId) ?? cited[0]!)}
-							title={`${fmtClock(p.tSec)} — ${p.source === "replay" ? "captured from your replay" : "drawn from your position data"}`}
+							title={`${fmtClock(p.tSec)} — ${p.source === "generated" ? "drawn from your position data" : "a real frame of your own game"}`}
 						>
 							<img src={API.media(p.id)} alt={`Map at ${fmtClock(p.tSec)}`} loading="lazy" />
 							<span className="csk-chat-shot-tag">
-								{p.source === "replay" ? "replay" : "drawn"} · {fmtClock(p.tSec)}
+								{p.source === "generated" ? "drawn" : "real"} · {fmtClock(p.tSec)}
 							</span>
 						</button>
 					))}

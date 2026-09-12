@@ -17,10 +17,12 @@ import { useCallback, useState } from "react"
 import type { ReplayFileInfo } from "../../shared/schema/api.ts"
 import { api, errorMessage } from "../lib/api.ts"
 import { href, useResource } from "../lib/hooks.ts"
-import { cls, fmtAgo, fmtDuration, fmtKda } from "../lib/format.ts"
+import { cls, fmtAgo, fmtDuration, fmtKda, fmtQty } from "../lib/format.ts"
 import { ChampIcon } from "../components/ChampIcon.tsx"
+import { Blank, Broken, Loading } from "../components/States.tsx"
 
-const mb = (bytes: number): string => `${(bytes / 1_048_576).toFixed(1)} MB`
+/** Megabytes, at the policy's grain — `14.3 MB`, `1,024 MB`. */
+const mb = (bytes: number): string => `${fmtQty(bytes / 1_048_576)} MB`
 
 /** What this file can actually support, said plainly. */
 const coverage = (
@@ -80,56 +82,54 @@ export const Replays = ({ eventTick }: ReplaysProps) => {
 			<div className="page-head">
 				<h1>Replays</h1>
 				{d && (
-					<p className="dim">
+					<div className="sub">
 						{d.replays.length} file{d.replays.length === 1 ? "" : "s"} in{" "}
-						<code>{d.folder}</code>
-					</p>
+						<code className="mono">{d.folder}</code>
+					</div>
 				)}
 			</div>
 
-			{res.loading && <div className="dim">Reading the replay folder…</div>}
+			{res.loading && <Loading rows={4} height={44} label="Reading the replay folder" />}
 
 			{res.error !== null && (
-				<div className="notice bad">
-					<span className="icon">✗</span>
-					<div>
-						<strong>Could not read the replay folder.</strong> {res.error}
-					</div>
-				</div>
+				<Broken title="Could not read the replay folder." message={res.error} />
 			)}
 
 			{d && d.replays.length === 0 && (
-				<div className="notice warn">
-					<span className="icon">⚠</span>
-					<div>
-						<strong>No .rofl files in {d.folder}</strong>
-						<div style={{ marginTop: 6 }}>
-							If your replays live somewhere else, set the folder in{" "}
-							<a href={href.settings}>Settings</a>. Replays expire on Riot's side about 30
-							minutes after a game ends, so anything not downloaded by then is gone for good.
-						</div>
-					</div>
-				</div>
+				<Blank
+					title={`No .rofl files in ${d.folder}`}
+					actions={
+						<a className="btn" href={href.settings}>
+							Set the replay folder
+						</a>
+					}
+				>
+					If your replays live somewhere else, set the folder in Settings. Replays expire on
+					Riot's side about 30 minutes after a game ends, so anything not downloaded by then is
+					gone for good.
+				</Blank>
 			)}
 
-			{error !== null && <div className="notice bad" style={{ marginBottom: 12 }}>
-				<span className="icon">✗</span>
-				<div>{error}</div>
-			</div>}
+			{error !== null && <Broken title="Couldn't coach that file." message={error} />}
 
 			{d && d.replays.length > 0 && (
-				<div className="panel">
-					<table className="replay-table">
+				<div className="panel table-wrap">
+					<table className="dtable">
 						<thead>
 							<tr>
 								<th />
 								<th>Game</th>
 								<th>Result</th>
-								<th>KDA</th>
-								<th>CS</th>
-								<th>Length</th>
-								<th>Patch</th>
-								<th>Size</th>
+								{/*
+								 * Every figure column is right-aligned and monospaced, so KDA, CS, length
+								 * and size each read as a column down the page rather than as five ragged
+								 * left edges. Units live in the header, never repeated in every cell.
+								 */}
+								<th className="num-col">KDA</th>
+								<th className="num-col">CS</th>
+								<th className="num-col">Length</th>
+								<th className="num-col">Patch</th>
+								<th className="num-col">Size</th>
 								<th>Coverage</th>
 								<th />
 							</tr>
@@ -151,15 +151,15 @@ export const Replays = ({ eventTick }: ReplaysProps) => {
 											:	<span className={r.win ? "win" : "loss"}>{r.win ? "Win" : "Loss"}</span>
 											}
 										</td>
-										<td className="mono">
+										<td className="num-col">
 											{r.kills === null ? "—" : fmtKda(r.kills, r.deaths ?? 0, r.assists ?? 0)}
 										</td>
-										<td className="mono">{r.cs ?? "—"}</td>
-										<td className="mono">
+										<td className="num-col">{r.cs ?? "—"}</td>
+										<td className="num-col">
 											{r.durationSec === null ? "—" : fmtDuration(r.durationSec)}
 										</td>
-										<td className="mono">{r.patch ?? "—"}</td>
-										<td className="mono faint">{mb(r.bytes)}</td>
+										<td className="num-col">{r.patch ?? "—"}</td>
+										<td className="num-col faint">{mb(r.bytes)}</td>
 										<td>
 											<span className={`cov cov--${cov.tone}`} title={cov.title}>
 												{cov.label}

@@ -3,70 +3,82 @@
    Owned by the `web-viz` unit. Every rule here is namespaced under a `csk-`
    class so the page shell can style around it without collisions.
 
-   Dark, dense, League-appropriate. Two ideas drive the palette:
+   THESE ARE ALIASES, NOT A SECOND PALETTE. Every `--csk-*` name below now
+   points at the token of the same role in `src/web/styles.css`, which is the
+   one place any of these values is decided.
+
+   They used to be independent literals, and they had DRIFTED: the panel here
+   was #101820 against the shell's #0e1219, the hairline #23323f against
+   #232a39, and `--csk-dim` (#9aabb9) was three steps brighter than `--dim`
+   (#737d92). The result was visible — a `.csk-panel` sitting inside a
+   `.panel-pad` was a slightly different dark than the panel around it, and
+   secondary text changed brightness depending on which half of the app had
+   rendered it. Nobody could point at it, and everybody could feel it.
+
+   The palette's meaning lives in styles.css, under rule 3. In short:
      * gold  = the user / their own achievements
-     * red   = deaths and damage taken
+     * red   = deaths, damage taken, worse than his own baseline
      * teal  = objectives and neutral map furniture
-   and one rule drives the typography: an uncertain number must LOOK uncertain.
+   and one rule drives the typography: an uncertain number must LOOK uncertain
+   — dashed and desaturated, never in a hue (rule 4).
    ========================================================================= */
 
 .csk-root,
 :root {
-	--csk-bg: #080c11;
-	--csk-panel: #101820;
-	--csk-panel-2: #16212c;
-	--csk-panel-3: #1c2836;
-	--csk-line: #23323f;
-	--csk-line-soft: #1a242e;
+	--csk-bg: var(--bg);
+	--csk-panel: var(--panel);
+	--csk-panel-2: var(--panel-2);
+	--csk-panel-3: var(--panel-3);
+	--csk-line: var(--line);
+	--csk-line-soft: var(--line-soft);
 
-	--csk-text: #e6edf3;
-	--csk-dim: #9aabb9;
-	--csk-faint: #64778a;
-	--csk-ghost: #3d4c5a;
+	--csk-text: var(--text);
+	--csk-dim: var(--text-2);
+	--csk-faint: var(--dim);
+	--csk-ghost: var(--faint);
 
-	--csk-gold: #c8aa6e;
-	--csk-gold-lit: #f0e6d2;
-	--csk-teal: #0ac8b9;
+	--csk-gold: var(--gold);
+	--csk-gold-lit: var(--gold-bright);
+	--csk-teal: var(--teal);
 	--csk-teal-deep: #0596aa;
-	--csk-blue: #4c8fdc;
-	--csk-red: #e0475b;
+	--csk-blue: var(--blue);
+	--csk-red: var(--loss);
 	--csk-red-deep: #8f2233;
-	--csk-green: #3fbf7f;
-	--csk-amber: #e0a010;
-	--csk-violet: #a98bfa;
+	--csk-green: var(--win);
+	--csk-amber: var(--warn);
 
-	--csk-good: var(--csk-green);
-	--csk-ok: var(--csk-dim);
-	--csk-bad: var(--csk-red);
-	--csk-unknown: var(--csk-ghost);
+	--csk-good: var(--band-good);
+	--csk-ok: var(--band-ok);
+	--csk-bad: var(--band-bad);
+	--csk-unknown: var(--band-unknown);
 
+	/* The two team colours. Not valence — which side of the map someone is on. */
 	--csk-blue-team: #3d7ebd;
 	--csk-red-team: #c04a56;
 
-	--csk-radius: 6px;
-	--csk-radius-lg: 10px;
-	--csk-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, monospace;
-	--csk-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	--csk-radius: var(--radius-sm);
+	--csk-radius-lg: var(--radius);
+	--csk-mono: var(--mono);
+	--csk-sans: var(--sans);
 }
 
 /* --------------------------------------------------------------- primitives */
 
-.csk-panel {
-	background: var(--csk-panel);
-	border: 1px solid var(--csk-line);
-	border-radius: var(--csk-radius-lg);
-}
-
+/*
+ * The in-component empty. Same family as `.state--empty` in styles.css — same colour, same
+ * size, same voice — so a panel that has nothing in it looks the same whether the page drew the
+ * state or the component did. It used to be italic, which made "no data" read as an aside about
+ * the app rather than a fact about the game.
+ */
 .csk-empty {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	min-height: 64px;
-	padding: 18px 14px;
+	padding: var(--sp-4) var(--sp-3);
 	color: var(--csk-faint);
-	font: 400 12.5px/1.5 var(--csk-sans);
+	font: 400 var(--fs-3)/1.55 var(--csk-sans);
 	text-align: center;
-	font-style: italic;
 }
 
 .csk-chip {
@@ -78,7 +90,7 @@
 	border-radius: 999px;
 	background: var(--csk-panel-2);
 	color: var(--csk-dim);
-	font: 500 11px/1.5 var(--csk-mono);
+	font: 500 var(--fs-1)/1.5 var(--csk-mono);
 	white-space: nowrap;
 }
 
@@ -93,7 +105,7 @@ button.csk-chip {
  */
 .csk-chip__conf {
 	font-style: normal;
-	font-size: 9px;
+	font-size: var(--fs-0);
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	padding: 0 4px;
@@ -102,12 +114,19 @@ button.csk-chip {
 	opacity: 0.85;
 }
 
+/*
+ * Rule 4: uncertainty is texture, never hue. These were `--csk-dim` and amber; the amber put a
+ * warning colour on a moment that is merely interpolated, which is not a warning about anything
+ * — it is a statement about how the number was obtained. The dashed border above already says
+ * "not measured"; brightness now says how much not.
+ */
 .csk-chip__conf--medium {
-	color: var(--csk-dim);
+	color: var(--csk-faint);
 }
 
 .csk-chip__conf--low {
-	color: var(--csk-warn, #d8a24a);
+	color: var(--csk-ghost);
+	border-style: dashed;
 }
 
 button.csk-chip:hover {
@@ -116,8 +135,7 @@ button.csk-chip:hover {
 	background: var(--csk-panel-3);
 }
 
-button.csk-chip:focus-visible,
-.csk-focusable:focus-visible {
+button.csk-chip:focus-visible {
 	outline: 2px solid var(--csk-teal);
 	outline-offset: 2px;
 }
@@ -126,491 +144,6 @@ button.csk-chip:focus-visible,
 	color: var(--csk-gold);
 	border-color: #4a3f2a;
 }
-
-/* ============================================================== MiniMap === */
-
-.csk-minimap {
-	position: relative;
-	width: 100%;
-	aspect-ratio: 1 / 1;
-	background: var(--csk-bg);
-	border: 1px solid var(--csk-line);
-	border-radius: var(--csk-radius-lg);
-	overflow: hidden;
-	user-select: none;
-}
-
-.csk-minimap__svg {
-	display: block;
-	width: 100%;
-	height: 100%;
-}
-
-.csk-minimap__mark {
-	cursor: pointer;
-	transition: opacity 0.12s;
-}
-
-.csk-minimap__mark--dim {
-	opacity: 0.22;
-}
-
-.csk-minimap__mark:focus {
-	outline: none;
-}
-
-.csk-minimap__mark:focus-visible circle,
-.csk-minimap__mark:focus-visible path,
-.csk-minimap__mark:focus-visible rect {
-	stroke: var(--csk-teal);
-	stroke-width: 4;
-}
-
-.csk-minimap__tip {
-	position: absolute;
-	z-index: 5;
-	max-width: 210px;
-	padding: 6px 8px;
-	transform: translate(-50%, calc(-100% - 12px));
-	background: #05090d;
-	border: 1px solid var(--csk-line);
-	border-radius: var(--csk-radius);
-	box-shadow: 0 6px 22px rgba(0, 0, 0, 0.65);
-	pointer-events: none;
-	font: 400 11.5px/1.45 var(--csk-sans);
-	color: var(--csk-text);
-}
-
-.csk-minimap__tip b {
-	display: block;
-	color: var(--csk-gold-lit);
-	font-weight: 600;
-}
-
-.csk-minimap__tip span {
-	color: var(--csk-faint);
-	font-family: var(--csk-mono);
-	font-size: 10.5px;
-}
-
-.csk-minimap__legend {
-	position: absolute;
-	left: 8px;
-	bottom: 8px;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px 10px;
-	max-width: calc(100% - 16px);
-	padding: 5px 7px;
-	background: rgba(5, 9, 13, 0.78);
-	border: 1px solid var(--csk-line-soft);
-	border-radius: var(--csk-radius);
-	font: 500 10px/1.4 var(--csk-mono);
-	color: var(--csk-faint);
-	pointer-events: none;
-}
-
-.csk-minimap__legend i {
-	display: inline-block;
-	width: 7px;
-	height: 7px;
-	margin-right: 4px;
-	border-radius: 2px;
-	vertical-align: baseline;
-}
-
-.csk-minimap__note {
-	position: absolute;
-	right: 8px;
-	top: 8px;
-	padding: 4px 7px;
-	background: rgba(5, 9, 13, 0.78);
-	border: 1px solid var(--csk-line-soft);
-	border-radius: var(--csk-radius);
-	font: 500 10px/1.4 var(--csk-mono);
-	color: var(--csk-faint);
-	pointer-events: none;
-	text-align: right;
-}
-
-/* ========================================================= GameTimeline === */
-
-.csk-timeline {
-	position: relative;
-	width: 100%;
-	padding: 6px 0 22px;
-	user-select: none;
-}
-
-.csk-timeline__track {
-	position: relative;
-	height: 46px;
-	background: linear-gradient(180deg, var(--csk-panel-2), var(--csk-panel));
-	border: 1px solid var(--csk-line);
-	border-radius: var(--csk-radius);
-	cursor: pointer;
-	touch-action: none;
-}
-
-.csk-timeline__track:focus-visible {
-	outline: 2px solid var(--csk-teal);
-	outline-offset: 2px;
-}
-
-.csk-timeline__phase {
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	background: rgba(200, 170, 110, 0.05);
-	border-right: 1px dashed var(--csk-line);
-	pointer-events: none;
-}
-
-.csk-timeline__tick {
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	width: 1px;
-	background: var(--csk-line-soft);
-	pointer-events: none;
-}
-
-.csk-timeline__tick-label {
-	position: absolute;
-	bottom: 4px;
-	transform: translateX(-50%);
-	font: 500 10px/1 var(--csk-mono);
-	color: var(--csk-faint);
-	white-space: nowrap;
-	pointer-events: none;
-}
-
-.csk-timeline__mark {
-	position: absolute;
-	bottom: 5px;
-	width: 3px;
-	transform: translateX(-50%);
-	border-radius: 2px 2px 0 0;
-	padding: 0;
-	border: none;
-	cursor: pointer;
-	transition: width 0.1s, filter 0.1s;
-}
-
-.csk-timeline__mark:hover,
-.csk-timeline__mark--sel {
-	width: 5px;
-	filter: brightness(1.5);
-}
-
-.csk-timeline__mark:focus-visible {
-	outline: 2px solid var(--csk-teal);
-	outline-offset: 1px;
-}
-
-.csk-timeline__head {
-	position: absolute;
-	top: -4px;
-	bottom: -4px;
-	width: 2px;
-	background: var(--csk-gold-lit);
-	box-shadow: 0 0 8px rgba(240, 230, 210, 0.55);
-	transform: translateX(-50%);
-	pointer-events: none;
-}
-
-.csk-timeline__head::before {
-	content: "";
-	position: absolute;
-	top: -3px;
-	left: 50%;
-	width: 9px;
-	height: 9px;
-	transform: translateX(-50%) rotate(45deg);
-	background: var(--csk-gold-lit);
-	border-radius: 2px;
-}
-
-.csk-timeline__readout {
-	position: absolute;
-	right: 0;
-	top: -20px;
-	font: 600 12px/1 var(--csk-mono);
-	color: var(--csk-gold);
-}
-
-.csk-timeline__hint {
-	position: absolute;
-	left: 0;
-	top: -20px;
-	font: 500 10px/1 var(--csk-mono);
-	color: var(--csk-ghost);
-}
-
-/* ============================================================ MetricGrid === */
-
-.csk-metrics {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-	gap: 8px;
-}
-
-.csk-metric {
-	/*
-	 * Grid items default to `min-width: auto`, so a long unbroken label pushes the cell wider
-	 * than its track and the whole grid gains a horizontal scroll — measured at 45px, which is
-	 * enough to clip the last card's value.
-	 */
-	min-width: 0;
-	position: relative;
-	padding: 9px 10px 10px;
-	background: var(--csk-panel);
-	border: 1px solid var(--csk-line);
-	border-left: 3px solid var(--csk-unknown);
-	border-radius: var(--csk-radius);
-	cursor: help;
-}
-
-.csk-metric--good { border-left-color: var(--csk-good); }
-.csk-metric--bad { border-left-color: var(--csk-bad); }
-.csk-metric--ok { border-left-color: var(--csk-ok); }
-.csk-metric--unknown { border-left-color: var(--csk-unknown); }
-
-/* An uncertain number must LOOK uncertain — this is a product requirement. */
-.csk-metric--low {
-	border-style: dashed;
-	border-left-style: dashed;
-	background: repeating-linear-gradient(
-		135deg,
-		var(--csk-panel),
-		var(--csk-panel) 6px,
-		rgba(255, 255, 255, 0.014) 6px,
-		rgba(255, 255, 255, 0.014) 12px
-	);
-}
-
-.csk-metric--low .csk-metric__value {
-	color: var(--csk-dim);
-}
-
-.csk-metric__label {
-	font: 500 10.5px/1.3 var(--csk-sans);
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	color: var(--csk-faint);
-	margin-bottom: 4px;
-}
-
-.csk-metric__value {
-	font: 600 21px/1.1 var(--csk-mono);
-	color: var(--csk-gold-lit);
-	display: flex;
-	align-items: baseline;
-	gap: 3px;
-}
-
-.csk-metric__unit {
-	font-size: 11px;
-	font-weight: 500;
-	color: var(--csk-faint);
-}
-
-.csk-metric__approx {
-	color: var(--csk-ghost);
-	font-weight: 400;
-}
-
-.csk-metric__foot {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 6px;
-	margin-top: 6px;
-	font: 500 10.5px/1.3 var(--csk-mono);
-}
-
-.csk-metric__delta--good { color: var(--csk-green); }
-.csk-metric__delta--bad { color: var(--csk-red); }
-.csk-metric__delta--flat { color: var(--csk-faint); }
-.csk-metric__delta--none { color: var(--csk-ghost); font-style: italic; }
-
-.csk-conf {
-	display: inline-flex;
-	align-items: center;
-	gap: 3px;
-	font: 500 9.5px/1 var(--csk-mono);
-	letter-spacing: 0.03em;
-	text-transform: uppercase;
-}
-
-.csk-conf--high { color: var(--csk-ghost); }
-.csk-conf--medium { color: var(--csk-amber); }
-.csk-conf--low { color: var(--csk-red); }
-
-.csk-conf__dots i {
-	display: inline-block;
-	width: 4px;
-	height: 4px;
-	margin-right: 2px;
-	border-radius: 50%;
-	background: currentColor;
-	opacity: 0.25;
-}
-
-.csk-conf__dots i.on { opacity: 1; }
-
-.csk-metric__tip {
-	position: absolute;
-	left: -1px;
-	right: -1px;
-	top: calc(100% + 6px);
-	z-index: 20;
-	padding: 7px 9px;
-	min-width: 200px;
-	background: #05090d;
-	border: 1px solid var(--csk-line);
-	border-radius: var(--csk-radius);
-	box-shadow: 0 8px 26px rgba(0, 0, 0, 0.7);
-	font: 400 11.5px/1.5 var(--csk-sans);
-	color: var(--csk-dim);
-	opacity: 0;
-	visibility: hidden;
-	transition: opacity 0.12s;
-	pointer-events: none;
-}
-
-.csk-metric:hover .csk-metric__tip,
-.csk-metric:focus-within .csk-metric__tip {
-	opacity: 1;
-	visibility: visible;
-}
-
-.csk-metric__tip em {
-	display: block;
-	margin-top: 5px;
-	color: var(--csk-faint);
-	font-style: normal;
-	font-size: 10.5px;
-	font-family: var(--csk-mono);
-}
-
-/* ============================================================ Scoreboard === */
-
-.csk-score {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-}
-
-.csk-score__team {
-	border: 1px solid var(--csk-line);
-	border-radius: var(--csk-radius-lg);
-	overflow: hidden;
-	background: var(--csk-panel);
-}
-
-.csk-score__head {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-	padding: 6px 10px;
-	font: 600 11px/1.4 var(--csk-sans);
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-}
-
-.csk-score__team--100 .csk-score__head {
-	background: linear-gradient(90deg, rgba(61, 126, 189, 0.22), transparent);
-	color: #9dc6f0;
-}
-
-.csk-score__team--200 .csk-score__head {
-	background: linear-gradient(90deg, rgba(192, 74, 86, 0.22), transparent);
-	color: #f0a3ab;
-}
-
-.csk-score__result {
-	font-family: var(--csk-mono);
-	font-size: 10.5px;
-}
-
-.csk-score__result--win { color: var(--csk-green); }
-.csk-score__result--loss { color: var(--csk-red); }
-
-.csk-score__table {
-	width: 100%;
-	border-collapse: collapse;
-	font: 500 11.5px/1.4 var(--csk-mono);
-}
-
-.csk-score__table th {
-	padding: 4px 8px;
-	text-align: right;
-	font: 500 9.5px/1.4 var(--csk-sans);
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-	color: var(--csk-ghost);
-	border-bottom: 1px solid var(--csk-line-soft);
-	white-space: nowrap;
-}
-
-.csk-score__table th:first-child,
-.csk-score__table th:nth-child(2) { text-align: left; }
-
-.csk-score__table td {
-	padding: 5px 8px;
-	text-align: right;
-	color: var(--csk-dim);
-	border-bottom: 1px solid var(--csk-line-soft);
-	white-space: nowrap;
-}
-
-.csk-score__table tr:last-child td { border-bottom: none; }
-
-.csk-score__row--user td {
-	background: rgba(200, 170, 110, 0.09);
-	color: var(--csk-text);
-}
-
-.csk-score__row--user .csk-score__name { color: var(--csk-gold-lit); font-weight: 600; }
-
-.csk-score__cell-champ {
-	width: 1%;
-	text-align: left !important;
-	padding-right: 0 !important;
-}
-
-.csk-score__player {
-	display: flex;
-	align-items: center;
-	gap: 7px;
-	text-align: left;
-}
-
-.csk-score__name {
-	max-width: 15ch;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	font-family: var(--csk-sans);
-	font-size: 12px;
-}
-
-.csk-score__role {
-	font-size: 9.5px;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-	color: var(--csk-faint);
-}
-
-.csk-score__role--soft {
-	color: var(--csk-ghost);
-	font-style: italic;
-}
-
-.csk-score__kda b { color: var(--csk-text); }
-.csk-score__kda .d { color: var(--csk-red); }
 
 /* ============================================================= ChampIcon === */
 
@@ -667,16 +200,16 @@ button.csk-chip:focus-visible,
 }
 
 .csk-trend__label {
-	font: 600 12px/1.3 var(--csk-sans);
+	font: 600 var(--fs-2)/1.3 var(--csk-sans);
 	color: var(--csk-text);
 }
 
 .csk-trend__mean {
-	font: 500 11px/1.3 var(--csk-mono);
+	font: 500 var(--fs-1)/1.3 var(--csk-mono);
 	color: var(--csk-gold);
 }
 
-.csk-trend__mean small { color: var(--csk-faint); font-size: 10px; }
+.csk-trend__mean small { color: var(--csk-faint); font-size: var(--fs-0); }
 
 .csk-trend__svg { display: block; width: 100%; height: auto; }
 
@@ -687,15 +220,23 @@ button.csk-chip:focus-visible,
 	margin-top: 7px;
 	padding-top: 7px;
 	border-top: 1px solid var(--csk-line-soft);
-	font: 400 11px/1.45 var(--csk-sans);
+	font: 400 var(--fs-1)/1.45 var(--csk-sans);
 	color: var(--csk-faint);
 }
 
-.csk-trend__note--warn { color: var(--csk-amber); }
+/*
+ * "not trendable" and "level only" are statements about the SAMPLE, not warnings — nothing is
+ * wrong when twenty solo queue games are too noisy to draw a slope through. Amber said
+ * something needed acting on. Rule 4: dashed and desaturated.
+ */
+.csk-trend__note--uncertain {
+	color: var(--csk-dim);
+	border-top-style: dashed;
+}
 
 .csk-trend__note b {
 	font-family: var(--csk-mono);
-	font-size: 10px;
+	font-size: var(--fs-0);
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	flex: none;
@@ -712,7 +253,7 @@ button.csk-chip:focus-visible,
 .csk-spark__svg { display: block; overflow: visible; }
 
 .csk-spark__flat {
-	font: 500 10px/1 var(--csk-mono);
+	font: 500 var(--fs-0)/1 var(--csk-mono);
 	color: var(--csk-ghost);
 }
 
@@ -726,7 +267,7 @@ button.csk-chip:focus-visible,
 	border: 1px solid var(--csk-line);
 	border-radius: 999px;
 	background: var(--csk-panel-2);
-	font: 500 11px/1.4 var(--csk-mono);
+	font: 500 var(--fs-1)/1.4 var(--csk-mono);
 	color: var(--csk-dim);
 	white-space: nowrap;
 }
@@ -748,8 +289,7 @@ button.csk-chip:focus-visible,
 .csk-job--expired { color: var(--csk-ghost); border-color: var(--csk-line-soft); text-decoration: line-through; }
 
 .csk-job__kind { color: inherit; font-weight: 600; }
-.csk-job__meta { color: var(--csk-ghost); font-size: 10px; }
-.csk-job__meta--intrusive { color: var(--csk-violet); }
+.csk-job__meta { color: var(--csk-ghost); font-size: var(--fs-0); }
 
 @keyframes csk-pulse {
 	0%, 100% { opacity: 1; }
@@ -788,7 +328,7 @@ button.csk-chip:focus-visible,
 	width: 24px;
 	height: 24px;
 	border-radius: 6px;
-	font-size: 13px;
+	font-size: var(--fs-3);
 	line-height: 1;
 	background: var(--csk-panel-3);
 	box-shadow: inset 0 0 0 1px var(--csk-line);
@@ -801,13 +341,13 @@ button.csk-chip:focus-visible,
 .csk-fb__title {
 	flex: 1;
 	margin: 1px 0 0;
-	font: 600 14px/1.35 var(--csk-sans);
+	font: 600 var(--fs-4)/1.35 var(--csk-sans);
 	color: var(--csk-gold-lit);
 }
 
 .csk-fb__cat {
 	flex: none;
-	font: 500 9.5px/1.6 var(--csk-mono);
+	font: 500 var(--fs-0)/1.6 var(--csk-mono);
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	color: var(--csk-ghost);
@@ -815,7 +355,7 @@ button.csk-chip:focus-visible,
 
 .csk-fb__body {
 	margin: 0;
-	font: 400 13px/1.6 var(--csk-sans);
+	font: 400 var(--fs-3)/1.6 var(--csk-sans);
 	color: var(--csk-dim);
 	white-space: pre-wrap;
 }
@@ -828,7 +368,7 @@ button.csk-chip:focus-visible,
 }
 
 .csk-fb__cites-label {
-	font: 500 9.5px/1.6 var(--csk-mono);
+	font: 500 var(--fs-0)/1.6 var(--csk-mono);
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	color: var(--csk-ghost);
@@ -836,7 +376,7 @@ button.csk-chip:focus-visible,
 }
 
 .csk-fb__opinion {
-	font: 400 10.5px/1.5 var(--csk-mono);
+	font: 400 var(--fs-0)/1.5 var(--csk-mono);
 	color: var(--csk-ghost);
 	font-style: italic;
 }
@@ -876,7 +416,7 @@ button.csk-chip:focus-visible,
 	justify-content: space-between;
 	gap: 4px;
 	padding: 3px 5px;
-	font: 500 9.5px/1.4 var(--csk-mono);
+	font: 500 var(--fs-0)/1.4 var(--csk-mono);
 	color: var(--csk-faint);
 	border-top: 1px solid var(--csk-line-soft);
 }
@@ -884,15 +424,27 @@ button.csk-chip:focus-visible,
 .csk-src {
 	padding: 1px 4px;
 	border-radius: 3px;
-	font: 600 9px/1.4 var(--csk-mono);
+	font: 600 var(--fs-0)/1.4 var(--csk-mono);
 	letter-spacing: 0.03em;
 	text-transform: uppercase;
 	white-space: nowrap;
 }
 
 /* Never let a drawn diagram be mistaken for a real screenshot. */
-.csk-src--replay { background: rgba(10, 200, 185, 0.16); color: #6fe3d9; }
-.csk-src--generated { background: rgba(169, 139, 250, 0.16); color: #c3aefc; }
+/* A real picture of his own game — a journal frame, or a replay capture from before that
+   pipeline was deleted. Teal reads as evidence; violet below reads as a drawing. */
+/*
+ * Real frame vs drawn diagram. Teal is "this is evidence from the game"; a drawing this app
+ * made from the same numbers it is already showing you is SYNTHETIC, so it wears the dashed
+ * uncertainty treatment rather than a sixth hue nobody can decode.
+ */
+.csk-src--real { background: rgba(10, 200, 185, 0.16); color: #6fe3d9; }
+.csk-src--generated {
+	background: transparent;
+	color: var(--csk-faint);
+	box-shadow: inset 0 0 0 1px var(--line-dash);
+	border-radius: 3px;
+}
 
 .csk-fb__play {
 	position: absolute;
@@ -907,118 +459,8 @@ button.csk-chip:focus-visible,
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 11px;
+	font-size: var(--fs-1);
 	pointer-events: none;
-}
-
-/* =========================================================== MediaViewer === */
-
-.csk-lightbox {
-	position: fixed;
-	inset: 0;
-	z-index: 900;
-	display: flex;
-	flex-direction: column;
-	background: rgba(3, 6, 9, 0.94);
-	backdrop-filter: blur(3px);
-}
-
-.csk-lightbox__bar {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	padding: 10px 14px;
-	border-bottom: 1px solid var(--csk-line);
-	font: 500 12px/1.4 var(--csk-mono);
-	color: var(--csk-dim);
-	flex: none;
-}
-
-.csk-lightbox__title {
-	flex: 1;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	color: var(--csk-gold-lit);
-}
-
-.csk-lightbox__count { color: var(--csk-ghost); }
-
-.csk-lightbox__btn {
-	flex: none;
-	padding: 4px 10px;
-	background: var(--csk-panel-2);
-	border: 1px solid var(--csk-line);
-	border-radius: var(--csk-radius);
-	color: var(--csk-dim);
-	font: 500 12px/1.4 var(--csk-mono);
-	cursor: pointer;
-}
-
-.csk-lightbox__btn:hover:not(:disabled) { border-color: var(--csk-gold); color: var(--csk-gold-lit); }
-.csk-lightbox__btn:disabled { opacity: 0.35; cursor: default; }
-.csk-lightbox__btn:focus-visible { outline: 2px solid var(--csk-teal); outline-offset: 2px; }
-
-.csk-lightbox__stage {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 0;
-	padding: 16px;
-}
-
-.csk-lightbox__stage img,
-.csk-lightbox__stage video {
-	max-width: 100%;
-	max-height: 100%;
-	object-fit: contain;
-	border-radius: var(--csk-radius);
-	background: #05090d;
-}
-
-.csk-lightbox__foot {
-	flex: none;
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	flex-wrap: wrap;
-	padding: 9px 14px;
-	border-top: 1px solid var(--csk-line);
-	font: 400 11.5px/1.5 var(--csk-sans);
-	color: var(--csk-faint);
-}
-
-.csk-lightbox__strip {
-	flex: none;
-	display: flex;
-	gap: 6px;
-	overflow-x: auto;
-	padding: 8px 14px;
-	border-top: 1px solid var(--csk-line-soft);
-}
-
-.csk-lightbox__strip button {
-	flex: none;
-	width: 92px;
-	height: 52px;
-	padding: 0;
-	border: 1px solid var(--csk-line);
-	border-radius: 4px;
-	background: var(--csk-panel-3);
-	overflow: hidden;
-	cursor: pointer;
-	opacity: 0.55;
-}
-
-.csk-lightbox__strip button.on { opacity: 1; border-color: var(--csk-gold); }
-.csk-lightbox__strip img { width: 100%; height: 100%; object-fit: cover; }
-
-.csk-lightbox__err {
-	color: var(--csk-red);
-	font: 500 12px/1.5 var(--csk-mono);
-	text-align: center;
-	padding: 24px;
 }
 
 /* ============================================================ coach chat */
@@ -1048,7 +490,7 @@ button.csk-chip:focus-visible,
 
 .csk-chat-empty {
 	color: var(--dim);
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	line-height: 1.55;
 }
 .csk-chat-empty p {
@@ -1066,7 +508,7 @@ button.csk-chip:focus-visible,
 	color: var(--text-2);
 	border-radius: 999px;
 	padding: 5px 11px;
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	cursor: pointer;
 	transition: border-color 0.12s, color 0.12s;
 }
@@ -1086,7 +528,7 @@ button.csk-chip:focus-visible,
 
 .csk-chat-bubble {
 	white-space: pre-wrap;
-	font-size: 13px;
+	font-size: var(--fs-3);
 	line-height: 1.6;
 	border-radius: var(--radius);
 	padding: 10px 13px;
@@ -1108,7 +550,7 @@ button.csk-chip:focus-visible,
 }
 .csk-chat-err {
 	margin-top: 7px;
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	color: var(--loss);
 	font-family: var(--mono);
 }
@@ -1150,7 +592,7 @@ button.csk-chip:focus-visible,
 	background: none;
 	border: none;
 	color: var(--dim);
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	text-decoration: underline;
 	cursor: pointer;
 }
@@ -1176,7 +618,7 @@ button.csk-chip:focus-visible,
 	border-radius: 999px;
 	padding: 3px 10px 3px 7px;
 	cursor: pointer;
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--text-2);
 }
 .csk-chat-chip:hover {
@@ -1193,7 +635,7 @@ button.csk-chip:focus-visible,
 }
 
 .csk-chat-metric {
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--text-2);
 	border: 1px solid var(--line);
 	border-left-width: 3px;
@@ -1238,7 +680,7 @@ button.csk-chip:focus-visible,
 	right: 0;
 	background: rgba(7, 9, 14, 0.82);
 	color: var(--text-2);
-	font-size: 10px;
+	font-size: var(--fs-0);
 	font-family: var(--mono);
 	padding: 2px 5px;
 	line-height: 1.4;
@@ -1246,7 +688,7 @@ button.csk-chip:focus-visible,
 }
 
 .csk-chat-error {
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	color: var(--loss);
 	border: 1px solid var(--loss);
 	background: rgba(224, 82, 95, 0.07);
@@ -1271,7 +713,7 @@ button.csk-chip:focus-visible,
 	border-radius: var(--radius-sm);
 	color: var(--text);
 	font-family: var(--sans);
-	font-size: 13px;
+	font-size: var(--fs-3);
 	line-height: 1.5;
 	padding: 9px 11px;
 }
@@ -1304,7 +746,7 @@ button.csk-chip:focus-visible,
 	border-radius: var(--radius-sm);
 	background: rgba(232, 177, 61, 0.07);
 	color: var(--text-2);
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	line-height: 1.55;
 	padding: 8px 11px;
 }
@@ -1317,7 +759,7 @@ button.csk-chip:focus-visible,
 }
 .csk-fb__unverified li {
 	font-family: var(--mono);
-	font-size: 11px;
+	font-size: var(--fs-1);
 	margin: 3px 0;
 }
 
@@ -1334,13 +776,13 @@ button.csk-chip:focus-visible,
 	background: rgba(232, 177, 61, 0.06);
 	padding: 13px 15px;
 	margin-bottom: 14px;
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	line-height: 1.6;
 	color: var(--text-2);
 }
 .csk-offline--compact {
 	padding: 10px 12px;
-	font-size: 12px;
+	font-size: var(--fs-2);
 }
 .csk-offline__head {
 	display: flex;
@@ -1349,7 +791,7 @@ button.csk-chip:focus-visible,
 }
 .csk-offline__head .icon {
 	color: var(--warn);
-	font-size: 15px;
+	font-size: var(--fs-5);
 	line-height: 1.3;
 }
 .csk-offline__head strong {
@@ -1367,12 +809,12 @@ button.csk-chip:focus-visible,
 	gap: 4px 10px;
 	justify-content: start;
 	align-items: center;
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	margin-bottom: 10px;
 }
 .csk-offline__services code {
 	font-family: var(--mono);
-	font-size: 11px;
+	font-size: var(--fs-1);
 	padding: 1px 7px;
 	border-radius: 999px;
 	border: 1px solid var(--line);
@@ -1402,18 +844,22 @@ button.csk-chip:focus-visible,
 
 /* ---- the fix: the one line that has to survive skimming ---- */
 
+/*
+ * The one line that has to survive skimming, so it is one step ABOVE body while the elaboration
+ * behind the disclosure is one step below it. Size carries the hierarchy the prose asks for.
+ */
 .csk-fb__fix {
 	display: flex;
-	gap: 9px;
+	gap: var(--sp-2);
 	align-items: baseline;
-	margin: 9px 0 0;
-	font-size: 13px;
+	margin: var(--sp-2) 0 0;
+	font-size: var(--fs-4);
 	line-height: 1.5;
 	color: var(--text);
 }
 .csk-fb__fix-tag {
 	flex: none;
-	font-size: 9.5px;
+	font-size: var(--fs-0);
 	text-transform: uppercase;
 	letter-spacing: 0.07em;
 	font-weight: 700;
@@ -1436,7 +882,7 @@ button.csk-chip:focus-visible,
 	display: inline-flex;
 	align-items: center;
 	gap: 5px;
-	font-size: 11px;
+	font-size: var(--fs-1);
 	color: var(--dim);
 	user-select: none;
 	padding: 2px 0;
@@ -1446,7 +892,7 @@ button.csk-chip:focus-visible,
 }
 .csk-fb__more > summary::before {
 	content: "▸";
-	font-size: 9px;
+	font-size: var(--fs-0);
 	transition: transform 0.12s ease;
 	display: inline-block;
 }
@@ -1461,8 +907,10 @@ button.csk-chip:focus-visible,
 	padding-left: 13px;
 	border-left: 1px solid var(--line);
 	color: var(--text-2);
-	font-size: 12.5px;
-	line-height: 1.62;
+	font-size: var(--fs-3);
+	line-height: 1.65;
+	/* Prose has a measure. Past about 75 characters the eye loses the next line's start. */
+	max-width: 74ch;
 }
 @media (prefers-reduced-motion: reduce) {
 	.csk-fb__more > summary::before { transition: none; }
@@ -1476,27 +924,33 @@ button.csk-chip:focus-visible,
 	gap: 5px;
 	margin-top: 9px;
 }
+/*
+ * The coach's three judgements — impact, actionability, confidence. Rule 5: a judgement gets NO
+ * HUE. The ramp is brightness alone, so "impact high" can never be mistaken for a severity or
+ * for a measured figure. `--high` used to carry a gold border, and gold is what this app uses
+ * for the player's own measured numbers; an opinion wearing it read as one of them.
+ */
 .csk-axis {
-	font-size: 9.5px;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	font-size: var(--fs-0);
+	text-transform: lowercase;
+	letter-spacing: 0.03em;
 	padding: 2px 7px;
 	border-radius: 999px;
-	border: 1px solid var(--line);
-	background: var(--panel-2);
+	border: 1px solid var(--line-soft);
+	background: transparent;
 	color: var(--dim);
 	cursor: help;
 	white-space: nowrap;
 }
 .csk-axis--high {
-	color: var(--text);
-	border-color: var(--gold-dim);
+	color: var(--text-2);
+	border-color: var(--line);
 }
 .csk-axis--medium {
-	color: var(--text-2);
+	color: var(--dim);
 }
 .csk-axis--low {
-	opacity: 0.72;
+	color: var(--faint);
 }
 
 /*
@@ -1504,7 +958,7 @@ button.csk-chip:focus-visible,
  * judgments have to be visibly the second kind.
  */
 .csk-axis-label {
-	font-size: 9.5px;
+	font-size: var(--fs-0);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	color: var(--faint);
@@ -1542,9 +996,9 @@ button.csk-chip:focus-visible,
 	font-size: 0.78em;
 	color: var(--dim);
 }
-.csk-grade--sm { font-size: 11px; padding: 2px 6px; }
-.csk-grade--md { font-size: 13px; }
-.csk-grade--lg { font-size: 20px; padding: 7px 13px; }
+.csk-grade--sm { font-size: var(--fs-1); padding: 2px 6px; }
+.csk-grade--md { font-size: var(--fs-3); }
+.csk-grade--lg { font-size: var(--fs-6); padding: 7px 13px; }
 
 .csk-grade--sp {
 	color: #ffd98a;
@@ -1560,57 +1014,13 @@ button.csk-chip:focus-visible,
 .csk-grade--e  { color: var(--loss); border-color: rgba(224, 82, 95, 0.45); }
 .csk-grade--none { color: var(--faint); }
 
-/* =============================================================== vision */
-/*
- * Data-only vs watched. Deliberately not colour-coded good/bad — a data review is not broken,
- * it is a different and narrower kind of evidence, and the badge's job is to say which one you
- * are reading rather than to grade it.
- */
-
-.csk-vision {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	border-radius: 999px;
-	border: 1px solid var(--line);
-	background: var(--panel-2);
-	padding: 3px 10px;
-	font-size: 10.5px;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	color: var(--dim);
-	cursor: help;
-	white-space: nowrap;
-}
-.csk-vision--sm { font-size: 9.5px; padding: 2px 8px; }
-.csk-vision__dot {
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: currentColor;
-	flex: none;
-}
-.csk-vision--seen {
-	color: var(--teal);
-	border-color: rgba(10, 200, 185, 0.45);
-	background: rgba(10, 200, 185, 0.08);
-}
-.csk-vision--ready {
-	color: var(--gold);
-	border-color: var(--gold-dim);
-}
-.csk-vision--none {
-	color: var(--faint);
-	border-style: dashed;
-}
-
 /* ---- the per-item watched note ---- */
 
 .csk-fb__watched {
 	margin-top: 10px;
 	border-left: 2px solid var(--teal);
 	padding: 8px 0 8px 12px;
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	line-height: 1.6;
 	color: var(--text-2);
 	white-space: pre-wrap;
@@ -1619,7 +1029,7 @@ button.csk-chip:focus-visible,
 	display: inline-flex;
 	align-items: center;
 	gap: 5px;
-	font-size: 9.5px;
+	font-size: var(--fs-0);
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	color: var(--teal);
@@ -1633,7 +1043,7 @@ button.csk-chip:focus-visible,
 	border: 1px dashed var(--line);
 	border-radius: var(--radius-sm);
 	color: var(--dim);
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	padding: 6px 11px;
 	cursor: pointer;
 	transition: border-color 0.12s, color 0.12s;
@@ -1645,42 +1055,10 @@ button.csk-chip:focus-visible,
 }
 .csk-fb__watch-cta:disabled { opacity: 0.55; cursor: default; }
 
-/* ========================================================= watch panel */
-
-.csk-watchpanel {
-	border: 1px solid var(--line);
-	border-left: 3px solid var(--gold-dim);
-	border-radius: var(--radius);
-	background: var(--panel-2);
-	padding: 13px 15px;
-	margin-bottom: 12px;
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	font-size: 12.5px;
-	line-height: 1.58;
-	color: var(--text-2);
-}
-.csk-watchpanel strong { color: var(--text); display: block; margin-bottom: 4px; }
-.csk-watchpanel p { margin: 0; }
-.csk-watchpanel--done { border-left-color: var(--teal); }
-.csk-watchpanel--done strong { color: var(--teal); }
-.csk-watchpanel--ready { border-left-color: var(--gold); }
-.csk-watchpanel__more { color: var(--dim); font-size: 11.5px; }
-.csk-watchpanel__note { font-size: 11.5px; color: var(--dim); }
-.csk-watchpanel__blocked {
-	font-size: 11.5px;
-	color: var(--warn);
-	border-left: 2px solid var(--warn);
-	padding-left: 10px;
-}
-.csk-watchpanel__ok { font-size: 11.5px; color: var(--win); }
-.csk-watchpanel__err { font-size: 11.5px; color: var(--loss); }
-
 /* ---- the per-row eye in the games list ---- */
 
 .csk-eye {
-	font-size: 11px;
+	font-size: var(--fs-1);
 	cursor: help;
 	opacity: 0.9;
 	flex: none;
@@ -1733,7 +1111,7 @@ button.csk-chip:focus-visible,
 	padding: 11px 14px;
 	flex: 1;
 	min-width: 0;
-	font-size: 13.5px;
+	font-size: var(--fs-3);
 	line-height: 1.6;
 	color: var(--text);
 }
@@ -1752,7 +1130,7 @@ button.csk-chip:focus-visible,
 	border-radius: 2px;
 }
 .csk-bubble__kicker {
-	font-size: 10.5px;
+	font-size: var(--fs-0);
 	text-transform: uppercase;
 	letter-spacing: 0.07em;
 	color: var(--gold);
@@ -1761,8 +1139,8 @@ button.csk-chip:focus-visible,
 .csk-bubble__body > :first-child { margin-top: 0; }
 .csk-bubble__body > :last-child { margin-bottom: 0; }
 
-.csk-bubble--lg .csk-bubble__speech { font-size: 15px; padding: 14px 17px; }
-.csk-bubble--sm .csk-bubble__speech { font-size: 12.5px; padding: 8px 11px; }
+.csk-bubble--lg .csk-bubble__speech { font-size: var(--fs-5); padding: 14px 17px; }
+.csk-bubble--sm .csk-bubble__speech { font-size: var(--fs-2); padding: 8px 11px; }
 
 .csk-bubble--nudge .csk-bubble__speech {
 	border-color: var(--gold-dim);
@@ -1803,7 +1181,7 @@ button.csk-chip:focus-visible,
 .csk-drill > summary::before {
 	content: "▸";
 	color: var(--dim);
-	font-size: 10px;
+	font-size: var(--fs-0);
 	transition: transform 0.12s ease;
 	flex: none;
 }
@@ -1812,7 +1190,7 @@ button.csk-chip:focus-visible,
 .csk-drill > summary:hover .csk-drill__title { color: var(--gold-bright); }
 
 .csk-drill__title {
-	font-size: 12px;
+	font-size: var(--fs-2);
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	font-weight: 600;
@@ -1820,7 +1198,7 @@ button.csk-chip:focus-visible,
 }
 .csk-drill__count {
 	font-family: var(--mono);
-	font-size: 10.5px;
+	font-size: var(--fs-0);
 	color: var(--dim);
 	background: var(--panel-2);
 	border: 1px solid var(--line);
@@ -1828,7 +1206,7 @@ button.csk-chip:focus-visible,
 	padding: 1px 7px;
 }
 .csk-drill__hint {
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	color: var(--faint);
 	margin-left: auto;
 	text-align: right;
@@ -1864,15 +1242,8 @@ button.csk-chip:focus-visible,
 	gap: 9px;
 	align-items: flex-start;
 }
-.csk-screen__blocked strong { color: var(--warn); font-size: 13px; }
-.csk-screen__blocked p { margin: 0; font-size: 12px; line-height: 1.55; color: var(--text-2); }
-.csk-screen__opening { font-size: 11.5px; color: var(--gold); font-family: var(--mono); }
-
-.csk-screen__live {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
+.csk-screen__blocked strong { color: var(--warn); font-size: var(--fs-3); }
+.csk-screen__blocked p { margin: 0; font-size: var(--fs-2); line-height: 1.55; color: var(--text-2); }
 .csk-screen__ask {
 	display: flex;
 	gap: 6px;
@@ -1903,13 +1274,13 @@ button.csk-chip:focus-visible,
 }
 .csk-screen__setup > strong {
 	color: var(--gold);
-	font-size: 13px;
+	font-size: var(--fs-3);
 }
 .csk-screen__setup ol {
 	margin: 8px 0 10px;
 	padding-left: 20px;
 	line-height: 1.65;
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 }
 .csk-screen__setup a {
 	color: var(--gold);
@@ -1929,7 +1300,7 @@ button.csk-chip:focus-visible,
 }
 .csk-screen__fine {
 	margin: 9px 0 0;
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	line-height: 1.55;
 	color: var(--faint);
 }
@@ -1959,7 +1330,7 @@ button.csk-chip:focus-visible,
 	white-space: nowrap;
 }
 .csk-transcript .s {
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	line-height: 1.5;
 }
 .csk-transcript li.me .s {
@@ -1975,7 +1346,7 @@ button.csk-chip:focus-visible,
 	margin: 0 14px 10px;
 	padding-left: 10px;
 	border-left: 2px solid var(--warn);
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	line-height: 1.55;
 	color: var(--text-2);
 }
@@ -1986,7 +1357,7 @@ button.csk-chip:focus-visible,
 .csk-transcript__truth > summary {
 	cursor: pointer;
 	list-style: none;
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 	color: var(--dim);
 	padding: 3px 0;
 	margin-left: calc(11ch + 10px);
@@ -2031,7 +1402,7 @@ button.csk-chip:focus-visible,
 	gap: 8px;
 	padding: 7px 10px;
 	border-top: 1px solid var(--line);
-	font-size: 11.5px;
+	font-size: var(--fs-1);
 }
 .csk-screen__compactlabel {
 	flex: 1;
@@ -2069,30 +1440,6 @@ button.csk-chip:focus-visible,
 	box-shadow: inset 0 0 0 2px var(--dim);
 }
 
-/*
- * "Show N more metrics" — the way into the other twenty-odd.
- *
- * A real review produces about thirty cards, and rendering them all at once is a wall with no
- * entry point. The eight shown by default are the ones that moved furthest against the player's
- * own baseline, plus whatever a feedback item cited, so the fold hides the quiet ones rather
- * than an arbitrary tail.
- */
-.csk-metrics__more {
-	margin-top: 10px;
-	padding: 8px 14px;
-	width: 100%;
-	border: 1px dashed var(--line);
-	border-radius: var(--radius);
-	background: transparent;
-	color: var(--dim);
-	font: 500 11.5px/1 inherit;
-	cursor: pointer;
-}
-.csk-metrics__more:hover {
-	color: var(--text);
-	border-color: var(--gold-dim);
-}
-
 /* ===================================== ScreenCoach: the journal line === */
 /*
  * Shown whenever the screen is shared. Its predecessor — replay capture — ran for the app's whole
@@ -2106,7 +1453,7 @@ button.csk-chip:focus-visible,
 	background: var(--panel);
 	color: var(--dim);
 	padding: 9px 12px;
-	font-size: 12px;
+	font-size: var(--fs-2);
 	line-height: 1.55;
 }
 .csk-screen__journal.on {
@@ -2115,6 +1462,38 @@ button.csk-chip:focus-visible,
 }
 .csk-screen__journal b {
 	color: var(--text);
+}
+
+/*
+ * The vitals row: four readings, quiet by default.
+ *
+ * Deliberately the dimmest thing in the panel. It is on screen for every second of every game and
+ * has to be readable at a glance WITHOUT competing with the fault list above it — a status line
+ * styled like a warning teaches him to stop reading warnings. Wraps rather than truncates: in the
+ * 380px window these stack, and a reading cut off mid-number is worse than a second line.
+ */
+.csk-screen__vitals {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 14px;
+	padding: 7px 12px;
+	border: 1px solid var(--line-soft);
+	border-radius: var(--radius-sm);
+	color: var(--faint);
+	font-size: var(--fs-1);
+	line-height: 1.5;
+}
+.csk-screen__vitals b {
+	color: var(--dim);
+	font-weight: 600;
+}
+/* Green is "this is happening right now", and nothing else gets it. */
+.csk-screen__vitals b.on {
+	color: var(--win);
+}
+.csk-screen__vitals em {
+	font-style: normal;
+	color: var(--faint);
 }
 
 /*
@@ -2128,7 +1507,7 @@ button.csk-chip:focus-visible,
 	border-radius: 8px;
 	padding: 6px 12px;
 	font: inherit;
-	font-size: 12.5px;
+	font-size: var(--fs-2);
 	cursor: pointer;
 }
 .csk-screen__unmute:hover {
@@ -2262,8 +1641,180 @@ button.csk-chip:focus-visible,
  * Her lines used to carry no label at all while his carried "you:", so a coach line read as
  * unattributed text floating between questions — indistinguishable from a system notice.
  */
-.csk-screen__log .who,
-.csk-live__log .who {
+.csk-screen__log .who {
 	color: var(--gold, #c9a227);
 	font-weight: 600;
+}
+
+/* ====================================================================== the board */
+/*
+ * The quiet always-on surface. It is read at a GLANCE, over a running game, by someone whose
+ * attention is somewhere else — so the whole design brief is: one column, no colour that does not
+ * mean something, and a reading that is missing must be as visible as a reading that is present.
+ *
+ * Nothing here animates and nothing here ever becomes an alert. The moment a panel starts flashing
+ * for attention it is a voice line with worse latency, which is the thing it was built to replace.
+ */
+.csk-board {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 10px 12px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--panel);
+	font-size: 12.5px;
+	line-height: 1.5;
+	font-variant-numeric: tabular-nums;
+}
+.csk-board--compact {
+	gap: 6px;
+	padding: 8px 10px;
+	font-size: 12px;
+}
+/*
+ * A board that has stopped being refreshed is DIMMED as a whole rather than annotated per row.
+ * Every number on it went stale at the same instant, so marking them one at a time would invite
+ * him to believe the ones that happened not to change.
+ */
+.csk-board--stale {
+	opacity: 0.55;
+	border-color: var(--warn);
+}
+.csk-board__stale {
+	color: var(--warn);
+	font-size: 11.5px;
+}
+
+.csk-board__sec {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+/* The section name. Deliberately quieter than anything it labels. */
+.csk-board__lab {
+	color: var(--faint);
+	font-size: 10px;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+}
+/*
+ * "Not known", in the one style used everywhere it happens. It is a real reading and it looks like
+ * one — never an empty row, which reads as a row that has not loaded yet.
+ */
+.csk-board__none {
+	color: var(--dim);
+}
+.csk-board__none em {
+	font-style: normal;
+	color: var(--faint);
+}
+
+.csk-board__objs,
+.csk-board__down {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+.csk-board__objs li,
+.csk-board__down li {
+	display: grid;
+	grid-template-columns: 5.5em 4.5em 1fr;
+	align-items: baseline;
+	gap: 8px;
+}
+.csk-board__objs .n,
+.csk-board__down .n {
+	color: var(--text-2);
+}
+/* The window itself: the one number on the board worth making bigger than its neighbours. */
+.csk-board__objs .w,
+.csk-board__down .w {
+	color: var(--gold);
+	font-family: var(--mono);
+	font-size: 13px;
+}
+/* Standing, as opposed to counting down. Teal is "this is available now" and nothing else. */
+.csk-board__objs li.up .w {
+	color: var(--teal);
+}
+.csk-board__objs .e {
+	color: var(--dim);
+	font-size: 11.5px;
+}
+.csk-board__down li.mine .n {
+	color: var(--loss);
+}
+.csk-board__down li.theirs .n {
+	color: var(--win);
+}
+.csk-board__down .w {
+	color: var(--dim);
+}
+
+/*
+ * The position. Two live states and they are typographically different, because "where you are"
+ * and "where you were" are different claims and the second is the one that gets misread.
+ */
+.csk-board__where {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.csk-board__where b {
+	font-weight: 600;
+}
+.csk-board__where em {
+	font-style: normal;
+	color: var(--faint);
+	font-size: 11.5px;
+}
+.csk-board__where.now b {
+	color: var(--text);
+}
+.csk-board__where.was b {
+	color: var(--dim);
+}
+
+.csk-board__cp {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.csk-board__cp b {
+	color: var(--text);
+	font-weight: 600;
+}
+.csk-board__cp em {
+	font-style: normal;
+	color: var(--faint);
+	cursor: help;
+}
+.csk-board__cp .v {
+	color: var(--dim);
+	font-size: 11.5px;
+}
+.csk-board__cp .v.dead {
+	color: var(--win);
+}
+
+.csk-board__you {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px 12px;
+	padding-top: 6px;
+	border-top: 1px solid var(--line-soft);
+	color: var(--dim);
+	font-size: 11.5px;
+}
+.csk-board__you .low {
+	color: var(--loss);
+}
+.csk-board__you .dead {
+	color: var(--loss);
 }

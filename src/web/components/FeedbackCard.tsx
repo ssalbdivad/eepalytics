@@ -14,8 +14,7 @@
 import type { FeedbackItem, Media, Metric, Moment } from "../../shared/schema/domain.ts"
 import { API } from "../../shared/schema/api.ts"
 import { fmtClock } from "../../shared/time.ts"
-import { CONFIDENCE_LABEL, confidenceChip } from "../lib/format.ts"
-import { MOMENT_KIND_LABEL, momentColor } from "./MiniMap.tsx"
+import { CONFIDENCE_LABEL, confidenceChip, MOMENT_KIND_LABEL, momentColor } from "../lib/format.ts"
 import { Glossed } from "./Term.tsx"
 import "./components.css"
 
@@ -49,16 +48,24 @@ const MEDIA_LABEL: Record<Media["kind"], string> = {
 	map: "map diagram"
 }
 
+/*
+ * Tested on "generated", not on "replay".
+ *
+ * The distinction that matters is drawn-versus-real, and there are two real sources: `replay`
+ * from the deleted capture pipeline (no row in this database has ever carried it) and `journal`,
+ * a frame of his own screen. Asking `=== "replay"` put journal frames in the `else`, so a real
+ * screenshot was labelled "drawn" with a tooltip insisting it was NOT a screenshot of his game.
+ */
 const sourceBadge = (m: Media) =>
-	m.source === "replay" ?
-		<span className="csk-src csk-src--replay" title="A real frame captured from your replay.">
-			replay
-		</span>
-	:	<span
+	m.source === "generated" ?
+		<span
 			className="csk-src csk-src--generated"
 			title="Drawn by this app from timeline data — NOT a screenshot of your game."
 		>
 			drawn
+		</span>
+	:	<span className="csk-src csk-src--real" title="A real frame of your own game.">
+			real frame
 		</span>
 
 export const FeedbackCard = ({
@@ -175,7 +182,7 @@ export const FeedbackCard = ({
 					className="csk-fb__watch-cta"
 					onClick={onWatch}
 					disabled={watching}
-					title={`Have the coach look at the ${watchableFrames} captured frames around this moment and comment on execution — abilities, kiting, fight entry. Takes about a minute.`}
+					title={`Have the coach look at the ${watchableFrames} recorded frames around this moment and comment on execution — abilities, kiting, fight entry. Takes about a minute.`}
 				>
 					{watching ? "Watching…" : `👁 Watch this moment (${watchableFrames} frames)`}
 				</button>
@@ -257,7 +264,7 @@ export const FeedbackCard = ({
 								onOpenMedia ? onOpenMedia(m.id) : onSeek(Math.round(m.tSec))
 							}
 							title={`${MEDIA_LABEL[m.kind]} at ${fmtClock(m.tSec)} — ${
-								m.source === "replay" ? "captured from the replay" : "drawn from timeline data"
+								m.source === "generated" ? "drawn from timeline data" : "a real frame of your own game"
 							}`}
 						>
 							{m.kind === "clip" ?

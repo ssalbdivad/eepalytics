@@ -12,10 +12,10 @@
  *
  * The second switch is the one that used to be missing, and it was the app's biggest overclaim:
  * §7.3 says never claim "improving"/"declining" unless the slope's own 95% CI excludes zero,
- * and a bold green line through the points IS that claim. Measured on the user's real 20-game
+ * and a bold line through the points IS that claim. Measured on the user's real 20-game
  * window: 19 series came back trendable and got a fit line, and exactly 2 of them
  * (`medianCentroidDist`, `p90OverExtension`) have a slope CI that excludes zero. The other 17
- * were confident green directions drawn through noise.
+ * were confident directions drawn through noise.
  *
  * A missing/`null` `slopeSignificant` means "not computed", and is treated as "do not draw".
  * There is no prop to override any of this. Drawing a confident line through noise is the
@@ -23,6 +23,7 @@
  */
 
 import type { TrendSeries } from "../../shared/schema/domain.ts"
+import { fmtInterval, fmtQty } from "../../shared/num.ts"
 import "./components.css"
 
 export interface TrendChartProps {
@@ -37,16 +38,6 @@ const PAD_L = 40
 const PAD_R = 10
 const PAD_T = 10
 const PAD_B = 18
-
-const fmtNum = (v: number): string => {
-	if (!Number.isFinite(v)) return "—"
-	const a = Math.abs(v)
-	if (a === 0) return "0"
-	if (a < 1) return v.toFixed(2)
-	if (a < 10) return v.toFixed(1)
-	if (a < 10000) return String(Math.round(v))
-	return Math.round(v).toLocaleString()
-}
 
 /** Ordinary least squares over the point index. Only ever drawn when the slope CI excludes zero. */
 const ols = (ys: number[]): { a: number; b: number } => {
@@ -124,11 +115,14 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 		<div className={`csk-trend${series.trendable ? "" : " csk-trend--untrendable"}`}>
 			<div className="csk-trend__head">
 				<span className="csk-trend__label">{series.label}</span>
+				{/*
+				 * Mean and interval come out of one call, so they are printed at ONE grain. This
+				 * header said `mean 72` while the table three inches above it said `72.45 ± 2.88`
+				 * — the same measurement at two precisions, which reads as two measurements.
+				 */}
 				<span className="csk-trend__mean">
-					mean {fmtNum(series.mean)}
-					{ci !== null ?
-						<small> ±{fmtNum(ci)} (95% CI)</small>
-					:	<small> · CI unavailable</small>}
+					mean {fmtInterval(series.mean, ci)}
+					{ci !== null ? <small> (95% CI)</small> : <small> · CI unavailable</small>}
 					<small> · n={points.length}</small>
 				</span>
 			</div>
@@ -137,7 +131,7 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 				className="csk-trend__svg"
 				viewBox={`0 0 ${W} ${H}`}
 				role="img"
-				aria-label={`${series.label}: ${points.length} games, mean ${fmtNum(series.mean)}${
+				aria-label={`${series.label}: ${points.length} games, mean ${fmtInterval(series.mean, ci)}${
 					series.trendable ? "" : ", not trendable"
 				}${series.trendable && !directionClaimable ? ", level only — no direction can be claimed" : ""}`}
 			>
@@ -160,7 +154,7 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 							fontFamily="ui-monospace, monospace"
 							fill="#4a5a68"
 						>
-							{fmtNum(v)}
+							{fmtQty(v)}
 						</text>
 					</g>
 				))}
@@ -189,25 +183,36 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 					opacity="0.8"
 				/>
 
-				{/* the connecting line is scatter-support only, never a claim */}
+				{/*
+				 * The connecting line is scatter-support only, never a claim — so it is neutral
+				 * grey. It was blue, and blue is this app's `info` severity; the only two things
+				 * in this chart that get a colour are the ones that mean something.
+				 */}
 				{points.length > 1 && (
 					<polyline
 						points={points.map((p, i) => `${xAt(i).toFixed(1)},${yAt(p.value).toFixed(1)}`).join(" ")}
 						fill="none"
-						stroke="#4c8fdc"
+						stroke="#6f7b91"
 						strokeWidth="1.2"
-						opacity={series.trendable ? 0.45 : 0.28}
+						opacity={series.trendable ? 0.5 : 0.3}
 					/>
 				)}
 
-				{/* the actual trend claim — only when the series says it is defensible */}
+				{/*
+				 * The actual trend claim — only when the series says it is defensible.
+				 *
+				 * TEAL, not green. Green in this app means "better than your own baseline", and
+				 * this line says nothing of the sort: it says a direction can be claimed. Drawn
+				 * green, a rising slope on DEATHS PER MINUTE read as good news. Teal is the
+				 * app's neutral-furniture colour and carries no valence at all.
+				 */}
 				{fit && (
 					<line
 						x1={xAt(0)}
 						y1={yAt(fit.a)}
 						x2={xAt(points.length - 1)}
 						y2={yAt(fit.a + fit.b * (points.length - 1))}
-						stroke="#3fbf7f"
+						stroke="#0ac8b9"
 						strokeWidth="2"
 						opacity="0.9"
 					/>
@@ -225,14 +230,14 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 						style={onSelectGame ? { cursor: "pointer" } : undefined}
 						onClick={onSelectGame ? () => onSelectGame(p.gameId) : undefined}
 					>
-						<title>{`game ${p.gameId}: ${fmtNum(p.value)}`}</title>
+						<title>{`game ${p.gameId}: ${fmtQty(p.value)}`}</title>
 					</circle>
 				))}
 			</svg>
 
 			{series.note && (
 				<div
-					className={`csk-trend__note${directionClaimable ? "" : " csk-trend__note--warn"}`}
+					className={`csk-trend__note${directionClaimable ? "" : " csk-trend__note--uncertain"}`}
 				>
 					<b>
 						{!series.trendable ? "not trendable"
@@ -243,7 +248,7 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 				</div>
 			)}
 			{series.trendable && !directionClaimable && !series.note && (
-				<div className="csk-trend__note csk-trend__note--warn">
+				<div className="csk-trend__note csk-trend__note--uncertain">
 					<b>level only</b>
 					<span>
 						The mean over these {points.length} games is worth quoting, but the slope's own 95%
@@ -252,7 +257,7 @@ export const TrendChart = ({ series, onSelectGame, height = 160 }: TrendChartPro
 				</div>
 			)}
 			{!series.note && !series.trendable && (
-				<div className="csk-trend__note csk-trend__note--warn">
+				<div className="csk-trend__note csk-trend__note--uncertain">
 					<b>not trendable</b>
 					<span>
 						The spread across these {points.length} games swamps any slope — read the mean, not
