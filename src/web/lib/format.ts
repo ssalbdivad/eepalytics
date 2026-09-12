@@ -1,6 +1,18 @@
 /**
- * Presentation-only formatting. Everything numeric the UI prints goes through here so that
- * "how a number looks" is decided in exactly one place.
+ * Presentation-only labels, palettes and metric adapters for the web UI.
+ *
+ * ## Where the numbers went
+ *
+ * This file used to decide precision too, and it decided it three ways: `fmtCompact` for gold,
+ * `toFixed(unitDigits(unit))` for everything else, and a separate `fmtSigned` for deltas that
+ * reached for the same `unitDigits` but through a different path. That is how one card ended up
+ * printing `1.9k gold` directly above `+1954 vs your avg` — the same quantity, compacted on one
+ * line and not on the next.
+ *
+ * The policy now lives in `shared/num.ts`, alone, and is shared with `shared/debrief-view.ts` so
+ * the prose the debrief assembles and the tiles above it round identically. What is left here is
+ * what is genuinely about THIS app's vocabulary: which unit a metric carries, what a job state
+ * is called, which colour a moment kind is.
  *
  * Nothing in this file invents a value. Where a number is missing the helpers return a dash
  * or an explicit "unknown" — never a zero standing in for absent data.
@@ -19,6 +31,7 @@ import type {
 } from "../../shared/schema/domain.ts"
 import { REPLAY_EXPIRY_MS } from "../../shared/constants.ts"
 import { fmtCountdown } from "../../shared/time.ts"
+import { fmtDelta, fmtQty } from "../../shared/num.ts"
 
 export {
 	fmtAgo,
@@ -30,57 +43,46 @@ export {
 	msUntil
 } from "../../shared/time.ts"
 
+/*
+ * The number policy, re-exported so a component has one import for "how things are written"
+ * rather than having to know which of two modules a given helper lives in.
+ */
+export {
+	MISSING,
+	fmtCompact,
+	fmtDelta,
+	fmtInterval,
+	fmtQty,
+	statDigits,
+	unitSuffix
+} from "../../shared/num.ts"
+
 /** Tiny classnames joiner. Falsy entries drop out. */
 export const cls = (...parts: (string | false | null | undefined)[]): string =>
 	parts.filter(Boolean).join(" ")
 
-/* ============================================================== numbers */
+/* ============================================================== metrics */
 
-export const fmtNum = (n: number, digits = 0): string =>
-	Number.isFinite(n) ? n.toFixed(digits) : "--"
-
-/** Always signed — for deltas against a baseline, where the sign IS the information. */
-export const fmtSigned = (n: number, digits = 0): string =>
-	!Number.isFinite(n) ? "--" : `${n > 0 ? "+" : n < 0 ? "−" : "±"}${Math.abs(n).toFixed(digits)}`
-
-export const fmtCompact = (n: number): string => {
-	if (!Number.isFinite(n)) return "--"
-	const abs = Math.abs(n)
-	if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-	if (abs >= 10_000) return `${Math.round(n / 1000)}k`
-	if (abs >= 1000) return `${(n / 1000).toFixed(1)}k`
-	return String(Math.round(n))
-}
-
-/** How many decimals a metric's unit deserves. Gold is never shown to a tenth. */
-const unitDigits = (unit: string): number => {
-	switch (unit) {
-		case "/min":
-			return 2
-		case "%":
-			return 1
-		case "s":
-			return 1
-		case "gold":
-		case "cs":
-			return 0
-		default:
-			return 1
-	}
-}
-
-export const fmtMetricValue = (m: Metric): string => {
-	if (!Number.isFinite(m.value)) return "--"
-	if (m.unit === "%") return `${m.value.toFixed(1)}%`
-	if (m.unit === "gold") return fmtCompact(m.value)
-	return m.value.toFixed(unitDigits(m.unit))
-}
+/**
+ * A metric's value, its delta and its unit word — all three from the one policy.
+ *
+ * These are adapters, not formatters: they pull `unit` off the metric and hand it to
+ * `shared/num.ts`. That is the whole reason the pairing can no longer drift, because the value
+ * and the delta are now two calls with the same unit rather than two different functions.
+ */
+export const fmtMetricValue = (m: Metric): string => fmtQty(m.value, m.unit)
 
 export const fmtMetricUnit = (m: Metric): string =>
 	m.unit === "" || m.unit === "%" ? "" : m.unit
 
+/**
+ * The delta line under a tile.
+ *
+ * `m.value` is passed as the grain reference so the two lines cannot disagree about decimals:
+ * `1,879 gold` over `+1,954 vs your avg`, not `1.9k` over `+1954`.
+ */
 export const fmtMetricDelta = (m: Metric): string =>
-	m.vsBaseline === null ? "no baseline" : `${fmtSigned(m.vsBaseline, unitDigits(m.unit))} vs your avg`
+	m.vsBaseline === null ? "no baseline" : `${fmtDelta(m.vsBaseline, m.unit, m.value)} vs your avg`
 
 /* =============================================================== labels */
 
@@ -101,6 +103,31 @@ export const SEVERITY_RANK: Record<FeedbackSeverity, number> = {
 }
 
 export const roleLabel = (role: Role): string => ROLE_LABELS[role] ?? "Unknown"
+
+/**
+ * One palette for moment kinds, shared by every component that draws one.
+ *
+ * It lived in `MiniMap.tsx` and was imported from there by the feedback cards and the chat, which
+ * meant deleting the 540-line map would have taken two unrelated screens with it. A colour that
+ * means one thing everywhere belongs beside the label that means one thing everywhere.
+ */
+export const MOMENT_KIND_COLOR: Record<MomentKind, string> = {
+	death: "#e0475b",
+	kill: "#c8aa6e",
+	objective: "#0ac8b9",
+	objective_missed: "#8a6bd6",
+	gold_swing: "#e0a010",
+	tempo: "#4c8fdc",
+	cs_gap: "#7fb069",
+	positioning: "#d97fa8",
+	vision: "#63d1e8",
+	teamfight: "#ff8c42",
+	recall: "#6b7f91",
+	other: "#8494a3"
+}
+
+export const momentColor = (kind: MomentKind): string =>
+	MOMENT_KIND_COLOR[kind] ?? MOMENT_KIND_COLOR.other
 
 export const MOMENT_KIND_LABEL: Record<MomentKind, string> = {
 	death: "Death",
@@ -162,8 +189,9 @@ export const replayCountdown = (endedAtMs: number, now = Date.now()): string | n
 
 export const fmtKda = (k: number, d: number, a: number): string => `${k}/${d}/${a}`
 
+/** A ratio is a unitless quantity, so it rounds by the same rule as every other one. */
 export const fmtKdaRatio = (k: number, d: number, a: number): string =>
-	d === 0 ? "Perfect" : ((k + a) / d).toFixed(2)
+	d === 0 ? "Perfect" : fmtQty((k + a) / d)
 
 
 /**
@@ -189,3 +217,28 @@ export const CATEGORY_LABEL: Record<string, string> = {
 
 /** The friendly label when there is one, the raw key when there is not. */
 export const categoryLabel = (key: string): string => CATEGORY_LABEL[key] ?? key
+
+/**
+ * The League client's gameflow phase, in words.
+ *
+ * The status pill and the settings read-out both printed the client's own enum, so the steady
+ * state of this app — sitting in the client, doing nothing — read "LCU connected · None" on
+ * every screen. "None" is a Riot identifier meaning idle; as a status it looks like a value
+ * that failed to load. Unknown phases fall through unchanged rather than being hidden.
+ */
+export const PHASE_WORD: Record<string, string> = {
+	None: "idle",
+	Lobby: "in a lobby",
+	Matchmaking: "in queue",
+	ReadyCheck: "ready check",
+	ChampSelect: "champ select",
+	GameStart: "starting",
+	InProgress: "in game",
+	WaitingForStats: "game over",
+	PreEndOfGame: "game over",
+	EndOfGame: "game over",
+	Reconnect: "reconnecting"
+}
+
+export const phaseWord = (phase: string | null | undefined): string | null =>
+	phase ? (PHASE_WORD[phase] ?? phase) : null
