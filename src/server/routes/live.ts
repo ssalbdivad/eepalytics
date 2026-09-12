@@ -90,6 +90,7 @@ import type { PositionFix } from "../../shared/live-brief.ts"
  */
 import {
 	cpSeenAt,
+	deathsSeen,
 	newMemory,
 	noteSaid,
 	observe,
@@ -2250,6 +2251,12 @@ export const createLiveRoute = (): Hono => {
 						 */
 						counterpartSeenSec: cpSeenAt(coachMemory),
 						/*
+						 * WHEN EACH MAN WENT DOWN, so the payload can state the elapsed half of a
+						 * dead clock instead of leaving the model to convert the remaining half
+						 * into it — which it did, wrongly, in 71 of 153 stored lines.
+						 */
+						deathsSeen: deathsSeen(coachMemory),
+						/*
 						 * And when this memory STARTED watching, because a null age above has two
 						 * opposite meanings. Without it `counterpartClause` reported the game clock
 						 * as the age of its own ignorance — "his row has NEVER moved in 7m23s" after
@@ -2282,6 +2289,12 @@ export const createLiveRoute = (): Hono => {
 						at,
 						reach,
 						counterpartSeenSec: cpSeenAt(coachMemory),
+						/*
+						 * WHEN EACH MAN WENT DOWN, so the payload can state the elapsed half of a
+						 * dead clock instead of leaving the model to convert the remaining half
+						 * into it — which it did, wrongly, in 71 of 153 stored lines.
+						 */
+						deathsSeen: deathsSeen(coachMemory),
 						/*
 						 * And when this memory STARTED watching, because a null age above has two
 						 * opposite meanings. Without it `counterpartClause` reported the game clock

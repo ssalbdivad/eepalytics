@@ -232,12 +232,21 @@ test("the full brief still carries everything it carried before NOW was added", 
  * a payload no caller builds. The value is the fixture's own: Briar's row last moved 118s ago, the
  * same figure the memory test further down uses.
  */
+/*
+ * `deathsSeen` is supplied for the same reason and from the same place: `coach-memory.ts` now
+ * records a death instant on every `observe` and the route and the bench both pass it. The value is
+ * not invented — 346 is the `EventTime` of the `ChampionKill` in this fixture's own event log, the
+ * one that put Lissandra on the floor with 2.8s left on her timer at 5:59.
+ */
+const LISSANDRA_DIED = 346
+
 const delta = buildDelta({
 	raw: cur,
 	gameTimeSec: cur.gameTime,
 	previous: { raw: prev, gameTimeSec: prev.gameTime },
 	feedNotes: false,
 	counterpartSeenSec: cur.gameTime - 118,
+	deathsSeen: { Lissandra: { atSec: LISSANDRA_DIED, exact: true } },
 	said: ['4:03 (1m44s ago) "Take her raptors while she is down."']
 })
 
@@ -680,9 +689,11 @@ test("a dead counterpart is stated beside the objective clock, with his timer", 
 		gameTimeSec: raw.gameTime,
 		previous: { raw: prev, gameTimeSec: prev.gameTime },
 		feedNotes: false,
+		deathsSeen: { Briar: { atSec: raw.gameTime - 9, exact: true } },
 		at: { label: "blue-side base", coarse: "base", atSec: raw.gameTime }
 	})!.text.split("\n\n").find(x => x.startsWith("NEXT"))!
-	assert.match(next, /Briar: DEAD, back in 24s/)
+	/* BOTH CLOCKS, and they run opposite ways: 9 seconds gone, 24 to come. */
+	assert.match(next, /Briar: DEAD, down 9s, back in 24s/)
 	assert.match(next, /Voidgrubs \(top side\): up at 8:00/)
 })
 
@@ -708,10 +719,11 @@ test("a dead counterpart leads NEXT, ahead of every pit", () => {
 		raw,
 		gameTimeSec: raw.gameTime,
 		previous: { raw: prev, gameTimeSec: prev.gameTime },
-		feedNotes: false
+		feedNotes: false,
+		deathsSeen: { Briar: { atSec: raw.gameTime - 9, exact: true } }
 	})!.text.split("\n\n").find(x => x.startsWith("NEXT"))!
 	const bullets = next.split("\n").filter(l => l.startsWith("- "))
-	assert.match(bullets[0]!, /^- Briar — the enemy jungler — is DEAD, back in 24s\./, bullets.join(" | "))
+	assert.match(bullets[0]!, /^- Briar — the enemy jungler — is DEAD, down 9s, back in 24s\./, bullets.join(" | "))
 	assert.match(bullets[0]!, /Nothing in his client shows him this timer/)
 	/* and he is named once, not twice: the down-list below drops the man who is already the head. */
 	assert.equal(bullets.filter(l => /Briar/.test(l)).length, 1, bullets.join(" | "))
@@ -719,7 +731,7 @@ test("a dead counterpart leads NEXT, ahead of every pit", () => {
 
 test("a live counterpart adds no head line at all", () => {
 	const next = withFix().text.split("\n\n").find(x => x.startsWith("NEXT"))!
-	assert.ok(!/is DEAD, back in/.test(next), next)
+	assert.ok(!/is DEAD, down/.test(next), next)
 })
 
 test("an objective beyond the horizon is not rendered at all", () => {
@@ -1085,16 +1097,11 @@ test("his own build is named on a delta, not just counted", () => {
 })
 
 test("every name in the down-list carries the team it is on", () => {
-	const d = buildDelta({
-		raw: cur,
-		gameTimeSec: cur.gameTime,
-		previous: { raw: prev, gameTimeSec: prev.gameTime },
-		feedNotes: false
-	})!
-	const line = d.text.split("\n").find(l => l.startsWith("- Down right now"))!
-	const names = line.slice(line.indexOf(":") + 1).split(", ")
+	const line = delta!.text.split("\n").find(l => l.startsWith("- Down right now"))!
+	const names = line.slice(line.indexOf(":") + 1).split("; ")
 	assert.ok(names.length > 0, line)
-	for (const n of names) assert.match(n, /\((YOUR team|ENEMY)\) back in \d+s/, `${n} in ${line}`)
+	/* And how long each has been down, beside what is left of his timer. */
+	for (const n of names) assert.match(n, /\((YOUR team|ENEMY)\) down \d+s, back in \d+s/, `${n} in ${line}`)
 })
 
 test("a dead player is announced as dead everywhere, and his corpse's bars are not printed", () => {
@@ -1105,16 +1112,17 @@ test("a dead player is announced as dead everywhere, and his corpse's bars are n
 	// A corpse really does read zero in this feed; that is why the bars come out.
 	raw.data.activePlayer.championStats.currentHealth = 0
 	raw.data.activePlayer.championStats.resourceValue = 0
-	const d = buildDelta({ raw, gameTimeSec: cur.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime }, feedNotes: false })!
+	const seen = { Lillia: { atSec: cur.gameTime - 6, exact: true } }
+	const d = buildDelta({ raw, gameTimeSec: cur.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime }, feedNotes: false, deathsSeen: seen })!
 	const now = d.text.split("\n\n")[0]!.split("\n")[1]!
-	assert.match(now, /^\d+:\d\d\. YOU ARE DEAD — 14s until you are up\./, now)
+	assert.match(now, /^\d+:\d\d\. YOU ARE DEAD — down 6s, 14s until you are up\./, now)
 	assert.match(now, /corpse reads 0 HP and 0 mana/, now)
 	assert.ok(!/HP 0%/.test(now), now)
-	assert.match(d.text, /You: [^\n]*DEAD for 14s more/)
+	assert.match(d.text, /You: [^\n]*DEAD, down 6s, 14s more/)
 
-	const b = buildBrief({ raw, gameTimeSec: cur.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime } })!
+	const b = buildBrief({ raw, gameTimeSec: cur.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime }, deathsSeen: seen })!
 	const you = b.text.split("\n\n").find(s => s.startsWith("YOU — Lillia"))!
-	assert.match(you.split("\n")[1]!, /^HE IS DEAD RIGHT NOW and respawns in 14s\./)
+	assert.match(you.split("\n")[1]!, /^HE IS DEAD RIGHT NOW — down 6s — and respawns in 14s\./)
 })
 
 /**
@@ -1198,4 +1206,92 @@ test("no bar claims what the number buys", () => {
 		assert.ok(!/\d+ (?:more )?(?:casts|camps|clears)/i.test(t), t)
 		assert.ok(!/enough (?:mana|health) (?:for|to)/i.test(t), t)
 	}
+})
+
+/* ================================================================ the dead clock, both ways
+ *
+ * The payload used to state a death ONE WAY ROUND — `back in Ns`, the time remaining — and the
+ * sentence a coach reaches for is the elapsed one. Measured over the 28 stored games: 153 spoken
+ * lines state an elapsed death time, 71 of them contradict the client's own kill log, and the error
+ * is one-sided — 101 overstate against 4 that understate, with 101 of 115 speaking a number within
+ * ten seconds of the remaining figure printed beside them. The model was not inventing; it was
+ * converting the only number it had, and the conversion needs a respawn length nothing here knows.
+ */
+
+/** Every line in a payload that states a respawn timer. */
+const timerLines = (text: string): string[] =>
+	text.split("\n").filter(l => /(?:back in|respawns in|until you are up) \d+s/.test(l))
+
+test("every remaining-time figure in the payload has an elapsed figure beside it", () => {
+	const raw = structuredClone(cur) as { gameTime: number; data: Record<string, any> }
+	const me = raw.data.allPlayers.find((p: any) => p.championName === "Lillia")
+	me.isDead = true
+	me.respawnTimer = 14.2
+	raw.data.activePlayer.championStats.currentHealth = 0
+	const seen = {
+		Lissandra: { atSec: LISSANDRA_DIED, exact: true },
+		Lillia: { atSec: raw.gameTime - 6, exact: true }
+	}
+	for (const payload of [
+		buildDelta({ raw, gameTimeSec: raw.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime }, feedNotes: false, deathsSeen: seen })!,
+		buildBrief({ raw, gameTimeSec: raw.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime }, deathsSeen: seen })!
+	]) {
+		const lines = timerLines(payload.text)
+		assert.ok(lines.length > 0, "the fixture has dead men in it")
+		for (const l of lines) assert.match(l, /down (?:at least )?\d+s|elapsed NOT KNOWN/, l)
+	}
+})
+
+/*
+ * NOT KNOWN IS A RENDERED STATE, not a gap to fill. A coach started mid-game, or a body that walked
+ * into view already dead, has an unwatched death — and the only route from `respawnTimer` to an
+ * elapsed figure is the respawn length, which grows with game time and is a patch value this app
+ * refuses to hardcode. So the line says it does not know, and carries no second number at all.
+ */
+test("an unwatched death renders NOT KNOWN and no elapsed number anywhere", () => {
+	const d = buildDelta({
+		raw: cur,
+		gameTimeSec: cur.gameTime,
+		previous: { raw: prev, gameTimeSec: prev.gameTime },
+		feedNotes: false
+	})!
+	const line = d.text.split("\n").find(l => /Lissandra/.test(l) && /back in/.test(l))!
+	assert.match(line, /Lissandra \(ENEMY\) elapsed NOT KNOWN, back in 3s/)
+	assert.ok(!/down \d+s/.test(d.text), d.text)
+})
+
+test("an instant taken off the sample edge says at least, because it is a bound", () => {
+	const d = buildDelta({
+		raw: cur,
+		gameTimeSec: cur.gameTime,
+		previous: { raw: prev, gameTimeSec: prev.gameTime },
+		feedNotes: false,
+		deathsSeen: { Lissandra: { atSec: LISSANDRA_DIED, exact: false } }
+	})!
+	assert.match(d.text, /Lissandra \(ENEMY\) down at least 13s, back in 3s/)
+})
+
+/*
+ * The record is keyed by CHAMPION, and a blind pick can put the same champion on both teams. Dating
+ * one man's death by the other's is exactly the confident-wrong-number failure this whole clock was
+ * built to remove, so a duplicated champion is treated as unwatched.
+ */
+test("a mirror matchup is NOT KNOWN rather than one man's death dating the other's", () => {
+	const raw = structuredClone(cur) as { gameTime: number; data: Record<string, any> }
+	raw.data.allPlayers.find((p: any) => p.championName === "Senna").championName = "Lissandra"
+	const d = buildDelta({
+		raw,
+		gameTimeSec: raw.gameTime,
+		previous: { raw: prev, gameTimeSec: prev.gameTime },
+		feedNotes: false,
+		deathsSeen: { Lissandra: { atSec: LISSANDRA_DIED, exact: true } }
+	})!
+	assert.match(d.text, /Lissandra \(ENEMY\) elapsed NOT KNOWN/)
+})
+
+test("the feed notes say which clock is which, once", () => {
+	const b = buildBrief({ raw: cur, gameTimeSec: cur.gameTime, previous: { raw: prev, gameTimeSec: prev.gameTime } })!
+	const notes = b.text.split("\n\n").find(x => x.startsWith("WHAT THIS FEED IS"))!
+	assert.match(notes, /A death carries TWO clocks here and they run opposite ways/)
+	assert.match(notes, /`down Ns` is how long the player has ALREADY been dead/)
 })

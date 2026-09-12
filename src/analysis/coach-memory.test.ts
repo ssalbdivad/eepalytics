@@ -22,6 +22,7 @@ import {
 	BACK_GOLD_DROP,
 	CAMPS_SPAWN_SEC,
 	cpSeenAt,
+	deathsSeen,
 	QUANTUM_HIDES_SEC,
 	RECENT_KEEP,
 	WINDOW_SEC,
@@ -104,6 +105,8 @@ interface Bits {
 	cpCs?: number
 	cpLevel?: number
 	cpItems?: string[]
+	cpDead?: boolean
+	cpRespawn?: number
 	events?: Record<string, unknown>[]
 }
 
@@ -138,8 +141,8 @@ const sample = (b: Bits) => ({
 			team: "CHAOS",
 			position: "JUNGLE",
 			level: b.cpLevel ?? 1,
-			isDead: false,
-			respawnTimer: 0,
+			isDead: b.cpDead === true,
+			respawnTimer: b.cpDead === true ? (b.cpRespawn ?? 12) : 0,
 			scores: { kills: 0, deaths: 0, assists: 0, creepScore: b.cpCs ?? 0, wardScore: 0 },
 			items: (b.cpItems ?? []).map(displayName => ({ displayName })),
 			summonerSpells: { summonerSpellOne: { displayName: "Smite" }, summonerSpellTwo: { displayName: "Flash" } }
@@ -833,4 +836,90 @@ test("cpSeenAt is the age the brief needs, and null before anything on his row h
 
 	const itemsLatest: MemoryState = { ...fresh, cpSeen: { level: 90, cs: null, items: 300 } }
 	assert.equal(cpSeenAt(itemsLatest), 300)
+})
+
+/* ================================================================ the dead clock
+ *
+ * The feed states a death ONE WAY ROUND — `respawnTimer`, the time remaining — and the sentence a
+ * coach reaches for is the other one. Across the 28 stored games 153 spoken lines state an elapsed
+ * death time and 71 contradict the client's own kill log, one-sided: 101 overstate, 4 understate,
+ * and 101 of 115 spoke a number within ten seconds of the `back in N` figure printed beside them.
+ * The elapsed instant has to be WATCHED, because the only other way to it is a respawn schedule and
+ * respawn length is a patch value that grows with game time.
+ */
+
+test("the kill log dates a death exactly, and it dates everyone's", () => {
+	const s = real()
+	/*
+	 * The recording's own `ChampionKill` at 346s: Taliyah kills Lissandra, who is still down at the
+	 * second sample with 2.8s left on her timer. Elapsed 13s against remaining 3s — the two figures
+	 * the model was converting between, and neither is derivable from the other.
+	 */
+	const liss = deathsSeen(s).Lissandra!
+	assert.ok(liss, "Lissandra's death is in the client's event log")
+	assert.equal(Math.round(liss.atSec), 346)
+	assert.equal(liss.exact, true)
+	/* Not just the counterpart: half of the contradicted lines named somebody else. */
+	assert.ok(Object.keys(deathsSeen(s)).length > 1, Object.keys(deathsSeen(s)).join(", "))
+})
+
+test("with no kill line the alive->dead edge bounds it, and says so", () => {
+	const s = newMemory()
+	observe(s, sample({ cpDead: false }), 100)
+	observe(s, sample({ cpDead: true }), 105)
+	const d = deathsSeen(s).Briar!
+	assert.ok(d)
+	/*
+	 * The edge only proves she died somewhere in the poll gap, so the instant is the moment the app
+	 * SAW the body and the elapsed time it yields is a lower bound. `live-brief.ts` renders it as
+	 * "down at least Ns" — the honest form of a figure that cannot be tighter than the sampler.
+	 */
+	assert.equal(d.atSec, 105)
+	assert.equal(d.exact, false)
+})
+
+test("the kill line wins over the edge that saw the same death", () => {
+	const s = newMemory()
+	observe(s, sample({ cpDead: false }), 100)
+	observe(
+		s,
+		sample({
+			cpDead: true,
+			events: [{ EventID: 1, EventName: "ChampionKill", EventTime: 102, KillerName: "Player", VictimName: "Enemy" }]
+		}),
+		105
+	)
+	assert.deepEqual(deathsSeen(s).Briar, { atSec: 102, exact: true })
+})
+
+/*
+ * THE ONE WAY THIS RECORD COULD STATE A CONFIDENT WRONG NUMBER, closed.
+ *
+ * A death dated at 3:00 and left standing survives the respawn and is then sitting there when the
+ * man dies again — and if nothing watched the second death, the brief would render the first one's
+ * age as this one's. So a respawn drops the entry and the next death has to be watched on its own.
+ */
+test("a respawn ends the clock, and an unwatched second death is NOT KNOWN rather than the first one's age", () => {
+	const s = newMemory()
+	observe(s, sample({ cpDead: false }), 100)
+	observe(s, sample({ cpDead: true }), 105)
+	observe(s, sample({ cpDead: false }), 130)
+	assert.equal(deathsSeen(s).Briar, undefined)
+	/* She dies again with no sample and no kill line in between: still unknown, not 30s stale. */
+	const later = newMemory()
+	observe(later, sample({ cpDead: true }), 200)
+	assert.equal(deathsSeen(later).Briar, undefined)
+})
+
+test("a death from before this memory started is still dated, because the first observe reads the whole log", () => {
+	const s = newMemory()
+	observe(
+		s,
+		sample({
+			cpDead: true,
+			events: [{ EventID: 1, EventName: "ChampionKill", EventTime: 240, KillerName: "Player", VictimName: "Enemy" }]
+		}),
+		260
+	)
+	assert.deepEqual(deathsSeen(s).Briar, { atSec: 240, exact: true })
 })

@@ -64,6 +64,7 @@ import { dragonPhrase } from "../shared/dragons.ts"
  * words HIS OWN floored farm, which is his farm, floored. */
 import { csPhrase } from "../shared/live-state.ts"
 import { clock } from "../shared/live-brief.ts"
+import type { DeathSeen } from "../shared/live-brief.ts"
 
 /* ================================================================ narrowing
  *
@@ -126,6 +127,14 @@ export interface Snapshot {
 	cpItems: string[]
 	cpDead: boolean
 	cpKda: readonly [number, number, number] | null
+	/**
+	 * Every champion the feed reports DEAD in this sample.
+	 *
+	 * The alive->dead EDGE is the fallback source for `MemoryState.deadAt`, and an edge needs both
+	 * sides. This module keeps samples and not payloads, so the set has to be stored beside the
+	 * sample it was read from or the diff has nothing to compare against.
+	 */
+	deadChamps: string[]
 }
 
 const itemNames = (v: unknown): string[] =>
@@ -209,7 +218,12 @@ const readSnapshot = (raw: unknown, tSec: number): Snapshot | null => {
 		cpLevel: cp ? num(cp.level) ?? 0 : null,
 		cpItems: cp ? itemNames(cp.items) : [],
 		cpDead: cp ? cp.isDead === true : false,
-		cpKda: cp ? [num(cs.kills) ?? 0, num(cs.deaths) ?? 0, num(cs.assists) ?? 0] : null
+		cpKda: cp ? [num(cs.kills) ?? 0, num(cs.deaths) ?? 0, num(cs.assists) ?? 0] : null,
+		deadChamps: arr(data.allPlayers)
+			.map(raw => rec(raw))
+			.filter((row): row is Record<string, unknown> => row !== null && row.isDead === true)
+			.map(row => str(row.championName))
+			.filter((c): c is string => c !== null)
 	}
 }
 
@@ -352,6 +366,34 @@ export interface MemoryState {
 	 */
 	cpSeen: { level: number | null; cs: number | null; items: number }
 	/**
+	 * WHEN EACH CHAMPION WAS OBSERVED TO GO DOWN, keyed by champion name. The other half of the
+	 * dead clock, and the half no channel in this app carried until now.
+	 *
+	 * The feed states a death as `respawnTimer` — time REMAINING. The sentence a coach reaches for
+	 * is the ELAPSED one ("he has been down for half a minute"), and with only the remaining figure
+	 * in front of it the model converted one into the other. Measured across the 28 stored games,
+	 * 153 spoken lines state an elapsed death time and 71 of them contradict the client's own kill
+	 * log; the error is one-sided — 101 overstate against 4 that understate — and 101 of 115 spoke
+	 * a number within ten seconds of the `back in N` figure sitting in the payload. The model was
+	 * not inventing. It was reading the only number it had been given.
+	 *
+	 * So the instant is OBSERVED and never computed. A respawn interval is a patch value that grows
+	 * with game time; subtracting one from the other would put a hardcoded schedule behind a
+	 * sentence the listener hears as a measurement, which is the same class of error as the item
+	 * prices this file's sibling deleted.
+	 *
+	 * Two sources, and the record says which:
+	 *  - the client's own `ChampionKill` log, whose `EventTime` is the death itself (`exact`), and
+	 *    which the first `observe` of a session ingests in full, so a death from before the coach
+	 *    started is usually still dated exactly;
+	 *  - the alive->dead edge between two samples, which bounds the death at the poll gap and is
+	 *    therefore a LOWER bound on the elapsed time. The brief renders it as "at least".
+	 *
+	 * A champion with no entry has not been watched going down, and the elapsed figure for him is
+	 * NOT KNOWN. That is a rendered state, not a gap to fill.
+	 */
+	deadAt: Record<string, DeathSeen>
+	/**
 	 * The game clock of the FIRST sample this memory ever saw, or null before there is one.
 	 *
 	 * `cpSeen` can only report a change it watched happen, so it stays null until the counterpart's
@@ -450,6 +492,7 @@ export const newMemory = (): MemoryState => ({
 	recent: [],
 	said: [],
 	cpSeen: { level: null, cs: null, items: 0 },
+	deadAt: {},
 	observedFrom: null
 })
 
@@ -516,6 +559,14 @@ export const observe = (s: MemoryState, raw: unknown, gameTimeSec: number): Memo
 				const killer = who(e.KillerName)
 				const victim = who(e.VictimName)
 				const assists = arr(e.Assisters).map(who)
+				/*
+				 * THE DEATH INSTANT, from the line that states it. `EventTime` is the kill, not the
+				 * reading of it, so this is the exact half of `MemoryState.deadAt`. Recorded for
+				 * everyone on the roster — half of the inverted lines named somebody other than the
+				 * enemy jungler — and unconditionally, because the log is ordered and a later kill
+				 * on the same victim is a later death.
+				 */
+				if (victim !== "someone") s.deadAt[victim] = { atSec: t, exact: true }
 				if (victim === s.me)
 					push(t, "my-death", `${killer} killed you${assists.length > 0 ? ` (assists ${assists.join(", ")})` : ""}`, 2, true)
 				else if (killer === s.me) push(t, "my-kill", `you killed ${victim}`, 2, true)
@@ -596,6 +647,31 @@ export const observe = (s: MemoryState, raw: unknown, gameTimeSec: number): Memo
 			LEVEL_SPIKES.has(snap.cpLevel)
 		)
 			push(gameTimeSec, "cp-level", `${cpName} was seen at level ${snap.cpLevel}`, 0)
+
+		/*
+		 * THE EDGE, for a death the log did not carry.
+		 *
+		 * It bounds the death inside one poll gap, so the elapsed time it yields is a LOWER bound
+		 * and the brief says "at least". It only writes when the record is OLDER than this window:
+		 * a death the kill log dated a moment ago is the better figure and survives, while a stale
+		 * entry from an earlier death cannot date this one.
+		 */
+		const wasDown = new Set(prev.deadChamps)
+		for (const champ of snap.deadChamps) {
+			if (wasDown.has(champ)) continue
+			const known = s.deadAt[champ]
+			if (!known || known.atSec <= prev.tSec) s.deadAt[champ] = { atSec: gameTimeSec, exact: false }
+		}
+		/*
+		 * A RESPAWN ENDS THE DEATH THIS CLOCK MEASURES, so the entry goes. Keeping it would leave a
+		 * dated instant standing behind a LATER death that nothing watched, which is the one way
+		 * this record could state a confident wrong number instead of NOT KNOWN.
+		 */
+		const nowDown = new Set(snap.deadChamps)
+		for (const champ of prev.deadChamps) {
+			const known = s.deadAt[champ]
+			if (!nowDown.has(champ) && known && known.atSec <= prev.tSec) delete s.deadAt[champ]
+		}
 
 		/* The last time each of his figures actually MOVED, which is the only age they have. */
 		if (snap.cpLevel !== null && snap.cpLevel !== prev.cpLevel) s.cpSeen.level = gameTimeSec
@@ -1046,6 +1122,14 @@ export const cpSeenAt = (s: MemoryState): number | null => {
 	const clocks = [s.cpSeen.level, s.cpSeen.cs, items].filter((n): n is number => n !== null)
 	return clocks.length === 0 ? null : Math.max(...clocks)
 }
+
+/**
+ * The observed death instants, for `buildBrief`'s `deathsSeen`.
+ *
+ * Read-only by contract and handed over without a copy: the brief renders it and computes one
+ * subtraction from it. See `MemoryState.deadAt` for why the instant is watched rather than derived.
+ */
+export const deathsSeen = (s: MemoryState): Readonly<Record<string, DeathSeen>> => s.deadAt
 
 export const renderCounterpart = (s: MemoryState, now: number): string => {
 	const last = s.recent.at(-1)

@@ -82,6 +82,23 @@ export interface BriefInput {
 	 */
 	counterpartSeenSec?: number | null
 	/**
+	 * WHEN EACH CHAMPION WAS OBSERVED TO GO DOWN, keyed by champion name — the ELAPSED half of the
+	 * dead clock, which this feed does not carry at all.
+	 *
+	 * `respawnTimer` is time REMAINING and it is the only death figure in the payload. The sentence
+	 * a coach reaches for is the elapsed one, so the model converted one into the other: across the
+	 * 28 stored games 153 spoken lines state an elapsed death time, 71 contradict the client's own
+	 * kill log, the error is one-sided (101 overstate, 4 understate), and 101 of 115 spoke a number
+	 * within ten seconds of the `back in N` figure printed beside it. Nothing was fabricated — the
+	 * payload gave one number and the sentence needed the other.
+	 *
+	 * Owned by the caller for the same reason `said` and `narrative` are: it needs a record across
+	 * samples and this file holds two. `analysis/coach-memory.ts`'s `deathsSeen`. A champion with no
+	 * entry was not watched going down and renders as `elapsed NOT KNOWN` — never as a subtraction
+	 * from a respawn schedule, which is a patch value this app may not hardcode.
+	 */
+	deathsSeen?: Readonly<Record<string, DeathSeen | undefined>> | null
+	/**
 	 * The game clock from which the caller has actually been WATCHING the feed, or null.
 	 *
 	 * `counterpartSeenSec` is null in two opposite situations and the difference between them is
@@ -394,7 +411,58 @@ const buildLine = (p: Player): string => {
 	return kit.length === 0 ? "nothing built yet" : `${kit.length} — ${kit.map(i => i.name).join(", ")}`
 }
 
-const deadTag = (p: Player): string => (p.dead ? ` DEAD, respawns in ${r0(p.respawn)}s` : "")
+/**
+ * When a champion was OBSERVED to go down. `analysis/coach-memory.ts`'s `deadAt` satisfies it
+ * structurally, so the two agree without this file importing that one.
+ */
+export interface DeathSeen {
+	/** The game clock of the death itself. */
+	atSec: number
+	/**
+	 * True when the instant came from the client's `ChampionKill` log, which states the kill's own
+	 * time. False when it came from an alive->dead edge between two samples, which only bounds the
+	 * death inside one poll gap — so the elapsed figure is then a LOWER bound and says "at least".
+	 */
+	exact: boolean
+}
+
+/** Renders the watched half of a dead player's clock. See `downClock`. */
+type Downed = (p: Player) => string
+
+/**
+ * HOW LONG HE HAS ALREADY BEEN DEAD, beside the time left — two different figures, and the payload
+ * used to print only the second.
+ *
+ * Every dead clock in this file renders both from here, because the inversion was not a property of
+ * one line: 83 of the contradicted claims named the enemy jungler and 48 named somebody else, so
+ * fixing the counterpart's line alone would have left half the defect standing.
+ *
+ * Three forms and no fourth: an exact elapsed time off the kill log, a bounded one off the sample
+ * edge, and NOT KNOWN. Nothing here subtracts a respawn timer from a respawn length to manufacture
+ * the third — respawn length grows with game time and is a patch value, so that arithmetic would
+ * hand the listener a schedule dressed as an observation.
+ *
+ * A MIRROR MATCH gets NOT KNOWN. The record is keyed by champion and two players can carry the same
+ * champion in a blind pick, which would date one man's death by the other's; a champion on the
+ * roster twice is therefore treated as unwatched rather than guessed at.
+ */
+const downClock = (now: number, players: Player[], seen: BriefInput["deathsSeen"]): Downed => {
+	const once = new Set<string>()
+	const twice = new Set<string>()
+	for (const p of players) {
+		if (once.has(p.champion)) twice.add(p.champion)
+		once.add(p.champion)
+	}
+	return p => {
+		const d = twice.has(p.champion) ? undefined : seen?.[p.champion]
+		if (d === undefined || d === null || d.atSec > now) return "elapsed NOT KNOWN"
+		const el = r0(Math.max(0, now - d.atSec))
+		return d.exact ? `down ${el}s` : `down at least ${el}s`
+	}
+}
+
+const deadTag = (p: Player, down: Downed): string =>
+	p.dead ? ` DEAD, ${down(p)}, respawns in ${r0(p.respawn)}s` : ""
 
 /* ================================================================ the counterpart, without the CS race
  *
@@ -523,6 +591,7 @@ const counterpartClause = (
 	now: number,
 	seenAtSec: number | null,
 	watchedFromSec: number | null,
+	down: Downed,
 	/** True on the FULL brief, which is sent once a game and is the one payload with room. */
 	full: boolean
 ): string => {
@@ -562,7 +631,7 @@ const counterpartClause = (
 	 */
 	const age = full || seenAtSec === null ? ` ${rowAge(c, now, seenAtSec, watchedFromSec)}.` : ""
 	const live = c.dead || full ? "His death and respawn are live;" : ""
-	return `${c.champion}: ${c.dead ? `DEAD, back in ${r0(c.respawn)}s` : "alive"}, lvl ${c.level} — ${race}.${full ? ` ${c.kills}/${c.deaths}/${c.assists}.` : ""} ${build}.${live === "" ? "" : ` ${live}`}${age}`
+	return `${c.champion}: ${c.dead ? `DEAD, ${down(c)}, back in ${r0(c.respawn)}s` : "alive"}, lvl ${c.level} — ${race}.${full ? ` ${c.kills}/${c.deaths}/${c.assists}.` : ""} ${build}.${live === "" ? "" : ` ${live}`}${age}`
 }
 
 /**
@@ -941,8 +1010,8 @@ interface Moves {
  *   branch read "he just backed and bought" for a man who had never left the fountain, and the coach
  *   said "Good back for the seedling."
  */
-const doingPhrases = (me: Player, m: Moves, now: number, wasDead = false): string[] => {
-	if (me.dead) return [`he is DEAD and respawns in ${r0(me.respawn)}s`]
+const doingPhrases = (me: Player, m: Moves, now: number, down: Downed, wasDead = false): string[] => {
+	if (me.dead) return [`he is DEAD, ${down(me)}, and respawns in ${r0(me.respawn)}s`]
 	/*
 	 * A RESPAWN, before anything else, because otherwise it is narrated as a heal.
 	 *
@@ -986,7 +1055,8 @@ const deltaBlock = (
 	prevPlayers: Player[],
 	elapsed: number,
 	now: number,
-	counterpart: Player | null
+	counterpart: Player | null,
+	down: Downed
 ): string[] => {
 	if (prevMe === null || mePrev === null)
 		return [
@@ -1030,7 +1100,7 @@ const deltaBlock = (
 
 	/* The `doing` inference is rendered by NOW, at the top of the payload, and repeated here so the
 	 * full brief keeps every sentence it had. */
-	const doing = doingPhrases(me, { dCs, dGold, dHp, dMana, dLevel, dItems }, now, prevMe.dead)
+	const doing = doingPhrases(me, { dCs, dGold, dHp, dMana, dLevel, dItems }, now, down, prevMe.dead)
 	if (doing.length > 0) out.push(`Inference from those deltas: ${doing.join("; ")}.`)
 	return out
 }
@@ -1129,6 +1199,11 @@ interface Scene {
 	prevSec: number | null
 	elapsed: number
 	moves: Moves | null
+	/**
+	 * The watched half of a dead player's clock, for whoever renders the other half. Built once per
+	 * scene because the mirror-match guard needs the whole roster. See `downClock`.
+	 */
+	downFor: Downed
 }
 
 const readScene = (input: BriefInput): Scene | null => {
@@ -1187,6 +1262,7 @@ const readScene = (input: BriefInput): Scene | null => {
 		me,
 		counterpart,
 		players,
+		downFor: downClock(now, players, input.deathsSeen),
 		teammates: players.filter(p => p.team === me.team && p.name !== me.name),
 		enemies: players.filter(p => p.team !== me.team && p.name !== counterpart?.name),
 		events: readEvents(data),
@@ -1353,7 +1429,7 @@ const situation = (
 	 */
 	bits.push(
 		s.me.dead ?
-			`${clock(s.now)}. YOU ARE DEAD — ${r0(s.me.respawn)}s until you are up. (A corpse reads 0 HP and 0 mana in this feed, so neither bar is printed while you are down.)`
+			`${clock(s.now)}. YOU ARE DEAD — ${s.downFor(s.me)}, ${r0(s.me.respawn)}s until you are up. (A corpse reads 0 HP and 0 mana in this feed, so neither bar is printed while you are down.)`
 		:	`${clock(s.now)}. YOU ARE ALIVE, ${bar("HP", s.hp, s.maxHp, HP_LOW_BAND)}, ${bar("mana", s.mana, s.maxMana, MANA_LOW_BAND)}. ${ONLY_HIS}.`
 	)
 	bits.push(
@@ -1391,7 +1467,7 @@ const situation = (
 	 */
 	bits.push(
 		c === null ? "This feed labels no enemy jungler this game."
-		:	`Counterpart ${c.champion}: ${c.dead ? `DEAD, back in ${r0(c.respawn)}s` : "alive"}, lvl ${c.level} — ${
+		:	`Counterpart ${c.champion}: ${c.dead ? `DEAD, ${s.downFor(c)}, back in ${r0(c.respawn)}s` : "alive"}, lvl ${c.level} — ${
 				c.level === s.me.level ? "level with you"
 				: s.me.level > c.level ? `${s.me.level - c.level} below you`
 				: `${c.level - s.me.level} above you`
@@ -1416,7 +1492,7 @@ const situation = (
 	if (at == null && str(where ?? null) !== null) bits.push(`Picture: ${where}.`)
 	if (s.moves === null) bits.push("First look at this game, so nothing here is a change yet.")
 	else {
-		const doing = doingPhrases(s.me, s.moves, s.now, s.prevMe?.dead === true)
+		const doing = doingPhrases(s.me, s.moves, s.now, s.downFor, s.prevMe?.dead === true)
 		if (doing.length > 0) bits.push(`Over the last ${r0(s.elapsed)}s: ${doing.join("; ")}.`)
 	}
 	return ["NOW", bits.join(" ")].join("\n")
@@ -1432,7 +1508,7 @@ export const buildBrief = (input: BriefInput): LiveBrief | null => {
 	const watchedFrom = input.counterpartWatchedFromSec ?? null
 
 	const playerLine = (p: Player): string =>
-		`- ${p.champion} (${p.position || "role unlabelled"}, lvl ${p.level}) ${p.kills}/${p.deaths}/${p.assists}, ${p.cs} CS, ward score ${r1(p.ward)}${deadTag(p)}. Items: ${itemLine(p)}`
+		`- ${p.champion} (${p.position || "role unlabelled"}, lvl ${p.level}) ${p.kills}/${p.deaths}/${p.assists}, ${p.cs} CS, ward score ${r1(p.ward)}${deadTag(p, s.downFor)}. Items: ${itemLine(p)}`
 
 	const eventLines = s.events
 		.slice()
@@ -1472,7 +1548,7 @@ export const buildBrief = (input: BriefInput): LiveBrief | null => {
 			 * table, and it is not four quiet words.
 			 */
 			me.dead ?
-				`HE IS DEAD RIGHT NOW and respawns in ${r0(me.respawn)}s. The HP and mana below are a corpse reading 0 and are not a reading of anything.`
+				`HE IS DEAD RIGHT NOW — ${s.downFor(me)} — and respawns in ${r0(me.respawn)}s. The HP and mana below are a corpse reading 0 and are not a reading of anything.`
 			:	`HE IS ALIVE RIGHT NOW. The HP and mana below are exact, his own, and the only ones in this feed.`,
 			`K/D/A ${me.kills}/${me.deaths}/${me.assists}. CS ${me.cs} (${r1(s.csPerMin)}/min). Ward score ${r1(me.ward)}.`,
 			/* Amount, fraction and the app's own low band — see `bar` for the two words 57% and 28% were turned into. */
@@ -1490,7 +1566,7 @@ export const buildBrief = (input: BriefInput): LiveBrief | null => {
 			"ENEMY JUNGLER — this feed does not label one this game."
 		:	[
 				`ENEMY JUNGLER — ${counterpart.champion}, level ${counterpart.level}, ${counterpart.kills}/${counterpart.deaths}/${counterpart.assists}`,
-				`Ward score ${r1(counterpart.ward)}. Summoners: ${counterpart.spells.join(", ") || "unknown"}.${deadTag(counterpart)}`,
+				`Ward score ${r1(counterpart.ward)}. Summoners: ${counterpart.spells.join(", ") || "unknown"}.${deadTag(counterpart, s.downFor)}`,
 				`Items: ${itemLine(counterpart)}.`,
 				/*
 				 * THE ROW'S AGE, ONCE — and it is in NEXT, not here.
@@ -1527,7 +1603,7 @@ export const buildBrief = (input: BriefInput): LiveBrief | null => {
 	)
 
 	sections.push(
-		["WHAT CHANGED SINCE THE LAST LOOK", ...deltaBlock(me, s.prevMe, { gold: s.gold, hp: s.hp, mana: s.mana }, s.mePrev, s.players, s.prevPlayers, s.elapsed, now, counterpart)].join("\n")
+		["WHAT CHANGED SINCE THE LAST LOOK", ...deltaBlock(me, s.prevMe, { gold: s.gold, hp: s.hp, mana: s.mana }, s.mePrev, s.players, s.prevPlayers, s.elapsed, now, counterpart, s.downFor)].join("\n")
 	)
 
 	/*
@@ -1571,6 +1647,7 @@ export const buildBrief = (input: BriefInput): LiveBrief | null => {
 				"- Item lists are what a player is HOLDING now, and the names are exact. An enemy's empty list means he has not been SEEN, not that he has bought nothing.",
 				"- There are no positions anywhere in this feed. It contains no coordinates for anyone, including him. Any position in this payload came from READING THE MINIMAP and says so on its own line, with its age.",
 				"- There are no cooldowns and no summoner-spell timers.",
+				"- A death carries TWO clocks here and they run opposite ways. `back in Ns` and `respawns in Ns` are what is LEFT of the timer, and that is the only one the feed states. `down Ns` is how long the player has ALREADY been dead, which this app watched happen — `down at least Ns` when it saw the body rather than the kill, and `elapsed NOT KNOWN` when it did not watch him go down at all. Neither figure can be turned into the other: respawn length changes with game time and nothing in this app knows it.",
 				"- Ward score is a score, not a ward map: it says nothing about where anything was placed.",
 				"- The screenshot accompanying this brief is a real look at his screen. What is plainly visible on it — who is on screen, what he is attacking, his own bars, the chat, the kill banners, the minimap pings — is readable. What is off screen is not in the picture and not in this brief."
 			].join("\n")
@@ -1801,14 +1878,14 @@ const movedBlock = (s: Scene): string | null => {
 			if (p.deaths !== q.deaths) bits.push(`DIED (${q.deaths}->${p.deaths})`)
 			if (p.kills !== q.kills) bits.push(`killed someone (${q.kills}->${p.kills})`)
 			if (p.assists !== q.assists) bits.push(`assist (${q.assists}->${p.assists})`)
-			if (p.dead !== q.dead) bits.push(p.dead ? `DEAD, back in ${r0(p.respawn)}s` : "respawned")
+			if (p.dead !== q.dead) bits.push(p.dead ? `DEAD, ${s.downFor(p)}, back in ${r0(p.respawn)}s` : "respawned")
 			const bought = p.items.filter(i => !q.items.some(j => j.name === i.name))
 			if (bought.length > 0) bits.push(`BOUGHT ${bought.map(i => i.name).join(", ")}`)
 			else if (p.items.length !== q.items.length) bits.push(`items ${q.items.length}->${p.items.length}`)
 		}
 		if (bits.length === 0) {
 			if (!isCounterpart) continue
-			counterpartRow = `${p.champion} (counterpart): no change — lvl ${p.level}, ${p.kills}/${p.deaths}/${p.assists}, ${shopItems(p).length} items${deadTag(p)}`
+			counterpartRow = `${p.champion} (counterpart): no change — lvl ${p.level}, ${p.kills}/${p.deaths}/${p.assists}, ${shopItems(p).length} items${deadTag(p, s.downFor)}`
 			continue
 		}
 		const row = `${p.champion}${isCounterpart ? " (counterpart)" : ""}: ${bits.join("; ")}`
@@ -1978,7 +2055,7 @@ const prospectHead = (
 	const build = mine.length === 0 ? "nothing built yet" : mine.map(i => i.name).join(", ")
 	const state =
 		s.me.dead ?
-			`DEAD for ${r0(s.me.respawn)}s more, ${r0(s.gold)}g, holding ${build}`
+			`DEAD, ${s.downFor(s.me)}, ${r0(s.me.respawn)}s more, ${r0(s.gold)}g, holding ${build}`
 		:	`ALIVE, ${pct(s.hp, s.maxHp)} HP, ${pct(s.mana, s.maxMana)} mana, ${r0(s.gold)}g, holding ${build}`
 	/*
 	 * TWO TENSES, ONE LINE — and the tense is the CALLER's call, never this file's guess at an age.
@@ -2049,7 +2126,7 @@ const prospectHead = (
 	 * ground had red icons on them, which settles whether the pit is contested without naming anyone.
 	 */
 	if (s.counterpart !== null) {
-		out.push(counterpartClause(s.me, s.counterpart, s.now, seenAtSec, watchedFromSec, full))
+		out.push(counterpartClause(s.me, s.counterpart, s.now, seenAtSec, watchedFromSec, s.downFor, full))
 		/*
 		 * AND WHERE HE IS NOT, on every turn, immediately under the clause that describes him.
 		 *
@@ -2097,7 +2174,7 @@ const marginPhrase = (minSec: number, maxSec: number): string => {
  * the head already states whether a position is known at all, and repeating "we don't know where you
  * are" once per objective would spend a third of NEXT's budget saying nothing three times.
  */
-const reachClause = (r: ReachLine | undefined): string | null => {
+const reachClause = (r: ReachLine | undefined, down: string | null): string | null => {
 	if (r === undefined) return null
 	if (!r.constrained || r.units === null || r.speed === null || r.etaMinSec === null || r.etaMaxSec === null)
 		return null
@@ -2123,7 +2200,7 @@ const reachClause = (r: ReachLine | undefined): string | null => {
 			null
 		:	marginPhrase(r.marginMinSec, r.marginMaxSec)
 	if (r.origin === "fountain")
-		return ` You: DEAD for ${r0(r.delaySec)}s, then ${travel} from your fountain — ${dur(r.etaMinSec)} from now at the earliest${margin === null ? "" : `, so ${margin}`}. ${FLOOR}`
+		return ` You: DEAD for ${r0(r.delaySec)}s more${down === null ? "" : ` (${down})`}, then ${travel} from your fountain — ${dur(r.etaMinSec)} from now at the earliest${margin === null ? "" : `, so ${margin}`}. ${FLOOR}`
 	const eta =
 		Math.round(r.etaMinSec) === Math.round(r.etaMaxSec) ?
 			dur(r.etaMinSec)
@@ -2287,7 +2364,7 @@ const nextBlock = (
 	const cpDown = s.counterpart !== null && s.counterpart.dead ? s.counterpart : null
 	if (cpDown !== null)
 		lines.unshift(
-			`- ${cpDown.champion} — the enemy jungler — is DEAD, back in ${r0(cpDown.respawn)}s. Nothing in his client shows him this timer.`
+			`- ${cpDown.champion} — the enemy jungler — is DEAD, ${s.downFor(cpDown)}, back in ${r0(cpDown.respawn)}s. Nothing in his client shows him this timer.`
 		)
 
 	/*
@@ -2323,12 +2400,14 @@ const nextBlock = (
 	const down = s.players.filter(p => p.dead && p.name !== s.me.name && p.name !== cpDown?.name)
 	if (down.length > 0)
 		lines.push(
-			`- Down right now (${s.me.dead ? `and YOU, for ${r0(s.me.respawn)}s more` : "NOT you — you are ALIVE"}): ${down
+			`- Down right now (${
+				s.me.dead ? `and YOU, ${s.downFor(s.me)}, ${r0(s.me.respawn)}s more` : "NOT you — you are ALIVE"
+			}): ${down
 				.map(
 					p =>
-						`${p.champion} (${p.team === s.me.team ? "YOUR team" : "ENEMY"}) back in ${r0(p.respawn)}s`
+						`${p.champion} (${p.team === s.me.team ? "YOUR team" : "ENEMY"}) ${s.downFor(p)}, back in ${r0(p.respawn)}s`
 				)
-				.join(", ")}.`
+				.join("; ")}.`
 		)
 
 	/*
@@ -2379,7 +2458,7 @@ const nextBlock = (
 			const r = reaches.find(x => lines[i]!.startsWith(`- ${x.label} (`))
 			if (r === undefined) continue
 			matched.push(r)
-			const c = reachClause(r)
+			const c = reachClause(r, s.me.dead ? s.downFor(s.me) : null)
 			if (c !== null) {
 				lines[i] = lines[i]! + c
 				clauses++
