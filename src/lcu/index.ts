@@ -26,7 +26,6 @@ export * from "./bridge-client.ts"
 export * from "./curl-fallback.ts"
 export * from "./client.ts"
 export * from "./live-client.ts"
-export * from "./replay-schema.ts"
 
 export interface CreateLcuOptions extends LcuClientOptions {
 	/** Force a transport. Defaults to `settings.transport`. */
