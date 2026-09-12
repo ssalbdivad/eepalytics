@@ -16,7 +16,7 @@ If the new question is really a new one, add a row.
 | file | the question it answers |
 |---|---|
 | `bench-stream.ts` | **THE live bench.** Replay one real game's recorded client samples and paired frames at every model at once: what did each say, how fast, and how does it score on the six axes? Arms, `@mode` architectures, `+noframe` twins, event or timer schedules, blinded sheet. |
-| `frame-value.ts` | What is the screenshot worth, and is it read at all? The only PAIRED test in the repo (McNemar), because two independent Wilson intervals at n=30 call almost anything "not separated". |
+| `frame-value.ts` | What is the screenshot worth, and is it read at all? Paired throughout (McNemar, from `lib/stats.ts`), because two independent Wilson intervals at n=30 call almost anything "not separated". |
 | `bench-events.ts` | How many times would the coach be ASKED? The event detector against the fixed timer, over a whole game. Free — no model. |
 | `measure-staleness.ts` | Is a line still TRUE when its last syllable lands? |
 | `measure-speech.ts` | Does the coach SAY it right? The only instrument that reads AUDIO rather than text. |
@@ -41,7 +41,7 @@ figure read out loud — and the shipped `trusted` mode sends neither the pronun
 that marker, so those checks had no live subject left. Nothing grades an abbreviated unit
 mechanically any more; `judge-corpus.ts` catches it as a judge would.
 
-## Post-game review — one chain, five stages, in order
+## Post-game review — the model comparison (stages 1-4), then the shipped path
 
 | file | the question it answers |
 |---|---|
@@ -53,12 +53,35 @@ mechanically any more; `judge-corpus.ts` catches it as a judge would.
 | `postgame-sheet.ts` | **Stage 4.** The arms' items, blinded, as one page he can grade. |
 | `probe-minimap.ts` | What can actually be read off a minimap crop, with accuracy numbers? The measurement behind `minimap-track`'s confidence, and the one question `bench-stream` cannot ask — it CONSUMES a minimap read and never grades one. Scorer pinned in `probe-minimap.test.ts`. |
 
+The four stages above are a CONCLUDED comparison: five models over one frozen bundle, indistinguishable
+on the blinded grading and separated only on the clock (flash 38-43 s against opus 330 s). That result is
+what `src/review/postgame-call.ts` ships. The stages stay because `data/eval/bundle-5639406342/` and the
+arms' outputs are on disk and rule 1 below applies to them.
+
+The two below are not stages. They are the shipped path and its clock.
+
+**`tl-pack.ts` and `tl-review.ts` were deleted on 2026-09-12.** They were an untracked prototype of
+"the pack the timeline alone can back, and one review call over it" for the 31 of 32 recent games with
+no journal session. That is exactly what `src/review/pack.ts` (`buildGamePack` / `renderPack`,
+`PACK_VERSION 2`, pinned by `src/review/pack.test.ts`) and `src/review/postgame-call.ts` now do, inside
+`runGameReviewJob` rather than beside it — so the prototypes were a second answer to a question the
+shipped path had already taken over. Neither had ever written an artefact: `data/eval/tl-packs/` and
+`data/eval/tl-reviews/` do not exist, so rule 1 had nothing to protect. **If you want a timeline-only
+pack, call `buildGamePack`.**
+
+| file | the question it answers |
+|---|---|
+| `backfill-reviews.ts` | NOT an arm — the SHIPPED reviewer (`runGameReviewJob`, unmodified) run over the games that never got one, resumable off the database rather than a state file. |
+| `measure-postgame.ts` | How long after a game ends can he read anything? The four-stage wall clock from `game.endedAtMs` to `review.createdMs`, from rows the daemon already writes. |
+
 ## Grading and reading stored runs
 
 | file | the question it answers |
 |---|---|
 | `lib/sheet.ts` | **THE sheet builder.** The blinded human grading sheet as one HTML file, plus its key and the reveal. Three callers: `bench-stream`, `frame-value`, `postgame-sheet`. Never write a second one. |
 | `judge-corpus.ts` | Grades every line a `bench-stream --games ...` run spoke, blinded and shuffled, and reports useful/false/generic PER GAME as well as pooled. Judges against the stored PAYLOAD only, because 13 of the 17 games have no frames — so its false rate is a floor, not the truth. |
+| `adjudicate.ts` | Settles a judge dispute against the EXACT record, with no model in the loop — every claim in a spoken line checked against the stored timeline and the raw 5s samples, and the two judges then scored against that. The instrument behind `data/eval/adjudicate-20260911.json`. |
+| `compare-arms.ts` | The PAIRED comparison between two arms of one `judge-corpus` run. Calls nothing; reads a `*-judged.json` and does the pairing that file's per-arm table stops short of. |
 | `blind-judge.ts` | The reader for the 2026-09-05 ablation corpus (`ablation-*.json`, `blind-*.json`), and the seeded shuffle every sheet imports. |
 | `diagnose-unbacked.ts` | WHY does the scorer say a figure is unbacked? Puts every charged figure in a stored run into one class — rounded, a map clock, a goal level, arithmetic, or invented — names the payload figure it stands for, reports the before/after against `scoreLine(_, { literal: true })`, and (`--inject`) injects known errors to prove the instrument still has teeth. |
 | `rescore-runs.ts` | What did a stored run SAY, and how does it score against today's scorer? The reader for the ~30 `run*/final*/confirm` files from 2026-09-04 whose writer (`eval-live.ts`) was deleted. |
@@ -71,6 +94,7 @@ mechanically any more; `judge-corpus.ts` catches it as a judge would.
 | file | what it owns |
 |---|---|
 | `lib/stream.ts` | **THE join.** Which frames on disk go with which raw samples, and the rebuild of the block the coach actually held. Also the ONE `readVerbatim` / `baselineDuring` / `coachStateFrom` / `championVocabulary`. Five harnesses each did this join by hand once and each got a different answer. |
+| `lib/stats.ts` | **THE paired test.** McNemar's exact, in both call shapes. It was written twice — `frame-value.ts` from the pairs, `adjudicate.ts` from the counts — and `compare-arms.ts` imported one of them out of a harness. Wilson stays in `src/analysis/coach-score.ts`, because the scorer ships it. |
 | `lib/win-lcu.ts` | The GET-only Windows-interop LCU reader for `scripts/`, kept separate from `src/lcu/` so `doctor.ts` can diagnose an app that will not import. |
 
 ## Operations — not measurement

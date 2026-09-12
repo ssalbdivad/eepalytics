@@ -797,7 +797,17 @@ const isPraise = (text: string): boolean => PRAISE.test(text) && DID_SOMETHING.t
  */
 export const isEmpty = (line: string): boolean => line.replace(/[^A-Za-z]/g, "") === ""
 
-const isSilent = (line: string): boolean =>
+/**
+ * A deliberate PASS: the coach had its turn and chose not to speak.
+ *
+ * Exported because it is the line between a sentence and a decision, and every instrument in this
+ * repo has to draw it in the same place. It was private, so `scripts/bench-stream.ts` kept its own
+ * copy and `scripts/judge-corpus.ts` had none at all — it took "text is not empty" for "he said
+ * something" and sent 11 of the 17-game corpus's PASSES to the judge as if they were coaching
+ * lines, inside the denominator of the headline useful rate. Two instruments over one corpus
+ * disagreeing about what a line is, is a defect in the instrument and not a detail.
+ */
+export const isSilent = (line: string): boolean =>
 	line.replace(/[^A-Za-z]/g, "").toLowerCase() === "pass"
 
 /**

@@ -149,17 +149,29 @@ export interface ArmVerdict {
 	unverifiable: Interval
 	generic: Interval
 	useful: Interval
+	/**
+	 * How many lines this arm was OFFERED, against the `judged` it got answers for.
+	 *
+	 * A human judging pass stops when he gets bored, and the tally silently dropped every line he
+	 * had not filled in: 20 answers out of 60 offered printed as `judged 20` and four confident
+	 * rates, with nothing on the page saying two thirds of the sheet was blank. Worse than a small
+	 * n, because a judge who abandons a sheet does not abandon it at random — he answers the easy
+	 * ones. The gap is now on the same row as the rates it qualifies.
+	 */
+	offered: number
 }
 
 export const tally = (key: readonly KeyRow[], verdicts: Record<string, Verdict>): ArmVerdict[] => {
 	const arms = [...new Set(key.map(k => k.arm))]
 	return arms.map(arm => {
-		const rows = key.filter(k => k.arm === arm && verdicts[k.id] !== undefined)
+		const offered = key.filter(k => k.arm === arm)
+		const rows = offered.filter(k => verdicts[k.id] !== undefined)
 		const n = rows.length
 		const c = (v: Verdict) => rows.filter(r => verdicts[r.id] === v).length
 		return {
 			arm,
 			judged: n,
+			offered: offered.length,
 			false: wilson(c("false"), n),
 			unverifiable: wilson(c("unverifiable"), n),
 			generic: wilson(c("generic"), n),
@@ -183,11 +195,17 @@ const main = (): void => {
 		const key = JSON.parse(readFileSync(argv[1]!, "utf8")) as { seed: number; rows: KeyRow[] }
 		const verdicts = JSON.parse(readFileSync(argv[2]!, "utf8")) as Record<string, Verdict>
 		const rows = tally(key.rows, verdicts)
-		console.log("arm             judged  false          unverifiable   generic        useful")
+		console.log("arm             judged/offered  false          unverifiable   generic        useful")
 		for (const r of rows)
 			console.log(
-				`${r.arm.padEnd(15)} ${String(r.judged).padStart(6)}  ${pct(r.false).padEnd(14)} ${pct(r.unverifiable).padEnd(14)} ` +
+				`${r.arm.padEnd(15)} ${`${r.judged}/${r.offered}`.padStart(14)}  ${pct(r.false).padEnd(14)} ${pct(r.unverifiable).padEnd(14)} ` +
 					`${pct(r.generic).padEnd(14)} ${pct(r.useful)}`
+			)
+		const blank = rows.reduce((a, r) => a + (r.offered - r.judged), 0)
+		if (blank > 0)
+			console.log(
+				`\n  ${blank} offered line(s) carry NO verdict and are excluded from every rate above. A part-judged\n` +
+					`  sheet is not a small sample of a whole one: the lines a tired judge skips are the hard ones.`
 			)
 		return
 	}

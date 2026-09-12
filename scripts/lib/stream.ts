@@ -178,28 +178,64 @@ export interface RawSample {
 }
 
 /**
- * The verbatim stream, keeping line numbers.
+ * The verbatim stream, keeping line numbers AND a count of what it could not read.
  *
  * Kept separate from the sampler's own `readSamples` on purpose: that one drops torn lines
  * silently and returns no line numbers, and `sampleLine` is the join key a replay needs.
  * (This began as a copy of `scripts/build-fixture.ts`, which is deleted; this is now the
  * only definition, so there is no longer a second copy to drift from.)
+ *
+ * ## Why the torn lines are COUNTED, and where the count goes
+ *
+ * A torn line is normal in exactly one place: the last line of a file a killed daemon was still
+ * writing. Anywhere else it is a sample the replay will never see — one fewer state stepped
+ * through the ranker, one fewer turn in the schedule, a rate limiter that reaches a different
+ * place — and the instrument used to swallow it in a bare `catch` with a comment. The module
+ * header claims a skipped sample is "skipped and counted"; before this it was counted only when a
+ * state failed to build, never when the JSON itself failed, so the one loss nobody could see was
+ * the one that happened before any of the counting started.
+ *
+ * `tornMid` is the number that matters: a tear that is NOT the final readable line means the file
+ * is damaged rather than merely truncated, and `buildStream` turns it into a warning that rides
+ * on the window into every report and stored run.
  */
-export const readVerbatim = (path: string): RawSample[] => {
+export interface VerbatimRead {
+	rows: RawSample[]
+	/** Lines that would not parse, at all. */
+	torn: number
+	/** Torn lines that were not the file's last non-blank line — i.e. damage, not truncation. */
+	tornMid: number
+	/** 1-based line numbers of the torn lines, capped so a shredded file cannot flood a report. */
+	tornLines: number[]
+}
+
+export const readVerbatimCensus = (path: string): VerbatimRead => {
 	const out: RawSample[] = []
+	const tornLines: number[] = []
 	const lines = readFileSync(path, "utf8").split("\n")
+	let lastNonBlank = 0
 	for (let i = 0; i < lines.length; i++) {
 		const raw = lines[i]!
 		if (raw.trim() === "") continue
+		lastNonBlank = i + 1
 		try {
 			const o = JSON.parse(raw) as { atMs: number; gameTime: number; data: unknown }
 			out.push({ line: i + 1, atMs: o.atMs, gameTime: o.gameTime, data: o.data })
 		} catch {
-			// The tail of a killed daemon. Everything before it is still good.
+			// The tail of a killed daemon, usually. Recorded either way — see the doc above.
+			tornLines.push(i + 1)
 		}
 	}
-	return out
+	return {
+		rows: out,
+		torn: tornLines.length,
+		tornMid: tornLines.filter(l => l !== lastNonBlank).length,
+		tornLines: tornLines.slice(0, 20)
+	}
 }
+
+/** The rows alone, for the callers that only ever wanted them. See `readVerbatimCensus`. */
+export const readVerbatim = (path: string): RawSample[] => readVerbatimCensus(path).rows
 
 /**
  * His rolling farm average as the daemon would have had it DURING this game.
@@ -959,9 +995,21 @@ export const sampleSegments = (
 	:	[]
 	for (const file of files) {
 		const path = join(dir, file)
-		const rows = readVerbatim(path)
+		const read = readVerbatimCensus(path)
+		const rows = read.rows
 		if (rows.length === 0) {
-			rejected.push({ file: path, gameId: null, samples: 0, why: "no readable ndjson lines" })
+			rejected.push({
+				file: path,
+				gameId: null,
+				samples: 0,
+				// "no readable lines" and "every line was torn" are different faults with different
+				// fixes, and a rejection line that cannot tell them apart sends a human to the wrong
+				// place. The torn count is on the row that refuses the file.
+				why:
+					read.torn === 0 ?
+						"no ndjson lines at all — the file is empty"
+					:	`no readable ndjson lines: all ${read.torn} non-blank line(s) failed to parse`
+			})
 			continue
 		}
 		const cut = segment(
@@ -1454,8 +1502,25 @@ export const buildStream = (
 	 * is a window built somewhere else, and replaying it here would silently measure a different
 	 * game.
 	 */
-	const seg = readVerbatim(window.sampleFile)
+	const read = readVerbatimCensus(window.sampleFile)
+	const seg = read.rows
 	if (seg.length === 0) throw new Error(`${window.sampleFile} holds no readable samples`)
+	/*
+	 * A torn line is a sample this replay will never step through, so it is said out loud rather
+	 * than absorbed. The last-line case is the ordinary one — a daemon killed mid-write — and is
+	 * reported without alarm; a tear anywhere else means the file is damaged and the replay is of
+	 * a stream with holes in it, which is a fact about every number computed from this window.
+	 */
+	if (read.torn > 0)
+		warnings.push(
+			`${read.torn} torn line(s) in ${window.sampleFile} (line${read.tornLines.length === 1 ? "" : "s"} ` +
+				`${read.tornLines.join(", ")}${read.torn > read.tornLines.length ? ", …" : ""}) could not be parsed and ` +
+				`are absent from this replay: ${seg.length} sample(s) of ${seg.length + read.torn} were readable. ` +
+				(read.tornMid === 0 ?
+					"All of them are the file's last line — a daemon killed mid-write, and everything before it is good."
+				:	`${read.tornMid} of them are NOT the last line, so the file is DAMAGED rather than truncated and ` +
+					"this window has holes in the middle of it.")
+		)
 	const firstFrameMs = window.frames[0]?.atMs ?? 0
 	const lastFrameMs = window.frames[window.frames.length - 1]?.atMs ?? 0
 	if (

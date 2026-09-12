@@ -343,15 +343,40 @@ let unanchored = 0
 const goldError: number[] = []
 const timerError: number[] = []
 
+/*
+ * WHY A RECORD IS NOT IN `spoken`, counted rather than shrugged off.
+ *
+ * `spoken` is the denominator of the headline rate on this page, and four `continue`s used to feed
+ * it without leaving a trace. Three are correct exclusions — the mock control is not the coach, an
+ * errored call produced no line, and a pass is a decision rather than a sentence — but the fourth
+ * is a FAILURE: a record whose window or turn could not be rebuilt is a line this tool could not
+ * score, and dropping it quietly makes the denominator smaller and the rate a number computed over
+ * whatever happened to rebuild. Printed above the rate, so a run that lost lines cannot look like
+ * one that did not.
+ */
+const excluded = { mock: 0, errored: 0, unrebuildable: 0, pass: 0 }
 for (const r of run.records) {
-	if (r.arm === "mock" || r.error !== null) continue
+	if (r.arm === "mock") {
+		excluded.mock++
+		continue
+	}
+	if (r.error !== null) {
+		excluded.errored++
+		continue
+	}
 	const w = byWindow.get(r.windowId)
 	const t = turnsOf.get(r.windowId)?.get(r.index)
-	if (!w || !t) continue
+	if (!w || !t) {
+		excluded.unrebuildable++
+		continue
+	}
 	const block = blockFor(r, t)
 	const scored = scoreLine({ line: r.text, block, roster: t.roster, champions: t.roster })
 	const was = scoreLine({ line: r.text, block, roster: t.roster, champions: t.roster }, { literal: true })
-	if (scored.silent) continue
+	if (scored.silent) {
+		excluded.pass++
+		continue
+	}
 	const klasses = classifyLine(r.text, block, t.roster)
 	const game = `${w.counterpart} (${w.id})`
 	const row = rows.get(game) ?? { game, spoken: 0, before: 0, after: 0, goldLines: 0, classes: new Map() }
@@ -388,7 +413,18 @@ const pct = (i: Interval): string =>
 	i.n === 0 ? "--" : `${(100 * i.p).toFixed(0)}% [${(100 * i.lo).toFixed(0)}-${(100 * i.hi).toFixed(0)}]`
 
 console.log(`corpus ${corpusPath}`)
-console.log(`${spoken} spoken lines over ${rows.size} games\n`)
+console.log(`${spoken} spoken lines over ${rows.size} games`)
+console.log(
+	`  of ${run.records.length} stored record(s): ${excluded.mock} mock, ${excluded.errored} errored, ` +
+		`${excluded.pass} pass, ${excluded.unrebuildable} UNREBUILDABLE (no window or turn on file)`
+)
+if (excluded.unrebuildable > 0)
+	console.log(
+		`  WARNING: ${excluded.unrebuildable} line(s) could not be scored at all because their turn could not be\n` +
+			`  rebuilt from the run file. They are absent from every rate below — read each one as computed over\n` +
+			`  ${spoken} of ${spoken + excluded.unrebuildable} scorable lines.`
+	)
+console.log("")
 console.log(`lines carrying a charged figure   BEFORE ${before}/${spoken} ${pct(wilson(before, spoken))}`)
 console.log(`                                   AFTER ${after}/${spoken} ${pct(wilson(after, spoken))}\n`)
 

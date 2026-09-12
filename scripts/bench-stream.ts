@@ -75,6 +75,10 @@
  *   - **`<arm>+noframe`**, a blind twin of any arm, in the SAME run on the SAME blocks. The
  *     difference between an arm and its twin is the frame's entire contribution. `--no-frame`
  *     blinds every arm instead, for a whole text-only run.
+ *   - **`<arm>+nocp`** and **`<arm>+noown`**, the KNOWLEDGE twins, on the same principle and for
+ *     the same reason: the champion files can only be compared against their own absence on
+ *     byte-identical blocks, and two runs on two days differ in the ranker's memory as well. See
+ *     `Arm["knowledge"]`.
  *
  * ## Two things this measures that are easy to misread
  *
@@ -112,7 +116,9 @@
  *                                with no --turns it sends every turn the detector raises
  *     --list                     print the discovered windows and the arm keys, then exit
  *     --arms a,b,c               arm ids; `@mode` picks the architecture (`anthropic@trusted`),
- *                                suffix +noframe for a blind twin of the same arm
+ *                                suffix +noframe for a blind twin of the same arm, +nocp for a twin
+ *                                with the enemy jungler's champion file withheld, +noown for one
+ *                                with his own champion's file withheld (the knowledge ablation)
  *     --models provider=model,…  free text, as everywhere in this app
  *     --schedule events|timer    WHEN to ask. `events` (default) runs the shipped detector from
  *                                `src/analysis/live-events.ts`; `timer` is the old cadence, kept
@@ -187,7 +193,7 @@ import { AXES, clockOf, scoreTranscript } from "../src/analysis/useful.ts"
 import type { Axis, TranscriptVerdict, UsefulInput } from "../src/analysis/useful.ts"
 import { WINDOW_FLOOR_SEC, speechDurationSec, stateAt } from "../src/analysis/timeliness.ts"
 import type { CoachState } from "../src/analysis/timeliness.ts"
-import { separated, wilson } from "../src/analysis/coach-score.ts"
+import { isEmpty, isSilent, separated, wilson } from "../src/analysis/coach-score.ts"
 import type { Interval } from "../src/analysis/coach-score.ts"
 import { buildBrief, buildDelta } from "../src/shared/live-brief.ts"
 import { reachFromLive } from "../src/analysis/reach-live.ts"
@@ -195,6 +201,7 @@ import type { Reach } from "../src/analysis/reachability.ts"
 import {
 	newMemory,
 	cpSeenAt,
+	deathsSeen,
 	noteSaid,
 	observe,
 	renderGameSoFar,
@@ -253,6 +260,21 @@ export interface Arm {
 	mode: LiveCoachMode
 	/** `socket` is gemini-live; everything else is a turn through `coachTurn`. */
 	shape: "turn" | "socket"
+	/**
+	 * WHICH champion files reach the system prompt — the knowledge ablation, as an arm modifier.
+	 *
+	 * `full` is the shipped call: `fullKnowledge({ champion, counterpart })`, i.e. his champion's
+	 * file, the enemy jungler's, and the role file. The other two withhold exactly one section by
+	 * handing `fullKnowledge` the argument the app itself hands it when the client has not named
+	 * that champion — so the ablated prompt is not a hand-edited string, it is a prompt this app
+	 * genuinely produces. Nothing else about the turn changes: the block, the frame, the ranked
+	 * list and the schedule are built once per window and replayed identically to every arm, so the
+	 * difference between `gemini-http` and `gemini-http+nocp` is those bytes and nothing else.
+	 *
+	 * `+nocp` drops `# THE ENEMY JUNGLER`; `+noown` drops `# YOUR CHAMPION`. The role file
+	 * (`knowledge/general/jungle.md`) is in every arm — it is not what is being ablated.
+	 */
+	knowledge: "full" | "no-counterpart" | "no-own"
 	vision: boolean
 	available: boolean
 	unavailable: string
@@ -301,6 +323,10 @@ const resolveArms = (
 				modeText
 			:	runMode
 		const blind = blindAll || mods.includes("noframe")
+		const knowledge: Arm["knowledge"] =
+			mods.includes("noown") ? "no-own"
+			: mods.includes("nocp") ? "no-counterpart"
+			: "full"
 		const { available, why } = armAvailability(provider)
 		return {
 			id,
@@ -308,6 +334,7 @@ const resolveArms = (
 			provider,
 			model: models.get(provider) ?? armDefaultModel(provider),
 			shape: provider === GEMINI_LIVE ? "socket" : "turn",
+			knowledge,
 			vision: !blind,
 			available,
 			unavailable: why
@@ -361,10 +388,12 @@ interface CallRecord {
 	payloadKind: "brief" | "delta" | "block" | null
 }
 
-const isSilence = (text: string): boolean => {
-	const bare = text.replace(/[^A-Za-z]/g, "").toLowerCase()
-	return bare === "" || bare === "pass"
-}
+/*
+ * ONE definition of "did not say anything", shared with `coach-score.ts` rather than restated here.
+ * This was a second copy of the same two rules; a third instrument (`judge-corpus.ts`) had no copy
+ * at all and silently used a different rule, which is what a private definition eventually buys.
+ */
+const isSilence = (text: string): boolean => isEmpty(text) || isSilent(text)
 
 /**
  * Strip what the TRANSPORT added, and nothing the model chose.
@@ -867,6 +896,12 @@ export const protocolFor = (
 						reach: wheres?.get(t.index)?.reach ?? null,
 						counterpartSeenSec: cpSeenAt(memory),
 						/*
+						 * WHEN EACH MAN WENT DOWN, so the payload can state the elapsed half of a
+						 * dead clock instead of leaving the model to convert the remaining half
+						 * into it — which it did, wrongly, in 71 of 153 stored lines.
+						 */
+						deathsSeen: deathsSeen(memory),
+						/*
 						 * And when this memory STARTED watching, because a null age above has two
 						 * opposite meanings. Without it `counterpartClause` reported the game clock
 						 * as the age of its own ignorance — "his row has NEVER moved in 7m23s" after
@@ -896,6 +931,12 @@ export const protocolFor = (
 						// is current, which is how "two whole levels up on Kayn" was said at 2:06
 						// about a one-level gap.
 						counterpartSeenSec: cpSeenAt(memory),
+						/*
+						 * WHEN EACH MAN WENT DOWN, so the payload can state the elapsed half of a
+						 * dead clock instead of leaving the model to convert the remaining half
+						 * into it — which it did, wrongly, in 71 of 153 stored lines.
+						 */
+						deathsSeen: deathsSeen(memory),
 						/*
 						 * And when this memory STARTED watching, because a null age above has two
 						 * opposite meanings. Without it `counterpartClause` reported the game clock
@@ -945,8 +986,18 @@ const runTurnArm = async (
 			...(arm.model === "" ? {} : { model: arm.model }),
 			...(arm.vision && t.frameB64 !== null ? { frameJpegBase64: t.frameB64 } : {}),
 			blockText: sent.text,
-			...(t.counterpart === null ? {} : { counterpart: t.counterpart }),
-			champion: stream.window.champion
+			/*
+			 * The ablation, and it is expressed as an ABSENT NAME rather than an edited prompt.
+			 * `coachTurn` builds the system prompt itself from these two names — that is the
+			 * invariant this file's header rests on — so withholding a section here means handing
+			 * it the same argument `routes/live.ts` hands it when the client has not named that
+			 * champion. A `+nocp` arm is therefore a prompt the shipped app produces, not one only
+			 * this script can make.
+			 */
+			...(t.counterpart === null || arm.knowledge === "no-counterpart" ?
+				{}
+			:	{ counterpart: t.counterpart }),
+			champion: arm.knowledge === "no-own" ? "" : stream.window.champion
 		})
 		const text = normalizeSpoken(r.text)
 		if (r.ok) proto.heard(t, text, r.latencyMs)
@@ -1053,8 +1104,10 @@ const runSocketArm = async (
 		championKnowledge:
 			mode === "trusted" ?
 				fullKnowledge({
-					champion: stream.window.champion,
-					counterpart: stream.turns.find(t => t.counterpart !== null)?.counterpart ?? null
+					champion: arm.knowledge === "no-own" ? "" : stream.window.champion,
+					counterpart:
+						arm.knowledge === "no-counterpart" ? null
+						: (stream.turns.find(t => t.counterpart !== null)?.counterpart ?? null)
 				})
 			:	liveChampionKnowledge(stream.window.champion)
 	})
@@ -1850,6 +1903,94 @@ const printAxes = (scores: readonly ArmScore[], run: RunFile): void => {
 }
 
 /**
+ * 4a. PER ASK — the denominator the six axes above cannot use, printed beside them.
+ *
+ * ## The number a per-line rate cannot express
+ *
+ * Every rate above is over LINES THAT WERE SPOKEN, because that is the only place a line can be
+ * checked, and `scoreTranscript` states the rule outright: a PASS is a considered silence and is
+ * excluded from every denominator. That rule is right for grading a line and wrong for grading a
+ * coach, and the gap between the two is the whole of this section.
+ *
+ * A coach that answers every one of 58 asks and is useful on half of them, and a coach that answers
+ * 29 of them and is useful on all 29, score 50% and 100% on every axis above and deliver the SAME
+ * TWENTY-NINE useful lines — while the second one costs him half as much attention. Read per line,
+ * the second is twice the coach. Read per ask, they are identical, and the honest summary of the
+ * change is "the same useful lines, half the interruptions". Neither number is the truth on its own:
+ *
+ *   - **per line** answers *when it speaks, is it worth hearing* — the precision of a line;
+ *   - **per ask** answers *over a whole game, how much did this coach deliver* — the yield of the
+ *     architecture, which is what he actually experiences.
+ *
+ * A change that makes restraint reachable is supposed to move the first and hold the second. If the
+ * per-ask count FALLS while the per-line rate rises, the coach has bought its precision by declining
+ * on turns it used to be useful on, and that is a worse product sold by a better-looking number.
+ * Printing both is what makes that trade visible instead of arguable.
+ *
+ * ## What a denominator is here
+ *
+ * An ASK is a turn this harness sent that came back — `spoke + pass`. Errors are excluded and
+ * printed separately: a socket that dropped a turn asked nothing and declined nothing, and folding
+ * those in would credit a crash as restraint.
+ *
+ * `clean` is the composite, and it is deliberately strict: a line that passed EVERY axis that could
+ * be measured on it. Mechanical, no judge, no opinion — the same `LineVerdict` the table above is
+ * built from. A line with no measurable axis at all is not clean, it is unmeasured, and it is
+ * counted in neither column.
+ */
+const printPerAsk = (scores: readonly ArmScore[]): void => {
+	console.log(`\n${RULE}\nPER ASK — what a whole game got, beside what each line was worth\n${RULE}\n`)
+	console.log(
+		`  ${pad("arm", 22)}${padL("asks", 6)}${padL("spoke", 6)}${padL("pass", 6)}${padL("err", 5)}` +
+			`${padL("spoke/ask", 11)}${padL("clean", 7)}${padL("clean/line", 12)}${padL("clean/ask", 11)}`
+	)
+	for (const s of scores) {
+		const asks = s.spoken + s.silent
+		const clean = s.perWindow.reduce(
+			(n, w) => n + w.verdict.lines.filter(l => l.measured > 0 && l.passed === l.measured).length,
+			0
+		)
+		console.log(
+			`  ${pad(s.arm.id, 22)}${padL(String(asks), 6)}${padL(String(s.spoken), 6)}${padL(String(s.silent), 6)}` +
+				`${padL(String(s.errors), 5)}${padL(pct(wilson(s.spoken, asks)), 11)}${padL(String(clean), 7)}` +
+				`${padL(pct(wilson(clean, s.spoken)), 12)}${padL(pct(wilson(clean, asks)), 11)}`
+		)
+	}
+	console.log(
+		`\n  "clean" is a line that passed every axis measurable on it. "asks" is spoke + pass; errors` +
+			`\n  are excluded from it, because a turn that never came back neither spoke nor declined.\n`
+	)
+	console.log(`  ${pad("", 22)}${pad("", 10)}${AXES.map(a => pad(a.slice(0, 13), 15)).join("")}`)
+	for (const s of scores) {
+		const asks = s.spoken + s.silent
+		console.log(
+			`  ${pad(s.arm.id, 22)}${pad("per line", 10)}` +
+				AXES.map(a => pad(`${s.axes[a].k}/${s.axes[a].n} ${pct(s.axes[a])}`, 15)).join("")
+		)
+		console.log(
+			`  ${pad("", 22)}${pad("per ask", 10)}` +
+				/*
+				 * An axis nothing could be checked on prints `--` here as well as above. The
+				 * numerator would be a true zero and the rate would read as a collapse, which is
+				 * the same mistake as scoring `unmeasured` as a fail — `useful.ts` states the rule
+				 * and this row is not an exception to it.
+				 */
+				AXES.map(a =>
+					pad(
+						s.axes[a].n === 0 ? "--" : `${s.axes[a].k}/${asks} ${pct(wilson(s.axes[a].k, asks))}`,
+						15
+					)
+				).join("")
+		)
+	}
+	console.log(
+		`\n  The per-ask row shares the per-line row's NUMERATOR and swaps its denominator, so the two` +
+			`\n  move apart only when an arm declines. An arm that never passes prints the same pair twice,` +
+			`\n  except where an axis was unmeasurable on some line it spoke.`
+	)
+}
+
+/**
  * 4b. PER GAME, beside the pooled figure — the section a fifteen-game run exists for.
  *
  * ## Why a pooled rate on its own is not an answer
@@ -2222,6 +2363,12 @@ const summarize = (path: string, verbose: boolean): void => {
 		})(),
 		provider: a.provider,
 		model: a.model,
+		// Recovered from the id's suffix too. A run file written before the knowledge ablation
+		// existed has neither suffix, and `full` is what it was: the shipped call.
+		knowledge:
+			a.id.includes("+noown") ? "no-own"
+			: a.id.includes("+nocp") ? "no-counterpart"
+			: "full",
 		shape: a.shape === "socket" ? "socket" : "turn",
 		vision: a.vision,
 		available: a.available,
@@ -2282,6 +2429,7 @@ const summarize = (path: string, verbose: boolean): void => {
 	printLatency(scores, run.everySec)
 	printPayload(scores)
 	printAxes(scores, run)
+	printPerAsk(scores)
 	printPerGame(scores, run)
 	printFailures(scores)
 	console.log(`\nre-printed ${path} — no model was called.`)
@@ -2547,6 +2695,9 @@ const main = async (): Promise<void> => {
 			provider: a.provider,
 			model: a.model,
 			vision: a.vision,
+			// Written out so a run file says which champion files reached its system prompt. A
+			// reader who has to infer that from an id suffix will eventually infer it wrong.
+			knowledge: a.knowledge,
 			shape: a.shape,
 			available: a.available,
 			unavailable: a.unavailable
@@ -2678,6 +2829,7 @@ const main = async (): Promise<void> => {
 	printLatency(scores, everySec)
 	printPayload(scores)
 	printAxes(scores, run)
+	printPerAsk(scores)
 	printPerGame(scores, run)
 	printFailures(scores)
 

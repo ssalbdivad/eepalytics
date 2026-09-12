@@ -42,7 +42,7 @@ const state = (unseen: string[]): VisionState => ({
 	me: { champion: "Lillia", level: 8, k: 2, d: 1, a: 3, cs: 88, gold: 1017 },
 	pace: { cs: 88, expected: 96, exact: true, source: "your own average: 96" },
 	pronounce: [],
-	counterpart: { champion: "Briar", cs: 111, level: 9 },
+	counterpart: { champion: "Briar", level: 9 },
 	allies: [{ champion: "Urgot", level: 8, k: 0, d: 0, a: 0 }],
 	enemies: [{ champion: "Ornn", level: 9, k: 1, d: 0, a: 2 }],
 	recentEvents: [],
@@ -63,10 +63,11 @@ test("stripRankedList removes the ranked list and nothing above it", () => {
 	let head = FULL.slice(0, FULL.indexOf("### What he is NOT looking at"))
 	for (const r of REPAIRS) head = head.replace(r.from, r.to)
 	assert.equal(cut.startsWith(head), true)
-	// "at least", because the client reports creepScore floored to a multiple of ten (1221 samples,
-	// not one non-multiple) and the block now says so instead of speaking a number that is
-	// understated by up to nine against the HUD he is looking at.
-	assert.equal(cut.includes("Enemy jungler right now: Briar, at least 111 CS, level 9"), true)
+	// No CS beside the counterpart: his `creepScore` is a count of what this player's own client
+	// witnessed (70 against a true 183 over one audited game), so the block states the refusal
+	// instead of the number. Level is exact and stays.
+	assert.equal(cut.includes("Enemy jungler right now: Briar, level 9"), true)
+	assert.equal(cut.includes("HIS FARM IS NOT LISTED"), true)
 	assert.equal(cut.includes("You: Lillia lv8 2/1/3, at least 88 CS"), true)
 	assert.equal(cut.includes("**The ten champions above"), true)
 })

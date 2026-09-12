@@ -11,7 +11,7 @@
  *     against 7 false on the truth judge — and the NO-FRAME arm scored top on value. Read on its
  *     own that says drop the picture.
  *   - But that tournament ran before `minimap-watch.ts`. The frame-only arm was being asked to
- *     supply POSITION by reading two-pixel dots off a downscaled minimap, which `probe-frames.ts`
+ *     supply POSITION by reading two-pixel dots off a downscaled minimap, which `probe-minimap.ts`
  *     measured landing a median 43% of the map's width from the truth, i.e. at chance. Position now
  *     comes from a dedicated read of a magnified crop, fenced against the client, and rides in the
  *     payload as text. So the tournament measured the picture doing the one job it is worst at, and
@@ -181,6 +181,7 @@ import { fullKnowledge } from "../src/review/live-knowledge-full.ts"
 import { modelHandleFor, providerById, providerKey } from "../src/review/live-providers.ts"
 import { wilson } from "../src/analysis/coach-score.ts"
 import type { Interval } from "../src/analysis/coach-score.ts"
+import { mcnemar } from "./lib/stats.ts"
 import { renderKey, renderSheet } from "./lib/sheet.ts"
 import type { SheetLine } from "./lib/sheet.ts"
 
@@ -343,6 +344,8 @@ const asBenchArm = (a: FrameArm): Arm => ({
 	model: GEMINI_LIVE_MODEL,
 	mode: "trusted",
 	shape: "socket",
+	// This file benches the FRAME, never the prompt: every arm here gets the shipped knowledge.
+	knowledge: "full",
 	vision: a.vision,
 	available: true,
 	unavailable: ""
@@ -695,8 +698,22 @@ const runInterleaved = async (
 
 /* ================================================================== the judge */
 
-export type Verdict = "useful" | "generic" | "unverifiable" | "false"
-export type FramePower = "only-with-picture" | "either" | "contradicted-by-picture"
+/*
+ * `ungraded` and `unknown` are the two states this judge used to have no way to say.
+ *
+ * A batch that would not parse twice had every line in it DROPPED — the count went to stdout and
+ * nowhere else, and the rates below were computed over the survivors. Worse for this instrument
+ * than for any other in the repo, because `contradicted-by-picture` is the label the central
+ * open question turns on: a verdict word the judge phrased oddly was silently rewritten to
+ * "unverifiable", and a framePower it phrased oddly was silently rewritten to "either" — the
+ * MODAL value, so every parse wobble pushed the tally towards "the picture changed nothing".
+ * A parse failure now says so in its own name and stays in the denominator, where it makes every
+ * rate a visible floor instead of an invisible one.
+ */
+export type Verdict = "useful" | "generic" | "unverifiable" | "false" | "ungraded"
+export type FramePower = "only-with-picture" | "either" | "contradicted-by-picture" | "unknown"
+const VERDICTS = ["useful", "generic", "unverifiable", "false"] as const
+const POWERS = ["only-with-picture", "either", "contradicted-by-picture"] as const
 
 export interface Graded {
 	arm: FrameArmId
@@ -781,19 +798,70 @@ const judgeBatch = async (
 	const raw = (res.text ?? "").trim().replace(/^```(?:json)?/, "").replace(/```$/, "").trim()
 	const parsed = JSON.parse(raw) as { grades?: { id?: string; verdict?: string; framePower?: string; why?: string }[] }
 	const out = new Map<string, { verdict: Verdict; framePower: FramePower; why: string }>()
+	// Only ids that were in this batch. An invented id used to land in the map, where it satisfied
+	// the "did we get an answer" check for a line that never got one.
+	const asked = new Set(lines.map(l => l.id))
 	for (const g of parsed.grades ?? []) {
-		if (!g.id) continue
+		if (!g.id || !asked.has(g.id)) continue
+		const knownVerdict = VERDICTS.includes((g.verdict ?? "") as (typeof VERDICTS)[number])
+		const knownPower = POWERS.includes((g.framePower ?? "") as (typeof POWERS)[number])
 		out.set(g.id, {
-			verdict: (["useful", "generic", "unverifiable", "false"].includes(g.verdict ?? "") ?
-				g.verdict
-			:	"unverifiable") as Verdict,
-			framePower: (["only-with-picture", "either", "contradicted-by-picture"].includes(g.framePower ?? "") ?
-				g.framePower
-			:	"either") as FramePower,
-			why: String(g.why ?? "").slice(0, 160)
+			verdict: knownVerdict ? (g.verdict as Verdict) : "ungraded",
+			framePower: knownPower ? (g.framePower as FramePower) : "unknown",
+			why:
+				knownVerdict && knownPower ? String(g.why ?? "").slice(0, 160)
+				:	`judge returned ${knownVerdict ? "" : `verdict "${String(g.verdict).slice(0, 24)}" `}` +
+					`${knownPower ? "" : `framePower "${String(g.framePower).slice(0, 24)}" `}— not a known value`
 		})
 	}
 	return out
+}
+
+/**
+ * One batch, then its HALVES — the same splitter `judge-corpus.ts` carries, and for the same
+ * measured reason: a batch dies when ONE answer trips the parse and takes its neighbours with it.
+ *
+ * Here a "batch" is one TURN's worth of arms, so a dropped batch removes the turn from the paired
+ * McNemar test entirely — it is not merely a smaller n, it is a turn that silently stopped voting.
+ * Halving recovers every line whose own answer parsed. A line that fails alone is recorded
+ * `ungraded` rather than dropped, so the turn still appears and the loss is visible in the table.
+ */
+const judgeSlice = async (
+	handle: ModelHandle,
+	turn: StreamTurn,
+	lines: readonly { id: string; arm: FrameArmId; text: string }[],
+	label: string
+): Promise<Map<string, { verdict: Verdict; framePower: FramePower; why: string }>> => {
+	const ungraded = (why: string) =>
+		new Map(lines.map(l => [l.id, { verdict: "ungraded" as Verdict, framePower: "unknown" as FramePower, why }]))
+	for (let attempt = 0; attempt < 2; attempt++) {
+		try {
+			const got = await judgeBatch(handle, turn, lines)
+			// A batch that parses but answers about only SOME of its lines is a partial failure and
+			// is treated as one. `verdicts.size > 0` used to count as success, so the unanswered
+			// lines were dropped without a retry.
+			const missing = lines.filter(l => !got.has(l.id))
+			if (missing.length === 0 || lines.length === 1) return got
+			for (const [id, v] of await judgeSlice(handle, turn, missing, `${label}/missing`)) got.set(id, v)
+			return got
+		} catch (e) {
+			const why = e instanceof Error ? e.message : String(e)
+			if (attempt === 1) {
+				if (lines.length === 1) {
+					process.stdout.write(`  ${label}: one line failed alone twice, recorded UNGRADED: ${why}
+`)
+					return ungraded(`judge failed twice on this line alone: ${why.slice(0, 100)}`)
+				}
+				const mid = Math.ceil(lines.length / 2)
+				const out = await judgeSlice(handle, turn, lines.slice(0, mid), `${label}a`)
+				for (const [id, v] of await judgeSlice(handle, turn, lines.slice(mid), `${label}b`)) out.set(id, v)
+				return out
+			}
+			process.stdout.write(`  ${label}: judge failed, retrying: ${why}
+`)
+		}
+	}
+	return ungraded("judgeSlice fell through")
 }
 
 /**
@@ -843,26 +911,19 @@ const gradeRun = async (stream: BuiltStream, calls: readonly FrameCall[]): Promi
 		if (spoken.length === 0) continue
 		const shuffled = shuffledBy(spoken, turn.index * 7919 + 13)
 		const lines = shuffled.map((c, i) => ({ id: LABELS[i]!, arm: c.arm, text: c.text }))
-		let verdicts = new Map<string, { verdict: Verdict; framePower: FramePower; why: string }>()
-		/*
-		 * ONE RETRY, because the failure mode is a truncated or malformed object rather than a
-		 * refusal, and the second draw of the same prompt usually parses. A batch that fails twice
-		 * is left ungraded and every line in it is dropped rather than defaulted.
-		 */
-		for (let attempt = 0; attempt < 2 && verdicts.size === 0; attempt++)
-			try {
-				verdicts = await judgeBatch(handle, turn, lines)
-			} catch (e) {
-				process.stdout.write(
-					`  judge failed at ${turn.clock}${attempt === 0 ? ", retrying" : " twice, dropping the turn"}: ` +
-						`${e instanceof Error ? e.message : String(e)}\n`
-				)
-			}
+		const verdicts = await judgeSlice(handle, turn, lines, `turn ${turn.clock}`)
 		for (const l of lines) {
-			const v = verdicts.get(l.id)
-			// An ungraded line is DROPPED, never defaulted. A default would be a verdict this run
-			// invented, and it would land on whichever arm the judge happened to choke on.
-			if (!v) continue
+			/*
+			 * An ungraded line is RECORDED, never dropped and never defaulted. A default would be a
+			 * verdict this run invented and it would land on whichever arm the judge choked on;
+			 * dropping it takes the turn out of the paired test without saying so. `ungraded` is
+			 * neither — it is in every denominator and it is named in the table.
+			 */
+			const v = verdicts.get(l.id) ?? {
+				verdict: "ungraded" as Verdict,
+				framePower: "unknown" as FramePower,
+				why: "no verdict returned for this line"
+			}
 			graded.push({
 				arm: l.arm,
 				index: turn.index,
@@ -882,7 +943,7 @@ const gradeRun = async (stream: BuiltStream, calls: readonly FrameCall[]): Promi
 /* ================================================================== statistics */
 
 /**
- * McNemar's exact test on the discordant turns.
+ * McNemar's exact test on the discordant turns — the implementation is `lib/stats.ts`.
  *
  * The arms here are PAIRED — the same turn, the same state, seconds apart — and comparing two
  * independent Wilson intervals throws that pairing away. The information about a difference is in
@@ -893,35 +954,14 @@ const gradeRun = async (stream: BuiltStream, calls: readonly FrameCall[]): Promi
  *
  * Reported beside the Wilson intervals rather than instead of them: the intervals say how precisely
  * each rate is known, and this says whether the DIFFERENCE survives.
+ *
+ * It moved DOWN into the library on 2026-09-12 because `adjudicate.ts` had written the same test a
+ * second time and `compare-arms.ts` was importing this copy out of a harness. Re-exported from here
+ * so this file's own unit test and every stored run's numbers stay attached to the file that
+ * produced them.
  */
-export interface McNemar {
-	/** a preferred, b preferred, and how many turns were decided the same way by both. */
-	aOnly: number
-	bOnly: number
-	both: number
-	neither: number
-	p: number
-}
-
-const logChoose = (n: number, k: number): number => {
-	let r = 0
-	for (let i = 1; i <= k; i++) r += Math.log(n - k + i) - Math.log(i)
-	return r
-}
-
-export const mcnemar = (pairs: readonly { a: boolean; b: boolean }[]): McNemar => {
-	const aOnly = pairs.filter(x => x.a && !x.b).length
-	const bOnly = pairs.filter(x => !x.a && x.b).length
-	const both = pairs.filter(x => x.a && x.b).length
-	const neither = pairs.filter(x => !x.a && !x.b).length
-	const n = aOnly + bOnly
-	if (n === 0) return { aOnly, bOnly, both, neither, p: 1 }
-	const pmf = (k: number): number => Math.exp(logChoose(n, k) - n * Math.LN2)
-	const lo = Math.min(aOnly, bOnly)
-	let tail = 0
-	for (let k = 0; k <= lo; k++) tail += pmf(k)
-	return { aOnly, bOnly, both, neither, p: Math.min(1, 2 * tail) }
-}
+export { mcnemar }
+export type { McNemar } from "./lib/stats.ts"
 
 const pct = (i: Interval): string =>
 	`${(i.p * 100).toFixed(0)}% [${(i.lo * 100).toFixed(0)}-${(i.hi * 100).toFixed(0)}] ${i.k}/${i.n}`
@@ -976,7 +1016,7 @@ const report = (run: RunFile): void => {
 	} else {
 		/* ------------------------------------------------------------- verdicts */
 		console.log("\nVERDICTS — every line judged against ITS OWN TURN'S REAL FRAME")
-		console.log("  arm       graded  useful               false                generic  unverif")
+		console.log("  arm       graded  useful               false                generic  unverif  ungraded")
 		for (const id of arms) {
 			const g = run.graded.filter(x => x.arm === id)
 			if (g.length === 0) continue
@@ -985,9 +1025,24 @@ const report = (run: RunFile): void => {
 			console.log(
 				`  ${id.padEnd(9)} ${String(g.length).padStart(6)}  ${pct(u).padEnd(20)} ${pct(f).padEnd(20)} ` +
 					`${String(g.filter(x => x.verdict === "generic").length).padStart(7)} ` +
-					`${String(g.filter(x => x.verdict === "unverifiable").length).padStart(8)}`
+					`${String(g.filter(x => x.verdict === "unverifiable").length).padStart(8)} ` +
+					`${String(g.filter(x => x.verdict === "ungraded").length).padStart(8)}`
 			)
 		}
+		/*
+		 * The ungraded lines are IN `graded` and therefore in every denominator above and below, so
+		 * every rate on this page is a floor whenever this count is not zero. Said here rather than
+		 * left to a reader to notice a column: the whole point of naming the state was to stop the
+		 * loss being invisible, and a column nobody reads is still invisible.
+		 */
+		const lost = run.graded.filter(x => x.verdict === "ungraded")
+		const powerless = run.graded.filter(x => x.framePower === "unknown")
+		if (lost.length > 0 || powerless.length > 0)
+			console.log(
+				`\n  UNGRADED ${lost.length} of ${run.graded.length} line(s); framePower unknown on ${powerless.length}.\n` +
+					`  They are counted in every denominator on this page, so each rate above is a FLOOR and its\n` +
+					`  ceiling is that rate plus ${((100 * lost.length) / Math.max(1, run.graded.length)).toFixed(0)}pp. A judge that cannot answer is a fact about the run.`
+			)
 
 		/* ------------------------------------------------ what the frame bought */
 		console.log("\nWHAT THE PICTURE DID — of the lines each arm spoke")

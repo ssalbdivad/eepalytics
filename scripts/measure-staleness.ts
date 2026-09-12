@@ -30,23 +30,26 @@
 
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from "node:fs"
 import { DATA_DIR } from "../src/shared/constants.ts"
+import { wilson } from "../src/analysis/coach-score.ts"
 import { coachStateFrom, readVerbatim } from "./lib/stream.ts"
 import { premiseOf, speechDurationSec, stalenessOf, stateAt } from "../src/analysis/timeliness.ts"
 import type { CoachState, PremiseKind, StaleKind } from "../src/analysis/timeliness.ts"
 
 /**
  * Wilson, because every rate here is a proportion on a few dozen trials and reads as stronger than
- * it is. Copied from `scripts/probe-attention.ts` rather than imported: that file runs its `main`
- * on import, so importing one helper from it starts a different measurement.
+ * it is. Formatting only — the interval itself is `src/analysis/coach-score.ts`'s, which is pure
+ * and has no `main`.
+ *
+ * It used to be a COPY, and the comment justifying the copy said it came from
+ * `scripts/probe-attention.ts` "rather than imported: that file runs its `main` on import".
+ * `probe-attention.ts` was deleted in the 2026-09-11 consolidation, so that reasoning had
+ * outlived its subject — the copy was being kept alive by a sentence about a file that no
+ * longer exists.
  */
-const wilson = (k: number, n: number): string => {
+const wilsonText = (k: number, n: number): string => {
 	if (n === 0) return "n/a"
-	const p = k / n
-	const z = 1.96
-	const d = 1 + (z * z) / n
-	const centre = (p + (z * z) / (2 * n)) / d
-	const half = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / d
-	return `${(100 * p).toFixed(1)}% [${(100 * Math.max(0, centre - half)).toFixed(0)}, ${(100 * Math.min(1, centre + half)).toFixed(0)}]`
+	const i = wilson(k, n)
+	return `${(100 * i.p).toFixed(1)}% [${(100 * i.lo).toFixed(0)}, ${(100 * i.hi).toFixed(0)}]`
 }
 
 /** The shipped middle turn cadence, the same one every other replay in this repo uses. */
@@ -171,10 +174,7 @@ const main = async (): Promise<void> => {
 			const stale = scored.filter(x => x.v!.stale)
 			const impossible = scored.filter(x => x.v!.kind === "impossible")
 			console.log(
-				`  ${label.padEnd(16)} stale ${String(stale.length).padStart(3)}/${String(scored.length).padEnd(3)} ${wilson(
-					stale.length,
-					scored.length
-				)}   impossible ${impossible.length}`
+				`  ${label.padEnd(16)} stale ${String(stale.length).padStart(3)}/${String(scored.length).padEnd(3)} ${wilsonText(stale.length, scored.length)}   impossible ${impossible.length}`
 			)
 		}
 		console.log(`latency ${latencySec}s`)

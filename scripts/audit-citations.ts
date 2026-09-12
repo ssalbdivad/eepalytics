@@ -10,14 +10,7 @@
  * Exits non-zero if any review has a serious warning. NODE ONLY.
  */
 
-import {
-	getGame,
-	getMetrics,
-	getMoments,
-	getParticipants,
-	getReview,
-	listGames
-} from "../src/db/queries.ts"
+import { getGame, getReview, listGames } from "../src/db/queries.ts"
 import { BLOB_REVIEW_DIGEST, readBlob } from "../src/db/blobs.ts"
 import type { GameDigest } from "../src/review/digest-contract.ts"
 import { allowlistOf } from "../src/review/digest-contract.ts"

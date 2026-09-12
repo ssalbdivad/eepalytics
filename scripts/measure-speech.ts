@@ -124,7 +124,7 @@ const base = (over: Partial<VisionState>): VisionState => ({
 	me: { champion: "Lillia", level: 11, hp: 1420, maxHp: 1980, gold: 1334, k: 3, d: 2, a: 6, cs: 132 },
 	pace: { cs: 132, expected: 141, exact: true, source: "your own average" },
 	pronounce: [],
-	counterpart: { champion: "Briar", cs: 146, level: 12 },
+	counterpart: { champion: "Briar", level: 12 },
 	allies: [
 		{ champion: "Urgot", level: 11, k: 2, d: 3, a: 1 },
 		{ champion: "Taliyah", level: 10, k: 1, d: 4, a: 5 },
@@ -162,7 +162,7 @@ const NAME_SUITE: { why: string; state: VisionState }[] = [
 	{
 		why: "the hardest names on the roster to say",
 		state: base({
-			counterpart: { champion: "Kha'Zix", cs: 146, level: 12 },
+			counterpart: { champion: "Kha'Zix", level: 12 },
 			enemies: [
 				{ champion: "Kha'Zix", level: 12, k: 5, d: 1, a: 2 },
 				{ champion: "Rek'Sai", level: 11, k: 1, d: 2, a: 4 },
@@ -180,7 +180,7 @@ const NAME_SUITE: { why: string; state: VisionState }[] = [
 	{
 		why: "a two-word name, and a level",
 		state: base({
-			counterpart: { champion: "Nunu & Willump", cs: 146, level: 13 },
+			counterpart: { champion: "Nunu & Willump", level: 13 },
 			enemies: [
 				{ champion: "Nunu & Willump", level: 13, k: 5, d: 1, a: 2 },
 				{ champion: "Ornn", level: 11, k: 1, d: 2, a: 4 },

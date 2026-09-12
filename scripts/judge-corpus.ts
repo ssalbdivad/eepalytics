@@ -36,15 +36,21 @@
  *
  *     --concurrency N  batches in flight (default 6). The batches are independent; the only
  *                  thing raising it can break is the provider's rate limit
- *     --arm <id>   grade only this arm. `bench-stream` always writes a `mock` reference arm
- *                  beside the real one, and pooling its echoes with real lines halves every rate.
+ *     --out <path> where the verdicts go (default: the run's name with `-judged`). It REFUSES to
+ *                  overwrite an existing file: re-judging a corpus must not destroy the number it
+ *                  is correcting.
+ *     --arm <id[,id...]>  grade only these arms. `bench-stream` always writes a `mock` reference
+ *                  arm beside the real one, and pooling its echoes with real lines halves every
+ *                  rate. A comma list judges an ABLATION's arms in one shuffled, blinded pool —
+ *                  one judge, one standard — and the report breaks out per arm and per game.
  *
  * NODE ONLY. Reads a stored run and never writes to it: the verdicts go to a NEW file beside it.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { modelHandleFor, providerById, providerKey } from "../src/review/live-providers.ts"
-import { wilson } from "../src/analysis/coach-score.ts"
+import { shuffled } from "./blind-judge.ts"
+import { isEmpty, isSilent, wilson } from "../src/analysis/coach-score.ts"
 import type { Interval } from "../src/analysis/coach-score.ts"
 
 const argv = process.argv.slice(2)
@@ -55,6 +61,27 @@ const arg = (name: string, fallback: string): string => {
 const runPath = argv.find(a => !a.startsWith("--") && a.endsWith(".json"))
 if (!runPath) throw new Error("usage: judge-corpus.ts <run.json> [--judge anthropic]")
 
+/*
+ * IT WILL NOT CLOBBER A STORED MEASUREMENT, and it says so BEFORE spending anything.
+ *
+ * The default output name is derived from the run, so re-judging the same corpus — which is exactly
+ * what you do after fixing the judge — used to overwrite the earlier verdicts and destroy the only
+ * copy of the number being corrected. A run that lands on an existing file stops and asks for
+ * `--out`, so the before and the after both survive and a correction can be SHOWN rather than
+ * asserted. Checked here, at argument-parse time, rather than beside the write: an hour of judge
+ * calls is the wrong moment to learn the file already exists.
+ */
+const outPath = ((): string => {
+	const i = argv.indexOf("--out")
+	const given = i >= 0 && argv[i + 1] !== undefined && !argv[i + 1]!.startsWith("--") ? argv[i + 1]! : ""
+	return given === "" ? runPath.replace(/\.json$/, "-judged.json") : given
+})()
+if (existsSync(outPath))
+	throw new Error(
+		`${outPath} already exists and holds an earlier measurement. Pass --out <path> — stored runs are ` +
+			`never rewritten, so a corrected number can be compared against the one it corrects.`
+	)
+
 const judgeProvider = arg("judge", "anthropic")
 const judgeModelArg = arg("judge-model", "")
 const batchSize = Number(arg("batch", "8"))
@@ -64,8 +91,19 @@ const seed = Number(arg("seed", "20260911"))
  * arm beside the real one as a reference transcript — 529 template echoes in this corpus — and
  * pooling those with the model's lines would halve every rate for a reason that has nothing to do
  * with the coach. Named explicitly so a run that meant to grade two arms says so.
+ *
+ * A COMMA LIST grades several arms in ONE shuffled pool, which is the only honest way to judge an
+ * ablation: two runs of this script are two different judge conversations, and the arm that went
+ * second would be compared against a judge that had already settled into a standard on the first.
+ * Blinding is what makes it safe — the arm label is stripped before the shuffle, so a batch holds
+ * lines from every arm in an order the judge cannot attribute, and the rejoin happens in code.
  */
-const armWanted = arg("arm", "")
+const armWanted = new Set(
+	arg("arm", "")
+		.split(",")
+		.map(a => a.trim())
+		.filter(a => a !== "")
+)
 /*
  * Batches in flight at once. The judge is the slow half by a long way — one batch of eight lines,
  * each carrying its own ~6000-character payload, took a measured 96 seconds against Sonnet, so a
@@ -75,11 +113,28 @@ const armWanted = arg("arm", "")
  */
 const concurrency = Math.max(1, Number(arg("concurrency", "6")))
 
-type Verdict = "useful" | "generic" | "unverifiable" | "false"
+/*
+ * UNGRADED is a verdict, not an absence.
+ *
+ * It is what this instrument says when it could not get an answer about a line: the judge's JSON
+ * would not parse even with the line on its own, or it came back with a verdict word that is not
+ * one of the four. Earlier versions had no such state, so both of those outcomes left the line out
+ * of the output file entirely and every rate was computed over the survivors — which is a
+ * denominator that silently excludes its own failures, and is how 50 of 529 corpus lines went
+ * missing while the report still printed a confident 74%.
+ *
+ * An ungraded line stays in `n`. `useful` and `false` are therefore FLOORS whenever any line is
+ * ungraded, and the report prints the ceiling beside them rather than leaving the reader to work
+ * out which way the uncertainty cuts.
+ */
+type Verdict = "useful" | "generic" | "unverifiable" | "false" | "ungraded"
+const GRADES = ["useful", "generic", "unverifiable", "false"] as const
 
 interface Record_ {
 	arm: string
 	windowId: string
+	index?: number
+	rep?: number
 	atSec: number
 	clock: string
 	text: string | null
@@ -97,24 +152,6 @@ interface Window_ {
 interface RunFile {
 	windows: Window_[]
 	records: Record_[]
-}
-
-/** mulberry32 — the same generator `blind-judge.ts` and `frame-value.ts` use, for the same reason. */
-const shuffled = <T,>(items: readonly T[], s: number): T[] => {
-	let a = s >>> 0
-	const rand = (): number => {
-		a = (a + 0x6d2b79f5) >>> 0
-		let t = a
-		t = Math.imul(t ^ (t >>> 15), t | 1)
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-	}
-	const out = [...items]
-	for (let i = out.length - 1; i > 0; i--) {
-		const j = Math.floor(rand() * (i + 1))
-		;[out[i], out[j]] = [out[j]!, out[i]!]
-	}
-	return out
 }
 
 const JUDGE_SYSTEM = `You are grading single sentences a live League of Legends coach said out loud to a jungle
@@ -137,7 +174,24 @@ Return one verdict per candidate:
 
 Reply with JSON only: {"grades":[{"id":"A","verdict":"...","why":"under 20 words"}]}`
 
-type Candidate = { id: string; arm: string; windowId: string; clock: string; text: string; payload: string }
+/*
+ * `index` and `rep` ride along because `(windowId, clock)` is NOT a unique key for a line.
+ * `bench-stream --repeats N` asks the same turn N times, so a downstream join keyed on the clock
+ * silently keeps the last repetition and drops the rest — a Map with no collision check, which is
+ * the quietest possible way to lose half a run. The turn index and the repetition number together
+ * name exactly one answer.
+ */
+type Candidate = {
+	id: string
+	arm: string
+	windowId: string
+	index: number
+	rep: number
+	atSec: number
+	clock: string
+	text: string
+	payload: string
+}
 
 const judgeBatch = async (
 	handle: Awaited<ReturnType<typeof modelHandleFor>>,
@@ -162,16 +216,84 @@ const judgeBatch = async (
 	const raw = (res.text ?? "").trim().replace(/^```(?:json)?/, "").replace(/```$/, "").trim()
 	const parsed = JSON.parse(raw) as { grades?: { id?: string; verdict?: string; why?: string }[] }
 	const out = new Map<string, { verdict: Verdict; why: string }>()
+	/*
+	 * Only ids that were actually IN this slice. The judge has invented ids, and one stray id used
+	 * to land in the verdict map, where it inflated the `judged n/N` progress line and then failed
+	 * to match any candidate — a count that ran ahead of the work and a line still missing at the
+	 * end. An id that was not asked about is discarded here and the line it was meant for falls
+	 * into `missing` below, where the splitter asks again.
+	 */
+	const asked = new Set(lines.map(l => l.id))
 	for (const g of parsed.grades ?? []) {
-		if (!g.id) continue
+		if (!g.id || !asked.has(g.id)) continue
+		/*
+		 * An unrecognised verdict word is UNGRADED, not "unverifiable". Coercing it to a real
+		 * verdict is the quietest way this instrument can flatter itself: the line stays in the
+		 * denominator, leaves both `useful` and `false`, and lowers the false rate for a reason
+		 * that is a parse failure rather than anything about the line.
+		 */
+		const known = GRADES.includes((g.verdict ?? "") as (typeof GRADES)[number])
 		out.set(g.id, {
-			verdict: (["useful", "generic", "unverifiable", "false"].includes(g.verdict ?? "") ?
-				g.verdict
-			:	"unverifiable") as Verdict,
-			why: String(g.why ?? "").slice(0, 160)
+			verdict: known ? (g.verdict as Verdict) : "ungraded",
+			why: known ? String(g.why ?? "").slice(0, 160) : `judge returned no known verdict (${String(g.verdict).slice(0, 40)})`
 		})
 	}
 	return out
+}
+
+/**
+ * One batch, then its HALVES, then its halves' halves — rather than one batch and a shrug.
+ *
+ * The first version of this tried a slice twice and dropped it on the second failure, and that
+ * dropped 50 of 529 lines on the corpus run: a batch dies when ONE answer trips the parse, and it
+ * takes seven innocent lines with it. On a single-arm report that reads as a smaller n. On an
+ * ABLATION it is worse than that — the lost lines are not spread evenly over the arms, so a
+ * difference between two arms can be a difference in which batches happened to parse.
+ *
+ * Halving costs at most 2n-1 calls in the pathological case and, measured against the alternative,
+ * it recovers every line whose own answer was fine. A line that fails ALONE is genuinely
+ * unjudgeable and is the only thing this can still lose; it is counted and printed rather than
+ * quietly missing.
+ */
+const judgeSlice = async (
+	handle: Awaited<ReturnType<typeof modelHandleFor>>,
+	slice: readonly Candidate[],
+	label: string
+): Promise<Map<string, { verdict: Verdict; why: string }>> => {
+	for (let attempt = 0; attempt < 2; attempt++) {
+		try {
+			const got = await judgeBatch(handle, slice)
+			// A batch that parses but answers about only some of its lines is a partial failure and
+			// is treated as one: the missing lines go back through the splitter rather than vanish.
+			const missing = slice.filter(c => !got.has(c.id))
+			if (missing.length === 0 || slice.length === 1) return got
+			for (const [id, v] of await judgeSlice(handle, missing, `${label}/missing`)) got.set(id, v)
+			return got
+		} catch (e) {
+			if (attempt === 1) {
+				if (slice.length === 1) {
+					/*
+					 * The end of the line, and it is RECORDED rather than dropped. A line whose own
+					 * answer will not parse twice in a row is genuinely unjudgeable by this judge,
+					 * and that is a fact about the run — it belongs in the output file and in every
+					 * denominator, not in a log line nobody reads.
+					 */
+					const c = slice[0]!
+					console.log(`\n  ${label}: line ${c.id} failed alone twice, recorded UNGRADED: ${e}`)
+					return new Map([[c.id, { verdict: "ungraded" as Verdict, why: `judge failed twice on this line alone: ${String(e).slice(0, 100)}` }]])
+				}
+				const mid = Math.ceil(slice.length / 2)
+				const out = await judgeSlice(handle, slice.slice(0, mid), `${label}a`)
+				for (const [id, v] of await judgeSlice(handle, slice.slice(mid), `${label}b`)) out.set(id, v)
+				return out
+			}
+		}
+	}
+	/*
+	 * Unreachable — the loop either returns a map or recurses — but if it ever becomes reachable it
+	 * must lose nothing, so it marks the whole slice ungraded rather than returning an empty map.
+	 */
+	return new Map(slice.map(c => [c.id, { verdict: "ungraded" as Verdict, why: "judgeSlice fell through" }]))
 }
 
 const pct = (k: number, n: number): string => (n === 0 ? "  —  " : `${Math.round((100 * k) / n)}%`)
@@ -179,20 +301,56 @@ const band = (i: Interval): string => `[${Math.round(i.lo * 100)}-${Math.round(i
 
 const main = async (): Promise<void> => {
 	const run = JSON.parse(readFileSync(runPath, "utf8")) as RunFile
-	const byWindow = new Map(run.windows.map(w => [w.id, w]))
 
-	const spoken = run.records.filter(
-		r => r.error === null && (r.text ?? "").trim() !== "" && (armWanted === "" || r.arm === armWanted)
-	)
+	/*
+	 * THE CENSUS, before anything is judged.
+	 *
+	 * Three things can keep a stored turn out of this judge's denominator, and only one of them is
+	 * the coach declining to speak. A call that ERRORED never produced a line and cannot be graded;
+	 * a call that returned nothing is a PASS. Both are excluded here — correctly, because the
+	 * question this instrument answers is "of the lines he heard, how many were useful" — but a
+	 * report that does not print them lets an arm that failed half its calls look identical to one
+	 * that answered them all, and lets a coach that went quiet look like a coach that was right.
+	 *
+	 * So every exclusion is counted, attributed to an arm, and printed above the table.
+	 */
+	const mineAll = run.records.filter(r => armWanted.size === 0 || armWanted.has(r.arm))
+	/*
+	 * A PASS is not a line, and this judge used to think it was.
+	 *
+	 * The test was `text.trim() !== ""`, which is not the rule the rest of the harness uses. The
+	 * coach declines by SAYING the word "pass" — `bench-stream` and `coach-score` both read that as
+	 * silence — so on the 17-game corpus 11 declinations went to the judge as candidate sentences
+	 * and sat in the denominator of the headline useful rate, where a judge with nothing to grade
+	 * can only mark them down. One corpus, two instruments, two different ideas of what a line is.
+	 * `isSilent` is now exported from `coach-score.ts` and all three read it from there.
+	 */
+	const spokeIt = (r: Record_): boolean => r.error === null && !isEmpty(r.text ?? "") && !isSilent(r.text ?? "")
+	const census = [...new Set(mineAll.map(r => r.arm))].map(armId => {
+		const mine = mineAll.filter(r => r.arm === armId)
+		return {
+			arm: armId,
+			turns: mine.length,
+			errored: mine.filter(r => r.error !== null).length,
+			empty: mine.filter(r => r.error === null && isEmpty(r.text ?? "")).length,
+			passed: mine.filter(r => r.error === null && !isEmpty(r.text ?? "") && isSilent(r.text ?? "")).length,
+			spoken: mine.filter(spokeIt).length
+		}
+	})
+
+	const spoken = mineAll.filter(spokeIt)
 	if (spoken.length === 0)
 		throw new Error(
-			`no spoken lines${armWanted === "" ? "" : ` for arm ${armWanted}`} in ${runPath} — ` +
+			`no spoken lines${armWanted.size === 0 ? "" : ` for arm(s) ${[...armWanted].join(", ")}`} in ${runPath} — ` +
 				`arms present: ${[...new Set(run.records.map(r => r.arm))].join(", ")}`
 		)
 	const candidates: Candidate[] = shuffled(spoken, seed).map((r, i) => ({
 		id: `L${i}`,
 		arm: r.arm,
 		windowId: r.windowId,
+		index: r.index ?? i,
+		rep: r.rep ?? 1,
+		atSec: r.atSec,
 		clock: r.clock,
 		text: r.text!.trim(),
 		payload: r.payload
@@ -204,9 +362,26 @@ const main = async (): Promise<void> => {
 	if (!key) throw new Error(`no key for ${judgeProvider} — put one in data/${p.keyFile}`)
 	const handle = await modelHandleFor(p, key, judgeModelArg || p.defaultModel)
 
+	console.log("\nWHAT IS IN THE DENOMINATOR, AND WHAT IS NOT\n")
+	console.log(
+		`  ${"arm".padEnd(20)} ${"turns".padStart(6)} ${"spoken".padStart(7)} ${"passed".padStart(7)} ` +
+			`${"empty".padStart(6)} ${"errored".padStart(8)}`
+	)
+	for (const c of census)
+		console.log(
+			`  ${c.arm.padEnd(20)} ${String(c.turns).padStart(6)} ${String(c.spoken).padStart(7)} ` +
+				`${String(c.passed).padStart(7)} ${String(c.empty).padStart(6)} ${String(c.errored).padStart(8)}`
+		)
+	console.log(
+		`  Only SPOKEN lines are graded below. A "pass" is the coach saying so and declining; "empty" is\n` +
+			`  nothing coming back at all, which is the model failing rather than choosing; "errored" is the call\n` +
+			`  failing. None of the three is a sentence, so none can be useful or false — but all three change\n` +
+			`  what a rate over spoken lines MEANS, which is why they are on the page and not in a comment.`
+	)
+
 	const batches = Math.ceil(candidates.length / batchSize)
 	console.log(
-		`${spoken.length} spoken line(s) across ${run.windows.length} game(s), ` +
+		`\n${spoken.length} spoken line(s) across ${run.windows.length} game(s), ` +
 			`shuffled with seed ${seed} and stripped of their arm label.\n` +
 			`about to spend ${batches} judge call(s) on ${judgeProvider}/${judgeModelArg || p.defaultModel}\n`
 	)
@@ -221,76 +396,164 @@ const main = async (): Promise<void> => {
 			const n = next++
 			const slice = slices[n]
 			if (!slice) return
-			let got: Map<string, { verdict: Verdict; why: string }> | null = null
-			for (let attempt = 0; attempt < 2 && got === null; attempt++) {
-				try {
-					got = await judgeBatch(handle, slice)
-				} catch (e) {
-					console.log(`  batch ${n + 1} failed${attempt === 0 ? ", retrying" : " twice, dropped"}: ${e}`)
-				}
+			/*
+			 * A slice may not be able to take the run down with it. `Promise.all` rejects on the
+			 * first rejection, which would abandon every other worker's verdicts and write no file
+			 * at all — an hour of judging lost to one unexpected throw. The slice is marked
+			 * ungraded and the run continues.
+			 */
+			let got: Map<string, { verdict: Verdict; why: string }>
+			try {
+				got = await judgeSlice(handle, slice, `batch ${n + 1}`)
+			} catch (e) {
+				console.log(`\n  batch ${n + 1} threw outside the splitter, whole slice UNGRADED: ${e}`)
+				got = new Map(slice.map(c => [c.id, { verdict: "ungraded" as Verdict, why: `slice threw: ${String(e).slice(0, 100)}` }]))
 			}
-			for (const [id, v] of got ?? []) verdicts.set(id, v)
+			for (const [id, v] of got) verdicts.set(id, v)
 			process.stdout.write(`\r  judged ${verdicts.size}/${candidates.length}`)
 		}
 	}
 	await Promise.all(Array.from({ length: Math.min(concurrency, slices.length) }, worker))
 	console.log("")
 
-	/* ------------------------------------------------------------ the report */
-	const rows: { gameId: string; label: string; n: number; useful: number; false_: number; generic: number }[] = []
-	for (const w of run.windows) {
-		const mine = candidates.filter(c => c.windowId === w.id && verdicts.has(c.id))
-		if (mine.length === 0) continue
-		const v = (k: Verdict) => mine.filter(c => verdicts.get(c.id)!.verdict === k).length
-		rows.push({
-			gameId: w.gameId,
-			label: `${w.champion} vs ${w.counterpart ?? "?"}${w.kind === "paired" ? "" : " (text)"}`,
-			n: mine.length,
-			useful: v("useful"),
-			false_: v("false"),
-			generic: v("generic")
-		})
-	}
+	/*
+	 * THE BACKFILL. Every candidate now has a verdict, by construction rather than by hope: if any
+	 * path above still managed to lose one, it becomes `ungraded` here instead of disappearing from
+	 * the denominator. `verdicts.size === candidates.length` after this line is an invariant the
+	 * rest of the report is allowed to rely on.
+	 */
+	for (const c of candidates)
+		if (!verdicts.has(c.id)) verdicts.set(c.id, { verdict: "ungraded", why: "no verdict returned for this line" })
 
-	console.log("\nPER GAME — no interval on purpose; these rows are a SPREAD, the interval is pooled below\n")
-	console.log("  gameId       matchup                          judged  useful   false  generic")
+	/* ------------------------------------------------------------ the report */
+	/*
+	 * PER ARM AND PER GAME. One row per (arm, game) even on a single-arm run, because a table whose
+	 * rows pool two arms is the one shape this report must never print: on an ablation it averages
+	 * the thing under test away and still looks like a result.
+	 */
+	const armIds = [...new Set(candidates.map(c => c.arm))]
+	const rows: {
+		arm: string
+		gameId: string
+		label: string
+		n: number
+		useful: number
+		false_: number
+		generic: number
+		unverifiable: number
+		ungraded: number
+	}[] = []
+	for (const armId of armIds)
+		for (const w of run.windows) {
+			/*
+			 * NO `verdicts.has` FILTER. That filter is exactly the bug: it made the denominator the
+			 * set of lines the judge happened to answer about, so a batch that failed to parse
+			 * shrank `n` and left every rate computed over the survivors. Every candidate has a
+			 * verdict after the backfill, `ungraded` included, and every candidate is counted.
+			 */
+			const mine = candidates.filter(c => c.arm === armId && c.windowId === w.id)
+			if (mine.length === 0) continue
+			const v = (k: Verdict) => mine.filter(c => verdicts.get(c.id)!.verdict === k).length
+			rows.push({
+				arm: armId,
+				gameId: w.gameId,
+				label: `${w.champion} vs ${w.counterpart ?? "?"}${w.kind === "paired" ? "" : " (text)"}`,
+				n: mine.length,
+				useful: v("useful"),
+				false_: v("false"),
+				generic: v("generic"),
+				unverifiable: v("unverifiable"),
+				ungraded: v("ungraded")
+			})
+		}
+
+	console.log("\nPER GAME — no interval on purpose; these rows are a SPREAD, the interval is pooled below")
+	console.log("`lines` is every line the coach spoke in that game; `ungraded` is the subset this judge could")
+	console.log("not answer about, and it is inside `lines`, never subtracted from it.\n")
+	console.log(
+		"  arm                  gameId       matchup                          lines  useful   false  generic  ungraded"
+	)
 	for (const r of rows)
 		console.log(
-			`  ${r.gameId}  ${r.label.padEnd(32)} ${String(r.n).padStart(5)}  ` +
-				`${pct(r.useful, r.n).padStart(5)}  ${pct(r.false_, r.n).padStart(6)}  ${pct(r.generic, r.n).padStart(6)}`
+			`  ${r.arm.padEnd(20)} ${r.gameId}  ${r.label.padEnd(32)} ${String(r.n).padStart(5)}  ` +
+				`${pct(r.useful, r.n).padStart(5)}  ${pct(r.false_, r.n).padStart(6)}  ${pct(r.generic, r.n).padStart(6)}  ` +
+				`${(r.ungraded === 0 ? "0" : `${r.ungraded} (${pct(r.ungraded, r.n).trim()})`).padStart(8)}`
 		)
 
-	const n = rows.reduce((a, r) => a + r.n, 0)
-	const u = rows.reduce((a, r) => a + r.useful, 0)
-	const f = rows.reduce((a, r) => a + r.false_, 0)
-	const g = rows.reduce((a, r) => a + r.generic, 0)
-	console.log(
-		`\nPOOLED  ${n} lines   useful ${u}/${n} ${pct(u, n)} ${band(wilson(u, n))}   ` +
-			`false ${f}/${n} ${pct(f, n)} ${band(wilson(f, n))}   generic ${g}/${n} ${pct(g, n)} ${band(wilson(g, n))}`
-	)
+	const pooled = armIds.map(armId => {
+		const mine = rows.filter(r => r.arm === armId)
+		const sum = (f: (r: (typeof mine)[number]) => number) => mine.reduce((a, r) => a + f(r), 0)
+		return {
+			arm: armId,
+			n: sum(r => r.n),
+			useful: sum(r => r.useful),
+			false_: sum(r => r.false_),
+			generic: sum(r => r.generic),
+			unverifiable: sum(r => r.unverifiable),
+			ungraded: sum(r => r.ungraded)
+		}
+	})
+	console.log("")
+	for (const pl of pooled) {
+		console.log(
+			`POOLED  ${pl.arm.padEnd(20)} ${String(pl.n).padStart(4)} lines   ` +
+				`useful ${String(pl.useful).padStart(3)}/${pl.n} ${pct(pl.useful, pl.n)} ${band(wilson(pl.useful, pl.n))}   ` +
+				`false ${String(pl.false_).padStart(3)}/${pl.n} ${pct(pl.false_, pl.n)} ${band(wilson(pl.false_, pl.n))}   ` +
+				`generic ${String(pl.generic).padStart(3)}/${pl.n} ${pct(pl.generic, pl.n)} ${band(wilson(pl.generic, pl.n))}`
+		)
+		/*
+		 * THE BOUNDS, whenever anything is ungraded. An ungraded line could have been anything, so
+		 * every rate above is a floor and `(k + ungraded) / n` is its ceiling. Printing the width
+		 * is what stops a reader treating a 9%-ungraded run as if it were a clean one — the Wilson
+		 * interval says nothing about this, because it is sampling error and this is missing data.
+		 */
+		if (pl.ungraded > 0)
+			console.log(
+				`        ${" ".repeat(20)} ${String(pl.ungraded).padStart(4)} of those were UNGRADED ` +
+					`${pct(pl.ungraded, pl.n)} — so useful is ${pct(pl.useful, pl.n)}–${pct(pl.useful + pl.ungraded, pl.n)} ` +
+					`and false is ${pct(pl.false_, pl.n)}–${pct(pl.false_ + pl.ungraded, pl.n)} depending on what they were`
+			)
+		else console.log(`        ${" ".repeat(20)} 0 ungraded — every line the coach spoke got a verdict`)
+	}
 	console.log(
 		`\nThe judge saw NO screenshot, so "contradicted-by-picture" is not a verdict it could reach.\n` +
 			`Read this false rate as a FLOOR.`
 	)
 
-	const out = runPath.replace(/\.json$/, `-judged.json`)
 	writeFileSync(
-		out,
+		outPath,
 		JSON.stringify(
 			{
 				of: runPath,
 				ranAt: new Date().toISOString(),
 				judge: `${judgeProvider}/${judgeModelArg || p.defaultModel}`,
 				seed,
-				note: "Graded against the stored payload only — no screenshot. The false rate is a floor.",
+				note:
+					"Graded against the stored payload only — no screenshot. The false rate is a floor. " +
+					"`lines` holds EVERY spoken line including `verdict: \"ungraded\"`; `n` in `pooled` and `perGame` " +
+					"counts those, so a rate over a run with ungraded lines is a floor in both directions.",
+				census,
 				perGame: rows,
-				pooled: { n, useful: u, false: f, generic: g },
+				pooled: pooled.map(pl => ({
+					arm: pl.arm,
+					n: pl.n,
+					useful: pl.useful,
+					false: pl.false_,
+					generic: pl.generic,
+					unverifiable: pl.unverifiable,
+					ungraded: pl.ungraded
+				})),
+				// EVERY candidate, ungraded included. A reader who wants the old survivors-only
+				// number can filter this list; a reader handed a pre-filtered list cannot get back
+				// the number of lines that went missing.
 				lines: candidates
-					.filter(c => verdicts.has(c.id))
 					.map(c => ({
 						id: c.id,
 						arm: c.arm,
 						windowId: c.windowId,
+						index: c.index,
+						rep: c.rep,
+						atSec: c.atSec,
 						clock: c.clock,
 						text: c.text,
 						...verdicts.get(c.id)!
@@ -300,7 +563,7 @@ const main = async (): Promise<void> => {
 			2
 		)
 	)
-	console.log(`\nwrote ${out}  (${runPath} is unchanged)`)
+	console.log(`\nwrote ${outPath}  (${runPath} is unchanged)`)
 }
 
 await main()
