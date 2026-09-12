@@ -2,7 +2,9 @@
  * `GET /api/settings` and `PUT /api/settings`.
  *
  * Settings are stored one key per row and read back merged over `DEFAULT_SETTINGS`, so adding
- * a field is backward compatible with an existing database and never needs a migration.
+ * a field is backward compatible with an existing database and never needs a migration. The
+ * corollary is that a stored row OUTRANKS the code default permanently, which is why the PUT
+ * below writes only the keys the user actually touched — see the comment on the write.
  *
  * The PUT path goes through `clampSettings`, so a fat-fingered `pollInGameMs: 0` cannot wedge
  * the daemon, and the daemon is notified synchronously so new poll intervals apply without a
@@ -36,8 +38,24 @@ export const createSettingsRoutes = (deps: ServerDeps): Hono => {
 		if (patch instanceof type.errors)
 			return fail(c, 400, "invalid settings patch", "bad-settings", patch.summary)
 
+		/*
+		 * ONLY THE KEYS THE PATCH CARRIED ARE PERSISTED, and that is load-bearing.
+		 *
+		 * This used to be `putSettings(merged)` — the whole settings object, every save. One
+		 * field changed and all seventeen keys became stored rows, after which `getSettings()`
+		 * merged them over `DEFAULT_SETTINGS` forever and a code default could never reach this
+		 * install again. It is not a hypothetical: every settings row on the author's machine
+		 * carries one identical `updatedMs`, and the `autoReviewNewGames: false` frozen in that
+		 * single write switched the post-game review path off for eight days while the code
+		 * default, the schema and the README all still said `true`.
+		 *
+		 * The clamp still runs against the MERGED view, because a clamp needs its neighbours —
+		 * but only the touched keys are written back out of it.
+		 */
 		const merged = clampSettings({ ...getSettings(), ...patch } as Settings)
-		const next = putSettings(merged)
+		const touched: Record<string, unknown> = {}
+		for (const key of Object.keys(patch)) touched[key] = (merged as Record<string, unknown>)[key]
+		const next = putSettings(touched as Partial<Settings>)
 
 		try {
 			deps.onSettingsChange?.(next)

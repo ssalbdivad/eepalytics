@@ -14,11 +14,12 @@
 import { useEffect, useMemo, useState } from "react"
 import type { HealthResponse } from "../../shared/schema/api.ts"
 import type { Settings, SettingsPatch } from "../../shared/schema/settings.ts"
-import { MODEL_CHOICES, clampSettings } from "../../shared/schema/settings.ts"
+import { MODEL_CHOICES, clampSettings, settingsOverrides } from "../../shared/schema/settings.ts"
 import { LIVE_COACH_MODES } from "../../shared/live-coach-mode.ts"
 import { api } from "../lib/api.ts"
 import { useAction, useNow, useResource } from "../lib/hooks.ts"
-import { cls, fmtAgo } from "../lib/format.ts"
+import { cls, fmtAgo, phaseWord } from "../lib/format.ts"
+import { Broken, Loading } from "../components/States.tsx"
 
 export interface SettingsPageProps {
 	health: HealthResponse | null
@@ -116,16 +117,12 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 					<h1>Settings</h1>
 				</div>
 				{loaded.error ?
-					<div className="notice bad">
-						<span className="icon">✗</span>
-						<div>
-							<strong>Couldn't load settings.</strong> {loaded.error}
-							<div style={{ marginTop: 8 }}>
-								<button onClick={loaded.reload}>Retry</button>
-							</div>
-						</div>
-					</div>
-				:	<div className="skeleton" style={{ height: 320 }} />}
+					<Broken
+						title="Couldn't load settings."
+						message={loaded.error}
+						actions={<button onClick={loaded.reload}>Retry</button>}
+					/>
+				:	<Loading rows={1} height={320} label="Loading settings" />}
 			</div>
 		)
 
@@ -134,11 +131,33 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 
 	const knownModel = MODEL_CHOICES.some(m => m.id === draft.model)
 
+	/*
+	 * Every field this install has moved off its code default, named out loud.
+	 *
+	 * A stored settings row outranks the code default forever, and until now nothing on this
+	 * screen said which fields had one. A single save wrote `autoReviewNewGames: false` and the
+	 * post-game review path — the only tier of this app a human has graded — produced nothing
+	 * for eight days, while the schema, the code default and the README all still said `true`.
+	 * The checkbox rendered `false` and looked exactly like a field nobody had touched.
+	 *
+	 * Computed from the LOADED settings, not the draft, so it describes what is actually
+	 * running rather than what is about to be saved.
+	 */
+	const overrides = settingsOverrides(loaded.data ?? draft)
+
 	return (
 		<div className="page">
 			<div className="page-head">
 				<h1>Settings</h1>
-				<div className="sub">stored in the daemon's database, not in this browser</div>
+				<div className="sub">
+					stored in the daemon's database, not in this browser
+					{overrides.length === 0 ?
+						" — every field is on its default"
+					:	` — ${overrides.length} field${overrides.length === 1 ? "" : "s"} overridden: ${overrides
+							.map(o => `${o.key} is ${JSON.stringify(o.value)}, not ${JSON.stringify(o.default)}`)
+							.join("; ")}`
+					}
+				</div>
 			</div>
 
 			<div className="settings-grid">
@@ -294,7 +313,7 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 								onChange={e => setGeminiKeyInput(e.target.value)}
 								style={{ width: "100%" }}
 							/>
-							<div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+							<div style={{ display: "flex", gap: 6, marginTop: "var(--sp-2)" }}>
 								<button
 									className="btn"
 									type="button"
@@ -310,7 +329,7 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 								)}
 							</div>
 							{gemini !== null && (
-								<div className={gemini.ok ? "ok" : "warn"} style={{ marginTop: 6 }}>
+								<div className={cls("field-status", gemini.ok ? "band-good" : "band-bad")}>
 									{gemini.ok ?
 										`Working${gemini.hint ? ` (${gemini.hint})` : ""}.`
 									:	`Not working: ${gemini.error ?? "no key set"}`}
@@ -346,53 +365,18 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							{LIVE_COACH_MODES.map(m => {
 								const on = draft.liveCoachMode === m.id
 								return (
-									<label
-										key={m.id}
-										style={{
-											display: "grid",
-											gridTemplateColumns: "auto 1fr",
-											gap: "0 10px",
-											alignItems: "start",
-											padding: "10px 12px",
-											borderRadius: 8,
-											cursor: "pointer",
-											border: `1px solid ${on ? "var(--gold-dim)" : "var(--line-soft)"}`,
-											background: on ? "var(--panel-2)" : "transparent"
-										}}
-									>
+									<label key={m.id} className={cls("choice", on && "on")}>
 										<input
 											type="radio"
 											name="liveCoachMode"
 											checked={on}
 											onChange={() => set("liveCoachMode", m.id)}
-											style={{ marginTop: 3 }}
 										/>
 										<div>
-											<div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
-												{m.label}
-											</div>
-											<div
-												style={{
-													fontSize: 11.5,
-													color: "var(--dim)",
-													marginTop: 3,
-													maxWidth: "62ch"
-												}}
-											>
-												{m.blurb}
-											</div>
-											<div
-												style={{
-													fontSize: 11.5,
-													color: "var(--faint)",
-													marginTop: 4,
-													maxWidth: "62ch"
-												}}
-											>
-												<b style={{ color: "var(--gold-dim)" }}>
-													{m.measured ? "Measured:" : "Unmeasured:"}
-												</b>{" "}
-												{m.evidence}
+											<div className="choice__title">{m.label}</div>
+											<div className="choice__blurb">{m.blurb}</div>
+											<div className="choice__evidence">
+												<b>{m.measured ? "Measured:" : "Unmeasured:"}</b> {m.evidence}
 											</div>
 										</div>
 									</label>
@@ -448,7 +432,9 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							/>
 						</div>
 						<div className="help">
-							Queue a review as soon as a finished game is ingested and analyzed.
+							Queue a review as soon as a finished game is ingested and analyzed. The
+							automatic sweep only reaches back a day — it is a safety net for a game
+							whose chain broke, not a backfill of your history.
 						</div>
 					</div>
 
@@ -521,7 +507,7 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 								placeholder="/mnt/c/Users/<you>/Documents/League of Legends/Replays"
 								value={draft.replayFolder}
 								onChange={e => set("replayFolder", e.target.value)}
-								style={{ width: "100%", fontFamily: "var(--mono)", fontSize: 12 }}
+								style={{ width: "100%", fontFamily: "var(--mono)", fontSize: "var(--fs-2)" }}
 							/>
 						</div>
 						<div className="help">
@@ -614,7 +600,7 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							<dt>league client</dt>
 							<dd className={cls(health.lcu === "connected" ? "band-good" : "band-bad")}>
 								{health.lcu}
-								{health.gameflowPhase ? ` · ${health.gameflowPhase}` : ""}
+								{health.gameflowPhase ? ` · ${phaseWord(health.gameflowPhase)}` : ""}
 							</dd>
 							<dt>transport in use</dt>
 							<dd>{health.bridge}</dd>
@@ -647,14 +633,11 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 								</>
 							:	null}
 						</dl>
-					:	<div className="notice bad">
-							<span className="icon">✗</span>
-							<div>The daemon isn't answering, so its status is unknown.</div>
-						</div>
+					:	<Broken title="The daemon isn't answering, so its status is unknown." />
 					}
 
 					{health?.warnings && health.warnings.length > 0 ?
-						<div className="notice warn" style={{ marginTop: 12 }}>
+						<div className="notice warn" style={{ marginTop: "var(--sp-3)" }}>
 							<span className="icon">⚠</span>
 							<div>
 								<strong>Warnings</strong>
@@ -667,7 +650,7 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 						</div>
 					:	null}
 
-					<div className="faint" style={{ fontSize: 11.5, marginTop: 12 }}>
+					<div className="faint" style={{ fontSize: "var(--fs-1)", marginTop: "var(--sp-3)" }}>
 						Logs: <code className="mono">journalctl --user -u eepalytics -f</code> · doctor:{" "}
 						<code className="mono">pnpm doctor</code>
 					</div>
@@ -675,14 +658,14 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 			</div>
 
 			<div className="save-bar">
-				<span className={cls(dirty ? "band-ok" : "faint")} style={{ fontSize: 12.5 }}>
+				<span className={cls(dirty ? "band-ok" : "faint")} style={{ fontSize: "var(--fs-2)" }}>
 					{dirty ?
 						`${Object.keys(changed).length} unsaved change${Object.keys(changed).length === 1 ? "" : "s"}`
 					: save.done ?
 						"Saved."
 					:	"No changes."}
 				</span>
-				{save.error ? <span className="band-bad" style={{ fontSize: 12.5 }}>{save.error}</span> : null}
+				{save.error ? <span className="band-bad" style={{ fontSize: "var(--fs-2)" }}>{save.error}</span> : null}
 				<span className="spacer" />
 				<button onClick={() => loaded.data && setDraft(loaded.data)} disabled={!dirty}>
 					Discard

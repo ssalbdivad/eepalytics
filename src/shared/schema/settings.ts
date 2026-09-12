@@ -133,6 +133,35 @@ export const clampSettings = (s: Settings): Settings => ({
 	maxMomentsPerGame: clamp(s.maxMomentsPerGame, 1, 50)
 })
 
+/**
+ * Which settings this install has OVERRIDDEN, and what the code would have used instead.
+ *
+ * A stored row outranks the code default forever — that is the price of the migration-free
+ * merge in `getSettings()`, and it is the mechanism that switched the post-game review path off
+ * for eight days without anything saying so. So the override set is computed and SHOWN: the
+ * daemon logs it at boot and the Settings screen prints the default beside every field that no
+ * longer follows it. The disagreement is allowed; being unable to see it is not.
+ *
+ * Pure and browser-safe, so the log line and the UI cannot drift apart.
+ */
+export const settingsOverrides = (
+	s: Settings
+): { key: keyof Settings; value: unknown; default: unknown }[] => {
+	const out: { key: keyof Settings; value: unknown; default: unknown }[] = []
+	for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
+		const mine = s[key]
+		const theirs = DEFAULT_SETTINGS[key]
+		if (mine !== theirs) out.push({ key, value: mine, default: theirs })
+	}
+	return out
+}
+
+/** One line naming every override, for a log. Empty string when there are none. */
+export const describeSettingsOverrides = (s: Settings): string =>
+	settingsOverrides(s)
+		.map(o => `${o.key}=${JSON.stringify(o.value)} (default ${JSON.stringify(o.default)})`)
+		.join(", ")
+
 const clamp = (n: number, lo: number, hi: number): number =>
 	!Number.isFinite(n) ? lo : n < lo ? lo : n > hi ? hi : n
 
