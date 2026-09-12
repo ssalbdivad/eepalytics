@@ -96,8 +96,14 @@ list is still a menu.
 The three modes live in `src/shared/live-coach-mode.ts` and the user picks between them:
 
 - **`trusted`** — the default. The full brief, the full champion prose, no ranked list, nothing
-  telling her what to say. **UNMEASURED as an arm**, and the settings page says so in those words:
-  the only honest claim is about what it replaces.
+  telling her what to say. **MEASURED as an arm since 2026-09-11**, which is a correction: this
+  bullet said "UNMEASURED" and claimed the settings page agreed, and by then
+  `src/shared/live-coach-mode.ts` had carried `measured: true` with a numbers-bearing evidence line
+  for a day. Three blind-judged corpora exist — `integrate-corpus-20260911` (17 games, 529 lines),
+  `mixfix-corpus-20260911` (19 games, 630) and `integrate2-corpus-20260912` (28 games, 840) — all
+  graded by `anthropic/claude-sonnet-5` against the payload alone. Keep this bullet and that file
+  in step: they are the same claim in two places and a reader who checks only one of them is the
+  reason this line was wrong.
 - **`cite-or-quiet`** — the measured arm above. Keeps the ranker as a PRIORITY HINT, never an
   allowlist.
 - **`fenced`** — the old architecture, kept because its stored runs are only meaningful if the
