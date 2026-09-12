@@ -536,9 +536,13 @@ export const projectTick = (data: LiveAllGameData | null | undefined): LiveTick 
  * turn and never cause one. Read this list with `LiveEvent.asks` next to it.
  *
  * The FIFTH cut demoted two more, on the 28-game corpus with every turn rejoined to the ask that
- * raised it. `game.start` produced 0 useful lines in 28 games and `death.counterpart` was the only
- * ask in the corpus with more wrong lines than useful ones; both now ride a turn and cause none.
- * The numbers, and the condition for putting either back, are at their own fire sites.
+ * raised it, and the SIXTH change reversed half of it. `game.start` produced 0 useful lines in 28
+ * games and 0 rescuable ones, and it stays demoted. `death.counterpart` was the only ask in the
+ * corpus with more wrong lines than useful ones — and splitting those wrong lines by the instrument
+ * that convicted them showed the judge faulting its ADVICE in 10% [4-21] of them, at the pooled
+ * rate, with the rest wrong only in a death clock. Cutting it deleted 1.50 good questions per game
+ * to remove 0.36 real errors, and deleted the turns any future run would need to settle the
+ * question, so it asks again. The numbers are at their own fire sites.
  *
  * `objective.window` and `objective.contested` are GONE, and they are the fourth cut's deletion
  * rather than another demotion. Once the window record owned the asking they detected nothing the
@@ -1280,11 +1284,15 @@ export const observeTick = (
 	 * stood before the fourth cut and the comparison stays re-derivable from the same samples
 	 * forever. It is never passed by the app.
 	 *
-	 * `asksBeforeFifthCut` is the same idea for the fifth: it puts the opening look and the
-	 * counter-jungle window back as QUESTIONS. The fifth cut removed them on a table of 879 stored
-	 * turns, and a table nobody can reproduce next month is a table nobody should have believed —
-	 * so `scripts/measure-asks.ts --before` replays the schedule as it stood, from the same samples,
+	 * `asksBeforeFifthCut` is the same idea for the fifth: it puts the opening look back as a
+	 * QUESTION. The fifth cut removed it on a table of 879 stored turns, and a table nobody can
+	 * reproduce next month is a table nobody should have believed — so
+	 * `scripts/measure-asks.ts --before` replays the schedule as it stood, from the same samples,
 	 * and the before column stays derivable rather than quoted. Also never passed by the app.
+	 *
+	 * It restored the counter-jungle window too until the sixth change put that ask back for real,
+	 * which is why the knob now moves ONE thing and the 879-turn table still reproduces exactly.
+	 * The name is kept: it names the schedule it reproduces, not the number of asks it touches.
 	 */
 	opts: { reach?: ReachFn; standingSilenceSec?: number; asksBeforeFifthCut?: boolean } = {}
 ): LiveEvent[] => {
@@ -1296,7 +1304,8 @@ export const observeTick = (
 	 * CONTEST WINDOWS at the foot of this function (`window.open`, `window.changed`,
 	 * `window.standing`), and the FIELD decisions above it — him coming back up, and a spike, level
 	 * or item. See the `fieldAsks` block for the corpus measurement that added the second family,
-	 * and the `death.counterpart` fire site for the one the fifth cut took back out of it.
+	 * and the `death.counterpart` fire site for the one the fifth cut took out and the sixth
+	 * change put back.
 	 */
 	const fire = (
 		e: Omit<LiveEvent, "asks" | "windowKey" | "seenAtSec"> & {
@@ -1453,40 +1462,84 @@ export const observeTick = (
 			 * Both intervals are separated from the pooled rate, and it is the ONLY ask kind in the
 			 * corpus that produces more wrong lines than useful ones — 31 against 16.
 			 *
-			 * WHY it is the one that breaks is structural, and it is the reason this is a cut rather
-			 * than a note for whoever owns the prompt. A death has two clocks running opposite ways
-			 * (`down Ns` elapsed, `back in Ns` remaining) and the model speaks the remaining one as
-			 * if it were the elapsed one: measured here, 26 of 26 of this ask's clock claims are
-			 * contradicted or inversion-shaped, a rate no other ask approaches. Every other ask
-			 * SURVIVES that, because it has a second thing to talk about — a pit, a spawn, an item —
-			 * and `window.changed` on the identical premise still comes out 71% clean. This one asks
-			 * in the open ground precisely when there is no pit, so the elapsed figure is the entire
-			 * sentence, and a sentence built out of one number the model reads backwards is wrong
-			 * whatever else is true about it.
+			 * AND THE SIXTH CHANGE PUT THE ASK BACK, because the fifth read that table the wrong way.
 			 *
-			 * The cost is real and is stated rather than hidden: 16 clean-useful lines over 28 games,
-			 * 0.57 per game, against 1.11 wrong lines per game removed. And it gives back some of the
-			 * objective monoculture the field asks were added to break — 80% of turns carried an
-			 * objective ask before this, 88% after.
+			 * The fifth cut concluded the ask was STRUCTURALLY bad: that in the open ground the death
+			 * clock is the entire sentence, so a model that reads the clock backwards has nothing
+			 * left to be right about, while every other ask survives on a second fact. The same
+			 * corpus refutes that, once each wrong line is split by WHICH of the two instruments
+			 * convicted it — `why()` in `scripts/measure-asks.ts`, re-derivable with `--before`:
 			 *
-			 * IT IS REVERSIBLE IN ONE WORD, and the condition for reversing it is written down: if a
-			 * corpus re-run ever shows the ELAPSED figure being spoken (re-derive with
-			 * `scripts/measure-deadclock.ts`), then 21 of the 31 wrong lines here were wrong only in
-			 * their number, this ask's clean rate goes to roughly 79%, and `asks: fieldAsks` should
-			 * come back. Until then it rides a turn and never causes one, which is this file's
-			 * standing idiom for a detector worth keeping and an ask worth not making.
+			 * ```
+			 *   cause                          spoke   wrong        clock ONLY   judge ONLY   resc
+			 *   changed:counterpart died         118   55% [46-64]  44% [35-53]   3% [1-8]      52
+			 *   death.counterpart                 52   60% [46-72]  40% [28-54]  10% [4-21]     21
+			 *   window.open                      204   17% [13-23]   3% [2-7]    13% [9-18]      7
+			 *   ALL                              837   25% [22-28]  11% [9-14]   11% [9-13]     96
+			 * ```
+			 *
+			 * `judge ONLY` is the column that asks whether the QUESTION was worth asking — the blind
+			 * judge reading the advice, with no view of any clock — and on this premise it is the
+			 * lowest in the app: 3% [1-8] on the 118-turn twin, 10% [4-21] here, both at or under the
+			 * pooled 11%. As coaching, "the man you are racing is off the map for the next 25
+			 * seconds" is the best question this app asks. It is wrecked by one number read
+			 * backwards and by nothing else.
+			 *
+			 * The second-fact theory fails on its own evidence too. `changed:counterpart died` IS
+			 * this premise with a pit beside it — the second fact that was said to rescue every other
+			 * ask — and it comes out 55% wrong at 44% clock-only, no better than the open ground.
+			 * `window.changed`'s healthy 71% clean is pooled over six causes; split, the
+			 * counterpart's death is its worst by a distance and `he backed` its best at 13%. A pit
+			 * does not save the sentence, because the model still reaches for the clock.
+			 *
+			 * SO THE TRADE WAS MISREAD, AND THE NUMBER THAT MISREAD IT IS THE RATIO. Deleting this
+			 * ask removes 1.11 wrong lines per game against 0.75 useful — 1.48, a healthy-looking
+			 * cut. But 0.75 of those 1.11 are RESCUABLE: wrong only in a death clock, with advice the
+			 * judge graded useful. Counted honestly the cut removes 0.36 real errors per game and
+			 * 1.50 good questions, a ratio of 0.24, which is a bad trade by this repo's own rule.
+			 * `scripts/measure-asks.ts --cuts` now prints `resc` beside every ratio for exactly this
+			 * reason.
+			 *
+			 * AND THE CUT WAS SELF-SEALING, which is what settles it rather than leaving it a
+			 * judgement call. `asksBeforeFifthCut` restores the ask for a REPLAY over lines already
+			 * stored; it cannot make a model answer a turn the shipped schedule never took. With the
+			 * ask off, the corpus run that measures the death-clock fix would hold zero of these
+			 * turns, and whether to restore it could never be answered from evidence — the cut
+			 * deletes the only thing that could overturn it.
+			 *
+			 * The cost of being wrong is stated and is one re-run away: if the clock fix does not
+			 * work, this ask is +1.11 wrong lines per game, and flipping `asks` to false here with
+			 * `scripts/measure-asks.ts --vs` re-derives every figure above.
 			 */
 			const window = contestableObjective(tick)
-			const downFor = victim.dead ? victim.respawn : 0
-			if (window === null && downFor < FIELD_CP_MIN_SEC) continue
+			/*
+			 * `respawn` is what is LEFT of his timer, and this line used to render it `down Ns`.
+			 *
+			 * `down Ns` was this app's word for the ELAPSED half — `live-brief.ts` states both
+			 * clocks in one breath (`DEAD, died 2s ago, respawns in 14s`) and the prompt's feed note
+			 * says in terms that neither can be turned into the other. So the note that names WHY a
+			 * turn fired was printing the remaining figure under the elapsed figure's name, in the
+			 * one vocabulary this repo spent three waves making unambiguous. It now uses the feed's
+			 * own word for the remaining clock, so the two cannot drift apart again in silence.
+			 *
+			 * Nothing the model reads was affected — `describeTurn` goes to the fault panel and the
+			 * transcript, never into a payload — so this is not the 44% clock-only wrongness
+			 * measured on the counterpart-death premise. It is worse in a smaller way: it is the
+			 * inversion sitting inside the instrument used to audit the inversion. Every row
+			 * `scripts/measure-asks.ts` writes carries this note, and a reviewer checking a spoken
+			 * "dead for 24 seconds" against a cause reading `down 24s` would have marked the line
+			 * correct.
+			 */
+			const backInSec = victim.dead ? victim.respawn : 0
+			if (window === null && backInSec < FIELD_CP_MIN_SEC) continue
 			fire({
 				kind: "death.counterpart",
 				atSec: e.atSec,
 				reactive: true,
-				asks: opts.asksBeforeFifthCut === true && window === null,
+				asks: window === null,
 				key: `kill:${e.id}`,
 				note: `${championOf(tick, e.killer) ?? e.killer ?? "someone"} killed ${cp.champion}${
-					downFor > 0 ? `, down ${Math.round(downFor)}s` : ""
+					backInSec > 0 ? `, respawns in ${Math.round(backInSec)}s` : ""
 				}${
 					window === null ? ""
 					: window.upForSec === null ?

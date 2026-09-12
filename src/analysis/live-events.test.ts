@@ -354,26 +354,64 @@ describe("a kill is not a turn", () => {
 	})
 
 	/*
-	 * THE FIFTH CUT, and the measurement is at the fire site. In the open ground this asked, and
-	 * over the 28-game corpus it was the only ask kind producing more wrong lines than useful ones
-	 * — 31 to 16, wrong 66% [52-78] against 25% [22-28] pooled, because with no pit to talk about
-	 * the sentence is nothing but a death clock and the model speaks the remaining half of it as
-	 * the elapsed one in 26 of 26 measurable cases.
+	 * THE FIFTH CUT TOOK THIS ASK OUT AND THE SIXTH CHANGE PUT IT BACK — the measurement for both
+	 * is at the fire site. Short version: over the 28-game corpus it was the only ask producing
+	 * more wrong lines than useful, and splitting those by the instrument that convicted them put
+	 * 40% [28-54] on the death clock alone and 10% [4-21] on the judge, which is the pooled rate.
+	 * The question is sound; the number in it was read backwards.
 	 *
-	 * It is still DETECTED, still reactive, and still carries the timer, because the note rides the
-	 * next turn and because putting the ask back is one word once the clock is spoken correctly.
+	 * In the OPEN GROUND it asks. With a pit standing it does not, and never did: the pit's own
+	 * `window.changed` re-asks on exactly this counter, and asking twice for one moment is the
+	 * three-turns-in-twelve-seconds failure the third cut removed.
 	 */
-	it("with no pit open it carries the counter-jungle window without asking", () => {
+	it("with no pit open it asks the counter-jungle window itself", () => {
 		const events = runEvents([
 			{ t: 100 },
 			{ t: 110, events: [kill(1, 105, CP_BARE)], enemyJungle: { dead: true, respawn: 25 } }
 		])
 		const death = events.find(e => e.kind === "death.counterpart")
 		ok(death !== undefined, events.map(e => e.kind).join(","))
-		strictEqual(death.asks, false)
+		strictEqual(death.asks, true)
 		ok(death.reactive, "a death timer decays in seconds")
-		ok(/down 25s/.test(death.note), death.note)
-		deepStrictEqual(asked(events), [], "nothing else is invented to fill the gap")
+		ok(/respawns in 25s/.test(death.note), death.note)
+		deepStrictEqual(
+			asked(events),
+			["death.counterpart"],
+			"and nothing else is invented to ride with it"
+		)
+	})
+
+	/*
+	 * THE INVERSION, PINNED IN THE ONE PLACE THIS FILE CAN STATE IT.
+	 *
+	 * `TickPlayer.respawn` is `respawnTimer` off the Live Client Data API, which is what is LEFT.
+	 * `down Ns` — since renamed `died Ns ago` — is the name `live-brief.ts` and the prompt's feed
+	 * note give the ELAPSED half, and the two cannot be converted into each other. This note
+	 * rendered the remaining figure under the elapsed figure's name until 2026-09-12.
+	 *
+	 * It never reached the model — `describeTurn` feeds the fault panel and the transcript — but it
+	 * is stamped into every row `scripts/measure-asks.ts` writes, so an auditor comparing a spoken
+	 * "dead for twenty-five seconds" against a cause reading `down 25s` would have agreed with it.
+	 * The regexes below are deliberately over-broad: any `down N`, in any note this file emits, for
+	 * a man whose timer is counting DOWN, is the bug coming back.
+	 */
+	it("no note names a remaining respawn timer with the elapsed clock's word", () => {
+		for (const respawn of [25, 40, FIELD_CP_MIN_SEC]) {
+			const events = runEvents([
+				{ t: 100 },
+				{ t: 110, events: [kill(1, 105, CP_BARE)], enemyJungle: { dead: true, respawn } }
+			])
+			for (const e of events) {
+				ok(!/\bdown \d/.test(e.note), `${e.kind}: ${e.note}`)
+				ok(!/\bdied \d+s ago/.test(e.note), `${e.kind}: ${e.note}`)
+				ok(!/\bdead for \d/.test(e.note), `${e.kind}: ${e.note}`)
+			}
+			const death = events.find(e => e.kind === "death.counterpart")
+			ok(
+				death !== undefined && death.note.includes(`respawns in ${respawn}s`),
+				death?.note ?? "no death.counterpart was detected at all"
+			)
+		}
 	})
 
 	/*
@@ -1003,14 +1041,14 @@ describe("the window is the unit", () => {
 	 * a table and the table would quietly become the AFTER one with a "before" label on it — the
 	 * worst failure an instrument has, because nothing looks broken.
 	 */
-	it("the before-the-fifth-cut knob puts both asks back, and only under the knob", () => {
+	it("the before-the-fifth-cut knob puts the opening look back, and only under the knob", () => {
 		const opening = [{ t: 100 }]
 		const death = [
 			{ t: 100 },
 			{ t: 110, events: [kill(1, 105, CP_BARE)], enemyJungle: { dead: true, respawn: 25 } }
 		]
 		deepStrictEqual(asked(runEvents(opening)), [])
-		deepStrictEqual(asked(runEvents(death)), [])
+		deepStrictEqual(asked(runEvents(death)), ["death.counterpart"])
 		deepStrictEqual(asked(runEvents(opening, { asksBeforeFifthCut: true })), ["game.start"])
 		deepStrictEqual(asked(runEvents(death, { asksBeforeFifthCut: true })), [
 			"game.start",

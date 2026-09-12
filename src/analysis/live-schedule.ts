@@ -93,13 +93,14 @@
  * 20-30 seconds away from an ordinary jungle position — so under ten seconds left there is nothing
  * he could start and finish, and the note would be about a man already walking back.
  *
- * It gated an ASK until the fifth cut; `death.counterpart` no longer asks anything (see its fire
- * site in `live-events.ts` for the 47 turns that took it out), so what this now decides is whether
- * the death is carried as context at all. Left where it is: the threshold is a statement about
- * when the fact stops being actionable, and that is true of a carried note as much as of a
- * question. Raising it was tested against the same corpus and is not the fix — the ask's wrong
- * lines are spread across every bucket of the remaining timer, and the 45s-and-over bucket is its
- * BEST one (15 useful of 27) rather than its worst.
+ * It gates an ASK again. The fifth cut stopped `death.counterpart` asking and the sixth change put
+ * it back — its wrong lines were 40% [28-54] a death clock read backwards against 10% [4-21] the
+ * judge faulting the advice, so the question was sound and the number in it was not; see the fire
+ * site in `live-events.ts`. Either way this threshold stays where it is, and it was checked against
+ * the same corpus: raising it is not the fix, because the ask's wrong lines are spread across every
+ * bucket of the remaining timer and the 45s-and-over bucket is its BEST one (15 useful of 27)
+ * rather than its worst. A longer timer buys more room and does not make the coach read it the
+ * right way round.
  */
 export const FIELD_CP_MIN_SEC = 10
 
