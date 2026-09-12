@@ -10,6 +10,7 @@
  *   GET  /api/health                     -> HealthResponse
  *   GET  /api/games?limit=               -> GameListResponse
  *   GET  /api/games/:gameId              -> GameDetailResponse
+ *   GET  /api/games/:gameId/spine        -> SpineResponse
  *   GET  /api/trends?games=              -> TrendsResponse
  *   POST /api/games/:gameId/review       -> JobAccepted
  *   GET  /api/jobs                       -> JobListResponse
@@ -145,6 +146,106 @@ export const GameDetailResponse = type({
 	timelineAvailable: "boolean"
 })
 export type GameDetailResponse = typeof GameDetailResponse.infer
+
+/* =============================================================== spine */
+
+/**
+ * The whole game as one shape: what the debrief's second band draws.
+ *
+ * Separate from `GameDetailResponse` on purpose. The detail route answers from tables the
+ * daemon already wrote; this one decompresses and walks the timeline blob, which is the most
+ * expensive read in the app and is wanted by exactly one screen. Two routes means the review
+ * page keeps rendering at the speed it does today.
+ *
+ * **Every figure here comes from the post-game timeline, where all ten players are exact.**
+ * The live feed's enemy CS is a visibility counter (70 read against a true 183 in game
+ * 5639406342); nothing on this route may come from that channel.
+ */
+export const SpineMinute = type({
+	/** The frame's OWN timestamp. Frames drift off the minute by up to half a second. */
+	atSec: "number",
+	clock: "string",
+	/** His total gold minus the counterpart's. 0 when there is no counterpart to subtract. */
+	goldDiff: "number",
+	goldMe: "number",
+	csMe: "number",
+	csThem: "number",
+	levelMe: "number",
+	levelThem: "number",
+	/**
+	 * Where HE was at this frame, as minimap percentages.
+	 *
+	 * Carried per frame rather than interpolated on demand: the median displacement between two
+	 * consecutive frames is about 28% of the map, so a position asked for between them is a
+	 * guess. A consumer gets the frame's own position and the gap it came from, and decides.
+	 */
+	minimapPct: type({ left: "number", top: "number" })
+})
+export type SpineMinute = typeof SpineMinute.infer
+
+export const SpineObjective = type({
+	atSec: "number",
+	clock: "string",
+	/** "Mountain drake", "Rift Herald", "Baron Nashor", "a voidgrub" — what a human calls it. */
+	name: "string",
+	/** Which side took it, from `killerId`. The assist list on these events is 19% corrupt and
+	 *  is never read. */
+	side: "'his'|'enemy'",
+	takenBy: "string",
+	zone: "string|null",
+	minimapPct: type({ left: "number", top: "number" }).or("null")
+})
+export type SpineObjective = typeof SpineObjective.infer
+
+export const SpineDeath = type({
+	atSec: "number",
+	clock: "string",
+	killer: "string",
+	zone: "string",
+	level: "number",
+	/**
+	 * Seconds dead, ESTIMATED. The timeline has no respawn field and one-minute frames cannot
+	 * measure a 20-50s timer, so this is a reference table times the clock factor. It travels
+	 * with `downtimeSource` and must never be rendered as if the client had said it.
+	 */
+	downtimeSec: "number",
+	/** Gold in hand at the nearest frame — what the death plausibly threw away. */
+	goldHeld: "number|null",
+	minimapPct: type({ left: "number", top: "number" }).or("null")
+})
+export type SpineDeath = typeof SpineDeath.infer
+
+export const SpineTakedown = type({
+	atSec: "number",
+	clock: "string",
+	kind: "'kill'|'assist'",
+	victim: "string"
+})
+export type SpineTakedown = typeof SpineTakedown.infer
+
+export const SpineResponse = type({
+	/** False when the timeline blob is not on disk. The screen still renders without it. */
+	available: "boolean",
+	/** Why not, in words a person can act on. Present only when `available` is false. */
+	"reason?": "string",
+	/** The enemy in his own role, or null when this app could not infer one. */
+	counterpart: type({
+		championName: "string",
+		riotId: "string",
+		cs: "number",
+		gold: "number",
+		level: "number",
+		kda: "string"
+	}).or("null"),
+	minutes: SpineMinute.array(),
+	objectives: SpineObjective.array(),
+	deaths: SpineDeath.array(),
+	takedowns: SpineTakedown.array(),
+	"durationSec?": "number",
+	/** The provenance sentence for `deaths[].downtimeSec`, rendered wherever it is. */
+	downtimeSource: "string"
+})
+export type SpineResponse = typeof SpineResponse.infer
 
 /* =============================================================== watch */
 
@@ -472,17 +573,6 @@ export const SseReviewEvent = type({
 })
 export type SseReviewEvent = typeof SseReviewEvent.infer
 
-export const SseCaptureEvent = type({
-	gameId: "number",
-	"progress?": "number",
-	phase: "string",
-	/** The pipeline's own detail line — which moment, which step. */
-	"note?": "string",
-	"done?": "number",
-	"total?": "number"
-})
-export type SseCaptureEvent = typeof SseCaptureEvent.infer
-
 export const SseDaemonEvent = type({
 	lcu: "'connected'|'disconnected'",
 	queueDepth: "number",
@@ -525,6 +615,7 @@ export const API = {
 	health: "/api/health",
 	games: "/api/games",
 	game: (gameId: number | string) => `/api/games/${gameId}`,
+	spine: (gameId: number | string) => `/api/games/${gameId}/spine`,
 	review: (gameId: number | string) => `/api/games/${gameId}/review`,
 	chat: (gameId: number | string) => `/api/games/${gameId}/chat`,
 	trends: "/api/trends",

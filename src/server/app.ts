@@ -38,6 +38,7 @@ import { createLiveRoute } from "./routes/live.ts"
 import { createShellRoutes } from "./routes/shell.ts"
 import { createReplayRoutes } from "./routes/replays.ts"
 import { createGamesRoutes } from "./routes/games.ts"
+import { createSpineRoute } from "./routes/spine.ts"
 import { createHealthRoute } from "./routes/health.ts"
 import { createJobRoutes } from "./routes/jobs.ts"
 import {
@@ -64,6 +65,7 @@ export const createApp = (deps: ServerDeps = {}): Hono => {
 	const api = new Hono()
 	api.route("/", createHealthRoute(deps))
 	api.route("/", createGamesRoutes())
+	api.route("/", createSpineRoute())
 	api.route("/", createReviewRoutes(deps))
 	api.route("/", createChatRoutes())
 	api.route("/", createReplayRoutes())

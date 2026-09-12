@@ -467,7 +467,22 @@ export type JobState = typeof JobState.infer
 
 export const Job = type({
 	id: "number",
-	kind: JobKind,
+	/**
+	 * FREE TEXT, not `JobKind` — deliberately wider than what may be ENQUEUED.
+	 *
+	 * `JobKind` is the set of kinds that still have a handler, and `JobRequest` holds it so
+	 * nothing unrunnable can be created. This is the STORED row, and the `job` table keeps its
+	 * history forever: six `replay-capture` rows from before that job was deleted are still in
+	 * there, terminal, and validating them against the narrow union made `GET /api/jobs` answer
+	 * 500 `contract-violation` the moment the Queue page asked for finished jobs — the whole
+	 * history unreadable because of a kind nothing can create any more.
+	 *
+	 * The same reasoning as `intrusive` below: rewriting a stored row to make the schema tidier
+	 * is not a thing this app does. `workers.ts` already abandons a job whose kind has no
+	 * handler, and the UI already falls back to the raw string, so the narrow type was buying
+	 * nothing that was not already enforced at the write side.
+	 */
+	kind: "string",
 	gameId: "number|null",
 	state: JobState,
 	/**
@@ -520,16 +535,6 @@ export const AppEvent = type({
 })
 export type AppEvent = typeof AppEvent.infer
 
-/** Event kinds the daemon emits. The UI switches on these; unknown kinds are ignored. */
-export const APP_EVENT_KINDS = [
-	"job",
-	"game",
-	"review",
-	"capture",
-	"daemon",
-	"error"
-] as const
-
 /* ============================================================== trends */
 
 /**
@@ -576,7 +581,3 @@ export const csPerMin = (
 	p: { role: Role; cs: number; jungleCs: number },
 	durationSec: number
 ): number => (durationSec <= 0 ? 0 : effectiveCs(p) / (durationSec / 60))
-
-/** A replay we could still act on. */
-export const replayIsActionable = (state: ReplayStateDomain): boolean =>
-	state === "available" || state === "downloading"

@@ -9,10 +9,9 @@ import { api } from "./lib/api.ts"
 import { href, useNow, useResource, useRoute, useScrollReset } from "./lib/hooks.ts"
 import { reconnectSse, sseLastEventId, useSse } from "./lib/sse.ts"
 import type { SseStatus } from "./lib/sse.ts"
-import { cls } from "./lib/format.ts"
+import { cls, phaseWord } from "./lib/format.ts"
 import { ClientOffline } from "./components/ClientOffline.tsx"
 import { GameList } from "./pages/GameList.tsx"
-import { GameReview } from "./pages/GameReview.tsx"
 import { Live } from "./pages/Live.tsx"
 import { Replays } from "./pages/Replays.tsx"
 import { Debrief } from "./pages/Debrief.tsx"
@@ -56,7 +55,7 @@ class ErrorBoundary extends Component<BoundaryProps, BoundaryState> {
 						<strong>This screen crashed.</strong> That is a bug in eepalytics, not in your
 						data — nothing was lost.
 						<pre>{error.stack ?? error.message}</pre>
-						<div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+						<div style={{ marginTop: "var(--sp-3)", display: "flex", gap: "var(--sp-2)" }}>
 							<button onClick={() => this.setState({ error: null })}>Try again</button>
 							<a className="btn" href={href.games}>
 								Back to games
@@ -193,7 +192,7 @@ export const App = () => {
 								}
 							>
 								<span className="dot" /> LCU {h?.lcu ?? "…"}
-								{h?.gameflowPhase ? ` · ${h.gameflowPhase}` : ""}
+								{h?.gameflowPhase ? ` · ${phaseWord(h.gameflowPhase)}` : ""}
 							</span>
 						</>
 					}
@@ -249,18 +248,16 @@ export const App = () => {
 				</div>
 				{route.name === "home" ?
 					null
-				: route.name === "debrief" ?
-					<Debrief gameId={route.gameId} />
 				: route.name === "games" ?
 					<GameList health={h} eventTick={eventTick} />
 				: route.name === "game" ?
-					<GameReview gameId={route.gameId} eventTick={eventTick} />
+					<Debrief gameId={route.gameId} eventTick={eventTick} />
 				: route.name === "replays" ?
 					<Replays eventTick={eventTick} />
 				: route.name === "trends" ?
 					<Trends eventTick={eventTick} />
 				: route.name === "queue" ?
-					<Queue health={h} eventTick={eventTick} />
+					<Queue eventTick={eventTick} />
 				: route.name === "settings" ?
 					<SettingsPage health={h} onSaved={() => setEventTick(t => t + 1)} />
 				:	<div className="page">

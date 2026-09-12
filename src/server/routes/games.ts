@@ -32,8 +32,9 @@ import {
 	mediaCounts,
 	momentCounts,
 	reviewHeadlines,
-	visionCounts,
-	framesForGame} from "../../db/queries.ts"
+	visionCounts} from "../../db/queries.ts"
+import { journalFramesForGame } from "../../db/journal-frames.ts"
+import { framesForThisGame } from "../../review/pack.ts"
 import { GameDetailResponse, GameListResponse } from "../../shared/schema/api.ts"
 import type { GameListItem } from "../../shared/schema/api.ts"
 import { fail, intParam, intQuery, notFound, send } from "../respond.ts"
@@ -91,8 +92,21 @@ export const createGamesRoutes = (): Hono => {
 			media: listMediaForGame(gameId),
 			// The row's own flag AND the blob actually being there. A pruned data dir must not
 			// make the UI promise a minimap it cannot draw.
-			// The raw evidence of what was on his screen. The evidence tier is computed from these.
-			journalFrames: framesForGame(gameId).map(f => ({ id: f.id, tSec: f.tSec })),
+			/*
+			 * The raw evidence of what was on his screen — AND ONLY OF THIS GAME.
+			 *
+			 * The join goes through `journal_session.gameId`, and a session that spanned two games
+			 * hands back both of them under the first one's id. This route used to pass all of
+			 * them straight to the debrief, which picks the nearest frame to a moment: on game
+			 * 5639406342 that meant 375 of the 715 candidates were pictures of the NEXT game, and
+			 * roughly half the debrief's screenshots were of a match he was not reading about.
+			 * `framesForThisGame` segments the session on the game clock and keeps the run that
+			 * started when this game did.
+			 */
+			journalFrames: framesForThisGame(journalFramesForGame(gameId), game).kept.map(f => ({
+				id: f.id,
+				tSec: f.tSec
+			})),
 			timelineAvailable: game.hasTimeline && hasBlob(gameId, BLOB_TIMELINE)
 		}
 

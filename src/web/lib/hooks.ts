@@ -21,9 +21,17 @@ export type Route =
 	 */
 	| { name: "home" }
 	| { name: "games" }
+	/**
+	 * ONE screen per game — the debrief.
+	 *
+	 * There used to be two: `#/game/:id`, a ten-panel review page the games list linked to, and
+	 * `#/debrief/:id`, the rebuilt screen with a single call site that opened in a new tab. Two
+	 * review screens meant the good one was reachable only for the game that had just ended, and
+	 * the other 122 got the one whose first screenful is a stat header. The ten-panel page is
+	 * deleted; `#/debrief/:id` still parses so the link the post-game panel already emitted keeps
+	 * working, and both spellings land on the same screen.
+	 */
 	| { name: "game"; gameId: number }
-	/** The fifteen-seconds-after-a-game screen. `game` is the full review it links to. */
-	| { name: "debrief"; gameId: number }
 	| { name: "replays" }
 	| { name: "live" }
 	| { name: "trends" }
@@ -42,11 +50,7 @@ export const parseRoute = (hash: string): Route => {
 	if (head === "trends") return { name: "trends" }
 	if (head === "queue") return { name: "queue" }
 	if (head === "settings") return { name: "settings" }
-	if (head === "debrief") {
-		const gameId = Number(tail)
-		if (Number.isFinite(gameId) && gameId > 0) return { name: "debrief", gameId }
-	}
-	if (head === "game") {
+	if (head === "game" || head === "debrief") {
 		const gameId = Number(tail)
 		if (Number.isFinite(gameId) && gameId > 0) return { name: "game", gameId }
 	}
@@ -61,8 +65,7 @@ export const href = {
 	trends: "#/trends",
 	queue: "#/queue",
 	settings: "#/settings",
-	game: (gameId: number) => `#/game/${gameId}`,
-	debrief: (gameId: number) => `#/debrief/${gameId}`
+	game: (gameId: number) => `#/game/${gameId}`
 }
 
 export const navigate = (to: string): void => {

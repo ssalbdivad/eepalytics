@@ -240,16 +240,28 @@ export const Debrief = ({
 
 					<div className="csk-debrief__foot">
 						{/*
-						 * A new window, not a navigation: this panel is usually rendered inside the
-						 * always-on-top coach window, and turning that 380px window into the full
-						 * review screen would be a surprise rather than a feature.
+						 * A NAVIGATION, not a new window.
+						 *
+						 * It opened a tab because this panel used to live in the always-on-top coach
+						 * window, where turning 380px into a full page would have been a surprise. That
+						 * window is gone, and `<Live>` stays mounted on every route — the screen share
+						 * survives the click — so a new tab now only costs him a second copy of the app
+						 * polling the daemon behind the one he is reading.
 						 */}
-						<a href={href.game(gameId)} target="_blank" rel="noreferrer">
-							Open the full review →
-						</a>
+						<a href={href.game(gameId)}>Open the debrief →</a>
+						{/*
+						 * "clips captured" was wrong in both words. `media-generate` is the only
+						 * thing that writes a media row and it only ever draws maps — 1157 of them
+						 * in this database, against zero clips and zero screenshots, because the
+						 * capture pipeline that would have produced those is deleted. Naming a
+						 * drawing a capture is the exact confusion the source badges elsewhere on
+						 * this app exist to prevent, so the label follows the kinds it actually has.
+						 */}
 						{d.media.length > 0 ?
 							<span className="dim">
-								{d.media.length} clip{d.media.length === 1 ? "" : "s"} captured
+								{d.media.length}{" "}
+								{d.media.every(m => m.kind === "map") ? "map diagram" : "picture"}
+								{d.media.length === 1 ? "" : "s"}
 							</span>
 						:	null}
 					</div>

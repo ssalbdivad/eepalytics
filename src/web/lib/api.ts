@@ -25,6 +25,7 @@ import {
 	JobListResponse,
 	OkResponse,
 	SettingsResponse,
+	SpineResponse,
 	SyncResponse,
 	TrendsResponse
 } from "../../shared/schema/api.ts"
@@ -144,6 +145,16 @@ export const api = {
 
 	game: (gameId: number, signal?: AbortSignal) =>
 		request(API.game(gameId), GameDetailResponse, { signal }),
+
+	/**
+	 * The whole game as one shape, walked out of the timeline blob.
+	 *
+	 * Asked for SECOND by the debrief, never bundled into `game`: it is the most expensive read
+	 * in the app and exactly one screen wants it, so the review page keeps its current speed and
+	 * the debrief's top band draws before this lands.
+	 */
+	spine: (gameId: number, signal?: AbortSignal) =>
+		request(API.spine(gameId), SpineResponse, { signal }),
 
 	trends: (games?: number, signal?: AbortSignal) =>
 		request(API.trends, TrendsResponse, { signal, query: { games } }),
