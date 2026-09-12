@@ -228,16 +228,6 @@ export const winPath = async (wslPath: string): Promise<string> => {
 	}
 }
 
-/** The inverse, for reading back files a Windows process wrote. */
-export const wslPathOf = async (windowsPath: string): Promise<string> => {
-	try {
-		const { stdout } = await execFileAsync("wslpath", ["-u", windowsPath])
-		return stdout.trim()
-	} catch (err) {
-		throw new LcuTransportError("PATH", `cannot translate ${windowsPath} to a WSL path`, err)
-	}
-}
-
 /** Default per-request timeouts. A `toFile` download gets a longer leash. */
 export const DEFAULT_TIMEOUT_MS = 15_000
 export const DEFAULT_FILE_TIMEOUT_MS = 60_000

@@ -358,9 +358,6 @@ const hasApiKey = (): boolean => {
 	return typeof k === "string" && k.trim() !== ""
 }
 
-/** Is a coaching transport available at all? Cheap enough for a health check. */
-export const coachTransport = (): CoachTransport | null => (hasApiKey() ? "api" : cliBin() ? "cli" : null)
-
 /* ================================================================ cli */
 
 interface CliResultJson {

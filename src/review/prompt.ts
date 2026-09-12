@@ -30,6 +30,7 @@ import { ROLE_LABELS } from "../shared/schema/domain.ts"
 import { fmtClock, fmtDuration } from "../shared/time.ts"
 import type { Digest, GameDigest, TrendDigest } from "./digest-contract.ts"
 import type { JsonSchema } from "./claude.ts"
+import { COACH_CATEGORIES } from "./parse.ts"
 
 /**
  * Bumped when the *rendering* below changes in a way that should re-review existing games.
@@ -199,7 +200,10 @@ export const COACH_JSON_SCHEMA: JsonSchema = {
 					},
 					category: {
 						type: "string",
-						enum: ["pathing", "tempo", "objectives", "vision", "farming", "teamfight", "deaths", "praise", "other"]
+						// The one list. `parse.ts` lower-cases anything outside it rather than
+						// rejecting the item, so a drifted second copy here would not fail — it
+						// would just quietly stop the UI badging what the model was told to send.
+						enum: [...COACH_CATEGORIES]
 					},
 					tSec: {
 						type: ["number", "null"],

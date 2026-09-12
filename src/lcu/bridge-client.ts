@@ -56,17 +56,6 @@ import { LcuTransportError, timeoutFor, winPath } from "./transport.ts"
  */
 export const DEFAULT_LCU_TOPICS = ["OnJsonApiEvent"] as const
 
-/** The `uri` values worth reacting to. Match with `startsWith` — metadata carries a gameId. */
-export const LCU_EVENT_URIS = {
-	gameflowPhase: "/lol-gameflow/v1/gameflow-phase",
-	gameflowSession: "/lol-gameflow/v1/session",
-	gameflowWatch: "/lol-gameflow/v1/watch",
-	/** `/lol-replays/v1/metadata/<gameId>` — fires repeatedly as a download progresses. */
-	replayMetadata: "/lol-replays/v1/metadata/",
-	champSelect: "/lol-champ-select/v1/session",
-	endOfGame: "/lol-end-of-game/v1/eog-stats-block"
-} as const
-
 const RESTART_BASE_MS = 1000
 const RESTART_MAX_MS = 30_000
 const MAX_CONSECUTIVE_RESTARTS = 5

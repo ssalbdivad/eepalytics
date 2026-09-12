@@ -4,7 +4,7 @@
  */
 
 /** Timeline event timestamps are ms since game start. Game clock is seconds. */
-export const msToGameSec = (ms: number): number => ms / 1000
+const msToGameSec = (ms: number): number => ms / 1000
 
 export const gameSecToMs = (sec: number): number => sec * 1000
 
@@ -70,9 +70,6 @@ export const fmtDateTime = (ms: number): string =>
 		hour: "numeric",
 		minute: "2-digit"
 	})
-
-/** Minutes elapsed at a game-clock second, as a float. Metric keys use `@10`, `@14` etc. */
-export const gameMinute = (sec: number): number => sec / 60
 
 /** ms remaining until `deadlineMs`, floored at 0. */
 export const msUntil = (deadlineMs: number, now: number = Date.now()): number =>

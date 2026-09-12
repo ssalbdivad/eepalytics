@@ -504,26 +504,6 @@ export const LcuEvent = type({
 })
 export type LcuEvent = typeof LcuEvent.infer
 
-/** Observed enum spaces. Anything outside them is possible — treat these as hints, not gates. */
-export const MONSTER_TYPES = ["BARON_NASHOR", "DRAGON", "HORDE", "RIFTHERALD"] as const
-export const DRAGON_SUBTYPES = [
-	"AIR_DRAGON",
-	"CHEMTECH_DRAGON",
-	"EARTH_DRAGON",
-	"ELDER_DRAGON",
-	"FIRE_DRAGON",
-	"HEXTECH_DRAGON",
-	"WATER_DRAGON"
-] as const
-export const BUILDING_TYPES = ["TOWER_BUILDING", "INHIBITOR_BUILDING"] as const
-export const TOWER_TYPES = [
-	"OUTER_TURRET",
-	"INNER_TURRET",
-	"BASE_TURRET",
-	"NEXUS_TURRET"
-] as const
-export const LANE_TYPES = ["TOP_LANE", "MID_LANE", "BOT_LANE"] as const
-
 /**
  * A single timeline frame. `participantFrames` keys are STRINGS ("1".."10"), not numbers.
  * Frame 0 has `timestamp: 0` and sits everyone in their fountain slot.
@@ -610,10 +590,6 @@ export const identityMap = (game: LcuGame): Map<number, LcuPlayer> =>
 			pi.player ? [[pi.participantId, pi.player] as const] : []
 		)
 	)
-
-/** `participants` indexed by participantId. */
-export const participantMap = (game: LcuGame): Map<number, LcuParticipant> =>
-	new Map(game.participants.map(p => [p.participantId, p] as const))
 
 /** A match-history list entry carries only the queried summoner. */
 export const isListEntry = (game: LcuGame): boolean => game.participants.length < 10

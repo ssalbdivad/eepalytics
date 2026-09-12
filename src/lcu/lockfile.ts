@@ -80,7 +80,7 @@ export const parseLockfile = (text: string, mtimeMs = 0): Lockfile | null => {
 	}
 }
 
-export const authHeader = (password: string): string =>
+const authHeader = (password: string): string =>
 	`Basic ${Buffer.from(`${LCU_AUTH_USER}:${password}`).toString("base64")}`
 
 /** `null` when the client is closed (no lockfile) or the file is mid-write / malformed. */
@@ -116,9 +116,6 @@ export const sameLockfile = (a: Lockfile | null, b: Lockfile | null): boolean =>
 	a === b || (a !== null && b !== null && a.port === b.port && a.password === b.password)
 
 /** Redacted form, safe for logs and for anything we hand to Claude. */
-export const describeLockfile = (lf: Lockfile | null): string =>
-	lf ? `${lf.name} pid=${lf.pid} port=${lf.port} password=<${lf.password.length} chars>` : "absent"
-
 /* ------------------------------------------------------------ staleness */
 
 /**

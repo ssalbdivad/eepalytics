@@ -226,7 +226,8 @@ export const LiveAllGameData = type({
 export type LiveAllGameData = typeof LiveAllGameData.infer
 
 /**
- * One line of `blobs/<gameId>/live.ndjson.gz` — a timestamped sample of `allgamedata`.
+ * One line of `data/live-samples/<gameId>-t<stamp>.ndjson` — a timestamped sample of
+ * `allgamedata`, appended by `daemon/live-sampler.ts` every 5s of game clock.
  * `atMs` is our wall clock (so we can align to the LCU), `gameTime` is the game's own.
  */
 export const LiveSample = type({
@@ -236,21 +237,3 @@ export const LiveSample = type({
 })
 export type LiveSample = typeof LiveSample.infer
 
-/** Names of the live events we act on. Anything else is journalled and ignored. */
-export const LIVE_EVENT_NAMES = [
-	"GameStart",
-	"MinionsSpawning",
-	"FirstBrick",
-	"FirstBlood",
-	"ChampionKill",
-	"Multikill",
-	"Ace",
-	"TurretKilled",
-	"InhibKilled",
-	"InhibRespawningSoon",
-	"InhibRespawned",
-	"DragonKill",
-	"HeraldKill",
-	"BaronKill",
-	"GameEnd"
-] as const

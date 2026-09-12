@@ -17,8 +17,8 @@ import { test } from "node:test"
 import { extractJson, runCoach } from "./claude.ts"
 import { allowlistOf, GameDigest } from "./digest-contract.ts"
 import type { GameDigest as GameDigestT, TrendDigest as TrendDigestT } from "./digest-contract.ts"
-import { clearPersonaCache, extractPersona, gamePrompt, loadPersona, PERSONA_PATH, promptHash, trendPrompt } from "./prompt.ts"
-import { buildReview, failedReview, makeReviewId, parseCoachOutput } from "./parse.ts"
+import { clearPersonaCache, COACH_JSON_SCHEMA, extractPersona, gamePrompt, loadPersona, PERSONA_PATH, promptHash, trendPrompt } from "./prompt.ts"
+import { buildReview, COACH_CATEGORIES, failedReview, makeReviewId, parseCoachOutput } from "./parse.ts"
 
 /* ============================================================ fixture */
 
@@ -688,4 +688,27 @@ test("a stub response flows all the way through buildReview", async () => {
 	assert.equal(rv.value.inputTokens, 5)
 	assert.deepEqual(rv.value.items[0]?.momentIds, ["g1-death-100"])
 	assert.deepEqual(rv.warnings, [])
+})
+
+/*
+ * The category list existed in three places and only two of them were read: this enum, which the
+ * model is actually given, and the label maps in `web/lib/format.ts`. `parse.ts`'s copy was the
+ * dead one — and a drifted copy would not have failed anything, because `parse.ts` lower-cases an
+ * unknown category rather than rejecting it. So the schema now spreads that list, and this pins
+ * the bytes the model sees to the exact set the parser and the UI agree on.
+ */
+test("the schema's category enum IS the shared category list", () => {
+	const props = (COACH_JSON_SCHEMA as any).properties.items.items.properties
+	assert.deepEqual(props.category.enum, [
+		"pathing",
+		"tempo",
+		"objectives",
+		"vision",
+		"farming",
+		"teamfight",
+		"deaths",
+		"praise",
+		"other"
+	])
+	assert.deepEqual(props.category.enum, [...COACH_CATEGORIES])
 })

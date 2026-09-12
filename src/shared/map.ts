@@ -15,14 +15,14 @@
  * looks mirrored, it is because something else re-implemented this and forgot.
  */
 
-import { MAP, TEAM_BLUE, TEAM_RED } from "./constants.ts"
+import { MAP, TEAM_BLUE } from "./constants.ts"
 
 export interface Pos {
 	x: number
 	y: number
 }
 
-export interface UV {
+interface UV {
 	/** Progression along the blue->red diagonal. Blue nexus ~2000, river ~7420, red nexus ~12840. */
 	u: number
 	/** Lane offset perpendicular to that. v > 0 = TOP side, v < 0 = BOT side, v ~ 0 = MID. */
@@ -148,10 +148,8 @@ export const LANES: readonly Lane[] = ["TOP", "MID", "BOT"]
 
 export const dist = (a: Pos, b: Pos): number => Math.hypot(a.x - b.x, a.y - b.y)
 
-export const dist2 = (a: Pos, b: Pos): number => (a.x - b.x) ** 2 + (a.y - b.y) ** 2
-
 /** Shortest distance from `p` to the segment `a`-`b`. */
-export const distToSegment = (p: Pos, a: Pos, b: Pos): number => {
+const distToSegment = (p: Pos, a: Pos, b: Pos): number => {
 	const dx = b.x - a.x
 	const dy = b.y - a.y
 	const len2 = dx * dx + dy * dy
@@ -175,7 +173,7 @@ export const distToLane = (p: Pos, lane: Lane): number => {
 }
 
 /** The closest lane and how far away it is. */
-export const nearestLane = (p: Pos): { lane: Lane; distance: number } => {
+const nearestLane = (p: Pos): { lane: Lane; distance: number } => {
 	let lane: Lane = "MID"
 	let distance = Infinity
 	for (const l of LANES) {
@@ -198,9 +196,7 @@ export const nearestLane = (p: Pos): { lane: Lane; distance: number } => {
  * from the river centreline is `du = D / Math.SQRT2` in `u` — remember the sqrt(2) whenever
  * you convert a band width in `u` back into game units.
  */
-export const toUV = (p: Pos): UV => ({ u: (p.x + p.y) / 2, v: (p.y - p.x) / 2 })
-
-export const fromUV = (uv: UV): Pos => ({ x: uv.u - uv.v, y: uv.u + uv.v })
+const toUV = (p: Pos): UV => ({ u: (p.x + p.y) / 2, v: (p.y - p.x) / 2 })
 
 /** Game units per unit of `u` or `v`. Multiply a `u`-band by this to get real distance. */
 export const UV_SCALE = Math.SQRT2
@@ -326,24 +322,6 @@ export const zoneOf = (p: Pos, teamId?: TeamId): string => {
 	}
 }
 
-/** Short label for a chip/badge: `"drake"`, `"mid"`, `"e.jgl"`. */
-export const zoneShortLabel = (zone: Zone): string =>
-	({
-		OWN_BASE: "base",
-		ENEMY_BASE: "e.base",
-		DRAGON_PIT: "drake",
-		BARON_PIT: "baron",
-		LANE_TOP: "top",
-		LANE_MID: "mid",
-		LANE_BOT: "bot",
-		RIVER_TOP: "river+",
-		RIVER_BOT: "river-",
-		OWN_JUNGLE_TOP: "jgl+",
-		OWN_JUNGLE_BOT: "jgl-",
-		ENEMY_JUNGLE_TOP: "e.jgl+",
-		ENEMY_JUNGLE_BOT: "e.jgl-"
-	})[zone]
-
 /* --------------------------------------------------------------- rendering */
 
 /**
@@ -362,12 +340,6 @@ export const toMinimapPct = (p: Pos): { left: number; top: number } => {
 	return { left: clampPct(left), top: clampPct(top) }
 }
 
-/** Same transform against a pixel canvas of `size` px (square, e.g. the 512px DDragon map). */
-export const toMinimapPx = (p: Pos, size = 512): { px: number; py: number } => {
-	const pct = toMinimapPct(p)
-	return { px: (pct.left / 100) * size, py: (pct.top / 100) * size }
-}
-
 /** Inverse of `toMinimapPct` — for click-to-place interactions. */
 export const fromMinimapPct = (left: number, top: number): Pos => ({
 	x: MAP.minX + (left / 100) * (MAP.maxX - MAP.minX),
@@ -376,33 +348,19 @@ export const fromMinimapPct = (left: number, top: number): Pos => ({
 
 const clampPct = (n: number): number => (n < 0 ? 0 : n > 100 ? 100 : n)
 
-/** Clamp a world position into the observed playable bounds. */
-export const clampToMap = (p: Pos): Pos => ({
-	x: Math.min(Math.max(p.x, MAP.minX), MAP.maxX),
-	y: Math.min(Math.max(p.y, MAP.minY), MAP.maxY)
-})
-
-/** Straight-line interpolation between two 1-minute frames. See the caveat below. */
+/**
+ * Straight-line interpolation between two 1-minute frames.
+ *
+ * Frames are 60s apart and the median displacement between them is 4082 units — about 28%
+ * of the map. Anything derived from a position this returns is a GUESS: presence detection
+ * built on it tops out around 65% sensitivity. Callers must degrade confidence accordingly
+ * and phrase claims as "likely", never "you were".
+ */
 export const lerpPos = (a: Pos, b: Pos, t: number): Pos => ({
 	x: a.x + (b.x - a.x) * t,
 	y: a.y + (b.y - a.y) * t
 })
 
-/**
- * Frames are 60s apart and the median displacement between them is 4082 units — about 28%
- * of the map. Anything derived from an interpolated position is a GUESS: presence detection
- * built on it tops out around 65% sensitivity. Callers must degrade confidence accordingly
- * and phrase claims as "likely", never "you were".
- */
-export const INTERPOLATION_IS_A_GUESS = true
-
 /** Whether the team that owns `teamId` is the blue side. */
 export const isBlue = (teamId: number): boolean => teamId === TEAM_BLUE
 
-/** The other team. */
-export const otherTeam = (teamId: TeamId): TeamId =>
-	teamId === TEAM_BLUE ? TEAM_RED : TEAM_BLUE
-
-/** participantId 1-5 => 100, 6-10 => 200. Verified 220/220 against the end-of-game payload. */
-export const teamOfParticipant = (participantId: number): TeamId =>
-	participantId <= 5 ? TEAM_BLUE : TEAM_RED

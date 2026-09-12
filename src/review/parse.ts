@@ -112,7 +112,12 @@ export const CoachOutput = type({
 })
 export type CoachOutput = typeof CoachOutput.infer
 
-/** Categories the UI knows how to badge. Anything else is kept verbatim but lower-cased. */
+/**
+ * The categories the UI knows how to badge. Anything else is kept verbatim but lower-cased.
+ *
+ * `prompt.ts` puts this exact list in the JSON schema the model is given, so the enum the coach
+ * is told about and the set the UI can render cannot disagree.
+ */
 export const COACH_CATEGORIES = [
 	"pathing",
 	"tempo",

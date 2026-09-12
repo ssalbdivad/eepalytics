@@ -222,10 +222,6 @@ const POSITION_TO_ROLE: Record<string, Role> = {
 /** Read any of the 371 fields by name, without pretending to know the key set. */
 export const stat = (p: RoflPlayerStats, key: string): string | undefined => p.raw[key]
 
-/** Same, coerced. Returns `fallback` when the key is missing on this patch. */
-export const statNumber = (p: RoflPlayerStats, key: string, fallback = 0): number =>
-	int(p.raw, key, fallback)
-
 const toPlayer = (raw: Record<string, string>, index: number): RoflPlayerStats => {
 	const gameName = text(raw, "RIOT_ID_GAME_NAME")
 	const tagLine = text(raw, "RIOT_ID_TAG_LINE")
@@ -592,25 +588,9 @@ export const listReplays = (dir: string = REPLAY_DIR_WSL): ReplayFileEntry[] => 
 	return out.sort((a, b) => b.mtimeMs - a.mtimeMs)
 }
 
-/** Find the on-disk replay for a gameId, if the client ever downloaded it. */
-export const findReplayForGame = (
-	gameId: number,
-	dir: string = REPLAY_DIR_WSL
-): ReplayFileEntry | null => listReplays(dir).find(r => r.gameId === gameId) ?? null
-
 /** The user's own row, matched on PUUID (the only reliable key — `NAME` is "" on this patch). */
 export const findPlayerByPuuid = (file: RoflFile, puuid: string): RoflPlayerStats | null =>
 	file.stats.find(p => p.puuid === puuid) ?? null
-
-/**
- * Can the current client play this replay?
- *
- * Only a NECESSARY condition: a matching `gameVersion` is required, but the real gate the
- * engine enforces is the 8-byte network protocol digest, and we cannot read the client's
- * copy of it without launching the game. A `true` here means "worth trying", never "will work".
- */
-export const replayLooksPlayable = (file: RoflFile, clientGameVersion: string): boolean =>
-	file.gameVersion === clientGameVersion
 
 /* ============================================================ CLI */
 
