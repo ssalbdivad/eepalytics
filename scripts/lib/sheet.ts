@@ -70,7 +70,8 @@
  * is a library. The driver (`scripts/bench-stream.ts`) owns the filesystem.
  */
 
-import { VERDICTS, shuffled } from "../blind-judge.ts"
+import { VERDICTS } from "../blind-judge.ts"
+import { shuffled } from "./stats.ts"
 import type { Verdict } from "../blind-judge.ts"
 import { separated, wilson } from "../../src/analysis/coach-score.ts"
 import type { Interval } from "../../src/analysis/coach-score.ts"

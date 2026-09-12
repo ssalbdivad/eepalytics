@@ -1,7 +1,8 @@
 /**
- * `POST /api/games/:gameId/watch` — look at the recorded frames for one moment.
+ * `/api/games/:gameId/watch` — look at the recorded frames for one moment.
  *
  *   GET  /api/games/:gameId/watch  -> { notes }
+ *   POST /api/games/:gameId/watch  -> { note }
  *
  * ON DEMAND ONLY, and never automatic: the model call costs money and takes about a minute, and
  * nobody wants either spent on a moment they were not asking about.
@@ -11,8 +12,8 @@
  * capture's output. That feature is deleted, and it never wrote one row in the app's whole
  * history, so this endpoint could only ever answer 409 — and the 409 told the user to "run a
  * capture on this game first", which is an instruction for a button that no longer exists.
- * `WatchGamePanel` on the review screen has said "frames come from the frame journal" since the
- * amputation; this is the half that was never moved.
+ * The UI half was moved at the amputation and the route's was not; `WatchGamePanel`, which carried
+ * it, has since gone with the ten-panel review screen. `pages/Debrief.tsx` is the caller now.
  *
  * Runs inline rather than through the queue for the same reason chat does — it touches Claude
  * and SQLite, not the League client.

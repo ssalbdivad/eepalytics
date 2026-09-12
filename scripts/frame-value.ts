@@ -181,7 +181,7 @@ import { fullKnowledge } from "../src/review/live-knowledge-full.ts"
 import { modelHandleFor, providerById, providerKey } from "../src/review/live-providers.ts"
 import { wilson } from "../src/analysis/coach-score.ts"
 import type { Interval } from "../src/analysis/coach-score.ts"
-import { mcnemar } from "./lib/stats.ts"
+import { mcnemar, shuffled } from "./lib/stats.ts"
 import { renderKey, renderSheet } from "./lib/sheet.ts"
 import type { SheetLine } from "./lib/sheet.ts"
 
@@ -864,31 +864,6 @@ const judgeSlice = async (
 	return ungraded("judgeSlice fell through")
 }
 
-/**
- * A seeded shuffle, so a second judging pass over the same run sees the same order.
- *
- * mulberry32, the same generator `blind-judge.ts` uses, for the same reason: "shuffled" has to mean
- * the same thing on a re-run or two passes cannot be compared line for line.
- */
-const shuffledBy = <T>(items: readonly T[], seed: number): T[] => {
-	let a = seed >>> 0
-	const rand = (): number => {
-		a = (a + 0x6d2b79f5) >>> 0
-		let t = a
-		t = Math.imul(t ^ (t >>> 15), t | 1)
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-	}
-	const copy = [...items]
-	for (let i = copy.length - 1; i > 0; i--) {
-		const j = Math.floor(rand() * (i + 1))
-		const tmp = copy[i]!
-		copy[i] = copy[j]!
-		copy[j] = tmp
-	}
-	return copy
-}
-
 const gradeRun = async (stream: BuiltStream, calls: readonly FrameCall[]): Promise<Graded[]> => {
 	if (judgeProvider === "none") return []
 	const p = providerById(judgeProvider)
@@ -909,8 +884,8 @@ const gradeRun = async (stream: BuiltStream, calls: readonly FrameCall[]): Promi
 	for (const turn of stream.turns) {
 		const spoken = byTurn.get(turn.index) ?? []
 		if (spoken.length === 0) continue
-		const shuffled = shuffledBy(spoken, turn.index * 7919 + 13)
-		const lines = shuffled.map((c, i) => ({ id: LABELS[i]!, arm: c.arm, text: c.text }))
+		const order = shuffled(spoken, turn.index * 7919 + 13)
+		const lines = order.map((c, i) => ({ id: LABELS[i]!, arm: c.arm, text: c.text }))
 		const verdicts = await judgeSlice(handle, turn, lines, `turn ${turn.clock}`)
 		for (const l of lines) {
 			/*

@@ -1,5 +1,8 @@
 /**
- * THE paired-comparison statistics for `scripts/`. One exact test, one place.
+ * THE shared measurement primitives for `scripts/`. One implementation each, one place.
+ *
+ * Two things live here, and they are here for the same reason: both were written more than once,
+ * and a second copy of either lets the repo quote two different numbers for one question.
  *
  * Wilson lives in `src/analysis/coach-score.ts` because the scorer ships it; this file is the
  * other half — the test that says whether a DIFFERENCE between two arms survives.
@@ -18,6 +21,44 @@
  * Both call shapes are kept because both are the natural one at their call site: an ablation has
  * the pairs, an adjudication has already counted the disagreements.
  */
+
+/* ==================================================================== blinding */
+
+/**
+ * A seeded shuffle, so "shuffled" means the same thing on a re-run.
+ *
+ * Every blinded harness here writes its seed into its key file so a second judging pass over the
+ * same run sees the lines in the same order and the two passes can be compared line for line. That
+ * only holds while there is ONE shuffle: this was written twice, byte-identical in behaviour but
+ * not in source, as `blind-judge.ts`'s `shuffled` and `frame-value.ts`'s `shuffledBy`. Checked
+ * before they were merged — 549 cases, lengths 0-60 against nine seeds spanning the u32 range,
+ * zero disagreements — so every stored run's ordering is re-derivable from this function.
+ *
+ * mulberry32 over a Fisher-Yates walking down. Do not "improve" either half: the generator and the
+ * direction of the loop are both part of the stored orderings, and changing one silently makes
+ * every key file in `data/eval/` describe an order this code can no longer reproduce.
+ *
+ * `bench-stream.ts` deliberately keeps its own: it seeds from a STRING and uses a plain LCG, so its
+ * sheets are re-derivable against a different sequence. Merging the two would rewrite that history.
+ */
+export const shuffled = <T,>(items: readonly T[], seed: number): T[] => {
+	let a = seed >>> 0
+	const rand = (): number => {
+		a = (a + 0x6d2b79f5) >>> 0
+		let t = a
+		t = Math.imul(t ^ (t >>> 15), t | 1)
+		t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+	}
+	const out = [...items]
+	for (let i = out.length - 1; i > 0; i--) {
+		const j = Math.floor(rand() * (i + 1))
+		;[out[i], out[j]] = [out[j]!, out[i]!]
+	}
+	return out
+}
+
+/* ==================================================================== paired comparison */
 
 /** The 2x2 of a paired comparison, plus the exact p-value on its discordant cells. */
 export interface McNemar {

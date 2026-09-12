@@ -91,7 +91,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { modelHandleFor, providerById, providerKey } from "../src/review/live-providers.ts"
-import { shuffled } from "./blind-judge.ts"
+import { shuffled } from "./lib/stats.ts"
 import { isEmpty, isSilent, wilson } from "../src/analysis/coach-score.ts"
 import type { Interval } from "../src/analysis/coach-score.ts"
 import { fullKnowledge } from "../src/review/live-knowledge-full.ts"

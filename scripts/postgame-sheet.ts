@@ -38,7 +38,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { gunzipSync } from "node:zlib"
-import { shuffled } from "./blind-judge.ts"
+import { shuffled } from "./lib/stats.ts"
 import { renderKey, renderSheet, revealVerdicts } from "./lib/sheet.ts"
 import type { SheetLine } from "./lib/sheet.ts"
 

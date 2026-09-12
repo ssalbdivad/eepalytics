@@ -82,10 +82,13 @@ pack, call `buildGamePack`.**
 | `judge-corpus.ts` | Grades every line a `bench-stream --games ...` run spoke, blinded and shuffled, and reports useful/false/generic PER GAME as well as pooled. Judges against the stored PAYLOAD only, because 13 of the 17 games have no frames — so its false rate is a floor, not the truth. |
 | `adjudicate.ts` | Settles a judge dispute against the EXACT record, with no model in the loop — every claim in a spoken line checked against the stored timeline and the raw 5s samples, and the two judges then scored against that. The instrument behind `data/eval/adjudicate-20260911.json`. |
 | `compare-arms.ts` | The PAIRED comparison between two arms of one `judge-corpus` run. Calls nothing; reads a `*-judged.json` and does the pairing that file's per-arm table stops short of. |
-| `blind-judge.ts` | The reader for the 2026-09-05 ablation corpus (`ablation-*.json`, `blind-*.json`), and the seeded shuffle every sheet imports. |
+| `blind-judge.ts` | The reader for the 2026-09-05 ablation corpus (`ablation-*.json`, `blind-*.json`), and the four verdicts every judge here scores against. The seeded shuffle moved to `lib/stats.ts` on 2026-09-12. |
 | `diagnose-unbacked.ts` | WHY does the scorer say a figure is unbacked? Puts every charged figure in a stored run into one class — rounded, a map clock, a goal level, arithmetic, or invented — names the payload figure it stands for, reports the before/after against `scoreLine(_, { literal: true })`, and (`--inject`) injects known errors to prove the instrument still has teeth. |
 | `rescore-runs.ts` | What did a stored run SAY, and how does it score against today's scorer? The reader for the ~30 `run*/final*/confirm` files from 2026-09-04 whose writer (`eval-live.ts`) was deleted. |
 | `read-frame-ablation.ts` | What did the frame/no-frame ablation say, and does the picture change the coaching? The reader for the four `kind: "e2e-real-game-run"` files whose writer (`e2e-real-game.ts`) was deleted. |
+| `compare-corpora.ts` | The PAIRED comparison between two `judge-corpus` runs of DIFFERENT nights over the same games — *did the coach get better?* Weaker than `compare-arms.ts` and says so: two runs are two judge conversations, so it prints the replicate-noise floor (~±6pp useful, ±9pp false) beside every rate. |
+| `audit-build-claims.ts` | Adjudicates the BUILD claims in a graded corpus against the real recipes, with no model in it. Exists because `price` is the item's own cost line, so neither coach nor judge could tell a finished item from a component. |
+| `measure-deadclock.ts` | Does a spoken death time match the client's own kill log? The elapsed/remaining inversion, re-derivable on the stored runs. |
 | `audit-citations.ts` | Do the reviews already in the database pass the citation and baseline checks? |
 | `audit-live-fields.ts` | Does every field the live brief renders match the exact post-game truth? (This is the one that caught `scores.creepScore` being visibility-limited.) |
 
@@ -94,7 +97,7 @@ pack, call `buildGamePack`.**
 | file | what it owns |
 |---|---|
 | `lib/stream.ts` | **THE join.** Which frames on disk go with which raw samples, and the rebuild of the block the coach actually held. Also the ONE `readVerbatim` / `baselineDuring` / `coachStateFrom` / `championVocabulary`. Five harnesses each did this join by hand once and each got a different answer. |
-| `lib/stats.ts` | **THE paired test.** McNemar's exact, in both call shapes. It was written twice — `frame-value.ts` from the pairs, `adjudicate.ts` from the counts — and `compare-arms.ts` imported one of them out of a harness. Wilson stays in `src/analysis/coach-score.ts`, because the scorer ships it. |
+| `lib/stats.ts` | **THE paired test, and THE seeded shuffle.** McNemar's exact in both call shapes — written twice, `frame-value.ts` from the pairs and `adjudicate.ts` from the counts, with `compare-arms.ts` importing one of them out of a harness. `shuffled` joined it on 2026-09-12 for the same reason: it too was written twice (`blind-judge.ts`, `frame-value.ts`), and `lib/sheet.ts` was importing it out of a harness in breach of rule 2. The two copies were checked identical over 549 cases before the merge, so every stored key file's ordering still re-derives. Wilson stays in `src/analysis/coach-score.ts`, because the scorer ships it. |
 | `lib/win-lcu.ts` | The GET-only Windows-interop LCU reader for `scripts/`, kept separate from `src/lcu/` so `doctor.ts` can diagnose an app that will not import. |
 
 ## Operations — not measurement
@@ -104,6 +107,7 @@ pack, call `buildGamePack`.**
 | `doctor.ts` | `pnpm doctor`. The preflight you run when something is wrong. Every failing check prints a FIX. |
 | `dev-seed.ts` | `pnpm seed`. Populate the DB with real recent games. GET only. |
 | `check-patch.ts` | Is the champion knowledge stale against the live patch? |
+| `fetch-items.ts` | Vendor the item table from Riot's static data, because the live feed's `price` is a cost line and not what the item cost. |
 | `research-champion.sh` | Research one champion's notes into `knowledge/champions/`. |
 | `run-daemon.sh` · `install-service.sh` | The `systemd --user` launcher and its installer. |
 | `dev-daemon.sh` | Restart the daemon detached from this shell, for development. |

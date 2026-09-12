@@ -23,7 +23,6 @@
    — dashed and desaturated, never in a hue (rule 4).
    ========================================================================= */
 
-.csk-root,
 :root {
 	--csk-bg: var(--bg);
 	--csk-panel: var(--panel);
