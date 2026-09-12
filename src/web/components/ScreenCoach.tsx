@@ -46,6 +46,23 @@ import "./components.css"
 const fmtTime = (ms: number): string =>
 	new Date(ms).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
 
+/** "8s" / "2m" — an age, for the vitals row. Coarse on purpose; nothing here is a stopwatch. */
+const fmtAge = (ms: number): string =>
+	ms < 60_000 ? `${Math.max(0, Math.round(ms / 1000))}s` : `${Math.round(ms / 60_000)}m`
+
+/**
+ * When the coach last said something of her own, or null if she never has this session.
+ *
+ * Hers, not his: a question he typed is in the same list and is not evidence that she spoke.
+ */
+const lastCoachLineMs = (lines: readonly { atMs: number; fromUser?: boolean }[]): number | null => {
+	for (let i = lines.length - 1; i >= 0; i--) {
+		const l = lines[i]
+		if (l && l.fromUser !== true) return l.atMs
+	}
+	return null
+}
+
 /**
  * Is this the Electron app running inside WSL?
  *
@@ -86,6 +103,38 @@ const TURN_CHOICES = [6, 10, 20, 40]
  * the review are pruned afterwards.
  */
 const JOURNAL_MS = 5000
+
+/**
+ * How often the minimap watcher's counters are read.
+ *
+ * 10s against a watcher whose own floor is several seconds: slow enough to cost nothing, fast
+ * enough that "it stopped reading" shows up while he is still in the game it stopped during.
+ *
+ * `GET /api/live/minimap-watch` is a status route by construction — counters and a track, no
+ * claims — and the one side effect it has (landing reads the watcher has finished) is the same
+ * one the coach's own ground-truth call makes a beat later, so polling it cannot change what she
+ * is told. Nothing from it is ever sent to the model; it is panel copy.
+ */
+const MAP_WATCH_MS = 10_000
+
+/** The counters `GET /api/live/minimap-watch` hands back. Everything else in it is ignored here. */
+interface MapWatch {
+	enabled: boolean
+	offered: number
+	accepted: number
+	refused: number
+	inFlight: boolean
+	lastReason: string | null
+}
+
+/**
+ * How long she may be silent before the panel says so rather than leaving him to guess.
+ *
+ * She is SUPPOSED to be quiet — that is the whole design, and `trusted` has a 90-second floor
+ * under silence of its own. So this is set above that floor: below it, quiet is the feature
+ * working and a countdown would be noise.
+ */
+const QUIET_NOTICE_MS = 100_000
 
 /**
  * How long the socket stays open after the game ends, so a line already being spoken can finish.
@@ -150,6 +199,16 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	 */
 	const [truthFails, setTruthFails] = useState(0)
 	/**
+	 * When the last ground-truth block actually arrived, so the panel can say the brief is being
+	 * built rather than leaving it to be inferred from her talking.
+	 *
+	 * `truthFails` only counts failures, and a coach that is correctly quiet produces the same
+	 * zero as a coach whose turns stopped going out at all — the block is fetched per TURN, so no
+	 * turns means no fetches means no failures. A timestamp tells those two apart; a counter of
+	 * failures cannot.
+	 */
+	const [truthAtMs, setTruthAtMs] = useState<number | null>(null)
+	/**
 	 * Consecutive journal POSTs that did not store a frame, and the daemon's own reason.
 	 *
 	 * The journal's failure path was a bare `catch` with a comment saying a dropped frame is not
@@ -173,6 +232,17 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	 */
 	const [journal, setJournal] = useState<{ frames: number; sessionId: string | null } | null>(null)
 	/**
+	 * Whether the MINIMAP WATCHER is reading, which nothing on this page could previously tell him.
+	 *
+	 * The daemon reads a crop of the minimap on the journal's beat, and this page reads one per
+	 * turn — and both swallow their failures on purpose, because a failed read costs the coach a
+	 * GATE and never a line, so there is no silence for him to notice. That is right for the coach
+	 * and wrong for the panel: a reader that is OFF looks exactly like a reader that is refusing
+	 * every frame, and "silently doing nothing while looking fine" is the precise shape of the
+	 * feature this journal replaced. Counters, from the route built to expose them.
+	 */
+	const [mapWatch, setMapWatch] = useState<MapWatch | null>(null)
+	/**
 	 * The last ground-truth block the coach fetched, so a journalled frame can be stored beside the
 	 * facts that were true when it was taken. Only ever a copy of something already fetched — the
 	 * journal never polls on its own, because a second poll would consume the announce-once state
@@ -190,7 +260,10 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	 * the one failure this journal exists to prevent.
 	 */
 	useEffect(() => {
-		if (!gate.inGame) truthRef.current = ""
+		if (!gate.inGame) {
+			truthRef.current = ""
+			setTruthAtMs(null)
+		}
 	}, [gate.inGame])
 	const [keyStatus, setKeyStatus] = useState<KeyStatus | null>(null)
 	const [keyInput, setKeyInput] = useState("")
@@ -365,6 +438,36 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	}, [share.sharing, gate.inGame, share.grabFrame])
 
 	/*
+	 * In-game only. Between games the watcher has nothing to read and its counters are last
+	 * game's, which is worse than no number: it would read as a live one.
+	 */
+	useEffect(() => {
+		if (!gate.inGame) {
+			setMapWatch(null)
+			return
+		}
+		let alive = true
+		const poll = async () => {
+			try {
+				const r = await fetch("/api/live/minimap-watch", { signal: AbortSignal.timeout(3000) })
+				if (!r.ok) throw new Error(`HTTP ${r.status}`)
+				const j = (await r.json()) as MapWatch
+				if (alive) setMapWatch(j)
+			} catch {
+				// Not knowing is its own state, and it is the daemon fault list's job to say the
+				// daemon is unreachable — saying it twice reads as two problems.
+				if (alive) setMapWatch(null)
+			}
+		}
+		void poll()
+		const id = setInterval(() => void poll(), MAP_WATCH_MS)
+		return () => {
+			alive = false
+			clearInterval(id)
+		}
+	}, [gate.inGame])
+
+	/*
 	 * Which model to speak through. Read here rather than inside the hook so the hook stays a
 	 * transport and the CHOICE stays with the screen the player configures.
 	 */
@@ -467,6 +570,7 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				setTruthFails(0)
 				if (j.text) {
 					truthRef.current = j.text
+					setTruthAtMs(Date.now())
 					/*
 					 * The clock rides back with the block because the page has no other source for
 					 * one. It is what finally lets a transcript row say when it was said — every
@@ -511,6 +615,22 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 		grabFrame: share.grabFrame,
 		coachMode
 	})
+
+	/*
+	 * A slow clock, only while there is something whose AGE is on screen.
+	 *
+	 * The vitals row prints "quiet for 2m" and "brief 8s ago", and both are subtractions from now.
+	 * Without a tick they would be frozen at whatever the last unrelated render happened to be —
+	 * a stale age reads exactly like a live one, which is the class of lie this whole panel exists
+	 * to stop.
+	 */
+	const [tick, setTick] = useState(0)
+	useEffect(() => {
+		if (!share.sharing || !gate.armed) return
+		const id = setInterval(() => setTick(t => t + 1), 5_000)
+		return () => clearInterval(id)
+	}, [share.sharing, gate.armed])
+	void tick
 
 	const [question, setQuestion] = useState("")
 	/**
@@ -633,6 +753,8 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	 * he sees while the game has the screen, and it used to say "In a game — coach arming" over a
 	 * coach that had given up entirely.
 	 */
+	// Hers, not his: a question he typed is not evidence that her audio is reaching the speakers.
+	const spokenLines = gem.lines.filter(l => l.fromUser !== true).length
 	const faults = liveFaults({
 		sharing: share.sharing,
 		shareEnded: share.ended,
@@ -651,8 +773,7 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 		coachStatus: gem.status,
 		coachError: gem.error,
 		voice: gem.voice,
-		// Hers, not his: a question he typed is not evidence that her audio is reaching the speakers.
-		spokenLines: gem.lines.filter(l => l.fromUser !== true).length,
+		spokenLines,
 		audioPlayed: gem.audioPlayed,
 		audioBlocked: gem.audioBlocked
 	})
@@ -666,6 +787,31 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	 * gets switched off, taking the free graded review down with it.
 	 */
 	const standby = share.sharing ? standbyReason(gate) : null
+
+	/** When she last said something of her own. Questions he typed are not her speaking. */
+	const lastSpokeMs = lastCoachLineMs(gem.lines)
+	const quietMs = lastSpokeMs === null ? null : Date.now() - lastSpokeMs
+
+	/**
+	 * WHY she is quiet — the sentence that separates a coach who is choosing silence from one that
+	 * has stopped working.
+	 *
+	 * She is SUPPOSED to be quiet: an empty fact list means PASS, and most turns of most games
+	 * correctly produce nothing. From the outside that is indistinguishable from a socket that is
+	 * closed, a brief that never arrives, or a heartbeat firing into a dead connection — and he has
+	 * switched a working coach off over exactly that ambiguity before, which costs the free graded
+	 * review as well as the voice.
+	 *
+	 * Every branch below is a reading the page already holds. The last one is the one that matters:
+	 * turns sent against lines spoken is how many times she was asked and had nothing worth saying,
+	 * which is the feature working and is now a number rather than an assurance.
+	 */
+	const quietWhy =
+		gem.status === "off" ? "the socket is closed"
+		: gem.status !== "live" ? `the socket is ${gem.status}`
+		: truthAtMs === null ? "no ground-truth block yet — she may not speak without one"
+		: gem.usage.turns === 0 ? "she has not been asked anything yet"
+		: `asked ${gem.usage.turns}\u00d7, passed ${Math.max(0, gem.usage.turns - spokenLines)}`
 
 	if (compact)
 		return (
@@ -900,6 +1046,100 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				</div>
 			)}
 			{/*
+			 * THE VITALS ROW — the four things that are either happening or not, while a game runs.
+			 *
+			 * The fault list above says what is WRONG. Everything below it says what she said. In
+			 * between there was nothing at all for the normal case, which for this coach is SILENCE:
+			 * she is designed to say almost nothing, so a working coach and a dead one produce the
+			 * same empty panel, and he has switched a working one off over exactly that ambiguity
+			 * before. Each of these is a reading, never an assurance:
+			 *
+			 *   - the SOCKET's own state, which is the only one of the four he could already see;
+			 *   - the BRIEF, timestamped — a coach that has stopped taking turns fails no
+			 *     ground-truth read, so the fault list stays silent and only an age shows it;
+			 *   - the MINIMAP WATCHER's accept/refuse counts, which nothing on this page has ever
+			 *     shown, from the daemon route built to expose them;
+			 *   - how long since she last spoke, with WHY she was last asked beside it.
+			 *
+			 * It is panel copy. None of it reaches the model, and none of it is a claim about the
+			 * game — a number missing here means "not known", and the row says so rather than
+			 * printing a zero that reads like a measurement.
+			 */}
+			{share.sharing && gate.armed && (
+				<div className="csk-screen__vitals">
+					<span title="The live connection this coach speaks over.">
+						socket{" "}
+						<b className={gem.status === "live" ? "on" : ""}>
+							{gem.status === "off" ? "closed" : gem.status}
+						</b>
+					</span>
+
+					<span title="The ground-truth block — the roster, the score, the farm — fetched fresh from the League client for each check-in. She is not allowed to speak without one, so an age climbing here is why she is quiet.">
+						brief{" "}
+						{truthAtMs === null ?
+							<b>not yet</b>
+						:	<b className="on">{fmtAge(Date.now() - truthAtMs)} ago</b>}
+					</span>
+
+					{/*
+					 * Refusals are printed, not hidden. Most of them are the fence doing its job —
+					 * a read that contradicts the client is thrown away whole — so a refuse count
+					 * beside an accept count is the honest shape, and a zero-accept run is the one
+					 * worth noticing.
+					 */}
+					<span title="A crop of your minimap, read and then checked against the League client. Refused reads are ones the client contradicted — those are the fence working, not an error. Nothing she says comes from a read the client refused.">
+						map reads{" "}
+						{mapWatch === null ?
+							<b>unknown</b>
+						: !mapWatch.enabled ?
+							<b>off</b>
+						:	<b className={mapWatch.accepted > 0 ? "on" : ""}>
+								{mapWatch.accepted} ok
+								{mapWatch.refused > 0 ? ` · ${mapWatch.refused} refused` : ""}
+							</b>
+						}
+						{/*
+						 * The daemon's own reason, shown only when NOTHING has been accepted this
+						 * game. With reads landing it is noise — a refusal beside an acceptance is
+						 * the fence working. With none it is the whole diagnosis, and it was
+						 * already in this payload, unread.
+						 */}
+						{mapWatch !== null && mapWatch.enabled && mapWatch.accepted === 0 && mapWatch.lastReason !== null && (
+							<em> · {mapWatch.lastReason}</em>
+						)}
+					</span>
+
+					<span
+						title={
+							gem.lastAsk === null ?
+								"She has not been asked anything yet this game."
+							:	`She was last asked on: ${gem.lastAsk}`
+						}
+					>
+						{quietMs === null ?
+							<>
+								spoke <b>not yet</b>
+							</>
+						: quietMs >= QUIET_NOTICE_MS ?
+							<>
+								quiet for <b>{fmtAge(quietMs)}</b>
+							</>
+						:	<>
+								spoke <b className="on">{fmtAge(quietMs)} ago</b>
+							</>
+						}
+						{/*
+						 * WHY, rather than what she was last asked about. The ask is still on the
+						 * tooltip, where it answers a question he only has after this one: a
+						 * player looking at a silent coach wants to know whether it is broken
+						 * before he wants to know which event woke it.
+						 */}
+						<em> · {quietWhy}</em>
+					</span>
+				</div>
+			)}
+
+			{/*
 			 * A reconnect is expected — the session credential lasts about half an hour and games
 			 * run longer — so it is reported as a status, not in red. Red is for something the
 			 * player has to act on.
@@ -1016,17 +1256,13 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 								` · ${Math.round(gem.usage.totalTokens / 1000)}k tokens`
 							:	""}
 							{/*
-							 * WHY she was last asked, when there is an event schedule to explain.
-							 *
-							 * An event-driven coach that has said nothing for a minute is
-							 * indistinguishable on screen from one that has broken, and that
-							 * ambiguity is what gets a working feature switched off. This is the
-							 * one line that tells them apart. It is panel copy and never reaches
-							 * the model.
+							 * WHY she was last asked has moved UP to the vitals row, beside how
+							 * long she has been quiet — the two answer one question together and
+							 * split across two lines they answered it worse. It is also no longer
+							 * conditioned on `trusted`: every mode can go quiet, and "which event
+							 * woke her" is the sentence that tells a quiet coach from a broken one
+							 * whichever schedule produced the silence.
 							 */}
-							{coachMode === "trusted" && gem.lastAsk !== null ?
-								` · asked on ${gem.lastAsk.slice(0, 60)}`
-							:	""}
 						</span>
 					)}
 					{/*

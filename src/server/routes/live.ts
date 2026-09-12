@@ -1986,6 +1986,177 @@ export const createLiveRoute = (): Hono => {
 		const data = handle ? await handle.live.allGameData().catch(() => null) : null
 		return c.json({ tick: projectTick(data) })
 	})
+	/**
+	 * `GET /api/live/board` — everything the quiet panel renders, computed where it already was.
+	 *
+	 * ## Why a route and not a second pipeline
+	 *
+	 * The panel's whole claim is that it costs no attention and invents nothing, and both halves
+	 * die if the browser starts doing arithmetic of its own: a second implementation of the
+	 * objective clocks or of the travel time is a second thing to be wrong, and it would be wrong
+	 * QUIETLY, on a surface he only glances at. So every number below comes out of the same
+	 * functions the coach's brief is built from — `projectTick`, `objectiveStates` (through
+	 * `reachFromLive`), the carried minimap read, `minimapWatchStatus` — and this handler does
+	 * nothing but project them.
+	 *
+	 * ## It is STATELESS, and that is the reason it is not a flag on `/live/ground-truth`
+	 *
+	 * Ground truth consumes state on every call: it advances the delta's baseline, increments the
+	 * turn sequence and caches the fence's `lastTruth`. A panel polls every couple of seconds, so
+	 * pointing it at that route would throw away most of the coach's announce-once facts and hand
+	 * the next real turn a two-second delta instead of the ninety since she last spoke. This is the
+	 * same argument `/live/tick` was split out under, and this route follows it exactly: the only
+	 * thing it touches is `drainMinimapReads`, which the status route already does on its own beat
+	 * and which cannot change what she is told — it lands reads the watcher has already taken,
+	 * through the same fence, in the same order.
+	 *
+	 * ## Three thresholds ride in the payload rather than being retyped in the page
+	 *
+	 * `freshSec` and `carrySec` are the app's two measured facts about how long a position read is
+	 * worth anything (92.3% same-half at ten seconds; a cliff to a coin flip at thirty). The panel
+	 * decides what to print from them, but it does not get to pick them — a copy in the browser is
+	 * a copy that drifts, and the drift would show up as a stale position drawn as a live one.
+	 *
+	 * Everything here is a reading or a null. A null means NOT KNOWN and the panel says so; there
+	 * is no field in this payload whose absence is filled in with a plausible number.
+	 */
+	app.get("/live/board", async c => {
+		/*
+		 * Land whatever the watcher has read since the last drain, before anything is built from
+		 * it — same call, same reason, as the ground-truth route's own first line.
+		 */
+		drainMinimapReads()
+		const handle = await lcu()
+		const data = handle ? await handle.live.allGameData().catch(() => null) : null
+		const tick = data ? projectTick(data) : null
+		const watcher = minimapWatchStatus()
+		if (!data || tick === null)
+			return c.json({
+				inGame: false,
+				/** The client is closed, as opposed to open with no game in it. */
+				clientUp: handle !== null,
+				freshSec: FRAME_FRESH_SEC,
+				carrySec: CARRY_MAX_SEC,
+				watcher
+			})
+		const nowSec = tick.gameTimeSec
+		const team = myTeamId(data)
+		/*
+		 * The travel times, from the SAME read the brief would print and the same objective
+		 * instances the coach is asked about. `carriedPct` is null on a game where nothing has ever
+		 * been accepted, and that is a real answer: `buildReach` then returns rows with null etas
+		 * rather than rows with guessed ones, and the panel renders "can't say from here".
+		 */
+		/*
+		 * THE SAME AGE RULE THE POSITION ROW OBEYS, applied before the arithmetic rather than after.
+		 *
+		 * `buildReach` will happily walk from a read of any age — the drift circle grows and
+		 * `constrained` goes false — but the board calls a read past `CARRY_MAX_SEC` UNKNOWN, and a
+		 * panel that says "position unknown" on one line and quotes a travel time from that same
+		 * position on the next is exactly the stale-number-wearing-a-fresh-face failure this surface
+		 * exists to remove. Past thirty seconds the read is a coin flip about his half; there is
+		 * nothing to walk from.
+		 */
+		const usable =
+			carriedPct !== null && nowSec - carriedPct.atSec >= 0 && nowSec - carriedPct.atSec <= CARRY_MAX_SEC ?
+				carriedPct
+			:	null
+		const reach = reachFromLive({ raw: data, nowSec, read: usable })
+		const mine = findMe(data)
+		const enemies = (data.allPlayers ?? []).filter(p => p.team !== mine?.team)
+		/*
+		 * The enemy jungler, chosen exactly as `buildLiveState` chooses him — declared position
+		 * first, then Smite, and `inferred` says which. A different rule here would mean the panel
+		 * and the coach could name two different men as the counterpart in one game.
+		 */
+		const byRole = enemies.find(p => (p.position ?? "").toUpperCase() === "JUNGLE")
+		const cp = byRole ?? enemies.find(hasSmite) ?? null
+		return c.json({
+			inGame: true,
+			clientUp: true,
+			gameTimeSec: nowSec,
+			freshSec: FRAME_FRESH_SEC,
+			carrySec: CARRY_MAX_SEC,
+			me: {
+				champion: tick.me.champion,
+				level: tick.me.level,
+				hp: tick.me.hp,
+				maxHp: tick.me.maxHp,
+				mana: tick.me.mana,
+				maxMana: tick.me.maxMana,
+				manaType: tick.me.manaType,
+				gold: tick.me.gold,
+				/** Floored to a multiple of ten by the client — see `CS_QUANTUM`. */
+				cs: tick.me.cs,
+				k: tick.me.kills,
+				d: tick.me.deaths,
+				a: tick.me.assists,
+				dead: tick.me.dead,
+				respawnSec: tick.me.respawn
+			},
+			counterpart:
+				cp === null ? null : (
+					{
+						champion: cp.championName ?? "their jungler",
+						level: cp.level ?? null,
+						/** Floored the same way his own is, so the gap is an interval and not a subtraction. */
+						cs: cp.scores?.creepScore ?? null,
+						dead: cp.isDead === true,
+						respawnSec: cp.respawnTimer ?? 0,
+						inferred: byRole === undefined
+					}
+				),
+			/*
+			 * One row per objective NEXT would render, each with its window and what the walk to it
+			 * costs. `constrained` false means the read is old enough that the drift circle covers
+			 * the pit — the number would be arithmetic about a position he has had time to leave —
+			 * and the panel prints no eta at all in that case.
+			 */
+			objectives: reach.map(r => ({
+				label: r.label,
+				windowSec: Math.round(r.windowSec),
+				origin: r.origin,
+				ageSec: r.ageSec === null ? null : Math.round(r.ageSec),
+				constrained: r.constrained,
+				etaMinSec: r.etaMinSec === null ? null : Math.round(r.etaMinSec),
+				etaMaxSec: r.etaMaxSec === null ? null : Math.round(r.etaMaxSec),
+				marginMinSec: r.marginMinSec === null ? null : Math.round(r.marginMinSec),
+				marginMaxSec: r.marginMaxSec === null ? null : Math.round(r.marginMaxSec)
+			})),
+			/*
+			 * The last read that was ACCEPTED, placed and undoubted — with its real age, however
+			 * old that is. The page is told the age and the two thresholds and draws its own
+			 * conclusion; nothing here is dropped for being stale, because a stale read that is
+			 * LABELLED stale is the honest answer and an absent one reads as "the watcher is off".
+			 */
+			/*
+			 * Written as `!== null` rather than as a `=== null` early-out on purpose: a line that
+			 * begins `carriedRead ===` is indistinguishable from an ASSIGNMENT to the source scan in
+			 * `live.test.ts`, which pins the one invariant protecting the carried read — that it is
+			 * written by an acceptance and by a new game and by nothing else.
+			 */
+			read:
+				carriedRead !== null && carriedRead.where !== null && carriedZone !== null ?
+					{
+						coarse: carriedRead.where,
+						label: zoneLabelForTeam(carriedZone.you, team),
+						ageSec: Math.round(Math.max(0, nowSec - carriedRead.atSec)),
+						confidence: carriedRead.confidence,
+						/** Whether there are coordinates behind it, i.e. whether an eta is possible. */
+						positioned: carriedPct !== null
+					}
+				:	null,
+			watcher,
+			/** Who is down right now, on both sides. Exact, and not fog-gated. */
+			down: tick.players
+				.filter(p => p.dead)
+				.map(p => ({
+					champion: p.champion,
+					mine: p.team === tick.me.team,
+					respawnSec: Math.round(p.respawn)
+				}))
+		})
+	})
 
 	/**
 	 * `POST /api/live/frame-read` — one reading of the minimap, from whoever took it.

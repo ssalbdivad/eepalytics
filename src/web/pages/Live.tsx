@@ -33,6 +33,7 @@ import type { LiveResponse } from "../../shared/schema/api.ts"
 import { api } from "../lib/api.ts"
 import { armedHeadline, useGameflow } from "../lib/gameflow.ts"
 import { categoryLabel } from "../lib/format.ts"
+import { LiveBoard } from "../components/LiveBoard.tsx"
 import { ScreenCoach } from "../components/ScreenCoach.tsx"
 import { LiveTranscript } from "../components/LiveTranscript.tsx"
 import { Debrief } from "../components/Debrief.tsx"
@@ -239,6 +240,16 @@ export const Live = () => {
 
 			<div className="live__cols">
 				<div className="live__main">
+					{/*
+					 * THE BOARD, first and at every size.
+					 *
+					 * It is the only thing on this page that answers "what should I be looking at
+					 * right now" — a window, where the contest will be, and whether he can be there
+					 * — and it is the half of the coach that costs no attention until he glances at
+					 * it. Everything below it is history or standing advice and can wait.
+					 */}
+					<LiveBoard compact={size !== "wide"} />
+
 					{data.nudges.length > 0 ?
 						<ul className="live__nudges">
 							{data.nudges.map(n => (
@@ -294,30 +305,15 @@ export const Live = () => {
 						</div>
 					)}
 
-					{data.score && (
-						<div className="live__stats">
-							<div className="live__stat">
-								<span className="v">{data.score.cs}</span>
-								<span className="k">CS</span>
-							</div>
-							<div className="live__stat">
-								<span className={`v ${data.score.deaths >= 3 ? "warn" : ""}`}>
-									{data.score.deaths}
-								</span>
-								<span className="k">deaths</span>
-							</div>
-							<div className="live__stat">
-								<span className="v">{data.score.level}</span>
-								<span className="k">level</span>
-							</div>
-							<div className="live__stat">
-								<span className="v">
-									{data.score.kills}/{data.score.assists}
-								</span>
-								<span className="k">kills / assists</span>
-							</div>
-						</div>
-					)}
+					{/*
+					 * The four-tile stat block that used to sit here is GONE, not moved.
+					 *
+					 * CS, deaths, level and kills/assists are all on the board above, in one line,
+					 * beside the window and the walk they are actually judged against — and they
+					 * were on his HUD before either of us printed them. Two copies of the same four
+					 * numbers on one screen is the "overwhelming" he has now asked about three
+					 * times, and the copy with less context was the one to lose.
+					 */}
 				</div>
 
 				{data.focus && data.focus.length > 0 && (
@@ -345,14 +341,6 @@ export const Live = () => {
 	return (
 		<div className={`live live--${size}`}>
 			{body}
-			{/*
-			 * HIDDEN in compact, never unmounted.
-			 *
-			 * The old `size === "wide" && <ScreenCoach />` meant pressing the collapse button —
-			 * advertised as "grow onto a second monitor" — ended the coaching session. `display:
-			 * none` keeps the socket open and the audio playing, which is what you want from a
-			 * voice coach in a 380px window.
-			 */}
 			{/*
 			 * Always mounted, at a fixed position in the tree. Compact renders a one-line strip
 			 * rather than nothing: 700px is the width this page is commonly first seen at, and hiding the

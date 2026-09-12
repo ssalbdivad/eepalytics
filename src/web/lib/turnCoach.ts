@@ -166,7 +166,6 @@ export const respellForSpeech = (text: string, names: readonly SpokenName[] = []
  * tuning gap, and pretending otherwise would be the wrong trade to hide.
  */
 export class SystemVoice {
-	#current: SpeechSynthesisUtterance | null = null
 	/** Chosen once — enumerating voices on every line is slow and the list is stable. */
 	#voice: SpeechSynthesisVoice | null = null
 	/**
@@ -217,7 +216,6 @@ export class SystemVoice {
 		if (v) u.voice = v
 		// Slightly quick: this is a sentence over a game, not an audiobook.
 		u.rate = 1.1
-		this.#current = u
 		window.speechSynthesis.speak(u)
 	}
 
@@ -231,7 +229,6 @@ export class SystemVoice {
 	silence(): void {
 		if (!this.available) return
 		window.speechSynthesis.cancel()
-		this.#current = null
 	}
 
 	get speaking(): boolean {
