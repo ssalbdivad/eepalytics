@@ -1881,6 +1881,36 @@ body.is-live {
 	.nav a { padding: 6px 7px; font-size: 12px; }
 }
 
+/*
+ * Below ~620px the shedding above has run out of things to shed: six nav items at 12px do not
+ * fit beside the brand and the dots no matter how the padding is tuned. Measured at 380px the
+ * nav clipped to "Coach | Histor" and Trends, Queue, Settings and Pop out were reachable only
+ * by dragging a scroller with no scrollbar — which is precisely the invisible gesture the
+ * comment above says this chrome exists to avoid, so the bar takes a second row instead.
+ *
+ * Height is the cheap resource here. 380px is the DOCKED window, glanced at beside a running
+ * game, and one more row of chrome costs nothing a player will notice; navigation he cannot
+ * see costs him the four screens behind it.
+ */
+@media (max-width: 620px) {
+	.topbar {
+		height: auto;
+		flex-wrap: wrap;
+		gap: 4px 10px;
+		padding: 6px 12px;
+	}
+	.nav {
+		/* Full width on its own row, wrapping rather than scrolling. */
+		order: 3;
+		flex: 1 0 100%;
+		margin-left: 0;
+		overflow-x: visible;
+		flex-wrap: wrap;
+		gap: 2px 4px;
+	}
+	.topbar-right { margin-left: auto; }
+}
+
 /* ---- live: wide mode, for a second monitor ---- */
 /*
  * Same data, a genuinely different layout. At 380px the overlay is glanced at over a running

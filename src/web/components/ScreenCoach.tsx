@@ -857,6 +857,34 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 						"Live coach needs a key"
 					:	"Live coach"}
 				</span>
+				{/*
+				 * The strip is the WHOLE coach below 700px — the popout docked beside the game is
+				 * exactly the window this shape was drawn for. Without this button there was no way
+				 * to start a share at that width anywhere in the app: the wide panel's "Share my
+				 * screen" lives behind a `compact` branch that returns before it, so a narrow popout
+				 * showed a grey dot and the dead words "Live coach" and offered nothing to press.
+				 *
+				 * Only when NOT sharing. A stop control here would sit under his cursor for the whole
+				 * game, and ending the share by accident mid-game is the one mistake this strip must
+				 * not make easy — stopping stays in the wide panel, where it takes a deliberate visit.
+				 */}
+				{!share.sharing && (
+					<button
+						className="btn btn-sm"
+						disabled={opening}
+						// Same handler as the wide panel, deliberately: a real click is the only thing
+						// that may unlock audio output, and on WSL the picker cannot see the game, so
+						// both widths hand off to the Windows browser rather than opening a dead picker.
+						onClick={() => {
+							gem.unlockAudio()
+							void (wsl ? openInWindows() : share.start()).catch(() => {
+								/* both set their own error state; this only stops an unhandled rejection */
+							})
+						}}
+					>
+						{opening ? "Opening…" : "Share"}
+					</button>
+				)}
 			</div>
 		)
 
