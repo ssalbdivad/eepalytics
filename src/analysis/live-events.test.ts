@@ -22,11 +22,11 @@ import {
 	describeTurn,
 	contestableObjective,
 	COUNTERPART_ABSENT_SEC,
-	dueTurn,
+	dueTurn as dueTurnAtLevel,
 	HEARTBEAT_SEC,
 	newEventWatch,
 	objectiveStates,
-	observeTick,
+	observeTick as observeTickAtLevel,
 	projectTick,
 	FIGHT_MIN_DEATHS,
 	FIGHT_QUIET_SEC,
@@ -40,6 +40,10 @@ import {
 	GRUBS_SPAWN_SEC,
 	nextOpeningSec,
 	STANDING_SILENCE_SEC,
+	askPolicy,
+	DEFAULT_SPEAK_LEVEL,
+	SPEAK_LEVELS,
+	type SpeakLevel,
 	type EventWatch,
 	type LiveEvent,
 	type LiveEventKind,
@@ -47,6 +51,30 @@ import {
 	type ReachFn
 } from "./live-events.ts"
 import { FIELD_CP_MIN_SEC, SETTLE_SEC } from "./live-schedule.ts"
+import { type } from "arktype"
+import { DEFAULT_SETTINGS, SettingsPatch } from "../shared/schema/settings.ts"
+
+/*
+ * EVERY CASE BELOW IS WRITTEN AGAINST `commentary`, and it says so here once rather than in 40
+ * call sites.
+ *
+ * `SPEAK_LEVELS` made "which asks fire" a setting and defaulted it to the quiet one, so the
+ * detector's own default is no longer the schedule these cases pin. They are the record of what
+ * the fire sites decide — the second, third, fourth and fifth cuts, each with its measurement —
+ * and that is a different question from how much the user wants to be spoken to. The level's own
+ * cases live in `speak levels` at the foot of this file and call the real functions directly.
+ */
+const observeTick = (
+	watch: EventWatch,
+	tick: LiveTick,
+	opts: Parameters<typeof observeTickAtLevel>[2] = {}
+): LiveEvent[] => observeTickAtLevel(watch, tick, { level: "commentary", ...opts })
+
+const dueTurn = (
+	watch: EventWatch,
+	nowSec: number,
+	opts: Parameters<typeof dueTurnAtLevel>[2] = {}
+) => dueTurnAtLevel(watch, nowSec, { level: "commentary", ...opts })
 
 /*
  * THE TWO NAMES THE CLIENT USES, and the reason this fixture carries both.
@@ -1588,5 +1616,217 @@ describe("two games, one session", () => {
 		strictEqual(watch.lastDeathNote, null, "game one's death must not follow him into game two")
 		const again = observeTick(watch, tickOf({ t: 270 }))
 		ok(again.some(e => e.kind === "window.open"), "game two's first window must still fire")
+	})
+})
+
+/**
+ * WHICH ASKS FIRE AT EACH LEVEL — the pin that stops her getting chatty again by accident.
+ *
+ * `SPEAK_LEVELS` is the only knob in this app that changes how much the coach talks, and it is a
+ * list of ask kinds, so the thing to pin is the list. Every number printed beside it in Settings
+ * was replayed over the 28-game corpus under exactly these sets
+ * (`scripts/measure-asks.ts --level <id>`); adding one kind to one array silently invalidates all
+ * of them, which is precisely the kind of edit nobody notices in review.
+ *
+ * `commentary` is separately pinned by every other case in this file: they all run at that level
+ * through the shim at the top, they were written against the schedule as it shipped, and they
+ * still pass unchanged. That is what "byte-identical" means here — not an assertion, 74 of them.
+ */
+describe("speak levels", () => {
+	it("pins the ask set of every level", () => {
+		deepStrictEqual(askPolicy("big-calls"), {
+			kinds: ["window.open", "level.spike", "item.completed"],
+			heartbeatSec: Infinity,
+			standingSilenceSec: 210
+		})
+		deepStrictEqual(askPolicy("key-moments"), {
+			kinds: [
+				"window.open",
+				"window.standing",
+				"respawn.self",
+				"level.spike",
+				"item.completed"
+			],
+			heartbeatSec: 360,
+			standingSilenceSec: 210
+		})
+		deepStrictEqual(askPolicy("commentary"), {
+			kinds: [
+				"window.open",
+				"window.changed",
+				"window.standing",
+				"death.counterpart",
+				"respawn.self",
+				"level.spike",
+				"item.completed",
+				"game.start"
+			],
+			heartbeatSec: HEARTBEAT_SEC,
+			standingSilenceSec: STANDING_SILENCE_SEC
+		})
+	})
+
+	/*
+	 * A LEVEL MAY ONLY SUBTRACT. It is an allowlist over the fire sites, and the fire sites are
+	 * where the measured cuts live — a level that named a kind `commentary` does not carry would be
+	 * re-enabling something the second, third or fifth cut removed, with no measurement behind it.
+	 */
+	it("no level asks about anything the full schedule does not", () => {
+		for (const l of SPEAK_LEVELS)
+			for (const k of l.policy.kinds)
+				ok(askPolicy("commentary").kinds.includes(k), `${l.id} adds ${k}`)
+	})
+
+	/*
+	 * THE ORDER OF THE TWO SILENCE CLOCKS, which is a real bug caught by a real replay.
+	 *
+	 * The heartbeat and the standing-objective ask both fire into silence, so the shorter one
+	 * reaches every lull first. The first draft of `key-moments` paired the shipped 180s heartbeat
+	 * with a 210s standing gate and `window.standing` never fired once in 28 games — the level
+	 * silently lost the only ask that covers a free objective nobody has taken.
+	 */
+	it("a level that keeps the standing ask leaves it room under the heartbeat", () => {
+		for (const l of SPEAK_LEVELS)
+			if (l.policy.kinds.includes("window.standing"))
+				ok(
+					l.policy.heartbeatSec > l.policy.standingSilenceSec,
+					`${l.id}: heartbeat ${l.policy.heartbeatSec}s would take every lull before the ${l.policy.standingSilenceSec}s standing gate`
+				)
+	})
+
+	/*
+	 * DEMOTED, NOT DELETED — the third cut's mechanism, reused. A kind a level does not ask about
+	 * still fires, still carries its note and still rides the next turn as context, because a
+	 * material change has to be DETECTED before anything can compare it and because deleting the
+	 * detector deletes the evidence that would settle the question later.
+	 */
+	it("still detects what it does not ask about", () => {
+		const watch = newEventWatch()
+		const events: LiveEvent[] = []
+		/*
+		 * BEFORE 255, which is where the drake's window opens. The two field asks only ask in the
+		 * OPEN GROUND — see `fieldAsks` — so a spike inside a contest window rides that window's
+		 * turn at every level and would prove nothing about this one.
+		 */
+		for (const t of [150, 160, 170])
+			events.push(
+				...observeTickAtLevel(
+					watch,
+					tickOf({
+						t,
+						level: t === 150 ? 5 : 6,
+						events: t === 170 ? [kill(1, 165, CP_BARE, ME_BARE)] : [],
+						// The fire site reads his death TIMER, not the log — see `FIELD_CP_MIN_SEC`.
+						enemyJungle: t === 170 ? { dead: true, respawn: 25 } : {}
+					}),
+					{ level: "big-calls" }
+				)
+			)
+		const spike = events.find(e => e.kind === "level.spike")
+		ok(spike?.asks === true, "a spike level is one of the three things that DO ask")
+		const cp = events.find(e => e.kind === "death.counterpart")
+		ok(cp !== undefined, "the counterpart's death is still detected")
+		strictEqual(cp!.asks, false, "…and at this level it rides a turn rather than causing one")
+		ok(cp!.note.includes("killed"), "…carrying its note, which is the whole point of demoting")
+	})
+
+	/* The floor under silence is OFF at the quietest level: nothing at all means nothing is said. */
+	it("big-calls has no heartbeat", () => {
+		/*
+		 * ONE TICK, then the clock. The first look seeds the silence floor and asks nothing (the
+		 * fifth cut), and walking further ticks forward would open a real objective window — which
+		 * is a question, and would be testing something else entirely.
+		 */
+		const watch = newEventWatch()
+		watch.pending.push(...observeTickAtLevel(watch, tickOf({ t: 100 }), { level: "big-calls" }))
+		strictEqual(
+			dueTurnAtLevel(watch, 100 + 15 * 60, { level: "big-calls" }),
+			null,
+			"fifteen minutes of nothing happening is still not a question"
+		)
+		ok(
+			dueTurnAtLevel(watch, 100 + HEARTBEAT_SEC, { level: "commentary" })?.heartbeat === true,
+			"…while the full schedule beats its floor every three minutes"
+		)
+	})
+
+	/*
+	 * THE WHOLE POINT, ON REAL GAMES. Both paired games, replayed through the real three calls the
+	 * browser makes. The counts are pinned exactly rather than as a ratio: they are what the
+	 * Settings page's "about 7.8 lines" is made of, and a change to any threshold in this file will
+	 * move them.
+	 */
+	it("cuts a real game from thirty turns to nine", t => {
+		const FILES = {
+			kayn: "data/live-samples/js-mtvxb5f4-f81a-t29817812.ndjson",
+			fiddle: "data/live-samples/js-mtvxb5f4-f81a-t29817845.ndjson"
+		}
+		const turnsAt = (file: string, level: SpeakLevel): number | null => {
+			let text: string
+			try {
+				text = readFileSync(file, "utf8")
+			} catch {
+				return null
+			}
+			const watch = newEventWatch()
+			let turns = 0
+			for (const line of text.split("\n")) {
+				if (line.trim() === "") continue
+				let parsed: { data?: unknown }
+				try {
+					parsed = JSON.parse(line) as { data?: unknown }
+				} catch {
+					continue
+				}
+				const tick = projectTick(parsed.data as never)
+				if (tick === null) continue
+				watch.pending.push(...observeTickAtLevel(watch, tick, { level }))
+				const reason = dueTurnAtLevel(watch, tick.gameTimeSec, { level })
+				if (reason === null) continue
+				commitTurn(watch, reason, tick.gameTimeSec)
+				turns += 1
+			}
+			return turns
+		}
+		const expected = {
+			kayn: { commentary: 29, "key-moments": 12, "big-calls": 9 },
+			fiddle: { commentary: 31, "key-moments": 11, "big-calls": 9 }
+		} as const
+		for (const [name, file] of Object.entries(FILES))
+			for (const level of ["commentary", "key-moments", "big-calls"] as const) {
+				const got = turnsAt(file, level)
+				if (got === null) return t.skip(`${file} is not on this machine`)
+				strictEqual(got, expected[name as keyof typeof expected][level], `${name} @ ${level}`)
+			}
+	})
+
+	/*
+	 * THE SETTING AND THE MECHANISM ARE THE SAME CLAIM IN TWO FILES, and `shared/schema/settings.ts`
+	 * spells the union out rather than importing it so `shared/` keeps its one-way dependency. That
+	 * is the arrangement `live-coach-mode.test.ts` already pins for the coach mode, and it only
+	 * works if something checks the two copies agree.
+	 */
+	it("agrees with the setting it is driven by", () => {
+		strictEqual(DEFAULT_SETTINGS.liveSpeakLevel, DEFAULT_SPEAK_LEVEL)
+		strictEqual(
+			DEFAULT_SPEAK_LEVEL,
+			"big-calls",
+			"the default is the quiet one, deliberately — the chatty schedule is the one he rated 0/10"
+		)
+		for (const l of SPEAK_LEVELS) {
+			const patch = SettingsPatch({ liveSpeakLevel: l.id })
+			ok(!(patch instanceof type.errors), `${l.id} must be a value the API accepts`)
+			deepStrictEqual(patch, { liveSpeakLevel: l.id })
+		}
+		ok(
+			SettingsPatch({ liveSpeakLevel: "chatty" }) instanceof type.errors,
+			"an id that is not a level must be refused rather than silently defaulted"
+		)
+		/* Every level needs its numbers in the picker: a volume claim with no measurement beside it
+		 * is the sentence this owner has learned to discount. */
+		for (const l of SPEAK_LEVELS) {
+			ok(l.evidence.length > 40, `${l.id} has no evidence line`)
+			ok(l.linesPerGame > 0, `${l.id} has no projected line count`)
+		}
 	})
 })

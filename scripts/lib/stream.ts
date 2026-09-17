@@ -857,9 +857,20 @@ export const pickEventCheckpoints = (
 		 * Two statements: `observeTick`'s new-game branch replaces `watch.pending`, and JS evaluates
 		 * the member expression before the arguments — so a one-liner pushes onto the detached array.
 		 */
-		const fired = observeTick(watch, tick)
+		/*
+		 * `commentary` — the FULL schedule, named out loud.
+		 *
+		 * The shipped default is now `big-calls` (see `SPEAK_LEVELS`), and a bench that silently
+		 * inherited it would compare models on a third of the turns and would quietly stop being
+		 * comparable with every run already on disk. Which schedule a replay replays is a property
+		 * of the replay, so it is stated here rather than defaulted into.
+		 */
+		const fired = observeTick(watch, tick, { level: "commentary" })
 		watch.pending.push(...fired)
-		const reason = dueTurn(watch, tick.gameTimeSec, { heartbeatSec: opts.heartbeatSec })
+		const reason = dueTurn(watch, tick.gameTimeSec, {
+			heartbeatSec: opts.heartbeatSec,
+			level: "commentary"
+		})
 		if (!reason) continue
 		/*
 		 * `dueTurn` PEEKS; the queue is spent by `commitTurn`, because in the app a send can fail

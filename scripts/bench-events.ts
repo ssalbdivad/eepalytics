@@ -52,6 +52,11 @@ const files =
 			.filter(f => f.endsWith(".ndjson"))
 			.map(f => join(SAMPLES, f))
 
+/*
+ * `level: "commentary"` everywhere below, because this whole file compares the schedule against
+ * its own history. The app's default is `big-calls` now (`SPEAK_LEVELS`); inheriting it here would
+ * silently re-cut every number this script exists to reproduce.
+ */
 const heartbeatSec = Number(argOf("--heartbeat") ?? HEARTBEAT_SEC)
 
 /**
@@ -63,8 +68,10 @@ const heartbeatSec = Number(argOf("--heartbeat") ?? HEARTBEAT_SEC)
  * Nothing else differs, so a diff of the two turn lists is the whole change.
  */
 const base = process.argv.includes("--base")
-const watchOpts = base ? { standingSilenceSec: Infinity } : {}
-const turnOpts = base ? { settleSec: 0 } : {}
+const watchOpts: Parameters<typeof observeTick>[2] =
+	base ? { standingSilenceSec: Infinity, level: "commentary" } : { level: "commentary" }
+const turnOpts: Parameters<typeof dueTurn>[2] =
+	base ? { settleSec: 0, level: "commentary" } : { level: "commentary" }
 
 /**
  * THE GRADED RUN, transcribed — one row per turn that was actually spoken.

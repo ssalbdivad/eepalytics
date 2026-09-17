@@ -859,6 +859,231 @@ export const CONTEXT_CARRY_SEC = 90
  */
 export const STANDING_SILENCE_SEC = 90
 
+/* ------------------------------------------------- HOW OFTEN SHE SPEAKS AT ALL */
+
+/**
+ * WHICH ASKS FIRE — the only knob in this app that changes how much the coach talks.
+ *
+ * It changes WHEN she is asked and nothing else. No prompt moves, no topic is forbidden, no
+ * sentence is suppressed and nothing here ever sees a line. That distinction is the repo's
+ * standing rule (`AGENTS.md`, "what is NOT in the brief is the whole of the design") and this
+ * mechanism is deliberately on the legitimate side of it: a question not asked is not a thing
+ * unsaid, it is a moment the coach was left alone.
+ *
+ * ## Why a level exists at all
+ *
+ * The shipped schedule asks about 30 times in a 28-minute game and roughly 21 of those lines are
+ * graded clean-useful. That is not a wrongness problem — `scripts/measure-asks.ts` spent a whole
+ * corpus establishing that volume and wrongness are different defects — it is a VOLUME problem,
+ * and it is the one complaint that has survived every architecture this app has shipped. The
+ * owner's own verdict on the live coach is 0/10 and "overwhelming" is the word he used, not
+ * "wrong".
+ *
+ * ## The table these levels are cut from
+ *
+ * 28 real games, 879 turns, every turn joined to the ask that raised it and graded by the two
+ * instruments in `scripts/measure-asks.ts` whose union lands on the independently adjudicated 28%
+ * false (`data/eval/integrate3-corpus-20260912.json` and the judged file beside it):
+ *
+ * ```
+ *   ask kind            turns   wrong          clean-useful    asks/game
+ *   window.changed        440   29% [25-34]    71% [66-75]       15.71
+ *   window.open           221   17% [13-23]    82% [76-87]        7.89
+ *   window.standing        56   21% [13-34]    73% [60-83]        2.00
+ *   death.counterpart      52   60% [46-72]    40% [28-54]        1.86
+ *   respawn.self           43   20% [10-35]    75% [60-86]        1.54
+ *   heartbeat              41   10% [4-23]     68% [53-80]        1.46
+ *   item.completed         29   18% [8-36]     79% [60-90]        1.04
+ *   level.spike            18    6% [1-27]     94% [73-99]        0.64
+ *   ALL                   879   25% [22-28]    69% [66-72]       30.39
+ * ```
+ *
+ * `window.open` at 82% clean-useful and 7.9 asks a game is about six good lines on its own, and
+ * `level.spike` is the most precise kind in the corpus at 0.64 asks a game. `window.changed` is
+ * the volume: 15.7 asks a game, half of everything, at the second-worst precision in the table.
+ * So the cut is not "say less of what is wrong", it is "keep the kinds whose hit rate is high and
+ * whose count is small".
+ *
+ * ## The numbers on each level are REPLAYED, not arithmetic
+ *
+ * Every figure in `SPEAK_LEVELS` comes from stepping the real detector — `observeTick` / `dueTurn`
+ * / `commitTurn`, the same three calls the browser makes — over the same 28 games under that
+ * level, and joining each replayed turn to the stored line at the same game clock. That matters
+ * because the quiet levels are not a subtraction: `window.standing` and the heartbeat both fire
+ * INTO SILENCE, so removing `window.changed` makes them fire more often, and adding up rows of the
+ * table above would have missed it. See `standingSilenceSec` below for the one that bit.
+ *
+ * A turn at a clock the stored run never took has no line to grade; those are counted and reported
+ * as ungraded rather than guessed at in either direction, and the per-level `linesPerGame` here is
+ * the SPOKEN count including them at the level's own measured PASS rate.
+ *
+ * ```
+ *   level               asks/g   spoken/g   clean-useful/g   wrong/g   longest silence
+ *   commentary            27.5       26.2             18.8       6.8             2.9m
+ *   key-moments           10.0        9.4              6.6       1.5             5.5m
+ *   big-calls              8.5        7.8              6.4       1.3             5.6m
+ * ```
+ *
+ * Per 28-minute game, scaled from the corpus's own mean of 30.9 minutes. Re-derive any row with
+ * `scripts/measure-asks.ts --level <id>`, which replays exactly this and needs no model.
+ *
+ * The shape of the cut is the point: `big-calls` removes two thirds of the talking and one third
+ * of the good lines, because the kinds it drops are the ones with the most turns and the worst hit
+ * rate. It is still not free — 18.8 clean-useful lines a game become 6.4 — and calling it free
+ * would be the flattering version of this table. The bet is the owner's stated one: the good lines
+ * exist today and are buried, and a coach that says six good things is worth more than one that
+ * says nineteen good things inside twenty-six.
+ */
+export type SpeakLevel = "commentary" | "key-moments" | "big-calls"
+
+/**
+ * What a level does, mechanically. Three fields, and all three move together.
+ *
+ * `kinds` is the allowlist of ask kinds — an event of any other kind still FIRES, still carries its
+ * note and still rides the next turn as context, it just cannot summon one. That is the third
+ * cut's mechanism (`LiveEvent.asks`) reused: demote, never delete, because a material change has to
+ * be detected before anything can compare it and because deleting a detector deletes the evidence
+ * that would settle the question later.
+ */
+export interface AskPolicy {
+	kinds: readonly LiveEventKind[]
+	/** The floor under silence, in seconds. `Infinity` means the coach is never asked about nothing. */
+	heartbeatSec: number
+	/** How long nothing may have been asked before a standing objective becomes the news. */
+	standingSilenceSec: number
+}
+
+/**
+ * The default, and it is the quiet one.
+ *
+ * The chatty schedule is the one he rated 0/10 and asked to be turned down in every session since
+ * the first. A default that has to be found in Settings before the product is bearable is not a
+ * default.
+ */
+export const DEFAULT_SPEAK_LEVEL: SpeakLevel = "big-calls"
+
+/**
+ * The picker's own copy, kept beside the mechanism rather than in the page — exactly as
+ * `LIVE_COACH_MODES` is kept beside the prompts, and for the same reason. `evidence` carries the
+ * numbers because he distrusts a claim about this coach that arrives without one, and he is right
+ * to.
+ */
+export const SPEAK_LEVELS: {
+	id: SpeakLevel
+	label: string
+	blurb: string
+	/** Spoken lines in a 28-minute game, replayed over the 28-game corpus. */
+	linesPerGame: number
+	evidence: string
+	policy: AskPolicy
+}[] = [
+	{
+		id: "big-calls",
+		label: "Big calls only",
+		blurb:
+			"An objective window opening, a spike level, a finished legendary. Nothing else opens her mouth — no running commentary, no floor under silence, and the board on the live page keeps showing the standing state with no model in it.",
+		linesPerGame: 7.8,
+		evidence:
+			"28 real games replayed: 8.5 asks and 7.8 spoken lines in a 28-minute game, 82% [76-86] clean-useful and 17% [13-22] wrong — 6.4 good lines a game and 1.3 bad ones, against 18.8 good and 6.8 bad when she reacts to everything. Median longest silence 5.6 minutes.",
+		policy: {
+			/*
+			 * THREE KINDS, and the third is the one to argue about. `item.completed` costs 1.0 asks
+			 * a game at 79% [60-90] clean-useful; dropping it lands this level at 7.0 spoken lines
+			 * in a 28-minute game instead of 7.8, which is the strict reading of the six-lines
+			 * target. It is kept because the trade is 0.8 lines for 0.8 good ones. `level.spike`
+			 * is not the place to economise either way: it is the most precise kind in the corpus
+			 * (94% [72-99]) and it costs 0.6 asks a game.
+			 */
+			kinds: ["window.open", "level.spike", "item.completed"],
+			/*
+			 * NO FLOOR UNDER SILENCE. The heartbeat is the ask that exists because nothing else did,
+			 * and this level's whole premise is that nothing else did is an acceptable answer — the
+			 * board on the live page renders the standing state continuously with no model in it, so
+			 * a quiet coach is not an empty screen.
+			 */
+			heartbeatSec: Infinity,
+			/*
+			 * The gate still runs at 210 although `window.standing` is not in `kinds`, and that is
+			 * deliberate: the detector fires, the note rides the next turn as context, and the bench
+			 * can still count it. Demote, never delete.
+			 */
+			standingSilenceSec: 210
+		}
+	},
+	{
+		id: "key-moments",
+		label: "Key moments",
+		blurb:
+			"Everything above, plus him coming back up, an objective that has stood free for a while, and a floor under long silences. Still no running commentary on a window that is already open.",
+		linesPerGame: 9.4,
+		evidence:
+			"10.0 asks and about 9.4 spoken lines in a 28-minute game, 80% [75-84] clean-useful — 6.6 good lines and 1.5 bad ones. 8.2 of those lines are joined to a real stored line; the other 1.2 land at instants no recorded run ever took, so they are counted at the same speak rate rather than assumed silent.",
+		policy: {
+			kinds: [
+				"window.open",
+				"window.standing",
+				"respawn.self",
+				"level.spike",
+				"item.completed"
+			],
+			/*
+			 * 360 AND 210, IN THAT ORDER, and the order is load-bearing.
+			 *
+			 * Both fire into silence, so the shorter one reaches every lull first. At the shipped
+			 * 180s the heartbeat takes every silence before the 210s standing gate can, and
+			 * `window.standing` — the only ask that covers a free objective nobody has taken — never
+			 * fires at all. Measured: the first replay of this level reported zero standing asks in
+			 * 28 games, and the fix was the floor, not the gate.
+			 *
+			 * 210 rather than the shipped 90 because the shipped figure was measured while the coach
+			 * was noisy, where anything at all resets the silence clock. With `window.changed` gone
+			 * the same 90s gate re-fires about seven times a game, which is the timer this whole
+			 * file replaced walking back in through the silence door.
+			 */
+			heartbeatSec: 360,
+			standingSilenceSec: 210
+		}
+	},
+	{
+		id: "commentary",
+		label: "Running commentary",
+		blurb:
+			"Every development: a window re-asked each time the board under it moves, the enemy jungler dying, and a heartbeat every three minutes. This is the schedule every stored measurement in this repo was taken on.",
+		linesPerGame: 26.2,
+		evidence:
+			"27.5 asks and 26.2 spoken lines in a 28-minute game, 72% [69-75] clean-useful — 18.8 good lines a game and 6.8 wrong ones, with a median longest silence of 2.9 minutes. Every number elsewhere in this app was measured here, and this is the schedule he scored 0/10.",
+		policy: {
+			kinds: [
+				"window.open",
+				"window.changed",
+				"window.standing",
+				"death.counterpart",
+				"respawn.self",
+				"level.spike",
+				"item.completed",
+				/*
+				 * `game.start` has not asked since the fifth cut — 0 useful lines in 28 games — and it
+				 * is listed here because `asksBeforeFifthCut` puts the question back for a replay, and
+				 * an allowlist that quietly vetoed it would make the 879-turn table unreproducible.
+				 * The fire site decides; this only declines to overrule it.
+				 */
+				"game.start"
+			],
+			heartbeatSec: HEARTBEAT_SEC,
+			standingSilenceSec: STANDING_SILENCE_SEC
+		}
+	}
+]
+
+/**
+ * The policy for a level. Unknown or absent falls back to the default rather than to the chattiest
+ * thing available, because the failure mode of a typo should be a quiet coach and not the one he
+ * switched off.
+ */
+export const askPolicy = (level?: SpeakLevel | null): AskPolicy =>
+	(SPEAK_LEVELS.find(l => l.id === level) ?? SPEAK_LEVELS.find(l => l.id === DEFAULT_SPEAK_LEVEL)!)
+		.policy
+
 /* --------------------------------------------------- the reachability port */
 
 /**
@@ -1294,10 +1519,23 @@ export const observeTick = (
 	 * which is why the knob now moves ONE thing and the 879-turn table still reproduces exactly.
 	 * The name is kept: it names the schedule it reproduces, not the number of asks it touches.
 	 */
-	opts: { reach?: ReachFn; standingSilenceSec?: number; asksBeforeFifthCut?: boolean } = {}
+	opts: {
+		reach?: ReachFn
+		standingSilenceSec?: number
+		asksBeforeFifthCut?: boolean
+		/**
+		 * HOW OFTEN SHE IS ASKED — see `SPEAK_LEVELS`. Absent means `DEFAULT_SPEAK_LEVEL`, which is
+		 * the quiet one, so a caller that forgets gets the shipped default rather than the schedule
+		 * the owner rated 0/10. Every replay that means the OLD schedule therefore has to say
+		 * `level: "commentary"` out loud, which is the right way round: a bench that does not name
+		 * the schedule it is replaying is the bug.
+		 */
+		level?: SpeakLevel
+	} = {}
 ): LiveEvent[] => {
 	const out: LiveEvent[] = []
 	const now = tick.gameTimeSec
+	const policy = askPolicy(opts.level)
 	/*
 	 * `asks` and `windowKey` default to "no" and "none", so no detector can cause a turn by accident.
 	 * The kinds that DO ask pass it explicitly, and there are two families of them: the three
@@ -1317,7 +1555,14 @@ export const observeTick = (
 		watch.fired.add(e.key)
 		out.push({
 			...e,
-			asks: e.asks === true,
+			/*
+			 * TWO GATES, AND THIS IS THE SECOND. The fire site decides whether this kind of thing is
+			 * a question at all — that is the third and fifth cuts, measured, and it is not a
+			 * setting. The LEVEL then decides whether the user wants to be asked that kind of
+			 * question today. An event the level vetoes is not dropped: it keeps its note, rides the
+			 * next turn as context, and is still there for the bench to count. See `AskPolicy`.
+			 */
+			asks: e.asks === true && policy.kinds.includes(e.kind),
 			windowKey: e.windowKey ?? null,
 			/*
 			 * NOW, not `atSec`. A window's `atSec` is its spawn and a kill's is the log's own clock;
@@ -1968,10 +2213,10 @@ export const observeTick = (
 					standing &&
 					nothingQueued &&
 					watch.lastTurnAtSec !== null &&
-					now - watch.lastTurnAtSec >= (opts.standingSilenceSec ?? STANDING_SILENCE_SEC) &&
+					now - watch.lastTurnAtSec >= (opts.standingSilenceSec ?? policy.standingSilenceSec) &&
 					(watch.lastStandingAskAtSec === null ||
 						now - watch.lastStandingAskAtSec >=
-							(opts.standingSilenceSec ?? STANDING_SILENCE_SEC))
+							(opts.standingSilenceSec ?? policy.standingSilenceSec))
 				) {
 					watch.lastStandingAskAtSec = now
 					watch.standingAsks += 1
@@ -2174,10 +2419,16 @@ export interface TurnReason {
 export const dueTurn = (
 	watch: EventWatch,
 	nowSec: number,
-	opts: { inFlight?: boolean; heartbeatSec?: number; settleSec?: number } = {}
+	opts: {
+		inFlight?: boolean
+		heartbeatSec?: number
+		settleSec?: number
+		/** See `SPEAK_LEVELS`. Here it decides the floor under silence, and `heartbeatSec` overrides it. */
+		level?: SpeakLevel
+	} = {}
 ): TurnReason | null => {
 	if (opts.inFlight === true) return null
-	const heartbeatSec = opts.heartbeatSec ?? HEARTBEAT_SEC
+	const heartbeatSec = opts.heartbeatSec ?? askPolicy(opts.level).heartbeatSec
 	const events = watch.pending
 	/*
 	 * THE ONE LINE THE THIRD CUT CHANGED HERE. It used to be `events.length === 0`, so anything

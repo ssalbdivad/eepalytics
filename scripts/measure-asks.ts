@@ -69,11 +69,14 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { scoreLine, wilson } from "../src/analysis/coach-score.ts"
 import {
+	askPolicy,
 	commitTurn,
+	DEFAULT_SPEAK_LEVEL,
 	dueTurn,
 	newEventWatch,
 	observeTick,
-	projectTick
+	projectTick,
+	type SpeakLevel
 } from "../src/analysis/live-events.ts"
 import { clockClaims, mechanicalVerdict, readPayload } from "./lib/payload-claims.ts"
 import { championVocabulary, readVerbatim } from "./lib/stream.ts"
@@ -91,6 +94,15 @@ const OUT = arg("--out", "")
 const CUTS = process.argv.includes("--cuts")
 /** Replay the schedule as it stood BEFORE the fifth cut, so the table that made it is derivable. */
 const BEFORE = process.argv.includes("--before")
+/**
+ * WHICH SPEAK LEVEL to replay — see `SPEAK_LEVELS` in `src/analysis/live-events.ts`.
+ *
+ * Defaults to whatever ships, so `--out` after a change describes the coach he actually has. Under
+ * `--before` it is forced to `commentary`: that flag's entire job is to reproduce the 879-turn
+ * table exactly, and replaying the pre-fifth-cut fire sites under a post-selectivity allowlist
+ * would reproduce neither schedule.
+ */
+const LEVEL = (BEFORE ? "commentary" : (arg("--level", DEFAULT_SPEAK_LEVEL) as SpeakLevel))
 
 interface Run {
 	heartbeatSec: number
@@ -141,8 +153,21 @@ const replay = (sampleFile: string): Turn[] => {
 	for (const row of readVerbatim(sampleFile)) {
 		const tick = projectTick(row.data as LiveAllGameData)
 		if (!tick) continue
-		watch.pending.push(...observeTick(watch, tick, { asksBeforeFifthCut: BEFORE }))
-		const reason = dueTurn(watch, tick.gameTimeSec, { heartbeatSec: run.heartbeatSec })
+		watch.pending.push(...observeTick(watch, tick, { asksBeforeFifthCut: BEFORE, level: LEVEL }))
+		/*
+		 * THE LEVEL OWNS THE FLOOR, and the stored run's `heartbeatSec` is only the authority under
+		 * `--before`, where reproducing that run is the entire point.
+		 *
+		 * Passing the run's 180s under a quiet level puts a floor back underneath a level that has
+		 * none, and it is not a small error: `key-moments` gates a standing objective on 210s of
+		 * silence, so a 180s heartbeat reaches every lull first and `window.standing` becomes
+		 * unreachable. The first run of this script did exactly that and reported the kind missing
+		 * from a level that has it.
+		 */
+		const reason = dueTurn(watch, tick.gameTimeSec, {
+			level: LEVEL,
+			heartbeatSec: BEFORE ? run.heartbeatSec : askPolicy(LEVEL).heartbeatSec
+		})
 		if (!reason) continue
 		commitTurn(watch, reason, tick.gameTimeSec)
 		turns.push({
@@ -403,7 +428,7 @@ const trade = (label: string, keep: (r: Row) => boolean): void => {
 }
 
 console.log(
-	`${RUN}${BEFORE ? "  (schedule replayed as it stood BEFORE the fifth cut)" : ""}\n${rows.length} turns joined to the ask that raised them; ${newInstants} replayed turn(s) the stored run never took, ungraded`
+	`${RUN}  (speak level: ${LEVEL})${BEFORE ? "  (schedule replayed as it stood BEFORE the fifth cut)" : ""}\n${rows.length} turns joined to the ask that raised them; ${newInstants} replayed turn(s) the stored run never took, ungraded`
 )
 tally("BY ASK KIND", r => r.kinds)
 tally("BY CAUSE (a window ask is split by every field that moved)", r => r.causes)

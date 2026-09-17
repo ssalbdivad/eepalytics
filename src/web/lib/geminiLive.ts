@@ -35,14 +35,15 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { mayspeak, newPaceMemory, noteSpoken, SPEAK_FLOOR_SEC } from "../../analysis/speak-pace.ts"
 import {
+	DEFAULT_SPEAK_LEVEL,
 	describeTurn,
 	dueTurn,
 	commitTurn,
-	HEARTBEAT_SEC,
 	newEventWatch,
 	observeTick,
 	type EventWatch,
-	type LiveTick
+	type LiveTick,
+	type SpeakLevel
 } from "../../analysis/live-events.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../../shared/live-prompt.ts"
 import { runCoachTurn, SystemVoice } from "./turnCoach.ts"
@@ -461,6 +462,15 @@ export interface GeminiLiveOptions {
 	grabFrame: () => string | null
 	/** The architecture in Settings. `trusted` removes the pace floor and quickens the beat. */
 	coachMode?: string
+	/**
+	 * HOW OFTEN she is asked — the `liveSpeakLevel` setting, forwarded. See `SPEAK_LEVELS`.
+	 *
+	 * Absent means `DEFAULT_SPEAK_LEVEL`, which is the quiet one, and that is the same fallback the
+	 * detector applies on its own. It matters here because the setting arrives from
+	 * `GET /api/settings` AFTER the first render: a socket that opened in the meantime must not
+	 * spend the first minute of the game on the chattiest schedule while it waits.
+	 */
+	speakLevel?: SpeakLevel
 }
 
 export const useGeminiLive = (opts: GeminiLiveOptions) => {
@@ -530,6 +540,14 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 	player.onChange = () => setAudio({ blocked: player.blocked, played: player.played })
 	const optsRef = useRef(opts)
 	optsRef.current = opts
+	/**
+	 * READ THROUGH THE REF, EVERY TURN. The socket effect and the turn loop both close over their
+	 * first render, and this setting arrives from `GET /api/settings` one render later — closed
+	 * over, a socket opened during the draft would run the whole game on whatever was current when
+	 * the effect ran. A function read at the moment of the ask cannot go stale, and the ask is the
+	 * only place it is used.
+	 */
+	const level = (): SpeakLevel => optsRef.current.speakLevel ?? DEFAULT_SPEAK_LEVEL
 	/** Transcript arrives in fragments; they are joined until the turn completes. */
 	const partialRef = useRef("")
 	/**
@@ -1163,9 +1181,9 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			const projected = await optsRef.current.liveTick?.()
 			// No feed, no decision — :2999 answers nothing during the draft and the loading screen.
 			if (!projected) return false
-			const fired = observeTick(watchRef.current, projected)
+			const fired = observeTick(watchRef.current, projected, { level: level() })
 			watchRef.current.pending.push(...fired)
-			const reason = dueTurn(watchRef.current, projected.gameTimeSec, { heartbeatSec: HEARTBEAT_SEC })
+			const reason = dueTurn(watchRef.current, projected.gameTimeSec, { level: level() })
 			if (!reason) return false
 			setLastAsk(describeTurn(reason))
 			/*
@@ -1505,14 +1523,14 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				 * `EventWatch` spanning two games reaches it, so it is the backstop that was broken
 				 * rather than the usual path — which is exactly the kind of bug nothing notices.
 				 */
-				const fired = observeTick(watchRef.current, tick)
+				const fired = observeTick(watchRef.current, tick, { level: level() })
 				watchRef.current.pending.push(...fired)
 				/* A turn older than `BUSY_MAX_MS` is not in flight any more, whatever the flag says. */
 				if (modelBusy.current && Date.now() - busySinceMs.current > BUSY_MAX_MS)
 					modelBusy.current = false
 				const reason = dueTurn(watchRef.current, tick.gameTimeSec, {
 					inFlight: modelBusy.current,
-					heartbeatSec: HEARTBEAT_SEC
+					level: level()
 				})
 				if (!reason) return
 				setLastAsk(describeTurn(reason))

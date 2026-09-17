@@ -16,6 +16,7 @@ import type { HealthResponse } from "../../shared/schema/api.ts"
 import type { Settings, SettingsPatch } from "../../shared/schema/settings.ts"
 import { MODEL_CHOICES, clampSettings, settingsOverrides } from "../../shared/schema/settings.ts"
 import { LIVE_COACH_MODES } from "../../shared/live-coach-mode.ts"
+import { SPEAK_LEVELS } from "../../analysis/live-events.ts"
 import { api } from "../lib/api.ts"
 import { useAction, useNow, useResource } from "../lib/hooks.ts"
 import { cls, fmtAgo, phaseWord } from "../lib/format.ts"
@@ -346,6 +347,61 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							<br />
 							There is no "sign in with Google" here because there cannot be — the Live API takes
 							an API key, and a consumer Gemini subscription grants no API access.
+						</div>
+					</div>
+
+					{/*
+					 * HOW OFTEN SHE SPEAKS AT ALL — the one knob he has asked for in every session.
+					 *
+					 * It sits ABOVE the architecture picker because it is the bigger lever on whether
+					 * this coach is bearable: the architecture decides what she is allowed to notice,
+					 * this decides how many times a game she is asked to notice anything. Same rule
+					 * about evidence — each option carries the replayed count of lines per game and
+					 * how many of them were graded good, including the option he is not on, because a
+					 * volume claim with no number beside it is the sentence he has learned to
+					 * discount.
+					 *
+					 * NOTHING HERE TOUCHES WHAT SHE MAY SAY. It moves which asks fire; the prompt,
+					 * the brief and the citation rule are identical on all three.
+					 */}
+					<div className="field wide">
+						<div className="label">How often she speaks</div>
+						<div className="control" style={{ display: "grid", gap: 8 }}>
+							{SPEAK_LEVELS.map(l => {
+								const on = draft.liveSpeakLevel === l.id
+								return (
+									<label key={l.id} className={cls("choice", on && "on")}>
+										<input
+											type="radio"
+											name="liveSpeakLevel"
+											checked={on}
+											onChange={() => set("liveSpeakLevel", l.id)}
+										/>
+										<div>
+											<div className="choice__title">
+												{l.label} — about {l.linesPerGame.toFixed(1)} lines in a 28-minute game
+											</div>
+											<div className="choice__blurb">{l.blurb}</div>
+											<div className="choice__evidence">
+												<b>Measured:</b> {l.evidence}
+											</div>
+										</div>
+									</label>
+								)
+							})}
+						</div>
+						<div className="help">
+							Replayed through the real detector over 28 of your own recorded games — 879 turns,
+							each one joined to the ask that raised it and graded by a blind judge and by a
+							check that subtracts the payload's own clocks out of the sentence in code. Re-derive
+							any of these with <code className="mono">scripts/measure-asks.ts --level &lt;id&gt;</code>;
+							no model is consulted.
+						</div>
+						<div className="help">
+							This changes <b>when she is asked</b>, never what she may say — the prompt is
+							byte-identical on all three. The live page's board keeps rendering the objective
+							clocks, the rosters and the standing state continuously with no model in it, which
+							is why going quiet costs you no information.
 						</div>
 					</div>
 

@@ -70,6 +70,24 @@ export const Settings = type({
 	liveCoachMode: "'trusted'|'cite-or-quiet'|'fenced'",
 
 	/**
+	 * HOW OFTEN the live coach is asked to say anything — see `SPEAK_LEVELS` in
+	 * `src/analysis/live-events.ts`, which owns the mechanism, the three ask sets and the numbers.
+	 *
+	 * It moves WHICH ASKS FIRE and nothing else. No prompt changes, no subject is forbidden and no
+	 * sentence is suppressed — a question not asked is a moment she was left alone, which is the
+	 * only lever this repo will pull on volume.
+	 *
+	 * `big-calls` is the default and it is a deliberate change of default: replayed over 28 real
+	 * games it speaks 7.8 times in a 28-minute game against `commentary`'s 26.2, for 6.4 clean-useful
+	 * lines against 18.8. That is a third of the good lines and a third of the talking, and the bet
+	 * — his, stated in his own words — is that the good lines already exist and are buried.
+	 *
+	 * The union is spelled out rather than imported so this file keeps its one-way dependency on
+	 * `shared/`; `live-events.test.ts` asserts the two lists and the two defaults agree.
+	 */
+	liveSpeakLevel: "'commentary'|'key-moments'|'big-calls'",
+
+	/**
 	 * How we reach the League client across the WSL2 boundary. `bridge` is a long-lived
 	 * Windows-side node.exe over stdio (p50 2.3 ms); `curl` shells out to curl.exe (~88 ms).
 	 * The daemon falls back to curl on its own if the bridge will not start.
@@ -97,6 +115,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	liveProvider: "gemini-live",
 	liveModel: "",
 	liveCoachMode: DEFAULT_LIVE_COACH_MODE,
+	liveSpeakLevel: "big-calls",
 	transport: "bridge",
 	pollIdleMs: 5_000,
 	pollInGameMs: 2_000,
@@ -115,6 +134,7 @@ export const SettingsPatch = type({
 	"liveProvider?": "string",
 	"liveModel?": "string",
 	"liveCoachMode?": "'trusted'|'cite-or-quiet'|'fenced'",
+	"liveSpeakLevel?": "'commentary'|'key-moments'|'big-calls'",
 	"transport?": "'bridge'|'curl'",
 	"pollIdleMs?": "number",
 	"pollInGameMs?": "number",
