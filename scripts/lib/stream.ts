@@ -1310,6 +1310,32 @@ export const discoverTextWindows = (opts?: {
 			})
 			continue
 		}
+		/*
+		 * A GAME THE CLIENT SAYS LASTED ZERO SECONDS IS A REMAKE, and it is not benchable.
+		 *
+		 * Measured 2026-09-18: games 5644425000 and 5644466002 are stored with `gameDurationSec` 0
+		 * — an early surrender or a remake, which the LCU reports as a zero-length game — while the
+		 * sampler had already written 60 real samples covering 0:01 to 6:33 before the client
+		 * vanished. So a window was produced whose duration is zero and whose samples are not, and
+		 * everything downstream that divides by a duration, places a clock inside one, or reports
+		 * "of a N-second game" was quietly working from the wrong end of that contradiction.
+		 *
+		 * Refused rather than repaired. The sampler's own last clock would make a plausible
+		 * duration and it would be a NUMBER THIS APP INVENTED for a game the client declined to
+		 * measure, which is the one thing every other refusal in this function exists to avoid.
+		 */
+		if (!(seg.game.gameDurationSec > 0)) {
+			rejected.push({
+				file: seg.file,
+				gameId: seg.game.gameId,
+				samples: seg.samples.length,
+				why:
+					`game ${seg.game.gameId} is stored with a duration of ${seg.game.gameDurationSec}s — a ` +
+					`remake or an early surrender — while this file holds ${seg.samples.length} samples. ` +
+					"A window cannot carry a clock the game itself does not have."
+			})
+			continue
+		}
 		const from = Math.round(seg.samples[0]!.gameTime)
 		const to = Math.round(seg.samples[seg.samples.length - 1]!.gameTime)
 		const notes = [
