@@ -171,9 +171,41 @@ test("the schedule refuses the timers it cannot know", () => {
 	const t = brief!.text
 	// The gap before a second grub set is a patch value; a number here would be the invented one.
 	assert.match(t, /NOT stated here/)
-	assert.match(t, /which crabs are up right now is NOT KNOWN/)
 	const grubLine = t.split("\n").find(l => l.startsWith("Voidgrubs:"))!
 	assert.ok(!/\bin \d+ (?:seconds|minutes)\b/.test(grubLine), grubLine)
+})
+
+/*
+ * ---------------------------------------------------------------- the crab
+ *
+ * "You are level 6 and Kayn is level 5, so grab this crab and then get ready to contest these
+ * grubs." — 7:17 of the shipped `big-calls` run, the one real fabrication in it. The scuttle entry
+ * WAS in that payload and it opened `Scuttle crabs: one in each river, first pair a few minutes
+ * in`, then said `which crabs are up right now is NOT KNOWN` two hundred characters later, and
+ * closed by refusing a NUMBER. The coach said no number. It said "this crab".
+ *
+ * So these pin the two properties that sentence needed and did not have: the entry must lead on
+ * the absence and say the CRAB is what is absent, and the refusal must reach every turn — the old
+ * one was full-brief only, and the temptation is the objective list, which rides on every delta.
+ */
+test("the scuttle entry leads on the absence, and it is the crab that is absent", () => {
+	const line = brief!.text.split("\n").find(l => l.startsWith("Scuttle crabs:"))!
+	assert.match(line, /^Scuttle crabs: NOT KNOWN/)
+	assert.match(line, /it is the CRABS that are not known, not just their clock/)
+	// The sentence that was actually written, named — a quantity refusal never reached it.
+	assert.match(line, /grab this crab/)
+	assert.ok(!/\d/.test(line), line)
+})
+
+test("every payload says the crab is not on the objective list, brief and delta alike", () => {
+	for (const [what, text] of [
+		["brief", brief!.text],
+		["delta", delta!.text]
+	] as const) {
+		const next = text.split("\n\n").find(x => x.startsWith("NEXT"))!
+		assert.match(next, /SCUTTLE CRABS ARE NOT ON IT AND CANNOT BE/, what)
+		assert.match(next, /there is no "this crab" anywhere in this payload/, what)
+	}
 })
 
 /*
@@ -395,7 +427,88 @@ test("NEXT carries the live objective state and none of the schedule prose", () 
 	assert.match(next, /Voidgrubs \(top side\): up at 8:00, in \d+m\d\ds/)
 	assert.match(next, /position line is a read of a PICTURE/)
 	assert.ok(!/patch value/.test(delta!.text))
-	assert.ok(!/NOT KNOWN/.test(delta!.text))
+	/*
+	 * The 918 characters of schedule prose stay in the full brief. What the delta DOES now carry
+	 * is the one-sentence scuttle absence, which is not schedule prose — it is the statement that
+	 * the list above it is complete, and it has to ride on every turn because every turn carries
+	 * the list. This assertion used to be `!/NOT KNOWN/`, which forbade it by accident.
+	 */
+	assert.ok(!/Voidgrubs: first spawn/.test(delta!.text))
+	assert.ok(!/They leave the pit at/.test(delta!.text))
+})
+
+/*
+ * ---------------------------------------------------------------- the two climbing facts
+ *
+ * `data/eval/what-wins-20260918.json`, over 138 of his own ranked games: neutral objectives taken
+ * minus conceded by 10:00 is AUC 0.65 [0.56-0.74] and deaths in 10:00-15:00 are AUC 0.35
+ * [0.26-0.44], and both survive putting the 10-minute scoreboard in the model. Almost nothing else
+ * he does early does — CS at 10 is 0.56 [0.46-0.66].
+ *
+ * These pin the ARITHMETIC and the ORDER, which is all the payload contributes. Nothing here
+ * asserts that either fact is worth a sentence, because nothing in the renderer says so.
+ */
+test("the ledger counts every neutral by side, off the killer and never the assisters", () => {
+	const line = brief!.text.split("\n").find(l => l.startsWith("OBJECTIVE LEDGER"))!
+	assert.match(line, /Drakes you 0 them 0/)
+	assert.match(line, /Net over those: level/)
+	/* A judgement about the count is the model's; this line is a sum. */
+	assert.ok(!/\b(ahead|behind|losing|winning|should)\b/i.test(line), line)
+})
+
+test("the ledger prints no row for a neutral that could not yet have happened", () => {
+	/* Before 5:00 nothing on it can have been taken, and a 0-0 line about that is the same false
+	 * shape as the first-drake line that used to render from 0:00. */
+	const early = buildBrief({ raw: cur, gameTimeSec: 120, previous: null, feedNotes: false })!
+	assert.ok(!/OBJECTIVE LEDGER/.test(early.text), early.text.slice(0, 400))
+	/* Past the grub window both rows are there, and the drake row is there in the shipped fixture. */
+	const late = buildBrief({ raw: cur, gameTimeSec: 900, previous: null, feedNotes: false })!
+	const line = late.text.split("\n").find(l => l.startsWith("OBJECTIVE LEDGER"))!
+	assert.match(line, /Drakes you 0 them 0; Voidgrubs you 0 them 0; Rift Herald you 0 them 0/)
+})
+
+test("the roll-call states the dead exactly and the placed as a ceiling", () => {
+	const blind = brief!.text.split("\n").find(l => l.startsWith("ENEMIES ACCOUNTED FOR"))!
+	/* One enemy is down in the fixture, and nothing placed the other four. */
+	assert.match(blind, /1 of 5 are DEAD on the respawn timers above, and 4 are alive/)
+	assert.match(blind, /NOTHING here places any of the 4/)
+	assert.match(blind, /is not an enemy who is far away/)
+
+	const seen = buildBrief({
+		raw: cur,
+		gameTimeSec: cur.gameTime,
+		previous: null,
+		feedNotes: false,
+		at: { label: "river (bot)", coarse: "botside", atSec: cur.gameTime - 8, enemies: ["river (bot)"] }
+	})!
+	const withIcon = seen.text.split("\n").find(l => l.startsWith("ENEMIES ACCOUNTED FOR"))!
+	/*
+	 * A minimap icon has no identity, so it can only ever bound the count from above — see
+	 * `accountedLine`. AT MOST / AT LEAST is the whole content of the line and a future edit that
+	 * turns either into a plain count is asserting an identity the reader refuses to supply.
+	 */
+	assert.match(withIcon, /AT MOST 1 of the 4 is placed/)
+	assert.match(withIcon, /AT LEAST 3 are somewhere this payload cannot see/)
+	assert.match(withIcon, /8s old/)
+})
+
+test("both climbing facts sit above the pits, on the brief and on the delta alike", () => {
+	for (const [what, text] of [
+		["brief", brief!.text],
+		["delta", delta!.text]
+	] as const) {
+		const next = text.split("\n\n").find(x => x.startsWith("NEXT"))!
+		const lines = next.split("\n")
+		const roll = lines.findIndex(l => l.startsWith("ENEMIES ACCOUNTED FOR"))
+		const ledger = lines.findIndex(l => l.startsWith("OBJECTIVE LEDGER"))
+		const where = lines.findIndex(l => l.startsWith("WHERE "))
+		const firstPit = lines.findIndex(l => l.startsWith("- "))
+		assert.ok(roll > 0 && ledger > 0 && firstPit > 0, `${what}: ${lines.join(" | ")}`)
+		/* Roll-call under the counterpart's absence — same subject; ledger directly above the pits. */
+		assert.ok(where < roll, `${what}: roll-call must follow WHERE`)
+		assert.ok(roll < ledger, `${what}: roll-call must lead the ledger`)
+		assert.ok(ledger < firstPit, `${what}: the ledger must lead the pit lines`)
+	}
 })
 
 test("over the cap it truncates from the bottom, never from the top", () => {

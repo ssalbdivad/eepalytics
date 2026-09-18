@@ -991,7 +991,24 @@ const objectiveBlock = (
 		 * next one of those waiting to happen — so it goes out as prose, which is the treatment
 		 * this block already gives the grub respawn cadence for the same reason.
 		 */
-		`Scuttle crabs: one in each river, first pair a few minutes in. The exact spawn clock and the respawn cadence are patch values this app cannot check — the live feed logs no scuttle kill at all and neither does the post-game timeline — so no scuttle time is stated here and which crabs are up right now is NOT KNOWN. Do not put a number on it.`,
+		/*
+		 * THE ABSENCE LEADS, and it is the CRAB that is absent, not a number about it.
+		 *
+		 * This entry used to open `Scuttle crabs: one in each river, first pair a few minutes in.`
+		 * — a present-tense assertion that crabs exist and are roughly due — and put `NOT KNOWN`
+		 * 200 characters later, behind two clauses of epistemics, with a closing refusal aimed at
+		 * a NUMBER. At 7:17 of the shipped `big-calls` run the coach said "grab this crab". It
+		 * never said a number, so the only thing this entry refused was the only thing it did not
+		 * do. That is the same failure `prospectHead`'s position line had: the invention was not a
+		 * bare quantity, it was a THING and an ACTION, and a sentence refusing quantities does not
+		 * reach either.
+		 *
+		 * So the entry now begins and ends on what is missing, says the missing thing is the crab
+		 * rather than its clock, and names the shape the sentence took. `nextBlock`'s header
+		 * carries the short form on every turn, because this section is full-brief only and the
+		 * temptation is on the objective list.
+		 */
+		`Scuttle crabs: NOT KNOWN, and it is the CRABS that are not known, not just their clock. Nothing this app reads logs a scuttle kill — not the live feed, not the post-game timeline — so this payload cannot say whether either crab is alive, whether one has just been taken, who took it, or when the next one is due; the spawn clock and the respawn cadence are patch values it cannot check either. A sentence like "grab this crab" is about a thing this app has never once observed, in any game, and the reason it reads as safe is that nothing here contradicts it.`,
 		`Baron Nashor: spawn ${spawnPhrase(BARON_SPAWN_SEC, now)}. ${
 			barons.length === 0 ?
 				now < BARON_SPAWN_SEC ? "Not taken; not up yet."
@@ -1456,8 +1473,24 @@ const situation = (
 			`${clock(s.now)}. YOU ARE DEAD — ${s.downFor(s.me)}, ${r0(s.me.respawn)}s until you are up. (A corpse reads 0 HP and 0 mana in this feed, so neither bar is printed while you are down.)`
 		:	`${clock(s.now)}. YOU ARE ALIVE, ${bar("HP", s.hp, s.maxHp, HP_LOW_BAND)}, ${bar("mana", s.mana, s.maxMana, MANA_LOW_BAND)}. ${ONLY_HIS}.`
 	)
+	/*
+	 * GOLD IN HAND MOVED TO THE END OF THIS CLAUSE, and that is the only thing that changed here.
+	 *
+	 * "Recall and spend your gold" is the single largest subject in the coach's whole recorded
+	 * output — 36.4% of 3,667 blind-judged lines across 33 games
+	 * (`data/eval/climb-attribution-20260918.json`). On his own 138 ranked games it is the one
+	 * quantity in the table that points the OTHER WAY: `meanGoldInHand` is AUC 0.82 [0.75-0.89],
+	 * 1,023g in wins against 778g in losses, and it survives the even-at-ten stratum at 0.77
+	 * (p 0.004). He holds MORE unspent gold in the games he WINS.
+	 *
+	 * The figure is true and it stays, at full precision, in this clause and in `YOU` and in
+	 * `prospectHead`'s state. What it no longer does is sit second, ahead of his K/D/A and his
+	 * farm, in the first table-free sentence of the payload. This is an ordering change and it is
+	 * UNMEASURED on its own — it moves five words inside one sentence — so it is reported as a
+	 * change of position and not as a result.
+	 */
 	bits.push(
-		`${s.me.champion} (${s.me.position || "role unlabelled"}) lvl ${s.me.level}, ${r0(s.gold)}g in hand, ${s.me.kills}/${s.me.deaths}/${s.me.assists}, ${s.me.cs} CS (${r1(s.csPerMin)}/min).`
+		`${s.me.champion} (${s.me.position || "role unlabelled"}) lvl ${s.me.level}, ${s.me.kills}/${s.me.deaths}/${s.me.assists}, ${s.me.cs} CS (${r1(s.csPerMin)}/min), ${r0(s.gold)}g in hand.`
 	)
 	const c = s.counterpart
 	/*
@@ -2549,7 +2582,50 @@ const nextBlock = (
 	 * two — which silently deletes the baron clause on exactly the turns baron decides the game.
 	 */
 	const budget = NEXT_BUDGET + clauses * REACH_BUDGET_PER_CLAUSE + noteChars
-	return ["NEXT — what is coming, joined to where you are and what you have. The position line is a read of a PICTURE, not a feed value.", ...prospectHead(s, at, seenAtSec, watchedFromSec, full), ...fit(lines, budget)].join("\n")
+	/*
+	 * THE ROLL-CALL AND THE LEDGER SIT BETWEEN THE HEAD AND THE PITS, and they are not budgeted.
+	 *
+	 * Order is the whole change. The roll-call rides directly under `counterpartWhere` because it
+	 * is the same subject — how much of the other team this app can place — and a reader who has
+	 * just been told the enemy jungler is unplaced is about to under-count the other four. The
+	 * ledger rides directly above the pit lines because that is the order a decision about a pit
+	 * consumes them: who is ahead on the neutrals, then which neutral is next, then whether he can
+	 * be there. Nothing here says either is worth a sentence.
+	 *
+	 * Unbudgeted for the same reason the head is: `fit` drops from the END, and a fact that only
+	 * survives on quiet turns is a fact the coach never has when the game is loud.
+	 */
+	const roll = accountedLine(s, at)
+	const ledger = ledgerLine(neutralLedger(s))
+	return [
+		/*
+		 * THE SCUTTLE CRAB, NAMED IN THE HEADER — the absence stated where the temptation is.
+		 *
+		 * At 7:17 of the shipped `big-calls` run the coach said "you are level 6 and Kayn is level
+		 * 5, so grab this crab and then get ready to contest these grubs." Nothing in this app
+		 * knows anything about a crab. The full brief's OBJECTIVES section did carry a scuttle
+		 * entry and that entry was read — it opens `Scuttle crabs: one in each river, first pair a
+		 * few minutes in`, an assertion in the present tense, and only 200 characters later says
+		 * `which crabs are up right now is NOT KNOWN`, and the only thing it actually refuses is a
+		 * NUMBER (`Do not put a number on it`). The coach did not say a number. It said "this
+		 * crab", which that entry never addressed.
+		 *
+		 * And OBJECTIVES is a FULL-BRIEF section, two thousand characters below this list, absent
+		 * from every delta. The temptation is HERE: this is the list of contestable neutrals, and a
+		 * list that silently omits the one neutral a jungler passes six times before ten minutes
+		 * reads as a list he is expected to complete. That is the roster's missing health column
+		 * and the enemy jungler's missing farm figure, a third time.
+		 *
+		 * So the header says what the list IS — every neutral this app can time — and then says the
+		 * crab is not one of them and why. No rule, no forbidden word: after this sentence there is
+		 * nowhere left to write "this crab" from.
+		 */
+		`NEXT — what is coming, joined to where you are and what you have. The position line is a read of a PICTURE, not a feed value. The list below is EVERY neutral objective this app can time. SCUTTLE CRABS ARE NOT ON IT AND CANNOT BE: nothing this app reads logs a scuttle kill — not the live feed, not the post-game timeline — so whether a crab is up, already taken, or being taken right now is NOT KNOWN, and there is no "this crab" anywhere in this payload.`,
+		...prospectHead(s, at, seenAtSec, watchedFromSec, full),
+		...(roll === null ? [] : [roll]),
+		...(ledger === null ? [] : [ledger]),
+		...fit(lines, budget)
+	].join("\n")
 }
 
 /** The objective lines only; the head is never dropped, because a timer with no state beside it is CLOCKS again. */
@@ -2561,6 +2637,160 @@ const NEXT_BUDGET = 340
  * 150-175. Paid per clause WRITTEN, so a turn with no usable read costs nothing.
  */
 const REACH_BUDGET_PER_CLAUSE = 230
+
+/* ================================================================ the ledger and the roll-call
+ *
+ * ## Two facts added because his own 138 ranked games say they are the ones that separate
+ *
+ * `data/eval/what-wins-20260918.json` regressed every quantity this app can compute against the
+ * result of his own games. Almost nothing he does before 10:00 separates a win from a loss — CS at
+ * 10 is AUC 0.56 [0.46-0.66] (q 0.34), his gold, his level, his xp and his farm RATE against the
+ * enemy jungler are all 0.53-0.56, and dying in the enemy jungle by 15:00 — which `AGENTS.md`
+ * Part 2 still calls "the single most common way a jungler throws a lead" — is 0.51 [0.46-0.56]
+ * over a play he makes in 11% of his games. Two things do separate, and both are decided early
+ * enough to act on:
+ *
+ *  - **Neutral objectives taken minus conceded by 10:00** — AUC 0.65 [0.56-0.74], q 0.005, and it
+ *    survives putting the 10-minute scoreboard in the model (OR 1.54 [1.04-2.26]). Ahead on them he
+ *    wins 64% [52-75] of 64 games; level or behind, 38% [28-49] of 74.
+ *  - **Surviving 10:00 to 15:00** — deaths in that window are AUC 0.35 [0.26-0.44], q 0.004, the
+ *    only metric he controls at any checkpoint that survives the same control (OR 0.63 per SD
+ *    [0.43-0.93], p 0.018). No death in the window and he wins 70% [56-80] of 53 games; one or more
+ *    and 38% [28-48] of 85. The intervals do not overlap.
+ *
+ * NEITHER OF THOSE SENTENCES IS IN THE PAYLOAD, and neither may be. What the two lines below carry
+ * is the arithmetic a decision about either one consumes, and nothing else: who holds which
+ * neutrals, and how many of the enemy team is placed by anything this app knows. Which of them is
+ * worth a sentence — or whether neither is — stays the model's, exactly as it is between a standing
+ * Herald and a spawning drake. The change that serves the thesis is that both now sit ABOVE the
+ * tables rather than being derivable from them, and this repo has measured that where a fact sits
+ * decides which line survives the fit (`shared/objective-stakes.ts`).
+ *
+ * ## Why these are computed here rather than left to the model
+ *
+ * The same reason `JOINS` exists. Across the 62 spoken lines of game 5639406342 not one joined his
+ * position to an objective clock, while the post-game pack — whose joins are arithmetic — produced
+ * its best items that way. A ledger is a sum over an event log the model reads as prose; a
+ * roll-call is a set difference over a roster it reads as a table. Both come out right every time
+ * here and most times there.
+ */
+
+/** One neutral, counted by side. */
+interface LedgerRow {
+	label: string
+	yours: number
+	theirs: number
+}
+
+interface NeutralLedger {
+	rows: LedgerRow[]
+	/** Taken minus conceded, summed over the rows RENDERED. */
+	net: number
+	/** Takes whose `KillerName` matched no roster row. Counted for NEITHER side — see below. */
+	unresolved: number
+}
+
+/**
+ * The four neutrals this feed logs a kill for, with the clock each becomes possible.
+ *
+ * A row is rendered once its window has opened OR once somebody has taken one, so the ledger never
+ * prints `Baron you 0 them 0` at 6:00 — a 0-0 line about a thing that cannot have happened yet is
+ * the same shape as the first-drake line that was false for the opening five minutes of every game.
+ */
+const LEDGER_KINDS: ReadonlyArray<readonly [string, string, number]> = [
+	/* The labels are NEXT's own, so a reader matching the ledger to a pit line does not have to
+	 * translate. They are not a join key — the ledger is not a `- ` line and `reachClause` only
+	 * matches those — but a payload that calls the same pit two names is a payload that invites a
+	 * third. */
+	["DragonKill", "Drakes", DRAKE_FIRST_SPAWN_SEC],
+	["HordeKill", "Voidgrubs", GRUBS_SPAWN_SEC],
+	["HeraldKill", "Rift Herald", HERALD_SPAWN_SEC],
+	["BaronKill", "Baron", BARON_SPAWN_SEC]
+]
+
+/**
+ * Count every neutral take by side, off `KillerName` resolved against the roster.
+ *
+ * MEASURED EXACT: across all 36 recorded games on disk, 349 of 349 `DragonKill` / `HordeKill` /
+ * `HeraldKill` / `BaronKill` events carry a `KillerName` that matches a row of `allPlayers` on
+ * `riotIdGameName`. So `unresolved` is expected to be zero and is rendered when it is not, rather
+ * than being silently absorbed into one side — an unresolvable take may understate a lead and may
+ * never invent one, which is the rule `drakeStakes` already follows for the soul point.
+ *
+ * `Assisters` is NOT read, here or anywhere: 54 of 236 assisted neutral events name a player on the
+ * other team (22.9% [18.0-28.6] over 36 games). Credit on a neutral means the KILLER.
+ */
+const neutralLedger = (s: Scene): NeutralLedger => {
+	const rows: LedgerRow[] = []
+	let net = 0
+	let unresolved = 0
+	for (const [name, label, opensAt] of LEDGER_KINDS) {
+		const takes = s.events.filter(e => e.name === name)
+		if (takes.length === 0 && s.now < opensAt) continue
+		let yours = 0
+		let theirs = 0
+		for (const e of takes) {
+			const p = s.players.find(x => x.name === str(e.raw.KillerName))
+			if (p === undefined) unresolved++
+			else if (p.team === s.me.team) yours++
+			else theirs++
+		}
+		rows.push({ label, yours, theirs })
+		net += yours - theirs
+	}
+	return { rows, net, unresolved }
+}
+
+/**
+ * The ledger as one line, or null before anything on it could have happened.
+ *
+ * Counts and a difference. "You are behind on objectives" is a judgement and judgements are the
+ * model's; "Voidgrubs you 3 them 3" is a sum over the strongest channel in this feed.
+ */
+const ledgerLine = (l: NeutralLedger): string | null => {
+	if (l.rows.length === 0) return null
+	const body = l.rows.map(r => `${r.label} you ${r.yours} them ${r.theirs}`).join("; ")
+	const net = l.net === 0 ? "level" : `${signed(l.net)} to you`
+	return `OBJECTIVE LEDGER — every neutral this feed logs a kill for, by side: ${body}. Net over those: ${net}.${
+		l.unresolved === 0 ? "" : (
+			` ${l.unresolved} take${l.unresolved === 1 ? "" : "s"} named a killer this payload could not place on either team and ${l.unresolved === 1 ? "is" : "are"} counted for NEITHER side.`
+		)
+	}`
+}
+
+/**
+ * How much of the enemy team anything in this app can place, as a floor.
+ *
+ * THIS IS A SET DIFFERENCE AND IT IS THE FACT HIS SCREEN NEVER DRAWS. The client shows a death
+ * banner once and then nothing; it never shows him "three of them are unaccounted for". Deaths and
+ * respawn timers are audited exact for enemies as well as allies, so the DEAD half of this line is
+ * the hardest arithmetic in the payload. The placed half is deliberately a CEILING: the minimap
+ * reader returns enemy dots with no identity — 16 of its refusals on the recorded game were the
+ * model pointing at a red-ringed Singed and calling it him — so an icon says at most that SOME
+ * enemy was there, and the count of alive-and-unplaced is written as "at least".
+ *
+ * The closing clause is the same device as the enemy jungler's absent farm figure and the roster's
+ * absent health column: a gap is an invitation, so the payload states what the gap means instead of
+ * forbidding the sentence it produces.
+ */
+const accountedLine = (s: Scene, at: PositionFix | null | undefined): string | null => {
+	const enemies = s.players.filter(p => p.team !== s.me.team)
+	const n = enemies.length
+	if (n === 0) return null
+	const dead = enemies.filter(p => p.dead).length
+	const alive = n - dead
+	if (alive === 0) return `ENEMIES ACCOUNTED FOR: all ${n} of them are DEAD, on the respawn timers above.`
+	const icons = at === null || at === undefined ? 0 : (at.enemies ?? []).length
+	const placed = Math.min(icons, alive)
+	const unplaced = alive - placed
+	const deadPart =
+		dead === 0 ?
+			`all ${n} are alive`
+		:	`${dead} of ${n} are DEAD on the respawn timers above, and ${alive} ${alive === 1 ? "is" : "are"} alive`
+	if (placed === 0)
+		return `ENEMIES ACCOUNTED FOR: ${deadPart} — and NOTHING here places any of the ${alive}. An enemy this payload does not mention is not an enemy who is far away.`
+	return `ENEMIES ACCOUNTED FOR: ${deadPart}. The last picture carried ${icons} unidentified enemy icon${icons === 1 ? "" : "s"}, ${dur(Math.max(0, s.now - at!.atSec))} old, so AT MOST ${placed} of the ${alive} ${placed === 1 ? "is" : "are"} placed by anything here and AT LEAST ${unplaced} ${unplaced === 1 ? "is" : "are"} somewhere this payload cannot see.`
+}
 
 /* ================================================================ JOINS — the rest of the pairings
  *
@@ -2732,7 +2962,43 @@ const JOINS_BUDGET = 320
  * and dilution is the fault this is trying not to feed. The memory is the opposite: it is the only
  * section that makes a line LESS likely to be said.
  */
-export const DELTA_HARD_CAP = 3100
+/**
+ * ## 3100 -> 3800, because two rank-0 facts were added and the memory is what pays for them
+ *
+ * `accountedLine` and `ledgerLine` are rank 0 — they sit in NEXT, above the tables, and they cannot
+ * yield. At 3100 they were paid for out of the sections that can. Replayed over all 28 benchable
+ * games at `--level commentary` with `--arms mock`, so nothing but the renderer moved
+ * (867 delta turns; `data/eval/payload-climb-20260918.ts` prints the table from any two runs):
+ *
+ *     cap      mean   JOINS  CHECKPT   SAID  NARRATIVE   LEDGER  ROLL-CALL
+ *     3100*    2927     865      658    865        688        0          0    <- as it shipped
+ *     3100     2991     626      634    407        104      820        867    <- new facts, old cap
+ *     3400     3295     837      658    706        311      820        867
+ *     3600     3454     864      658    822        487      820        867
+ *     3800     3593     865      658    863        682      820        867    <- here
+ *
+ * (* the shipped renderer, before this change.)
+ *
+ * At the old cap the anti-repetition memory drops from 865 turns of 867 to 407 and the narrative
+ * from 688 to 104 — the same all-or-nothing eviction this cap has been raised twice to stop, and
+ * the memory is the only section in the payload that makes a line LESS likely to be said. 3800 is
+ * the smallest cap at which NOTHING that shipped is lost: every section is back within one turn of
+ * where it was, and the two new facts ride on every turn that has them.
+ *
+ * The cost is about 660 characters a turn. The latency regression on the 38 stored turns puts the
+ * payload term at -0.011ms per character with the wrong sign and not significant, so this is
+ * tokens and nothing else — and against the 1,102 prompt tokens each screenshot adds, re-billed on
+ * every turn after it, it is not the expensive thing in this payload.
+ *
+ * ONE THING THE SWEEP SETTLED THAT IS NOT ABOUT THE CAP: `MOVED` renders on 0 of 867 delta turns at
+ * every cap from 3100 to 3800. The reserve above was sized from one game at a 6-20 second beat,
+ * where the block ran 76-157 characters; at the event schedule's 40-100 second gaps it is bigger
+ * than `MOVED_RESERVE` on essentially every turn, so it is never reserved for and then never wins
+ * the remainder either. That is left as it is and recorded here — raising the reserve would buy
+ * back a roster of everyone's purchases at the memory's expense, which is the trade the previous
+ * revision of this comment deliberately refused.
+ */
+export const DELTA_HARD_CAP = 3800
 
 /**
  * What the two caller-owned sections may take out of a delta before their oldest rows drop.
