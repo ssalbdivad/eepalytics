@@ -442,6 +442,54 @@ export const gamesForRetentionPrune = (olderThanMs: number): Game[] =>
 		.all(olderThanMs)
 		.map(r => rowToGame({ ...(r as Row) }))
 
+/**
+ * The rows the habit tracker counts: ranked solo games with a stored timeline, newest first.
+ *
+ * `queueId = 420` is not a default, it is the population the measurement behind the tracker was
+ * taken on (`data/eval/what-wins-20260918.json`, ranked solo only). Counting a normal game into
+ * that rate would be quoting an interval for a population it was never measured on.
+ *
+ * `teamIds` comes along because credit on an elite monster is the KILLER's and the killer has to
+ * be checked against his team — one small join here rather than a second read of the match blob
+ * per game.
+ */
+export interface HabitGameRow {
+	gameId: number
+	gameCreationMs: number
+	gameDurationSec: number
+	championName: string
+	win: boolean
+	participantId: number
+	teamId: number
+}
+
+export const recentHabitGames = (limit = 20, queueId = 420): HabitGameRow[] =>
+	prep(
+		`SELECT gameId, gameCreationMs, gameDurationSec, championName, win, participantId, teamId
+		 FROM game
+		 WHERE queueId = ? AND timelineBlob IS NOT NULL
+		 ORDER BY gameCreationMs DESC LIMIT ?`
+	)
+		.all(queueId, limit)
+		.map(r => {
+			const row = r as Row
+			return {
+				gameId: num(row.gameId),
+				gameCreationMs: num(row.gameCreationMs),
+				gameDurationSec: num(row.gameDurationSec),
+				championName: str(row.championName),
+				win: num(row.win) === 1,
+				participantId: num(row.participantId),
+				teamId: num(row.teamId)
+			}
+		})
+
+/** The participant ids on one side of one game. Used to decide who took an objective. */
+export const teamParticipantIds = (gameId: number, teamId: number): number[] =>
+	prep("SELECT participantId FROM participant WHERE gameId = ? AND teamId = ?")
+		.all(gameId, teamId)
+		.map(r => num((r as Row).participantId))
+
 /* ========================================================== participants */
 
 const rowToParticipant = (row: Row): ParticipantSummary => ({

@@ -20,6 +20,7 @@ If the new question is really a new one, add a row.
 | `bench-events.ts` | How many times would the coach be ASKED? The event detector against the fixed timer, over a whole game. Free — no model. |
 | `measure-staleness.ts` | Is a line still TRUE when its last syllable lands? |
 | `measure-speech.ts` | Does the coach SAY it right? The only instrument that reads AUDIO rather than text. |
+| `attribute-sections.ts` | **Which part of the PAYLOAD produced the line?** Joins every graded line back to the exact payload the coach held, cuts that payload into channels, and reports each one's presence, character cost, redundancy and the phrase/subject tests over what was actually said. Its own header carries the retraction that matters: exclusive number provenance does NOT work on this payload, and the file says why at length. Free — no model. |
 | `smoke-live.ts` | Is the live coach working RIGHT NOW? Key, token, ground truth, socket, one real turn — names the step that failed. |
 
 **Five harnesses were retired here on 2026-09-11** — `ablate-autonomy.ts`, `eval-useful.ts`,
@@ -74,6 +75,17 @@ pack, call `buildGamePack`.**
 | `backfill-reviews.ts` | NOT an arm — the SHIPPED reviewer (`runGameReviewJob`, unmodified) run over the games that never got one, resumable off the database rather than a state file. |
 | `measure-postgame.ts` | How long after a game ends can he read anything? The four-stage wall clock from `game.endedAtMs` to `review.createdMs`, from rows the daemon already writes. |
 
+## Does it make him CLIMB? — the only instruments that ask about the GAME, not about a line
+
+Everything above grades what the coach SAID. These two ask whether the thing it points him at
+distinguishes the games he wins, which is a different question and had never been asked until
+2026-09-18.
+
+| file | the question it answers |
+|---|---|
+| `what-wins.ts` | **WHICH of his numbers separate his wins from his losses?** 78 features over 138 ranked games, Mann-Whitney with bootstrapped AUC, BH q-values, a logistic control on the 10-minute team gold difference, and an even-at-ten stratum. The measurement that retired CS@10 as a coaching priority and nominated the two habits below. `data/eval/what-wins-20260918.json`. |
+| `habit-record.ts` | **How is he doing at the one behaviour that separates them?** The habit tracker's own record from the CLI, no server and no model — streak, Wilson interval, and whether the rate is distinguishable from noise. Same pure module the card renders (`src/analysis/habit.ts`), so the screen and the CLI cannot disagree. `--out` freezes a baseline; `data/eval/habit-baseline-20260918.json` is ship day. Reproduces `what-wins`' counts exactly: 53 clean 10:00-15:00 windows of 138, 64 of 138 ahead on early objectives. |
+
 ## Grading and reading stored runs
 
 | file | the question it answers |
@@ -98,6 +110,8 @@ pack, call `buildGamePack`.**
 |---|---|
 | `lib/stream.ts` | **THE join.** Which frames on disk go with which raw samples, and the rebuild of the block the coach actually held. Also the ONE `readVerbatim` / `baselineDuring` / `coachStateFrom` / `championVocabulary`. Five harnesses each did this join by hand once and each got a different answer. |
 | `lib/stats.ts` | **THE paired test, and THE seeded shuffle.** McNemar's exact in both call shapes — written twice, `frame-value.ts` from the pairs and `adjudicate.ts` from the counts, with `compare-arms.ts` importing one of them out of a harness. `shuffled` joined it on 2026-09-12 for the same reason: it too was written twice (`blind-judge.ts`, `frame-value.ts`), and `lib/sheet.ts` was importing it out of a harness in breach of rule 2. The two copies were checked identical over 549 cases before the merge, so every stored key file's ordering still re-derives. Wilson stays in `src/analysis/coach-score.ts`, because the scorer ships it. |
+| `lib/trim-payload.ts` | **The CUT half of the context-feed ablation.** Removes a named section from a payload AFTER `buildBrief` rendered it, so a `bench-stream --arms <p>+cut-<preset>` arm is provably the shipped bytes minus one section. `live-brief.ts` is untouched on purpose: it is what every stored measurement was taken on, and a `drop` parameter there would be a fifth way to change the payload by accident. Each preset carries the measurement that nominated it. |
+| `lib/add-payload.ts` | **The ADD half.** The three candidate sections `data/eval/context-feed-20260918.md` nominated — the gold-to-next-spike join, the Baron/Elder take with a refusal to put a clock on the buff, and one clause saying summoner-spell cooldowns are in this feed for nobody — as `+add-<preset>` arms. None of them tells the model what to say; two are arithmetic and one is a statement about what the feed lacks. |
 | `lib/win-lcu.ts` | The GET-only Windows-interop LCU reader for `scripts/`, kept separate from `src/lcu/` so `doctor.ts` can diagnose an app that will not import. |
 
 ## Operations — not measurement

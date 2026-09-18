@@ -441,6 +441,72 @@ export const FormResponse = type({
 })
 export type FormResponse = typeof FormResponse.infer
 
+/* ================================================================= habit */
+
+/**
+ * `GET /api/habit` — one behaviour, game over game.
+ *
+ * Deliberately NOT the whole of `analysis/habit.ts`: the definitions, the stored evidence and the
+ * sentences that quote it are pure and browser-safe, so the UI imports them directly and this
+ * wire carries only what had to be read off disk — his actual games and the arithmetic over
+ * them. Sending the evidence too would create a second copy of a measurement, and two copies of
+ * a measurement is how one of them goes stale.
+ */
+export const HabitInterval = type({
+	p: "number",
+	lo: "number",
+	hi: "number",
+	k: "number",
+	n: "number"
+})
+export type HabitInterval = typeof HabitInterval.infer
+
+export const HabitGameInfo = type({
+	gameId: "number",
+	createdMs: "number",
+	championName: "string",
+	win: "boolean",
+	durationSec: "number",
+	/** The raw count. `null` when the game ended before the window closed. */
+	value: "number|null",
+	clean: "boolean|null",
+	/** Why this game is not counted, when it is not. Never silently dropped. */
+	excluded: "string|null"
+})
+export type HabitGameInfo = typeof HabitGameInfo.infer
+
+export const HabitChangeInfo = type({
+	recent: HabitInterval,
+	prior: HabitInterval,
+	/** Non-overlapping Wilson intervals — conservative, and the only thing that licenses a direction. */
+	separated: "boolean",
+	note: "string"
+})
+export type HabitChangeInfo = typeof HabitChangeInfo.infer
+
+export const HabitResponse = type({
+	/** Which habit this is; the UI resolves the rest of the definition locally. */
+	key: "string",
+	/** Newest first, including the games that could not be answered. */
+	games: HabitGameInfo.array(),
+	counted: "number",
+	rate: HabitInterval,
+	streak: "number",
+	change: HabitChangeInfo.or("null"),
+	/** His whole measured history, for reading the window against. Never tested against it. */
+	baseRate: HabitInterval,
+	/** The count and its interval. The card draws this large. */
+	head: "string",
+	/** Whether it is moving, or why that cannot be asked yet. Drawn under the numbers. */
+	verdict: "string",
+	/** The two joined, for any reader that wants one sentence. */
+	note: "string",
+	/** The window asked for, which is not the same as how many games came back. */
+	windowGames: "number",
+	generatedMs: "number"
+})
+export type HabitResponse = typeof HabitResponse.infer
+
 /* =============================================================== replays */
 
 /**
@@ -627,6 +693,7 @@ export const API = {
 	media: (id: string) => `/api/media/${encodeURIComponent(id)}`,
 	sync: "/api/sync",
 	form: "/api/form",
+	habit: "/api/habit",
 	live: "/api/live",
 	matchup: "/api/live/matchup",
 	liveDismiss: "/api/live/dismiss",	watch: (gameId: number | string) => `/api/games/${gameId}/watch`,
