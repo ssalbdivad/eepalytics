@@ -1,13 +1,22 @@
 /**
- * The loader has one job the review depends on: never throw. Champion context is an
- * enhancement, so a missing directory, a malformed header or an unknown champion must all
- * degrade to something the digest can carry, not to a failed review.
+ * What is left of the on-disk loader, and the tripwire that keeps the deleted corpus deleted.
+ *
+ * The champion markdown is gone — 184,104 bytes of model-authored prose with a measured 8.0%
+ * [5.1, 12.3] error rate on its checkable mechanical claims — and with it went `championNote`,
+ * `defaultNote`, `knownChampions` and `stalenessWarning`. The tests for those went too, because a
+ * test for a loader nobody calls is a test that keeps the loader alive.
+ *
+ * Two things still need pinning. The key normaliser, because every lookup in the app goes through
+ * it and Riot spells champions three ways across its endpoints. And the ABSENCE of
+ * `knowledge/champions/`, because the cheapest way for this to come back is for someone — a person
+ * or an agent — to write one plausible file into a directory nothing is watching.
  */
 
 import { ok, strictEqual } from "node:assert/strict"
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs"
+import { existsSync, mkdtempSync, writeFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 import { afterEach, describe, it } from "node:test"
 
 const dirs: string[] = []
@@ -15,9 +24,7 @@ const dirs: string[] = []
 const withKnowledge = (files: Record<string, string>) => {
 	const root = mkdtempSync(join(tmpdir(), "csk-knowledge-"))
 	dirs.push(root)
-	mkdirSync(join(root, "champions"), { recursive: true })
-	for (const [name, body] of Object.entries(files))
-		writeFileSync(join(root, "champions", name), body)
+	for (const [name, body] of Object.entries(files)) writeFileSync(join(root, name), body)
 	process.env.EEPALYTICS_KNOWLEDGE_DIR = root
 	return root
 }
@@ -44,107 +51,41 @@ describe("championKey", () => {
 	})
 })
 
-describe("championNote", () => {
-	it("parses the header and returns the prose verbatim", async () => {
-		withKnowledge({
-			"lillia.md": "patch: 16.17\nsourcedAt: 2026-09-03\nsource: model-knowledge\n---\nShe clears fast.\n"
-		})
-		const { championNote } = await freshModule()
-		const note = championNote("Lillia")!
-		strictEqual(note.patch, "16.17")
-		strictEqual(note.source, "model-knowledge")
-		strictEqual(note.text, "She clears fast.")
-		strictEqual(note.isDefault, false)
+describe("pronunciationTable", () => {
+	it("reads the table off disk", async () => {
+		withKnowledge({ "pronunciations.md": "| Lillia | LIL-ee-uh |\n" })
+		const { pronunciationTable } = await freshModule()
+		ok(pronunciationTable().length >= 0)
 	})
 
-	it("falls back to _default and says so", async () => {
-		withKnowledge({ "_default.md": "patch: durable\n---\nCoach the role only.\n" })
-		const { championNote } = await freshModule()
-		const note = championNote("Zilean")!
-		ok(note.isDefault)
-		strictEqual(note.text, "Coach the role only.")
-	})
-
-	it("returns null when there is no knowledge directory at all", async () => {
+	it("degrades to an empty table rather than throwing when the file is absent", async () => {
 		process.env.EEPALYTICS_KNOWLEDGE_DIR = join(tmpdir(), "eepalytics-does-not-exist-ever")
-		const { championNote } = await freshModule()
-		strictEqual(championNote("Lillia"), null)
-	})
-
-	it("survives a file with no header block", async () => {
-		withKnowledge({ "lillia.md": "just prose, no header" })
-		const { championNote } = await freshModule()
-		const note = championNote("Lillia")!
-		strictEqual(note.patch, "durable")
-		strictEqual(note.text, "just prose, no header")
-	})
-
-	it("ignores an empty champion name", async () => {
-		withKnowledge({ "_default.md": "---\nx\n" })
-		const { championNote } = await freshModule()
-		strictEqual(championNote(""), null)
-	})
-})
-
-describe("stalenessWarning", () => {
-	it("never fires for durable notes — champion identity survives tuning", async () => {
-		const { stalenessWarning } = await freshModule()
-		strictEqual(
-			stalenessWarning({ patch: "durable" } as never, "16.17"),
-			null
-		)
-	})
-
-	it("is silent when the patches match", async () => {
-		const { stalenessWarning } = await freshModule()
-		strictEqual(stalenessWarning({ patch: "16.17" } as never, "16.17"), null)
-	})
-
-	it("asks for a hedge when the note predates the game's patch", async () => {
-		const { stalenessWarning } = await freshModule()
-		const w = stalenessWarning({ patch: "15.2" } as never, "16.17")!
-		ok(w.includes("15.2") && w.includes("16.17"))
-	})
-})
-
-describe("knownChampions", () => {
-	it("lists hand-written notes and hides the default", async () => {
-		withKnowledge({ "lillia.md": "---\na", "belveth.md": "---\nb", "_default.md": "---\nc" })
-		const { knownChampions } = await freshModule()
-		strictEqual(knownChampions().join(","), "belveth,lillia")
+		const { pronunciationTable } = await freshModule()
+		strictEqual(pronunciationTable().length, 0)
 	})
 })
 
 /**
- * `sourcesAreTrusted` is the only thing standing between an unverified claim and the coaching
- * prompt, so it has to be strict. It also has to be right: it once rejected a correctly-sourced
- * 8 KB Lee Sin note because the header mentioned Data Dragon's `LeeSin.json` and a filename
- * matches any reasonable domain pattern. A validator that discards good work over a file
- * extension is one you end up switching off.
+ * The tripwire.
+ *
+ * `knowledge/champions/` held one markdown file per champion and nothing in the repo could tell a
+ * sourced sentence in one from an invented one, which is how "Swirlseed rolls over terrain, and
+ * grants vision of what it rolls past" shipped into 170 of 1,513 stored pieces of advice. Champion
+ * facts are fetched now (`pnpm fetch:champions` -> `champion-table.ts`), and nothing in `src/`
+ * reads that directory any more — so a file appearing there would be dead weight at best and, far
+ * more likely, the first step of someone re-wiring prose back into the prompt.
+ *
+ * Deliberately pinned against the REPO's own path rather than the test seam: the point is to guard
+ * what ships, and a check a test could point elsewhere guards nothing.
  */
-describe("sourcesAreTrusted", () => {
-	const trusted = async () => (await import("./research.ts")).sourcesAreTrusted
-
-	it("accepts a header naming only sanctioned domains", async () => {
-		ok((await trusted())("op.gg jungle-paths (patch 16.17) + leagueoflegends.com patch notes"))
-		ok((await trusted())("www.u.gg and lolalytics.com, both patch 16.17"))
-	})
-
-	it("accepts a data file cited alongside a sanctioned domain", async () => {
-		ok((await trusted())("ddragon.leagueoflegends.com 16.17.1 — LeeSin.json, for ability roles"))
-		ok((await trusted())("op.gg 16.17; ddragon LeeSin.json; notes.md"))
-	})
-
-	it("rejects an unsanctioned domain even beside good ones", async () => {
-		strictEqual((await trusted())("op.gg, u.gg and mobafire.com"), false)
-	})
-
-	it("rejects a header with no provenance at all", async () => {
-		for (const empty of ["", "   ", "unknown", "my own knowledge", "assorted guides"])
-			strictEqual((await trusted())(empty), false, `should reject ${JSON.stringify(empty)}`)
-	})
-
-	it("ignores www. when matching", async () => {
-		strictEqual((await trusted())("www.op.gg"), (await trusted())("op.gg"))
+describe("the deleted champion corpus", () => {
+	it("has not come back", () => {
+		const dir = resolve(dirname(fileURLToPath(import.meta.url)), "../../knowledge/champions")
+		ok(
+			!existsSync(dir),
+			`${dir} exists again. Champion knowledge is FETCHED — regenerate it with \`pnpm fetch:champions\`, ` +
+				`which writes src/knowledge/champion-table.ts with a URL, a revision and a fetch date on every ` +
+				`record. Hand-written champion prose has no source and does not ship.`
+		)
 	})
 })

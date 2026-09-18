@@ -36,7 +36,8 @@ import type { LcuEvent, LcuTimeline } from "../shared/schema/lcu.ts"
 import { zoneOf } from "../shared/map.ts"
 import type { TeamId } from "../shared/map.ts"
 import type { Baseline } from "../analysis/index.ts"
-import { championNote, stalenessWarning } from "../knowledge/index.ts"
+import { championBriefSync } from "../knowledge/champion-brief.ts"
+import { CHAMPION_TABLE_PATCH, championTableStaleness } from "../knowledge/champion-data.ts"
 import { DIGEST_SCHEMA_VERSION } from "../review/digest-contract.ts"
 import type { ChampionContext } from "../review/digest-contract.ts"
 import type {
@@ -311,22 +312,38 @@ export const buildGameDigest = (input: BuildDigestInput): GameDigest => {
 	// Restate before anything reads them, so `metrics` and `baseline` below cannot disagree.
 	const restated = restateBaselines(metrics, input.baseline)
 
-	// Champion notes are an enhancement, never a dependency: a missing or unreadable
-	// `knowledge/` leaves `championContext` undefined and the review is unchanged.
-	const note = championNote(game.championName)
-	const oppNote = opponent ? championNote(opponent.championName) : null
+	/*
+	 * Champion context, FETCHED. This is the path the 2026-09-18 cutover was actually for.
+	 *
+	 * 28.9% of stored post-game items carry champion-kit content against 2.3% of live lines, so the
+	 * review is where a wrong mechanic reaches him — 170 of 1,513 pieces of written advice traced to
+	 * one false sentence about Swirlseed in a model-authored file. Every line below now comes out of
+	 * `champion-table.ts` with its own URL, wiki revision and fetch date attached, and a claim that
+	 * cannot be re-derived from its stored evidence never reaches this object.
+	 *
+	 * Still an enhancement and never a dependency: no row for the champion leaves `championContext`
+	 * undefined and the review is unchanged, exactly as a missing markdown file used to.
+	 *
+	 * The counterpart's section drops the wiki's edge-case notes. Same reason as the live block —
+	 * it is 60% of the bytes, it is measured inert, and dropping fetched lines can only make the
+	 * coach know less rather than make it wrong.
+	 */
+	const brief = championBriefSync(game.championName)
+	const oppBrief = opponent ? championBriefSync(opponent.championName, { edgeCases: false }) : null
 	const championContext: ChampionContext | undefined =
-		note ?
+		brief ?
 			{
 				champion: game.championName,
-				patch: note.patch,
-				source: note.source,
-				text: note.text,
-				staleness: stalenessWarning(note, game.patch),
-				isDefault: note.isDefault,
+				patch: CHAMPION_TABLE_PATCH,
+				source: "fetched — every line carries its own source, revision and date",
+				text: brief.text,
+				staleness: championTableStaleness(game.patch),
+				// The generated table has no `_default` row: a champion nobody fetched yields no
+				// section at all rather than a stand-in that reads like one.
+				isDefault: false,
 				opponent:
-					oppNote && !oppNote.isDefault && opponent ?
-						{ champion: opponent.championName, text: oppNote.text }
+					oppBrief && opponent ?
+						{ champion: opponent.championName, text: oppBrief.text }
 					:	null
 			}
 		:	undefined

@@ -178,11 +178,11 @@ ${BANNED_MATCHUP_LINES.map((b, i) => `${i + 1}. "${b.line}" — ${b.why}.`).join
 Two or three sentences. He is reading this on a loading screen with about forty seconds left.
 One plan he can act on beats four observations he cannot.${
 		brief.championNotes ?
-			`\n\n### ${brief.championNotes.champion} — how the champion works (NOT measured)\n\n${brief.championNotes.text}`
+			`\n\n### ${brief.championNotes.champion} — how the champion works (FETCHED, not measured from a game)\n\n${brief.championNotes.text}`
 		:	""
 	}${
 		brief.opponentNotes ?
-			`\n\n### ${brief.opponentNotes.champion} — what he is up against (NOT measured)\n\nSame fence. This is for shaping his plan, not for asserting what that player is going to do.\n\n${brief.opponentNotes.text}`
+			`\n\n### ${brief.opponentNotes.champion} — what he is up against (FETCHED, not measured from a game)\n\nSame fence. This is for shaping his plan, not for asserting what that player is going to do.\n\n${brief.opponentNotes.text}`
 		:	""
 	}${
 		brief.unknowns.length > 0 ?

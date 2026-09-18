@@ -1,14 +1,22 @@
 /**
- * check-patch — is the champion knowledge stale against the live patch?
+ * check-patch — is the FETCHED champion table stale against the live patch?
  *
  * Riot's Data Dragon publishes the live version list at a stable, unauthenticated URL. That is
  * the only patch signal worth trusting: it is official, it needs no key, and it does not depend
  * on scraping a site that can restyle itself. `16.17.1` there is the `16.17` the client reports
  * and the app stores on every game.
  *
- * Notes marked `patch: durable` are never stale. That is the point of the marker — champion
- * identity (clear shape, ability roles, power spikes) survives tuning, and only material that
- * could actually be balanced away needs re-checking.
+ * ## What it compares, and what changed on 2026-09-18
+ *
+ * It used to walk `knowledge/champions/*.md` and read each file's `patch:` header. Those files are
+ * deleted — model-authored, 8.0% [5.1, 12.3] of their checkable mechanical claims wrong — and
+ * champion facts are fetched now, all of them pinned to ONE patch by `pnpm fetch:champions`. So
+ * there is one comparison to make rather than twenty-four, and a stale answer has one remedy:
+ * re-run the fetch.
+ *
+ * The `durable` escape hatch went with the prose. It existed because a hand-written note about
+ * "clear shape and power spikes" survives tuning, and nothing in the generated table is that kind
+ * of sentence: a cooldown array either describes this patch or it does not.
  *
  * Used two ways:
  *   - by a human:  node --experimental-strip-types scripts/check-patch.ts
@@ -19,12 +27,8 @@
  * and a caller must not treat that as "all fresh".
  */
 
-import { readFileSync, readdirSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { CHAMPION_ROWS, CHAMPION_TABLE_PATCH, CHAMPION_TABLE_SOURCES } from "../src/knowledge/champion-table.ts"
 
-const HERE = dirname(fileURLToPath(import.meta.url))
-const CHAMPIONS_DIR = resolve(HERE, "../knowledge/champions")
 const VERSIONS_URL = "https://ddragon.leagueoflegends.com/api/versions.json"
 
 /** `16.17.1` -> `16.17`. The build number moves for hotfixes that change no balance. */
@@ -39,45 +43,30 @@ export const livePatch = async (signal?: AbortSignal): Promise<string> => {
 	return minorOf(versions[0])
 }
 
-export interface NoteStatus {
-	champion: string
-	file: string
+export interface TableStatus {
+	/** The patch `pnpm fetch:champions` pinned the table to. */
 	patch: string
-	sourcedAt: string
+	live: string
+	champions: number
+	/** When each source was last read, for a reader deciding whether to believe a line by age. */
+	fetchedAt: Record<string, string>
 	stale: boolean
 }
 
-const headerValue = (raw: string, key: string): string => {
-	const head = raw.split("\n---")[0] ?? ""
-	for (const line of head.split("\n")) {
-		const m = new RegExp(`^${key}:\\s*(.*)$`).exec(line.trim())
-		if (m) return m[1]!.trim()
-	}
-	return ""
-}
-
-export const auditNotes = (live: string, dir = CHAMPIONS_DIR): NoteStatus[] => {
-	let files: string[]
-	try {
-		files = readdirSync(dir).filter(f => f.endsWith(".md"))
-	} catch {
-		return []
-	}
-	return files
-		.map(file => {
-			const raw = readFileSync(join(dir, file), "utf8")
-			const patch = headerValue(raw, "patch") || "durable"
-			return {
-				champion: file.replace(/\.md$/, ""),
-				file: `knowledge/champions/${file}`,
-				patch,
-				sourcedAt: headerValue(raw, "sourcedAt") || "unknown",
-				// `durable` is identity, not tuning: it does not go stale when a patch lands.
-				stale: patch !== "durable" && patch !== "" && patch !== live
-			}
-		})
-		.sort((a, b) => a.champion.localeCompare(b.champion))
-}
+export const auditTable = (live: string): TableStatus => ({
+	patch: CHAMPION_TABLE_PATCH,
+	live,
+	champions: CHAMPION_ROWS.length,
+	fetchedAt: Object.fromEntries(
+		Object.entries(CHAMPION_TABLE_SOURCES).map(([id, src]) => [
+			id,
+			typeof src === "object" && src !== null && "fetchedAt" in src ? String(src.fetchedAt) : "unknown"
+		])
+	),
+	// `16.18.1` and `16.18` are the same patch; the build number moves for hotfixes that change
+	// no balance, and the client reports the two-part form.
+	stale: CHAMPION_TABLE_PATCH.split(".").slice(0, 2).join(".") !== live
+})
 
 const main = async (): Promise<void> => {
 	const json = process.argv.includes("--json")
@@ -91,23 +80,21 @@ const main = async (): Promise<void> => {
 		process.exit(2)
 	}
 
-	const notes = auditNotes(live)
-	const stale = notes.filter(n => n.stale)
+	const status = auditTable(live)
 
 	if (json) {
-		console.log(JSON.stringify({ ok: true, live, stale: stale.length > 0, notes }, null, 2))
+		console.log(JSON.stringify({ ok: true, live, stale: status.stale, table: status }, null, 2))
 		return
 	}
 
-	console.log(`live patch: ${live}\n`)
-	for (const n of notes)
-		console.log(
-			`  ${n.stale ? "STALE" : " ok  "}  ${n.champion.padEnd(12)} patch ${n.patch.padEnd(9)} sourced ${n.sourcedAt}`
-		)
+	console.log(`live patch:            ${live}`)
+	console.log(`champion table patch:  ${status.patch}  (${status.champions} champions)`)
+	for (const [id, at] of Object.entries(status.fetchedAt)) console.log(`  ${id.padEnd(16)} fetched ${at}`)
 	console.log(
-		stale.length === 0 ?
-			`\nNothing to refresh.`
-		:	`\n${stale.length} note(s) written for an older patch: ${stale.map(n => n.champion).join(", ")}`
+		status.stale ?
+			`\nSTALE. Re-run \`pnpm fetch:champions\` — every number in the coach's champion block is the ` +
+				`${status.patch} number, and the block says so to the model rather than pretending otherwise.`
+		:	`\nFresh.`
 	)
 }
 

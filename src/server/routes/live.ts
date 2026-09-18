@@ -46,7 +46,10 @@ import { loadCorpus } from "../../daemon/corpus.ts"
 import { championName, refreshChampionNames } from "../../daemon/champions.ts"
 import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
-import { championNote, defaultNote, pronunciationTable } from "../../knowledge/index.ts"
+import { championKey, pronunciationTable } from "../../knowledge/index.ts"
+import { championBriefSync } from "../../knowledge/champion-brief.ts"
+import { CHAMPION_TABLE_PATCH } from "../../knowledge/champion-data.ts"
+import { ROLE_DEFAULT_KEY, shippedClauseSection } from "../../knowledge/legacy-clauses.ts"
 import {
 	mergeClauses,
 	newAdviceCursor,
@@ -1256,29 +1259,29 @@ const buildLiveState = (
 				 */
 				counterpart,
 				/*
-				 * His champion's own note, or the role default. Parsed every call and cached by the
-				 * knowledge module, so editing the markdown mid-session takes effect on the next
-				 * game with no restart.
+				 * His champion's own clauses over the role default, from the FROZEN corpus.
+				 *
+				 * These belong to the two legacy modes and nothing else reads them. The markdown
+				 * they lived in was deleted on 2026-09-18 — model-authored, one sentence of it
+				 * measurably false — and the five sections that existed are reproduced byte for byte
+				 * in `knowledge/legacy-clauses.ts`. `shippedClauseSection` is that corpus minus the
+				 * two clauses a fetched source contradicts; `ablationChampionKnowledge` keeps the
+				 * as-measured text so the stored runs still reproduce.
 				 */
 				advice: (() => {
-					const note = championNote(me.championName ?? "")
-					if (!note) return undefined
+					const key = championKey(me.championName ?? "")
 					/*
 					 * The role defaults UNDER the champion's own clauses, merged per fact kind.
 					 *
-					 * `championNote` only falls back to `_default.md` when no champion file exists
-					 * at all, so a champion file that says nothing about deaths used to leave the
-					 * coach with nothing to say about deaths — having a file was strictly worse
-					 * than having none. Merging per kind means a file overrides only where it has
+					 * A champion with clauses for some kinds and not others used to leave the coach
+					 * with nothing to say about the rest — having a file was strictly worse than
+					 * having none. Merging per kind means a champion overrides only where it has
 					 * something better, and every kind still has a clause.
 					 */
-					const clauses =
-						note.isDefault ?
-							parseChampionClauses(note.text)
-						:	mergeClauses(
-								parseChampionClauses(defaultNote()?.text ?? ""),
-								parseChampionClauses(note.text)
-							)
+					const clauses = mergeClauses(
+						parseChampionClauses(shippedClauseSection(ROLE_DEFAULT_KEY)),
+						parseChampionClauses(shippedClauseSection(key))
+					)
 					/*
 					 * A fresh view per turn over a cursor that outlives the turn. Reading a kind is
 					 * what advances it, and `buildFacts` reads a kind exactly when it renders a
@@ -1851,13 +1854,24 @@ export const createLiveRoute = (): Hono => {
 			puuid: USER_PUUID,
 			championName,
 			spellName: summonerSpellName,
-			// `_default.md` is treated as "no notes on file", because it does not describe a
-			// champion — it tells the coach to stop talking about the champion. Passing it through
-			// as context would invite exactly the improvisation it exists to prevent.
+			/*
+			 * The FETCHED section for the champion, or nothing. No fallback text: a champion the
+			 * fetcher has no row for produces no section, which is the honest state and the one
+			 * that does not invite improvisation.
+			 *
+			 * Edge-case notes are off here. This brief is read in champ select, where what he wants
+			 * is the shape of the matchup rather than whether a spell shield eats a detonation, and
+			 * the notes are 60% of the bytes.
+			 */
 			noteFor: champion => {
-				const note = championNote(champion)
-				return note && !note.isDefault ?
-						{ champion, text: note.text, patch: note.patch, source: note.source }
+				const brief = championBriefSync(champion, { edgeCases: false })
+				return brief ?
+						{
+							champion,
+							text: brief.text,
+							patch: CHAMPION_TABLE_PATCH,
+							source: "fetched — every line carries its own source, revision and date"
+						}
 					:	null
 			},
 			queue:

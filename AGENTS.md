@@ -701,41 +701,99 @@ questions on better inputs. `src/shared/live-prompt.ts` survives as the **`fence
 stored runs are the only reason the fence's numbers above are quotable at all, and
 `src/shared/live-coach-mode.test.ts` fails if the text moves.
 
-#### Champion knowledge: three doors, and only one of them has a digit fence
+#### Champion knowledge is FETCHED, and the prose that used to supply it is deleted
 
 A line has two halves: the NUMBER, from the client, and the ADVICE, which no client can supply.
-Advice comes from `knowledge/champions/*.md`, and it reaches the model by one of three routes
-depending on the mode.
+Until 2026-09-18 that second half came from `knowledge/champions/*.md`: twenty-four markdown files,
+184,104 bytes, every sentence of them written by a model — `src/knowledge/research.ts` spawned an
+agent with web access and had it compose champion knowledge into the file the next review would
+paste into its prompt.
 
-**The ranked modes (`fenced`, `cite-or-quiet`)** take it through `src/shared/champion-advice.ts`,
-keyed BY FACT KIND so a clause only speaks once the client has established the situation — prose in
-a prompt has nothing tying it to the moment, which is how you get *"Viego is your jungle counterpart
-so watch for his ganks"*. **Advice on this path may not contain a digit, and the parser refuses any
-clause that does.** An earlier general "benchmark" mechanism validated a rule's FORM and never its
-SUBJECT, so a rule meaning *"his flash is usually back in thirty seconds"* rendered and was spoken
-aloud. Cooldowns are unknowable. A mechanism that can express a number about the game can express a
-wrong one, so this one cannot express a number at all.
+**Audited against the wiki's rendered ability pages and Data Dragon 16.18.1, that corpus carried 18
+wrong sentences in 225 adjudicated mechanical claims — 8.0% [5.1, 12.3] Wilson, 14 distinct root
+errors — and 20 of the 24 files were clean, so the errors concentrated in four.** One of them cost
+more than all the rest together. `lillia.md` said Swirlseed *"rolls over terrain, and grants vision
+of what it rolls past"*. It does neither: Riot's own tooltip says the seed "rolls until it hits an
+enemy or collides with terrain" and the wiki says it "detonates upon hitting an enemy or terrain
+while on the ground", revealing only the enemies caught in the cone and only for two seconds. That
+one clause traces to **38% of all champion-specific live lines** and **170 of 1,513 stored pieces of
+post-game advice (11.2%), across 90 of 239 reviews**. No grader here could catch it: the judge was
+handed the same file.
 
-**The default mode (`trusted`)** takes it through `src/review/live-knowledge-full.ts`: the complete
-prose, his champion's file and the counterpart's and the role file, in the SYSTEM INSTRUCTION, sent
-once for the whole game. This is a different bet and it was made on a measurement.
-`knowledge/champions/lillia.md` is 6,800 characters; `liveChampionKnowledge("Lillia")` handed the
-model 2,566 of them as 27 tagged fragments, because the clause parser rejects any line with a digit
-and keeps only what is under `## Live coaching`. Every route, every item, every *why* was stripped at
-load time, and the `(kind)` tags then labelled each fragment for a ranked-list mechanism the shipped
-mode no longer runs. **The model was receiving numberless half-sentences addressed to a machine that
-was not listening** — which is the whole answer to "why am I barely getting anything
-Lillia-specific". Static context costs the socket nothing, because a system instruction is sent at
-setup; size is not the constraint on this path, accuracy is.
+**The sentences were not the failure — the structure was.** A file-level provenance header cannot be
+wrong about a sentence, because it does not describe sentences. `lillia.md`'s header cited "op.gg
+jungle-paths (16.17)", an endpoint that does not exist; three plausible shapes were probed, two 404
+and the third ignored the parameter, and no key in op.gg's 17KB payload matches path, route or camp.
+Every invented sentence under that header read exactly like a sourced one.
 
-The digit fence is therefore a property of the CLAUSE PATH, not of champion knowledge. Do not
-"restore" it on the prose path, and do not delete the `## Live coaching` sections: the two older
-modes read them, and their stored runs are only meaningful while those clauses exist byte for byte.
+So champions now look like ITEMS. `scripts/fetch-items.ts` has vendored Riot's own static data into
+the generated `src/shared/item-table.ts` for months, for the same reason; `pnpm fetch:champions`
+does it for champions. Five fetches — the wiki's `Module:ChampionData/data` as the join table (no
+hand-written name map anywhere), Data Dragon's `championFull.json`, the wiki's per-ability
+`Template:Data <Champion>/<Ability>` expanded BY THE WIKI so `{{ap|60 to 160}}` arrives as
+`60 / 85 / 110 / 135 / 160`, Data Dragon's rune and summoner names, and op.gg per role — cached
+under `data/champions/<patch>/` and generated into `src/knowledge/champion-table.ts`: 173 champions,
+937 abilities, patch-pinned, byte-identical across two consecutive runs.
 
-Neither fence validates TRUTH. `belveth.md` shipped `death: your stacks die with you`; Death in
-Lavender stacks are permanent and the same file said so two paragraphs earlier. That is why
-`src/knowledge/champion-claims.test.ts` is a bet register: every shipped clause cites a mechanic
-written down with where it was checked.
+**The validation is the point of the script, not a nicety.** Data Dragon and the wiki are
+independent transcriptions of the same patch, so every slot is checked for agreement on NAME,
+COOLDOWN per rank and COST per rank: 660 of 692 agree. A slot that does not keeps its prose, loses
+every number, and SAYS the number was withheld. A disagreement means a patch landed mid-fetch or one
+source is stale, and shipping either alone is how a wrong number sounds like a right one. Tier 2 —
+op.gg, one undocumented endpoint with no terms grant — is ArkType-fenced at the boundary and fails
+closed PER CHAMPION: one bad claim drops the whole meta section, because half a meta section is
+worse than none.
+
+**Every sentence carries its own source, in the line.** `src/knowledge/provenance.ts` is the fence
+and its load-bearing idea is `derivation`: a closed set of pure functions that RE-DERIVE a claim's
+text from the evidence stored beside it, so a sentence that cannot be reproduced from its own bytes
+is refused. The field vocabulary is closed too and bound to a tier — op.gg cannot supply a cooldown,
+Riot cannot supply a win rate, a tier-2 figure cannot ship without its sample size, and an ability's
+name, cooldown or cost cannot ship without a second tier-1 source agreeing. Prompt lines can only be
+minted by `renderClaimLine` or by a frozen structural template, and the brand is a runtime symbol
+rather than a type, because `--experimental-strip-types` erases types and the point is that an
+unsourced string cannot reach the renderer even through `any`.
+
+`pnpm audit:knowledge [champion]` assembles the two prompts a player actually gets and audits the
+delivered bytes line for line. Today, for Lillia vs Kayn: 141 of 141 champion lines in the live
+system instruction carry an inline citation, the post-game block is 77 claim lines with 0 untraced,
+and every refuted sentence is absent from all three paths.
+
+**What this does NOT solve, and it is roughly half of what the deleted files said.** Routes and
+clear order, gank-failure conditions, clear tempo, objective-pressure narrative, spike timing,
+item-to-intent inference, matchup ADVICE as distinct from matchup win rate: no source publishes any
+of it. u.gg is 403, lolalytics is Cloudflare-gated, mobalytics needs auth, blitz is DNS-dead, and
+Riot's own `allytips`/`enemytips` come back as empty arrays. Those sections do not come back in
+another form — they are simply absent, and the post-game prompt tells the model so. The one channel
+that may carry that material is `knowledge/owner/<champion>.md`, from HIM, rendered under a heading
+that says it has no source; `champion-brief.test.ts` pins the digest of that directory so an agent
+adding a file there fails the suite.
+
+**The clause path is frozen, not regenerated.** `fenced` and `cite-or-quiet` speak short tagged
+clauses keyed by fact kind, through `src/shared/champion-advice.ts`, and that path still may not
+contain a digit — an earlier "benchmark" mechanism validated a rule's FORM and never its SUBJECT, so
+a rule meaning *"his flash is usually back in thirty seconds"* rendered and was spoken aloud, and a
+mechanism that can express a number about the game can express a wrong one. Five of the deleted
+files carried a `## Live coaching` section; the other nineteen never had one. Those five are
+reproduced BYTE FOR BYTE in `src/knowledge/legacy-clauses.ts`, whose digests are pinned, because
+both modes are measured arms and an arm whose input moved is not the arm that was measured.
+
+Two texts live there and they differ by exactly two lines and 173 characters. `legacyClauseSection`
+is AS MEASURED and nothing may edit it. `shippedClauseSection` is what a player hears: the same text
+minus `RETRACTIONS`, which today withdraws the two Lillia clauses that taught the Swirlseed as a
+corridor scout. That difference moves the `shipped` ablation arm and nothing else — the four arms
+whose numbers are quoted above reproduce byte for byte, which is what the freeze was for, and the
+shipped arm's drift is recorded with its size in `ABLATION_PROMPT_FINGERPRINTS`. **Nothing may be
+ADDED to that module**: a new clause there is unsourced model prose wearing a frozen-data label.
+
+Neither fence validates TRUTH, and the register that was supposed to notice did not. `belveth.md`
+shipped `death: your stacks die with you` when Death in Lavender stacks are permanent and the same
+file said so two paragraphs earlier, which is why `src/knowledge/champion-claims.test.ts` exists:
+every shipped clause cites a mechanic written down with where it was checked. Its limit is now
+measured. It had `lillia.e-reveals-what-it-hits` RIGHT — *"it reveals what it HITS, it does not light
+up the ground it rolled over"* — while the file it sat beside said the opposite four times, because
+a register records what a clause bets on and never sees the prose the clause lives in. A register of
+bets is not a source.
 
 Rate-limiting still lives in `buildFacts`, because a fact that stays true for minutes will otherwise
 be repeated until it is noise: each death is announced once, gold once per 800g and only after it
@@ -849,7 +907,7 @@ src/shared/   types + pure helpers, browser-safe    (schemas, map math, time)
 src/db/       SQLite: migrations, queries, blobs    (NODE ONLY; all SQL lives here)
 src/lcu/      the Windows-interop transport + LCU/live-client clients
 src/rofl/     ROFL2 replay-file decoding
-src/knowledge/champion notes, loaded into reviews  (editable markdown, no code change)
+src/knowledge/the FETCHED champion table, its fence, and what it renders (no prose, no model)
 src/analysis/ metrics, moments, digest              (no LLM, no I/O)
 src/review/   Claude coaching engine + persona loader
 src/daemon/   job queue, poller, journal, jobs/*   (owns every side effect)
@@ -866,6 +924,11 @@ src/shared/live-coach-mode.ts  the three architectures and their system prompts;
 src/shared/live-prompt.ts      the LEGACY `fenced` prompt — a measured arm, kept byte-identical
 src/shared/live-state.ts       the thin ground-truth block: types + renderer, for the ranked modes
 src/shared/champion-advice.ts  clause-path champion knowledge, keyed by fact kind, digit-free
+src/knowledge/champion-table.ts GENERATED by `scripts/fetch-champions.ts` — 173 champions, patch-pinned
+src/knowledge/provenance.ts    the fence: a claim's text must RE-DERIVE from its own stored evidence
+src/knowledge/claims-from-row.ts turns the generated table into per-sentence sourced claims
+src/knowledge/champion-brief.ts renders the champion section, source and date IN each line (NODE ONLY)
+src/knowledge/legacy-clauses.ts the FROZEN clause corpus of the two measured modes, plus retractions
 src/shared/objective-stakes.ts what an objective is WORTH right now — soul point, standing vs spawning
 src/shared/dragons.ts          the drakes' real names — the API says "Fire", nobody else does
 src/shared/items.ts            finished vs component, what parts build into, and what the rest costs
@@ -880,7 +943,7 @@ src/analysis/reachability.ts   seconds from where he stands to each pit — the 
 src/analysis/game-truth.ts     the POST-GAME truth for all ten, where the live feed's CS cannot be
 src/analysis/coach-score.ts    scores a spoken line for fabrication, mechanically
 src/analysis/fights.ts         kill clusters: the trade, his participation, what it bought
-src/review/live-knowledge-full.ts  the COMPLETE champion + role prose for `trusted`   (NODE ONLY)
+src/review/live-knowledge-full.ts  the FETCHED champion sections + the role file, for `trusted` (NODE ONLY)
 src/review/read-minimap.ts     one fenced read of a magnified minimap crop            (NODE ONLY)
 src/review/frame-read.ts       the constrained schema and the fence against the client
 src/review/live-providers.ts   every non-socket model, through one AI SDK path        (NODE ONLY)
@@ -897,6 +960,8 @@ scripts/bench-stream.ts        replays a real game through every model at once a
 scripts/frame-value.ts         the interleaved frame ablation — the VERDICT instrument, and its floor
 scripts/frame-power.ts         the FORCED CHOICE: which picture was this line said about? An exact 50% null
 scripts/measure-ttft.ts        first token, first SYLLABLE, cache hits and cost per game, paired per turn
+scripts/fetch-champions.ts     fetches, caches and generates the champion table — no model, no key
+scripts/audit-knowledge.ts     what the champion knowledge in the prompts is standing on, line by line
 scripts/audit-live-fields.ts   every rendered field against the post-game truth, by side
 scripts/what-wins.ts           what separates his WINS from his LOSSES over the whole library
 scripts/probe-minimap.ts       how accurate a minimap read is — the one thing bench-stream cannot grade
@@ -1179,11 +1244,11 @@ and pivot to a number that *is*. Refusing to invent is itself part of the bit �
 "I'd roast your build but the client won't give me your item timings, so instead
 let's talk about the 41 seconds you spent walking to a camp that was already dead."
 
-### Champion context — the one unmeasured thing in the prompt
+### Champion context — fetched, and not measured from his game
 
-Some reviews carry a **CHAMPION CONTEXT** section, loaded from editable markdown in
-`knowledge/champions/`. It is the only part of the prompt that was not measured from
-his game, and it is fenced hard:
+Some reviews carry a **CHAMPION CONTEXT** section. Every line of it was copied from Riot's own
+champion data or the League of Legends Wiki and carries its source, its revision and the date it
+was fetched **in the line**. None of it was measured from THIS game, so it is fenced hard:
 
 - It shapes **the fix**, never the numbers. A fix that fits the champion he played beats
   a generic one — "your clear accelerates as it chains, so stopping mid-route costs you
@@ -1193,9 +1258,14 @@ his game, and it is fenced hard:
 - If it disagrees with the data, **the data wins.**
 - Absorb it. Never say "the guide says" or attribute it.
 
-If no notes exist for a champion, coach the role and the numbers and say nothing about
-the kit. Inventing champion knowledge to fill the gap breaks hard rule 2 exactly the way
-inventing a stat does.
+**If something about the champion is not on a line in that section, no source published it and you
+do not know it.** Routes, clear order, gank conditions, power spikes and what an item purchase
+implies are missing because nothing publishes them, not because the section was trimmed. Say less
+rather than filling the gap: inventing champion knowledge breaks hard rule 2 exactly the way
+inventing a stat does, and the last time this app filled that gap it told him for months that
+Swirlseed rolls over terrain and grants vision along its path, which it does not.
+
+If no section is present at all, coach the role and the numbers and say nothing about the kit.
 
 ### Hedging — the sampling rule
 

@@ -352,9 +352,11 @@ export type MatchupBasis = typeof MatchupBasis.infer
  * The champ-select / loading-screen brief.
  *
  * Everything here is read off `/lol-gameflow/v1/session` before the game starts, except
- * `championNotes` / `opponentNotes`, which come from editable markdown in `knowledge/champions/`
- * and are fenced the same way the review's CHAMPION CONTEXT is: they may shape the plan, they
- * may never become a number or a claim about what will happen.
+ * `championNotes` / `opponentNotes`, which come from the FETCHED champion table
+ * (`src/knowledge/champion-table.ts`, written by `pnpm fetch:champions`) and carry a source, a
+ * revision and a fetch date on every line. They are fenced the same way the review's CHAMPION
+ * CONTEXT is: they may shape the plan, they may never become a number or a claim about what will
+ * happen in a game that has not been played yet.
  */
 export const MatchupBrief = type({
 	/** Gameflow phase this was read at: `"ChampSelect"`, `"GameStart"`, `"InProgress"`, … */
@@ -369,14 +371,14 @@ export const MatchupBrief = type({
 	allies: MatchupPlayer.array(),
 	/** The five enemies, `opponent` included. */
 	enemies: MatchupPlayer.array(),
-	/** Champion notes for what HE picked. `null` when only `_default.md` matched. */
+	/** The fetched section for what HE picked. `null` when the table has no row for it. */
 	championNotes: type({
 		champion: "string",
 		text: "string",
 		patch: "string",
 		source: "string"
 	}).or("null"),
-	/** Champion notes for the enemy counterpart. `null` when there is no file for them. */
+	/** The same for the enemy counterpart. `null` when the table has no row for them. */
 	opponentNotes: type({ champion: "string", text: "string" }).or("null"),
 	/**
 	 * Everything this brief could not establish, in plain words. Rendered to the user AND to the

@@ -643,11 +643,12 @@ ${bullets(d.baseline)}`)
 	 */
 	if (d.championContext && !d.championContext.isDefault) {
 		const cc = d.championContext
-		sections.push(`## CHAMPION CONTEXT — ${cc.champion} (NOT measured from this game)
+		sections.push(`## CHAMPION CONTEXT — ${cc.champion} (FETCHED, and NOT measured from this game)
 
-This section is general knowledge about how ${cc.champion} works. **Nothing in it was measured
-from this game and none of it can be checked against the data.** It exists so your FIX can be
-specific to the champion he actually played.
+This section is how ${cc.champion} works, copied line by line out of Riot's own champion data and
+the League of Legends Wiki. **Every line names the source it came from, its revision and the date
+it was fetched, in the line.** None of it was measured from THIS game, so it can tell you what the
+champion does and it can never tell you what happened.
 
 Rules for this section, and they are absolute:
 
@@ -657,6 +658,9 @@ Rules for this section, and they are absolute:
   figure you cite still has to come from the metrics and moments above.
 - If anything here disagrees with the data above, **the data wins** and you drop the note.
 - Do not quote it, do not attribute it, and do not tell him "the guide says". Absorb it.
+- **If something about this champion is not on a line below, no source published it and you do
+  not know it.** Routes, clear order, gank conditions, power spikes and what an item purchase
+  implies are not here because nothing publishes them — say less rather than filling the gap.
 ${cc.staleness ? `- ${cc.staleness}\n` : ""}
 ${cc.text}${
 			cc.opponent ?

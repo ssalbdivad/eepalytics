@@ -1,0 +1,94 @@
+# Re-fetch the champion table when Riot ships a patch, and open a PR with the diff.
+#
+# THE APP DOES NOT NEED THIS. `pnpm fetch:champions` runs anywhere, with no key and no model, and
+# the coach keeps working on a stale table — every champion line it renders carries the date it was
+# fetched, and `championTableStaleness` tells the model out loud that it is reading last patch's
+# numbers. This workflow is only about not being the one who notices in the middle of a game.
+#
+# WHAT IT REPLACED, AND WHY THAT MATTERS. Until 2026-09-18 this file was
+# `refresh-champion-context.yml`: it ran an agent with web access and had it WRITE champion prose
+# into `knowledge/champions/*.md`. Audited against the wiki and Data Dragon, that corpus carried
+# 18 wrong sentences in 225 adjudicated mechanical claims (8.0% [5.1, 12.3]), and one false clause
+# about Lillia's Swirlseed reached 170 of 1,513 stored pieces of advice. A model composing champion
+# knowledge is the thing this repo will not do any more, in CI or anywhere else. This job fetches
+# and regenerates; it writes no sentence of its own.
+#
+# IT OPENS A PR, IT NEVER PUSHES TO MAIN. The diff is the review: a regenerated table that changes
+# an ability's behaviour text is exactly the thing worth a human's eye, and the suite runs on it
+# here so a shape change upstream fails loudly rather than shipping a degraded section.
+#
+# No secrets. Every source it reads is public and unauthenticated.
+
+name: Refresh champion table
+
+on:
+  schedule:
+    # Riot ships Wednesdays; Thursday 09:00 UTC gives op.gg a day of games on the new patch, so
+    # the sample size beside a win rate means something by the time it is quoted.
+    - cron: "0 9 * * 4"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: refresh-champion-table
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - id: patch
+        name: Is the table stale against the live patch?
+        run: |
+          set -euo pipefail
+          out=$(node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/check-patch.ts --json)
+          echo "$out"
+          node -e 'const j=JSON.parse(process.argv[1]); require("node:fs").appendFileSync(process.env.GITHUB_OUTPUT, `stale=${j.stale === true}\nlive=${j.live ?? ""}\n`)' "$out"
+
+      - name: Re-fetch and regenerate
+        if: steps.patch.outputs.stale == 'true'
+        run: pnpm fetch:champions
+
+      # The fetch fails closed on its own — an unreachable Tier 1 source exits 1 and touches
+      # nothing — so reaching here means a table was written. These check it is one the app can use.
+      - name: Check what was generated
+        if: steps.patch.outputs.stale == 'true'
+        run: |
+          pnpm typecheck
+          pnpm test
+          pnpm audit:knowledge Lillia Kayn
+
+      - uses: peter-evans/create-pull-request@v6
+        if: steps.patch.outputs.stale == 'true'
+        with:
+          branch: "auto/champion-table-${{ steps.patch.outputs.live }}"
+          title: "Champion table, patch ${{ steps.patch.outputs.live }}"
+          commit-message: "Champion table, fetched on patch ${{ steps.patch.outputs.live }}"
+          body: |
+            `pnpm fetch:champions` on patch ${{ steps.patch.outputs.live }}. Nothing here was written
+            by a model: every string was copied from Riot's Data Dragon, the League of Legends Wiki
+            or op.gg, and carries its URL, revision and fetch time.
+
+            Worth reading in the diff, in this order:
+
+            - any ability whose BEHAVIOUR text changed — that is a rework or a fix in the source,
+              and it is what the coach will now say about the champion;
+            - any ability that gained a `conflicts` entry, meaning Data Dragon and the wiki stopped
+              agreeing on its name, cooldown or cost. Its numbers are withheld until they agree
+              again, and the block says so rather than going quiet;
+            - any champion whose `tier2` became `null`, meaning op.gg's payload changed shape and
+              the whole meta section was dropped rather than shipped half-right.
+
+            Do not merge without looking. A regenerated table is data, and data can be wrong
+            upstream — what it cannot be any more is invented here.

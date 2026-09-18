@@ -31,7 +31,7 @@ import {
 	listWatchNotes,
 	upsertWatchNote
 } from "../../db/queries.ts"
-import { championNote } from "../../knowledge/index.ts"
+import { championBriefSync } from "../../knowledge/champion-brief.ts"
 import { watchMoment } from "../../review/watch.ts"
 import { fail, intParam, notFound, send } from "../respond.ts"
 import { DATA_DIR, WATCH_FRAME_WINDOW_SEC } from "../../shared/constants.ts"
@@ -122,7 +122,12 @@ export const createWatchRoutes = (): Hono => {
 			.filter(m => cited.has(m.key))
 			.map(m => `${m.label}: ${m.value}${m.unit}${m.baselineText ? ` (${m.baselineText})` : ""}`)
 
-		const note = championNote(game.championName)
+		/*
+		 * FETCHED, not prose. Same cutover as the digest and the live block: every line carries its
+		 * own source. Edge-case notes are off — this call looks at a handful of frames of one
+		 * moment, so what helps is the kit, not the wiki's interaction minutiae.
+		 */
+		const brief = championBriefSync(game.championName, { edgeCases: false })
 		const result = await watchMoment({
 			championName: game.championName,
 			role: game.role,
@@ -130,7 +135,7 @@ export const createWatchRoutes = (): Hono => {
 			// Already absolute and already checked to exist — see the containment check above.
 			frames,
 			context,
-			championNotes: note && !note.isDefault ? note.text : null,
+			championNotes: brief?.text ?? null,
 			mediaDir: dirname(frames[0]!.path)
 		})
 

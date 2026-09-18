@@ -136,10 +136,17 @@ describe("matchupPromptSection", () => {
 		for (const { line } of BANNED_MATCHUP_LINES) ok(text.includes(line))
 	})
 
-	test("prints the notes it was given and labels them unmeasured", () => {
+	test("prints the notes it was given and says where they did and did not come from", () => {
 		ok(text.includes("Her clear accelerates as it chains."))
 		ok(text.includes("He wants the even early fight."))
-		ok(text.includes("NOT measured"))
+		/*
+		 * Both halves of the label, because both are load-bearing and they pull in opposite
+		 * directions. FETCHED says the lines were copied off a URL rather than written by a model —
+		 * which they were not, until 2026-09-18. "not measured from a game" says they are still not
+		 * evidence about the player, which is the fence that has always applied here.
+		 */
+		ok(text.includes("FETCHED"))
+		ok(text.includes("not measured from a game"))
 	})
 
 	test("tells the coach to stop when there is no counterpart", () => {
