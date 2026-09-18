@@ -24,6 +24,7 @@ import { test } from "node:test"
 import { liveCoachSystemPrompt } from "../shared/live-coach-mode.ts"
 import { liveChampionKnowledge } from "./live-coach-knowledge.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../shared/live-prompt.ts"
+import { RETRACTIONS } from "../knowledge/legacy-clauses.ts"
 import { renderState } from "../shared/live-state.ts"
 import type { VisionState } from "../shared/live-state.ts"
 import {
@@ -209,12 +210,42 @@ test("every arm still emits the exact text its fingerprint claims", () => {
 	}
 })
 
-test("the three arms that own their words are byte-identical to the measured run", () => {
-	for (const id of ["cite-or-quiet", "free", "shipped"]) {
+test("the two arms that own their words are byte-identical to the measured run", () => {
+	for (const id of ["cite-or-quiet", "free"]) {
 		const fp = FINGERPRINTS[id]!
 		assert.equal(fp.drift, "", `${id} is supposed to be frozen and now claims a drift`)
 		assert.equal(fp.today.sha, fp.measured.sha, `${id} no longer matches the 2026-09-05 run`)
 		assert.equal(fp.today.chars, fp.measured.chars)
+	}
+})
+
+/*
+ * `shipped` used to be in the list above. It is the one arm that reads what the PLAYER hears, and on
+ * 2026-09-18 two Lillia clauses were withdrawn from that text because both taught the Swirlseed as a
+ * scouting tool and both Riot and the wiki say the seed detonates on terrain. Withdrawing them
+ * changes this arm and nothing else, which is exactly what the frozen clause corpus was for: the
+ * four arms whose numbers are quoted in AGENTS.md reproduce byte for byte, and the shipped arm's
+ * departure from them is a recorded, sized difference rather than a silent one.
+ */
+test("the shipped arm has drifted by exactly the two retracted clauses", () => {
+	const fp = FINGERPRINTS["shipped"]!
+	assert.notEqual(fp.drift, "", "the shipped arm must name why it is not the measured text")
+	assert.notEqual(fp.today.sha, fp.measured.sha, "it matches the run again — delete the drift note")
+	assert.equal(
+		fp.measured.chars - fp.today.chars,
+		173,
+		"the shipped arm moved by something other than the two retracted clauses"
+	)
+	/*
+	 * The clauses themselves: gone from the text a player hears, still present in the arm that
+	 * reproduces the run. Both halves are asserted, because a retraction that also silently edited
+	 * the measured corpus would be the same failure this whole freeze exists to prevent.
+	 */
+	const shipped = ARMS.find(a => a.id === "shipped")!.system(FINGERPRINT_CHAMPION)
+	const measured = championKnowledge(FINGERPRINT_CHAMPION)
+	for (const r of RETRACTIONS) {
+		assert.equal(shipped.includes(r.clause), false, `a retracted clause is still shipping: ${r.clause}`)
+		assert.equal(measured.includes(r.clause), true, `the measured corpus lost a clause: ${r.clause}`)
 	}
 })
 

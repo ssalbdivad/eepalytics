@@ -13,17 +13,15 @@
  *     argument was wrong: its clock-derived index collided with `FARM_COOLDOWN_SEC` and said one
  *     clause three times while never speaking a third at all. That collision is asserted below as
  *     a fact about arithmetic, so nobody re-derives it.
- *   - the SHIPPED files load. A clause the parser drops is worse than no clause, because the file
- *     looks like progress and the coach says nothing new. The last section reads
- *     `knowledge/champions/*.md` off disk and fails on any line that looks like a clause and did
- *     not arrive in the parse.
+ *   - the SHIPPED clauses load. A clause the parser drops is worse than no clause, because it
+ *     looks like progress and the coach says nothing new. The last section reads the frozen corpus
+ *     in `knowledge/legacy-clauses.ts` — the markdown it came from was deleted on 2026-09-18 — and
+ *     fails on any line that looks like a clause and did not arrive in the parse.
  */
 
 import { deepStrictEqual, notStrictEqual, ok, strictEqual } from "node:assert/strict"
-import { readFileSync, readdirSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
 import { describe, it } from "node:test"
-import { fileURLToPath } from "node:url"
+import { ROLE_DEFAULT_KEY, legacyClauseKeys, shippedClauseSection } from "../knowledge/legacy-clauses.ts"
 import { FARM_COOLDOWN_SEC, buildFacts, newFactMemory } from "../analysis/live-facts.ts"
 import { speechDurationSec } from "../analysis/timeliness.ts"
 import type { FactInput } from "../analysis/live-facts.ts"
@@ -331,15 +329,18 @@ describe("the rotation, simulated over a real game", () => {
 /**
  * The guard that would have caught the silent loss.
  *
- * Work on these files has already been done once and reverted, and the tell was not a failing
- * test — it was a passing one over an empty directory. So this reads the SHIPPED markdown off
- * disk and fails when a line that looks like a clause did not arrive in the parse. Knowledge the
- * parser drops is worse than none, because the file reads as progress and the coach says nothing
- * new.
+ * Work on these clauses has already been done once and reverted, and the tell was not a failing
+ * test — it was a passing one over an empty directory. So this reads the SHIPPED corpus and fails
+ * when a line that looks like a clause did not arrive in the parse. Knowledge the parser drops is
+ * worse than none, because it reads as progress and the coach says nothing new.
+ *
+ * The corpus moved on 2026-09-18. It used to be `knowledge/champions/*.md`, which was deleted
+ * because every sentence in it was model-authored and 8.0% [5.1, 12.3] of its checkable mechanical
+ * claims were wrong. The five `## Live coaching` sections those files carried are frozen byte for
+ * byte in `knowledge/legacy-clauses.ts`, and this suite reads `shippedClauseSection` — the text a
+ * player actually hears, i.e. as-measured minus the two retracted Lillia clauses.
  */
-describe("the shipped champion files", () => {
-	const CHAMPIONS = resolve(dirname(fileURLToPath(import.meta.url)), "../../knowledge/champions")
-
+describe("the shipped champion clauses", () => {
 	/**
 	 * How long a clause may be, in characters.
 	 *
@@ -350,30 +351,19 @@ describe("the shipped champion files", () => {
 	 */
 	const MAX_CLAUSE_CHARS = 110
 
-	const files = readdirSync(CHAMPIONS)
-		.filter(f => f.endsWith(".md"))
-		.sort()
+	const keys = legacyClauseKeys()
 
-	/** The `## Live coaching` block of a file, sliced the same way the parser slices it. */
-	const section = (md: string): string => {
-		const start = md.indexOf("## Live coaching")
-		if (start < 0) return ""
-		const rest = md.slice(start)
-		const end = rest.indexOf("\n## ", 1)
-		return end < 0 ? rest : rest.slice(0, end)
-	}
-
-	it("has files to check at all", () => {
-		// A directory that has been emptied must fail loudly rather than pass vacuously — that is
+	it("has clauses to check at all", () => {
+		// A corpus that has been emptied must fail loudly rather than pass vacuously — that is
 		// precisely how a night of this work went missing without a red test.
-		ok(files.includes("_default.md"), "`_default.md` is missing")
-		ok(files.length > 1, "no champion files on disk")
+		ok(keys.includes(ROLE_DEFAULT_KEY), "the role default is missing")
+		ok(keys.length > 1, "no champion clauses in the frozen corpus")
 	})
 
-	for (const file of files)
+	for (const file of keys)
 		describe(file, () => {
-			const md = readFileSync(join(CHAMPIONS, file), "utf8")
-			const lines = section(md)
+			const md = shippedClauseSection(file)
+			const lines = md
 				.split("\n")
 				.map(l => l.trim())
 				.filter(l => l !== "" && !l.startsWith("#"))
@@ -473,16 +463,16 @@ describe("the shipped champion files", () => {
 				 * with no Live coaching section harmless again rather than a silencer.
 				 */
 				const merged =
-					file === "_default.md" ?
+					file === ROLE_DEFAULT_KEY ?
 						loaded
-					:	mergeClauses(parseChampionClauses(readFileSync(join(CHAMPIONS, "_default.md"), "utf8")), loaded)
+					:	mergeClauses(parseChampionClauses(shippedClauseSection(ROLE_DEFAULT_KEY)), loaded)
 				for (const kind of ADVICE_KINDS)
 					ok((merged[kind]?.length ?? 0) > 0, `nothing to say for "${kind}"`)
 			})
 		})
 
 	it("has a role default for every kind, since that is what the merge falls back on", () => {
-		const roleDefault = parseChampionClauses(readFileSync(join(CHAMPIONS, "_default.md"), "utf8"))
+		const roleDefault = parseChampionClauses(shippedClauseSection(ROLE_DEFAULT_KEY))
 		for (const kind of ADVICE_KINDS)
 			ok((roleDefault[kind]?.length ?? 0) > 0, `_default.md has no clause for "${kind}"`)
 	})
@@ -496,8 +486,8 @@ describe("the shipped champion files", () => {
 		 * proves the thing actually shipping.
 		 */
 		const clauses = mergeClauses(
-			parseChampionClauses(readFileSync(join(CHAMPIONS, "_default.md"), "utf8")),
-			parseChampionClauses(readFileSync(join(CHAMPIONS, "lillia.md"), "utf8"))
+			parseChampionClauses(shippedClauseSection(ROLE_DEFAULT_KEY)),
+			parseChampionClauses(shippedClauseSection("lillia"))
 		)
 		const mem = newFactMemory()
 		const cursor = newAdviceCursor()
@@ -541,10 +531,10 @@ describe("the shipped champion files", () => {
 	})
 
 	it("rotates the shipped clauses rather than repeating one", () => {
-		// Whatever the files hold, a kind with several clauses must actually cycle through them.
+		// Whatever the corpus holds, a kind with several clauses must actually cycle through them.
 		const cursor = newAdviceCursor()
-		for (const file of files) {
-			const clauses = parseChampionClauses(readFileSync(join(CHAMPIONS, file), "utf8"))
+		for (const file of keys) {
+			const clauses = parseChampionClauses(shippedClauseSection(file))
 			for (const kind of ADVICE_KINDS) {
 				const list = clauses[kind]
 				if (!list || list.length < 2) continue

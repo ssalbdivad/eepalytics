@@ -25,11 +25,11 @@
  * the shipped coach needs different words, change `live-coach-mode.ts` and let the pin fail — that
  * failure is the whole point, and it is where you decide whether the old number still applies.
  *
- * NODE ONLY: `ablationChampionKnowledge` reads `knowledge/champions/*.md` off disk.
+ * `ablationChampionKnowledge` reads the FROZEN clause corpus in `knowledge/legacy-clauses.ts`.
  */
 
 import { createHash } from "node:crypto"
-import { existsSync, readFileSync } from "node:fs"
+import { legacyClauseSection } from "../knowledge/legacy-clauses.ts"
 import { parseChampionClauses } from "../shared/champion-advice.ts"
 import { liveCoachSystemPrompt } from "../shared/live-coach-mode.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../shared/live-prompt.ts"
@@ -104,9 +104,16 @@ export const countRankedFacts = (block: string): number =>
  * PARSED clauses, which are digit-free by construction. Same knowledge, unfenced delivery.
  */
 export const ablationChampionKnowledge = (champion: string): string => {
-	const path = `knowledge/champions/${champion.toLowerCase().replace(/[^a-z]/g, "")}.md`
-	if (!existsSync(path)) return ""
-	const clauses = parseChampionClauses(readFileSync(path, "utf8"))
+	/*
+	 * FROZEN, not read off disk. The markdown these clauses came from was deleted on 2026-09-18
+	 * because it was model-authored and one of its sentences was false; the sections themselves are
+	 * reproduced byte for byte in `knowledge/legacy-clauses.ts`. This arm must read the AS-MEASURED
+	 * corpus, retractions included, or the stored runs it exists to reproduce stop being
+	 * reproducible — `liveChampionKnowledge` is the one that reads the shipped, retracted text.
+	 */
+	const section = legacyClauseSection(champion.toLowerCase().replace(/[^a-z]/g, ""))
+	if (section === "") return ""
+	const clauses = parseChampionClauses(section)
 	const lines: string[] = []
 	for (const [kind, list] of Object.entries(clauses))
 		for (const c of list ?? []) lines.push(`- (${kind}) ${c}`)
@@ -349,11 +356,19 @@ export const ABLATION_PROMPT_FINGERPRINTS: Record<string, PromptFingerprint> = {
 		today: { sha: "8de1e3aa0cf030a2", chars: 4207 },
 		drift: ""
 	},
-	// Only in `data/eval/ablation-shipped-20260905.json`; the first run had no shipped arm.
+	/*
+	 * Only in `data/eval/ablation-shipped-20260905.json`; the first run had no shipped arm.
+	 *
+	 * DRIFTED on 2026-09-18, by exactly two clauses and 173 characters. `shipped` is the only arm
+	 * that reads `liveChampionKnowledge`, i.e. the text a player actually hears, and two Lillia
+	 * clauses were retracted there because they rest on a sentence no source supports — see
+	 * `RETRACTIONS` in `knowledge/legacy-clauses.ts`. The four measured arms are unchanged, which is
+	 * the whole reason the clause corpus was frozen rather than regenerated.
+	 */
 	shipped: {
 		measured: { sha: "0f4dab533a8a6f96", chars: 7089 },
-		today: { sha: "0f4dab533a8a6f96", chars: 7089 },
-		drift: ""
+		today: { sha: "6342ea4a0961beb1", chars: 6916 },
+		drift: "two Lillia clauses retracted on 2026-09-18 — both taught the Swirlseed as a scouting tool, which the wiki and Data Dragon both refute"
 	}
 }
 

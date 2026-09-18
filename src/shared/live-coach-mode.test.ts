@@ -18,9 +18,10 @@
 
 import { type } from "arktype"
 import assert from "node:assert/strict"
-import { readFileSync } from "node:fs"
 import { test } from "node:test"
 import { ABLATION_ARMS as ARMS, ablationChampionKnowledge as championKnowledge } from "../review/ablation-arms.ts"
+import { legacyClauseSection } from "../knowledge/legacy-clauses.ts"
+import { fullKnowledge } from "../review/live-knowledge-full.ts"
 import { parseChampionClauses } from "./champion-advice.ts"
 import {
 	CITE_BLOCK_REPAIRS,
@@ -79,15 +80,22 @@ test("fenced mode is what ships today, unchanged", () => {
 	assert.equal(liveCoachSystemPrompt({ mode: "fenced", championKnowledge: "ignored" }), LIVE_COACH_SYSTEM_PROMPT)
 })
 
+/*
+ * The clause corpus moved from `knowledge/champions/*.md` into `knowledge/legacy-clauses.ts` on
+ * 2026-09-18, frozen byte for byte, because the markdown was model-authored and one of its
+ * sentences was measurably false. `legacyClauseSection` is the AS-MEASURED text, which is what
+ * these two tests are about: they pin that the renderer the ablation ran still produces the
+ * ablation's bytes.
+ */
 test("champion knowledge renders exactly as the ablation rendered it", () => {
-	const md = readFileSync("knowledge/champions/lillia.md", "utf8")
-	assert.equal(renderChampionKnowledge("Lillia", parseChampionClauses(md)), championKnowledge("Lillia"))
+	const section = legacyClauseSection("lillia")
+	assert.equal(renderChampionKnowledge("Lillia", parseChampionClauses(section)), championKnowledge("Lillia"))
 })
 
 test("champion knowledge reaches the prompt and carries no digits", () => {
-	const md = readFileSync("knowledge/champions/lillia.md", "utf8")
-	const knowledge = renderChampionKnowledge("Lillia", parseChampionClauses(md))
-	assert.equal(knowledge.length > 0, true, "lillia.md parsed to nothing — the clause format moved")
+	const section = legacyClauseSection("lillia")
+	const knowledge = renderChampionKnowledge("Lillia", parseChampionClauses(section))
+	assert.equal(knowledge.length > 0, true, "the frozen Lillia section parsed to nothing — the clause format moved")
 	assert.equal(liveCoachSystemPrompt({ mode: "cite-or-quiet", championKnowledge: knowledge }).endsWith(knowledge), true)
 	// The one rule that keeps this honest by construction rather than by obedience.
 	const clauses = knowledge.split("\n").filter(l => l.startsWith("- ("))
@@ -216,9 +224,18 @@ test("adding trusted left both measured modes byte-identical", () => {
 })
 
 test("trusted appends the caller's knowledge whole, with no parsing and no digit filter", () => {
-	// The bug this mode exists to fix: 6800 characters of lillia.md arrived as 2566 of numberless
-	// fragments, because the clause parser drops every clause carrying a digit. Prose goes through.
-	const md = readFileSync("knowledge/champions/lillia.md", "utf8")
+	/*
+	 * The bug this mode exists to fix: 6,800 characters of champion knowledge arrived as 2,566 of
+	 * numberless fragments, because the clause parser drops every clause carrying a digit. Whatever
+	 * the caller hands over goes through whole.
+	 *
+	 * The knowledge is the FETCHED block now rather than a file of prose, and that is the point of
+	 * asking for it through `fullKnowledge` here: this test's job is that the mode does not parse,
+	 * filter or truncate what it is given, whatever that happens to be, and it would pass vacuously
+	 * against a constant.
+	 */
+	const md = fullKnowledge({ champion: "Lillia", counterpart: "Briar" })
+	assert.equal(md.length > 0, true, "the fetched knowledge block is empty — champion-table.ts moved")
 	const out = liveCoachSystemPrompt({ mode: "trusted", championKnowledge: md })
 	assert.equal(out.startsWith(TRUSTED_PROMPT), true)
 	assert.equal(out.includes(md), true)
@@ -237,7 +254,7 @@ test("trusted appends the caller's knowledge whole, with no parsing and no digit
  * may grow to any size and this section still comes after it.
  */
 test("the close is the last instruction, after the champion knowledge", () => {
-	const md = readFileSync("knowledge/champions/lillia.md", "utf8")
+	const md = fullKnowledge({ champion: "Lillia", counterpart: "Briar" })
 	const out = liveCoachSystemPrompt({ mode: "trusted", championKnowledge: md })
 	assert.equal(out.endsWith(TRUSTED_CLOSE), true)
 	assert.equal(out.indexOf(md) < out.indexOf(TRUSTED_CLOSE), true)

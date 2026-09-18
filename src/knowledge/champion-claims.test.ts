@@ -35,17 +35,11 @@
  */
 
 import { deepStrictEqual, ok, strictEqual } from "node:assert/strict"
-import { readFileSync, readdirSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
 import { describe, it } from "node:test"
-import { fileURLToPath } from "node:url"
 import { ADVICE_KINDS, parseChampionClauses } from "../shared/champion-advice.ts"
+import { legacyClauseKeys, shippedClauseSection } from "./legacy-clauses.ts"
 
-/*
- * Resolved from THIS file rather than through `EEPALYTICS_KNOWLEDGE_DIR`, deliberately: the point
- * is to guard what ships, and a seam that a test could point elsewhere guards nothing.
- */
-const CHAMPIONS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../knowledge/champions")
+
 
 interface Fact {
 	/** The mechanic, in one sentence. If this stops being true, every clause citing it is false. */
@@ -112,10 +106,17 @@ const LILLIA_FACTS = {
 		says: "Watch Out! Eep! dashes a short distance toward the target location and cannot pass through terrain, and it is the ONLY dash, blink or leap in the kit — which is why 'she has no dash' is wrong and 'the hop will not carry her over a wall' is right.",
 		checked: `wiki.leagueoflegends.com/en-us/Lillia (W, 500 target range and a 350 dash, not through terrain) + ddragon 16.17.1 Lillia.json for the rest of the kit, ${CHECKED_ON}`
 	},
-	"lillia.e-reveals-what-it-hits": {
-		says: "Swirlseed rolls until it meets a wall or a target; what it lands on is damaged, slowed and revealed briefly. It reveals what it HITS — it does not light up the ground it rolled over.",
-		checked: `ddragon 16.17.1 Lillia.json (LilliaE) + wiki.leagueoflegends.com/en-us/Lillia, ${CHECKED_ON}`
-	},
+	/*
+	 * `lillia.e-reveals-what-it-hits` was here and was RIGHT: "it reveals what it HITS — it does not
+	 * light up the ground it rolled over". The prose in `lillia.md` said the opposite four times over
+	 * and nothing reconciled the two, which is the register's real limit — it records what a clause
+	 * bets on, and it never saw the file the clause sat in.
+	 *
+	 * Both clauses that cited it were retracted on 2026-09-18 (`RETRACTIONS` in
+	 * `knowledge/legacy-clauses.ts`): each told him to roll the seed down a corridor to LEARN
+	 * something, and against terrain it detonates and tells him nothing. With no clause citing it the
+	 * fact goes too, because a register that keeps uncited facts rots into decoration.
+	 */
 	"lillia.r-needs-dream-dust": {
 		says: "Lilting Lullaby only makes drowsy, and then sleeps, enemies already carrying Dream Dust from her passive.",
 		checked: `ddragon 16.17.1 Lillia.json (LilliaR) + wiki.leagueoflegends.com/en-us/Lillia, ${CHECKED_ON}`
@@ -270,7 +271,6 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["your clear only gets faster while it keeps running, so finish the whole route", ["lillia.q-stacks-move-speed"]],
 		["you do not win the straight early duel, so win the race on route speed instead", ["lillia.judgment.weak-early-duel", "lillia.q-stacks-move-speed"]],
 		["the Prance stacks decay once you stop hitting things, so keep the route moving", ["lillia.q-stacks-move-speed"]],
-		["roll a Swirlseed down his entrance, it reveals whoever it rolls into", ["lillia.e-reveals-what-it-hits"]],
 		["you are ahead because the route never stopped, so do not stop it to go find him", ["lillia.q-stacks-move-speed"]],
 		["keep the clear running toward his camps while the speed is stacked", ["lillia.q-stacks-move-speed", "role.camps-respawn"]],
 		["no burst means you cannot cash a lead in a duel, so cash it on a drake", ["lillia.damage-arrives-over-time", "role.objectives-persist"]],
@@ -284,7 +284,6 @@ const PINS: Record<string, [clause: string, facts: string[]][]> = {
 		["arriving late on foot only feeds it, take the far objective instead", ["lillia.w-is-her-only-hop", "role.objective-timers"]],
 		["start walking to the next timer, your speed only pays in transit", ["lillia.q-stacks-move-speed", "role.objective-timers"]],
 		["the W hop is a step and not an escape, so the leaving has to start before you commit.", ["lillia.w-is-her-only-hop"]],
-		["roll a Swirlseed in ahead of you next time, it reveals whoever it rolls into.", ["lillia.e-reveals-what-it-hits"]],
 		["speed only saves you when it is already stacked, so start moving before you need it.", ["lillia.q-stacks-move-speed"]],
 		["a pit or a corridor is where your escape stops existing, so fight at the entrance to it.", ["lillia.w-is-her-only-hop"]],
 		["if that shortens the fight, stop taking the fight and go take something instead", ["lillia.damage-arrives-over-time", "role.items-change-a-duel"]],
@@ -452,7 +451,22 @@ const SANCTIONED = [
 	"community consensus"
 ]
 
-const read = (file: string): string => readFileSync(join(CHAMPIONS_DIR, file), "utf8")
+/**
+ * The text a pin is checked against: the SHIPPED clause section for that champion.
+ *
+ * It used to be the whole markdown file. Those files were deleted on 2026-09-18 — model-authored,
+ * 8.0% [5.1, 12.3] of their checkable mechanical claims wrong — and the five `## Live coaching`
+ * sections they carried are frozen byte for byte in `knowledge/legacy-clauses.ts`. The `.md` names
+ * are kept as the register's keys because they are what every stored run and every comment in this
+ * repo calls these corpora.
+ *
+ * One consequence worth stating rather than discovering later: `FORBIDDEN` below now guards the
+ * CLAUSES only. It used to also guard the prose around them, and most of the sentences it was
+ * written against — "her escape is movement speed, no dash, no blink" — lived in that prose. The
+ * prose is gone and cannot come back through this door, so the patterns are a narrower guard over a
+ * frozen corpus. They are kept because the clauses still ship, in two selectable modes.
+ */
+const sectionOf = (file: string): string => shippedClauseSection(file.replace(/\.md$/, ""))
 
 /*
  * The files this register is ABOUT: the ones that ship tagged clauses to the fenced and
@@ -463,14 +477,11 @@ const read = (file: string): string => readFileSync(join(CHAMPIONS_DIR, file), "
  * directory guard below honest: delete lillia.md's clause block and it drops out of this list and
  * the register fails, which is exactly what it did the night that mattered.
  */
-const shippedFiles = (): string[] =>
-	readdirSync(CHAMPIONS_DIR)
-		.filter(f => f.endsWith(".md") && /^##+\s*Live coaching\s*$/im.test(read(f)))
-		.sort()
+const shippedFiles = (): string[] => legacyClauseKeys().map(k => `${k}.md`).sort()
 
 /** Every clause on disk, in file order within each kind. */
 const clausesOf = (file: string): string[] => {
-	const parsed = parseChampionClauses(read(file))
+	const parsed = parseChampionClauses(sectionOf(file))
 	return ADVICE_KINDS.flatMap(kind => parsed[kind] ?? [])
 }
 
@@ -544,7 +555,7 @@ describe("the claims register", () => {
 describe("the mistakes already made here", () => {
 	it("cannot come back, in any file that once made them", () => {
 		for (const [file, rules] of Object.entries(FORBIDDEN)) {
-			const text = read(file)
+			const text = sectionOf(file)
 			for (const { pattern, why } of rules) {
 				const hit = pattern.exec(text)
 				ok(hit === null, `${file} says "${hit?.[0]}" — ${why}`)
@@ -572,7 +583,7 @@ describe("the mistakes already made here", () => {
 
 describe("_default.md", () => {
 	it("names no champion ability, because it is what the coach says when it knows none", () => {
-		const text = read("_default.md")
+		const text = sectionOf("_default.md")
 		for (const name of ABILITY_NAMES)
 			ok(!text.includes(name), `_default.md mentions "${name}" — the role fallback may not lean on a kit`)
 	})

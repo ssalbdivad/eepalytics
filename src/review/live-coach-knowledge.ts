@@ -26,22 +26,39 @@
  * to say about deaths. That merge is a property of the LIST — it exists so that every fact KIND
  * still finds a clause. There are no kinds here; there is one block of prose. Matching the arm
  * that was actually measured is worth more than the extra sentences, and
- * `live-coach-knowledge.test.ts` asserts the two are byte-identical.
+ * `live-coach-knowledge.test.ts` asserts the two are the same text minus the retractions.
+ *
+ * ## Where the clauses live now
+ *
+ * `knowledge/champions/*.md` was deleted on 2026-09-18: every sentence in it was written by a model
+ * out of its own head, and one of them — Swirlseed "rolls over terrain, and grants vision of what it
+ * rolls past" — was false against Riot's own tooltip and the wiki, and licensed 38% of the
+ * champion-specific lines this coach has ever spoken. The five `## Live coaching` sections those
+ * files carried are frozen byte for byte in `knowledge/legacy-clauses.ts`, because these two modes
+ * are measured arms and an arm whose input moved is not the arm that was measured.
+ *
+ * This function reads the SHIPPED corpus: as measured, minus the two Lillia clauses that rest on
+ * that false sentence. `ablationChampionKnowledge` reads the as-measured one, so the stored runs
+ * stay reproducible and the player stops being told something no source supports.
  */
 
-import { championNote } from "../knowledge/index.ts"
+import { shippedClauseSection } from "../knowledge/legacy-clauses.ts"
+import { championKey } from "../knowledge/index.ts"
 import { parseChampionClauses } from "../shared/champion-advice.ts"
 import { renderChampionKnowledge } from "../shared/live-coach-mode.ts"
 
 /**
  * The digit-free clauses for a champion, rendered for the prompt, or `""`.
  *
- * Empty is the normal case and not a failure: a champion with no note gets a coach that reasons
- * from the block alone, which is what it did for this app's whole life.
+ * Empty is the normal case and not a failure: twenty of the twenty-four deleted files never had a
+ * clause section at all, so most champions have always got a coach reasoning from the block alone.
  */
 export const liveChampionKnowledge = (championName: string): string => {
-	const note = championNote(championName)
-	// `isDefault` means no file matched this champion — the measured arm found nothing there either.
-	if (!note || note.isDefault) return ""
-	return renderChampionKnowledge(championName, parseChampionClauses(note.text))
+	const key = championKey(championName)
+	// `_default` is the ROLE fallback, not a champion. The measured arm read a champion file or
+	// found none, and substituting the role clauses here would make the comparison meaningless.
+	if (key === "" || key === "default") return ""
+	const section = shippedClauseSection(key)
+	if (section === "") return ""
+	return renderChampionKnowledge(championName, parseChampionClauses(section))
 }
