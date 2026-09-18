@@ -149,6 +149,7 @@ import {
 	observeTick,
 	projectTick
 } from "../../src/analysis/live-events.ts"
+import type { SpeakLevel } from "../../src/analysis/live-events.ts"
 import type { LiveAllGameData } from "../../src/shared/schema/live.ts"
 
 /* =============================================================== the samples
@@ -841,8 +842,21 @@ export interface ScheduledTurn {
 
 export const pickEventCheckpoints = (
 	rows: readonly { line: number; gameTime: number; data: unknown }[],
-	opts: { heartbeatSec?: number; stride?: number; fromSec?: number } = {}
+	/*
+	 * `level` is WHICH SCHEDULE is being replayed — `SPEAK_LEVELS`, the user-facing setting — and it
+	 * defaults to `commentary` rather than to the app's own default ON PURPOSE. Every run already on
+	 * disk was taken on the full schedule, and a bench that silently inherited the shipped default
+	 * would have made those runs incomparable without changing a single argument. A replay that
+	 * means the quiet coach has to say so, and the run file records which it said.
+	 */
+	opts: {
+		heartbeatSec?: number
+		stride?: number
+		fromSec?: number
+		level?: SpeakLevel
+	} = {}
 ): ScheduledTurn[] => {
+	const level = opts.level ?? "commentary"
 	const watch = newEventWatch()
 	const stride = Math.max(1, opts.stride ?? 1)
 	const fromSec = opts.fromSec ?? 0
@@ -865,11 +879,17 @@ export const pickEventCheckpoints = (
 		 * comparable with every run already on disk. Which schedule a replay replays is a property
 		 * of the replay, so it is stated here rather than defaulted into.
 		 */
-		const fired = observeTick(watch, tick, { level: "commentary" })
+		const fired = observeTick(watch, tick, { level })
 		watch.pending.push(...fired)
+		/*
+		 * `heartbeatSec` is left UNDEFINED unless the caller asked for one, so the level's own floor
+		 * applies. Forcing `HEARTBEAT_SEC` in here is what would put a 180s timer back underneath
+		 * `big-calls`, whose whole premise is that there is no floor — and the two ask into the same
+		 * silence, so the shorter one wins every lull.
+		 */
 		const reason = dueTurn(watch, tick.gameTimeSec, {
 			heartbeatSec: opts.heartbeatSec,
-			level: "commentary"
+			level
 		})
 		if (!reason) continue
 		/*
@@ -1490,6 +1510,8 @@ export const buildStream = (
 		/** Cost-only subsample of the due turns. See `pickEventCheckpoints`. */
 		stride?: number
 		heartbeatSec?: number
+		/** WHICH schedule to replay. See `pickEventCheckpoints`; absent means the full one. */
+		level?: SpeakLevel
 	}
 ): BuiltStream => {
 	const warnings: string[] = []
@@ -1638,7 +1660,12 @@ export const buildStream = (
 	if (schedule === "events") {
 		scheduled = pickEventCheckpoints(
 			built.map(b => ({ line: b.sample.line, gameTime: b.sample.gameTime, data: b.sample.data })),
-			{ heartbeatSec: opts.heartbeatSec, stride: opts.stride, fromSec: opts.fromSec }
+			{
+				heartbeatSec: opts.heartbeatSec,
+				stride: opts.stride,
+				fromSec: opts.fromSec,
+				level: opts.level
+			}
 		)
 		const byLine = new Map(candidates.map((c, i) => [c.sample.line, i]))
 		const wanted = scheduled.filter(t => !t.skipped)

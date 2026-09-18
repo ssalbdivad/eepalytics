@@ -344,6 +344,8 @@ const asBenchArm = (a: FrameArm): Arm => ({
 	model: GEMINI_LIVE_MODEL,
 	mode: "trusted",
 	shape: "socket",
+	trim: null,
+	add: null,
 	// This file benches the FRAME, never the prompt: every arm here gets the shipped knowledge.
 	knowledge: "full",
 	vision: a.vision,

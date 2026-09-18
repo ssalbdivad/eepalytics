@@ -172,6 +172,17 @@ export interface CoachTurnRequest {
 	 * section is simply missing, which is what champ select and an unread client both look like.
 	 */
 	counterpart?: string | null
+	/**
+	 * Whether the ROLE file rides along with the champion files. `trusted` only, default true.
+	 *
+	 * A boolean, not a string, so the invariant above survives: a caller may withhold a whole
+	 * section of the knowledge pack and may not write one. It exists because the 2026-09-11
+	 * knowledge ablation could not reach the role file — the two champion sections are keyed by a
+	 * NAME and an absent name is a state the client reaches by itself, while `knowledge/general/
+	 * jungle.md` has no name to withhold. Nothing in the app passes it; `scripts/bench-stream.ts`
+	 * does, as the `+noknow` arm.
+	 */
+	role?: boolean
 }
 
 export interface CoachTurnResult {
@@ -273,7 +284,11 @@ export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult>
 				mode: req.mode ?? DEFAULT_LIVE_COACH_MODE,
 				championKnowledge:
 					(req.mode ?? DEFAULT_LIVE_COACH_MODE) === "trusted" ?
-						fullKnowledge({ champion: req.champion ?? "", counterpart: req.counterpart ?? null })
+						fullKnowledge({
+							champion: req.champion ?? "",
+							counterpart: req.counterpart ?? null,
+							...(req.role === false ? { role: false } : {})
+						})
 					:	liveChampionKnowledge(req.champion ?? "")
 			}),
 			messages: [

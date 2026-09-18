@@ -264,6 +264,8 @@ const armOf = (mode: Arm["mode"]): Arm => ({
 	model: "",
 	mode,
 	shape: "turn",
+		trim: null,
+		add: null,
 	knowledge: "full",
 	vision: false,
 	available: true,

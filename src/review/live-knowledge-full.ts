@@ -81,7 +81,21 @@ const readKnowledge = (...segments: string[]): string | null => {
  * Concatenated under headings the model can navigate, in the order it should weight them — his own
  * champion first, because that is the one every line is about.
  */
-export const fullKnowledge = (opts: { champion: string; counterpart?: string | null }): string => {
+export const fullKnowledge = (opts: {
+	champion: string
+	counterpart?: string | null
+	/*
+	 * Whether `knowledge/general/jungle.md` rides along. TRUE everywhere the app runs.
+	 *
+	 * It exists for one experiment and it is a BOOLEAN rather than a string for the same reason
+	 * `champion` is a name: a caller may withhold a section that the app itself sometimes has no
+	 * material for, and may not write one. The 2026-09-11 knowledge ablation could only withhold
+	 * the two CHAMPION sections, because those are keyed by a name and an absent name is a state
+	 * the client reaches on its own; the role file has no name to withhold, so measuring whether
+	 * it buys anything needed this flag. Nothing in `src/` passes it.
+	 */
+	role?: boolean
+}): string => {
 	const parts: string[] = []
 
 	const own = opts.champion ? readKnowledge("champions", `${championKey(opts.champion)}.md`) : null
@@ -92,7 +106,7 @@ export const fullKnowledge = (opts: { champion: string; counterpart?: string | n
 	const vs = opts.counterpart ? readKnowledge("champions", `${championKey(opts.counterpart)}.md`) : null
 	if (vs) parts.push(`# THE ENEMY JUNGLER: ${opts.counterpart}\n\n${vs}`)
 
-	const general = readKnowledge("general", "jungle.md")
+	const general = opts.role === false ? null : readKnowledge("general", "jungle.md")
 	if (general) parts.push(`# THE ROLE\n\n${general}`)
 
 	return parts.join("\n\n---\n\n")

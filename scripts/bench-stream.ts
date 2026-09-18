@@ -118,15 +118,27 @@
  *     --arms a,b,c               arm ids; `@mode` picks the architecture (`anthropic@trusted`),
  *                                suffix +noframe for a blind twin of the same arm, +nocp for a twin
  *                                with the enemy jungler's champion file withheld, +noown for one
- *                                with his own champion's file withheld (the knowledge ablation)
+ *                                with his own champion's file withheld (the knowledge ablation),
+ *                                +cut-log / +cut-dead / +cut-both for the CONTEXT-FEED ablation —
+ *                                the same payload with a named section removed after it is
+ *                                rendered (see `lib/trim-payload.ts` for what each one cuts and the
+ *                                attribution run that nominated it), and +add-spend / +add-buffs /
+ *                                +add-spells / +add-all for the three candidate ADDITIONS the same
+ *                                run nominated (`lib/add-payload.ts`)
  *     --models provider=model,…  free text, as everywhere in this app
  *     --schedule events|timer    WHEN to ask. `events` (default) runs the shipped detector from
  *                                `src/analysis/live-events.ts`; `timer` is the old cadence, kept
  *                                runnable for comparison on one game
  *     --stride N                 under `events`, send every Nth due turn. COST ONLY — the skipped
  *                                turns are questions not asked, and their events ride the next turn
- *     --heartbeat SEC            floor under silence for the event schedule (default HEARTBEAT_SEC,
- *                                180s — what the shipped coach runs; pass it only to measure something else)
+ *     --heartbeat SEC            floor under silence for the event schedule. Default: the LEVEL's own
+ *                                floor, which is `Infinity` at `big-calls`. Pass it only to measure
+ *                                something else
+ *     --level <id>               WHICH SCHEDULE to replay — `commentary` (default here, the full
+ *                                one every stored run was taken on), `key-moments` or `big-calls`
+ *                                (what the app now ships). See `SPEAK_LEVELS`. It is NOT defaulted
+ *                                to the app's default: that would make every run on disk
+ *                                incomparable without anyone typing an argument
  *     --every SEC                turn cadence in game-clock seconds, `--schedule timer` only
  *     --turns N                  how many checkpoints to send (default 8 — cost discipline)
  *     --from SEC                 game clock to start sending at (the ranker is stepped from 0 regardless)
@@ -153,7 +165,8 @@ import { basename, dirname } from "node:path"
 import { DATA_DIR } from "../src/shared/constants.ts"
 import { buildStream, discoverBenchable, discoverWindows } from "./lib/stream.ts"
 import type { RejectedSegment } from "./lib/stream.ts"
-import { HEARTBEAT_SEC } from "../src/analysis/live-events.ts"
+import { HEARTBEAT_SEC, SPEAK_LEVELS, askPolicy } from "../src/analysis/live-events.ts"
+import type { SpeakLevel } from "../src/analysis/live-events.ts"
 import { execFileSync } from "node:child_process"
 import { jpegSize } from "./lib/stream.ts"
 import {
@@ -196,6 +209,8 @@ import type { CoachState } from "../src/analysis/timeliness.ts"
 import { isEmpty, isSilent, separated, wilson } from "../src/analysis/coach-score.ts"
 import type { Interval } from "../src/analysis/coach-score.ts"
 import { buildBrief, buildDelta } from "../src/shared/live-brief.ts"
+import { trimFromMods, type Trim, trimPayload } from "./lib/trim-payload.ts"
+import { type Add, addFromMods, addToPayload } from "./lib/add-payload.ts"
 import { reachFromLive } from "../src/analysis/reach-live.ts"
 import type { Reach } from "../src/analysis/reachability.ts"
 import {
@@ -261,6 +276,22 @@ export interface Arm {
 	/** `socket` is gemini-live; everything else is a turn through `coachTurn`. */
 	shape: "turn" | "socket"
 	/**
+	 * A SECTION CUT applied to the rendered payload, from a `+cut-<preset>` modifier.
+	 *
+	 * The context-feed ablation. `null` is the shipped payload and goes through the same call, so
+	 * the control arm cannot drift from the arm it is a control for. See `lib/trim-payload.ts` for
+	 * what each preset removes and the measurement that nominated it.
+	 */
+	trim: Trim | null
+	/**
+	 * A CANDIDATE SECTION added to the rendered payload, from an `+add-<preset>` modifier.
+	 *
+	 * The other half of the context-feed ablation: the cuts ask what a section is worth, these ask
+	 * what a missing one would be worth. Applied after `trim`, for the same reason — so an arm is
+	 * provably the shipped payload plus a named block. See `lib/add-payload.ts`.
+	 */
+	add: Add | null
+	/**
 	 * WHICH champion files reach the system prompt — the knowledge ablation, as an arm modifier.
 	 *
 	 * `full` is the shipped call: `fullKnowledge({ champion, counterpart })`, i.e. his champion's
@@ -271,10 +302,18 @@ export interface Arm {
 	 * list and the schedule are built once per window and replayed identically to every arm, so the
 	 * difference between `gemini-http` and `gemini-http+nocp` is those bytes and nothing else.
 	 *
-	 * `+nocp` drops `# THE ENEMY JUNGLER`; `+noown` drops `# YOUR CHAMPION`. The role file
-	 * (`knowledge/general/jungle.md`) is in every arm — it is not what is being ablated.
+	 * `+nocp` drops `# THE ENEMY JUNGLER`; `+noown` drops `# YOUR CHAMPION`. Those two were the
+	 * whole of the 2026-09-11 ablation, and it left the role file (`knowledge/general/jungle.md`)
+	 * in every arm, so nothing on disk says what the role file buys.
+	 *
+	 * `+noknow` is the TOTAL ablation added 2026-09-18: no champion file, no counterpart file, no
+	 * role file — `championKnowledge` is the empty string and the system prompt is the bare
+	 * `trusted` persona. It is the control the three-arm run never had. Against it, "the knowledge
+	 * directory is worth nothing" is a hypothesis with a zero on the axis rather than a shrug: the
+	 * three graded arms differed by at most 1.4 points of useful rate, and all three of them were
+	 * reading the same role file.
 	 */
-	knowledge: "full" | "no-counterpart" | "no-own"
+	knowledge: "full" | "no-counterpart" | "no-own" | "none"
 	vision: boolean
 	available: boolean
 	unavailable: string
@@ -317,14 +356,31 @@ const resolveArms = (
 	return ids.map(id => {
 		// `provider@mode+noframe`: the mode binds tighter than the blindfold, so it is split first.
 		const [head = "", ...mods] = id.split("+")
-		const [provider = "", modeText = ""] = head.split("@")
+		const [providerText = "", modeText = ""] = head.split("@")
+		/*
+		 * `provider/model` — the model id INSIDE the arm id, so one run can hold several models of
+		 * the SAME provider.
+		 *
+		 * `--models provider=model` is keyed by provider and therefore tops out at one model per
+		 * vendor per run. That was fine while the question was "is the model the bottleneck" and it
+		 * is useless for "which of Anthropic's five current models is best", because the only way to
+		 * answer it with a provider-keyed map is five separate runs — five different streams, five
+		 * different minimap reads, five different nights. The whole reason this script exists is
+		 * that arms must share one `buildStream`.
+		 *
+		 * Additive by construction: no arm id in any stored run contains a slash, so every existing
+		 * command line resolves exactly as before and `--models` still wins nothing it used to win.
+		 */
+		const [provider = "", ...modelParts] = providerText.split("/")
+		const inlineModel = modelParts.join("/")
 		const mode: LiveCoachMode =
 			modeText === "trusted" || modeText === "cite-or-quiet" || modeText === "fenced" ?
 				modeText
 			:	runMode
 		const blind = blindAll || mods.includes("noframe")
 		const knowledge: Arm["knowledge"] =
-			mods.includes("noown") ? "no-own"
+			mods.includes("noknow") ? "none"
+			: mods.includes("noown") ? "no-own"
 			: mods.includes("nocp") ? "no-counterpart"
 			: "full"
 		const { available, why } = armAvailability(provider)
@@ -332,8 +388,10 @@ const resolveArms = (
 			id,
 			mode,
 			provider,
-			model: models.get(provider) ?? armDefaultModel(provider),
+			model: inlineModel !== "" ? inlineModel : (models.get(provider) ?? armDefaultModel(provider)),
 			shape: provider === GEMINI_LIVE ? "socket" : "turn",
+			trim: trimFromMods(mods),
+			add: addFromMods(mods),
 			knowledge,
 			vision: !blind,
 			available,
@@ -954,7 +1012,12 @@ export const protocolFor = (
 			turnsSent += 1
 			lastAtSec = t.atSec
 			if (full) fullBriefs += 1
-			return { text: built.text, kind: full ? "brief" : "delta" }
+			/* The cut is the LAST thing that happens to the bytes, so every arm was built from the
+			 * same state by the same renderer and differs only by what this removed. */
+			return {
+				text: addToPayload(trimPayload(built.text, arm.trim), arm.add, t.raw as LiveAllGameData, t.atSec),
+				kind: full ? "brief" : "delta"
+			}
 		},
 		heard: (t, text, latencyMs) => {
 			// A silence is not advice and the route does not log one: `noteSaid` is the record of
@@ -994,10 +1057,14 @@ const runTurnArm = async (
 			 * champion. A `+nocp` arm is therefore a prompt the shipped app produces, not one only
 			 * this script can make.
 			 */
-			...(t.counterpart === null || arm.knowledge === "no-counterpart" ?
+			...(t.counterpart === null ||
+			arm.knowledge === "no-counterpart" ||
+			arm.knowledge === "none" ?
 				{}
 			:	{ counterpart: t.counterpart }),
-			champion: arm.knowledge === "no-own" ? "" : stream.window.champion
+			...(arm.knowledge === "none" ? { role: false } : {}),
+			champion:
+				arm.knowledge === "no-own" || arm.knowledge === "none" ? "" : stream.window.champion
 		})
 		const text = normalizeSpoken(r.text)
 		if (r.ok) proto.heard(t, text, r.latencyMs)
@@ -1104,10 +1171,14 @@ const runSocketArm = async (
 		championKnowledge:
 			mode === "trusted" ?
 				fullKnowledge({
-					champion: arm.knowledge === "no-own" ? "" : stream.window.champion,
+					champion:
+						arm.knowledge === "no-own" || arm.knowledge === "none" ?
+							""
+						:	stream.window.champion,
 					counterpart:
-						arm.knowledge === "no-counterpart" ? null
-						: (stream.turns.find(t => t.counterpart !== null)?.counterpart ?? null)
+						arm.knowledge === "no-counterpart" || arm.knowledge === "none" ? null
+						: (stream.turns.find(t => t.counterpart !== null)?.counterpart ?? null),
+					...(arm.knowledge === "none" ? { role: false } : {})
 				})
 			:	liveChampionKnowledge(stream.window.champion)
 	})
@@ -1467,6 +1538,8 @@ interface RunFile {
 	schedule?: "timer" | "events"
 	stride?: number
 	heartbeatSec?: number
+	/** WHICH schedule was replayed. Absent on runs before 2026-09-17, which were all `commentary`. */
+	level?: SpeakLevel
 	everySec: number
 	fromSec: number
 	turnsWanted: number
@@ -1558,7 +1631,7 @@ const printWhat = (run: RunFile, arms: readonly Arm[], calls: number): void => {
 	// name a cadence that was never used.
 	const how =
 		run.schedule === "events" ?
-			`events (hb ${run.heartbeatSec ?? HEARTBEAT_SEC}s${(run.stride ?? 1) > 1 ? `, stride ${run.stride}` : ""})`
+			`events · level ${run.level ?? "commentary"} · hb ${run.heartbeatSec ?? HEARTBEAT_SEC}s${(run.stride ?? 1) > 1 ? `, stride ${run.stride}` : ""}`
 		:	`every ${run.everySec}s`
 	console.log(`bench-stream · ${run.windows.map(w => w.id).join(", ")} · mode ${run.mode} · ${how}`)
 	console.log(RULE)
@@ -2355,6 +2428,10 @@ const summarize = (path: string, verbose: boolean): void => {
 	const run = JSON.parse(readFileSync(path, "utf8")) as RunFile
 	const arms: Arm[] = run.arms.map(a => ({
 		id: a.id,
+		/* A re-score never re-renders a payload, so the cut is irrelevant here — but it is parsed
+		 * back from the id so a printed arm still says which cut produced its rows. */
+		trim: trimFromMods(a.id.split("+").slice(1)),
+		add: addFromMods(a.id.split("+").slice(1)),
 		// Recovered from the id's own suffix; a pre-mode run file has none and falls back to the
 		// run-level mode it was actually rendered for.
 		mode: ((): LiveCoachMode => {
@@ -2366,7 +2443,8 @@ const summarize = (path: string, verbose: boolean): void => {
 		// Recovered from the id's suffix too. A run file written before the knowledge ablation
 		// existed has neither suffix, and `full` is what it was: the shipped call.
 		knowledge:
-			a.id.includes("+noown") ? "no-own"
+			a.id.includes("+noknow") ? "none"
+			: a.id.includes("+noown") ? "no-own"
 			: a.id.includes("+nocp") ? "no-counterpart"
 			: "full",
 		shape: a.shape === "socket" ? "socket" : "turn",
@@ -2524,7 +2602,19 @@ const main = async (): Promise<void> => {
 	 */
 	const schedule = (arg("schedule", "events") === "timer" ? "timer" : "events") as "timer" | "events"
 	const stride = Number(arg("stride", "1"))
-	const heartbeatSec = Number(arg("heartbeat", String(HEARTBEAT_SEC)))
+	/*
+	 * `commentary` unless asked otherwise — the full schedule, which is what every run in
+	 * `data/eval/` was taken on. See `pickEventCheckpoints` for why this does not follow
+	 * `DEFAULT_SPEAK_LEVEL`.
+	 */
+	const level = arg("level", "commentary") as SpeakLevel
+	if (!SPEAK_LEVELS.some(l => l.id === level))
+		throw new Error(`--level ${level} is not one of ${SPEAK_LEVELS.map(l => l.id).join(", ")}`)
+	/*
+	 * The level's own floor when none is named, NOT `HEARTBEAT_SEC`. At `big-calls` that is
+	 * `Infinity`, and hard-coding 180 here would have quietly benched a level with a timer under it.
+	 */
+	const heartbeatSec = Number(arg("heartbeat", String(askPolicy(level).heartbeatSec)))
 	/*
 	 * `--turns` is a COST CAP and its default is different for the two instruments.
 	 *
@@ -2612,7 +2702,8 @@ const main = async (): Promise<void> => {
 			requireFrame,
 			schedule,
 			stride,
-			heartbeatSec
+			heartbeatSec,
+			level
 		})
 	)
 	const totalTurns = streams.reduce((a, s) => a + s.turns.length, 0)
@@ -2645,6 +2736,7 @@ const main = async (): Promise<void> => {
 		schedule,
 		stride,
 		heartbeatSec,
+		level,
 		everySec,
 		fromSec,
 		turnsWanted,
