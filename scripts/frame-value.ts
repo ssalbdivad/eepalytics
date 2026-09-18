@@ -366,7 +366,7 @@ const asBenchArm = (a: FrameArm): Arm => ({
  */
 const DECOY_MIN_GAP_SEC = 300
 
-const decoyFor = (turn: StreamTurn, window: StreamWindow): { b64: string; tSec: number } | null => {
+export const decoyFor = (turn: StreamTurn, window: StreamWindow): { b64: string; tSec: number } | null => {
 	let best: { b64: string; tSec: number; gap: number } | null = null
 	for (const f of window.frames) {
 		const gap = Math.abs(f.tSec - turn.atSec)
@@ -422,7 +422,7 @@ interface TurnResult {
 	error: string | null
 }
 
-interface OpenArm {
+export interface OpenArm {
 	send: (turn: StreamTurn, parts: unknown[]) => Promise<TurnResult>
 	close: () => void
 }
@@ -451,7 +451,12 @@ interface OpenArm {
  * to avoid repeating, and `recycled` and `threadTurn` are recorded per call so a reader can find
  * every turn where that happened and drop them if the question is about repetition.
  */
-const openArm = async (arm: FrameArm, system: string): Promise<OpenArm> => {
+export const openArm = async (
+	label: string,
+	system: string,
+	opts?: { timeoutMs?: number }
+): Promise<OpenArm> => {
+	const budgetMs = opts?.timeoutMs ?? timeoutMs
 	interface Live {
 		ws: WebSocket
 		dead: string | null
@@ -486,11 +491,11 @@ const openArm = async (arm: FrameArm, system: string): Promise<OpenArm> => {
 
 	const connect = async (): Promise<Live> => {
 		const minted = await mintGeminiToken()
-		if (!minted.ok) throw new Error(`${arm.id}: ${minted.error}`)
+		if (!minted.ok) throw new Error(`${label}: ${minted.error}`)
 		const ws = new WebSocket(`${minted.value.wsUrl}?access_token=${encodeURIComponent(minted.value.token)}`)
 		const self: Live = { ws, dead: null, answered: 0 }
 		const opened = new Promise<void>((resolve, reject) => {
-			const giveUp = setTimeout(() => reject(new Error(`${arm.id}: socket never completed setup`)), timeoutMs)
+			const giveUp = setTimeout(() => reject(new Error(`${label}: socket never completed setup`)), budgetMs)
 			ws.onmessage = async ev => {
 				const m = JSON.parse(typeof ev.data === "string" ? ev.data : await (ev.data as Blob).text()) as {
 					setupComplete?: unknown
@@ -535,13 +540,13 @@ const openArm = async (arm: FrameArm, system: string): Promise<OpenArm> => {
 				self.dead = self.dead ?? "socket error"
 				clearTimeout(giveUp)
 				settle("", self.dead)
-				reject(new Error(`${arm.id}: ${self.dead}`))
+				reject(new Error(`${label}: ${self.dead}`))
 			}
 			ws.onclose = e => {
 				self.dead = self.dead ?? (e.code === 1000 ? "socket closed" : `closed ${e.code}: ${String(e.reason).slice(0, 160)}`)
 				clearTimeout(giveUp)
 				settle("", self.dead)
-				reject(new Error(`${arm.id}: ${self.dead}`))
+				reject(new Error(`${label}: ${self.dead}`))
 			}
 			ws.onopen = () =>
 				ws.send(
@@ -586,7 +591,7 @@ const openArm = async (arm: FrameArm, system: string): Promise<OpenArm> => {
 				audioParts = 0
 				usage = { prompt: null, response: null }
 				pending = { at: Date.now(), resolve, threadTurn: socket.answered, recycled }
-				timer = setTimeout(() => settle("", `no answer within ${timeoutMs}ms`), timeoutMs)
+				timer = setTimeout(() => settle("", `no answer within ${budgetMs}ms`), budgetMs)
 				socket.ws.send(JSON.stringify({ clientContent: { turns: [{ role: "user", parts }], turnComplete: true } }))
 			})
 		},
@@ -621,7 +626,7 @@ const runInterleaved = async (
 
 	if (!dry)
 		for (const a of arms) {
-			sockets.set(a.id, await openArm(a, `${base}${a.appendix}`))
+			sockets.set(a.id, await openArm(a.id, `${base}${a.appendix}`))
 			process.stdout.write(`opened ${a.id}\n`)
 		}
 
@@ -731,7 +736,7 @@ export interface Graded {
 /** The AI SDK's opaque model handle, named so `judgeBatch` does not have to say `unknown`. */
 type ModelHandle = Awaited<ReturnType<typeof modelHandleFor>>
 
-const JUDGE_SYSTEM = `You are grading single sentences a live League of Legends coach said out loud to a jungle
+export const JUDGE_SYSTEM = `You are grading single sentences a live League of Legends coach said out loud to a jungle
 main, mid-game, while he was playing.
 
 For each candidate you are given: the game clock, the ground-truth payload the app computed from
