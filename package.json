@@ -31,6 +31,7 @@
 		"pack": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/game-pack.ts",
 		"backfill": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/backfill-reviews.ts",
 		"smoke:live": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/smoke-live.ts",
+		"what-wins": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/what-wins.ts",
 		"read:frame-ablation": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/read-frame-ablation.ts"
 	},
 	"dependencies": {

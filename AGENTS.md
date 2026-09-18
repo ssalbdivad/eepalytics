@@ -483,6 +483,83 @@ The same owner's **blinded** grading of the POST-GAME path is **68% useful**, on
 gap between 68% and 58% is the honest statement of where this app is, and the schedule is the
 largest known piece of it.
 
+### Does any of this make him CLIMB? — 138 of his own ranked games
+
+Every other measurement in this file grades a LINE. This one grades the TARGET: of the things this
+app pushes him toward, which ones actually distinguish the games he wins from the games he loses?
+`scripts/what-wins.ts` answers it with no model in the loop, on every ranked solo game in the
+library with a full post-game timeline and at least 15 minutes on the clock — **138 games, 69 won
+and 69 lost**, 136 of them Lillia, all of them jungle, counterpart identified in 138 of 138. Effect
+size is an AUC with a seeded bootstrap interval (0.50 is a coin flip; 0.70 means seven times in ten
+the won game is the higher one), the test is Mann-Whitney, and q is Benjamini-Hochberg across all
+78 rows. Table and per-game features in `data/eval/what-wins-20260918.json`.
+
+**NOTHING HE PERSONALLY DOES BEFORE TEN MINUTES SEPARATES HIS WINS FROM HIS LOSSES.** Not CS at
+10:00 (69.5 won against 67.2 lost, AUC 0.56 [0.46-0.66], q 0.34), not his clear rate over 0-10
+(0.56), not gold at 10:00 (0.54), not xp or level or gold against the enemy jungler at 10:00
+(0.55 / 0.53 / 0.55), not deaths by 10:00 (0.44), not his first back (0.46), not first-blood
+involvement (0.51), not how much of the first ten minutes he spent in the enemy half (0.56). His
+TEAM's gold at 10:00 separates at **0.74 [0.65-0.82]** — 72% [60-81] win rate when ahead against
+31% [22-42] when behind, a 41-point swing — and his own contribution to that number is nil. He is
+not losing his games in the first ten minutes and the app has been coaching him as though he were.
+The reason is visible in the spread: he is CONSISTENT early. There is not enough variance in his
+first ten minutes for it to correlate with anything.
+
+**The first thing of his that separates arrives between 10:00 and 15:00, and it is deaths.** Deaths
+in that five-minute window: 0.68 won against 1.13 lost, AUC 0.35 [0.26-0.44], q 0.004. As a rule he
+could use: **no death between 10:00 and 15:00 → 70% [56-80] over 53 games; one or more → 38%
+[28-48] over 85.** Those Wilson intervals do not overlap. It is also the ONLY metric he controls,
+at any checkpoint, that survives the scoreboard control — a two-term logistic with team gold at
+10:00 in the model, which is the instrument that separates "do this" from "this happens when you
+are winning": **OR 0.63 per SD [0.43-0.93], p 0.018**, beside a scoreboard OR of 2.54. Deaths by
+10:00 do not separate and deaths after 20:00 are consequence; it is this window.
+
+**The other early survivor is objectives, and a jungler owns them.** Early objective difference
+(drakes + grubs + herald) by 10:00: AUC 0.65 [0.56-0.74], q 0.005, and **64% [52-75] win rate when
+ahead on them against 38% [28-49] when not**. It survives the scoreboard control at OR 1.54
+[1.04-2.26], p 0.029; by 15:00 the same row is AUC 0.73 and OR 1.94 [1.28-2.93], p 0.0016. Grubs
+alone by 10:00 are AUC 0.61 [0.52-0.69] and OR 1.44 [0.99-2.09] — suggestive, interval touching 1,
+reported as suggestive. Objective credit is KILLER-ONLY throughout, because the timeline's objective
+assist list names the other team 23% of the time, so these rows say his team took it, never that he
+was there.
+
+**Five things this app coaches hard that do not distinguish his wins from his losses at all.**
+
+- **Dying in the enemy jungle.** Part 2 calls it "the single most common way a jungler throws a
+  lead" and tells the coach to say so every time it happens. By 15:00 it happens in **15 of 138
+  games (11% [7-17])**, and the win rate when it happens is 53% [30-75] against 50% [41-58] when it
+  does not. Whole-game: AUC 0.49 [0.42-0.57], q 0.87. The advice is not WRONG — it is a mis-ranked
+  priority, aimed at a play he almost never makes. Deaths in the enemy HALF by 15:00 are the same
+  null (0.51, q 0.77).
+- **Vision.** Vision score 0.55 (q 0.42), wards placed 0.48, wards cleared 0.49, control wards
+  bought 0.51. Only vision per minute moves at all (0.63, q 0.021) and that is the row most
+  confounded by being alive and ahead. The Keria pillar of the persona is not supported here.
+- **First blood.** He is involved in the game's first kill in **6 of 138 games (4% [2-9])**. It
+  cannot be a coaching priority at that base rate whatever its effect.
+- **Unspent gold — and this one points the OTHER way.** Mean gold sitting in his pocket is HIGHER
+  in wins (1023g against 778g, AUC 0.82), as is the maximum (3146g against 2339g, 0.78). Read it as
+  a consequence — a winning game earns faster, so any sampled instant finds more in hand — but
+  "you are sitting on gold" is not a defect signal for him and must not be coached as one.
+- **Positional constructs.** The p90 over-extension index (0.46) and median distance from his
+  team's centroid (0.50, q 0.94) separate nothing. Both are repo inventions built on once-a-minute
+  positions.
+
+**The biggest effects in the table are consequences and are labelled so.** Share of frames in the
+enemy half (0.88), camps per minute (0.88), dragon difference (0.88), deaths per ten minutes
+(0.15), modelled dead time (0.16), team gold at 20:00 (0.84), baron difference (0.80). The
+window breakdown is what convicts them: presence in the enemy half is 0.56 over 0-10, 0.59 over
+10-15, 0.62 over 15-20 — it grows as the game resolves, which is the shape of a symptom, not a
+lever. Not one of them survives the scoreboard control except the ones that are the scoreboard.
+
+**What this measurement cannot do.** It is observational on one player; he cannot be randomised
+into taking grubs. Nothing here is a causal estimate and every row in the JSON carries a
+`causalCaveat` saying which way it is likely to be wrong. Seventy-eight rows were tested, so BH is
+applied and the raw p is kept beside the q. The even-at-ten stratum — 40 games inside ±800g of
+level at 10:00 — is reported and is **underpowered**: at n=40 it can only see an AUC around 0.70 or
+larger, so it neither confirms nor refutes any of the early findings, and the two early survivors
+both fall to non-significance inside it (0.57 and 0.37). Dead time is MODELLED from the published
+respawn formula because the match blob has no such field, and is never spoken to him.
+
 ### Architecture in one breath
 
 Vite 8 + React 19 frontend · Hono 4 + `@hono/node-server` backend (one Node
@@ -540,6 +617,7 @@ scripts/lib/stream.ts          discoverBenchable + buildStream: one replay every
 scripts/bench-stream.ts        replays a real game through every model at once and scores it
 scripts/frame-value.ts         the interleaved frame ablation — what the screenshot is worth
 scripts/audit-live-fields.ts   every rendered field against the post-game truth, by side
+scripts/what-wins.ts           what separates his WINS from his LOSSES over the whole library
 scripts/probe-minimap.ts       how accurate a minimap read is — the one thing bench-stream cannot grade
 scripts/blind-judge.ts         re-grades a stored ablation run, labels stripped
 scripts/read-frame-ablation.ts  reads the four stored frame/no-frame runs whose writer is gone
