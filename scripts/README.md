@@ -120,9 +120,10 @@ distinguishes the games he wins, which is a different question and had never bee
 |---|---|
 | `doctor.ts` | `pnpm doctor`. The preflight you run when something is wrong. Every failing check prints a FIX. |
 | `dev-seed.ts` | `pnpm seed`. Populate the DB with real recent games. GET only. |
-| `check-patch.ts` | Is the champion knowledge stale against the live patch? |
+| `check-patch.ts` | Is the generated champion table stale against the live patch? Reads Riot's version list; `--json` for CI. |
 | `fetch-items.ts` | Vendor the item table from Riot's static data, because the live feed's `price` is a cost line and not what the item cost. |
-| `research-champion.sh` | Research one champion's notes into `knowledge/champions/`. |
+| `fetch-champions.ts` | `pnpm fetch:champions`. Vendor EVERY champion's mechanics from Data Dragon and the League wiki, and what wins from op.gg, into the generated `src/knowledge/champion-table.ts` — because a model-authored knowledge base has an unbounded error rate and `lillia.md` said Swirlseed rolls over terrain when both sources say terrain stops it. Refuses to write a number the two Tier 1 sources disagree about. |
+| `audit-knowledge.ts` | `pnpm audit:knowledge [champion]`. Assembles the live and post-game prompts and audits the delivered bytes line for line: what is untraced, what refuted sentence is back, what the table refused. The command that makes "every sentence was copied off a URL" checkable rather than claimed. |
 | `run-daemon.sh` · `install-service.sh` | The `systemd --user` launcher and its installer. |
 | `dev-daemon.sh` | Restart the daemon detached from this shell, for development. |
 | `make-icon.mjs` · `shoot.mjs` · `voices.mjs` | Artwork, screenshots, and the browser voice list. |
