@@ -1,20 +1,48 @@
 /**
- * Settings.
+ * Settings, after the 2026-09-18 audit.
  *
- * One knob here is labelled carefully: `coachIntensity` changes the persona but is explicitly
- * documented as never changing what the numbers say. There used to be a second, `captureEnabled`,
- * which handed the League client to a background process; that feature is gone and so is its
- * whole panel.
+ * ## What this screen was
  *
- * The save is a PATCH of only the fields you actually touched, clamped client-side with the
- * same `clampSettings` the daemon uses, so the two can never disagree about what "valid"
- * means.
+ * Fourteen fields across four panels, every one of them on the first screen, each with a
+ * paragraph of evidence under it. Polling intervals in milliseconds sat beside the one knob he
+ * has asked for in every session. He has asked five times for the interface to be
+ * non-overwhelming, and this screen grew every week of the campaign, because a new knob always
+ * had an obvious place to go and never an obvious place to be REFUSED.
+ *
+ * ## The rule that replaced "add a field, add a control"
+ *
+ * `shared/schema/settings.ts` now files every field under `SIMPLE`, `ADVANCED` or `UNEXPOSED`,
+ * the three lists partition the schema, and the suite fails if a new field is filed nowhere. So
+ * the refusal is mechanical rather than a matter of taste, and the argument for each one is
+ * written next to it there.
+ *
+ * Two controls are on the first screen: how often she speaks, and how she talks. Seven are one
+ * disclosure down. Five have no control at all.
+ *
+ * ## Deleting a control is not deleting a value, and the difference is the whole lesson
+ *
+ * A stored row outranks the code default forever. `autoReviewNewGames: false`, written once on
+ * 2026-09-04, switched off the only tier of this product a human has graded — for eight days,
+ * while the checkbox rendered `false` and looked exactly like a field nobody had touched. Taking
+ * the checkbox away does not fix that; it would HIDE it.
+ *
+ * So the override banner is now the load-bearing part of this screen rather than a footnote: any
+ * field that disagrees with the code default is named, whether or not it has a control, and each
+ * one has a button that puts it back. You cannot set the hidden knobs. You can always see that
+ * one of them is set, and undo it in a click.
  */
 
 import { useEffect, useMemo, useState } from "react"
 import type { HealthResponse } from "../../shared/schema/api.ts"
 import type { Settings, SettingsPatch } from "../../shared/schema/settings.ts"
-import { MODEL_CHOICES, clampSettings, settingsOverrides } from "../../shared/schema/settings.ts"
+import {
+	DEFAULT_SETTINGS,
+	INTENSITY_STOPS,
+	MODEL_CHOICES,
+	clampSettings,
+	nearestIntensityStop,
+	settingsOverrides
+} from "../../shared/schema/settings.ts"
 import { LIVE_COACH_MODES } from "../../shared/live-coach-mode.ts"
 import { SPEAK_LEVELS } from "../../analysis/live-events.ts"
 import { api } from "../lib/api.ts"
@@ -37,7 +65,13 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 			fetch("/api/live/coach/providers", { signal }).then(
 				r =>
 					r.json() as Promise<{
-						providers: { id: string; label: string; available: boolean; note: string; defaultModel: string }[]
+						providers: {
+							id: string
+							label: string
+							available: boolean
+							note: string
+							defaultModel: string
+						}[]
 					}>
 			),
 		[]
@@ -58,6 +92,13 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 	 * and never sits in this page's state after a reload.
 	 */
 	const [geminiKeyInput, setGeminiKeyInput] = useState("")
+	/**
+	 * `null` = nobody has said either way, so the panel decides: open when there is no working
+	 * key, closed when there is. A plain `false` here made the auto-opened box impossible to
+	 * shut — the toggle flipped `false` to `true` and the box was open on both, under a button
+	 * that said "Hide".
+	 */
+	const [keyOpen, setKeyOpen] = useState<boolean | null>(null)
 
 	const readGemini = async () => {
 		try {
@@ -111,6 +152,14 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 		onSaved()
 	})
 
+	/** Put one field back on its code default. The only way to reach an unexposed field. */
+	const resetOne = useAction(async (key: keyof Settings) => {
+		const next = await api.saveSettings({ [key]: DEFAULT_SETTINGS[key] } as SettingsPatch)
+		setDraft(next)
+		loaded.reload()
+		onSaved()
+	})
+
 	if (!draft)
 		return (
 			<div className="page">
@@ -131,175 +180,115 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 		setDraft(d => (d === null ? d : { ...d, [key]: value }))
 
 	const knownModel = MODEL_CHOICES.some(m => m.id === draft.model)
+	const intensityStop = nearestIntensityStop(draft.coachIntensity)
+	const voiceWorking = gemini?.ok === true
+	const showKeyBox = keyOpen ?? (gemini !== null && !voiceWorking)
 
 	/*
-	 * Every field this install has moved off its code default, named out loud.
-	 *
-	 * A stored settings row outranks the code default forever, and until now nothing on this
-	 * screen said which fields had one. A single save wrote `autoReviewNewGames: false` and the
-	 * post-game review path — the only tier of this app a human has graded — produced nothing
-	 * for eight days, while the schema, the code default and the README all still said `true`.
-	 * The checkbox rendered `false` and looked exactly like a field nobody had touched.
-	 *
-	 * Computed from the LOADED settings, not the draft, so it describes what is actually
-	 * running rather than what is about to be saved.
+	 * Every field this install has moved off its code default, named out loud — and now the only
+	 * route to the five that have no control. See the file header: removing a control removes the
+	 * ability to SET a value, and the eight-day outage came from being unable to SEE one.
 	 */
 	const overrides = settingsOverrides(loaded.data ?? draft)
+	/** Warnings the daemon is reporting right now. Never silent, whatever screen you are on. */
+	const warnings = health?.warnings ?? []
 
 	return (
 		<div className="page">
 			<div className="page-head">
 				<h1>Settings</h1>
 				<div className="sub">
-					stored in the daemon's database, not in this browser
-					{overrides.length === 0 ?
-						" — every field is on its default"
-					:	` — ${overrides.length} field${overrides.length === 1 ? "" : "s"} overridden: ${overrides
-							.map(o => `${o.key} is ${JSON.stringify(o.value)}, not ${JSON.stringify(o.default)}`)
-							.join("; ")}`
-					}
+					Two choices here. Everything else runs on a default that was measured — the rest is one
+					disclosure down, with the measurement beside it.
 				</div>
 			</div>
 
-			<div className="settings-grid">
-				{/* -------------------------------------------------------- coach */}
-				<div className="panel panel-pad">
-					<div className="section-title">
-						The coach <span className="rule" />
+			{warnings.length > 0 ?
+				<div className="notice warn">
+					<span className="icon">⚠</span>
+					<div>
+						<strong>
+							The daemon is reporting {warnings.length} problem{warnings.length === 1 ? "" : "s"}.
+						</strong>
+						<ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+							{warnings.map((w, i) => (
+								<li key={i}>{w}</li>
+							))}
+						</ul>
 					</div>
+				</div>
+			:	null}
 
-					<div className="field">
-						<div className="label">Model</div>
-						<div className="control">
-							<select
-								value={knownModel ? draft.model : "__custom"}
-								onChange={e =>
-									set("model", e.target.value === "__custom" ? draft.model : e.target.value)
-								}
-							>
-								{MODEL_CHOICES.map(m => (
-									<option key={m.id} value={m.id}>
-										{m.label}
-									</option>
-								))}
-								<option value="__custom">Custom…</option>
-							</select>
-						</div>
-						{!knownModel ?
-							<div className="control" style={{ gridColumn: "1 / -1", justifySelf: "stretch" }}>
-								<input
-									type="text"
-									value={draft.model}
-									onChange={e => set("model", e.target.value)}
-									style={{ width: "100%" }}
-								/>
+			{overrides.length > 0 ?
+				<div className="notice warn">
+					<span className="icon">⚠</span>
+					<div>
+						<strong>
+							{overrides.length} setting{overrides.length === 1 ? " is" : "s are"} off the default.
+						</strong>{" "}
+						A stored value outranks the code default forever, including for the fields that no
+						longer have a control. This is the only place that says so.
+						<ul className="overrides">
+							{overrides.map(o => (
+								<li key={String(o.key)}>
+									<code className="mono">{String(o.key)}</code> is{" "}
+									<b>{JSON.stringify(o.value)}</b>, not {JSON.stringify(o.default)}
+									<button
+										className="btn btn-sm"
+										disabled={resetOne.pending}
+										onClick={() => resetOne.run(o.key)}
+									>
+										Put it back
+									</button>
+								</li>
+							))}
+						</ul>
+						{resetOne.error ?
+							<div className="band-bad" style={{ fontSize: "var(--fs-2)" }}>
+								{resetOne.error}
 							</div>
 						:	null}
-						<div className="help">
-							Runs through the Claude Agent SDK on your existing <code className="mono">claude</code>{" "}
-							CLI login — there's no API key on this machine, so nothing is billed separately.
-						</div>
 					</div>
+				</div>
+			:	null}
 
-					{/*
-					 * The LIVE coach's model, which is a different thing from the reviewer's above.
-					 * The trade between the two shapes is stated here rather than left for him to
-					 * discover in a game: only Gemini Live speaks natively and can be interrupted.
-					 */}
-					<div className="field wide">
-						<div className="label">Live coach model</div>
-						<div className="control" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-							<select
-								value={draft.liveProvider}
-								onChange={e => set("liveProvider", e.currentTarget.value)}
-							>
-								<option value="gemini-live">Gemini Live — speaks itself, ~1s, interruptible</option>
-								{/*
-								 * NOT disabled when a key is missing, which it was.
-								 *
-								 * The key box only appears once a provider is selected, so disabling the
-								 * keyless ones made them unreachable: you could not select the thing you
-								 * needed to select in order to give it a key. An option that says "needs a
-								 * key" and then shows you where to put one is the whole flow.
-								 */}
-								{providers.data?.providers.map(p => (
-									<option key={p.id} value={p.id}>
-										{p.label}
-										{p.available ? "" : " — needs a key"}
-									</option>
-								))}
-							</select>
-							{draft.liveProvider !== "gemini-live" && (
-								<input
-									type="text"
-									placeholder={
-										providers.data?.providers.find(p => p.id === draft.liveProvider)
-											?.defaultModel ?? "model id"
-									}
-									value={draft.liveModel}
-									onChange={e => set("liveModel", e.currentTarget.value)}
-									style={{ minWidth: 220 }}
-								/>
-							)}
-						</div>
-						<div className="help">
-							{draft.liveProvider === "gemini-live" ?
-								"A held-open socket: it speaks in its own voice, answers in about a second, and can be cut off mid-sentence."
-							:	<>
-									An HTTPS turn spoken by your system voice — slower (a few seconds), it cannot be
-									usefully interrupted because the sentence is already paid for, and it does not
-									sound like her.{" "}
-									{providers.data?.providers.find(p => p.id === draft.liveProvider)?.note}
+			{/* ============================================================ the voice */}
+
+			{/*
+			 * The key is not a setting — it is the one piece of setup without which the flagship
+			 * feature cannot speak. So it renders as a STATE, collapsed to a line while it works,
+			 * and opens itself when it does not. It was previously a password box and two
+			 * paragraphs sitting permanently between two real settings.
+			 */}
+			<div className="panel panel-pad">
+				<div className="setting-row">
+					<div>
+						<div className="label">Her voice</div>
+						<div className="help" style={{ margin: 0 }}>
+							{gemini === null ?
+								"Checking the saved key…"
+							: voiceWorking ?
+								<>
+									Working{gemini.hint ? ` (${gemini.hint})` : ""}. She speaks over a held-open
+									socket, about a second behind your screen.
 								</>
-							}
-						</div>
-						<div className="help">
-							Model id is free text on purpose — ids change faster than this app does, and a
-							stale dropdown is a bug that looks like a limitation. Leave it blank for the
-							provider's default. Pick a model that accepts images, and a fast one: a
-							reasoning model took fifteen seconds to answer, which is useless in a fight.
+							: gemini.configured ?
+								"A key is saved but Google refused it — usually a partial copy."
+							:	"No key yet. Everything still records and every game is still graded afterwards; she just cannot talk."}
 						</div>
 					</div>
+					<div className="setting-row__right">
+						<span className={cls("pill", voiceWorking ? "band-good" : gemini === null ? "" : "band-bad")}>
+							{gemini === null ? "checking…" : voiceWorking ? "connected" : "not set up"}
+						</span>
+						<button className="btn btn-sm" onClick={() => setKeyOpen(!showKeyBox)}>
+							{showKeyBox ? "Hide" : voiceWorking ? "Replace key" : "Set it up"}
+						</button>
+					</div>
+				</div>
 
-					{draft.liveProvider !== "gemini-live" && (
-						<div className="field wide">
-							<div className="label">
-								Key for {providers.data?.providers.find(p => p.id === draft.liveProvider)?.label}
-							</div>
-							<div className="control" style={{ display: "flex", gap: 8 }}>
-								<input
-									type="password"
-									autoComplete="off"
-									placeholder="paste a key — it is written to a 0600 file and never read back"
-									value={providerKeyDraft}
-									onChange={e => setProviderKeyDraft(e.currentTarget.value)}
-									style={{ flex: 1 }}
-								/>
-								<button
-									className="btn"
-									onClick={() => {
-										void fetch(`/api/live/coach/key/${draft.liveProvider}`, {
-											method: "PUT",
-											headers: { "content-type": "application/json" },
-											body: JSON.stringify({ key: providerKeyDraft })
-										}).then(() => {
-											setProviderKeyDraft("")
-											providers.reload()
-										})
-									}}
-								>
-									Save
-								</button>
-							</div>
-							<div className="help">
-								Stored on this machine only, like the Gemini key — the daemon holds it and the
-								browser never sees it. An empty save clears it.
-							</div>
-						</div>
-					)}
-
-					<div className="field wide">
-						<div className="label">Gemini key — live voice coach</div>
+				{showKeyBox ?
+					<div className="field wide" style={{ marginTop: "var(--sp-3)" }}>
 						<div className="control">
 							<input
 								type="password"
@@ -329,95 +318,148 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 									</button>
 								)}
 							</div>
-							{gemini !== null && (
-								<div className={cls("field-status", gemini.ok ? "band-good" : "band-bad")}>
-									{gemini.ok ?
-										`Working${gemini.hint ? ` (${gemini.hint})` : ""}.`
-									:	`Not working: ${gemini.error ?? "no key set"}`}
+							{gemini !== null && !gemini.ok && gemini.error ? (
+								<div className="field-status band-bad">{gemini.error}</div>
+							) : null}
+						</div>
+						<div className="help">
+							Free at <code className="mono">aistudio.google.com/apikey</code> — sign in, press
+							Create API key, paste it here. It stays on this machine: the daemon swaps it for a
+							short-lived token and only that reaches the browser. There is no "sign in with
+							Google" because the Live API takes an API key and a consumer Gemini subscription
+							grants no API access.
+						</div>
+					</div>
+				:	null}
+			</div>
+
+			{/* ==================================================== how often she speaks */}
+
+			{/*
+			 * The one knob he has asked for in every session, and the only lever in this app on how
+			 * much the coach talks. It moves WHICH ASKS FIRE and nothing else — no prompt changes, no
+			 * subject is forbidden, no sentence is suppressed.
+			 *
+			 * Each option carries its replayed count including the option he is NOT on, because a
+			 * volume claim with no number beside it is the sentence he has learned to discount.
+			 */}
+			<div className="panel panel-pad">
+				<div className="section-title">
+					How often she speaks <span className="rule" />
+				</div>
+				<div className="choices">
+					{SPEAK_LEVELS.map(l => {
+						const on = draft.liveSpeakLevel === l.id
+						return (
+							<label key={l.id} className={cls("choice", on && "on")}>
+								<input
+									type="radio"
+									name="liveSpeakLevel"
+									checked={on}
+									onChange={() => set("liveSpeakLevel", l.id)}
+								/>
+								<div>
+									<div className="choice__title">
+										{l.label} — about {l.linesPerGame.toFixed(1)} lines in a 28-minute game
+										{l.id === DEFAULT_SETTINGS.liveSpeakLevel ? (
+											<span className="chip">default</span>
+										) : null}
+									</div>
+									<div className="choice__blurb">{l.blurb}</div>
+									<div className="choice__evidence">
+										<b>Measured:</b> {l.evidence}
+									</div>
 								</div>
-							)}
-						</div>
-						<div className="help">
-							Powers <b>Live voice</b> on the live page — a held-open connection that watches your
-							screen continuously and answers out loud in about 0.8s, against ~3s for glances.
-							Get one free at{" "}
-							<code className="mono">aistudio.google.com/apikey</code>. The key stays on this
-							machine: the daemon swaps it for a short-lived token and only that reaches the
-							browser.
-							<br />
-							There is no "sign in with Google" here because there cannot be — the Live API takes
-							an API key, and a consumer Gemini subscription grants no API access.
-						</div>
-					</div>
+							</label>
+						)
+					})}
+				</div>
+				<div className="help">
+					Replayed through the real detector over 28 of your own recorded games — 879 turns, each
+					joined to the ask that raised it and graded blind. Re-derive any of these with{" "}
+					<code className="mono">scripts/measure-asks.ts --level &lt;id&gt;</code>; no model is
+					consulted. This changes <b>when she is asked</b>, never what she may say: the prompt is
+					byte-identical on all three, and the live board keeps rendering the objective clocks and
+					the standing state continuously with no model in it.
+				</div>
+			</div>
 
-					{/*
-					 * HOW OFTEN SHE SPEAKS AT ALL — the one knob he has asked for in every session.
-					 *
-					 * It sits ABOVE the architecture picker because it is the bigger lever on whether
-					 * this coach is bearable: the architecture decides what she is allowed to notice,
-					 * this decides how many times a game she is asked to notice anything. Same rule
-					 * about evidence — each option carries the replayed count of lines per game and
-					 * how many of them were graded good, including the option he is not on, because a
-					 * volume claim with no number beside it is the sentence he has learned to
-					 * discount.
-					 *
-					 * NOTHING HERE TOUCHES WHAT SHE MAY SAY. It moves which asks fire; the prompt,
-					 * the brief and the citation rule are identical on all three.
-					 */}
-					<div className="field wide">
-						<div className="label">How often she speaks</div>
-						<div className="control" style={{ display: "grid", gap: 8 }}>
-							{SPEAK_LEVELS.map(l => {
-								const on = draft.liveSpeakLevel === l.id
-								return (
-									<label key={l.id} className={cls("choice", on && "on")}>
-										<input
-											type="radio"
-											name="liveSpeakLevel"
-											checked={on}
-											onChange={() => set("liveSpeakLevel", l.id)}
-										/>
-										<div>
-											<div className="choice__title">
-												{l.label} — about {l.linesPerGame.toFixed(1)} lines in a 28-minute game
-											</div>
-											<div className="choice__blurb">{l.blurb}</div>
-											<div className="choice__evidence">
-												<b>Measured:</b> {l.evidence}
-											</div>
-										</div>
-									</label>
-								)
-							})}
-						</div>
-						<div className="help">
-							Replayed through the real detector over 28 of your own recorded games — 879 turns,
-							each one joined to the ask that raised it and graded by a blind judge and by a
-							check that subtracts the payload's own clocks out of the sentence in code. Re-derive
-							any of these with <code className="mono">scripts/measure-asks.ts --level &lt;id&gt;</code>;
-							no model is consulted.
-						</div>
-						<div className="help">
-							This changes <b>when she is asked</b>, never what she may say — the prompt is
-							byte-identical on all three. The live page's board keeps rendering the objective
-							clocks, the rosters and the standing state continuously with no model in it, which
-							is why going quiet costs you no information.
-						</div>
-					</div>
+			{/* ========================================================== how she talks */}
 
-					{/*
-					 * WHICH ARCHITECTURE she runs on, with the measurement printed beside each choice.
-					 *
-					 * This is the one setting on this page that changes what she is ALLOWED to say, so it
-					 * is the one place a bare label would be worst. He has turned this coach off mid-game
-					 * more than once and has learned to discount an unevidenced claim about it; "we changed
-					 * the architecture, trust us" is exactly that sentence. So each option carries its own
-					 * numbers from the same blind run, including the fence's — the argument for the option
-					 * he is not on has to be visible too, or this is marketing rather than a choice.
-					 */}
-					<div className="field wide">
-						<div className="label">How she decides what to say</div>
-						<div className="control" style={{ display: "grid", gap: 8 }}>
+			{/*
+			 * Three stops, not a twenty-one-position slider printing two decimals. There is no run
+			 * anywhere in this repo comparing 0.75 to 0.80; the prompt itself describes three bands,
+			 * and the shipped default lands exactly on one of them.
+			 */}
+			<div className="panel panel-pad">
+				<div className="section-title">
+					How she talks <span className="rule" />
+				</div>
+				<div className="choices choices--row">
+					{INTENSITY_STOPS.map(stop => {
+						const on = intensityStop === stop.value
+						return (
+							<label key={stop.value} className={cls("choice", on && "on")}>
+								<input
+									type="radio"
+									name="coachIntensity"
+									checked={on}
+									onChange={() => set("coachIntensity", stop.value)}
+								/>
+								<div>
+									<div className="choice__title">
+										{stop.label}
+										{stop.value === DEFAULT_SETTINGS.coachIntensity ? (
+											<span className="chip">default</span>
+										) : null}
+									</div>
+									<div className="choice__blurb">{stop.blurb}</div>
+								</div>
+							</label>
+						)
+					})}
+				</div>
+				{/*
+				 * The stored value need not BE a stop — the old slider could write 0.9 — and a band
+				 * lighting up under a number it does not equal is exactly the kind of quiet
+				 * disagreement that cost this app eight days. Say it rather than round it away.
+				 */}
+				{draft.coachIntensity !== intensityStop ?
+					<div className="help">
+						Stored as <b>{draft.coachIntensity.toFixed(2)}</b>, from the slider this replaced. It
+						reads as the band above; clicking that band would write{" "}
+						<b>{intensityStop.toFixed(2)}</b>.
+					</div>
+				:	null}
+				<div className="help">
+					Scales the jokes and nothing else. It never changes a number, a timestamp, a severity or
+					a fix — that is a property of the prompt, not a promise made here.
+				</div>
+			</div>
+
+			{/* ============================================================== advanced */}
+
+			{/*
+			 * ONE disclosure, closed by default, and everything inside it keeps its evidence. These
+			 * are real knobs with real defaults that were measured; the audit's finding was that none
+			 * of them is a decision to hand a person on the way in.
+			 */}
+			<details className="advanced">
+				<summary>
+					<b>Advanced</b>
+					<span>
+						models, the coach's architecture, replay storage and diagnostics — all on measured
+						defaults
+					</span>
+				</summary>
+
+				<div className="settings-grid">
+					{/* ------------------------------------------------ the architecture */}
+					<div className="panel panel-pad">
+						<div className="section-title">
+							How she decides what to say <span className="rule" />
+						</div>
+						<div className="choices">
 							{LIVE_COACH_MODES.map(m => {
 								const on = draft.liveCoachMode === m.id
 								return (
@@ -429,7 +471,12 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 											onChange={() => set("liveCoachMode", m.id)}
 										/>
 										<div>
-											<div className="choice__title">{m.label}</div>
+											<div className="choice__title">
+												{m.label}
+												{m.id === DEFAULT_SETTINGS.liveCoachMode ? (
+													<span className="chip">default</span>
+												) : null}
+											</div>
 											<div className="choice__blurb">{m.blurb}</div>
 											<div className="choice__evidence">
 												<b>{m.measured ? "Measured:" : "Unmeasured:"}</b> {m.evidence}
@@ -440,278 +487,311 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							})}
 						</div>
 						<div className="help">
-							Both were run on the same model against the same 363 recorded samples from four of
-							your own games, replayed in order, and every line was judged with the labels
-							stripped so the judge could not tell which arm it was reading. Neither one lets her
-							say a number that is not in the block — that rule is what keeps her honest, and it
-							is in both. What changes is how much she is allowed to notice for herself.
-						</div>
-						<div className="help">
-							Takes effect at the start of the next game: one socket is opened per game and the
-							instructions go in when it opens, so changing this mid-game does nothing until the
-							next one.
+							All three were run on the same model against the same 363 recorded samples from four
+							of your own games, judged with the labels stripped. None of them lets her say a
+							number that is not in the block. Takes effect at the start of the next game: one
+							socket is opened per game and the instructions go in when it opens.
 						</div>
 					</div>
 
-					<div className="field wide">
-						<div className="label">Coach intensity</div>
-						<div className="control">
-							<div className="slider-row">
-								<span className="ends">clinical</span>
-								<input
-									type="range"
-									min={0}
-									max={1}
-									step={0.05}
-									value={draft.coachIntensity}
-									onChange={e => set("coachIntensity", Number(e.target.value))}
-								/>
-								<span className="ends">meme goblin</span>
-								<span className="mono" style={{ width: 34, textAlign: "right" }}>
-									{draft.coachIntensity.toFixed(2)}
-								</span>
-							</div>
+					{/* -------------------------------------------------------- the models */}
+					<div className="panel panel-pad">
+						<div className="section-title">
+							Models <span className="rule" />
 						</div>
-						<div className="help">
-							Scales the persona only. At 0 you get dry notes; at 1 you get the full
-							Faker-invoking treatment. It never changes a number, a timestamp or a verdict.
-						</div>
-					</div>
 
-					<div className="field">
-						<div className="label">Auto-review new games</div>
-						<div className="control">
-							<input
-								type="checkbox"
-								checked={draft.autoReviewNewGames}
-								onChange={e => set("autoReviewNewGames", e.target.checked)}
-							/>
-						</div>
-						<div className="help">
-							Queue a review as soon as a finished game is ingested and analyzed. The
-							automatic sweep only reaches back a day — it is a safety net for a game
-							whose chain broke, not a backfill of your history.
-						</div>
-					</div>
-
-					<div className="field">
-						<div className="label">Games in the trend window</div>
-						<div className="control">
-							<input
-								type="number"
-								min={3}
-								max={200}
-								value={draft.gamesForTrends}
-								onChange={e => set("gamesForTrends", Number(e.target.value))}
-							/>
-						</div>
-						<div className="help">
-							How many recent games the cross-game review reads. Fewer than about 10 and most
-							series will honestly report themselves as noise.
-						</div>
-					</div>
-
-					<div className="field">
-						<div className="label">Max moments per game</div>
-						<div className="control">
-							<input
-								type="number"
-								min={1}
-								max={50}
-								value={draft.maxMomentsPerGame}
-								onChange={e => set("maxMomentsPerGame", Number(e.target.value))}
-							/>
-						</div>
-						<div className="help">
-							Hard cap on how many timestamped moments analysis will keep, however rough the
-							game was.
-						</div>
-					</div>
-				</div>
-
-				{/* ------------------------------------------------------ replays */}
-				<div className="panel panel-pad">
-					<div className="section-title">
-						Replays <span className="rule" />
-					</div>
-
-					<div className="field">
-						<div className="label">Keep replays for</div>
-						<div className="control">
-							<input
-								type="number"
-								min={0}
-								max={365}
-								value={draft.retentionDays}
-								onChange={e => set("retentionDays", Number(e.target.value))}
-							/>
-						</div>
-						<div className="help">
-							Days. <code className="mono">.rofl</code> files are about 15 MB each and dominate
-							disk use. Reviews, metrics and moments are kept forever regardless. Only replays
-							this app downloaded are pruned — files the League client put in your own Replays
-							folder are never touched.
-						</div>
-					</div>
-
-					<div className="field">
-						<div className="label">Replay folder</div>
-						<div className="control">
-							<input
-								type="text"
-								spellCheck={false}
-								placeholder="/mnt/c/Users/<you>/Documents/League of Legends/Replays"
-								value={draft.replayFolder}
-								onChange={e => set("replayFolder", e.target.value)}
-								style={{ width: "100%", fontFamily: "var(--mono)", fontSize: "var(--fs-2)" }}
-							/>
-						</div>
-						<div className="help">
-							Where to look for <code className="mono">.rofl</code> files on the{" "}
-							<a href="#/replays">Replays</a> screen. Leave blank for the client's default.
-							Point it at an archive to coach games that have already fallen out of match
-							history — those reviews get end-of-game stats but no timeline, so no moments or
-							map positions.
-						</div>
-					</div>
-				</div>
-
-				{/* ------------------------------------------------------- daemon */}
-				<div className="panel panel-pad">
-					<div className="section-title">
-						League client link <span className="rule" />
-					</div>
-
-					<div className="field">
-						<div className="label">Transport</div>
-						<div className="control">
-							<div className="seg">
-								{(["bridge", "curl"] as const).map(t => (
-									<button
-										key={t}
-										className={cls(draft.transport === t && "active")}
-										onClick={() => set("transport", t)}
-									>
-										{t}
-									</button>
-								))}
-							</div>
-						</div>
-						<div className="help">
-							WSL2 can't reach the Windows client over TCP, so everything goes through Windows
-							interop. <strong>bridge</strong> is a long-lived <code className="mono">node.exe</code>{" "}
-							over stdio (~2 ms); <strong>curl</strong> shells out per request (~88 ms). The
-							daemon falls back to curl on its own if the bridge won't start.
-						</div>
-					</div>
-
-					<div className="field">
-						<div className="label">Idle poll</div>
-						<div className="control">
-							<input
-								type="number"
-								min={1000}
-								max={60000}
-								step={500}
-								value={draft.pollIdleMs}
-								onChange={e => set("pollIdleMs", Number(e.target.value))}
-							/>
-						</div>
-						<div className="help">Milliseconds between phase checks while you're not in a game.</div>
-					</div>
-
-					<div className="field">
-						<div className="label">In-game poll</div>
-						<div className="control">
-							<input
-								type="number"
-								min={500}
-								max={30000}
-								step={250}
-								value={draft.pollInGameMs}
-								onChange={e => set("pollInGameMs", Number(e.target.value))}
-							/>
-						</div>
-						<div className="help">
-							How often the daemon checks the League client while a game is running.
-							Lower means the live overlay and voice coach see changes sooner; higher is
-							gentler on the client.
-						</div>
-					</div>
-				</div>
-
-				{/* ------------------------------------------------------- status */}
-				<div className="panel panel-pad">
-					<div className="section-title">
-						Daemon <span className="rule" />
-					</div>
-					{health ?
-						<dl className="kv">
-							<dt>status</dt>
-							<dd className={cls(health.daemon === "ok" ? "band-good" : "band-bad")}>
-								{health.daemon}
-							</dd>
-							<dt>version</dt>
-							<dd>{health.version}</dd>
-							<dt>league client</dt>
-							<dd className={cls(health.lcu === "connected" ? "band-good" : "band-bad")}>
-								{health.lcu}
-								{health.gameflowPhase ? ` · ${phaseWord(health.gameflowPhase)}` : ""}
-							</dd>
-							<dt>transport in use</dt>
-							<dd>{health.bridge}</dd>
-							<dt>queue depth</dt>
-							<dd>{health.queueDepth}</dd>
-							{typeof health.gameCount === "number" ?
-								<>
-									<dt>games stored</dt>
-									<dd>{health.gameCount}</dd>
-								</>
-							:	null}
-							{health.dbPath ?
-								<>
-									<dt>database</dt>
-									<dd>{health.dbPath}</dd>
-								</>
-							:	null}
-							{typeof health.analysisVersion === "number" ?
-								<>
-									<dt>versions</dt>
-									<dd>
-										analysis v{health.analysisVersion} · review v{health.reviewVersion ?? "?"}
-									</dd>
-								</>
-							:	null}
-							{health.lastSyncMs !== undefined && health.lastSyncMs !== null ?
-								<>
-									<dt>last sync</dt>
-									<dd>{fmtAgo(health.lastSyncMs, now)}</dd>
-								</>
-							:	null}
-						</dl>
-					:	<Broken title="The daemon isn't answering, so its status is unknown." />
-					}
-
-					{health?.warnings && health.warnings.length > 0 ?
-						<div className="notice warn" style={{ marginTop: "var(--sp-3)" }}>
-							<span className="icon">⚠</span>
-							<div>
-								<strong>Warnings</strong>
-								<ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-									{health.warnings.map((w, i) => (
-										<li key={i}>{w}</li>
+						<div className="field wide">
+							<div className="label">Live coach</div>
+							<div className="control" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+								<select
+									value={draft.liveProvider}
+									onChange={e => set("liveProvider", e.currentTarget.value)}
+								>
+									<option value="gemini-live">
+										Gemini Live — speaks itself, ~1s, interruptible (default)
+									</option>
+									{/*
+									 * NOT disabled when a key is missing: the key box only appears once a
+									 * provider is selected, so disabling the keyless ones made them
+									 * unreachable — you could not select the thing you needed to select in
+									 * order to give it a key.
+									 */}
+									{providers.data?.providers.map(p => (
+										<option key={p.id} value={p.id}>
+											{p.label}
+											{p.available ? "" : " — needs a key"}
+										</option>
 									))}
-								</ul>
+								</select>
+								{draft.liveProvider !== "gemini-live" && (
+									<input
+										type="text"
+										placeholder={
+											providers.data?.providers.find(p => p.id === draft.liveProvider)
+												?.defaultModel ?? "model id"
+										}
+										value={draft.liveModel}
+										onChange={e => set("liveModel", e.currentTarget.value)}
+										style={{ minWidth: 220 }}
+									/>
+								)}
+							</div>
+							<div className="help">
+								{draft.liveProvider === "gemini-live" ?
+									"A held-open socket: it speaks in its own voice, answers in about a second, and can be cut off mid-sentence. Five models were indistinguishable on quality in the bench — this one is the default because of its SHAPE, not its answers."
+								:	<>
+										An HTTPS turn spoken by your system voice — slower (a few seconds), it cannot
+										be usefully interrupted because the sentence is already paid for, and it does
+										not sound like her.{" "}
+										{providers.data?.providers.find(p => p.id === draft.liveProvider)?.note}
+									</>
+								}
+							</div>
+							<div className="help">
+								Model id is free text on purpose — ids change faster than this app does, and a
+								stale dropdown is a bug that looks like a limitation. Blank uses the provider's
+								default. Pick one that accepts images, and a fast one: a reasoning model took
+								fifteen seconds to answer, which is useless in a fight.
 							</div>
 						</div>
-					:	null}
 
-					<div className="faint" style={{ fontSize: "var(--fs-1)", marginTop: "var(--sp-3)" }}>
-						Logs: <code className="mono">journalctl --user -u eepalytics -f</code> · doctor:{" "}
-						<code className="mono">pnpm doctor</code>
+						{draft.liveProvider !== "gemini-live" && (
+							<div className="field wide">
+								<div className="label">
+									Key for {providers.data?.providers.find(p => p.id === draft.liveProvider)?.label}
+								</div>
+								<div className="control" style={{ display: "flex", gap: 8 }}>
+									<input
+										type="password"
+										autoComplete="off"
+										placeholder="paste a key — it is written to a 0600 file and never read back"
+										value={providerKeyDraft}
+										onChange={e => setProviderKeyDraft(e.currentTarget.value)}
+										style={{ flex: 1 }}
+									/>
+									<button
+										className="btn"
+										onClick={() => {
+											void fetch(`/api/live/coach/key/${draft.liveProvider}`, {
+												method: "PUT",
+												headers: { "content-type": "application/json" },
+												body: JSON.stringify({ key: providerKeyDraft })
+											}).then(() => {
+												setProviderKeyDraft("")
+												providers.reload()
+											})
+										}}
+									>
+										Save
+									</button>
+								</div>
+								<div className="help">
+									Stored on this machine only, like the Gemini key — the daemon holds it and the
+									browser never sees it. An empty save clears it.
+								</div>
+							</div>
+						)}
+
+						<div className="field">
+							<div className="label">Post-game review</div>
+							<div className="control">
+								<select
+									value={knownModel ? draft.model : "__custom"}
+									onChange={e =>
+										set("model", e.target.value === "__custom" ? draft.model : e.target.value)
+									}
+								>
+									{MODEL_CHOICES.map(m => (
+										<option key={m.id} value={m.id}>
+											{m.label}
+										</option>
+									))}
+									<option value="__custom">Custom…</option>
+								</select>
+							</div>
+							{!knownModel ?
+								<div className="control" style={{ gridColumn: "1 / -1", justifySelf: "stretch" }}>
+									<input
+										type="text"
+										value={draft.model}
+										onChange={e => set("model", e.target.value)}
+										style={{ width: "100%" }}
+									/>
+								</div>
+							:	null}
+							<div className="help">
+								Runs through the Claude Agent SDK on your existing{" "}
+								<code className="mono">claude</code> CLI login — there is no API key on this
+								machine, so nothing is billed separately. This is the tier a human graded at 68%
+								useful, blinded.
+							</div>
+						</div>
+
+						<div className="field">
+							<div className="label">Games behind a baseline</div>
+							<div className="control">
+								<input
+									type="number"
+									min={3}
+									max={200}
+									value={draft.gamesForTrends}
+									onChange={e => set("gamesForTrends", Number(e.target.value))}
+								/>
+							</div>
+							<div className="help">
+								How many recent games "your own average" is computed over, and the default window
+								for the cross-game review. The Trends screen has its own picker for what it
+								DISPLAYS; this is the corpus everything else compares you against. Fewer than
+								about 10 and most series honestly report themselves as noise.
+							</div>
+						</div>
+					</div>
+
+					{/* ------------------------------------------------------ replays */}
+					<div className="panel panel-pad">
+						<div className="section-title">
+							Replays <span className="rule" />
+						</div>
+
+						<div className="field">
+							<div className="label">Keep replays for</div>
+							<div className="control">
+								<input
+									type="number"
+									min={0}
+									max={365}
+									value={draft.retentionDays}
+									onChange={e => set("retentionDays", Number(e.target.value))}
+								/>
+							</div>
+							<div className="help">
+								Days. <code className="mono">.rofl</code> files are about 15 MB each and dominate
+								disk use; 0 means never prune. Reviews, metrics and moments are kept forever
+								regardless, and files the League client put in your own Replays folder are never
+								touched.
+							</div>
+						</div>
+
+						<div className="field">
+							<div className="label">Replay folder</div>
+							<div className="control">
+								<input
+									type="text"
+									spellCheck={false}
+									placeholder="/mnt/c/Users/<you>/Documents/League of Legends/Replays"
+									value={draft.replayFolder}
+									onChange={e => set("replayFolder", e.target.value)}
+									style={{ width: "100%", fontFamily: "var(--mono)", fontSize: "var(--fs-2)" }}
+								/>
+							</div>
+							<div className="help">
+								Where to look for <code className="mono">.rofl</code> files on the{" "}
+								<a href="#/replays">Replays</a> screen. Blank uses the client's default. Point it
+								at an archive to coach games that have fallen out of match history — those reviews
+								get end-of-game stats but no timeline, so no moments and no map positions.
+							</div>
+						</div>
+					</div>
+
+					{/* -------------------------------------------------- diagnostics */}
+					<div className="panel panel-pad">
+						<div className="section-title">
+							Diagnostics <span className="rule" />
+						</div>
+						{health ?
+							<dl className="kv">
+								<dt>status</dt>
+								<dd className={cls(health.daemon === "ok" ? "band-good" : "band-bad")}>
+									{health.daemon}
+								</dd>
+								<dt>version</dt>
+								<dd>{health.version}</dd>
+								<dt>league client</dt>
+								<dd className={cls(health.lcu === "connected" ? "band-good" : "band-bad")}>
+									{health.lcu}
+									{health.gameflowPhase ? ` · ${phaseWord(health.gameflowPhase)}` : ""}
+								</dd>
+								{/*
+								 * WHICH TRANSPORT WON, reported rather than chosen. The picker that used to
+								 * sit on the first screen is gone: the daemon falls back from the bridge to
+								 * curl on its own, and there was nothing for a person to decide that the code
+								 * did not already decide better and then tell you about here.
+								 */}
+								<dt>transport in use</dt>
+								<dd>{health.bridge}</dd>
+								<dt>queue depth</dt>
+								<dd>{health.queueDepth}</dd>
+								{typeof health.gameCount === "number" ?
+									<>
+										<dt>games stored</dt>
+										<dd>{health.gameCount}</dd>
+									</>
+								:	null}
+								{health.dbPath ?
+									<>
+										<dt>database</dt>
+										<dd>{health.dbPath}</dd>
+									</>
+								:	null}
+								{typeof health.analysisVersion === "number" ?
+									<>
+										<dt>versions</dt>
+										<dd>
+											analysis v{health.analysisVersion} · review v{health.reviewVersion ?? "?"}
+										</dd>
+									</>
+								:	null}
+								{health.lastSyncMs !== undefined && health.lastSyncMs !== null ?
+									<>
+										<dt>last sync</dt>
+										<dd>{fmtAgo(health.lastSyncMs, now)}</dd>
+									</>
+								:	null}
+							</dl>
+						:	<Broken title="The daemon isn't answering, so its status is unknown." />}
+
+						<div className="faint" style={{ fontSize: "var(--fs-1)", marginTop: "var(--sp-3)" }}>
+							Logs: <code className="mono">journalctl --user -u eepalytics -f</code> · doctor:{" "}
+							<code className="mono">pnpm doctor</code>
+						</div>
 					</div>
 				</div>
-			</div>
+
+				{/*
+				 * The five fields with no control, named where someone looking for them will look.
+				 * Saying "this is not a setting, and here is why" is the point of the audit; leaving
+				 * them unmentioned would just be a smaller screen with the same ambiguity.
+				 */}
+				<div className="panel panel-pad">
+					<div className="section-title">
+						Not settings <span className="rule" />
+					</div>
+					<ul className="nonsettings">
+						<li>
+							<b>Reviewing each game</b> is always on. Its other position switched the only
+							human-graded tier of this product off for eight days while the checkbox looked
+							untouched. A control whose second value silently breaks the product is not a choice.
+						</li>
+						<li>
+							<b>The League transport</b> picks itself — the bridge, falling back to curl — and
+							which one carried the last request is printed above.
+						</li>
+						<li>
+							<b>Poll intervals</b> are milliseconds between client reads. Nothing downstream of
+							them is a coaching decision.
+						</li>
+						<li>
+							<b>Moments per game</b> is capped at {DEFAULT_SETTINGS.maxMomentsPerGame}, which is
+							the number the review prompt is written against. Raising it does not buy more
+							coaching, it buys more rows.
+						</li>
+					</ul>
+					<div className="help">
+						If a stored value has one of these off its default, the banner at the top of this page
+						names it and puts it back in one click.
+					</div>
+				</div>
+			</details>
 
 			<div className="save-bar">
 				<span className={cls(dirty ? "band-ok" : "faint")} style={{ fontSize: "var(--fs-2)" }}>
@@ -721,7 +801,11 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 						"Saved."
 					:	"No changes."}
 				</span>
-				{save.error ? <span className="band-bad" style={{ fontSize: "var(--fs-2)" }}>{save.error}</span> : null}
+				{save.error ?
+					<span className="band-bad" style={{ fontSize: "var(--fs-2)" }}>
+						{save.error}
+					</span>
+				:	null}
 				<span className="spacer" />
 				<button onClick={() => loaded.data && setDraft(loaded.data)} disabled={!dirty}>
 					Discard
@@ -730,7 +814,6 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 					{save.pending ? "Saving…" : "Save"}
 				</button>
 			</div>
-
 		</div>
 	)
 }

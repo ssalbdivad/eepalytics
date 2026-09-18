@@ -191,3 +191,125 @@ export const MODEL_CHOICES = [
 	{ id: "claude-sonnet-5", label: "Sonnet 5 — the default" },
 	{ id: "claude-haiku-4-5", label: "Haiku 4.5 — fast and cheap" }
 ] as const
+
+/* ======================================================= the 2026-09-18 audit */
+
+/**
+ * WHICH SETTINGS A PERSON MAY ACTUALLY SEE, and where.
+ *
+ * Every field above is read by the daemon, so none of them could be deleted from the schema
+ * without editing code this audit did not own. What WAS decided is narrower and more useful:
+ * which of them a human is ever shown, and how deep. A setting that exists because we were
+ * unsure is a decision we failed to make, and the fix for that is to make the decision here
+ * rather than to hand it to him three screens deep.
+ *
+ * The three lists PARTITION `DEFAULT_SETTINGS` and `settings.test.ts` asserts it, so adding a
+ * field to the schema without filing it under one of these fails the suite. That is the whole
+ * point: the Settings screen grew all campaign because every new knob had somewhere obvious to
+ * go and nowhere obvious to be refused.
+ *
+ *   SIMPLE      — on the first screen, no disclosure. Two of them.
+ *   ADVANCED    — behind one `<details>`, with its measurement printed beside it.
+ *   UNEXPOSED   — no control anywhere. The stored value still wins, the daemon still reads it,
+ *                 and the override banner still names it with a one-click reset — being unable
+ *                 to SET it is not the same as being unable to SEE it, and the eight-day review
+ *                 outage came from the second thing, not the first.
+ */
+
+/**
+ * The first screen. Nothing else earns that place.
+ *
+ * `liveSpeakLevel` is the one knob he has asked for in every session, and it is the only lever
+ * in the app on how much the coach talks. `coachIntensity` is the personality dial: it changes
+ * the jokes and never a number, which is exactly the kind of thing a person legitimately wants
+ * to move and nobody can pick for him.
+ */
+export const SIMPLE_SETTING_KEYS = ["liveSpeakLevel", "coachIntensity"] as const
+
+/**
+ * Behind one disclosure, each with the measurement that says why the default is the default.
+ *
+ * - `liveCoachMode` — three architectures, all measured, `trusted` shipped. Kept selectable
+ *   because the stored runs are only meaningful while the prompts that produced them exist.
+ * - `liveProvider` / `liveModel` — five models were indistinguishable on both paths, and only
+ *   the Gemini socket speaks natively at ~1.2s. Free text on purpose: a model id died inside a
+ *   minute of being typed as a default.
+ * - `model` — the reviewer's. Same indistinguishability result; same escape hatch.
+ * - `gamesForTrends` — the Trends screen has its own per-view window picker, so this is really
+ *   the daemon's baseline corpus size, which is not a thing to tune between games.
+ * - `retentionDays` / `replayFolder` — disk and where the client writes. Real, rare.
+ */
+export const ADVANCED_SETTING_KEYS = [
+	"liveCoachMode",
+	"liveProvider",
+	"liveModel",
+	"model",
+	"gamesForTrends",
+	"retentionDays",
+	"replayFolder"
+] as const
+
+/**
+ * No control, anywhere. Each one is a decision, and each one is written down.
+ *
+ * - `autoReviewNewGames` — has exactly one correct value. Its wrong value switched the only
+ *   human-graded tier of this product off for eight days while the checkbox rendered `false`
+ *   and looked like a field nobody had touched. A checkbox whose other position is "silently
+ *   break the product" is not a setting.
+ * - `transport` — the daemon falls back from bridge to curl on its own, and the diagnostics
+ *   panel prints which one actually carried the last request. There is nothing for a person
+ *   to decide that the code does not already decide better and report afterwards.
+ * - `pollIdleMs` / `pollInGameMs` — milliseconds between LCU polls. No user-facing meaning,
+ *   clamped at both ends, and nothing downstream of them is a coaching decision.
+ * - `maxMomentsPerGame` — 12 is the number the review prompt is written against ("three that
+ *   matter beats six that pad"). Moving it does not get more coaching, it gets more rows.
+ */
+export const UNEXPOSED_SETTING_KEYS = [
+	"autoReviewNewGames",
+	"transport",
+	"pollIdleMs",
+	"pollInGameMs",
+	"maxMomentsPerGame"
+] as const
+
+/**
+ * The persona dial, as three stops instead of twenty-one.
+ *
+ * It was a `step={0.05}` slider printing two decimals beside it, which is false precision about
+ * a quantity nobody has ever measured: there is no run anywhere in this repo comparing 0.75 to
+ * 0.80. Three stops is what the prompt itself actually describes (`Part 2 — Intensity` names
+ * three bands), and 0.8 is one of them, so the shipped default still lands exactly on a stop.
+ *
+ * 1.0 is deliberately unreachable. The band above 0.8 is the same band.
+ */
+export const INTENSITY_STOPS = [
+	{
+		value: 0,
+		label: "Dry",
+		blurb: "Numbers, zones and fixes. One aside in a whole review."
+	},
+	{
+		value: 0.5,
+		label: "Warm",
+		blurb: "A bit per item. The T1 references land without taking the item over."
+	},
+	{
+		value: 0.8,
+		label: "Full Lillia",
+		blurb: "Every item opens on the joke — and still cites the number, still ends on the fix."
+	}
+] as const
+
+/** Which stop a stored value reads as. Display only: nothing writes until he clicks one. */
+export const nearestIntensityStop = (value: number): number => {
+	let best: number = INTENSITY_STOPS[0]!.value
+	let bestGap = Infinity
+	for (const stop of INTENSITY_STOPS) {
+		const gap = Math.abs(stop.value - value)
+		if (gap < bestGap) {
+			bestGap = gap
+			best = stop.value
+		}
+	}
+	return best
+}

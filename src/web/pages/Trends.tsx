@@ -16,6 +16,7 @@ import { FeedbackCard } from "../components/FeedbackCard.tsx"
 import { Sparkline } from "../components/Sparkline.tsx"
 import { TrendChart } from "../components/TrendChart.tsx"
 import { Blank, Broken, Loading } from "../components/States.tsx"
+import { HabitCard } from "../components/HabitCard.tsx"
 
 const WINDOWS = [10, 20, 50] as const
 
@@ -89,6 +90,36 @@ export const Trends = ({ eventTick }: TrendsProps) => {
 			</div>
 		)
 
+	/*
+	 * THE FIRST-RUN STATE OF THIS SCREEN, which used to be a grid of empty cards.
+	 *
+	 * `gameCount === 0` renders every chart with no points and every series flagged untrendable,
+	 * which is a page that looks broken and is merely early. It is also the ONE case where the
+	 * "not enough games" warning below is not the right answer: a warning implies something is
+	 * wrong with what is on screen, and there is nothing on screen.
+	 */
+	if (t.gameCount === 0)
+		return (
+			<div className="page">
+				<div className="page-head">
+					<h1>Trends</h1>
+				</div>
+				<Blank
+					title="Nothing to compare yet."
+					actions={
+						<a className="btn btn-primary" href={href.home}>
+							Go to the coach
+						</a>
+					}
+				>
+					This screen is the only one that needs a HISTORY rather than a game: it reads your last
+					ten to fifty matches and reports which of them are real series and which are noise.
+					Nothing has been ingested yet, so there is nothing to draw — play a game with the League
+					client open and it fills in on its own.
+				</Blank>
+			</div>
+		)
+
 	return (
 		<div className="page">
 			<div className="page-head">
@@ -106,6 +137,20 @@ export const Trends = ({ eventTick }: TrendsProps) => {
 					))}
 				</div>
 			</div>
+
+			{/*
+			 * THE HABIT FIRST, above the model's write-up and above every series below it.
+			 *
+			 * Everything else on this screen is a metric that exists because it could be computed.
+			 * This one is here because it was MEASURED to separate his wins from his losses on 138
+			 * of his own ranked games, and because it survived controlling for the 10-minute
+			 * scoreboard — which is the test that tells a lever from a symptom. Of the eighteen
+			 * series below it, most are coin flips on his data and several are consequences of
+			 * having already won.
+			 *
+			 * It is also the only block on this page with no model anywhere in it.
+			 */}
+			<HabitCard variant="full" games={Math.max(games, 20)} eventTick={eventTick} />
 
 			{t.gameCount < 5 ?
 				<div className="notice warn">

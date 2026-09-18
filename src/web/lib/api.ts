@@ -14,6 +14,7 @@ import {
 	GameDetailResponse,
 	ChatHistoryResponse,
 	FormResponse,
+	HabitResponse,
 	LiveResponse,
 	MatchupResponse,
 	WatchListResponse,
@@ -198,6 +199,14 @@ export const api = {
 	/** Grades and focus areas. Derived from stored data — no model call, so it is instant. */
 	form: (games?: number, signal?: AbortSignal) =>
 		request(API.form, FormResponse, { signal, query: { games } }),
+
+	/**
+	 * The habit tracker: one behaviour, game over game. Counted off stored timelines, so it is
+	 * instant and identical on every call — and it is the one screen in this app whose numbers
+	 * were chosen by measuring which of them separate his wins.
+	 */
+	habit: (habit?: string, games?: number, signal?: AbortSignal) =>
+		request(API.habit, HabitResponse, { signal, query: { habit, games } }),
 
 	replays: (signal?: AbortSignal) => request(API.replays, ReplayListResponse, { signal }),
 

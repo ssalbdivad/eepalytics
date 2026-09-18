@@ -40,6 +40,7 @@ import { useGeminiLive } from "../lib/geminiLive.ts"
 import type { LiveTick } from "../../analysis/live-events.ts"
 import { useGameflow, standbyReason } from "../lib/gameflow.ts"
 import { liveFaults, topFault } from "../lib/liveFaults.ts"
+import { coachPulse } from "../lib/coachPulse.ts"
 import { useScreenShare } from "../lib/useScreenShare.ts"
 import "./components.css"
 
@@ -476,6 +477,12 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	const liveModel = settings.data?.liveModel ?? ""
 	// The architecture, forwarded so the socket can drop the pace floor under `trusted`.
 	const coachMode = settings.data?.liveCoachMode ?? ""
+	/*
+	 * HOW OFTEN she is asked. Undefined until the fetch lands, and deliberately left undefined
+	 * rather than defaulted here — the hook and the detector both fall back to
+	 * `DEFAULT_SPEAK_LEVEL`, and a third copy of that decision in this file is how the three drift.
+	 */
+	const speakLevel = settings.data?.liveSpeakLevel
 
 	const gem = useGeminiLive({
 		provider: liveProvider,
@@ -613,7 +620,8 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 			return { text: "", gameTimeSec: null }
 		},
 		grabFrame: share.grabFrame,
-		coachMode
+		coachMode,
+		speakLevel
 	})
 
 	/*
@@ -790,100 +798,132 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 
 	/** When she last said something of her own. Questions he typed are not her speaking. */
 	const lastSpokeMs = lastCoachLineMs(gem.lines)
-	const quietMs = lastSpokeMs === null ? null : Date.now() - lastSpokeMs
 
 	/**
-	 * WHY she is quiet — the sentence that separates a coach who is choosing silence from one that
-	 * has stopped working.
+	 * WHAT SHE IS DOING, in one named state — the whole point of this panel now.
 	 *
-	 * She is SUPPOSED to be quiet: an empty fact list means PASS, and most turns of most games
-	 * correctly produce nothing. From the outside that is indistinguishable from a socket that is
-	 * closed, a brief that never arrives, or a heartbeat firing into a dead connection — and he has
-	 * switched a working coach off over exactly that ambiguity before, which costs the free graded
-	 * review as well as the voice.
+	 * She is SUPPOSED to be quiet, and the target is about six spoken lines in a twenty-eight
+	 * minute game: four minutes of silence between them. From the outside that is indistinguishable
+	 * from a socket that is closed, a brief that never arrives, or a heartbeat firing into a dead
+	 * connection — and he has switched a working coach off over exactly that ambiguity before,
+	 * which costs the free graded review as well as the voice.
 	 *
-	 * Every branch below is a reading the page already holds. The last one is the one that matters:
-	 * turns sent against lines spoken is how many times she was asked and had nothing worth saying,
-	 * which is the feature working and is now a number rather than an assurance.
+	 * `lib/coachPulse.ts` turns the readings this component already holds into one of three
+	 * silences — nothing has changed, she was asked and declined, something is broken — and it
+	 * lives outside this file for two reasons: the strip and the panel draw it from the same call
+	 * so they cannot disagree, and a state machine inside a JSX ternary cannot be pinned by a test.
 	 */
-	const quietWhy =
-		gem.status === "off" ? "the socket is closed"
-		: gem.status !== "live" ? `the socket is ${gem.status}`
-		: truthAtMs === null ? "no ground-truth block yet — she may not speak without one"
-		: gem.usage.turns === 0 ? "she has not been asked anything yet"
-		: `asked ${gem.usage.turns}\u00d7, passed ${Math.max(0, gem.usage.turns - spokenLines)}`
+	const pulse = coachPulse({
+		sharing: share.sharing,
+		armed: gate.armed,
+		status: gem.status,
+		fault: worst,
+		standby,
+		daemonReachable: gate.reachable,
+		needsKey,
+		/*
+		 * The ground-truth block is fetched per TURN and only when a turn is actually going out, so
+		 * when it landed is when she was last ASKED. There is no other timestamp on this page that
+		 * means that: `usage.turns` is a counter, and a counter cannot tell four seconds ago from
+		 * four minutes ago, which is the entire difference between the two honest silences.
+		 */
+		askedAtMs: truthAtMs,
+		spokeAtMs: lastSpokeMs,
+		turns: gem.usage.turns,
+		spokenLines,
+		nowMs: Date.now()
+	})
+
+	/**
+	 * Three of the pulse's states are already spelled out at full length in the WIDE panel, and
+	 * printing them twice reads as two problems rather than one.
+	 *
+	 *   - `broken` is the fault list, which has the text AND the fix;
+	 *   - `standby` is the journal line, which carries the gate's own sentence;
+	 *   - `nokey` is the whole inline setup flow, with the link and the paste box.
+	 *
+	 * None of those exist below 700px — the compact branch returns before all three — which is why
+	 * the strip prints the sentence unconditionally and this panel does not.
+	 */
+	const whyIsAlreadyOnThisPanel =
+		pulse.state === "broken" || pulse.state === "standby" || pulse.state === "nokey"
 
 	if (compact)
+		/*
+		 * THE 380px POPOUT — the width he actually plays with, and the only surface a coach that
+		 * speaks six times in half an hour can be judged from.
+		 *
+		 * It used to be one line: a dot and a label. That line could say "Coaching · 14 check-ins"
+		 * over a coach that had been asked nothing for four minutes, over one that had been asked
+		 * and passed twelve seconds ago, and over one whose ground-truth fetch had died — three
+		 * different things, one sentence. So the strip is now three rows, and the two it gained are
+		 * the two that separate them: WHY it is quiet, and the readings that back the why up.
+		 *
+		 * Rows two and three only exist while something is being explained, so "Live coach" with a
+		 * share button is still exactly one line.
+		 */
 		return (
 			<div className="csk-screen csk-screen--compact">
-				<span
-					className="csk-screen__dot"
-					// Sharing-but-idle is its own state, not an off one. Without this the dot is the
-					// same grey in "waiting for your next game" as in "you never pressed share".
-					// A live fault outranks both: a green dot over a broken coach is the single most
-					// misleading thing this strip can show, and it showed exactly that.
-					data-state={
-						worst?.level === "error" ? "error"
-						: standby !== null && gem.status === "off" ? "standby"
-						: gem.status
-					}
-				/>
-				<span className="csk-screen__compactlabel" title={worst?.text ?? undefined}>
+				<div className="csk-screen__striprow">
+					<span
+						className="csk-screen__dot"
+						/*
+						 * One dot, five states, and each one is a state a person can name. Standby
+						 * and QUIET are both rings rather than fills, because neither is a failure
+						 * and neither is activity: grey for "no game", teal for "connected and
+						 * choosing not to speak". A green dot over a broken coach is the single
+						 * most misleading thing this strip can show, and it showed exactly that.
+						 */
+						data-state={pulse.state === "standby" ? "standby" : pulse.tone}
+					/>
+					<span className="csk-screen__compactlabel">{pulse.short}</span>
 					{/*
-					 * The strip is what he can see while the game owns the screen, so a fault has to
-					 * reach it. It said "In a game — coach arming" over a coach that had given up
-					 * and over a share that had ended — both indistinguishable from working.
+					 * The strip is the WHOLE coach below 700px — the popout docked beside the game is
+					 * exactly the window this shape was drawn for. Without this button there was no way
+					 * to start a share at that width anywhere in the app: the wide panel's "Share my
+					 * screen" lives behind a `compact` branch that returns before it, so a narrow popout
+					 * showed a grey dot and the dead words "Live coach" and offered nothing to press.
+					 *
+					 * Only when NOT sharing. A stop control here would sit under his cursor for the whole
+					 * game, and ending the share by accident mid-game is the one mistake this strip must
+					 * not make easy — stopping stays in the wide panel, where it takes a deliberate visit.
 					 */}
-					{worst?.level === "error" ?
-						worst.short
-					: gem.status === "live" ?
-						`Coaching · ${gem.usage.turns} check-in${gem.usage.turns === 1 ? "" : "s"}`
-					: gem.status === "reconnecting" ?
-						"Coach reconnecting…"
-					: gem.status === "connecting" ?
-						"Coach connecting…"
-					: share.sharing && gate.armed && needsKey ?
-						// The journal half is running and free; only the voice is blocked. Saying
-						// only "needs a key" would hide the half that is actually working.
-						"Recording — the voice needs a key"
-					: share.sharing && gate.armed ?
-						"In a game — coach arming"
-					: share.sharing && !gate.reachable ?
-						"Sharing — can't reach eepalytics"
-					: share.sharing ?
-						// Says the share survived, which is the thing he is checking for.
-						"Sharing — waiting for your next game"
-					: needsKey ?
-						"Live coach needs a key"
-					:	"Live coach"}
-				</span>
+					{!share.sharing && (
+						<button
+							className="btn btn-sm"
+							disabled={opening}
+							// Same handler as the wide panel, deliberately: a real click is the only thing
+							// that may unlock audio output, and on WSL the picker cannot see the game, so
+							// both widths hand off to the Windows browser rather than opening a dead picker.
+							onClick={() => {
+								gem.unlockAudio()
+								void (wsl ? openInWindows() : share.start()).catch(() => {
+									/* both set their own error state; this only stops an unhandled rejection */
+								})
+							}}
+						>
+							{opening ? "Opening…" : "Share"}
+						</button>
+					)}
+				</div>
+
 				{/*
-				 * The strip is the WHOLE coach below 700px — the popout docked beside the game is
-				 * exactly the window this shape was drawn for. Without this button there was no way
-				 * to start a share at that width anywhere in the app: the wide panel's "Share my
-				 * screen" lives behind a `compact` branch that returns before it, so a narrow popout
-				 * showed a grey dot and the dead words "Live coach" and offered nothing to press.
-				 *
-				 * Only when NOT sharing. A stop control here would sit under his cursor for the whole
-				 * game, and ending the share by accident mid-game is the one mistake this strip must
-				 * not make easy — stopping stays in the wide panel, where it takes a deliberate visit.
+				 * WHY. One sentence, and at this width it is the only place a fault can be read at
+				 * all — the fault list lives below a `compact` branch that has already returned, and
+				 * a tooltip is not readable with a hand on the mouse mid-clear.
 				 */}
-				{!share.sharing && (
-					<button
-						className="btn btn-sm"
-						disabled={opening}
-						// Same handler as the wide panel, deliberately: a real click is the only thing
-						// that may unlock audio output, and on WSL the picker cannot see the game, so
-						// both widths hand off to the Windows browser rather than opening a dead picker.
-						onClick={() => {
-							gem.unlockAudio()
-							void (wsl ? openInWindows() : share.start()).catch(() => {
-								/* both set their own error state; this only stops an unhandled rejection */
-							})
-						}}
-					>
-						{opening ? "Opening…" : "Share"}
-					</button>
+				{share.sharing && pulse.why !== null && (
+					<div className={`csk-screen__why ${pulse.tone}`}>{pulse.why}</div>
+				)}
+
+				{/* The readings the sentence above rests on. Same four at both widths, one call. */}
+				{share.sharing && gate.armed && (
+					<CoachVitals
+						status={gem.status}
+						askedAtMs={truthAtMs}
+						spokeAtMs={lastSpokeMs}
+						mapWatch={mapWatch}
+					/>
 				)}
 			</div>
 		)
@@ -1074,97 +1114,30 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				</div>
 			)}
 			{/*
-			 * THE VITALS ROW — the four things that are either happening or not, while a game runs.
+			 * WHY SHE IS QUIET, then the four readings it rests on.
 			 *
-			 * The fault list above says what is WRONG. Everything below it says what she said. In
-			 * between there was nothing at all for the normal case, which for this coach is SILENCE:
-			 * she is designed to say almost nothing, so a working coach and a dead one produce the
-			 * same empty panel, and he has switched a working one off over exactly that ambiguity
-			 * before. Each of these is a reading, never an assurance:
+			 * The fault list above says what is WRONG. Everything below says what she SAID. In
+			 * between there was nothing at all for the normal case, which for this coach is
+			 * SILENCE — and the target is about six spoken lines in a twenty-eight minute game, so
+			 * silence is now most of what this panel has to describe. A working coach and a dead
+			 * one produced the same empty panel, and he has switched a working one off over exactly
+			 * that ambiguity before.
 			 *
-			 *   - the SOCKET's own state, which is the only one of the four he could already see;
-			 *   - the BRIEF, timestamped — a coach that has stopped taking turns fails no
-			 *     ground-truth read, so the fault list stays silent and only an age shows it;
-			 *   - the MINIMAP WATCHER's accept/refuse counts, which nothing on this page has ever
-			 *     shown, from the daemon route built to expose them;
-			 *   - how long since she last spoke, with WHY she was last asked beside it.
-			 *
-			 * It is panel copy. None of it reaches the model, and none of it is a claim about the
-			 * game — a number missing here means "not known", and the row says so rather than
-			 * printing a zero that reads like a measurement.
+			 * The sentence comes from the same `coachPulse` call the 380px strip draws, so the two
+			 * widths cannot tell him different stories about the same second.
 			 */}
+			{share.sharing && pulse.why !== null && !whyIsAlreadyOnThisPanel && (
+				<div className={`csk-screen__why ${pulse.tone}`}>{pulse.why}</div>
+			)}
+
 			{share.sharing && gate.armed && (
-				<div className="csk-screen__vitals">
-					<span title="The live connection this coach speaks over.">
-						socket{" "}
-						<b className={gem.status === "live" ? "on" : ""}>
-							{gem.status === "off" ? "closed" : gem.status}
-						</b>
-					</span>
-
-					<span title="The ground-truth block — the roster, the score, the farm — fetched fresh from the League client for each check-in. She is not allowed to speak without one, so an age climbing here is why she is quiet.">
-						brief{" "}
-						{truthAtMs === null ?
-							<b>not yet</b>
-						:	<b className="on">{fmtAge(Date.now() - truthAtMs)} ago</b>}
-					</span>
-
-					{/*
-					 * Refusals are printed, not hidden. Most of them are the fence doing its job —
-					 * a read that contradicts the client is thrown away whole — so a refuse count
-					 * beside an accept count is the honest shape, and a zero-accept run is the one
-					 * worth noticing.
-					 */}
-					<span title="A crop of your minimap, read and then checked against the League client. Refused reads are ones the client contradicted — those are the fence working, not an error. Nothing she says comes from a read the client refused.">
-						map reads{" "}
-						{mapWatch === null ?
-							<b>unknown</b>
-						: !mapWatch.enabled ?
-							<b>off</b>
-						:	<b className={mapWatch.accepted > 0 ? "on" : ""}>
-								{mapWatch.accepted} ok
-								{mapWatch.refused > 0 ? ` · ${mapWatch.refused} refused` : ""}
-							</b>
-						}
-						{/*
-						 * The daemon's own reason, shown only when NOTHING has been accepted this
-						 * game. With reads landing it is noise — a refusal beside an acceptance is
-						 * the fence working. With none it is the whole diagnosis, and it was
-						 * already in this payload, unread.
-						 */}
-						{mapWatch !== null && mapWatch.enabled && mapWatch.accepted === 0 && mapWatch.lastReason !== null && (
-							<em> · {mapWatch.lastReason}</em>
-						)}
-					</span>
-
-					<span
-						title={
-							gem.lastAsk === null ?
-								"She has not been asked anything yet this game."
-							:	`She was last asked on: ${gem.lastAsk}`
-						}
-					>
-						{quietMs === null ?
-							<>
-								spoke <b>not yet</b>
-							</>
-						: quietMs >= QUIET_NOTICE_MS ?
-							<>
-								quiet for <b>{fmtAge(quietMs)}</b>
-							</>
-						:	<>
-								spoke <b className="on">{fmtAge(quietMs)} ago</b>
-							</>
-						}
-						{/*
-						 * WHY, rather than what she was last asked about. The ask is still on the
-						 * tooltip, where it answers a question he only has after this one: a
-						 * player looking at a silent coach wants to know whether it is broken
-						 * before he wants to know which event woke it.
-						 */}
-						<em> · {quietWhy}</em>
-					</span>
-				</div>
+				<CoachVitals
+					status={gem.status}
+					askedAtMs={truthAtMs}
+					spokeAtMs={lastSpokeMs}
+					mapWatch={mapWatch}
+					lastAsk={gem.lastAsk}
+				/>
 			)}
 
 			{/*
@@ -1324,12 +1297,6 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 				</form>
 			)}
 
-			{gem.status === "live" && gem.lines.length === 0 && (
-				<div className="csk-screen__quiet">
-					Listening. She'll speak up when something's worth saying — quiet is normal.
-				</div>
-			)}
-
 			{gem.lines.length > 0 && (
 				<ul className="csk-screen__log">
 					{gem.lines.map(l => (
@@ -1343,6 +1310,113 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 					))}
 				</ul>
 			)}
+		</div>
+	)
+}
+
+/**
+ * THE FOUR READINGS, drawn once and rendered at both widths.
+ *
+ * The sentence above this row says WHY she is quiet; this row is the evidence for it, and the two
+ * have to come from the same numbers or the panel is arguing with itself. It used to exist only in
+ * the wide panel — so the 380px popout, which is the window he actually plays with, had no way at
+ * all to tell a coach that was choosing silence from one whose socket had closed four minutes ago.
+ *
+ * Each one is a reading, never an assurance:
+ *
+ *   - the SOCKET's own state, the only one of the four he could already see;
+ *   - when she was last ASKED, which is when the ground-truth block last landed — a coach that has
+ *     stopped taking turns fails no read, so the fault list stays silent and only an age shows it;
+ *   - the MINIMAP WATCHER's accept/refuse counts, from the daemon route built to expose them;
+ *   - when she last SPOKE, with the event that last woke her on the tooltip.
+ *
+ * It is panel copy. None of it reaches the model, and none of it is a claim about the game — a
+ * number that is not known renders as the word for not knowing, never as a zero that reads like a
+ * measurement.
+ */
+const CoachVitals = ({
+	status,
+	askedAtMs,
+	spokeAtMs,
+	mapWatch,
+	lastAsk
+}: {
+	status: "off" | "connecting" | "live" | "reconnecting" | "error"
+	askedAtMs: number | null
+	spokeAtMs: number | null
+	mapWatch: MapWatch | null
+	lastAsk?: string | null
+}) => {
+	const now = Date.now()
+	const quietMs = spokeAtMs === null ? null : now - spokeAtMs
+	return (
+		<div className="csk-screen__vitals">
+			<span title="The live connection this coach speaks over.">
+				socket{" "}
+				<b className={status === "live" ? "on" : ""}>{status === "off" ? "closed" : status}</b>
+			</span>
+
+			{/*
+			 * "asked", not "brief". The ground-truth block is fetched per turn and only when a turn
+			 * is going out, so its age IS how long since she was last asked — which is the reading
+			 * that tells the two honest silences apart, and calling it by the name of the payload
+			 * hid that. The tooltip still says what the thing itself is.
+			 */}
+			<span title="The ground-truth block — the roster, the score, the farm — fetched fresh from the League client for each check-in, and only when one is actually going out. She may not speak without one, so this age is how long since she was last asked anything.">
+				asked{" "}
+				{askedAtMs === null ?
+					<b>not yet</b>
+				:	<b className="on">{fmtAge(now - askedAtMs)} ago</b>}
+			</span>
+
+			{/*
+			 * Refusals are printed, not hidden. Most of them are the fence doing its job — a read
+			 * that contradicts the client is thrown away whole — so a refuse count beside an accept
+			 * count is the honest shape, and a zero-accept run is the one worth noticing.
+			 */}
+			<span title="A crop of your minimap, read and then checked against the League client. Refused reads are ones the client contradicted — those are the fence working, not an error. Nothing she says comes from a read the client refused.">
+				map reads{" "}
+				{mapWatch === null ?
+					<b>unknown</b>
+				: !mapWatch.enabled ?
+					<b>off</b>
+				:	<b className={mapWatch.accepted > 0 ? "on" : ""}>
+						{mapWatch.accepted} ok
+						{mapWatch.refused > 0 ? ` · ${mapWatch.refused} refused` : ""}
+					</b>
+				}
+				{/*
+				 * The daemon's own reason, shown only when NOTHING has been accepted this game.
+				 * With reads landing it is noise — a refusal beside an acceptance is the fence
+				 * working. With none it is the whole diagnosis, and it was already in this payload,
+				 * unread.
+				 */}
+				{mapWatch !== null &&
+					mapWatch.enabled &&
+					mapWatch.accepted === 0 &&
+					mapWatch.lastReason !== null && <em> · {mapWatch.lastReason}</em>}
+			</span>
+
+			<span
+				title={
+					lastAsk === null || lastAsk === undefined ?
+						"She has not been asked anything yet this game."
+					:	`She was last asked on: ${lastAsk}`
+				}
+			>
+				{quietMs === null ?
+					<>
+						spoke <b>not yet</b>
+					</>
+				: quietMs >= QUIET_NOTICE_MS ?
+					<>
+						quiet for <b>{fmtAge(quietMs)}</b>
+					</>
+				:	<>
+						spoke <b className="on">{fmtAge(quietMs)} ago</b>
+					</>
+				}
+			</span>
 		</div>
 	)
 }

@@ -36,7 +36,9 @@ import { categoryLabel } from "../lib/format.ts"
 import { LiveBoard } from "../components/LiveBoard.tsx"
 import { ScreenCoach } from "../components/ScreenCoach.tsx"
 import { LiveTranscript } from "../components/LiveTranscript.tsx"
+import { FirstRun } from "../components/FirstRun.tsx"
 import { Debrief } from "../components/Debrief.tsx"
+import { HabitCard } from "../components/HabitCard.tsx"
 
 /** Fast enough to catch an objective window, slow enough to be free. */
 const POLL_MS = 3000
@@ -194,9 +196,16 @@ export const Live = () => {
 								onDismiss={() => dismiss(ended.endedAtMs)}
 							/>
 						:	<Ingesting endedAtMs={ended.endedAtMs} onDismiss={() => dismiss(ended.endedAtMs)} />
-					:	<div className="live__idle">
-						<img className="live__mark" src="/icons/icon-128.png" alt="" width={size === "wide" ? 44 : 22} height={size === "wide" ? 44 : 22} />
-						<strong>{starting ?? "Not in a game"}</strong>
+					:	<div className="live__idle live__idle--slim">
+						<img className="live__mark" src="/icons/icon-128.png" alt="" width={22} height={22} />
+						{/*
+						 * "Not in a game" was the first thing this app ever said to anyone, in the
+						 * biggest type on the screen, and it is a fact about the League client rather
+						 * than anything about this product. Idle is most of the hours this window is
+						 * open; the honest version of it is that she is waiting, which is also the
+						 * version that does not read as a failure.
+						 */}
+						<strong>{starting ?? "Waiting for your next game"}</strong>
 						<span>
 							{starting !== null ?
 								"Your numbers appear as soon as the game clock starts."
@@ -204,6 +213,36 @@ export const Live = () => {
 						</span>
 						</div>
 					}
+
+					{/*
+					 * Only on a genuine first run — it establishes that positively (a games list was
+					 * read and no game in it was coached) and returns null otherwise, so a returning
+					 * user never meets it, including on a cold load with every fetch in flight.
+					 */}
+					<FirstRun compact={size !== "wide"} />
+
+					{/*
+					 * THE HABIT, ABOVE THE FOCUS LIST, and the order is the argument.
+					 *
+					 * This block is on screen through queue, champion select and the loading
+					 * screen — the one window in a session when he is doing nothing else and the
+					 * next game is still entirely unplayed. What it says is the single behaviour
+					 * his own 138 ranked games say separates his wins (`analysis/habit.ts`), and
+					 * his record on it. No model call: it is counted off stored timelines, so it
+					 * costs nothing and says the same thing every time it is asked.
+					 *
+					 * It sits ABOVE "What to work on" because that list is mined from reviews and
+					 * ranks by how often a category recurred, which is a measure of what the coach
+					 * TALKED about rather than of what wins. When the two disagree, the measured
+					 * one goes first.
+					 *
+					 * Hidden while a just-finished debrief owns the compact window, for the same
+					 * reason the focus list is: at 380px a second card pushes the debrief off the
+					 * screen it was opened for.
+					 */}
+					{!(ended && size === "compact") && (
+						<HabitCard variant="pregame" size={size} />
+					)}
 
 					{/*
 					 * The standing focus list is about the last twenty games and can wait; in the
@@ -266,13 +305,19 @@ export const Live = () => {
 								</li>
 							))}
 						</ul>
-					:	<div className="live__quiet">
-							{/* Silence is a real answer. See the file header. */}
-							{size === "wide" ?
-								"Nothing worth saying right now — that's a good sign. Keep clearing."
-							:	"Nothing worth saying right now."}
-						</div>
-					}
+					:	null}
+					{/*
+					 * There is no "nothing worth saying right now" line here any more, and its
+					 * absence is the change.
+					 *
+					 * The board directly above already renders the standing state continuously and
+					 * with no model — the window, the walk, the counterpart, his own vitals — and
+					 * the coach strip at the bottom of this page now says in one sentence WHY she
+					 * is quiet, with the ages behind it. Three surfaces announcing the same silence
+					 * is the "overwhelming" he has asked about four times, and the one with no
+					 * numbers in it is the one to lose. Quiet is answered by the board being full,
+					 * not by a sentence about being quiet.
+					 */}
 
 					{/*
 					 * Big numbers, wide mode only.
@@ -338,8 +383,22 @@ export const Live = () => {
 
 			</div>
 
+	/*
+	 * WHERE THE COACH PANEL SITS, and it is the whole default experience.
+	 *
+	 * Off a game the panel is the only thing on this screen that says what the app is and carries
+	 * the one button that starts it — and it was LAST, under a status line and a focus list about
+	 * the past twenty games. So a launch opened on "Not in a game" over a list of old habits, with
+	 * the product's actual proposition below the fold. It goes first whenever nothing more urgent
+	 * is on screen.
+	 *
+	 * The exception is a game that just ended: the debrief is about the scoreboard he is looking
+	 * at right now and outranks a panel that will still be there in a minute.
+	 */
+	const coachFirst = !data?.inGame && ended === null
+
 	return (
-		<div className={`live live--${size}`}>
+		<div className={`live live--${size}${coachFirst ? " live--coachfirst" : ""}`}>
 			{body}
 			{/*
 			 * Always mounted, at a fixed position in the tree. Compact renders a one-line strip

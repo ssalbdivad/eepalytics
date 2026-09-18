@@ -2104,3 +2104,264 @@ body.is-live {
 }
 .live--wide .live__nudge--objective .live__icon { font-size: 26px; }
 .live--wide .live__nudge--objective .live__nudge-src { padding-left: 42px; }
+
+/* ---- live: the board is the main surface ---- */
+/*
+ * When she is quiet — which, at about six spoken lines in a twenty-eight minute game, is nearly
+ * all of it — the board IS the product. It renders the standing state continuously and with no
+ * model: the window, whether he can be in it, the counterpart, his own vitals. It was drawn as
+ * decoration around a transcript that spends four minutes at a time not moving, and that is the
+ * wrong way round.
+ *
+ * So it gets the page's one raised surface and the objective window gets the page's one big
+ * figure. Nothing is added to it — a board that needs more rows to feel important needs fewer.
+ */
+.live .csk-board {
+	border-color: var(--line-hover);
+	box-shadow: var(--shadow);
+}
+/*
+ * The window is the one time-critical number on the page and the only one that is worth acting on
+ * within seconds of reading it. Everything else on the board is a reading he can take his time
+ * over.
+ */
+.live .csk-board__objs .w {
+	font-size: var(--fs-num-sm);
+	white-space: nowrap;
+}
+/*
+ * The window column widens with the figure. "up 2:57" at the board's own size fits 4.5em and at
+ * this one does not — it wrapped onto a second line, which on a countdown puts the minutes and
+ * the seconds on separate rows. A number that breaks in half is worse than a smaller number.
+ */
+.live .csk-board__objs li,
+.live .csk-board__down li {
+	grid-template-columns: 5.5em 5.4em 1fr;
+}
+.live--wide .csk-board {
+	padding: var(--sp-3) var(--sp-4);
+	gap: var(--sp-2);
+	font-size: var(--fs-3);
+}
+.live--wide .csk-board__objs li,
+.live--wide .csk-board__down li {
+	grid-template-columns: 7em 6.5em 1fr;
+}
+.live--wide .csk-board__objs .w {
+	font-size: var(--fs-num);
+}
+.live--wide .csk-board__lab {
+	font-size: var(--fs-0);
+}
+
+/* ===================================================== the default experience */
+
+/*
+ * THE COACH PANEL GOES FIRST when nothing more urgent is on screen.
+ *
+ * `.live` is a flex column whose two children are the content and the coach; `order` moves the
+ * panel without moving the component, which is the point — `<ScreenCoach>` holds the MediaStream
+ * and the socket, so it must keep its position in the REACT tree (see the comment in Live.tsx)
+ * while being free to move in the visual one. A conditional that re-parented it would cost the
+ * screen share.
+ */
+.live--coachfirst .live__coach { order: -1; }
+
+/*
+ * Idle used to shout. `.live--wide .live__idle strong` is 26px, and on the idle screen that type
+ * was spent on the words "Not in a game" — a fact about the League client, in the largest text in
+ * the product, above everything the product does. Under the coach panel it is a status line, and
+ * it is sized like one.
+ */
+.live--wide.live--coachfirst .live__idle--slim { flex-direction: row; align-items: center; gap: 9px; }
+.live--wide .live__idle--slim strong { font-size: 14px; }
+.live--wide .live__idle--slim span { font-size: 12px; }
+.live__idle--slim .live__mark { width: 18px; height: 18px; }
+
+/*
+ * THE FIVE-SECOND TEST, and the only place this app gets to pass it.
+ *
+ * When the coach panel leads the screen, its heading is the first sentence anyone reads and it
+ * has to carry the weight the idle status line used to spend on "Not in a game". Sized here
+ * rather than in the component's own rules so the panel keeps its modest type everywhere else —
+ * mid-game it is a control surface beside a running board, not a billboard.
+ */
+.live--wide.live--coachfirst .csk-screen__head strong { font-size: 22px; line-height: 1.25; }
+.live--wide.live--coachfirst .csk-screen__head p { font-size: 13.5px; margin-top: 7px; max-width: 76ch; }
+.live--wide.live--coachfirst .csk-screen { padding-top: 6px; }
+
+/* --------------------------------------------------------------- first run */
+
+/*
+ * Shown only while no stored game has ever been coached. Quiet on purpose: it sits under the
+ * panel that carries the button, and its job is to say what happens after the game and which
+ * step is outstanding — not to compete with the thing it is pointing at.
+ */
+.firstrun {
+	border: 1px solid var(--line-soft);
+	border-radius: var(--radius);
+	background: var(--panel);
+	padding: 16px 18px;
+	display: flex;
+	flex-direction: column;
+	gap: 13px;
+}
+.firstrun__head strong {
+	display: block;
+	color: var(--gold);
+	font-size: 14px;
+	letter-spacing: 0.01em;
+}
+.firstrun__head p {
+	margin: 6px 0 0;
+	color: var(--text-2);
+	font-size: 13px;
+	line-height: 1.6;
+	max-width: 68ch;
+}
+.firstrun__steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.firstrun__step { display: flex; align-items: flex-start; gap: 10px; }
+.firstrun__step b { display: block; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.firstrun__step span { display: block; color: var(--dim); font-size: 12px; line-height: 1.5; }
+/*
+ * Three marks for three states, and UNKNOWN is drawn as its own thing rather than borrowing
+ * either neighbour. A step still being read must not look like a step he has failed to do.
+ */
+.firstrun__mark {
+	flex: none;
+	width: 18px;
+	text-align: center;
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--faint);
+}
+.firstrun__step.is-done .firstrun__mark { color: var(--win); }
+.firstrun__step.is-done b { color: var(--dim); font-weight: 500; }
+.firstrun__step.is-todo .firstrun__mark { color: var(--gold); }
+.firstrun__foot {
+	border-top: 1px solid var(--line-soft);
+	padding-top: 11px;
+	color: var(--dim);
+	font-size: 12px;
+	line-height: 1.55;
+}
+.firstrun--compact { padding: 11px 12px; gap: 10px; }
+.firstrun--compact .firstrun__head strong { font-size: 12.5px; }
+.firstrun--compact .firstrun__step b { font-size: 12px; }
+.firstrun--compact .firstrun__step span { font-size: 11px; }
+.firstrun--compact .firstrun__foot { font-size: 11px; }
+
+/* ================================================== settings, after the audit */
+
+/* A stack of `.choice` rows. Was an inline `display:grid;gap:8px` typed at three call sites. */
+.choices { display: grid; gap: var(--sp-2); }
+/*
+ * Side by side when the options are short enough to compare at a glance — the three intensity
+ * bands are one word each, and stacking them made a three-word decision look like a form.
+ */
+.choices--row { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.choice__title .chip { margin-left: 7px; vertical-align: 1px; }
+
+/*
+ * A state, not a field: label and explanation on the left, what it is doing and the way in on
+ * the right. The Gemini key used to be a password box permanently open between two settings,
+ * which is what a thing you do once every eighteen months should not look like.
+ */
+.setting-row {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--sp-4);
+	flex-wrap: wrap;
+}
+.setting-row__right { display: flex; align-items: center; gap: var(--sp-2); flex: none; }
+.pill {
+	font-size: var(--fs-1);
+	padding: 2px 8px;
+	border-radius: 999px;
+	border: 1px solid var(--line-soft);
+	color: var(--dim);
+}
+
+/*
+ * ONE disclosure for everything that is not one of the two decisions. Closed by default and it
+ * stays closed across a reload — the browser does not persist `open`, and that is the behaviour
+ * wanted here: the first screen is the same on every launch.
+ */
+.advanced {
+	border: 1px solid var(--line-soft);
+	border-radius: var(--radius);
+	background: var(--panel);
+	margin-top: var(--gap-section);
+}
+.advanced > summary {
+	cursor: pointer;
+	padding: var(--sp-3) var(--sp-4);
+	display: flex;
+	align-items: baseline;
+	gap: var(--sp-3);
+	flex-wrap: wrap;
+	color: var(--text-2);
+	font-size: var(--fs-2);
+	/*
+	 * The native marker is dropped by `display:flex` on a summary, which left a disclosure with
+	 * nothing on it that said it opened — a screenshot caught it. Drawn explicitly instead, so it
+	 * cannot go missing again with a layout change.
+	 */
+	list-style: none;
+}
+.advanced > summary::-webkit-details-marker { display: none; }
+.advanced > summary::before {
+	content: "▸";
+	color: var(--gold-dim);
+	font-size: 11px;
+	line-height: 1.5;
+}
+.advanced[open] > summary::before { content: "▾"; }
+.advanced > summary b { color: var(--text); }
+.advanced > summary span { color: var(--dim); font-size: var(--fs-1); }
+.advanced > summary:hover { color: var(--text); }
+.advanced[open] > summary { border-bottom: 1px solid var(--line-soft); }
+.advanced > .settings-grid,
+.advanced > .panel { margin: var(--sp-4); }
+.advanced > .settings-grid { max-width: none; }
+
+/* The override list: what disagrees with the code default, and the one click that undoes it. */
+.overrides { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: grid; gap: 6px; }
+.overrides li { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; font-size: var(--fs-2); }
+
+/* Fields that have no control, and the reason each one is not a decision to hand anybody. */
+.nonsettings { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.nonsettings li {
+	border-left: 2px solid var(--line-soft);
+	padding-left: var(--sp-3);
+	color: var(--dim);
+	font-size: var(--fs-2);
+	line-height: 1.6;
+	max-width: 78ch;
+}
+.nonsettings b { color: var(--text-2); }
+
+/*
+ * `.help` OUTSIDE A FIELD had no rule at all, so every explanatory paragraph that was not inside
+ * a `.field` rendered at full body size — the measurement note under the speak-level choices read
+ * as body copy rather than as the footnote it is, which is a large part of why that screen felt
+ * heavy. A screenshot at 380px caught two of them running together with no gap.
+ *
+ * `.field .help` is more specific and keeps its narrower measure and grid placement.
+ */
+.help {
+	font-size: var(--fs-1);
+	line-height: 1.55;
+	color: var(--dim);
+	max-width: 78ch;
+}
+.help + .help { margin-top: var(--sp-2); }
+.panel > .help { margin-top: var(--sp-3); }
