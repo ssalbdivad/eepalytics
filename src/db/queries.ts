@@ -1648,6 +1648,27 @@ export const openJournalSessionFor = (): JournalSessionRow | null => {
 	return row ? (row as unknown as JournalSessionRow) : null
 }
 
+/**
+ * Every session whose frames could belong to a window of wall clock.
+ *
+ * Overlap, not containment: a session that was already open when the game started, or still open
+ * when it ended, holds that game's frames just as much as one that began and ended inside it. An
+ * open session (`endedMs` null) is treated as reaching to the end of the window, which is the only
+ * honest reading of "still being written to" — and is why `endOpenSession` exists to make that a
+ * rare state rather than the permanent one it used to be.
+ */
+export const journalSessionsBetween = (
+	fromMs: number,
+	toMs: number
+): JournalSessionRow[] =>
+	prep(
+		`SELECT * FROM journal_session
+		  WHERE startedMs <= ? AND COALESCE(endedMs, ?) >= ?
+		  ORDER BY startedMs`
+	)
+		.all(toMs, toMs, fromMs)
+		.map(r => plain(r) as unknown as JournalSessionRow)
+
 export const closeJournalSession = (id: string, endedMs: number): void => {
 	prep("UPDATE journal_session SET endedMs = ? WHERE id = ?").run(endedMs, id)
 }

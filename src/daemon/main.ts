@@ -32,6 +32,8 @@ import { ensureBoundToCurrentClient, fetchLcuAsset } from "./lcu.ts"
 import runRetentionPrune from "./jobs/retention-prune.ts"
 import { log, setLogLevel } from "./log.ts"
 import { noteGameEnded } from "./postgame.ts"
+import { measureCoverage } from "./coach-coverage.ts"
+import { endOpenSession } from "./journal.ts"
 import { adoptOrphanedLeases, sweep } from "./queue.ts"
 import * as queue from "./queue.ts"
 import { reconcile, reconcileFinishedGame } from "./reconcile.ts"
@@ -120,6 +122,20 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 	adoptOrphanedLeases()
 	sweep()
 
+	/*
+	 * Anything the previous process left open is closed here, before a frame can join it.
+	 *
+	 * `journal.ts`'s `anchor` is module state, so after a restart `sessionFor` cannot see that the
+	 * game clock has run backwards and has no reason to roll — and the champion is the same one he
+	 * always plays, so the identity check does not fire either. The first frames of a brand new
+	 * game therefore joined the last session this daemon ever wrote to and inherited ITS gameId.
+	 * A process boundary is the one moment we know for certain that nothing is mid-stream.
+	 */
+	{
+		const stale = endOpenSession("daemon restarted")
+		if (stale) log.info("closed a journal session left open by a previous process", { stale })
+	}
+
 	let ready = false
 
 	const runReconcile = async (why: string): Promise<SyncResult> => {
@@ -143,7 +159,20 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 		}
 	}
 
+	/**
+	 * When the current game started, in wall clock — the window `measureCoverage` searches.
+	 *
+	 * The supervisor already owns the gameId and the phase; it does not own a start time, and a
+	 * game that produced NOTHING has no other timestamp anywhere on the machine to look it up by.
+	 * Set on the transition INTO `InProgress` so a daemon that started mid-game leaves it null and
+	 * the coverage line is skipped rather than measured over a window it does not know.
+	 */
+	let gameStartedMs: number | null = null
+
 	const supervisor = startSupervisor({
+		onPhase: next => {
+			if (next === "InProgress") gameStartedMs = Date.now()
+		},
 		onConnected: () => {
 			void (async () => {
 				await ensureBoundToCurrentClient()
@@ -162,6 +191,35 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 			 * the debrief in follows behind it.
 			 */
 			noteGameEnded(gameId)
+			/*
+			 * THE SESSION ENDS WITH THE GAME, and this is the only place that was ever true.
+			 *
+			 * `journal.ts` used to close a session only when the NEXT frame arrived with a clock
+			 * that had run backwards, so a session that simply stopped receiving frames stayed open
+			 * forever — measured on this machine, one had been open for eight days and five games,
+			 * and every live sample in that time was keyed on it. See `endOpenSession`.
+			 */
+			endOpenSession("game ended")
+			/*
+			 * AND THEN SAY WHETHER THE COACH WAS THERE AT ALL.
+			 *
+			 * One line per game, so "three games today and not one transcript line" is something
+			 * the machine notices rather than something he has to report. It is a measurement of
+			 * our plumbing and touches nothing the coach does. See `coach-coverage.ts` for the four
+			 * verdicts and why the middle one is the one worth chasing.
+			 */
+			if (gameStartedMs !== null) {
+				const coverage = measureCoverage({
+					gameId,
+					startedMs: gameStartedMs,
+					endedMs: Date.now()
+				})
+				const line = `live coach ${coverage.verdict}: ${coverage.note}`
+				if (coverage.verdict === "coached") log.info(line, { gameId })
+				else log.warn(line, { gameId })
+				publish("daemon", { coachCoverage: coverage })
+				gameStartedMs = null
+			}
 			// The 30-minute replay clock just started. Do not wait for the next sweep.
 			void (async () => {
 				const report = await reconcileFinishedGame(gameId)

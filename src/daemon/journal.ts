@@ -289,6 +289,47 @@ const sessionFor = async (
 	return id
 }
 
+/**
+ * Close whatever session is open, and say why.
+ *
+ * ## The bug this exists to end
+ *
+ * Until 2026-09-18 a session was closed in exactly one place: `sessionFor`, when the NEXT frame
+ * arrived and its clock had run backwards. So a session that stopped receiving frames — he closed
+ * the app, he stopped sharing, the game ended — was never closed at all. Measured on this machine
+ * the same day: `js-mtvxb5f4-f81a` had `endedMs` null since 2026-09-10, eight days and five games
+ * later, and `openJournalSessionFor()` was still returning it as the session in progress.
+ *
+ * Two things were reading that answer and both were wrong because of it.
+ *
+ *   1. `supervisor.ts` keys every live sample on `openSessionStatus().sessionId`, so every game
+ *      recorded in those eight days was filed under a session id belonging to a game from the 10th.
+ *   2. Worse, and the reason this is a recording defect rather than a labelling one: `anchor` is
+ *      module state, so it is null after any daemon restart, so `wentBackwards` CANNOT fire on the
+ *      first frame of the next game. `identityChanged` only fires when the champion differs, and he
+ *      plays Lillia. The first frames of a brand new game therefore joined the eight-day-old
+ *      session and inherited its `gameId` — which is a picture attached to a different game, the
+ *      one thing `journal.ts`'s own header says this module exists to prevent.
+ *
+ * So the lifetime of a session now has a real end: the supervisor calls this when the client leaves
+ * `InProgress`, and `main.ts` calls it at startup for anything left open by a previous process.
+ */
+export const endOpenSession = (reason: string, nowMs: number = Date.now()): string | null => {
+	const open = openJournalSessionFor()
+	if (!open) return null
+	closeJournalSession(open.id, nowMs)
+	/*
+	 * The in-process anchor goes with it. It holds `sessionId`, and a stale anchor pointing at a
+	 * closed session is how the next frame gets interpolated onto the previous game's clock.
+	 */
+	anchor = null
+	log.info(`session ${open.id} closed — ${reason}`, {
+		frames: countJournalFrames(open.id),
+		gameId: open.gameId
+	})
+	return open.id
+}
+
 /** Frames stored for the currently open session — the number that makes "it is working" checkable. */
 export const openSessionStatus = (): {
 	sessionId: string | null
