@@ -271,38 +271,117 @@ which line survives the fit and which is read first; it never tells the model wh
 over two real games, a standing objective led the payload on 16 turns the coach spoke and it named
 that objective on 7 — a weak effect, reported as one.
 
-#### What the screenshot is worth: not measurable, and 30% of the bill
+#### What the screenshot is worth: MEASURED AND NULL, on an instrument built to see it
 
-Two stored results disagreed about the picture, so `scripts/frame-value.ts` settled it on the
-shipped socket — one live socket per arm, round N sent to every arm before round N+1 reaches any of
-them, arm order rotating inside the round, so thread position, wall clock and the replayed state are
-identical and a difference cannot be a difference in two runs. Two runs, five arms, 181 spoken lines,
-all of it in `data/eval/frame-value-20260911-*`.
+The first answer to this was "no difference, but the test could not have seen one", and that is not
+an answer. `scripts/frame-value.ts` graded each spoken line `useful`/`false` and compared the rates
+between arms — then measured its own noise floor with `--agree` and found that the SAME arm run
+twice, same window, same prompt, true difference zero, agrees with itself on **13 of 30** turns.
+At that discordance McNemar needs about 27 points of useful-rate on one game before it prints a
+small p. So the stored null (`frame` and `noframe` both 10 of 30 useful and 13 of 30 false, p =
+1.000 on both axes, `data/eval/frame-value-20260911-*`) means "nothing bigger than a quarter of the
+scale", and the decoy arm's move on `false` (13 of 30 to 18 of 30, 9 against 4, p = 0.267) was
+suggestive and no more.
 
-**The ablation is NULL.** `frame` and `noframe` both scored 10 of 30 useful and 13 of 30 false;
-McNemar's exact on the 10 discordant turns splits 5–5, p = 1.000 on both axes.
+**The variance is the COACH, not the judge.** A live coach asked the same question twice writes two
+different sentences about two different true things, and a verdict about the whole sentence
+inherits all of it. More games cannot fix that; a different question can.
 
-**But the run could not have seen a small effect, and this number should govern how every frame
-comparison in this repo is read.** Run the SAME arm twice — same window, same prompt, true
-difference zero — and it agrees with itself on 13 of 30 turns for `useful` and 15 of 30 for
-`false`, and repeats not one of its 30 sentences. At that discordance the exact test needs about 9
-of 10 discordant turns to fall one way, i.e. roughly **27 points of useful rate on one game**. "No
-difference" here means "nothing bigger than a quarter of the scale". `--agree` prints it from any
-two runs sharing an arm.
+`scripts/frame-power.ts` asks one. Two arms are run that are identical except the picture — one
+gets the REAL frame for that instant, the other a DECOY from the same game at least five minutes
+away — on the same round, same payload, same thread position. Then a judge is shown ONE screenshot
+and BOTH sentences, with no payload, no clock and no labels, and must say which sentence was
+written by someone looking at this screenshot. **Every turn is asked twice, once showing each
+picture**, so a judge with any fixed preference between the two writing styles scores 100% one way
+and 0% the other and lands on 50% pooled — which is also where a coach that never opened the
+picture lands. **50% is the null by construction, not by assumption**, and that is what buys the
+power: 360 trials separate 58% from chance at about 90% power where the verdict instrument needed
+27 points.
 
-The picture IS being read: the decoy arm is the only one that moved. A frame from a different minute
-of the same game took `false` from 13 of 30 to 18 of 30 (9 against 4, p = 0.267). Direction says a
-wrong picture actively misleads, so the right one is looked at; magnitude is not established.
+**THE ANSWER IS NULL, and this time the test could have seen it.** 420 coaching turns over the two
+whole paired games (5639406342 and 5639409343, 60 turns, `level: "commentary"`), coach
+`claude-sonnet-5` on the turn path at DEFAULT thinking (`coachTurn` sets no effort or thinking
+option, deliberately — see the comment in `live-providers.ts`), every line forced-choice judged by
+`claude-sonnet-5` against the two candidate frames — `data/eval/frame-power-turn-sonnet5-20260918.json`:
 
-**The price is the one hard number here.** One picture adds 1,102 prompt tokens (1,040–1,159). But
-one socket per game keeps every frame in the thread, so a picture sent at 3:00 is re-billed on all
-28 turns after it: 31 pictures cost 543,412 prompt tokens across a 28-minute game — **30% of the
-entire prompt bill, 493× their own marginal price**, plus 6.5MB of JPEG uploaded. The compounding is
-the cost, not the picture. And it is slower: paired turn against turn, the frame arm came back later
-on **28 of 31 turns by a median 345ms**, two-sided sign test p < 0.00001, beside a quality
-difference of exactly zero.
+| pair | what the coach saw | correct | p |
+|---|---|---|---|
+| `full`/`fullD` | the whole 1536x864 frame | 48% [40–57] 58/120 | 0.78 |
+| `map`/`mapD` | the 288px minimap crop at 4x | 54% [45–63] 65/120 | 0.41 |
+| `hud`/`hudD` | the HUD band at 2x — his HP, mana, ability and SUMMONER cooldowns | 54% [45–63] 65/120 | 0.41 |
+| **pooled** | | **52% [47–57] 188/360** | **0.43** |
 
-Two candidate fixes for the measured misuses are REFUTED and must not be re-drafted. Sending the
+180 turn-clusters, cluster bootstrap [47–57]. An effect larger than about **7 points** is excluded.
+Every one of the 420 turns produced a line — `claude-sonnet-5` never once passed and zero calls
+errored — so the speak-or-pass decision has no variance here and nothing on this page is a statement
+about restraint. Three different crops, three nulls — and the HUD band, the one channel carrying
+something the Live Client Data feed genuinely cannot supply, his own summoner cooldowns, is as null
+as the rest.
+
+One thing leaned, and it is POST-HOC and must be read as exploratory rather than as a result: the
+`hud` arm used summoner/cooldown language on 10 turns where `hudD` did not, against 3 the other way
+(p = 0.092, one regex chosen after seeing the lines). If anything about the picture is ever going to
+pay it is the band carrying his own summoner timers — and it did not reach significance on 60 paired
+turns either.
+
+**The model can read the picture; it just does not coach from it.** Positive control on the same
+bytes, the same base64 encoding `coachTurn` uses, the same journal frame: asked what is in the
+image, `claude-sonnet-5` answered "League of Legends gameplay screenshot… mana bar reads 68 / 698",
+which is exactly right. The picture arrives, is legible, and does not reach the sentence.
+
+**The one positive signal does not survive a second judge.** Re-asking the forced choice of the
+STORED socket ablation — the `frame` and `decoy` arms of 2026-09-11, 31 turns, gemini-live, the
+payload of the day — scored 63% [50–74] 39/62, p = 0.056
+(`data/eval/frame-power-stored-ablation-20260918.json`). Handed the SAME 62 trials,
+`claude-haiku-4-5` scored **51%** and the two judges agree on only 63% of trials
+(`…-rechosen-claude-haiku-4-5.json`). A 63% that one of two readers cannot see, on 62 trials, beside
+a 52% on 360, is not evidence that the picture is read.
+
+**What is NOT established, said plainly.** The 360-trial null is on the TURN path with an Anthropic
+model, which AGENTS.md elsewhere insists is a different shape from the socket and must not be
+scored in the same column. The socket arm of this work died mid-run: the Gemini key's prepaid credit
+ran out at 14:43 on 2026-09-18 and every Gemini call since answers 429 RESOURCE_EXHAUSTED, which
+took the live coach, the minimap reader and 174 already-paid socket turns with it. TWO benches were
+spending that project at once that afternoon, so which of them emptied it is not attributable and
+nobody should claim it; what is certain is that there was credit at 14:37 and none at 14:43. So the honest
+statement is: **null with real power on a strong turn model, null-shaped and underpowered on the
+socket, and nothing anywhere that survives a second reader.**
+
+**The corpus has a hard ceiling of TWO GAMES and it is not going up by playing more.** A frame
+ablation needs paired journal frames, and `discoverWindows()` returns **3** paired windows against
+37 text-only ones. Two are whole games with frames throughout; the third (5635921368, Gwen) has
+four minutes of frames on a 37-minute game and therefore cannot produce a single decoy, because no
+frame in it is five minutes from any other. "Use more games" was never available here. The power
+had to come from the instrument, and it did.
+
+**A smaller picture is NOT a cheaper picture.** Gemini pads a small image to the same tile budget —
+`frame-read.ts` measured 1,089 image tokens for the 288px crop, 1,089 for that crop upscaled to
+1152px and 1,100 for the whole frame. So the crops are quality candidates and never savings, and
+the ONLY lever on the frame share of the bill is sending fewer pictures. (Anthropic bills by pixels
+instead, so there the 4x upscale costs 16x what the native crop does — a reason to stop upscaling
+if a Claude coach ever ships, and no reason at all on the socket.)
+
+**The 30% figure is a property of the CHATTY SCHEDULE.** Measured on the socket at `commentary`:
+the `frame` arm spent 1,806,208 prompt tokens over 31 turns against the `noframe` arm's 1,262,796,
+so the pictures are 543,412 tokens — **30.1%**, at 1,102 tokens each, i.e. 493x their own marginal
+price, plus 6.5MB of JPEG. One socket per game keeps every frame in the thread, so a picture sent
+at 3:00 is re-billed on all 28 turns after it and the frame bill grows as **N²** while the system
+instruction grows as N. Fitting the measured per-turn series (base 16,381, +3,008 a turn with the
+picture, +1,910 without) and re-evaluating at the SHIPPED `big-calls` schedule of ~8.5 asks a game:
+the pictures fall to about **15%** of a bill that is itself about **0.26M** tokens instead of 1.81M.
+Both numbers moved because the schedule changed, not because anything about the picture did.
+
+And the picture is SLOW: paired turn against turn on the socket, the frame arm came back later on
+**28 of 31 turns by a median 345ms**, sign test p < 0.00001, beside a quality difference of zero.
+That latency is upload, not tokens.
+
+**What to do with it.** The picture is not earning its 15–30%, its 6.5MB or its 345ms, and three
+separate crops of it change nothing a reader can detect. Send it RARELY — at champ select, and on
+the handful of turns where nothing else can settle what is happening — or not at all, and spend the
+latency on the schedule instead, which is where AGENTS.md already says the next real gain is. Do
+not spend another run asking whether a different crop helps; three have been asked.
+
+Two candidate fixes for the two measured misuses are REFUTED and must not be re-drafted. Sending the
 JPEG after the text rather than before changed nothing (37% useful against 37%, p = 1.000).
 `PICTURE_NOW` — the paragraph telling the coach the frame outranks the text about the present,
 written against *"kite this team fight out"* at 18:39 with him alone in an empty river and *"back
@@ -311,10 +390,10 @@ axes (23% useful, 60% false, p = 0.424) and did not reduce `contradicted-by-pict
 the bench file, refuted, with its run named, because a refuted candidate with its evidence attached
 is the only thing that stops the same paragraph being written again in six weeks.
 
-One label in those runs is unusable and every report prints its own calibration rather than leaving
-a reader to notice: `only-with-picture` was given to the BLIND arm on 7 of 30 lines, which is
-impossible by construction, against 3 of 30 for the sighted arm. Its error rate is at least 23% and
-it points the wrong way.
+One label in the older runs is unusable and every report prints its own calibration rather than
+leaving a reader to notice: `only-with-picture` was given to the BLIND arm on 7 of 30 lines, which
+is impossible by construction, against 3 of 30 for the sighted arm. Its error rate is at least 23%
+and it points the wrong way. The forced choice exists because that label did not work.
 
 #### Position comes from a dedicated read of the minimap, not from the coach's eyes
 
@@ -356,6 +435,130 @@ synchronously, never throws, and at most one read is in flight — a frame arriv
 running is DROPPED, because the next frame is five seconds away and is a better picture than the one
 that was waiting.
 
+#### The seven-arm race: the model IS the problem, and the fix is free
+
+Asked directly — *"i'm starting to think more that the model quality is the biggest problem"* — the
+answer is **half yes, and the expensive half is no.** `scripts/model-race.ts` put every architecture
+the census found viable on the SAME 60 turns of the same two paired games (5639406342 Kayn,
+5639409343 Fiddlesticks), level `commentary`, and had one blind judge grade all seven arms in ONE
+shuffled pool (`data/eval/model-race-20260918.json`, `-judged.json`, `-judged-opus.json`, sheet
+`model-race-sheet-20260918.html` + key).
+
+| arm | shape | lines/game | useful [95%] | false [95%] | clock-contradicted | 1st syllable | $/game |
+|---|---|---|---|---|---|---|---|
+| `mock` | none | 30.0 | 37 [26-49] | 0 [0-6] | 0% | — | 0 |
+| `incumbent` gemini-3.1-flash-live | socket | 30.0 | 57 [44-68] | 42 [30-54] | **12%** | 1,070ms | — |
+| `g38` gemini-3.8-live | socket | 30.0 | 77 [65-86] | 15 [8-26] | 2% | 1,800ms | — |
+| `haiku` claude-haiku-4-5 | turn | 12.5 | 44 [27-63] | 52 [33-70] | 0% | 906ms | 0.16 |
+| `sonnet` claude-sonnet-5 low | turn | 30.0 | 78 [66-87] | 22 [13-34] | 0% | 1,754ms | 0.39 |
+| `opus` claude-opus-5 low | turn | 28.5 | **84 [73-91]** | 16 [9-27] | 0% | 3,718ms | 1.01 |
+| `fable` claude-fable-5-1 low | turn | 28.5 | 56 [43-68] | 42 [30-55] | 9% | 10,933ms | 2.69 |
+
+**1. The shipped model is the worst non-trivial arm in the race, and it is barely above `mock`.**
+Paired turn for turn, `gemini-3.1-flash-live-preview` is false on 42% of what it says and its death
+clocks are mechanically contradicted on 12% of lines — a figure with no judge in it at all. Every
+other real arm except `fable` is at 0-2% there.
+
+**2. THE TOP THREE ARE INDISTINGUISHABLE FROM EACH OTHER.** `opus` against `g38`: useful 11-9,
+p = 0.82; false 8-8, p = 1.00. `sonnet` against `g38`: 11-10, p = 1.00. So the ceiling is FLAT once
+you leave the incumbent, and the honest reading of his hypothesis is: **the model was the problem,
+and the fix is a free socket swap rather than a dollar a game.**
+
+**3. MORE MODEL IS NOT MORE COACH.** `claude-fable-5-1` — the most capable and by far the most
+expensive model on this key — lands at the incumbent's rates, 56% useful and 42% false, with the
+worst mechanical fabrication score in the race (56%). Its lines are long and pile three claims onto
+one sentence, and the third claim is the one that is wrong. `claude-haiku-4-5` fails a different
+way: it PASSES on 58% of turns, so it gets 12.5 lines a game where everything else gets thirty.
+
+**4. TWO JUDGES DISAGREE MORE THAN THE CAMPAIGN'S OWN NOISE FLOOR, so read the ranking, not the
+rate.** The same 379 lines graded by `claude-sonnet-5` and by `claude-opus-5` agree on 76% —
+larger than the 16% replicate noise this repo quotes, and the disagreement is almost all in one
+direction (`false` -> `useful`, 40 lines). Under the opus judge the incumbent rises to 72% useful
+and `g38` no longer separates from it (p = 0.48). **The only arm that beats the incumbent under
+BOTH judges is `claude-opus-5`** (useful p = 0.009 / 0.019, false p = 0.0015 / 0.0018). The ORDERING
+is stable across judges; the gaps are not. His own blinded pass on the sheet is the tiebreak.
+
+**5. Caching and streaming did what they were built for.** A turn arm spends 0.61M prompt tokens a
+game against the socket's 1.5-1.8M, because 77% of every prompt is served from cache and no frame is
+re-billed across a held thread. At the shipped `big-calls` schedule (8.5 asks) that is **$0.11 a game
+for sonnet and $0.29 for opus**, and a first syllable at 1.75s / 3.7s against the socket's 1.07s.
+
+**What this does NOT establish.** The Gemini key ran out of prepaid credit mid-campaign, so the
+socket rows are `socket-bake`'s stored lines replayed, not re-spoken, and no socket arm could be run
+today. Every arm was handed the stored payload byte for byte with only its own said-log spliced in
+(`renderSaid`), which is why the states are comparable at all; on 14 of 60 turns the delta's byte
+budget had evicted the socket arm's narrative tail, and the run re-reports the whole table over the
+46 byte-identical turns alone — every conclusion above holds there too. Two games is n=2 for
+between-game variance, and `sonnet` is both an arm and the primary judge.
+
+#### WHAT SHIPPED out of that race, 2026-09-18
+
+The race is above; this is the part of it that is now the product, so that a reader checking one
+without the other cannot be misled.
+
+- **The socket default is `models/gemini-3.8-live`.** `GEMINI_LIVE_MODEL` in
+  `src/review/gemini-live.ts` carries the two measurements it moved on, and the SILENCE one needs no
+  judge: the incumbent returned a transcript and zero audio chunks on 34 of 60 turns while 3.8 was
+  audible on 60 of 60. Verified live on the shipped setup the same evening — 14 audio chunks, first
+  audio 975ms, the browser's own `speechConfig` and voice.
+- **Every socket model is selectable, and for the first time.** `liveModel` was read by every
+  provider except the one that ships: the settings box was HIDDEN whenever `gemini-live` was
+  selected and the id was a constant. That is the whole reason this app ran one live model for its
+  entire life without anyone choosing it. `resolveSocketModel` turns a blank into the default and a
+  bare name into the `models/` form, `GEMINI_LIVE_MODELS` offers the three that have been opened,
+  and the incumbent stays reachable because every stored socket run in `data/eval/` is only
+  re-derivable while the model it measured can still be pointed at.
+- **Prompt caching, token streaming and the `effort` knob ship on every provider that has them.**
+  They change no byte of the prompt — `coachSystemPrompt` is the one builder and
+  `live-providers.test.ts` pins the three modes byte-identical — so they are latency and cost, never
+  an arm. Sonnet's first syllable goes 2,523ms buffered to 1,616ms streamed (11 of 12 turns,
+  p = 0.006) and Opus 7,290ms to 3,248ms on the effort knob alone (12 of 12, p < 0.001).
+- **The Anthropic default is `claude-sonnet-5`, not `claude-opus-5`.** Opus is the only arm that
+  beats the incumbent under BOTH judges and it is not separable from Sonnet or from `g38`
+  (useful 11-10, p = 1.00). It costs 2.6x and takes 3,718ms to a first syllable against 1,754ms.
+  Paying triple for a difference the instrument cannot see is the mistake this campaign was supposed
+  to stop, so Opus is one word in the model box rather than the default.
+- **OpenAI is withdrawn from the offered list, not deleted.** `providerStatus` computed `available`
+  from "is there a key file", and `data/openai.key` has existed and been REJECTED
+  (`invalid_api_key`) throughout — so the screen advertised `gpt-5`, whose stored latency on this
+  task is 20.5s, as a working live coach. `ProviderInfo.offered` is the flag; `providerById` still
+  resolves the id, because his settings may already name it.
+- **The picture was NOT changed, and that is a result rather than an omission.** `frame-power` says
+  the frame does not reach the sentence (52% [47-57] forced-choice, p = 0.43, excludes anything
+  bigger than ~7 points), but the verdict arm on the same run points the other way and is
+  underpowered: over 41 graded lines `full` is 19 useful / 19 false and `none` is 15 / 25. Removing
+  the frame would be acting on the direction the powered instrument could not measure and the
+  unpowered one contradicts. The only lever with a hard number on it is CADENCE — 31 pictures cost
+  543,412 prompt tokens across a 28-minute game, 30% of the whole bill, because one socket re-bills
+  every frame on every later turn — and `sparse` is written and unrun.
+
+#### Nobody could tell whether the coach ran at all, and that outranked every model finding
+
+The campaign opened with "three games today and the live transcript recorded zero lines". Measured
+on the machine the same evening: `data/logs/live-transcript.jsonl` had not been appended to since
+2026-09-10 and neither had `journal_frame` — eight days and a dozen games. With him **in a game at
+the time of the check**, phase `InProgress` and the gate armed, the newest stored frame was still
+the 10th's. So the browser was sending nothing: the page was not open, or not sharing. Nothing was
+broken in the recording path and nothing on the machine could have said so.
+
+Two defects were real and both are fixed.
+
+- **A journal session was closed in exactly one place** — `sessionFor`, when the NEXT frame arrived
+  with a clock that had run backwards. A session that simply stopped receiving frames stayed open
+  forever: `js-mtvxb5f4-f81a` had `endedMs` null for eight days, `openJournalSessionFor()` still
+  returned it as current, and `supervisor.ts` keyed every live sample in that time on it. Worse,
+  `anchor` is module state, so after any daemon restart `wentBackwards` CANNOT fire and the
+  champion check does not either when he plays Lillia twice — meaning the first frames of a brand
+  new game joined the eight-day-old session and inherited its `gameId`. `endOpenSession` is now
+  called when the client leaves `InProgress` and once at daemon startup.
+- **Nothing counted what a game produced.** `src/daemon/coach-coverage.ts` writes one line per game
+  — frames stored and transcript lines recorded — and `judgeCoverage` keeps the four outcomes apart,
+  because they want different fixes. `absent` (neither) is him not sharing. `heard-nothing` (frames
+  and no lines) is the only one that is ours by construction: the share was up, every frame landed,
+  and he still heard nothing — which is what a refused socket, a depleted key or a coach that PASSed
+  all game look like from outside. Transcript rows now carry the `gameId` of the open session, so
+  "what did it say in the game he is complaining about" stops being a wall-clock puzzle.
+
 #### More than one model, and how to tell them apart
 
 There are TWO SHAPES and flattening them would be a lie. **Gemini Live** is a socket: native audio,
@@ -384,6 +587,80 @@ not shorten a reasoning model, it TRUNCATES it — at 200 tokens one answered "K
 mid-number. And provider-specific thinking options are not ignored when unknown: setting Google's
 `thinkingBudget` to 0 made every turn fail with an invalid-argument error, which for twenty minutes
 looked exactly like a model producing nothing.
+
+#### The turn path was never as slow as it was measured: the cache, the stream and the effort knob
+
+"Turn models are too slow for a live coach" was true of how we CALLED them, not of the models. Three
+things were wrong with the call and all three are now measured, paired, on twelve real turns of game
+5639409343 (`scripts/measure-ttft.ts`, runs `data/eval/ttft-20260918184*.json`, re-readable with
+`--read a.json,b.json`; every arm answered the same turn in the same order with the arm order rotated
+inside the turn, so a difference cannot be a difference between two moments of the afternoon).
+
+**THINKING is the wall, and it is a knob.** Opus 5 reaches its first spoken fragment at 7,290ms at
+the vendor default and **3,248ms at `effort: low`** — faster on 12 of 12 turns, sign test p<0.001.
+gemini-3.8-flash goes from about 5,000ms to 1,780ms the same way. The knob's name is different per
+vendor and every wrong spelling is a 400 that looks like a broken model, so it is a CLOSED SET
+(`CoachEffort` in `live-providers.ts`) rather than free text: Anthropic wants `output_config.effort`,
+Google wants `generationConfig.thinkingConfig.thinkingLevel`, and `claude-haiku-4-5` refuses `effort`
+outright with "This model does not support the effort parameter" — which the SDK surfaces as an empty
+stream, i.e. as a model producing nothing, exactly the failure mode the `thinkingBudget` note above
+warns about. The ROUTE pins `low`; `coachTurn` still defaults to the vendor default so every stored
+bench run keeps its baseline.
+
+**STREAMING moves the number he actually feels.** The browser used to wait for the whole answer and
+then speak it, so the first syllable landed after the last token was paid for. Streaming the first
+clause into `speechSynthesis` takes claude-sonnet-5 from **2,523ms to 1,616ms** to its first spoken
+fragment — faster on 11 of 12 turns, p=0.006 — with the generation time unchanged. It is not a
+universal win and the run says so: gemini-3.8-flash returns its whole answer in one burst (first
+delta 1,780ms, whole answer 1,825ms), so streaming buys it nothing, and Opus is late for a different
+reason — it is still thinking. The boundaries come from `src/shared/speech-chunks.ts`, not from the
+provider's delta sizes, because half a word spoken aloud is audibly broken; it also withholds the
+first four characters until they prove not to be `PASS`, so a coach that correctly stays quiet does
+not say the word "pass" on its way to staying quiet.
+
+**CACHING is a COST win and a latency null.** The system instruction is 46,900 characters for
+Lillia vs Fiddlesticks — persona, prompt, both champion files and the role file — static for a whole
+game and re-sent every turn until now. One `cache_control` breakpoint on the system block reads back
+**15,542 of about 20,000 prompt tokens**, and it survives between turns comfortably (the 5-minute TTL
+against a schedule that asks every 20-60 seconds). Cost per turn: Opus **$0.1031 → $0.0329**, Sonnet
+**$0.0407 → $0.0126**, i.e. **$0.88 → $0.28** and **$0.35 → $0.11** per 28-minute game at the
+`big-calls` schedule's 8.5 asks. Latency: NOTHING, 5 of 12 and 7 of 12 turns faster, p=0.77 — and
+this run could not have seen less than roughly 300ms either way, so read it as "no large effect"
+rather than "no effect". Google's caching is IMPLICIT and already on (8,171-12,257 tokens came back
+cached without anyone asking), so its figures are an observation and this code cannot claim them.
+
+**The eligibility table, first spoken fragment, p50 over 12 turns, cached and streamed at low
+effort**, against the socket's measured 1,150ms:
+
+| model | first syllable p50 | spoke | $/turn | $/game (8.5 asks) |
+|---|---|---|---|---|
+| claude-sonnet-5 | **1,616ms** | 12/12 | $0.0126 | $0.107 |
+| gemini-3.8-flash | 1,780ms | 8/8 | $0.0118 | $0.100 |
+| claude-sonnet-5 + frame | 1,735ms | 12/12 | $0.0160 | $0.136 |
+| claude-opus-5 | 3,248ms | 11/12 | $0.0329 | $0.280 |
+| gemini-3.6-flash (old default) | 4,996ms | 8/8 | $0.0041 | $0.035 |
+| claude-fable-5-1 | 10,923ms | 12/12 | $0.0833 | $0.708 |
+| claude-haiku-4-5 | — | **2 of 6 turns spoke at all** | $0.0047 | $0.040 |
+
+So **sonnet-5 becomes eligible and Opus does not**, and that is the honest answer to "is the model
+the problem": the best model this key serves is still three seconds behind the moment, and no amount
+of caching moves it, because its time goes on thinking rather than on prefill. Haiku is the warning
+in the table: it is the fastest thing here and it answered PASS on four of six turns, so a
+first-syllable number is only honest when it is taken over the turns where the arm actually spoke,
+and when the count of those turns travels beside it. The first version of this table took
+`speakableMs ?? latencyMs`, so an arm that said nothing scored the latency of its own silence, and
+Haiku came out at 822ms under the heading "BEATS the socket".
+
+**A frame costs ONCE on this path.** +1,708 prompt tokens on Anthropic and +1,100 on Google, about
++120ms to the first fragment (1 of 12 turns faster, p=0.006), and +$0.003 a turn. That is the
+structural difference from the socket, where one held thread re-bills every picture on every later
+turn — 543,412 prompt tokens and 30% of the bill for 31 frames. Nothing here says a frame is WORTH
+it; that is `frame-value.ts`'s null, unchanged.
+
+**Two things this run found that are not about latency.** `claude-haiku-4-5` refuses `effort`.
+And the Gemini key's prepayment credits ran out DURING the second run — `generateContent` now answers
+429 "Your prepayment credits are depleted" — which is worth checking before reading any Gemini figure
+on this page as current, and worth checking against the live socket, which bills the same project.
 
 #### Evaluate against real games, not reconstructions
 
@@ -594,6 +871,7 @@ src/shared/dragons.ts          the drakes' real names — the API says "Fire", n
 src/shared/items.ts            finished vs component, what parts build into, and what the rest costs
 src/shared/item-table.ts       GENERATED by `scripts/fetch-items.ts` — Riot's recipes and real totals
 src/shared/pronounce.ts        say-it-like-this, from editable markdown. SYSTEM INSTRUCTION only
+src/shared/speech-chunks.ts    WHEN a half-written sentence is safe to say — the streamed voice's boundaries
 src/analysis/live-events.ts    WHEN she is asked at all — contestable future state, not a timer.
                                SPEAK_LEVELS decides which of those asks fire; `big-calls` is default
 src/analysis/live-facts.ts     buildFacts — ranked and rate-limited. A PRIORITY HINT, not a fence
@@ -609,17 +887,22 @@ src/review/live-providers.ts   every non-socket model, through one AI SDK path  
 src/review/gemini-live.ts      holds the API key, mints ephemeral tokens              (NODE ONLY)
 src/daemon/minimap-watch.ts    reads the minimap on the JOURNAL beat, off the turn's critical path
 src/daemon/live-sampler.ts     records raw allgamedata during a game, so evals replay reality
+src/daemon/coach-coverage.ts   one line per game: did the coach run, and did he hear anything
 src/server/routes/live.ts      buildLiveState + buildBrief — the client's JSON into the payload
 src/web/lib/useScreenShare     the shared screen + frame grabber
 src/web/lib/gameflow.ts        the phase gate: whether anything may be sent at all
 src/web/lib/geminiLive.ts      the WebSocket, audio out, mic in, reconnect, socket recycling
 scripts/lib/stream.ts          discoverBenchable + buildStream: one replay every bench shares
 scripts/bench-stream.ts        replays a real game through every model at once and scores it
-scripts/frame-value.ts         the interleaved frame ablation — what the screenshot is worth
+scripts/frame-value.ts         the interleaved frame ablation — the VERDICT instrument, and its floor
+scripts/frame-power.ts         the FORCED CHOICE: which picture was this line said about? An exact 50% null
+scripts/measure-ttft.ts        first token, first SYLLABLE, cache hits and cost per game, paired per turn
 scripts/audit-live-fields.ts   every rendered field against the post-game truth, by side
 scripts/what-wins.ts           what separates his WINS from his LOSSES over the whole library
 scripts/probe-minimap.ts       how accurate a minimap read is — the one thing bench-stream cannot grade
 scripts/blind-judge.ts         re-grades a stored ablation run, labels stripped
+scripts/socket-bake.ts         races every socket-capable model over one game, interleaved
+scripts/model-race.ts          SOCKET vs TURN on the same stored payloads, one blind judge, one pool
 scripts/read-frame-ablation.ts  reads the four stored frame/no-frame runs whose writer is gone
 src/review/ablation-arms.ts    the four architectures, as DATA. The run that removed the fence
 ```
