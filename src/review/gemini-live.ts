@@ -38,14 +38,72 @@ import { errText, makeLogger } from "../daemon/log.ts"
 const log = makeLogger("gemini-live")
 
 /**
- * The only model here that both speaks and sees.
+ * The socket model the coach speaks through, and the reason this line moved on 2026-09-18.
  *
- * Enumerated live: seven models advertise `bidiGenerateContent`, and the rest are audio-only
- * transcribe/translate variants. This one refuses `responseModalities: ["TEXT"]` outright — it
- * is native-audio-out, which is why the browser gets a voice instead of speech synthesis, and
- * why `outputAudioTranscription` is switched on to get the words as well as the sound.
+ * For the whole life of this app it was `models/gemini-3.1-flash-live-preview`, and that was never
+ * a choice — it was the first model that worked and nothing else was ever tried. `scripts/socket-
+ * bake.ts` raced it against the two 3.8 sockets the same key serves, on 60 real turns of two of his
+ * own paired games, every arm holding its own socket and round N reaching every arm before round
+ * N+1 reached any of them. Two findings, both in `data/eval/socket-bake-*-20260918.json`:
+ *
+ *   1. **The incumbent is SILENT on more than half its turns.** It returned a transcript and ZERO
+ *      audio chunks on 34 of 60 — audio on 26 of 60, 43% [32-56] — scattered through the thread,
+ *      worse in the LATER game, so not warm-up, thread length or quota. `gemini-3.8-live` carried
+ *      sound on 60 of 60, 100% [94-100]. He watched the line appear in the panel and heard nothing.
+ *   2. **On the lines themselves 3.8 wins and the margin clears the noise floor.** Blind-judged in
+ *      one shuffled pool with every other arm (`data/eval/model-race-20260918-judged.json`):
+ *      3.8-live 77% useful [65-86] and 15% false [8-26], the incumbent 57% [44-68] and 42% [30-54].
+ *      Paired McNemar against the incumbent: useful 20-8 (p = 0.036), false 5-21 (p = 0.0025). The
+ *      judge-free instrument agrees and needs nobody's opinion — the incumbent's death clocks are
+ *      mechanically contradicted by its own payload on 12% of its lines against 3.8's 2%.
+ *
+ * The honest caveat, kept here because the number will be quoted: the effect is NOT homogeneous
+ * across the two games (game one flat, game two carries it), n=2 is n=2 for between-game variance,
+ * and a second judge agreed on the ORDER but not on the gap. The silence finding needs no judge at
+ * all, and on its own it is enough to move this line.
+ *
+ * Both 3.8 sockets refuse `responseModalities: ["TEXT"]`, same as the incumbent — they are
+ * native-audio-out, which is why the browser gets a voice instead of speech synthesis and why
+ * `outputAudioTranscription` is switched on to get the words as well as the sound.
  */
-export const GEMINI_LIVE_MODEL = "models/gemini-3.1-flash-live-preview"
+export const GEMINI_LIVE_MODEL = "models/gemini-3.8-live"
+
+/**
+ * The socket ids that have actually been opened by this app, for the settings screen to offer.
+ *
+ * It is a SUGGESTION LIST beside a free-text box, never an allowlist: `resolveSocketModel` accepts
+ * anything, because a model id written as a default here has already been refused as "no longer
+ * available to new users" within a minute of being typed, and a dropdown is a bug that looks like a
+ * limitation. What this list buys is that the three ids somebody has measured are one click away
+ * and spelled correctly.
+ */
+export const GEMINI_LIVE_MODELS: readonly { id: string; note: string }[] = [
+	{
+		id: "models/gemini-3.8-live",
+		note: "Default. 77% useful [65-86], audio on 60 of 60 turns, first syllable ~1.8s."
+	},
+	{
+		id: "models/gemini-3.1-flash-live-preview",
+		note: "The old default. Faster to the first syllable (~1.1s) and silent on 57% of its turns."
+	},
+	{
+		id: "models/gemini-3.8-live-extended-thinking",
+		note: "Thinks first: ~2.0s to audio at LOW. Refuses a setup with no thinkingLevel, which this app does not send."
+	}
+]
+
+/**
+ * Normalise whatever the settings box holds into an id the Live API will accept.
+ *
+ * Blank means the default. A bare name is prefixed, because `gemini-3.8-live` and
+ * `models/gemini-3.8-live` are the same model and only one of them connects — the endpoint answers
+ * a missing prefix with a close, not an error a user could read.
+ */
+export const resolveSocketModel = (raw: string | null | undefined): string => {
+	const t = (raw ?? "").trim()
+	if (t === "") return GEMINI_LIVE_MODEL
+	return t.startsWith("models/") ? t : `models/${t}`
+}
 
 const MINT_URL = "https://generativelanguage.googleapis.com/v1beta/auth_tokens"
 
@@ -111,7 +169,17 @@ export const setGeminiKey = (key: string): void => {
  * game, short enough that a leaked token is worth little.
  */
 export const mintGeminiToken = async (
-	signal?: AbortSignal
+	signal?: AbortSignal,
+	/**
+	 * Which socket this token will open. Optional and normalised through `resolveSocketModel`, so
+	 * every caller that does not care keeps the shipped default and a bench can pin an arm.
+	 *
+	 * The token itself is NOT bound to it — `liveConnectConstraints` is refused by this API version
+	 * — so this id travels back out to the browser and is what goes in the `setup` message. That is
+	 * the only place the model is chosen, which is why it has to ride with the token rather than
+	 * being a constant in the page.
+	 */
+	model?: string
 ): Promise<{ ok: true; value: GeminiToken } | { ok: false; error: string }> => {
 	const key = geminiKey()
 	if (key === "")
@@ -136,7 +204,10 @@ export const mintGeminiToken = async (
 		}
 
 		log.info("minted an ephemeral live token")
-		return { ok: true, value: { token: body.name, model: GEMINI_LIVE_MODEL, wsUrl: GEMINI_LIVE_WS } }
+		return {
+			ok: true,
+			value: { token: body.name, model: resolveSocketModel(model), wsUrl: GEMINI_LIVE_WS }
+		}
 	} catch (err) {
 		return { ok: false, error: errText(err) }
 	}
@@ -185,6 +256,15 @@ export interface TranscriptLine {
 	fromUser: boolean
 	gameTimeSec: number | null
 	/**
+	 * Which game this line was said in, stamped by the daemon from the open journal session.
+	 *
+	 * Absent on every row written before 2026-09-18, and null whenever no session was open or the
+	 * session is still `unclaimed` — both of which are real states and neither of which is a
+	 * reason to guess. Without it, "what did the coach say in the game he is complaining about"
+	 * can only be answered by lining wall clocks up against match history by hand.
+	 */
+	gameId?: number | null
+	/**
 	 * The ground-truth block the coach was holding when it said this.
 	 *
 	 * Kept because a line on its own cannot be judged. "Graves is down 22s" is either excellent
@@ -203,7 +283,7 @@ export interface TranscriptLine {
  * it. A limit that cannot be read is a limit that was not given.
  */
 export const TRANSCRIPT_DEFAULT_LIMIT = 200
-const TRANSCRIPT_MAX_LIMIT = 5000
+export const TRANSCRIPT_MAX_LIMIT = 5000
 
 /** Clamp a `?limit=` — anything unreadable falls back to the default rather than to zero. */
 export const transcriptLimit = (raw: string | undefined | null): number => {

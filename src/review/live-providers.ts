@@ -38,6 +38,7 @@ import { DEFAULT_LIVE_COACH_MODE, liveCoachSystemPrompt } from "../shared/live-c
 import { fullKnowledge } from "./live-knowledge-full.ts"
 import type { LiveCoachMode } from "../shared/live-coach-mode.ts"
 import { liveChampionKnowledge } from "./live-coach-knowledge.ts"
+import { SpeechChunker } from "../shared/speech-chunks.ts"
 
 export type ProviderId = "gemini-http" | "anthropic" | "openai" | "kimi" | "glm" | "mock"
 
@@ -51,6 +52,17 @@ export interface ProviderInfo {
 	/** OpenAI-compatible providers differ only by base URL. */
 	baseUrl?: string
 	note: string
+	/**
+	 * Whether the settings screen may OFFER this provider. Absent means yes.
+	 *
+	 * It exists because `available` is computed from "is there a key file", which is not the same
+	 * question as "does the key work". `data/openai.key` has been present and INVALID since at
+	 * least 2026-09-18 — `GET /v1/models` answers `invalid_api_key` on it — so the screen offered
+	 * `gpt-5` as an available choice that fails on the first turn of a real game. A provider is
+	 * withdrawn here rather than deleted because the id may already be stored in his settings and
+	 * `providerById` still has to resolve it; what changes is that it stops being advertised.
+	 */
+	offered?: boolean
 }
 
 /**
@@ -83,22 +95,45 @@ export const PROVIDERS: readonly ProviderInfo[] = [
 		id: "gemini-http",
 		label: "Gemini (HTTPS)",
 		keyFile: "gemini.key",
-		defaultModel: "gemini-3.6-flash",
+		/*
+		 * MEASURED 2026-09-18, twelve real turns of game 5639409343, same payloads and prompt:
+		 * `gemini-3.8-flash` at low thinking reaches its first spoken fragment at p50 1,780ms where
+		 * `gemini-3.6-flash` at the vendor default takes 4,996ms — and the newer one is the cheaper
+		 * of the two per turn once the thinking tokens are counted. The old default was three
+		 * releases behind what this key serves and nobody had noticed.
+		 */
+		defaultModel: "gemini-3.8-flash",
 		note: "Same key as the live voice coach. The control arm: same model family, no socket."
 	},
 	{
 		id: "anthropic",
 		label: "Anthropic",
 		keyFile: "anthropic.key",
+		/*
+		 * MEASURED 2026-09-18 over 60 paired turns of two of his own games, one blind judge across
+		 * all seven arms in one pool (`data/eval/model-race-20260918*.json`): `claude-sonnet-5` at
+		 * `effort: low`, cached and streamed, is 78% useful [66-87] with a first syllable at
+		 * 1,754ms. `claude-opus-5` is 84% [73-91] and the two are NOT separated (useful 11-10,
+		 * p = 1.00) — but Opus takes 3,718ms to that first syllable and costs 2.6x as much, so the
+		 * default is the one that can keep up with a fight. Opus stays one word away in the box.
+		 */
 		defaultModel: "claude-sonnet-5",
-		note: "Needs an API key; the `claude` CLI login used by the reviewer cannot take an image."
+		note: "Needs an API key. Sonnet 5 speaks its first words at about 1.75s, cached and streamed. Type claude-opus-5 for the best-judged arm at 3.7s."
 	},
 	{
 		id: "openai",
 		label: "OpenAI",
 		keyFile: "openai.key",
 		defaultModel: "gpt-5",
-		note: "platform.openai.com/api-keys"
+		note: "The stored key is rejected (invalid_api_key). Save a working one to bring this back.",
+		/*
+		 * WITHDRAWN 2026-09-18. The key on this machine answers `invalid_api_key` to
+		 * `GET /v1/models`, and it has a key FILE, so `available` said true and the screen offered
+		 * `gpt-5` as a working choice. Beside that, the stored latency for gpt-5 on this task is
+		 * 20.5s to a full answer, which is not a live coach under any schedule. Offering it again
+		 * is a one-line change once a key that works exists.
+		 */
+		offered: false
 	},
 	{
 		id: "kimi",
@@ -183,6 +218,25 @@ export interface CoachTurnRequest {
 	 * does, as the `+noknow` arm.
 	 */
 	role?: boolean
+	/**
+	 * Cache the static system prefix where the provider supports it. DEFAULT TRUE.
+	 *
+	 * It changes no byte of the prompt — the same `coachSystemPrompt` text is sent either way — so
+	 * unlike `mode` this is not an arm in the editorial sense. It is a flag at all so a measurement
+	 * can pay the cold price on purpose; the app never passes it.
+	 */
+	cache?: boolean
+	/** How hard the model may think. Pinned per arm and recorded; see `CoachEffort`. */
+	effort?: CoachEffort
+	/**
+	 * Stream the answer, calling this with each text delta as it arrives.
+	 *
+	 * The PRESENCE of this callback is what turns streaming on, and that is the only thing that
+	 * decides it: an arm cannot be streaming in the harness and buffered in the app, because both
+	 * reach the model through this one call. The full text is still returned when the turn ends, so
+	 * a caller that only wants the sentence ignores the stream and reassembles nothing.
+	 */
+	onDelta?: (delta: string) => void
 }
 
 export interface CoachTurnResult {
@@ -195,6 +249,28 @@ export interface CoachTurnResult {
 	frameSent: boolean
 	latencyMs: number
 	reason?: string
+	/* ---- additive: what the latency work needs and the old callers ignore ---- */
+	/**
+	 * Time to the FIRST text delta. Streaming runs only; undefined when the answer was buffered.
+	 *
+	 * Not the same thing as time to first syllable — a delta may be half a word, and the browser
+	 * cannot speak half a word. `SpeechChunker` decides that; this is the floor beneath it.
+	 */
+	ttftMs?: number
+	/**
+	 * Time until the first chunk a voice could SAY, by `src/shared/speech-chunks.ts`.
+	 *
+	 * This is the number that decides whether a model is eligible for a live coach, because it is
+	 * the one he experiences. Undefined when nothing was said — a PASS has no first syllable, and
+	 * recording one as zero would flatter every arm that stays quiet.
+	 */
+	speakableMs?: number
+	/** Tokens in and out, and how many of them a cache served. Undefined when the provider said. */
+	usage?: TurnUsage
+	/** Whether a cache breakpoint was SENT. Says nothing about whether it hit; read `usage`. */
+	cacheRequested?: boolean
+	/** The effort this turn actually ran at, echoed so a run file can never lose it. */
+	effort?: CoachEffort
 }
 
 /**
@@ -220,6 +296,159 @@ export const modelHandleFor = async (p: ProviderInfo, key: string, model: string
 	const { createOpenAI } = await import("@ai-sdk/openai")
 	// OpenAI itself, plus every OpenAI-compatible endpoint, differ only by base URL.
 	return createOpenAI({ apiKey: key, ...(p.baseUrl ? { baseURL: p.baseUrl } : {}) })(model)
+}
+
+/* ========================================================= the two latency knobs */
+
+/**
+ * THE SYSTEM PROMPT, built from the closed set. One function, so caching cannot change the words.
+ *
+ * This is the invariant the whole file rests on, restated as a function because prompt caching is
+ * about to split these bytes into two API fields. The cached arm and the uncached arm call THIS,
+ * and `live-providers.test.ts` asserts the two requests carry byte-identical system text — because
+ * a cache that quietly reworded the prompt would turn a latency measurement into a prompt
+ * measurement, which is the confound this module exists to prevent.
+ */
+export const coachSystemPrompt = (req: {
+	mode?: LiveCoachMode
+	champion?: string
+	counterpart?: string | null
+	role?: boolean
+}): string => {
+	const mode = req.mode ?? DEFAULT_LIVE_COACH_MODE
+	return liveCoachSystemPrompt({
+		mode,
+		championKnowledge:
+			mode === "trusted" ?
+				fullKnowledge({
+					champion: req.champion ?? "",
+					counterpart: req.counterpart ?? null,
+					...(req.role === false ? { role: false } : {})
+				})
+			:	liveChampionKnowledge(req.champion ?? "")
+	})
+}
+
+/**
+ * How hard the model is allowed to think, as a CLOSED SET of two.
+ *
+ * Every model reachable from here now defaults to thinking, and thinking is the whole latency wall:
+ * measured on this machine's own key, Opus goes 6.3s to 3.6s, gemini-3.8-flash 6.4s to 1.2s and
+ * Sonnet 1.8s to 1.0s by moving this one knob. An arm run at a different effort from its rivals is
+ * measuring effort, not the model — so it is named, recorded in every run file beside the model id,
+ * and pinned per arm the way `level: "commentary"` is pinned.
+ *
+ * A closed set rather than a string for the same reason `mode` is a mode: the knob NAMES have a
+ * different spelling per vendor and every wrong spelling is a 400 that looks like a broken model.
+ * Anthropic wants `output_config.effort`; Google's turn path wants
+ * `generationConfig.thinkingConfig.thinkingLevel`; `thinkingBudget` is refused outright by the live
+ * models and, set to 0, was refused by gemini-3.6-flash for twenty minutes of a previous session
+ * while looking exactly like a model producing nothing. Nobody should be typing those by hand.
+ */
+export type CoachEffort = "low" | "default"
+
+/**
+ * The vendor spelling of `effort`, and nothing else.
+ *
+ * `default` sends NOTHING, deliberately: it is the shipped behaviour and must stay byte-identical
+ * to the runs already on disk, so the control arm is the absence of this feature rather than an
+ * explicit "high".
+ */
+const effortOptions = (p: ProviderInfo, effort: CoachEffort, model: string): Record<string, unknown> => {
+	if (effort === "default") return {}
+	if (p.id === "anthropic") {
+		/*
+		 * MEASURED on this key, 2026-09-18: `claude-haiku-4-5` answers an effort request with a 400,
+		 * "This model does not support the effort parameter", and the SDK surfaces that as an empty
+		 * stream — i.e. as a model that produced nothing, which is exactly the failure this file's
+		 * previous note warned about. Effort is a property of the 4.6-and-later thinking models; the
+		 * 4.5 generation does not think unless asked with `budget_tokens`, so on Haiku the low-effort
+		 * arm IS the default arm and sending nothing is the honest way to run it.
+		 */
+		if (/haiku-4-5|sonnet-4-5|opus-4-5/.test(model)) return {}
+		return { anthropic: { effort: "low" } }
+	}
+	if (p.id === "gemini-http") return { google: { thinkingConfig: { thinkingLevel: "low" } } }
+	// OpenAI-compatible endpoints spell it differently again and none of them is measured here;
+	// sending an option a provider may refuse is how a working model gets scored as broken.
+	return {}
+}
+
+/**
+ * Whether this provider can be told to cache a prefix, and how.
+ *
+ * ANTHROPIC is explicit: one `cache_control` breakpoint on the system block. That block is the
+ * persona, the prompt, his champion's prose, the counterpart's and the role file — about 33,000
+ * characters, static for a whole game, and re-sent on every single turn until now.
+ *
+ * GOOGLE is implicit and already on: repeat calls come back with `cachedContentTokenCount` set
+ * without anyone asking for it, so there is nothing to send and a `cache: false` arm CANNOT turn it
+ * off. Any Gemini cache figure in a run file is therefore an observation, never an intervention,
+ * and the reports say so rather than crediting this code for it.
+ *
+ * The OpenAI-compatible endpoints cache automatically too where they cache at all; same story.
+ */
+const cacheBreakpoint = (p: ProviderInfo): Record<string, unknown> | null =>
+	p.id === "anthropic" ? { anthropic: { cacheControl: { type: "ephemeral" } } } : null
+
+/** What a turn cost, in the four numbers that decide whether caching paid for itself. */
+export interface TurnUsage {
+	inputTokens: number
+	outputTokens: number
+	/** Tokens served from a cache — Anthropic's `cache_read_input_tokens`, Google's implicit hit. */
+	cacheReadTokens: number
+	/** Tokens WRITTEN to the cache, billed at ~1.25x. Anthropic only; zero everywhere else. */
+	cacheWriteTokens: number
+}
+
+/**
+ * The SDK's usage object, flattened — and it is read DEFENSIVELY on purpose.
+ *
+ * `inputTokens` is a structured value on this SDK version (`{total, noCache, cacheRead, cacheWrite}`)
+ * and was a plain number on the previous one, and a provider that reports neither is a normal
+ * outcome rather than an error. Every cost figure in this repo is derived from these four numbers,
+ * so a shape change that silently produced zeros would not look like a bug — it would look like
+ * caching having no effect, which is precisely the claim under test.
+ */
+const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0)
+
+const usageOf = (usage: unknown): TurnUsage | null => {
+	if (!usage || typeof usage !== "object") return null
+	const u = usage as Record<string, unknown>
+	/*
+	 * MEASURED, and it cost a whole run to find: on this SDK version the cache figures are NOT on
+	 * `inputTokens`. They live in `inputTokenDetails: {noCacheTokens, cacheReadTokens,
+	 * cacheWriteTokens}`, while `inputTokens` is the grand total. A reader that looked only at the
+	 * obvious field returned zero for every cache number and the run below it said, quite
+	 * convincingly, that prompt caching does nothing — with `cache_control` provably on the wire.
+	 * The older shape (`cachedInputTokens`, or a structured `inputTokens`) is still read, because a
+	 * stored run must stay re-derivable across an SDK bump.
+	 */
+	const details =
+		u.inputTokenDetails && typeof u.inputTokenDetails === "object" ?
+			(u.inputTokenDetails as Record<string, unknown>)
+		:	null
+	const inp = u.inputTokens
+	const out = u.outputTokens
+	const inputObj = inp && typeof inp === "object" ? (inp as Record<string, unknown>) : null
+	const outObj = out && typeof out === "object" ? (out as Record<string, unknown>) : null
+	const cacheRead =
+		details ? num(details.cacheReadTokens)
+		: inputObj ? num(inputObj.cacheRead)
+		: num(u.cachedInputTokens)
+	const cacheWrite =
+		details ? num(details.cacheWriteTokens)
+		: inputObj ? num(inputObj.cacheWrite)
+		: 0
+	const total = inputObj ? num(inputObj.total) : num(inp)
+	const totalOut = outObj ? num(outObj.total) : num(out)
+	if (total === 0 && totalOut === 0 && cacheRead === 0) return null
+	return {
+		inputTokens: total,
+		outputTokens: totalOut,
+		cacheReadTokens: cacheRead,
+		cacheWriteTokens: cacheWrite
+	}
 }
 
 /**
@@ -269,39 +498,50 @@ export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult>
 	}
 
 	try {
-		const { generateText } = await import("ai")
+		const { generateText, streamText } = await import("ai")
 		const handle = await modelHandleFor(p, key, model)
 		const frameSent = typeof req.frameJpegBase64 === "string" && req.frameJpegBase64.length > 0
-		const result = await generateText({
+		const effort: CoachEffort = req.effort ?? "default"
+		const wantsCache = req.cache !== false
+		const breakpoint = wantsCache ? cacheBreakpoint(p) : null
+
+		/*
+		 * The prompt, and WHERE IT SITS, which is the whole of the caching change.
+		 *
+		 * It used to go in the SDK's `system` field. It now goes in `messages` as a system message,
+		 * which is the only place a provider option can be attached to it — the `system` field has
+		 * no slot for one. Every provider here folds a leading system message straight back into its
+		 * own system channel (Anthropic's `system` blocks, Google's `systemInstruction`, OpenAI's
+		 * first message), so this moves a cache breakpoint and not a single byte of prompt.
+		 * `live-providers.test.ts` pins that equality.
+		 *
+		 * `trusted` gets the FULL knowledge — his champion's file, the counterpart's, and the role's,
+		 * with their numbers intact — so a turn-based arm is asked the same question the socket is
+		 * asked and the bench can compare the two. The older modes keep the digit-free clause list
+		 * they were measured against, byte for byte.
+		 */
+		const system = coachSystemPrompt(req)
+		const messages = [
+			{
+				role: "system" as const,
+				content: system,
+				...(breakpoint ? { providerOptions: breakpoint as never } : {})
+			},
+			{
+				role: "user" as const,
+				content: [
+					...(frameSent ? [{ type: "image" as const, image: req.frameJpegBase64! }] : []),
+					{ type: "text" as const, text: req.blockText }
+				]
+			}
+		]
+		const common = {
 			model: handle,
-			/*
-			 * `trusted` gets the FULL knowledge — his champion's file, the counterpart's, and the
-			 * role's, with their numbers intact — so a turn-based arm is asked the same question the
-			 * socket is asked and the bench can compare the two. The older modes keep the digit-free
-			 * clause list they were measured against, byte for byte.
-			 */
-			system: liveCoachSystemPrompt({
-				mode: req.mode ?? DEFAULT_LIVE_COACH_MODE,
-				championKnowledge:
-					(req.mode ?? DEFAULT_LIVE_COACH_MODE) === "trusted" ?
-						fullKnowledge({
-							champion: req.champion ?? "",
-							counterpart: req.counterpart ?? null,
-							...(req.role === false ? { role: false } : {})
-						})
-					:	liveChampionKnowledge(req.champion ?? "")
-			}),
-			messages: [
-				{
-					role: "user",
-					content: [
-						...(frameSent ?
-							[{ type: "image" as const, image: req.frameJpegBase64! }]
-						:	[]),
-						{ type: "text" as const, text: req.blockText }
-					]
-				}
-			],
+			messages,
+			// A system message inside `messages` is refused by default; this is the switch that
+			// allows it, and it is the only reason the breakpoint above can be attached at all.
+			allowSystemInMessages: true,
+			providerOptions: effortOptions(p, effort, model) as never,
 			/*
 			 * Generous, and that is deliberate even though the coach speaks ONE sentence.
 			 *
@@ -314,28 +554,75 @@ export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult>
 			 * Length is controlled by the PROMPT, which asks for one sentence, not by starving the
 			 * model of tokens.
 			 */
-			maxOutputTokens: 2000,
+			maxOutputTokens: 2000
 			/*
-			 * NO provider-specific thinking options, and that is a correction.
+			 * The thinking knob is now `effort`, and it is STILL not free text — see `CoachEffort`.
 			 *
-			 * I set `thinkingConfig: { thinkingBudget: 0 }` for Google, `thinking: disabled` for
-			 * Anthropic and `reasoningEffort: minimal` for OpenAI, on the reasoning that an unknown
-			 * key would simply be ignored. It is NOT ignored: gemini-3.6-flash rejects that budget
-			 * with "Request contains an invalid argument", so every turn failed and returned empty
-			 * text. For twenty minutes that looked like a model producing nothing.
-			 *
-			 * Thinking is a real problem for a coach that has about a second — measured at 15.2s
-			 * for a first answer — but the fix is choosing a non-reasoning model in the settings,
-			 * not sending options a provider may refuse. Model choice is his, and this stays out
-			 * of it.
+			 * The previous note here said to send no thinking options at all, after
+			 * `thinkingBudget: 0` was refused by gemini-3.6-flash and looked for twenty minutes like
+			 * a model producing nothing. That reasoning was right about the spelling and wrong about
+			 * the conclusion: thinking IS the latency wall, every model reachable from here now
+			 * defaults to it, and refusing to touch it disqualifies every strong model by a setting
+			 * rather than by its answers. So the knob exists, its vendor spelling lives in one
+			 * function, and `default` sends nothing — the shipped behaviour, byte-identical to the
+			 * runs already on disk.
 			 */
-		})
+		}
+
+		/* ---- buffered: the shipped shape. One round trip, and no first-token number to report ---- */
+		if (!req.onDelta) {
+			const result = await generateText(common)
+			const usage = usageOf(result.usage)
+			return {
+				ok: true,
+				text: (result.text ?? "").trim(),
+				model,
+				frameSent,
+				latencyMs: Date.now() - started,
+				cacheRequested: breakpoint !== null,
+				effort,
+				...(usage ? { usage } : {})
+			}
+		}
+
+		/*
+		 * ---- streamed ----
+		 *
+		 * Two clocks come out of here and they are not the same number. `ttftMs` is the first delta,
+		 * which is what a provider comparison usually quotes; `speakableMs` is the first chunk a
+		 * voice could actually say, decided by `SpeechChunker`, and it is the one he experiences.
+		 * The gap between them is a property of the model's writing rather than of the network, so
+		 * reporting only the first would flatter a model that opens on a token nobody can pronounce.
+		 */
+		const chunker = new SpeechChunker()
+		let ttftMs: number | undefined
+		let speakableMs: number | undefined
+		let text = ""
+		const result = streamText(common)
+		for await (const delta of result.textStream) {
+			if (ttftMs === undefined) ttftMs = Date.now() - started
+			text += delta
+			for (const chunk of chunker.push(delta)) {
+				if (speakableMs === undefined) speakableMs = Date.now() - started
+				req.onDelta(chunk)
+			}
+		}
+		for (const chunk of chunker.flush()) {
+			if (speakableMs === undefined) speakableMs = Date.now() - started
+			req.onDelta(chunk)
+		}
+		const usage = usageOf(await result.usage)
 		return {
 			ok: true,
-			text: (result.text ?? "").trim(),
+			text: text.trim(),
 			model,
 			frameSent,
-			latencyMs: Date.now() - started
+			latencyMs: Date.now() - started,
+			cacheRequested: breakpoint !== null,
+			effort,
+			...(ttftMs === undefined ? {} : { ttftMs }),
+			...(speakableMs === undefined ? {} : { speakableMs }),
+			...(usage ? { usage } : {})
 		}
 	} catch (err) {
 		return fail(err instanceof Error ? err.message : String(err))
@@ -344,7 +631,7 @@ export const coachTurn = async (req: CoachTurnRequest): Promise<CoachTurnResult>
 
 /** Which providers are usable right now, for a UI that must not offer a dead option. */
 export const providerStatus = (): { id: ProviderId; label: string; available: boolean; note: string; defaultModel: string }[] =>
-	PROVIDERS.map(p => ({
+	PROVIDERS.filter(p => p.offered !== false).map(p => ({
 		id: p.id,
 		label: p.label,
 		available: providerKey(p) !== null,

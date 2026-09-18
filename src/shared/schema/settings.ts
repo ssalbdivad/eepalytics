@@ -48,6 +48,12 @@ export const Settings = type({
 	 * Model ids change faster than this app will be updated — a default written today was already
 	 * refused as "no longer available to new users" within a minute of being typed. Empty means the
 	 * provider's own default.
+	 *
+	 * It applies to the SOCKET too, as of 2026-09-18. It did not before: `GEMINI_LIVE_MODEL` was a
+	 * constant and the settings box was hidden whenever `gemini-live` was selected, so the shipped
+	 * path was the one path whose model could not be chosen — which is how this app ran exactly one
+	 * live model, never deliberately, for its entire life. `resolveSocketModel` turns a blank into
+	 * the default and a bare name into the `models/` form the Live endpoint accepts.
 	 */
 	liveModel: "string",
 
@@ -231,9 +237,13 @@ export const SIMPLE_SETTING_KEYS = ["liveSpeakLevel", "coachIntensity"] as const
  *
  * - `liveCoachMode` — three architectures, all measured, `trusted` shipped. Kept selectable
  *   because the stored runs are only meaningful while the prompts that produced them exist.
- * - `liveProvider` / `liveModel` — five models were indistinguishable on both paths, and only
- *   the Gemini socket speaks natively at ~1.2s. Free text on purpose: a model id died inside a
- *   minute of being typed as a default.
+ * - `liveProvider` / `liveModel` — the CEILING is flat and the FLOOR is not. Measured 2026-09-18
+ *   over 60 paired turns of two of his own games, one blind judge across seven arms in one pool
+ *   (`data/eval/model-race-20260918*.json`): claude-opus-5 84% useful [73-91], claude-sonnet-5 78%
+ *   [66-87] and gemini-3.8-live 77% [65-86] are not separable from one another, while the socket
+ *   this app shipped for its whole life is 57% [44-68] and separable from all three. So the choice
+ *   between the top three is about shape and speed, and the choice to leave the old socket is not
+ *   a choice at all. Free text on purpose: a model id died inside a minute of being typed.
  * - `model` — the reviewer's. Same indistinguishability result; same escape hatch.
  * - `gamesForTrends` — the Trends screen has its own per-view window picker, so this is really
  *   the daemon's baseline corpus size, which is not a thing to tune between games.

@@ -72,6 +72,8 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 							note: string
 							defaultModel: string
 						}[]
+						/** Socket ids this app has actually opened — suggestions, not an allowlist. */
+						socketModels?: { id: string; note: string }[]
 					}>
 			),
 		[]
@@ -523,22 +525,40 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 										</option>
 									))}
 								</select>
-								{draft.liveProvider !== "gemini-live" && (
-									<input
-										type="text"
-										placeholder={
-											providers.data?.providers.find(p => p.id === draft.liveProvider)
-												?.defaultModel ?? "model id"
-										}
-										value={draft.liveModel}
-										onChange={e => set("liveModel", e.currentTarget.value)}
-										style={{ minWidth: 220 }}
-									/>
-								)}
+								{/*
+								 * THE MODEL BOX IS SHOWN FOR THE SOCKET TOO, and that is the fix.
+								 *
+								 * It used to be hidden whenever `gemini-live` was selected, because
+								 * the socket's id was a constant in `review/gemini-live.ts`. So the
+								 * default provider — the one every real game has ever run on — was
+								 * the only one whose model he could not change, and the app shipped
+								 * a single socket model for its entire life without anyone choosing
+								 * it. Blank still means the measured default.
+								 */}
+								<input
+									type="text"
+									list={draft.liveProvider === "gemini-live" ? "socket-models" : undefined}
+									placeholder={
+										draft.liveProvider === "gemini-live" ?
+											(providers.data?.socketModels?.[0]?.id ?? "models/…")
+										:	(providers.data?.providers.find(p => p.id === draft.liveProvider)
+												?.defaultModel ?? "model id")
+									}
+									value={draft.liveModel}
+									onChange={e => set("liveModel", e.currentTarget.value)}
+									style={{ minWidth: 260 }}
+								/>
+								<datalist id="socket-models">
+									{providers.data?.socketModels?.map(m => (
+										<option key={m.id} value={m.id}>
+											{m.note}
+										</option>
+									))}
+								</datalist>
 							</div>
 							<div className="help">
 								{draft.liveProvider === "gemini-live" ?
-									"A held-open socket: it speaks in its own voice, answers in about a second, and can be cut off mid-sentence. Five models were indistinguishable on quality in the bench — this one is the default because of its SHAPE, not its answers."
+									"A held-open socket: it speaks in its own voice, answers in about a second, and can be cut off mid-sentence. gemini-3.8-live is the default since 18 Sep: raced against the old one over 60 turns of two of your own games it was 77% useful against 57%, and — the part that needs no judge — it produced actual AUDIO on 60 of 60 turns where the old one was silent on 34 of them."
 								:	<>
 										An HTTPS turn spoken by your system voice — slower (a few seconds), it cannot
 										be usefully interrupted because the sentence is already paid for, and it does
@@ -552,6 +572,14 @@ export const SettingsPage = ({ health, onSaved }: SettingsPageProps) => {
 								stale dropdown is a bug that looks like a limitation. Blank uses the provider's
 								default. Pick one that accepts images, and a fast one: a reasoning model took
 								fifteen seconds to answer, which is useless in a fight.
+							</div>
+							<div className="help">
+								Measured 18 Sep over the same 60 turns, one blind judge across all seven arms:
+								claude-opus-5 84% useful [73-91] at 3.7s to the first word, claude-sonnet-5 78%
+								[66-87] at 1.75s, gemini-3.8-live 77% [65-86] at 1.8s. Those three are not
+								separable from each other — the ceiling is flat, so choose on shape and speed,
+								not on hope. Below them: the old socket 57%, claude-fable-5-1 56% at 11s,
+								claude-haiku-4-5 44%.
 							</div>
 						</div>
 

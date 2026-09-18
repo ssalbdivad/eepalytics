@@ -34,6 +34,16 @@ export interface TurnResult {
 	latencyMs: number
 	reason?: string
 	/**
+	 * When the first delta arrived, and when the first fragment a voice could SAY did. Streaming
+	 * turns only.
+	 *
+	 * Two numbers rather than one because they answer different questions: the first is the
+	 * provider's, the second is his. A model that opens on a token nobody can pronounce has a fast
+	 * `ttftMs` and a slow coach.
+	 */
+	ttftMs?: number
+	speakableMs?: number
+	/**
 	 * Say-it-like-this rows for this game's roster, for `SystemVoice.setPronunciations`.
 	 *
 	 * On the response rather than fetched separately because this path already makes exactly one
@@ -72,6 +82,99 @@ export const runCoachTurn = async (input: {
 			model: input.model,
 			frameSent: false,
 			latencyMs: 0,
+			reason: err instanceof Error ? err.message : String(err)
+		}
+	}
+}
+
+/**
+ * The same turn, spoken as it is written.
+ *
+ * ## The number this moves
+ *
+ * `runCoachTurn` above waits for the whole sentence and then speaks it, so the first syllable
+ * lands after the LAST token was paid for. Measured over six real turns of game 5639409343,
+ * claude-sonnet-5 at low effort reached a speakable fragment at a median 1,553ms this way against
+ * 2,513ms buffered — faster on 6 of 6 turns, sign test p=0.031 — with the total generation time
+ * unchanged. A coach that starts talking a second earlier is a different product in a game where
+ * the moment being described lasts four seconds.
+ *
+ * It is not a universal win and the caller should not assume one: gemini-3.8-flash returns its
+ * whole answer in a single burst, so on that model this behaves exactly like the buffered route.
+ *
+ * ## What `onChunk` receives
+ *
+ * SPEAKABLE fragments, not provider deltas: the daemon runs `SpeechChunker`, so a fragment ends on
+ * punctuation or a word boundary and the silence token `PASS` is never handed over at all. Speak
+ * each one as it arrives — `speechSynthesis` queues them and reads them as one continuous line.
+ *
+ * ## Failure is still a quiet turn
+ *
+ * Same contract as the buffered call: a dropped connection resolves with `ok: false` rather than
+ * throwing, because a network hiccup must cost one turn and never interrupt a game. Anything
+ * already spoken stays spoken — there is no way to unsay it and no reason to try.
+ */
+export const runCoachTurnStreaming = async (input: {
+	provider: string
+	model: string
+	frame: string | null
+	block: string
+	onChunk: (chunk: string) => void
+	signal?: AbortSignal
+}): Promise<TurnResult> => {
+	const started = Date.now()
+	try {
+		const res = await fetch("/api/live/coach/turn/stream", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				provider: input.provider,
+				model: input.model,
+				...(input.frame ? { frame: input.frame } : {}),
+				block: input.block
+			}),
+			...(input.signal ? { signal: input.signal } : {})
+		})
+		if (!res.body) return (await res.json()) as TurnResult
+		const reader = res.body.getReader()
+		const decoder = new TextDecoder()
+		let buffered = ""
+		let done: TurnResult | null = null
+		let spoken = ""
+		for (;;) {
+			const { value, done: end } = await reader.read()
+			if (end) break
+			buffered += decoder.decode(value, { stream: true })
+			// Newline-delimited JSON: a partial line at the tail is normal and waits for more bytes.
+			const lines = buffered.split("\n")
+			buffered = lines.pop() ?? ""
+			for (const line of lines) {
+				if (line.trim() === "") continue
+				const msg = JSON.parse(line) as { chunk?: string; done?: TurnResult }
+				if (typeof msg.chunk === "string") {
+					spoken += msg.chunk
+					input.onChunk(msg.chunk)
+				}
+				if (msg.done) done = msg.done
+			}
+		}
+		return (
+			done ?? {
+				ok: spoken !== "",
+				text: spoken,
+				model: input.model,
+				frameSent: input.frame !== null,
+				latencyMs: Date.now() - started,
+				reason: spoken === "" ? "the stream ended without an answer" : undefined
+			}
+		)
+	} catch (err) {
+		return {
+			ok: false,
+			text: "",
+			model: input.model,
+			frameSent: false,
+			latencyMs: Date.now() - started,
 			reason: err instanceof Error ? err.message : String(err)
 		}
 	}

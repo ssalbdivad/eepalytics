@@ -46,7 +46,7 @@ import {
 	type SpeakLevel
 } from "../../analysis/live-events.ts"
 import { LIVE_COACH_SYSTEM_PROMPT } from "../../shared/live-prompt.ts"
-import { runCoachTurn, SystemVoice } from "./turnCoach.ts"
+import { runCoachTurnStreaming, SystemVoice } from "./turnCoach.ts"
 
 /**
  * How often the coach is prompted to speak. The interval IS the talkativeness — and, now, the
@@ -1239,11 +1239,32 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 			try {
 				const shot = optsRef.current.grabFrame()
 				if (shot === null) setBlindTurns(n => n + 1)
-				const r = await runCoachTurn({
+				/*
+				 * Streamed, so the voice starts on the first clause rather than on the last token.
+				 *
+				 * Measured over six real turns of game 5639409343: sonnet-5 at low effort reaches a
+				 * speakable fragment at a median 1,553ms streamed against 2,513ms buffered, 6 of 6
+				 * turns, sign test p=0.031, with the whole answer taking the same time either way.
+				 * Nothing about WHAT is said changes — the daemon runs the same `coachTurn`, and the
+				 * fragments are only cut at boundaries a voice can pronounce.
+				 *
+				 * `silence()` fires once, before the FIRST fragment: calling it per fragment would
+				 * cancel the queue this path exists to fill, which is a stutter rather than a line.
+				 */
+				let opened = false
+				const r = await runCoachTurnStreaming({
 					provider: opts.provider ?? "",
 					model: opts.model ?? "",
 					frame: shot,
-					block: truth
+					block: truth,
+					onChunk: chunk => {
+						if (!alive) return
+						if (!opened) {
+							opened = true
+							voiceRef.current?.silence()
+						}
+						voiceRef.current?.speak(chunk)
+					}
 				})
 				if (!alive) return
 				if (!r.ok) {
@@ -1258,8 +1279,16 @@ export const useGeminiLive = (opts: GeminiLiveOptions) => {
 				noteSpoken(paceRef.current, nowSec())
 				record(text, false, truth)
 				setLines(l => [{ text, atMs: Date.now() }, ...l].slice(0, 40))
-				voiceRef.current?.silence()
-				voiceRef.current?.speak(text)
+				/*
+				 * Already spoken, fragment by fragment, while it was being written. This is the
+				 * fallback for a provider whose stream produced no speakable fragment at all — a
+				 * whole answer that arrived after the stream ended, which the ndjson reader reports
+				 * as text with nothing having been said.
+				 */
+				if (!opened) {
+					voiceRef.current?.silence()
+					voiceRef.current?.speak(text)
+				}
 			} finally {
 				inFlight = false
 			}

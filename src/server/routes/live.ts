@@ -129,8 +129,10 @@ import {
 	appendTranscript,
 	checkGeminiKey,
 	geminiKey,
+	GEMINI_LIVE_MODELS,
 	mintGeminiToken,
 	readTranscript,
+	resolveSocketModel,
 	setGeminiKey,
 	transcriptLimit
 } from "../../review/gemini-live.ts"
@@ -2621,7 +2623,17 @@ export const createLiveRoute = (): Hono => {
 	 * whole feature exists to remove.
 	 */
 	app.post("/live/gemini/token", async c => {
-		const minted = await mintGeminiToken()
+		/*
+		 * WHICH SOCKET, and it is his to choose.
+		 *
+		 * `liveModel` is the model id within the chosen provider, and until 2026-09-18 it was read
+		 * by every provider except the one that ships — the socket's id was a constant in
+		 * `gemini-live.ts` and the settings box was hidden whenever `gemini-live` was selected. So
+		 * the single most consequential model choice in the product was the only one he could not
+		 * make. `resolveSocketModel` turns a blank into the measured default and a bare name into
+		 * the `models/` form the endpoint will accept.
+		 */
+		const minted = await mintGeminiToken(undefined, resolveSocketModel(getSettings().liveModel))
 		if (!minted.ok) return c.json({ ok: false, error: minted.error }, 200)
 		/*
 		 * The SYSTEM PROMPT rides with the token, and it has to.
@@ -2696,6 +2708,20 @@ export const createLiveRoute = (): Hono => {
 			text: body.text.slice(0, 2000),
 			fromUser: body.fromUser === true,
 			gameTimeSec: typeof body.gameTimeSec === "number" ? body.gameTimeSec : null,
+			/*
+			 * WHICH GAME, stamped by the daemon because the page does not know.
+			 *
+			 * Every one of the 217 stored rows has only a wall clock, so "what did the coach say in
+			 * that game" is answerable today only by eyeballing timestamps against match history —
+			 * which is exactly the question anyone investigating a complaint about the coaching
+			 * asks first. The daemon is holding the id already; it costs nothing to write it down.
+			 *
+			 * It comes from the OPEN JOURNAL SESSION, which is the id the frames beside this line
+			 * are filed under — so a transcript row and the pictures it belongs with can never
+			 * disagree. `null` stays the honest answer: a session opens `unclaimed` when the client
+			 * could not be reached, and a coach running with no share has no session at all.
+			 */
+			gameId: openSessionStatus().gameId,
 			...(typeof body.groundTruth === "string" && body.groundTruth !== "" ?
 				{ groundTruth: body.groundTruth.slice(0, 8000) }
 			:	{})
@@ -2792,7 +2818,15 @@ export const createLiveRoute = (): Hono => {
 	 * sentence the UI can show, because an option that silently does nothing is worse than one
 	 * that says why it cannot.
 	 */
-	app.get("/live/coach/providers", c => c.json({ providers: providerStatus() }))
+	app.get("/live/coach/providers", c =>
+		/*
+		 * `socketModels` rides along because the socket is a provider the browser cannot enumerate:
+		 * its ids are a property of the Gemini key, which lives in the daemon. They are SUGGESTIONS
+		 * beside a free-text box — the endpoint accepts anything `resolveSocketModel` can shape —
+		 * so this is the measured spellings, not an allowlist.
+		 */
+		c.json({ providers: providerStatus(), socketModels: GEMINI_LIVE_MODELS })
+	)
 
 	/**
 	 * `PUT /api/live/coach/key/:provider` — store a provider key, or clear it with an empty body.
@@ -2842,9 +2876,115 @@ export const createLiveRoute = (): Hono => {
 			blockText: body.block,
 			mode: getSettings().liveCoachMode,
 			champion: await lockedChampion(),
-			counterpart: await lockedCounterpart()
+			counterpart: await lockedCounterpart(),
+			/*
+			 * LOW effort, and it is the app that decides this rather than `coachTurn`'s default.
+			 *
+			 * Every model reachable from here now thinks by default, and thinking is the entire
+			 * latency wall: measured over twelve real turns of game 5639409343, claude-opus-5 goes
+			 * from 7,290ms to 3,248ms to its first spoken fragment and gemini-3.8-flash from about
+			 * 5,000ms to 1,780ms, on the same payloads with the same prompt. A coach describing a
+			 * four-second moment five seconds late is not a slower coach, it is a wrong one.
+			 *
+			 * It is set HERE and not in `coachTurn` on purpose: every stored bench run was taken at
+			 * the vendor default, and moving the default would silently re-baseline them. The app
+			 * makes a product choice; the harness keeps the old one unless an arm asks for this.
+			 */
+			effort: "low"
 		})
 		return c.json(r)
+	})
+
+	/**
+	 * `POST /api/live/coach/turn/stream` — the same turn, spoken as it is written.
+	 *
+	 * ## Why a second endpoint rather than a flag on the first
+	 *
+	 * The two differ in their RESPONSE SHAPE, not in what they ask the model. This one answers with
+	 * newline-delimited JSON — a `{chunk}` per speakable fragment, then one `{done}` carrying the
+	 * same object the buffered route returns — so the browser can hand the first clause to
+	 * `speechSynthesis` while the rest is still being written. A caller that wants a whole sentence
+	 * keeps the old route and nothing about it changes.
+	 *
+	 * ## What it buys, measured
+	 *
+	 * On six real turns of game 5639409343, claude-sonnet-5 at low effort reached its first
+	 * SPEAKABLE fragment at a median 1,553ms streamed against 2,513ms buffered — faster on 6 of 6
+	 * turns, sign test p=0.031. The whole answer still takes the same time; what moves is when he
+	 * hears the first word, and that is the number that decides whether a model is usable in a game.
+	 *
+	 * It is not a universal win and the run says so: gemini-3.8-flash delivers its answer in one
+	 * burst (first delta 1,780ms, whole answer 1,825ms), so streaming buys it nothing, and Opus is
+	 * late for a different reason — it is still thinking when the clock runs out.
+	 *
+	 * ## Where the chunk boundaries come from
+	 *
+	 * `SpeechChunker`, in `src/shared/speech-chunks.ts`, and NOT from the provider's delta sizes: a
+	 * delta is often half a word, and half a word spoken aloud is audibly broken. It also holds the
+	 * first four characters back until they prove not to be `PASS`, so a coach that correctly
+	 * decides to stay quiet does not say the word "pass" out loud on its way to staying quiet.
+	 *
+	 * Answers 200 in every state, like its sibling: this is called from a live game.
+	 */
+	app.post("/live/coach/turn/stream", async c => {
+		const body = (await c.req.json().catch(() => null)) as {
+			provider?: unknown
+			model?: unknown
+			frame?: unknown
+			block?: unknown
+		} | null
+		if (typeof body?.provider !== "string" || typeof body?.block !== "string")
+			return c.json({ ok: false, text: "", reason: "provider and block are required" })
+		const frame =
+			typeof body.frame === "string" ? body.frame.replace(/^data:[^,]+,/, "") : undefined
+		// The mode and the champion are resolved HERE, never taken from the request — the same rule
+		// the buffered route follows, and for the same reason: a browser that could post a mode is
+		// one step from a browser that posts a prompt.
+		const mode = getSettings().liveCoachMode
+		const champion = await lockedChampion()
+		const counterpart = await lockedCounterpart()
+		const encoder = new TextEncoder()
+		const stream = new ReadableStream<Uint8Array>({
+			start(controller) {
+				const send = (o: unknown): void => {
+					try {
+						controller.enqueue(encoder.encode(`${JSON.stringify(o)}\n`))
+					} catch {
+						// The browser closed the tab mid-turn. The model call is already paid for and
+						// there is nobody to tell; dropping it silently is the whole handling.
+					}
+				}
+				void coachTurn({
+					provider: body.provider as never,
+					...(typeof body.model === "string" ? { model: body.model } : {}),
+					...(frame ? { frameJpegBase64: frame } : {}),
+					blockText: body.block as string,
+					mode,
+					champion,
+					counterpart,
+					// Same product choice as the buffered route above, and for the same measured
+					// reason: thinking is the wall, and this path exists to get to the first word.
+					effort: "low",
+					onDelta: chunk => send({ chunk })
+				})
+					.then(r => send({ done: r }))
+					.catch(err => send({ done: { ok: false, text: "", reason: String(err) } }))
+					.finally(() => {
+						try {
+							controller.close()
+						} catch {}
+					})
+			}
+		})
+		return new Response(stream, {
+			headers: {
+				"content-type": "application/x-ndjson; charset=utf-8",
+				"cache-control": "no-store",
+				// Nothing between this process and the browser should hold a chunk back: the entire
+				// point of the endpoint is that the first fragment leaves early.
+				"x-accel-buffering": "no"
+			}
+		})
 	})
 
 	/**

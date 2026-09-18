@@ -6,7 +6,7 @@
 
 import { deepStrictEqual, strictEqual } from "node:assert/strict"
 import { afterEach, describe, it } from "node:test"
-import { respellForSpeech, runCoachTurn, SystemVoice } from "./turnCoach.ts"
+import { respellForSpeech, runCoachTurn, runCoachTurnStreaming, SystemVoice } from "./turnCoach.ts"
 
 const original = globalThis.fetch
 afterEach(() => {
@@ -186,5 +186,85 @@ describe("SystemVoice", () => {
 			;(globalThis as { SpeechSynthesisUtterance?: unknown }).SpeechSynthesisUtterance =
 				priorUtterance
 		}
+	})
+})
+
+/**
+ * The streaming reader, against a server that sends ndjson the way the daemon does.
+ *
+ * The thing worth pinning here is the SPLIT: a chunk boundary in the transport has nothing to do
+ * with a line boundary in the protocol, so a naive reader that treats each network chunk as a JSON
+ * document works perfectly in a fast test and then throws mid-game on the first slow connection.
+ * Every case below cuts the bytes somewhere awkward on purpose.
+ */
+const streamStub = (pieces: readonly string[]): void => {
+	globalThis.fetch = (async () => ({
+		body: {
+			getReader: () => {
+				let i = 0
+				return {
+					read: async () =>
+						i < pieces.length ?
+							{ value: new TextEncoder().encode(pieces[i++]!), done: false }
+						:	{ value: undefined, done: true }
+				}
+			}
+		},
+		json: async () => ({ ok: false })
+	})) as unknown as typeof fetch
+}
+
+describe("runCoachTurnStreaming", () => {
+	it("hands over each fragment as it lands, even when a line is split across packets", async () => {
+		streamStub([
+			'{"chunk":"Take raptors now, ',
+			'"}\n{"chunk":"drake is up in forty seconds."}',
+			'\n{"done":{"ok":true,"text":"Take raptors now, drake is up in forty seconds.","model":"m","frameSent":false,"latencyMs":1200,"ttftMs":400,"speakableMs":600}}\n'
+		])
+		const said: string[] = []
+		const r = await runCoachTurnStreaming({
+			provider: "anthropic",
+			model: "claude-sonnet-5",
+			frame: null,
+			block: "B",
+			onChunk: c => said.push(c)
+		})
+		deepStrictEqual(said, ["Take raptors now, ", "drake is up in forty seconds."])
+		strictEqual(r.ok, true)
+		strictEqual(r.speakableMs, 600)
+		// The final object is the daemon's, not one this reader assembled: a caller that logs the
+		// line must log what the model said, not what the transport happened to deliver.
+		strictEqual(r.text, "Take raptors now, drake is up in forty seconds.")
+	})
+
+	it("says nothing at all when the coach passed", async () => {
+		// The daemon's chunker withholds the silence token, so a PASS arrives as a `done` and no
+		// chunks. Nothing may be spoken on this path or the coach says "pass" out loud.
+		streamStub(['{"done":{"ok":true,"text":"PASS","model":"m","frameSent":false,"latencyMs":700}}\n'])
+		const said: string[] = []
+		const r = await runCoachTurnStreaming({
+			provider: "anthropic",
+			model: "m",
+			frame: null,
+			block: "B",
+			onChunk: c => said.push(c)
+		})
+		deepStrictEqual(said, [])
+		strictEqual(r.text, "PASS")
+	})
+
+	it("returns a failed result instead of throwing when the stream dies", async () => {
+		globalThis.fetch = (async () => {
+			throw new Error("connection reset")
+		}) as unknown as typeof fetch
+		const r = await runCoachTurnStreaming({
+			provider: "anthropic",
+			model: "m",
+			frame: null,
+			block: "B",
+			onChunk: () => {}
+		})
+		strictEqual(r.ok, false)
+		strictEqual(r.text, "")
 	})
 })
