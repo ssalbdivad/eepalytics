@@ -24,9 +24,9 @@
  * re-derives each sentence from the bytes it came from, and `champion-brief.ts` renders it with the
  * URL, revision and fetch date inline. `championNote`, `defaultNote`, `knownChampions` and
  * `stalenessWarning` are gone with the files they read; the staleness that replaced the last of
- * them is `contextStaleness` in `champion-context.ts` — AGENTS.md calls it
- * `championContextStaleness`, but the exported name is the shorter one — which asks the COMMITTED
- * tree's own manifest which patch it was cut on. (`champion-data.ts` carried
+ * them is `contextStaleness` in `champion-context.ts`, which asks the COMMITTED tree's own manifest
+ * which patch it was cut on. (AGENTS.md called it `championContextStaleness` until 2026-09-19,
+ * when that paragraph was rewritten; the export has only ever had the shorter name.) (`champion-data.ts` carried
  * `championTableStaleness`, the same sentence over `champion-table.ts` with no caller but its own
  * test. That file was deleted on 2026-09-19 and every assertion its test made was re-homed onto
  * `champion-table.ts`, the parsers, and — for the four-part patch string nothing else covered —
