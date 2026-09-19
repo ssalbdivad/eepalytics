@@ -83,6 +83,13 @@
  * seen" and a re-run on the same patch produces the same bytes on disk and the same generated
  * module. A new patch is a new directory and a visible diff in `src/knowledge/champion-table.ts`.
  *
+ * With `--patch` given it also runs with the NETWORK OFF, which it did not until 2026-09-19: two
+ * things reached for the internet on every run regardless of the cache — `versions.json`, fetched
+ * before `--patch` was read, and the twelve ability templates the wiki has no page for, which were
+ * asked for and forgotten every time. Both are fixed below, at `patch` and at `absentPath`, and
+ * each carries the measurement that proves it. "Latest" still needs the network, because only the
+ * network knows what latest is.
+ *
  * Run:
  *   pnpm fetch:champions
  *   pnpm fetch:champions -- --patch 16.18.1
@@ -592,8 +599,16 @@ type WikiPage = { title: string; revId: number; wikitext: string }
 /**
  * Up to 40 titles per query. The API normalises and redirects titles, so the response is matched
  * back by the mappings it returns rather than by assuming the title came back as it went out.
+ *
+ * `absentOut`, when passed, collects the asked titles the WIKI ITSELF answered `missing: true` for
+ * — its own verdict that no such page exists, not this function's inference from an empty result.
+ * The distinction is the whole reason the parameter is a set of missing pages rather than
+ * `titles.filter(t => !out.has(t))`: a page that exists but whose latest revision carried no
+ * content is dropped here too, and that one is NOT absence and must keep being re-asked. Optional
+ * and additive, because `verify-fetched.ts` and `champion-data.test.ts` call this with one
+ * argument and neither of them owns a cache to record absence in.
  */
-export const fetchWikitextBatch = async (titles: string[]): Promise<Map<string, WikiPage>> => {
+export const fetchWikitextBatch = async (titles: string[], absentOut?: Set<string>): Promise<Map<string, WikiPage>> => {
 	const url =
 		`${WIKI_API}?action=query&prop=revisions&rvslots=main&rvprop=content|ids&format=json` +
 		`&formatversion=2&redirects=1&titles=${encodeURIComponent(titles.join("|"))}`
@@ -609,8 +624,12 @@ export const fetchWikitextBatch = async (titles: string[]): Promise<Map<string, 
 		}
 	}>(url)
 	const byTitle = new Map<string, WikiPage>()
+	const saidMissing = new Set<string>()
 	for (const p of j.query?.pages ?? []) {
-		if (p.missing) continue
+		if (p.missing) {
+			saidMissing.add(p.title)
+			continue
+		}
 		const rev = p.revisions?.[0]
 		if (!rev?.slots?.main?.content) continue
 		byTitle.set(p.title, { title: p.title, revId: rev.revid, wikitext: rev.slots.main.content })
@@ -629,6 +648,7 @@ export const fetchWikitextBatch = async (titles: string[]): Promise<Map<string, 
 		}
 		const page = byTitle.get(cur)
 		if (page) out.set(asked, page)
+		else if (absentOut && saidMissing.has(cur)) absentOut.add(asked)
 	}
 	return out
 }
@@ -935,8 +955,39 @@ const main = async (): Promise<void> => {
 
 	/* ------------------------------------------------------- tier 1, sources 1 and 2 */
 
-	const versions = await fetchJson<string[]>(DDRAGON_VERSIONS)
-	const patch = arg("--patch") ?? versions[0]!
+	/*
+	 * `--patch` is an ADDRESS, and it is answered WITHOUT the network. `versions.json` used to be
+	 * fetched on the line above this one, before `--patch` was read at all, so
+	 * `pnpm fetch:champions --patch 16.18.1` against a fully warm cache still had to ask the internet
+	 * which patch was latest in order to honour a patch it had already been given. AGENTS.md carried
+	 * that as two lines and NOT DONE; this is the two lines. Without `--patch` the fetch still
+	 * happens and must — "latest" is a question only the network can answer.
+	 *
+	 * MEASURED on 2026-09-19, because an unproven claim about offline determinism is exactly the
+	 * kind of sentence this repo keeps having to retract. A COPY of the repo carrying the warm
+	 * `data/champions/` was run inside a network namespace with no route off the machine (a copy,
+	 * so that the verification could not write `src/knowledge/champion-table.ts` or
+	 * `knowledge/context/`, which another agent owned at the time):
+	 *
+	 *   unshare -rn node --experimental-strip-types scripts/fetch-champions.ts --patch 16.18.1
+	 *
+	 * On the revision before this change it died on its first call — `versions.json — fetch failed`,
+	 * exit 1, nothing else attempted. With this change and the absence cache below it runs to
+	 * completion in 3.5s, exit 0, having deleted its own outputs first, and reproduces
+	 * `src/knowledge/champion-table.ts` BYTE FOR BYTE against what is committed (`cmp` against
+	 * `git show HEAD:`) and all 353 files of `knowledge/context/` with zero differences
+	 * (`diff -r` against `git archive HEAD`, tree sha256
+	 * fcc2b837cbcfee657629c2281724e3912643ce7d108c1968f32e8629ff803f81, the sha the committed
+	 * MANIFEST already carried). A second offline run leaves every byte of `data/champions/`
+	 * unchanged, and the round trip AGENTS.md describes — 16.18.1 -> 16.17.1 --no-tier2 -> 16.18.1
+	 * — reproduces the committed table offline as well. WITHOUT `--patch` the same command still
+	 * dies on `versions.json`, which is correct and is the point of the check.
+	 *
+	 * (16.17.1 needs `--no-tier2` only because that patch directory has no op.gg half on this
+	 * machine; tier 2 fails soft per champion, so the run would have finished either way with 0
+	 * tier-2 sections.)
+	 */
+	const patch = arg("--patch") ?? (await fetchJson<string[]>(DDRAGON_VERSIONS))[0]!
 	const cacheDir = join(CACHE_ROOT, patch)
 	console.log(`patch ${patch} — cache ${cacheDir}`)
 
@@ -1025,12 +1076,53 @@ const main = async (): Promise<void> => {
 	const abilityCached = refresh ? null : readCache(abilityPath)
 	let rawAbilities: Record<string, { revId: number; wikitext: string }> =
 		abilityCached ? (JSON.parse(abilityCached.content) as Record<string, { revId: number; wikitext: string }>) : {}
-	const missingTitles = wanted.filter(w => rawAbilities[w.title] === undefined).map(w => w.title)
+
+	/*
+	 * The titles the wiki says DO NOT EXIST, remembered, because a cache that only remembers hits is
+	 * not a warm cache.
+	 *
+	 * `Module:ChampionData` lists ability names with no `Template:Data` page behind them - Shyvana's
+	 * dragon-form Emberstrike 2 and 3 and Inferno Aegis 2, Viktor's Glorious Evolution 2-5 and
+	 * Arcane Storm 2-3, Yuumi's Prowling Projectile 2, Samira's splash coin, Milio's Cozy Campfire
+	 * 2: 12 of the titles `wanted` names on 16.18.1. They came back `missing` and were then
+	 * FORGOTTEN, so `missingTitles` was 12 on every run for ever and this script made a network
+	 * call on every run for ever. Verified against the wiki on 2026-09-19 by asking for all twelve
+	 * in one `action=query`: every one answered `"missing": true`, with no normalisation and no
+	 * redirect, so what is recorded here is the wiki's own verdict and not an inference from an
+	 * empty result.
+	 *
+	 * That is what actually blocked the offline run, and it blocked it AFTER the `--patch` fix
+	 * above: the fixed script got as far as `fetching 12 ability templates from the wiki` and died
+	 * there. Both defects had to go before the property AGENTS.md describes was true, and either
+	 * one alone would have made the other look fixed.
+	 *
+	 * The cost is real and is stated rather than hidden: a template page CREATED later is not
+	 * re-asked, so a genuinely new ability stays out of the corpus until someone passes `--refresh`,
+	 * which ignores this file and rebuilds it. That is the lever, and it is deliberately NOT a
+	 * time-based expiry - a "re-ask anything older than N days" rule would put the wall clock back
+	 * into the pipeline and make the offline property work today and fail next month, which is the
+	 * kind of flake this cache exists to end. The count is printed on every run so the suppression
+	 * is visible rather than silent.
+	 *
+	 * It changes no byte of the table: an absent title produced no ability row before (`if (!src)
+	 * continue` in the assembly below) and produces none now. That was measured, not reasoned about
+	 * - the byte-identity check is on `--patch` above.
+	 */
+	const absentPath = join(WIKI_CACHE, "wiki-absent.json")
+	const absentCached = refresh ? null : readCache(absentPath)
+	const absent: Record<string, string> = absentCached
+		? (JSON.parse(absentCached.content) as Record<string, string>)
+		: {}
+
+	const missingTitles = wanted
+		.filter(w => rawAbilities[w.title] === undefined && absent[w.title] === undefined)
+		.map(w => w.title)
+	const absentNow = new Set<string>()
 	if (missingTitles.length > 0) {
 		console.log(`  fetching ${missingTitles.length} ability templates from the wiki…`)
 		for (let i = 0; i < missingTitles.length; i += 40) {
 			const batch = missingTitles.slice(i, i + 40)
-			const pages = await fetchWikitextBatch(batch)
+			const pages = await fetchWikitextBatch(batch, absentNow)
 			for (const t of batch) {
 				const p = pages.get(t)
 				if (p) rawAbilities[t] = { revId: p.revId, wikitext: p.wikitext }
@@ -1040,6 +1132,19 @@ const main = async (): Promise<void> => {
 		}
 		process.stdout.write("\n")
 	}
+	// The date is the day the wiki first said so and is kept across re-runs the way `.fetched` is,
+	// so an unchanged answer is unchanged bytes on disk.
+	const absentDay = new Date().toISOString().slice(0, 10)
+	for (const t of absentNow) absent[t] ??= absentDay
+	const sortedAbsent: Record<string, string> = {}
+	for (const k of Object.keys(absent).sort()) sortedAbsent[k] = absent[k]!
+	writeCache(absentPath, `${JSON.stringify(sortedAbsent, null, "\t")}\n`)
+	if (Object.keys(sortedAbsent).length > 0)
+		console.log(
+			`  ${Object.keys(sortedAbsent).length} ability titles the wiki publishes no page for` +
+				` (cached absent; --refresh re-asks)`
+		)
+
 	// Sorted keys so the cache file is byte-stable whatever order the batches came back in.
 	const sortedAbilities: Record<string, { revId: number; wikitext: string }> = {}
 	for (const k of Object.keys(rawAbilities).sort()) sortedAbilities[k] = rawAbilities[k]!
