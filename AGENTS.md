@@ -931,10 +931,28 @@ fetch (the wiki is edited continuously; those are reported as `stale` with both 
 defects — Wukong's `rev-4051479` is now `rev-4064066`) and 86 are op.gg lines, deliberately not
 re-fetched because tier 2 changes hourly and a difference there would say nothing about the
 renderer (`data/eval/verify-fetched-all-20260919-d.json`; the 22,544-line pass before the drop is
-`-c.json` beside it). On the independent instrument, re-run the same morning:
+`-c.json` beside it). **Replicated exactly, hours later and by a different agent, on an unchanged
+tree: 16,516 / 0 / 6 / 86 again, and the SAME six stale rows** — Evelynn ×3, Ezreal ×1, Wukong ×2
+(`data/eval/verify-fetched-all-20260919-e.json`, `pnpm verify:fetched -- --all`). Not merely the
+same counts — the two files' `results` arrays are EQUAL row for row, 77 minutes apart, over
+16,608 live wiki reads, so the open-loop instrument is as deterministic as the closed ones on a
+tree that is not moving and a wiki that is not being edited. 16,516 + 6 + 86
+is 16,608, which is `audit:knowledge --all`'s cited-line count to the line, so the closed loop and
+the open one are now counting the same corpus rather than two corpora that happen to agree.
+On the independent instrument, re-run the same morning:
 **2,554 of 2,554 per-rank runs this app delivers appear verbatim in the wiki ARTICLE a human
 reads, 0 do not, 0 unchecked** (`data/eval/verify-articles-20260919-b.json`) — the check that
-shares no code with the pipeline it checks. A third check, delivered text against the cached fetched bytes,
+shares no code with the pipeline it checks. **Replicated a third time the same morning, by a
+different agent on the unchanged tree: 2,542 match, 0 do not, 1 unchecked**
+(`data/eval/verify-articles-20260919-c.json`, `pnpm verify:fetched -- --all --articles`). The whole
+11-run difference from 2,554 is ONE CHAMPION and is worth naming rather than averaging away: Urgot's
+article came back HTTP 429 and his 12 runs collapsed into a single `unchecked` row, because that
+agent had a `--all` pass and an `--articles` pass hitting `wiki.leagueoflegends.com` at the same
+moment. **Run these two one at a time.** The wiki rate-limits the whole instrument, not the request,
+and the first full pass it killed outright — a mid-run `SourceDown … HTTP 429` out of `fetchText`,
+which is the right failure (it refuses to write a partial verification) and is indistinguishable at
+a glance from a source that has genuinely moved.
+A third check, delivered text against the cached fetched bytes,
 is clean on every line of all 173 files. And the Riot half is checked the same way rather than
 trusted: a live `championFull.json` fetch is byte-identical to the cached copy the table was cut
 from, and **all 643 delivered cooldowns agree with Riot's own numbers**.
@@ -1108,12 +1126,43 @@ layer it does not ship made the counterpart's section 639 characters longer and 
 measurement, on the live Lillia vs Kayn prompt, is in `champion-brief.ts`).
 
 AFTER: **28,689 delivered lines, 7,179 edge-case lines, ZERO bare colons, 473 short values (1.6%,
-was 17.4%)**, and the tree is **4,334,544 bytes** against 4,691,665. `audit:knowledge --all` still
-reports 173 champions, **16,608 cited lines, 0 untraced and 0 missing** — because the filter lands
+was 17.4%)**, and the tree is **4,334,544 bytes** against 4,691,665. That line count is AT THAT
+COMMIT and the tree has since moved under it: counted at HEAD on 2026-09-19 the same way
+(`git grep -h "^- " HEAD -- knowledge/context | wc -l`) it is **28,565**, because the commit after
+it took the 143 `- WITHHELD` notices back out of the `.core` files. Both numbers are right about
+their own commit, which is the reason to carry the command beside the figure rather than the
+figure alone. `audit:knowledge --all` still reports 173 champions, **16,608 cited lines, 0
+untraced and 0 missing** — because the filter lands
 at claim-mint time in `claims-from-row.ts`, not in the generator. That is mechanical rather than
 stylistic: `auditAssembled` builds its ledger from `championBrief`'s own minted lines, so a line
 the GENERATOR drops becomes `missing` and a notice the generator adds becomes `untraced`, and 157
 untraced lines would fail the audit this file quotes as green.
+
+**A THIRD KIND OF USELESS LINE SURVIVED THE DROP, and it is the wiki's own scaffolding rather
+than its data.** Counted over the committed corpus on 2026-09-19
+(`grep -rhF -- "PENDING FOR TEST" knowledge/context/champions/*.md | wc -l`, and the same for the
+other two markers): **96 delivered lines across 60 champions carry `PENDING FOR TEST:`**, 363 lines
+across 112 champions carry `(bug)` and 208 across 87 carry `(unexpected)`. Those are the wiki
+editors' own confidence annotations, and the first of them is not a claim about League at all — it
+is a TODO. Akshan ships `- edge case: PENDING FOR TEST: Hook range including lollipop against walls
+and final dash distance and speed.`, which is a wiki editor writing down what nobody has measured
+yet, delivered to a coach that is told to absorb this section and never attribute it.
+
+**The source wins and the source really does say it**, which is why this is a usefulness finding and
+not a fabrication one: all 96 of those lines carry `verdict: "match"` in the full open-loop pass
+(`python3 -c` over `data/eval/verify-fetched-all-20260919-d.json`, replicated line for line in
+`-e.json`). So every fence in this repo is behaving correctly and the line is still worthless, which
+is the same shape as the 6,026 cells and the reason to write it down here rather than fix it
+quietly. The fix is NOT DONE and is a judgement rather than a filter: `PENDING FOR TEST` marks a
+claim the source itself has not verified and probably should be dropped at mint time the way an
+empty value now is, while `(bug)` and `(unexpected)` mark a real, documented interaction and
+probably should be KEPT — a jungler being told an interaction is a bug is being told something
+true and useful. Whoever takes it: dropping all three on the marker is the change that looks
+obvious and would cost 567 lines to save 96 — 567 rather than 363 + 208, because four lines carry
+a `(bug)` or `(unexpected)` marker AND a `PENDING FOR TEST` one, which is what happens when a
+figure is added up instead of counted
+(`grep -rhE "\(bug\)|\(unexpected\)" knowledge/context/champions/*.md | grep -vF "PENDING FOR
+TEST" | wc -l`).
 
 **The residue is measured and written into `claims-from-row.ts` rather than left to be
 rediscovered.** 473 short values survive; most are the wiki being genuinely terse ("No additional
@@ -1322,6 +1371,17 @@ drift from what the app would have loaded that day. 60 calls on `gemini-3.6-flas
 post-game model, 0 failed reviews (`data/eval/persona-ab-20260919-flash.json`; reprint it with
 `scripts/persona-ab.ts --read <file>`, which consults no model and costs nothing).
 
+**Within a run the two arms are byte-identical; ACROSS two runs they are not, and the reason is
+worth carrying.** Each run hashes its user turn per game, so the arms cannot differ. But of the 14
+games the flash and sonnet runs share, only **10 produced the same `userSha`** — and diffing the
+four that did not, every difference is inside the CHAMPION CONTEXT block, because another agent
+regenerated `knowledge/context/champions/*.md` between the two runs (one game's Pantheon section
+carries a `- WITHHELD (40 cells of a table in the wiki's notes)` line in the earlier run and not in
+the later one). **The post-game digest is a pure function of the database AND of the committed
+knowledge tree**, so two runs taken while that tree is moving are not strictly paired. It does not
+touch anything above, which is all within-run; it does mean a future A/B against these stored files
+has to check `userSha` rather than assume it.
+
 **The primary number has no judge in it.** An item is scored from its own structured fields —
 `category`, `tSec`, and the clock carried inside every moment id it cites — and never from its
 prose. Part 2's own worked examples both land inside that definition, which is what
@@ -1376,21 +1436,26 @@ whose every figure a judge could verify against the digest:
 | flash, the SAME 188 items | `gemini-3.6-flash` | 90% [82-94] 86/96 | 88% [80-93] 81/92 | p 0.74 |
 | sonnet, 105 items | `claude-sonnet-5` | 80% [68-89] 45/56 | 65% [51-77] 32/49 | p 0.082 |
 | sonnet, the SAME 105 items | `claude-opus-5` | 86% [74-93] 48/56 | 65% [51-77] 32/49 | p 0.014 |
+| sonnet, the SAME 105 items | `gemini-3.6-flash` | 86% [74-93] 48/56 | 65% [51-77] 32/49 | p 0.014 |
 
-**Every judge INDEPENDENT of the coach reports the gap, and the one that does not is grading its
-own output.** The gemini judge on the flash run is `gemini-3.6-flash` reading items written by
-`gemini-3.6-flash`; it scores both arms near ninety and separates nothing, which is what a judge
-that barely discriminates looks like. The two Anthropic judges on the sonnet run agree with each
-other on **93% [87-97]** of the same 105 items and land on the same 21- and 15-point gaps. That is
-not proof — every judge that sees it is from one vendor, and the opus pass
+**Every judge INDEPENDENT of the coach reports the gap, and the only one that does not is grading
+its own output.** That is not an excuse made for a judge that disagreed; it is the last row of the
+table, added to test exactly that. Handed the SONNET run's items — written by a model that is not
+its own — `gemini-3.6-flash` lands on **86% against 65%, p 0.014**: the same 21 points, and the
+same counts to the item (48/56 and 32/49) as `claude-opus-5`, with which it agrees on **96%
+[91-99]** of those 105 verdicts. Two vendors, three judge models, one answer. The only pass that
+sees nothing is `gemini-3.6-flash` reading `gemini-3.6-flash`'s own writing, where it scores both
+arms near ninety. The one provenance caveat that remains: the opus pass
 (`…-sonnet-judged-claude-opus-5.json`) was produced by another agent running this same committed
-script in this tree rather than by this run — but "it does not replicate" would be the wrong
-summary. And one thing IS consistent across all five passes including the gemini ones: **the NEW
-arm's own on-target items are the unsupported ones**, every time. Its on-target against its
-off-target unsupported rate is 46% / 23% (flash, sonnet judge), 23% / 5% and 26% / 7% (flash,
-gemini and its replicate), 64% / 11% and 68% / 7% (sonnet run, sonnet and opus judges). The judges
-disagree wildly on the LEVEL and not at all on where the difficulty sits: in the items the re-aim
-added.
+script in this tree rather than by this run, and the cross-vendor gemini pass above is what makes
+it unnecessary.
+
+And the same thing is consistent across all SIX passes, the gemini ones included: **the NEW arm's
+own on-target items are the unsupported ones**, every time. Its on-target against its off-target
+unsupported rate is 46% / 23% (flash, sonnet judge), 23% / 5% and 26% / 7% (flash,
+gemini and its replicate), and 64% / 11%, 68% / 7%, 64% / 11% on the sonnet run under sonnet, opus
+and gemini. The judges disagree on the LEVEL and not at all on where the difficulty sits: in the
+items the re-aim added.
 
 **A MODEL SWITCH THIS RUN NEARLY JUSTIFIED, on the axis the paragraph above says cannot carry a
 reading.** The two runs differ in COACH as well as in prompt, so the same stored items answer a
@@ -1412,23 +1477,26 @@ prose was worth 23 points of `useful` — comfortably larger than any prompt eff
 page, and on the axis whose own self-agreement is 72%.
 
 **USEFUL is flat everywhere and is not measurable here at all.** 49% against 50% (p 0.89) under
-sonnet on the flash run, 67% against 74% (p 0.28) under gemini on the same items, 77% against 73%
-(p 0.69) and 54% against 61% (p 0.43) on the sonnet run. The reason to stop asking was measured
-rather than assumed: the gemini judge was re-run over the SAME 188 items under a different shuffle
-seed (`…-judged-gemini-3.6-flash-replicate.json`, 30 of 30 games), true difference zero, and it
-**agrees with itself on `useful` on only 72% [66-78]**, with its own old-arm rate moving 67% to 78%
-between the two passes — an eleven-point swing on identical items, larger than any arm difference
+sonnet on the flash run, 67% against 74% (p 0.28) under gemini on the same items, and 80% against
+84% (p 0.66), 77% against 73% (p 0.69) and 54% against 61% (p 0.43) on the sonnet run. The reason
+to stop asking was measured rather than assumed: the gemini judge was re-run over the SAME 188
+items under a different shuffle seed (`…-judged-gemini-3.6-flash-replicate.json`, 30 of 30
+games), true difference zero, and it **agrees with itself on `useful` on only 72% [66-78]**, with
+its own old-arm rate moving 67% to 78% between the two passes — an eleven-point swing on identical items, larger than any arm difference
 on that axis anywhere here. On `supported` the same replicate agrees with itself on **91%
 [86-94]**, which is why that axis can carry a reading and this one cannot.
 
-**What this does NOT establish.** Three judge models over five passes, all of them one-shot, and
-every judge that reports the `supported` gap is from ONE VENDOR — so the gap is reproduced but not
-independent, and nothing here says how much of it is real fabrication rather than a judge's
-strictness. Some verdicts conflate "supported" with "permitted" (one cites the digest's own
-no-blame rule as the reason a figure is unsupported), so 65-68% is a floor on what is sourced, not
-a fabrication rate. Two arms, one prompt pair, one player, one day. The fixes all this suggests — police prose figures the way ids are policed, and
-say in the digest that an objective row names no killer — are NOT DONE and are changes to files
-this run did not own.
+**What this does NOT establish.** Three judge models over six passes, all of them one-shot, and
+nothing here says how much of the gap is real fabrication rather than a judge's strictness — only
+that three models from two vendors agree there IS one. Some verdicts conflate "supported" with
+"permitted" (one cites the digest's own no-blame rule as the reason a figure is unsupported), so
+65-68% is a floor on what is sourced, not a fabrication rate. Two arms, one prompt pair, one
+player, one day. Of the two fixes all this suggests, ONE SHIPPED the same morning: the digest's
+`## OBJECTIVES` block now says in so many words that no row names a player, because the judge's own
+reasons named that list — "Cho'Gath took drake and 3 grubs" against a row reading `8:17 — HORDE
+taken by the enemy` (`review/prompt.ts`, which carries the measurement). Carrying the killer where
+`killerId` knows it, the way `pack.ts` already does on the frame path, and policing prose figures
+the way ids are policed, are both still NOT DONE.
 
 ### Architecture in one breath
 
