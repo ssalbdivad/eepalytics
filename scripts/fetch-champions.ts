@@ -1342,6 +1342,20 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = ${JSON.stringify(rows, null
 			`${(header.length / 1024).toFixed(0)} KB`
 	)
 	console.log(`cache: ${cacheDir}`)
+
+	/*
+	 * The table is an intermediate, not the artefact. What the app reads is `knowledge/context/`,
+	 * written from the table by `generate-context.ts` — so a fetch that stopped here would leave the
+	 * repo in the one state this design does not allow: fresh facts on disk and a coach still
+	 * reading last patch's text, with nothing to say which. The import is dynamic and comes after
+	 * the write, because the generator reads the module that was just written.
+	 */
+	const { generateContext } = await import("./generate-context.ts")
+	const tree = await generateContext()
+	console.log(
+		`wrote knowledge/context/: ${tree.files} files, ${(tree.bytes / 1024 / 1024).toFixed(2)} MB, ` +
+			`sha256 ${tree.sha256}`
+	)
 }
 
 /*

@@ -1,0 +1,15 @@
+{
+	"patch": "16.18.1",
+	"champions": 173,
+	"roles": [
+		"jungle",
+		"top",
+		"middle",
+		"bottom",
+		"support"
+	],
+	"files": 353,
+	"bytes": 4665492,
+	"generatedFrom": "2026-09-18T22:31:42.512Z",
+	"sha256": "0556c1a3945829c69c8becc46aa6accf857ccb3614b107f8371dbc585f0a1e7d"
+}

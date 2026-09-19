@@ -1,0 +1,1 @@
+Nothing here. No source this app fetches publishes anything about the support role, and nothing was written to stand in for one. If the coach wants to say something about this role, it is saying it out of its own head and should say less instead.

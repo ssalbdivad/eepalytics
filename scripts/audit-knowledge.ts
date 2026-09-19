@@ -33,6 +33,7 @@
  */
 
 import { championBriefSync, championTableSync } from "../src/knowledge/champion-brief.ts"
+import { championContext } from "../src/knowledge/champion-context.ts"
 import { liveChampionKnowledge } from "../src/review/live-coach-knowledge.ts"
 import { fullKnowledge } from "../src/review/live-knowledge-full.ts"
 import { auditAssembled } from "../src/knowledge/provenance.ts"
@@ -86,7 +87,17 @@ const REFUTED: { pattern: RegExp; was: string; source: string }[] = [
 const champion = process.argv[2] ?? "Lillia"
 const counterpart = process.argv[3] ?? "Kayn"
 
+/*
+ * TWO objects, and the gap between them is the check.
+ *
+ * `brief` is the LEDGER — what the renderer says every line of this champion's section is and where
+ * it came from. `delivered` is the committed file in `knowledge/context/`, which is the only thing
+ * the running app ever reads. Auditing the delivered bytes against the ledger is strictly stronger
+ * than auditing the renderer's own output against itself: it catches a hand edit to a generated
+ * file, which is exactly how the sentence this pipeline replaced got in.
+ */
 const brief = championBriefSync(champion)
+const delivered = championContext(champion)
 if (!brief) {
 	console.error(
 		`No fetched row for ${champion}. That is a legitimate state — it means the coach says nothing ` +
@@ -106,7 +117,7 @@ console.log("## 1. Refuted sentences, probed against every path that reaches the
 for (const r of REFUTED) {
 	const hits = [
 		r.pattern.test(live) ? "LIVE" : null,
-		r.pattern.test(brief.text) ? "POST-GAME" : null,
+		delivered !== null && r.pattern.test(delivered) ? "POST-GAME" : null,
 		r.pattern.test(clauses) ? "LEGACY-CLAUSES" : null
 	].filter(x => x !== null)
 	if (hits.length > 0) failures += 1
@@ -115,7 +126,14 @@ for (const r of REFUTED) {
 }
 
 console.log("\n## 2. The post-game CHAMPION CONTEXT block, line for line\n")
-const audit = auditAssembled(brief.text, brief)
+if (delivered === null) {
+	console.error(
+		`No committed context file for ${champion} in knowledge/context/. The table has a row and the ` +
+			`tree does not — run \`pnpm generate:context\` and commit the diff.`
+	)
+	process.exit(1)
+}
+const audit = auditAssembled(delivered, brief)
 console.log(`claim lines ${audit.claimLines} · structural lines ${audit.structureLines} · untraced ${audit.untraced.length} · unsourced claims ${audit.unsourcedClaims}`)
 console.log(`oldest fetch anything here rests on: ${audit.oldestFetchedAt ?? "unknown"}`)
 for (const u of audit.usage)

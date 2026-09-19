@@ -683,6 +683,33 @@ export const STRUCTURE_TEMPLATES = {
 	"sources.heading": () => "### Where this section came from",
 	"sources.line": (v: { source: SourceRecord; claims: number }) =>
 		`- ${v.source.id}: ${v.source.publisher}, revision ${v.source.revision}, fetched ${v.source.fetchedAt.slice(0, 10)} — ${v.claims} line${v.claims === 1 ? "" : "s"} — ${v.source.url}`,
+
+	/*
+	 * The five below exist for the PRE-GENERATED context tree in `knowledge/context/`, which is
+	 * committed text rather than something a running app renders. They are here and not in the
+	 * generator for one reason: this table is the whole of the unsourced vocabulary, it is pinned
+	 * literal-for-literal by `provenance.test.ts`, and a second table somewhere else would be a
+	 * second place a sentence about League could enter without a reviewer seeing it as a diff.
+	 */
+	"general.heading": () => "# GENERAL CONTEXT — where every champion line in this app comes from",
+	"general.patch": (v: { patch: string; champions: number; claims: number; withheld: number }) =>
+		`Patch ${v.patch}. ${v.champions} champions, ${v.claims} checked lines, ${v.withheld} ability slot${v.withheld === 1 ? "" : "s"} withheld because two sources disagreed about the name, the cooldown or the cost.`,
+	/*
+	 * The negative half, and it is the honest one. Every entry names a CATEGORY that was probed for
+	 * and came back empty — it is a statement about sources, not about League, which is why it can
+	 * be written down here at all. The probes are recorded in `knowledge/SOURCES.md`.
+	 */
+	"general.silent": () =>
+		"NOT PUBLISHED ANYWHERE, so this app says nothing about it: jungle clear routes and camp order; " +
+		"gank-failure conditions; how to read a clear's tempo; what an item purchase implies about intent; " +
+		"objective-pressure narrative; power-spike timing; matchup advice as distinct from matchup win " +
+		"rate; where a champion tends to die. Each was probed for and each came back empty — u.gg 403, " +
+		"lolalytics behind a challenge, mobalytics needs auth, blitz DNS-dead, and Riot's own allytips " +
+		"and enemytips return empty arrays. None of it was written to fill the gap, and a gap is the " +
+		"correct output.",
+	"role.none": (v: { role: string }) =>
+		`Nothing here. No source this app fetches publishes anything about the ${v.role} role, and nothing was written to stand in for one. If the coach wants to say something about this role, it is saying it out of its own head and should say less instead.`,
+
 	blank: () => ""
 } as const
 

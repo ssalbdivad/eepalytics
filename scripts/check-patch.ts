@@ -28,6 +28,7 @@
  */
 
 import { CHAMPION_ROWS, CHAMPION_TABLE_PATCH, CHAMPION_TABLE_SOURCES } from "../src/knowledge/champion-table.ts"
+import { contextManifest } from "../src/knowledge/champion-context.ts"
 
 const VERSIONS_URL = "https://ddragon.leagueoflegends.com/api/versions.json"
 
@@ -89,6 +90,19 @@ const main = async (): Promise<void> => {
 
 	console.log(`live patch:            ${live}`)
 	console.log(`champion table patch:  ${status.patch}  (${status.champions} champions)`)
+	/*
+	 * The table is not what the app reads — `knowledge/context/` is. A fresh table behind a stale
+	 * tree is the one failure this split introduced, and it is silent unless something says it out
+	 * loud: the coach would go on quoting last patch's numbers while `check-patch` reported Fresh.
+	 */
+	const tree = contextManifest()
+	console.log(
+		tree === null ?
+			`context tree:          MISSING — run \`pnpm generate:context\``
+		: tree.patch === status.patch ?
+			`context tree:          ${tree.patch}  (${tree.files} files, ${(tree.bytes / 1024 / 1024).toFixed(2)} MB)`
+		:	`context tree:          ${tree.patch}  — BEHIND THE TABLE. Run \`pnpm generate:context\`; the app reads the tree, not the table.`
+	)
 	for (const [id, at] of Object.entries(status.fetchedAt)) console.log(`  ${id.padEnd(16)} fetched ${at}`)
 	console.log(
 		status.stale ?

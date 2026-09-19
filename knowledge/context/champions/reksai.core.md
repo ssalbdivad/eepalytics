@@ -1,0 +1,105 @@
+## REK'SAI — FETCHED FACTS (copied from the sources named on each line)
+
+Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
+
+### Identity
+- title: the Void Burrower [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- resource: Fury [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released / last changed: V4.21 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released / last changed: V26.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+
+### Base stats
+- base stat: hp_base 600, hp_lvl 99, mp_base 100, mp_lvl 0, arm_base 35, arm_lvl 4.5, mr_base 32, mr_lvl 2.05, hp5_base 2.5, hp5_lvl 0.5, mp5_base 0, mp5_lvl 0, dam_base 62, dam_lvl 3, as_base 0.667, as_lvl 2, range 175, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+
+### Passive
+- name: Fury of the Xer'Sai [wiki-p rev-4007776, fetched 2026-09-18]
+- what it does: Innate: Rek'Sai basic attacks generate 25 Fury on-hit, reduced to 4 per hit against minions, and to 5 per hit against wards and jungle plants. Rek'Sai's abilities other than Queen's Wrath generate 25 Fury upon hitting at least one unit. Prey Seeker does not generate Fury against non- champions hit. After 8 seconds of being out of combat, she loses 20 Fury per second. When Rek'Sai becomes Burrowed, she consumes her current Fury over 3 seconds to heal for 0% – 100% (based on Fury) of 9% – 21.29% (based on level) maximum health, stopping once fully consumed or she reaches full health. If she starts generating Fury while Burrowed, the consumption occurs after 5 seconds. [wiki-p rev-4007776, fetched 2026-09-18]
+- targeting: Passive [wiki-p rev-4007776, fetched 2026-09-18]
+
+### Q
+- name: Queen's Wrath [wiki-q rev-3983369, fetched 2026-09-18]
+- cooldown: 4 / 3.5 / 3 / 2.5 / 2 [wiki-q rev-3983369, fetched 2026-09-18]
+- what it does: Active: Rek'Sai gains 35% bonus attack speed for 3 seconds. Her next basic attack on-hit within the duration will have an uncancellable windup and deal bonus physical damage to the target and surrounding enemies. Queen's Wrath's damage to the primary target is affected by critical strike modifiers. If Rek'Sai completes an attack, the duration is refreshed, for up to 3 total empowered attacks. Queen's Wrath resets Rek'Sai's basic attack timer. [wiki-q rev-3983369, fetched 2026-09-18]
+- damage by rank: Bonus Physical Damage: 30 / 35 / 40 / 45 / 50% AD Total Bonus Physical Damage: 90 / 105 / 120 / 135 / 150% AD [wiki-q rev-3983369, fetched 2026-09-18]
+- cast time: none [wiki-q rev-3983369, fetched 2026-09-18]
+- effect radius: 325 [wiki-q rev-3983369, fetched 2026-09-18]
+- targeting: Auto [wiki-q rev-3983369, fetched 2026-09-18]
+- damage type: Physical [wiki-q rev-3983369, fetched 2026-09-18]
+- spell shield: false [wiki-q rev-3983369, fetched 2026-09-18]
+- name: Prey Seeker [wiki-q2 rev-3961898, fetched 2026-09-18]
+- cooldown: 10 [wiki-q2 rev-3961898, fetched 2026-09-18]
+- what it does: Active: Rek'Sai fires a void bolt in the target direction that detonates on the first enemy hit, dealing magic damage to all nearby enemies and revealing them for 5 seconds. [wiki-q2 rev-3961898, fetched 2026-09-18]
+- damage by rank: Magic Damage: 50 / 80 / 110 / 140 / 170 (+ 25% bonus AD) (+ 70% AP) [wiki-q2 rev-3961898, fetched 2026-09-18]
+- target range: 1500 [wiki-q2 rev-3961898, fetched 2026-09-18]
+- cast time: 0.125 [wiki-q2 rev-3961898, fetched 2026-09-18]
+- effect radius: 150 [wiki-q2 rev-3961898, fetched 2026-09-18]
+- width: 130 [wiki-q2 rev-3961898, fetched 2026-09-18]
+- missile speed: 1950 [wiki-q2 rev-3961898, fetched 2026-09-18]
+- targeting: Direction [wiki-q2 rev-3961898, fetched 2026-09-18]
+- damage type: Magic [wiki-q2 rev-3961898, fetched 2026-09-18]
+- spell shield: True [wiki-q2 rev-3961898, fetched 2026-09-18]
+
+### W
+- name: Burrow [wiki-w rev-3980688, fetched 2026-09-18]
+- cooldown: 4 [wiki-w rev-3980688, fetched 2026-09-18]
+- what it does: Active: Rek'Sai becomes Burrowed, reducing her attack range by 50 and her sight radius to 385 units, while gaining access to her Burrowed abilities. She also becomes ghosted and gains bonus movement speed, as well as Tremor Sense. Tremor Sense: Rek'Sai and her allies gain obscured vision of non-visible, moving enemies within range at a rate of once every second. Once Burrow has been learned, Rek'Sai automatically becomes Burrowed upon completing a Recall channel or respawning. [wiki-w rev-3980688, fetched 2026-09-18]
+- damage by rank: Bonus Movement Speed: 5 / 10 / 15 / 20 / 25 [wiki-w rev-3980688, fetched 2026-09-18]
+- cast time: none [wiki-w rev-3980688, fetched 2026-09-18]
+- effect radius: 1500 [wiki-w rev-3980688, fetched 2026-09-18]
+- targeting: Auto [wiki-w rev-3980688, fetched 2026-09-18]
+- name: Unburrow [wiki-w2 rev-4008007, fetched 2026-09-18]
+- what it does: Active: Rek'Sai becomes Un-Burrowed, gaining access to her Un-Burrowed abilities and emerging from the ground to deal magic damage to nearby enemies and knock them up for 1 second. Minions and small monsters are instead knocked back a short distance. Targets hit cannot be displaced by Unburrow again for some time. Rek'Sai can also trigger Unburrow by issuing an attack command, casting the ability once she is in attack range of the target and applying the knock up against them. Rek'Sai becomes unable to move or attack for 0.15 seconds after hitting an enemy with Unburrow. [wiki-w2 rev-4008007, fetched 2026-09-18]
+- damage by rank: Magic Damage: 30 / 55 / 80 / 105 / 130 (+ 80% AP) [wiki-w2 rev-4008007, fetched 2026-09-18]
+- cast time: none [wiki-w2 rev-4008007, fetched 2026-09-18]
+- effect radius: 220 • 250 • 75 [wiki-w2 rev-4008007, fetched 2026-09-18]
+- targeting: Auto [wiki-w2 rev-4008007, fetched 2026-09-18]
+- damage type: Magic [wiki-w2 rev-4008007, fetched 2026-09-18]
+- spell shield: True [wiki-w2 rev-4008007, fetched 2026-09-18]
+
+### E
+- name: Furious Bite [wiki-e rev-4034704, fetched 2026-09-18]
+- cooldown: 6 [wiki-e rev-4034704, fetched 2026-09-18]
+- what it does: Active: Rek'Sai bites the target enemy, dealing physical damage. At maximum Fury, Furious Bite deals - 100% damage and is converted to true damage. [wiki-e rev-4034704, fetched 2026-09-18]
+- damage by rank: Physical Damage: to (+ % bonus AD) · True Damage: - to * (+ - % bonus AD) [wiki-e rev-4034704, fetched 2026-09-18]
+- target range: 225 [wiki-e rev-4034704, fetched 2026-09-18]
+- cast time: 0.25 [wiki-e rev-4034704, fetched 2026-09-18]
+- targeting: Unit [wiki-e rev-4034704, fetched 2026-09-18]
+- damage type: Physical [wiki-e rev-4034704, fetched 2026-09-18]
+- spell shield: True [wiki-e rev-4034704, fetched 2026-09-18]
+- name: Tunnel [wiki-e2 rev-4007778, fetched 2026-09-18]
+- cooldown: 18 / 17 / 16 / 15 / 14 [wiki-e2 rev-4007778, fetched 2026-09-18]
+- what it does: Active: Rek'Sai dashes in the target direction, leaving behind a Tunnel that has two interconnected entrances and lasts up to 10 minutes. The Tunnel can be traversed again when Rek'Sai targets either entrance, causing her to dash to the selected entrance before travelling through the Tunnel to the opposite side. Once a Tunnel has been traversed, it is shut down for a few seconds during which Rek'Sai cannot enter it again. Rek'Sai can have up to 8 Tunnels active on the battlefield at once. Deploying Tunnels beyond the maximum causes the oldest one to be destroyed. Enemy champions can destroy a Tunnel by standing on either entrance for 1.5 seconds, granting them 5 upon successfully destroying the Tunnel. If Rek'Sai attempts to enter a Tunnel while Un-Burrowed, she will automatically Burrow upon interacting with it, and automatically Unburrow after exiting it. This does not place Burrow on cooldown nor trigger Fury of the Xer'Sai, but does trigger other Burrow effects and Unburrow. If Burrow is on cooldown at the time of interacting with the Tunnel, the cooldown will be reset. Rek'Sai cannot enter a tunnel while immobilized, grounded, or silenced. [wiki-e2 rev-4007778, fetched 2026-09-18]
+- target range: 850 [wiki-e2 rev-4007778, fetched 2026-09-18]
+- cast time: none [wiki-e2 rev-4007778, fetched 2026-09-18]
+- missile speed: 500 + 100% movement speed [wiki-e2 rev-4007778, fetched 2026-09-18]
+- targeting: Direction [wiki-e2 rev-4007778, fetched 2026-09-18]
+
+### R
+- name: Void Rush [wiki-r rev-4004938, fetched 2026-09-18]
+- cooldown: 120 / 100 / 80 [wiki-r rev-4004938, fetched 2026-09-18]
+- what it does: Passive: Rek'Sai applies Marked as Prey to enemy champions she damages, lasting for 5 seconds. Active: Rek'Sai singles out the target enemy champion Marked as Prey, becoming displacement immune and unable to act and vanishing into the ground, as well as revealing the target for 1.5 seconds. After 0.9 seconds, she blinks to a location near the target, becoming targetable again and emerging from the ground to pounce at them. Upon arrival, she slashes at the target with her claws, dealing physical damage, and dashes 125 units through them. If cast while in Burrowed form, Rek'Sai will automatically Unburrow at the end of Void Rush's cast time, placing Burrow on a 1-second cooldown without triggering Unburrow's effects. If Burrow is already on cooldown, its remaining cooldown is set to 1 second. [wiki-r rev-4004938, fetched 2026-09-18]
+- damage by rank: Physical Damage: 150 / 250 / 350 (+ 100% bonus AD) (+ 15 / 20 / 25% of target's maximum health) [wiki-r rev-4004938, fetched 2026-09-18]
+- target range: 1500 [wiki-r rev-4004938, fetched 2026-09-18]
+- cast time: 0.25 [wiki-r rev-4004938, fetched 2026-09-18]
+- missile speed: 1400 [wiki-r rev-4004938, fetched 2026-09-18]
+- targeting: Unit [wiki-r rev-4004938, fetched 2026-09-18]
+- damage type: Physical [wiki-r rev-4004938, fetched 2026-09-18]
+- spell shield: True [wiki-r rev-4004938, fetched 2026-09-18]
+
+### What real games did this patch — counts, not advice
+- win rate this patch: 51.74% (n=2,362 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]
+- skill order: Q > W > E > Q > Q > R > Q > E > Q > E > R > E > E > W > W (n=666 games, 409 wins, emerald_plus) [opgg 16.18, fetched 2026-09-18]
+
+### Where this section came from
+- wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4007776, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FFury%20of%20the%20Xer'Sai&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-3983369, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FQueen's%20Wrath&prop=text
+- wiki-q2: League of Legends Wiki, ability data template, revision rev-3961898, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FPrey%20Seeker&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-3980688, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FBurrow&prop=text
+- wiki-w2: League of Legends Wiki, ability data template, revision rev-4008007, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FUnburrow&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4034704, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FFurious%20Bite&prop=text
+- wiki-e2: League of Legends Wiki, ability data template, revision rev-4007778, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FTunnel&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4004938, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FVoid%20Rush&prop=text
+- opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/reksai/jungle?tier=emerald_plus

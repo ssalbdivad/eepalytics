@@ -34,6 +34,35 @@ URL, a revision and a fetch time. `src/knowledge/claims-from-row.ts` turns that 
 any it cannot reproduce, and `src/knowledge/champion-brief.ts` renders the section with the source,
 revision and date **in every line**.
 
+Then it stops. **The rendering happens at generation time, not at request time**, and
+`scripts/generate-context.ts` writes the result to `context/` as committed text — one file per
+champion, one per role, one general. `pnpm fetch:champions` runs it; `pnpm generate:context`
+re-runs it on its own with no network.
+
+### `context/` — the committed artefact, and what the app actually reads
+
+**This is the thing.** At runtime `src/knowledge/champion-context.ts` picks the right combination —
+his champion, the enemy jungler's, his role — reads those files and concatenates them. It has no
+renderer, no template, no claim checker and no branch that can produce a word about League. If the
+runtime path can generate a sentence, the design is wrong.
+
+Why a file and not the renderer it replaced: a rendered block is a block nobody read. The renderer
+was already checking every claim and putting a URL on every line, and it was doing all of it inside
+the process where the only reader was the model. A committed file is greppable by a human who wants
+to know what his coach was told about Lillia, a new patch is a pull request, and a hand edit fails
+the suite — `src/knowledge/champion-context.test.ts` regenerates the whole tree into a temp
+directory and diffs it against what is committed, in both directions.
+
+`<key>.core.md` is the same block without the wiki's per-ability interaction notes: a BUDGET
+variant for the counterpart's section, the champ-select brief and the watch-a-moment call. It is a
+second file rather than a runtime filter, because a filter is a branch, and a test asserts every
+line of a core file appears in its full file — so the worst it can do is leave the coach knowing
+less.
+
+`roles/` has a file for all five roles and four of them say, in so many words, that no source
+publishes anything about a role and nothing was written to stand in for one. That is the
+instruction working, not a gap in the build.
+
 `pnpm audit:knowledge [champion]` assembles the prompts a player actually gets and checks, line for
 line, that nothing in the champion half arrived without a claim behind it.
 

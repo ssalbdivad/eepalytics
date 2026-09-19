@@ -32,6 +32,7 @@
 		"backfill": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/backfill-reviews.ts",
 		"smoke:live": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning scripts/smoke-live.ts",
 		"fetch:champions": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/fetch-champions.ts",
+		"generate:context": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/generate-context.ts",
 		"audit:knowledge": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/audit-knowledge.ts",
 		"check-patch": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/check-patch.ts",
 		"what-wins": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/what-wins.ts",

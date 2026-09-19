@@ -395,11 +395,23 @@ describe("rendering", () => {
 			STRUCTURE_TEMPLATES["owner.warning"](),
 			"The lines under this heading have no source. They are the owner's own judgment, written by him on the date shown. Treat them as opinion you may act on, never as a fact you may assert."
 		)
+		strictEqual(
+			STRUCTURE_TEMPLATES["role.none"]({ role: "support" }),
+			"Nothing here. No source this app fetches publishes anything about the support role, and nothing was written to stand in for one. If the coach wants to say something about this role, it is saying it out of its own head and should say less instead."
+		)
+		strictEqual(
+			STRUCTURE_TEMPLATES["general.patch"]({ patch: "16.18.1", champions: 173, claims: 9, withheld: 1 }),
+			"Patch 16.18.1. 173 champions, 9 checked lines, 1 ability slot withheld because two sources disagreed about the name, the cooldown or the cost."
+		)
 		deepStrictEqual(Object.keys(STRUCTURE_TEMPLATES).sort(), [
 			"blank",
+			"general.heading",
+			"general.patch",
+			"general.silent",
 			"group.heading",
 			"owner.heading",
 			"owner.warning",
+			"role.none",
 			"section.heading",
 			"section.preamble",
 			"sources.heading",

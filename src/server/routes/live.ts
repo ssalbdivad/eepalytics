@@ -47,8 +47,7 @@ import { championName, refreshChampionNames } from "../../daemon/champions.ts"
 import { summonerSpellName, refreshSummonerSpellNames } from "../../daemon/spells.ts"
 import { lcu } from "../../daemon/lcu.ts"
 import { championKey, pronunciationTable } from "../../knowledge/index.ts"
-import { championBriefSync } from "../../knowledge/champion-brief.ts"
-import { CHAMPION_TABLE_PATCH } from "../../knowledge/champion-data.ts"
+import { championContext, contextPatch } from "../../knowledge/champion-context.ts"
 import { ROLE_DEFAULT_KEY, shippedClauseSection } from "../../knowledge/legacy-clauses.ts"
 import {
 	mergeClauses,
@@ -1864,12 +1863,12 @@ export const createLiveRoute = (): Hono => {
 			 * the notes are 60% of the bytes.
 			 */
 			noteFor: champion => {
-				const brief = championBriefSync(champion, { edgeCases: false })
+				const brief = championContext(champion, "core")
 				return brief ?
 						{
 							champion,
-							text: brief.text,
-							patch: CHAMPION_TABLE_PATCH,
+							text: brief,
+							patch: contextPatch(),
 							source: "fetched — every line carries its own source, revision and date"
 						}
 					:	null

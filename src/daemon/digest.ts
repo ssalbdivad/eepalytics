@@ -36,8 +36,7 @@ import type { LcuEvent, LcuTimeline } from "../shared/schema/lcu.ts"
 import { zoneOf } from "../shared/map.ts"
 import type { TeamId } from "../shared/map.ts"
 import type { Baseline } from "../analysis/index.ts"
-import { championBriefSync } from "../knowledge/champion-brief.ts"
-import { CHAMPION_TABLE_PATCH, championTableStaleness } from "../knowledge/champion-data.ts"
+import { championContext as committedContext, contextPatch, contextStaleness } from "../knowledge/champion-context.ts"
 import { DIGEST_SCHEMA_VERSION } from "../review/digest-contract.ts"
 import type { ChampionContext } from "../review/digest-contract.ts"
 import type {
@@ -328,22 +327,22 @@ export const buildGameDigest = (input: BuildDigestInput): GameDigest => {
 	 * it is 60% of the bytes, it is measured inert, and dropping fetched lines can only make the
 	 * coach know less rather than make it wrong.
 	 */
-	const brief = championBriefSync(game.championName)
-	const oppBrief = opponent ? championBriefSync(opponent.championName, { edgeCases: false }) : null
+	const brief = committedContext(game.championName)
+	const oppBrief = opponent ? committedContext(opponent.championName, "core") : null
 	const championContext: ChampionContext | undefined =
 		brief ?
 			{
 				champion: game.championName,
-				patch: CHAMPION_TABLE_PATCH,
+				patch: contextPatch(),
 				source: "fetched — every line carries its own source, revision and date",
-				text: brief.text,
-				staleness: championTableStaleness(game.patch),
+				text: brief,
+				staleness: contextStaleness(game.patch),
 				// The generated table has no `_default` row: a champion nobody fetched yields no
 				// section at all rather than a stand-in that reads like one.
 				isDefault: false,
 				opponent:
 					oppBrief && opponent ?
-						{ champion: opponent.championName, text: oppBrief.text }
+						{ champion: opponent.championName, text: oppBrief }
 					:	null
 			}
 		:	undefined
