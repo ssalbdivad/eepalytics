@@ -38,7 +38,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 550 [wiki-q rev-4007611, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4007611, fetched 2026-09-18]
 - effect radius: 450 [wiki-q rev-4007611, fetched 2026-09-18]
-- missile speed: 1800 • 600 [wiki-q rev-4007611, fetched 2026-09-18]
+- missile or dash speed: 1800 • 600 [wiki-q rev-4007611, fetched 2026-09-18]
 - targeting: Unit [wiki-q rev-4007611, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4007611, fetched 2026-09-18]
 - spell shield: Special [wiki-q rev-4007611, fetched 2026-09-18]
@@ -67,6 +67,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Captive Audience [wiki-e rev-4007613, fetched 2026-09-18]
 - cooldown: 2 [wiki-e rev-4007613, fetched 2026-09-18]
 - cost: 30 [wiki-e rev-4007613, fetched 2026-09-18]
+- recharge timer for a stocked charge: 24 / 21.5 / 19 / 16.5 / 14 [wiki-e rev-4007613, fetched 2026-09-18]
 - what it does: Passive - Beauty in Death: Whenever Jhin kills an enemy champion, he summons a Blooming Lotus Trap on their corpse. Active: Jhin places a Lotus Trap at the target location which, upon landing, becomes stealthed after arming over 1 second, lasting for up to 180 seconds and granting sight within its radius. The Lotus Trap blooms upon enemy contact, with enemies in the area at the time of its trigger becoming revealed for 4 seconds. Jhin periodically stocks a Lotus Trap charge, up to a maximum of 2. Blooming Lotus Traps slow enemies within the area by 35% for 2 seconds before exploding, dealing magic damage to enemies. Lotus Traps deal 65% damage against minions as well as against champions and monsters who have been struck by another Lotus Trap in the last 1 second. [wiki-e rev-4007613, fetched 2026-09-18]
 - damage by rank: Magic Damage: 20 / 80 / 140 / 200 / 260 (+ 120% AD) (+ 100% AP) Reduced Damage: 13 / 52 / 91 / 130 / 169 (+ 78% AD) (+ 65% AP) [wiki-e rev-4007613, fetched 2026-09-18]
 - target range: 750 [wiki-e rev-4007613, fetched 2026-09-18]
@@ -89,7 +90,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Minimum Physical Damage per Bullet: 64 / 128 / 192 (+ 25% AD) Maximum Physical Damage per Bullet: 256 / 512 / 768 (+ 100% AD) · Minimum Fourth Shot Damage: 128 / 256 / 384 (+ 50% AD) Maximum Fourth Shot Damage: 512 / 1024 / 1536 (+ 200% AD) [wiki-r rev-4007615, fetched 2026-09-18]
 - cast time: 1 • 0.25 [wiki-r rev-4007615, fetched 2026-09-18]
 - width: 160 [wiki-r rev-4007615, fetched 2026-09-18]
-- missile speed: 5000 [wiki-r rev-4007615, fetched 2026-09-18]
+- missile or dash speed: 5000 [wiki-r rev-4007615, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-4007615, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4007615, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4007615, fetched 2026-09-18]
@@ -191,5 +192,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3998238, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jhin%2FWhisper&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007611, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jhin%2FDancing%20Grenade&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4021795, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jhin%2FDeadly%20Flourish&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4007613, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jhin%2FCaptive%20Audience&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4007613, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jhin%2FCaptive%20Audience&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007615, fetched 2026-09-18 — 103 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jhin%2FCurtain%20Call&prop=text

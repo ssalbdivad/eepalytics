@@ -21,6 +21,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Q
 - name: Switcheroo! [wiki-q rev-4062629, fetched 2026-09-18]
 - cost: 20 [wiki-q rev-4062629, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 0.9 [wiki-q rev-4062629, fetched 2026-09-18]
 - what it does: Toggle: Jinx switches between Pow-Pow, her minigun, and Fishbones, her rocket launcher. Pow-Pow: Basic attacks with Pow-Pow generate a stack of Rev'd up for 2.5 seconds, refreshing on subsequent attacks with Pow-Pow and stacking up to 3 times. Each stack of Rev'd up grants bonus attack speed, with all stacks beyond the first one being 50% effective. Stacks expire one by one when the duration ends. Fishbones: Basic attacks with Fishbones cost mana on-attack to deal 110% AD modified physical damage to the target and nearby enemies. The damage is affected by critical strike modifiers. While Fishbones is equipped, Jinx gains bonus range but loses 10% of her bonus attack speed. Only the first attack after switching to Fishbones will benefit from Rev'd up. [wiki-q rev-4062629, fetched 2026-09-18]
 - damage by rank: Bonus Attack Speed: 15 / 27.5 / 40 / 52.5 / 65% Attack Speed per Subsequent Stack: 7.5 / 13.75 / 20 / 26.25 / 32.5% Maximum Attack Speed: 30 / 55 / 80 / 105 / 130% · Bonus Range: 100 / 125 / 150 / 175 / 200 [wiki-q rev-4062629, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4062629, fetched 2026-09-18]
@@ -37,7 +38,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 10 / 60 / 110 / 160 / 210 (+ 140% AD) Slow: 40 / 50 / 60 / 70 / 80% [wiki-w rev-3907092, fetched 2026-09-18]
 - cast time: 0.6 – 0.4 (based on bonus attack speed) [wiki-w rev-3907092, fetched 2026-09-18]
 - width: 120 [wiki-w rev-3907092, fetched 2026-09-18]
-- missile speed: 3300 [wiki-w rev-3907092, fetched 2026-09-18]
+- missile or dash speed: 3300 [wiki-w rev-3907092, fetched 2026-09-18]
 - targeting: Direction [wiki-w rev-3907092, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-3907092, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-3907092, fetched 2026-09-18]
@@ -65,7 +66,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.6 [wiki-r rev-4007616, fetched 2026-09-18]
 - effect radius: 400 • 1000 • 1000 [wiki-r rev-4007616, fetched 2026-09-18]
 - width: 280 [wiki-r rev-4007616, fetched 2026-09-18]
-- missile speed: 1700 • 2200 [wiki-r rev-4007616, fetched 2026-09-18]
+- missile or dash speed: 1700 • 2200 [wiki-r rev-4007616, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-4007616, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4007616, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4007616, fetched 2026-09-18]
@@ -73,7 +74,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3973632, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jinx%2FGet%20Excited!&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4062629, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jinx%2FSwitcheroo!&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4062629, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jinx%2FSwitcheroo!&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3907092, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jinx%2FZap!&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3993368, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jinx%2FFlame%20Chompers!&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007616, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jinx%2FSuper%20Mega%20Death%20Rocket!&prop=text

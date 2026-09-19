@@ -53,7 +53,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1200 [wiki-q rev-3997075, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-3997075, fetched 2026-09-18]
 - width: 80 [wiki-q rev-3997075, fetched 2026-09-18]
-- missile speed: 2400 [wiki-q rev-3997075, fetched 2026-09-18]
+- missile or dash speed: 2400 [wiki-q rev-3997075, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-3997075, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-3997075, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-3997075, fetched 2026-09-18]
@@ -64,6 +64,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### W
 - name: Sentinel [wiki-w rev-4007621, fetched 2026-09-18]
 - cooldown: 30 [wiki-w rev-4007621, fetched 2026-09-18]
+- recharge timer for a stocked charge: 90 / 80 / 70 / 60 / 50 [wiki-w rev-4007621, fetched 2026-09-18]
 - what it does: Passive - Soul-Marked: While Kalista and her Oathsworn are tethered, their basic attacks and Pierce apply a Soul-Mark to the target hit for 4 seconds. If both Kalista's and the Oathsworn's Soul-Mark are applied to the same enemy, the marks are consumed to deal magic damage to the target, capped against non-champions. Soul-Mark cannot affect an enemy more than once every few seconds. Active: Kalista summons a Sentinel that patrols back and forth on a path along the target direction, granting sight of its surroundings as it travels. Kalista periodically stocks a Sentinel charge, up to a maximum of 2. [wiki-w rev-4007621, fetched 2026-09-18]
 - damage by rank: Bonus Magic Damage: 10 / 12 / 14 / 16 / 18% of target's maximum health Maximum Non-Champion Damage: 100 / 125 / 150 / 175 / 200 [wiki-w rev-4007621, fetched 2026-09-18]
 - target range: 1400 - 5000 [wiki-w rev-4007621, fetched 2026-09-18]
@@ -133,6 +134,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4024157, fetched 2026-09-18 — 29 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FMartial%20Poise&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3997075, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FPierce&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4007621, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FSentinel&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4007621, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FSentinel&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4004071, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FRend&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4015001, fetched 2026-09-18 — 29 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FFate's%20Call&prop=text

@@ -93,7 +93,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 700 [wiki-r rev-4007765, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4007765, fetched 2026-09-18]
 - effect radius: 300 • 500 • 700 [wiki-r rev-4007765, fetched 2026-09-18]
-- missile speed: 750 [wiki-r rev-4007765, fetched 2026-09-18]
+- missile or dash speed: 750 [wiki-r rev-4007765, fetched 2026-09-18]
 - targeting: Location [wiki-r rev-4007765, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4007765, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4007765, fetched 2026-09-18]

@@ -29,7 +29,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 925 [wiki-q rev-4006897, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4006897, fetched 2026-09-18]
 - width: 100 [wiki-q rev-4006897, fetched 2026-09-18]
-- missile speed: 1700 [wiki-q rev-4006897, fetched 2026-09-18]
+- missile or dash speed: 1700 [wiki-q rev-4006897, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4006897, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4006897, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4006897, fetched 2026-09-18]
@@ -43,7 +43,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 325 - 650 [wiki-w rev-4053262, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4053262, fetched 2026-09-18]
 - effect radius: 2000 • Global [wiki-w rev-4053262, fetched 2026-09-18]
-- missile speed: 2500 [wiki-w rev-4053262, fetched 2026-09-18]
+- missile or dash speed: 2500 [wiki-w rev-4053262, fetched 2026-09-18]
 - targeting: Location • Auto [wiki-w rev-4053262, fetched 2026-09-18]
 
 ### E

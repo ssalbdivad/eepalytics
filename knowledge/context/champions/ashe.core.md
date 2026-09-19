@@ -39,7 +39,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 [wiki-w rev-4007430, fetched 2026-09-18]
 - effect radius: 1200 [wiki-w rev-4007430, fetched 2026-09-18]
 - width: 20 [wiki-w rev-4007430, fetched 2026-09-18]
-- missile speed: 2000 [wiki-w rev-4007430, fetched 2026-09-18]
+- missile or dash speed: 2000 [wiki-w rev-4007430, fetched 2026-09-18]
 - targeting: Direction [wiki-w rev-4007430, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-4007430, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4007430, fetched 2026-09-18]
@@ -48,11 +48,12 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Hawkshot [wiki-e rev-3936951, fetched 2026-09-18]
 - cooldown: 5 [wiki-e rev-3936951, fetched 2026-09-18]
 - cost: 1 [wiki-e rev-3936951, fetched 2026-09-18]
+- recharge timer for a stocked charge: 90 / 80 / 70 / 60 / 50 [wiki-e rev-3936951, fetched 2026-09-18]
 - what it does: Active: Ashe sends a hawk spirit to a location, granting sight of the area along its path「 repeatedly for 0.5 seconds after every 100 units traveled 」「 for effectively up-to 1.8 seconds at any location 」and at its destination for 5 seconds. Ashe periodically stocks a Hawkshot charge, up to a maximum of 2. [wiki-e rev-3936951, fetched 2026-09-18]
 - target range: Global [wiki-e rev-3936951, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-3936951, fetched 2026-09-18]
 - effect radius: 1000 [wiki-e rev-3936951, fetched 2026-09-18]
-- missile speed: 1400 [wiki-e rev-3936951, fetched 2026-09-18]
+- missile or dash speed: 1400 [wiki-e rev-3936951, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-3936951, fetched 2026-09-18]
 - spell shield: false [wiki-e rev-3936951, fetched 2026-09-18]
 
@@ -65,7 +66,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 [wiki-r rev-4026934, fetched 2026-09-18]
 - effect radius: 400 • 350 [wiki-r rev-4026934, fetched 2026-09-18]
 - width: 260 [wiki-r rev-4026934, fetched 2026-09-18]
-- missile speed: 1500 – 2100 (based on Seconds traveled) [wiki-r rev-4026934, fetched 2026-09-18]
+- missile or dash speed: 1500 – 2100 (based on Seconds traveled) [wiki-r rev-4026934, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-4026934, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4026934, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4026934, fetched 2026-09-18]
@@ -75,5 +76,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4062251, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ashe%2FFrost%20Shot&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4053426, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ashe%2FRanger's%20Focus&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007430, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ashe%2FVolley&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-3936951, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ashe%2FHawkshot&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-3936951, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ashe%2FHawkshot&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4026934, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ashe%2FEnchanted%20Crystal%20Arrow&prop=text

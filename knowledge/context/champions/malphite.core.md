@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Granite Shield [wiki-p rev-3973718, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 8 / 7 / 6 (based on level) [wiki-p rev-3973718, fetched 2026-09-18]
 - what it does: Innate - Shard of the Monolith: Malphite gains increased percentage size equal to 8% of his total armor, capped at 35% increased size at 437.5 armor. Innate - Granite Shield: Malphite grants himself a shield equal to 10% of his maximum health. The shield lasts until it is broken, and replenishes to full strength after a few seconds of not taking damage. [wiki-p rev-3973718, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3973718, fetched 2026-09-18]
 
@@ -26,7 +27,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 70 / 120 / 170 / 220 / 270 (+ 60% AP) Slow: 20 / 25 / 30 / 35 / 40% [wiki-q rev-4003493, fetched 2026-09-18]
 - target range: 625 [wiki-q rev-4003493, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4003493, fetched 2026-09-18]
-- missile speed: 1200 [wiki-q rev-4003493, fetched 2026-09-18]
+- missile or dash speed: 1200 [wiki-q rev-4003493, fetched 2026-09-18]
 - targeting: Unit [wiki-q rev-4003493, fetched 2026-09-18]
 - damage type: magic [wiki-q rev-4003493, fetched 2026-09-18]
 - spell shield: Special [wiki-q rev-4003493, fetched 2026-09-18]
@@ -63,14 +64,14 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1000 [wiki-r rev-4007750, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4007750, fetched 2026-09-18]
 - effect radius: 325 [wiki-r rev-4007750, fetched 2026-09-18]
-- missile speed: 1500 + 100% movement speed [wiki-r rev-4007750, fetched 2026-09-18]
+- missile or dash speed: 1500 + 100% movement speed [wiki-r rev-4007750, fetched 2026-09-18]
 - targeting: Location [wiki-r rev-4007750, fetched 2026-09-18]
 - damage type: magic [wiki-r rev-4007750, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4007750, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3973718, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malphite%2FGranite%20Shield&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3973718, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malphite%2FGranite%20Shield&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4003493, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malphite%2FSeismic%20Shard&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4013417, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malphite%2FThunderclap&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3985874, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malphite%2FGround%20Slam&prop=text

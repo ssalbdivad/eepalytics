@@ -819,21 +819,40 @@ the end of it, which is the shape a correct line has:
    twice, dressed as an ability interaction. All of it is stripped in `htmlToText` now.
 
 **Where it stands after the fix, with the n beside it.** All 173 champions, every cited line:
-**22,481 of 22,481 checkable delivered lines match the live source, 0 do not**, 4 moved since the
+**22,544 of 22,544 checkable delivered lines match the live source, 0 do not**, 4 moved since the
 fetch (the wiki is edited continuously; those are reported as `stale` with both revisions, not as
 defects) and 86 are op.gg lines, deliberately not re-fetched because tier 2 changes hourly and a
 difference there would say nothing about the renderer
-(`data/eval/verify-fetched-all-20260919-b.json`). On the independent instrument: **2,547 of 2,547
-per-rank runs appear verbatim in the wiki article a human reads** (`verify-articles-20260919.json`).
-A third check, delivered text against the cached fetched bytes, is 22,571 of 22,571.
+(`data/eval/verify-fetched-all-20260919-c.json`). On the independent instrument: every per-rank run
+this app delivers appears verbatim in the wiki article a human reads
+(`verify-articles-20260919.json`). A third check, delivered text against the cached fetched bytes,
+is clean on every line of all 173 files.
 
 **`pnpm audit:knowledge --all` now asks the same question of every champion rather than of Lillia.**
-173 champions, 22,571 cited lines in the committed files, **0 untraced**, 0 uncited lines in any
+173 champions, 22,634 cited lines in the committed files, **0 untraced**, 0 uncited lines in any
 live instruction. That matters because the claim "no unsourced sentence reaches any prompt" was only
 ever exercised on two champions, which made it a claim about Lillia wearing a claim about the
 corpus. Doing it roster-wide also exposed that the REFUTED probe patterns need a SUBJECT: Riven's
 passive genuinely deals "bonus damage to monsters" and the wiki says so, so Lillia's W pattern
 reported a fabrication that was a fetched fact.
+
+**Two numbers were FETCHED and never delivered, and one label was a claim the source does not
+make.** The same read found these by asking what the wiki says each field MEANS rather than what it
+contains:
+
+- `static` is the wiki's cooldown-not-affected-by-ability-haste, and the fetcher already read it —
+  it falls back to it when cross-checking a slot against Data Dragon — and then dropped it. **51
+  abilities whose cooldown lives in `static` shipped with no cooldown line at all.** Anivia's
+  Rebirth is a 240-second egg and her file said nothing about it. Same for `recharge`, the timer on
+  a stocked ability, on 9 more. Both ship now, labelled in the wiki's own words, gated on the
+  slot's cross-source agreement but NOT claiming `agreesWith` — the fetcher compares Data Dragon
+  against `cooldown || static || recharge`, so whichever it used was corroborated and the other two
+  were not looked at.
+- `speed` was labelled **"missile speed"** on all 308 abilities that carry one. The wiki documents
+  the field as *"Speed of a missile **or dash**"*, and 89 of the 308 describe a dash rather than a
+  projectile — Tristana's W, Xin Zhao's E, Rammus's R. The VALUE was copied correctly every time;
+  the LABEL was a statement about the game that no source made. It reads "missile or dash speed"
+  now, which is what the source says.
 
 **Three smaller things the second read turned up.**
 
@@ -849,6 +868,30 @@ reported a fabrication that was a fetched fact.
   slash made Yunara's "Arc of Judgment | Arc of Ruin" a NAME CONFLICT, which withheld her W's and
   E's cooldown and cost — two numbers both sources agreed on. Failing closed is right when the
   sources disagree and is a bug when they do not.
+
+**A patch bump was NOT a reviewable diff, and the reason was a filing mistake.** The claim is that
+committed text makes a new patch a pull request; measured on the 16.17.1 bump it made **349 files
+and 34,000 lines** of diff, of which almost nothing was a change of value. The cache was filed
+entirely under `data/champions/<patch>/`, so a bump gave the wiki's 1,061 ability templates a
+directory with no prior copy: everything was re-fetched, every `fetchedAt` became today, and the
+citation date on all 22,571 delivered lines changed. **Data Dragon is requested AT a patch and the
+wiki has no patch parameter at all**, so the wiki half now lives in `data/champions/wiki/`, shared,
+and keeps the dates its lines were first seen on. The same bump is now **95 files and 720 lines**,
+of which 186 are outside the tier-2 section, and they are the four ability slots whose cross-source
+agreement actually changed between the two patches, each carrying the WITHHELD line that says so.
+
+**And the pipeline round-trips.** 16.18.1 -> 16.17.1 -> 16.18.1 reproduces `champion-table.ts` and
+all 353 context files **byte for byte**, so the corpus is a pure function of (patch, cache) and a
+diff in it means a source moved.
+
+**One renderer is DELETED rather than left dormant.** `renderChampionKnowledge` in
+`src/knowledge/champion-data.ts` turned a row into a markdown block with its own labels and its own
+headings — a second renderer for data `champion-brief.ts` already renders. Nothing but its own test
+had imported it since the context tree landed, and it was wrong in the same place the live path
+was: it labelled `speed` "Missile speed" on all 308 abilities. A second labelling of the same
+numbers is a second place to be wrong about them, and one fix in one place is the whole point of
+having one place. Lookup and provenance survive there; nothing in the file can produce a sentence
+about League any more.
 
 **What is still UNFENCED, said plainly: `target range`.** Cooldown and cost are cross-checked
 against Data Dragon; range is not, and it ships from the wiki alone. Where both sources publish a

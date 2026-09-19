@@ -17,7 +17,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Daredevil Impulse [wiki-p rev-4051977, fetched 2026-09-18]
 - what it does: Innate: Samira's damaging basic attacks and abilities against at least one enemy champion unique from the previous damaging hit made against champions generate a stack of Style for 6 seconds, refreshing on subsequent unique or non-unique hits and stacking up to 6 times. Style: For each stack, Samira gains 2.75% / 3% / 3.25% / 3.5% (based on level) bonus movement speed, up to a maximum of 16.5% / 18% / 19.5% / 21% (based on level). At maximum stacks, Samira can cast Inferno Trigger. Innate: Samira's basic attacks against targets within 200 units of her use her blade, becoming non-projectile. Blade attacks, Blade Whirl, Wild Rush, and the slash and explosives of Flair deal 2 – 21 (based on level) (+ 3.5% – 11.32% (based on level) AD) bonus magic damage, increased by 0% – 100% (based on target's missing health), up to 4 – 42 (based on level) (+ 7% – 22.65% (based on level) AD). Samira's basic attack against an immobilized target is empowered to have an uncancellable windup and fire 6 bolts over 0.5 seconds, each dealing 17% AD physical damage and applying life steal. If the target is a monster or is airborne, the attack also knocks them up for 0.5 seconds. [wiki-p rev-4051977, fetched 2026-09-18]
 - target range: 650 / 725 / 800 / 875 / 950 (based on level) [wiki-p rev-4051977, fetched 2026-09-18]
-- missile speed: 2050 • 2800 [wiki-p rev-4051977, fetched 2026-09-18]
+- missile or dash speed: 2050 • 2800 [wiki-p rev-4051977, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4051977, fetched 2026-09-18]
 - damage type: Magic [wiki-p rev-4051977, fetched 2026-09-18]
 - spell shield: special [wiki-p rev-4051977, fetched 2026-09-18]
@@ -31,7 +31,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 340 [wiki-q rev-4008027, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4008027, fetched 2026-09-18]
 - width: 120 • 130 [wiki-q rev-4008027, fetched 2026-09-18]
-- missile speed: 2600 [wiki-q rev-4008027, fetched 2026-09-18]
+- missile or dash speed: 2600 [wiki-q rev-4008027, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4008027, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4008027, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4008027, fetched 2026-09-18]
@@ -57,7 +57,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 600 [wiki-e rev-4008028, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4008028, fetched 2026-09-18]
 - width: 300 [wiki-e rev-4008028, fetched 2026-09-18]
-- missile speed: 1600 [wiki-e rev-4008028, fetched 2026-09-18]
+- missile or dash speed: 1600 [wiki-e rev-4008028, fetched 2026-09-18]
 - targeting: Unit [wiki-e rev-4008028, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4008028, fetched 2026-09-18]
 - spell shield: true [wiki-e rev-4008028, fetched 2026-09-18]
@@ -65,6 +65,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### R
 - name: Inferno Trigger [wiki-r rev-3992663, fetched 2026-09-18]
 - cost: 6 Style [wiki-r rev-3992663, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 5 [wiki-r rev-3992663, fetched 2026-09-18]
 - what it does: Active: Samira unleashes a torrent of shots for 2.277 seconds, reducing her movement speed by 30% and rapidly shooting at nearby enemies over 2.013 seconds at sporadic times in 0.2-second intervals each (up to 10 times per enemy), dealing physical damage with each shot, reduced by 75% against minions. This damage is affected by critical strike modifiers and applies life steal at 100% effectiveness. A nearby visible enemy is required to cast this ability, and targets do not have to be visible to be shot at. Style stacks are consumed at the end of the effect. Samira cannot basic attack nor cast Flair and Blade Whirl during Inferno Trigger, but she can still move. Inferno Trigger will end prematurely if Samira is affected by any form of cast-inhibiting crowd control as well as disarm. Inferno Trigger cannot be cast while Samira is disarmed. [wiki-r rev-3992663, fetched 2026-09-18]
 - damage by rank: Physical Damage Per Shot: 20 / 40 / 60 (+ 30% AD) Total Physical Damage: 200 / 400 / 600 (+ 300% AD) Minion Damage Per Shot: 5 / 10 / 15 (+ 7.5% AD) Total Minion Damage: 50 / 100 / 150 (+ 75% AD) [wiki-r rev-3992663, fetched 2026-09-18]
 - cast time: none [wiki-r rev-3992663, fetched 2026-09-18]
@@ -79,4 +80,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008027, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FFlair&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3936240, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FBlade%20Whirl&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008028, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FWild%20Rush&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-3992663, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FInferno%20Trigger&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-3992663, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FInferno%20Trigger&prop=text

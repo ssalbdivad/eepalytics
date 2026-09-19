@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Trial by Fire [wiki-p rev-4038337, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 15 [wiki-p rev-4038337, fetched 2026-09-18]
 - what it does: Innate: Periodically, Gangplank empowers his next basic attack to set the target on fire, dealing them「 50 – 250 (based on level) (+ 100% bonus AD) bonus true damage over 2.5 seconds. 」「 5 – 25 (based on level) (+ 10% bonus AD) bonus true damage every 0.25 seconds over 2.5 seconds. 」 Turrets are dealt 50% damage. If Gangplank successfully hits a target with Trial by Fire, he gains 15% – 30% (based on level) bonus movement speed for 2 seconds. Every time a Powder Keg explodes, the cooldown for Trial by Fire resets and Gangplank gains its bonus movement speed. Trial by Fire cannot be applied with Parrrley nor Powder Keg. [wiki-p rev-4038337, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4038337, fetched 2026-09-18]
 - damage type: True [wiki-p rev-4038337, fetched 2026-09-18]
@@ -31,7 +32,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 10 / 40 / 70 / 100 / 130 (+ 100% AD) · Gold Plunder: 3 / 4 / 5 / 6 / 7 Silver Serpent Plunder: 4 / 5 / 6 / 7 / 8 [wiki-q rev-4063653, fetched 2026-09-18]
 - target range: 625 [wiki-q rev-4063653, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4063653, fetched 2026-09-18]
-- missile speed: 2600 [wiki-q rev-4063653, fetched 2026-09-18]
+- missile or dash speed: 2600 [wiki-q rev-4063653, fetched 2026-09-18]
 - targeting: Unit [wiki-q rev-4063653, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4063653, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4063653, fetched 2026-09-18]
@@ -119,7 +120,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4038337, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gangplank%2FTrial%20by%20Fire&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4038337, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gangplank%2FTrial%20by%20Fire&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4063653, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gangplank%2FParrrley&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3906839, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gangplank%2FRemove%20Scurvy&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4058497, fetched 2026-09-18 — 44 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gangplank%2FPowder%20Keg&prop=text

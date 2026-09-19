@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Rebirth [wiki-p rev-3906517, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 240 [wiki-p rev-3906517, fetched 2026-09-18]
 - what it does: Innate: Periodically, upon taking fatal damage, Anivia enters resurrection for 6 seconds and restores all of her health. While under resurrection, Anivia is unable to act and gains -40 – 20 (based on level) bonus armor and bonus magic resistance. If Anivia remains alive by the end of the duration, she is revived with her current health. [wiki-p rev-3906517, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3906517, fetched 2026-09-18]
 - edge case: Triggering Rebirth will break tethers on Anivia. [wiki-p rev-3906517, fetched 2026-09-18]
@@ -69,7 +70,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 [wiki-q rev-4026612, fetched 2026-09-18]
 - effect radius: 225 [wiki-q rev-4026612, fetched 2026-09-18]
 - width: 220 [wiki-q rev-4026612, fetched 2026-09-18]
-- missile speed: 950 [wiki-q rev-4026612, fetched 2026-09-18]
+- missile or dash speed: 950 [wiki-q rev-4026612, fetched 2026-09-18]
 - targeting: Direction / Auto [wiki-q rev-4026612, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4026612, fetched 2026-09-18]
 - spell shield: Special [wiki-q rev-4026612, fetched 2026-09-18]
@@ -102,7 +103,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 55 / 80 / 105 / 130 / 155 (+ 55% AP) Enhanced Damage: 110 / 160 / 210 / 260 / 310 (+ 110% AP) [wiki-e rev-4057862, fetched 2026-09-18]
 - target range: 600 [wiki-e rev-4057862, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4057862, fetched 2026-09-18]
-- missile speed: 1600 [wiki-e rev-4057862, fetched 2026-09-18]
+- missile or dash speed: 1600 [wiki-e rev-4057862, fetched 2026-09-18]
 - targeting: Unit [wiki-e rev-4057862, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4057862, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4057862, fetched 2026-09-18]
@@ -114,6 +115,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Glacial Storm [wiki-r rev-4006729, fetched 2026-09-18]
 - cooldown: 4 / 3 / 2 [wiki-r rev-4006729, fetched 2026-09-18]
 - cost: 60 [wiki-r rev-4006729, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 1 [wiki-r rev-4006729, fetched 2026-09-18]
 - what it does: Passive: Flash Frost's slow strength is increased. Toggle: Anivia calls forth a driving rain of ice and hail at the target location, dealing magic damage every 0.5 seconds to enemies within and slowing them for 1 second, refreshing every 0.5 seconds while they remain inside. The blizzard increases in size over 1.5 seconds. At maximum size, Glacial Storm is empowered to deal 300% damage and increase the effectiveness of its slow by 50%, which also instead lasts 1.5 seconds and refreshes every 0.25 seconds. Toggling Glacial Storm off triggers a final tick of damage and incurs its full cooldown. Glacial Storm is toggled off automatically if Anivia moves too far away from the blizzard or becomes unable to pay the mana cost, or is affected by any form of cast-inhibiting crowd control. [wiki-r rev-4006729, fetched 2026-09-18]
 - damage by rank: Slow Strength Increase: 0 / 10 / 20% · Magic Damage per Tick: 15 / 22.5 / 30 (+ 6.25% AP) Slow: 20 / 30 / 40% · Empowered Damage per Tick: 45 / 67.5 / 90 (+ 18.75% AP) Empowered Slow: 30 / 45 / 60% [wiki-r rev-4006729, fetched 2026-09-18]
 - target range: 750 [wiki-r rev-4006729, fetched 2026-09-18]
@@ -130,8 +132,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3906517, fetched 2026-09-18 — 45 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FRebirth&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3906517, fetched 2026-09-18 — 46 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FRebirth&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4026612, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FFlash%20Frost&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007565, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FCrystallize&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4057862, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FFrostbite&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4006729, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FGlacial%20Storm&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4006729, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FGlacial%20Storm&prop=text

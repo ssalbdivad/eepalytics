@@ -26,7 +26,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Hurl Physical Damage: 70 / 100 / 130 / 160 / 190 (+ 115% bonus AD) (+ 50% AP) Increased Hurl Damage: 155 / 230 / 305 / 380 / 455 (+ 230% bonus AD) (+ 100% AP) Hurl Secondary Physical Damage: 35 / 50 / 65 / 80 / 95 (+ 57.5% bonus AD) (+ 25% AP) Increased Hurl Secondary Damage: 77.5 / 115 / 152.5 / 190 / 227.5 (+ 115% bonus AD) (+ 50% AP) · Thrust Physical Damage: 70 / 100 / 130 / 160 / 190 (+ 115% bonus AD) Increased Thrust Damage: 155 / 230 / 305 / 380 / 455 (+ 230% bonus AD) [wiki-q rev-4016044, fetched 2026-09-18]
 - cast time: 0.2 [wiki-q rev-4016044, fetched 2026-09-18]
 - width: 120 • 110 [wiki-q rev-4016044, fetched 2026-09-18]
-- missile speed: 2700 [wiki-q rev-4016044, fetched 2026-09-18]
+- missile or dash speed: 2700 [wiki-q rev-4016044, fetched 2026-09-18]
 - targeting: Auto • Direction [wiki-q rev-4016044, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4016044, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4016044, fetched 2026-09-18]

@@ -17,7 +17,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Pix, Faerie Companion [wiki-p rev-4046485, fetched 2026-09-18]
 - what it does: Innate: Lulu is assisted by Pix, an untargetable faerie, who follows her around and fires a barrage of 3 bolts towards her target whenever she uses a basic attack on-attack. Each bolt deals 5 – 39 (based on level) (+ 5% AP) magic damage to the first enemy it collides with, for a total of 15 – 117 (based on level) (+ 15% AP) on hitting a single target with all three bolts. Casting Help, Pix! on an ally champion transfers Pix's help to them, causing him to fire the bolts dependent on their basic attacks. Pix snaps back to Lulu if she is too far away. [wiki-p rev-4046485, fetched 2026-09-18]
 - width: 60 [wiki-p rev-4046485, fetched 2026-09-18]
-- missile speed: 900 - 2600 [wiki-p rev-4046485, fetched 2026-09-18]
+- missile or dash speed: 900 - 2600 [wiki-p rev-4046485, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4046485, fetched 2026-09-18]
 - damage type: Magic [wiki-p rev-4046485, fetched 2026-09-18]
 
@@ -29,7 +29,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 60 / 95 / 130 / 165 / 200 (+ 50% AP) Minion Damage: 42 / 66.5 / 91 / 115.5 / 140 (+ 35% AP) · Reduced Damage: 30 / 47.5 / 65 / 82.5 / 100 (+ 25% AP) Total Magic Damage: 90 / 142.5 / 195 / 247.5 / 300 (+ 75% AP) Reduced Minion Damage: 21 / 33.25 / 45.5 / 57.75 / 70 (+ 17.5% AP) Total Minion Damage: 63 / 99.75 / 136.5 / 173.25 / 210 (+ 52.5% AP) [wiki-q rev-3881438, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-3881438, fetched 2026-09-18]
 - width: 120 [wiki-q rev-3881438, fetched 2026-09-18]
-- missile speed: 1450 [wiki-q rev-3881438, fetched 2026-09-18]
+- missile or dash speed: 1450 [wiki-q rev-3881438, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-3881438, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-3881438, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-3881438, fetched 2026-09-18]
@@ -42,7 +42,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Disable Duration: 1.2 / 1.4 / 1.6 / 1.8 / 2 seconds · Bonus Attack Speed: 20 / 22.5 / 25 / 27.5 / 30% Effect Duration: 3 / 3.25 / 3.5 / 3.75 / 4 seconds [wiki-w rev-4007673, fetched 2026-09-18]
 - target range: 650 [wiki-w rev-4007673, fetched 2026-09-18]
 - cast time: 0.2419 • None [wiki-w rev-4007673, fetched 2026-09-18]
-- missile speed: 2250 [wiki-w rev-4007673, fetched 2026-09-18]
+- missile or dash speed: 2250 [wiki-w rev-4007673, fetched 2026-09-18]
 - targeting: Unit [wiki-w rev-4007673, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4007673, fetched 2026-09-18]
 

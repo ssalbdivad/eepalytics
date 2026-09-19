@@ -15,8 +15,9 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Short Fuse [wiki-p rev-4005222, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 12 [wiki-p rev-4005222, fetched 2026-09-18]
 - what it does: Innate: Periodically, Ziggs empowers his next basic attack to deal 20 – 184 (based on level) (+ 50% AP) bonus magic damage,「 increased by 75% against structures. 」「 increased to 35 – 322 (based on level) (+ 87.5% AP) against structures. 」 Short Fuse's cooldown is reduced by 4 / 5 / 6 (based on level) seconds whenever Ziggs casts an ability. [wiki-p rev-4005222, fetched 2026-09-18]
-- missile speed: 1500 [wiki-p rev-4005222, fetched 2026-09-18]
+- missile or dash speed: 1500 [wiki-p rev-4005222, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4005222, fetched 2026-09-18]
 - damage type: magic [wiki-p rev-4005222, fetched 2026-09-18]
 - spell shield: False [wiki-p rev-4005222, fetched 2026-09-18]
@@ -34,7 +35,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 850 [wiki-q rev-4008669, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4008669, fetched 2026-09-18]
 - effect radius: 240 [wiki-q rev-4008669, fetched 2026-09-18]
-- missile speed: 1700 [wiki-q rev-4008669, fetched 2026-09-18]
+- missile or dash speed: 1700 [wiki-q rev-4008669, fetched 2026-09-18]
 - targeting: Location [wiki-q rev-4008669, fetched 2026-09-18]
 - damage type: magic [wiki-q rev-4008669, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4008669, fetched 2026-09-18]
@@ -51,7 +52,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1000 [wiki-w rev-4008672, fetched 2026-09-18]
 - cast time: 0.25 [wiki-w rev-4008672, fetched 2026-09-18]
 - effect radius: 325 • 400 [wiki-w rev-4008672, fetched 2026-09-18]
-- missile speed: 1750 [wiki-w rev-4008672, fetched 2026-09-18]
+- missile or dash speed: 1750 [wiki-w rev-4008672, fetched 2026-09-18]
 - targeting: Location / Auto [wiki-w rev-4008672, fetched 2026-09-18]
 - damage type: magic [wiki-w rev-4008672, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4008672, fetched 2026-09-18]
@@ -70,7 +71,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 900 [wiki-e rev-4008673, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4008673, fetched 2026-09-18]
 - effect radius: 335 • 135 [wiki-e rev-4008673, fetched 2026-09-18]
-- missile speed: 1550 [wiki-e rev-4008673, fetched 2026-09-18]
+- missile or dash speed: 1550 [wiki-e rev-4008673, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4008673, fetched 2026-09-18]
 - damage type: magic [wiki-e rev-4008673, fetched 2026-09-18]
 - spell shield: Special [wiki-e rev-4008673, fetched 2026-09-18]
@@ -89,7 +90,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 5000 [wiki-r rev-4008677, fetched 2026-09-18]
 - cast time: 0.375 [wiki-r rev-4008677, fetched 2026-09-18]
 - effect radius: 525 • 600 [wiki-r rev-4008677, fetched 2026-09-18]
-- missile speed: 2250 [wiki-r rev-4008677, fetched 2026-09-18]
+- missile or dash speed: 2250 [wiki-r rev-4008677, fetched 2026-09-18]
 - targeting: Location [wiki-r rev-4008677, fetched 2026-09-18]
 - damage type: magic [wiki-r rev-4008677, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4008677, fetched 2026-09-18]
@@ -100,7 +101,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4005222, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FShort%20Fuse&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4005222, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FShort%20Fuse&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008669, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FBouncing%20Bomb&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008672, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FSatchel%20Charge&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008673, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FHexplosive%20Minefield&prop=text

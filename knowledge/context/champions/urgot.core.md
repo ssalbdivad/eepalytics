@@ -38,11 +38,12 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Purge [wiki-w rev-4058781, fetched 2026-09-18]
 - cooldown: 12 / 9 / 6 / 3 / 0 [wiki-w rev-4058781, fetched 2026-09-18]
 - cost: 40 / 30 / 20 / 10 / 0 [wiki-w rev-4058781, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 0.5 • 0.25 [wiki-w rev-4058781, fetched 2026-09-18]
 - what it does: Passive: Urgot's other abilities mark enemy champions hit for 5 seconds. Only one enemy can be marked at a time. Additionally, at maximum rank, Purge lasts indefinitely and becomes a toggled ability. Active: Urgot equips his machine gun for 4 seconds, granting ghosting to minions and non-epic monsters around him and autonomously firing at the nearest enemy at a fixed 3.0 attack speed, prioritizing marked enemy champions and refreshing the mark with every attack. While firing, Urgot is able to move and gains 40% slow resist, but his movement speed is reduced by 125. Attacks with Purge deal modified physical damage, with a minimum threshold of 50 against monsters and minions, and cannot critically strike. Each attack applies on-hit and on-attack effects, with on-hit and on-attack damage reduced to 50% effectiveness. Urgot cannot perform attacks while affected by disarming crowd control. Purge can be recast after 0.5 seconds within the duration, and does so automatically afterwards. [wiki-w rev-4058781, fetched 2026-09-18]
 - damage by rank: Modified Physical Damage: 12 (+ 20 / 23.5 / 27 / 30.5 / 34% AD) [wiki-w rev-4058781, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4058781, fetched 2026-09-18]
 - effect radius: 490 [wiki-w rev-4058781, fetched 2026-09-18]
-- missile speed: 2500 [wiki-w rev-4058781, fetched 2026-09-18]
+- missile or dash speed: 2500 [wiki-w rev-4058781, fetched 2026-09-18]
 - targeting: Auto [wiki-w rev-4058781, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-4058781, fetched 2026-09-18]
 - spell shield: false [wiki-w rev-4058781, fetched 2026-09-18]
@@ -55,7 +56,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Shield Strength: 55 / 75 / 95 / 115 / 135 (+ 135% bonus AD) (+ 13.5% bonus health) · Physical Damage: 90 / 120 / 150 / 180 / 210 (+ 100% bonus AD) [wiki-e rev-4008211, fetched 2026-09-18]
 - target range: 475 • 450 [wiki-e rev-4008211, fetched 2026-09-18]
 - cast time: 0.45 [wiki-e rev-4008211, fetched 2026-09-18]
-- missile speed: 1200 + 100% movement speed [wiki-e rev-4008211, fetched 2026-09-18]
+- missile or dash speed: 1200 + 100% movement speed [wiki-e rev-4008211, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4008211, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4008211, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4008211, fetched 2026-09-18]
@@ -70,7 +71,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.5 [wiki-r rev-4015146, fetched 2026-09-18]
 - effect radius: Global • 600 [wiki-r rev-4015146, fetched 2026-09-18]
 - width: 160 [wiki-r rev-4015146, fetched 2026-09-18]
-- missile speed: 3200 [wiki-r rev-4015146, fetched 2026-09-18]
+- missile or dash speed: 3200 [wiki-r rev-4015146, fetched 2026-09-18]
 - targeting: Direction • Auto [wiki-r rev-4015146, fetched 2026-09-18]
 - damage type: Physical True [wiki-r rev-4015146, fetched 2026-09-18]
 - spell shield: Special [wiki-r rev-4015146, fetched 2026-09-18]
@@ -79,6 +80,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4051193, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FEchoing%20Flames&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3952903, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FCorrosive%20Charge&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4058781, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FPurge&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4058781, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FPurge&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008211, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FDisdain&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4015146, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FFear%20Beyond%20Death&prop=text

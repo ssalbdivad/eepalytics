@@ -2,7 +2,7 @@
 
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
-Patch 16.18.1. 173 champions, 22571 checked lines, 30 ability slots withheld because two sources disagreed about the name, the cooldown or the cost, and 2 fields withheld because the wiki's own expansion of it came back broken.
+Patch 16.18.1. 173 champions, 22634 checked lines, 30 ability slots withheld because two sources disagreed about the name, the cooldown or the cost, and 2 fields withheld because the wiki's own expansion of it came back broken.
 
 NOT PUBLISHED ANYWHERE, so this app says nothing about it: jungle clear routes and camp order; gank-failure conditions; how to read a clear's tempo; what an item purchase implies about intent; objective-pressure narrative; power-spike timing; matchup advice as distinct from matchup win rate; where a champion tends to die. Each was probed for and each came back empty — u.gg 403, lolalytics behind a challenge, mobalytics needs auth, blitz DNS-dead, and Riot's own allytips and enemytips return empty arrays. None of it was written to fill the gap, and a gap is the correct output.
 

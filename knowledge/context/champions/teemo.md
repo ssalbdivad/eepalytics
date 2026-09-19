@@ -35,7 +35,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 80 / 125 / 170 / 215 / 260 (+ 70% AP) Blind Duration: 2 / 2.25 / 2.5 / 2.75 / 3 seconds · Increased Blind Duration: 4 / 4.5 / 5 / 5.5 / 6 seconds [wiki-q rev-3948425, fetched 2026-09-18]
 - target range: 680 [wiki-q rev-3948425, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-3948425, fetched 2026-09-18]
-- missile speed: 2500 [wiki-q rev-3948425, fetched 2026-09-18]
+- missile or dash speed: 2500 [wiki-q rev-3948425, fetched 2026-09-18]
 - targeting: Unit [wiki-q rev-3948425, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-3948425, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-3948425, fetched 2026-09-18]
@@ -73,6 +73,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Noxious Trap [wiki-r rev-4015245, fetched 2026-09-18]
 - cooldown: 0.25 [wiki-r rev-4015245, fetched 2026-09-18]
 - cost: 75 / 55 / 35 [wiki-r rev-4015245, fetched 2026-09-18]
+- recharge timer for a stocked charge: 35 / 30 / 25 [wiki-r rev-4015245, fetched 2026-09-18]
 - what it does: Active: Teemo tosses a poisonous mushroom to the target location that becomes stealthed after arming over 1 second, lasting for up to 5 minutes and granting sight of its surroundings. If the mushroom lands on one that has already been placed, it will bounce forward from the placed mushroom for its cast distance, up to a cap, which can happen repeatedly. Teemo periodically stocks a Noxious Trap charge, up to a maximum amount. The mushroom will explode upon enemy contact, inflicting poison to nearby enemies and slowing them for 4 seconds, as well as revealing them. poison: The target takes magic damage every second over 4 seconds. Subsequent inflictions refresh the duration. [wiki-r rev-4015245, fetched 2026-09-18]
 - damage by rank: Bounce Distance Cap: 350 / 450 / 550 · Maximum Charges: 3 / 4 / 5 · Slow: 30 / 40 / 50% · Magic Damage per Tick: 50 / 81.25 / 112.5 (+ 12.5% AP) Total Magic Damage: 200 / 325 / 450 (+ 50% AP) [wiki-r rev-4015245, fetched 2026-09-18]
 - target range: 600 / 750 / 900 [wiki-r rev-4015245, fetched 2026-09-18]
@@ -94,4 +95,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3948425, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Teemo%2FBlinding%20Dart&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4010102, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Teemo%2FMove%20Quick&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4062253, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Teemo%2FToxic%20Shot&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4015245, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Teemo%2FNoxious%20Trap&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4015245, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Teemo%2FNoxious%20Trap&prop=text

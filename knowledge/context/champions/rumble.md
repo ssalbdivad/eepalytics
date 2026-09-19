@@ -50,11 +50,12 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### E
 - name: Electro Harpoon [wiki-e rev-4008020, fetched 2026-09-18]
 - cooldown: 0.5 [wiki-e rev-4008020, fetched 2026-09-18]
+- recharge timer for a stocked charge: 6 [wiki-e rev-4008020, fetched 2026-09-18]
 - what it does: Active: Rumble generates 20 Heat to shoot a harpoon in the target direction that deals magic damage to the first enemy hit, inflicting them with magic resistance reduction for 4 seconds and slowing them for 2 seconds. These effects stack additively with multiple harpoons, refreshing their duration and stacking up to 2 times. Rumble periodically stocks an Electro Harpoon charge, up to a maximum of 2. Danger Zone Bonus: Electro Harpoon's effects are increased by 50%. If Rumble casts Electro Harpoon before his mech becomes Overheated, he may still use another charge within 3 seconds of the initial cast. [wiki-e rev-4008020, fetched 2026-09-18]
 - damage by rank: Magic Damage: 55 / 80 / 105 / 130 / 155 (+ 50% AP) Total Magic Damage: 110 / 160 / 210 / 260 / 310 (+ 100% AP) Magic Resistance Reduction: 10 / 12 / 14 / 16 / 18% Total MR Reduction: 20 / 24 / 28 / 32 / 36% Slow: 15 / 20 / 25 / 30 / 35% Total Slow: 30 / 40 / 50 / 60 / 70% · Enhanced Damage: 82.5 / 120 / 157.5 / 195 / 232.5 (+ 75% AP) Total Enhanced Damage: 165 / 240 / 315 / 390 / 465 (+ 150% AP) Enhanced Magic Resistance Reduction: 15 / 18 / 21 / 24 / 27% Total Enhanced MR Reduction: 30 / 36 / 42 / 48 / 54% Enhanced Slow: 22.5 / 30 / 37.5 / 45 / 52.5% Total Enhanced Slow: 45 / 60 / 75 / 90 / 105% [wiki-e rev-4008020, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4008020, fetched 2026-09-18]
 - width: 120 [wiki-e rev-4008020, fetched 2026-09-18]
-- missile speed: 2000 [wiki-e rev-4008020, fetched 2026-09-18]
+- missile or dash speed: 2000 [wiki-e rev-4008020, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4008020, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4008020, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4008020, fetched 2026-09-18]
@@ -74,7 +75,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1700 [wiki-r rev-4008021, fetched 2026-09-18]
 - cast time: None • 0.5833 [wiki-r rev-4008021, fetched 2026-09-18]
 - width: 410 - 368.4 [wiki-r rev-4008021, fetched 2026-09-18]
-- missile speed: 1600 [wiki-r rev-4008021, fetched 2026-09-18]
+- missile or dash speed: 1600 [wiki-r rev-4008021, fetched 2026-09-18]
 - targeting: Vector [wiki-r rev-4008021, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4008021, fetched 2026-09-18]
 - spell shield: False [wiki-r rev-4008021, fetched 2026-09-18]
@@ -88,5 +89,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3985666, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rumble%2FJunkyard%20Titan&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4034705, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rumble%2FFlamespitter&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3923327, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rumble%2FScrap%20Shield&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4008020, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rumble%2FElectro%20Harpoon&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4008020, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rumble%2FElectro%20Harpoon&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4008021, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rumble%2FThe%20Equalizer&prop=text

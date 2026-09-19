@@ -49,7 +49,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: none [wiki-e rev-3853799, fetched 2026-09-18]
 - effect radius: 600 [wiki-e rev-3853799, fetched 2026-09-18]
 - width: 120 [wiki-e rev-3853799, fetched 2026-09-18]
-- missile speed: 4000 [wiki-e rev-3853799, fetched 2026-09-18]
+- missile or dash speed: 4000 [wiki-e rev-3853799, fetched 2026-09-18]
 - targeting: Auto [wiki-e rev-3853799, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-3853799, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-3853799, fetched 2026-09-18]

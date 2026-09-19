@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Doom 'n Gloom [wiki-p rev-3986733, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 25 / 22 / 19 / 16 (based on level) [wiki-p rev-3986733, fetched 2026-09-18]
 - what it does: Passive - Doom: Periodically, Vex empowers her next basic ability to knock down and fear enemies hit for 0.75 / 1 / 1.25 / 1.5 (based on level) seconds, during which they are slowed by 60% – 99% (based on distance from Vex). If Looming Darkness triggers Doom, enemies hit will flee from the epicenter instead. Doom's cooldown resets upon respawning. Innate - Gloom: Nearby enemy champions and monsters that dash or blink will be marked with Gloom for 6 seconds. Vex's next basic attack, which becomes non-projectile, or basic ability hit against an enemy with Gloom will detonate the mark. Looming Darkness will also inflict Gloom, but cannot detonate it. Gloom's detonation deals 40 – 162.94 (based on level) (+ 25% AP) bonus magic damage and refunds 25% of Doom's cooldown. Against non-champions, this instead deals 40% / 45% / 50% / 55% / 60% (based on level) damage and refunds 10% of Doom's cooldown. [wiki-p rev-3986733, fetched 2026-09-18]
 - effect radius: 1600 [wiki-p rev-3986733, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3986733, fetched 2026-09-18]
@@ -29,7 +30,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 70 / 115 / 160 / 205 / 250 (+ 70% AP) [wiki-q rev-4053302, fetched 2026-09-18]
 - cast time: 0.15 [wiki-q rev-4053302, fetched 2026-09-18]
 - width: 360 • 160 [wiki-q rev-4053302, fetched 2026-09-18]
-- missile speed: 600 • 3200 [wiki-q rev-4053302, fetched 2026-09-18]
+- missile or dash speed: 600 • 3200 [wiki-q rev-4053302, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4053302, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4053302, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4053302, fetched 2026-09-18]
@@ -55,7 +56,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 800 [wiki-e rev-4034711, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4034711, fetched 2026-09-18]
 - effect radius: 200 – 300 (based on cast distance) [wiki-e rev-4034711, fetched 2026-09-18]
-- missile speed: 1300 [wiki-e rev-4034711, fetched 2026-09-18]
+- missile or dash speed: 1300 [wiki-e rev-4034711, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4034711, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4034711, fetched 2026-09-18]
 - spell shield: true [wiki-e rev-4034711, fetched 2026-09-18]
@@ -69,14 +70,14 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 • None [wiki-r rev-4057925, fetched 2026-09-18]
 - effect radius: 650 • Global [wiki-r rev-4057925, fetched 2026-09-18]
 - width: 260 [wiki-r rev-4057925, fetched 2026-09-18]
-- missile speed: 1600 • 2200 [wiki-r rev-4057925, fetched 2026-09-18]
+- missile or dash speed: 1600 • 2200 [wiki-r rev-4057925, fetched 2026-09-18]
 - targeting: Direction • Auto [wiki-r rev-4057925, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4057925, fetched 2026-09-18]
 - spell shield: true [wiki-r rev-4057925, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3986733, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FDoom%20'n%20Gloom&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3986733, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FDoom%20'n%20Gloom&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4053302, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FMistral%20Bolt&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008547, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FPersonal%20Space&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4034711, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FLooming%20Darkness&prop=text

@@ -28,7 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 50 / 85 / 120 / 155 / 190 (+ 40% AP) · Bonus Magic Damage: 10 / 15 / 20 / 25 / 30 (+ 10% of Sona's AP) [wiki-q rev-4049803, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4049803, fetched 2026-09-18]
 - effect radius: 825 • 400 [wiki-q rev-4049803, fetched 2026-09-18]
-- missile speed: 1300 [wiki-q rev-4049803, fetched 2026-09-18]
+- missile or dash speed: 1300 [wiki-q rev-4049803, fetched 2026-09-18]
 - targeting: Auto [wiki-q rev-4049803, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4049803, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4049803, fetched 2026-09-18]
@@ -41,7 +41,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Heal: 30 / 45 / 60 / 75 / 90 (+ 30% AP) · Shield Strength: 25 / 45 / 65 / 85 / 105 (+ 25% of Sona's AP) · Minimum Damage Mitigated: 25 / 45 / 65 / 85 / 105 [wiki-w rev-4008052, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4008052, fetched 2026-09-18]
 - effect radius: 1000 • 400 [wiki-w rev-4008052, fetched 2026-09-18]
-- missile speed: 1300 [wiki-w rev-4008052, fetched 2026-09-18]
+- missile or dash speed: 1300 [wiki-w rev-4008052, fetched 2026-09-18]
 - targeting: Auto [wiki-w rev-4008052, fetched 2026-09-18]
 
 ### E
@@ -62,7 +62,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 150 / 250 / 350 (+ 50% AP) [wiki-r rev-4047883, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r rev-4047883, fetched 2026-09-18]
 - width: 280 [wiki-r rev-4047883, fetched 2026-09-18]
-- missile speed: 2400 [wiki-r rev-4047883, fetched 2026-09-18]
+- missile or dash speed: 2400 [wiki-r rev-4047883, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-4047883, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4047883, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4047883, fetched 2026-09-18]

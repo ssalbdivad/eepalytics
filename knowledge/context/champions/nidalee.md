@@ -27,7 +27,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Minimum Magic Damage: 70 / 90 / 110 / 130 / 150 (+ 50% AP) Maximum Magic Damage: 227.5 / 292.5 / 357.5 / 422.5 / 487.5 (+ 162.5% AP) [wiki-q rev-3971597, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-3971597, fetched 2026-09-18]
 - width: 80 [wiki-q rev-3971597, fetched 2026-09-18]
-- missile speed: 1300 [wiki-q rev-3971597, fetched 2026-09-18]
+- missile or dash speed: 1300 [wiki-q rev-3971597, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-3971597, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-3971597, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-3971597, fetched 2026-09-18]

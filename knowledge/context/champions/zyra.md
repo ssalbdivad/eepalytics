@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Garden of Thorns [wiki-p rev-3986877, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 13.6 – 8.51 (based on level) [wiki-p rev-3986877, fetched 2026-09-18]
 - what it does: Innate: Periodically, Zyra spawns one or two Seeds nearby that last for 30 seconds, granting sight over the surrounding area for 1 second. After 1 second, enemy champions can destroy Seeds by moving on top of them. Zyra can only have a total of 8 Seeds planted at a time, preserving Seeds spawned by Rampant Growth over Seeds spawned by Garden of Thorns. [wiki-p rev-3986877, fetched 2026-09-18]
 - effect radius: 900 [wiki-p rev-3986877, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3986877, fetched 2026-09-18]
@@ -66,7 +67,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1100 • 1200 [wiki-e rev-4013460, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4013460, fetched 2026-09-18]
 - width: 140 • 560 [wiki-e rev-4013460, fetched 2026-09-18]
-- missile speed: 1150 [wiki-e rev-4013460, fetched 2026-09-18]
+- missile or dash speed: 1150 [wiki-e rev-4013460, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4013460, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4013460, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4013460, fetched 2026-09-18]
@@ -92,7 +93,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3986877, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FGarden%20of%20Thorns&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3986877, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FGarden%20of%20Thorns&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4013461, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FDeadly%20Spines&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4044057, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FRampant%20Growth&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4013460, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FGrasping%20Roots&prop=text

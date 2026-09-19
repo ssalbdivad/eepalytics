@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Cell Division [wiki-p rev-4061399, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 300 [wiki-p rev-4061399, fetched 2026-09-18]
 - what it does: Innate - The Secret Weapon: Zac gains increased percentage size equal to 1.5% of his bonus health, capped at 35% increased size at 2333.33 bonus health. Zac's size also reduces based on his missing health, down to 70% total size while at 0% health. Innate - Goo: Whenever Zac hits enemies with an ability, he sheds a number of chunks of himself to a nearby location, landing towards nearby visible enemy champions and lasting for 6 seconds. - Stretching Strikes: 1 chunk for the initial hit, and 1 chunk if the second hits a different enemy - Unstable Matter: 1 chunk if it hits at least one enemy - Elastic Slingshot: 1 chunk for each enemy champion hit, with a minimum of 1 if it hits at least one enemy - Let's Bounce!: 1 chunk for each bounce that hits at least one enemy Both Zac and enemy champions can interact with a chunk by being within 50 units of it: an enemy will destroy it, while Zac will consume it to heal for 4% – 8.47% (based on level) of his maximum health. Innate - Cell Division: Periodically, upon taking fatal damage, Zac enters resurrection for 8 / 7 / 6 / 5 / 4 (based on level) seconds, instantly restoring 50% of his maximum health and becoming untargetable and unable to act for the duration. Zac then splits into four uncontrollable bloblets away from his location, though stopping at terrain. After 1.5 seconds of the bloblets being untargetable, they start moving toward Zac's location over the remaining duration. Any damage the bloblets receive, excluding damage dealt in excess of each bloblet's total maximum health, is also echoed to Zac as true damage. While in resurrection, Zac cannot take damage from sources other than the echoed damage from his bloblets. [wiki-p rev-4061399, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4061399, fetched 2026-09-18]
 
@@ -27,7 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 800 • 80 [wiki-q rev-4008654, fetched 2026-09-18]
 - cast time: 0.33 [wiki-q rev-4008654, fetched 2026-09-18]
 - width: 160 [wiki-q rev-4008654, fetched 2026-09-18]
-- missile speed: 2800 [wiki-q rev-4008654, fetched 2026-09-18]
+- missile or dash speed: 2800 [wiki-q rev-4008654, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4008654, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4008654, fetched 2026-09-18]
 - spell shield: special [wiki-q rev-4008654, fetched 2026-09-18]
@@ -53,7 +54,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1200 / 1350 / 1500 / 1650 / 1800 [wiki-e rev-4046591, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4046591, fetched 2026-09-18]
 - effect radius: 265 [wiki-e rev-4046591, fetched 2026-09-18]
-- missile speed: 1350 [wiki-e rev-4046591, fetched 2026-09-18]
+- missile or dash speed: 1350 [wiki-e rev-4046591, fetched 2026-09-18]
 - targeting: Direction / Location [wiki-e rev-4046591, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4046591, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4046591, fetched 2026-09-18]
@@ -75,7 +76,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4061399, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FCell%20Division&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4061399, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FCell%20Division&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008654, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FStretching%20Strikes&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4022472, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FUnstable%20Matter&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4046591, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FElastic%20Slingshot&prop=text

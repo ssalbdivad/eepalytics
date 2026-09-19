@@ -18,7 +18,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Innate: Feathers shot by Xayah will linger and be planted in the ground at maximum range for 6 seconds. Innate: Xayah's ability casts generate 3 stacks of Clean Cuts, lasting for 8 seconds, refreshing on subsequent casts, and stacking up to 5 times. Xayah's basic attacks are empowered to each consume a stack on-attack to instead shoot a Feather that deals the triggering attack's damage to the primary target and 35% / 45% / 55% (based on level) AD physical damage to other enemies hit. The secondary target damage can critically strike for (200% + 30%) damage if the triggering attack does. Innate - Lover's Leap: If either Xayah or Rakan is channeling Recall, the other may move nearby and channel their own to join alongside them. Both reach base at the time of which the initiator's Recall completes. [wiki-p rev-4059261, fetched 2026-09-18]
 - effect radius: 1000 [wiki-p rev-4059261, fetched 2026-09-18]
 - width: 120 [wiki-p rev-4059261, fetched 2026-09-18]
-- missile speed: 4000 [wiki-p rev-4059261, fetched 2026-09-18]
+- missile or dash speed: 4000 [wiki-p rev-4059261, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4059261, fetched 2026-09-18]
 - spell shield: False [wiki-p rev-4059261, fetched 2026-09-18]
 
@@ -41,7 +41,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Active: Xayah enters a frenzy for 4 seconds, gaining bonus attack speed and causing her basic attacks on-attack to be empowered to fire an additional smaller feather at the target on-hit that deals 25% damage of the triggering attack's damage. Whenever Xayah hits an enemy champion with the strike, she gains 30% bonus movement speed for 1.5 seconds. If Rakan is nearby upon cast, he also becomes empowered, and gains the bonus movement speed at the same time as Xayah. [wiki-w rev-4062257, fetched 2026-09-18]
 - damage by rank: Bonus Attack Speed: 35 / 40 / 45 / 50 / 55% [wiki-w rev-4062257, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4062257, fetched 2026-09-18]
-- missile speed: 3000 [wiki-w rev-4062257, fetched 2026-09-18]
+- missile or dash speed: 3000 [wiki-w rev-4062257, fetched 2026-09-18]
 - targeting: Auto [wiki-w rev-4062257, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-4062257, fetched 2026-09-18]
 
@@ -54,7 +54,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: none [wiki-e rev-4002073, fetched 2026-09-18]
 - effect radius: Global [wiki-e rev-4002073, fetched 2026-09-18]
 - width: 160 [wiki-e rev-4002073, fetched 2026-09-18]
-- missile speed: 4000 [wiki-e rev-4002073, fetched 2026-09-18]
+- missile or dash speed: 4000 [wiki-e rev-4002073, fetched 2026-09-18]
 - targeting: Auto [wiki-e rev-4002073, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4002073, fetched 2026-09-18]
 - spell shield: special [wiki-e rev-4002073, fetched 2026-09-18]

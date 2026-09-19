@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Harrier [wiki-p rev-4024765, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 7 – 2.56 (based on critical strike chance) [wiki-p rev-4024765, fetched 2026-09-18]
 - what it does: Innate: Quinn's Blinding Assault against the primary target, Vault, and Skystrike mark enemies hit with Harrier for 4 seconds, during which they are revealed. Valor will periodically mark a nearby visible enemy if no Harrier targets exist for 1 second. Quinn's basic attacks on-hit against Harrier targets are empowered to consume the mark to deal 15 – 132.35 (based on level) (+ 40% bonus AD) bonus physical damage. Harrier deals 75 bonus physical damage against monsters. While Behind Enemy Lines is active, Harrier is disabled and all Harrier marks are removed. [wiki-p rev-4024765, fetched 2026-09-18]
 - effect radius: 525 [wiki-p rev-4024765, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4024765, fetched 2026-09-18]
@@ -31,7 +32,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 [wiki-q rev-4056272, fetched 2026-09-18]
 - effect radius: 210 [wiki-q rev-4056272, fetched 2026-09-18]
 - width: 120 [wiki-q rev-4056272, fetched 2026-09-18]
-- missile speed: 1550 [wiki-q rev-4056272, fetched 2026-09-18]
+- missile or dash speed: 1550 [wiki-q rev-4056272, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4056272, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4056272, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4056272, fetched 2026-09-18]
@@ -54,7 +55,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical damage: 40 / 65 / 90 / 115 / 140 (+ 20% bonus AD) [wiki-e rev-4024768, fetched 2026-09-18]
 - target range: 600 [wiki-e rev-4024768, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4024768, fetched 2026-09-18]
-- missile speed: 2500 • 850 [wiki-e rev-4024768, fetched 2026-09-18]
+- missile or dash speed: 2500 • 850 [wiki-e rev-4024768, fetched 2026-09-18]
 - targeting: Unit [wiki-e rev-4024768, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4024768, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4024768, fetched 2026-09-18]
@@ -78,7 +79,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4024765, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Quinn%2FHarrier&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4024765, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Quinn%2FHarrier&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4056272, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Quinn%2FBlinding%20Assault&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4024767, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Quinn%2FHeightened%20Senses&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4024768, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Quinn%2FVault&prop=text

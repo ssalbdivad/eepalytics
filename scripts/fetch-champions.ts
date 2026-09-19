@@ -103,6 +103,24 @@ const DDRAGON_VERSIONS = "https://ddragon.leagueoflegends.com/api/versions.json"
 const OPGG = "https://lol-api-champion.op.gg/api/na/champions/ranked"
 
 const CACHE_ROOT = "data/champions"
+
+/**
+ * The wiki's half of the cache does NOT live under the patch directory, and that is a statement
+ * about the source rather than a filing convenience.
+ *
+ * Data Dragon is requested AT a patch, so `16.18.1` is a real address and its files belong in a
+ * directory named after it. The wiki has no patch parameter at all: `Module:ChampionData/data` and
+ * every `Template:Data` page are served at HEAD, whatever the wiki says today. Filing them under a
+ * patch pretended otherwise, and the cost was paid on every bump — a new patch directory had no
+ * prior copy of them, so all 1,061 ability templates were re-fetched, every `fetchedAt` became
+ * today, and the citation date on all 22,571 delivered lines changed. Measured on the 16.17.1 bump:
+ * 349 files and 34,000 lines of diff, of which almost none was a change of VALUE. A diff that size
+ * is a diff nobody reads, which defeats the entire reason the corpus is committed text.
+ *
+ * Shared, the same bump re-fetches only Riot's files and the wiki lines keep the dates they were
+ * first seen on — so the diff is what actually moved.
+ */
+const WIKI_CACHE = "data/champions/wiki"
 const OUT = "src/knowledge/champion-table.ts"
 
 /**
@@ -851,6 +869,10 @@ interface AbilityRow {
 	wikiDescription: string
 	leveling: string[]
 	cooldown: string
+	/** The wiki's `static`: a cooldown not affected by ability haste. Often the only one an innate has. */
+	staticCooldown: string
+	/** The wiki's `recharge`: the timer that returns one charge of a stocked ability. */
+	recharge: string
 	cost: string
 	costType: string
 	targetRange: string
@@ -955,7 +977,7 @@ const main = async (): Promise<void> => {
 	for (const s of Object.values((JSON.parse(summRaw) as { data: Record<string, { key: string; name: string }> }).data))
 		summonerNames[Number(s.key)] = s.name
 
-	const modPath = join(cacheDir, "wiki-championdata.lua")
+	const modPath = join(WIKI_CACHE, "wiki-championdata.lua")
 	const modCached = refresh ? null : readCache(modPath)
 	const modRaw = modCached?.content ?? (await fetchText(WIKI_MODULE))
 	const modMeta = writeCache(modPath, modRaw)
@@ -999,7 +1021,7 @@ const main = async (): Promise<void> => {
 			for (const name of wiki.skills[slot])
 				wanted.push({ apiname: wiki.apiname, slot, name, title: `Template:Data ${wiki.wikiPage}/${name}` })
 
-	const abilityPath = join(cacheDir, "wiki-abilities.json")
+	const abilityPath = join(WIKI_CACHE, "wiki-abilities.json")
 	const abilityCached = refresh ? null : readCache(abilityPath)
 	let rawAbilities: Record<string, { revId: number; wikitext: string }> =
 		abilityCached ? (JSON.parse(abilityCached.content) as Record<string, { revId: number; wikitext: string }>) : {}
@@ -1026,7 +1048,7 @@ const main = async (): Promise<void> => {
 
 	/* ---------------------------- tier 1, source 3b: let the WIKI expand its own templates */
 
-	const renderPath = join(cacheDir, `wiki-rendered-${RENDERER_VERSION}.json`)
+	const renderPath = join(WIKI_CACHE, `wiki-rendered-${RENDERER_VERSION}.json`)
 	const renderCached = refresh ? null : readCache(renderPath)
 	let rendered: Record<string, Record<string, string>> =
 		renderCached ? (JSON.parse(renderCached.content) as Record<string, Record<string, string>>) : {}
@@ -1232,6 +1254,8 @@ const main = async (): Promise<void> => {
 					wikiDescription: description,
 					leveling: trust ? leveling : [],
 					cooldown: trust ? pick("cooldown") : "",
+					staticCooldown: trust ? pick("static") : "",
+					recharge: trust ? pick("recharge") : "",
 					cost: trust ? pick("cost") : "",
 					costType: pick("costtype"),
 					targetRange: trust ? pick("target range") : "",
@@ -1383,6 +1407,10 @@ export interface ChampionAbilityRow {
 	/** Per-rank damage and ratio lines, already evaluated by the wiki. */
 	leveling: string[]
 	cooldown: string
+	/** The wiki's \`static\`: a cooldown not affected by ability haste. Often the only one an innate has. */
+	staticCooldown: string
+	/** The wiki's \`recharge\`: the timer that returns one charge of a stocked ability. */
+	recharge: string
 	cost: string
 	costType: string
 	targetRange: string

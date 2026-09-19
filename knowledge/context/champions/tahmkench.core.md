@@ -27,7 +27,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 75 / 120 / 165 / 210 / 255 (+ 100% AP) + [ 5 – 60 (based on level) (+ 1.25% AP per 100 bonus health) (+ 4% bonus health) ] Heal: 10 / 15 / 20 / 25 / 30 (+ 5 / 5.5 / 6 / 6.5 / 7% of missing health) [wiki-q rev-4040842, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4040842, fetched 2026-09-18]
 - width: 140 [wiki-q rev-4040842, fetched 2026-09-18]
-- missile speed: 2800 [wiki-q rev-4040842, fetched 2026-09-18]
+- missile or dash speed: 2800 [wiki-q rev-4040842, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4040842, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4040842, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4040842, fetched 2026-09-18]

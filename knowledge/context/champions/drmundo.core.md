@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Goes Where He Pleases [wiki-p rev-4038331, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 60 – 15 (based on level) [wiki-p rev-4038331, fetched 2026-09-18]
 - what it does: Innate: Dr. Mundo regenerates an additional「 0.4% – 2.3% (based on level) of his maximum health every 5 seconds. 」「 0.04% – 0.23% (based on level) of his maximum health every 0.5 seconds. 」 Passive: Periodically, Dr. Mundo gains immunity to the next hostile immobilizing effect to affect him. Upon resisting one, Dr. Mundo pays a health cost equal to 4% of his current health and propels a canister that lands 525 units in the general direction of the immobilization source, remaining on the ground for 7 seconds. Dr. Mundo can move near the canister to consume it, healing himself for 4% of his maximum health and reducing the cooldown of Goes Where He Pleases by 15 seconds. Enemy champions can move near it to destroy it. Goes Where He Pleases' cooldown resets upon respawning. [wiki-p rev-4038331, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4038331, fetched 2026-09-18]
 
@@ -27,7 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1050 • 990 [wiki-q rev-4008441, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4008441, fetched 2026-09-18]
 - width: 120 [wiki-q rev-4008441, fetched 2026-09-18]
-- missile speed: 2000 [wiki-q rev-4008441, fetched 2026-09-18]
+- missile or dash speed: 2000 [wiki-q rev-4008441, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4008441, fetched 2026-09-18]
 - damage type: magic [wiki-q rev-4008441, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4008441, fetched 2026-09-18]
@@ -70,7 +71,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4038331, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Dr.%20Mundo%2FGoes%20Where%20He%20Pleases&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4038331, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Dr.%20Mundo%2FGoes%20Where%20He%20Pleases&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008441, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Dr.%20Mundo%2FInfected%20Bonesaw&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4038332, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Dr.%20Mundo%2FHeart%20Zapper&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4059881, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Dr.%20Mundo%2FBlunt%20Force%20Trauma&prop=text

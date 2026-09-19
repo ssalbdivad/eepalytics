@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Umbra Blades [wiki-p rev-4007794, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 12 [wiki-p rev-4007794, fetched 2026-09-18]
 - what it does: Innate: Periodically, Nocturne empowers his next basic attack to slash in a circle, dealing 120% AD physical damage to the target and nearby enemies and healing himself for 13 – 32 (based on level) (+ 30% AP) per enemy hit. Against minions, Umbra Blades' damage to secondary targets and healing are reduced by 50% and it applies on-hit effects to all targets(unexpected) at 100% effectiveness. Umbra Blades can critically strike against the primary target, modifying the physical damage dealt to「 (220% + 33%) AD. 」「 110% AD × total critical damage. 」 Basic attacks reduce Umbra Blades' cooldown by 1 second, increased to 3 against enemy champions and monsters. [wiki-p rev-4007794, fetched 2026-09-18]
 - effect radius: 360 [wiki-p rev-4007794, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4007794, fetched 2026-09-18]
@@ -30,7 +31,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 [wiki-q rev-4026429, fetched 2026-09-18]
 - effect radius: 150 [wiki-q rev-4026429, fetched 2026-09-18]
 - width: 120 [wiki-q rev-4026429, fetched 2026-09-18]
-- missile speed: 1600 [wiki-q rev-4026429, fetched 2026-09-18]
+- missile or dash speed: 1600 [wiki-q rev-4026429, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4026429, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4026429, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4026429, fetched 2026-09-18]
@@ -66,7 +67,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 2500 / 3250 / 4000 [wiki-r rev-4049972, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4049972, fetched 2026-09-18]
 - effect radius: Global [wiki-r rev-4049972, fetched 2026-09-18]
-- missile speed: 1800 [wiki-r rev-4049972, fetched 2026-09-18]
+- missile or dash speed: 1800 [wiki-r rev-4049972, fetched 2026-09-18]
 - targeting: Auto / Unit [wiki-r rev-4049972, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4049972, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4049972, fetched 2026-09-18]
@@ -77,7 +78,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4007794, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nocturne%2FUmbra%20Blades&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4007794, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nocturne%2FUmbra%20Blades&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4026429, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nocturne%2FDuskbringer&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3948584, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nocturne%2FShroud%20of%20Darkness&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4015219, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nocturne%2FUnspeakable%20Horror&prop=text

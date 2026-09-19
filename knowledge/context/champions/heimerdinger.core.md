@@ -23,6 +23,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: H-28G Evolution Turret [wiki-q rev-4036534, fetched 2026-09-18]
 - cooldown: 1 [wiki-q rev-4036534, fetched 2026-09-18]
 - cost: 20 [wiki-q rev-4036534, fetched 2026-09-18]
+- recharge timer for a stocked charge: 20 [wiki-q rev-4036534, fetched 2026-09-18]
 - what it does: Active: Heimerdinger deploys a H-28G Evolution Turret at the target location, which lasts until destroyed. Heimerdinger periodically stocks a Turret Kit charge, up to a maximum of 3. Up to 3 H-28G Evolution Turrets can be deployed at a time, with those deployed beyond the maximum destroying the oldest one. See Pets for more details about H-28G Evolution Turrets. [wiki-q rev-4036534, fetched 2026-09-18]
 - target range: 350 [wiki-q rev-4036534, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4036534, fetched 2026-09-18]
@@ -68,7 +69,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 925 [wiki-e rev-4022980, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4022980, fetched 2026-09-18]
 - effect radius: 250 [wiki-e rev-4022980, fetched 2026-09-18]
-- missile speed: 1200 [wiki-e rev-4022980, fetched 2026-09-18]
+- missile or dash speed: 1200 [wiki-e rev-4022980, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4022980, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4022980, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4022980, fetched 2026-09-18]
@@ -79,7 +80,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 925 [wiki-e2 rev-3965591, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e2 rev-3965591, fetched 2026-09-18]
 - effect radius: 300 [wiki-e2 rev-3965591, fetched 2026-09-18]
-- missile speed: 1200 [wiki-e2 rev-3965591, fetched 2026-09-18]
+- missile or dash speed: 1200 [wiki-e2 rev-3965591, fetched 2026-09-18]
 - targeting: Location [wiki-e2 rev-3965591, fetched 2026-09-18]
 - damage type: Magic [wiki-e2 rev-3965591, fetched 2026-09-18]
 - spell shield: True [wiki-e2 rev-3965591, fetched 2026-09-18]
@@ -88,6 +89,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: UPGRADE!!! [wiki-r rev-4006857, fetched 2026-09-18]
 - cooldown: 100 / 85 / 70 [wiki-r rev-4006857, fetched 2026-09-18]
 - cost: 100 [wiki-r rev-4006857, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 3 [wiki-r rev-4006857, fetched 2026-09-18]
 - what it does: Toggle: Heimerdinger empowers his next basic ability for an additional effect, consuming the empowerment upon cast and placing UPGRADE!!! on full cooldown. These empowered abilities have the same cooldowns as their basic forms, deal modified damage, and do not have a mana cost. UPGRADE!!! incurs its static cooldown on-cast, and can be toggled off to remove the empowerment and place the ability on its static cooldown. UPGRADE!!! can be used while affected by cast-inhibiting crowd control. [wiki-r rev-4006857, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4006857, fetched 2026-09-18]
 - targeting: Auto [wiki-r rev-4006857, fetched 2026-09-18]
@@ -95,10 +97,10 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3428651, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FHextech%20Affinity&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4036534, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FH-28G%20Evolution%20Turret&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4036534, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FH-28G%20Evolution%20Turret&prop=text
 - wiki-q2: League of Legends Wiki, ability data template, revision rev-4025020, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FH-28Q%20Apex%20Turret&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3989864, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FHextech%20Micro-Rockets&prop=text
 - wiki-w2: League of Legends Wiki, ability data template, revision rev-3965590, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FHextech%20Rocket%20Swarm&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4022980, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FCH-2%20Electron%20Storm%20Grenade&prop=text
 - wiki-e2: League of Legends Wiki, ability data template, revision rev-3965591, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FCH-3X%20Lightning%20Grenade&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4006857, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FUPGRADE!!!&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4006857, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Heimerdinger%2FUPGRADE!!!&prop=text

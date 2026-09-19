@@ -85,7 +85,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 650 [wiki-r rev-4017869, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4017869, fetched 2026-09-18]
 - effect radius: 350 • 1700 [wiki-r rev-4017869, fetched 2026-09-18]
-- missile speed: Distance to target ÷ 0.35 s [wiki-r rev-4017869, fetched 2026-09-18]
+- missile or dash speed: Distance to target ÷ 0.35 s [wiki-r rev-4017869, fetched 2026-09-18]
 - targeting: Unit [wiki-r rev-4017869, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4017869, fetched 2026-09-18]
 - spell shield: Special [wiki-r rev-4017869, fetched 2026-09-18]

@@ -37,7 +37,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 300 / 500 – 900 (based on channel time) [wiki-w rev-4008551, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4008551, fetched 2026-09-18]
 - width: 120 [wiki-w rev-4008551, fetched 2026-09-18]
-- missile speed: 1000 • 1300 [wiki-w rev-4008551, fetched 2026-09-18]
+- missile or dash speed: 1000 • 1300 [wiki-w rev-4008551, fetched 2026-09-18]
 - targeting: Auto • Direction [wiki-w rev-4008551, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4008551, fetched 2026-09-18]
 - spell shield: true [wiki-w rev-4008551, fetched 2026-09-18]
@@ -49,7 +49,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Bonus Attack Speed: 30 / 35 / 40 / 45 / 50% Bonus Movement Speed: 25 / 27.5 / 30 / 32.5 / 35% (+ 4% per 100 AP) [wiki-e rev-4057854, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4057854, fetched 2026-09-18]
 - width: 500 • 500 [wiki-e rev-4057854, fetched 2026-09-18]
-- missile speed: 1600 • 1200 [wiki-e rev-4057854, fetched 2026-09-18]
+- missile or dash speed: 1600 • 1200 [wiki-e rev-4057854, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4057854, fetched 2026-09-18]
 
 ### R

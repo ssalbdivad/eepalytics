@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Blast Shield [wiki-p rev-3986701, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 16 – 12 (based on level) [wiki-p rev-3986701, fetched 2026-09-18]
 - what it does: Innate: Periodically, Vi's next ability hit grants her a shield equal to 12% of her maximum health for 3 seconds. Blast Shield's cooldown is reduced by 4 seconds each time Denting Blows is consumed. [wiki-p rev-3986701, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3986701, fetched 2026-09-18]
 - spell shield: False [wiki-p rev-3986701, fetched 2026-09-18]
@@ -27,7 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Minimum Physical Damage: 40 / 60 / 80 / 100 / 120 (+ 60% bonus AD) Maximum Physical Damage: 100 / 150 / 200 / 250 / 300 (+ 150% bonus AD) [wiki-q rev-3921391, fetched 2026-09-18]
 - target range: 250 – 725 (based on channel time) [wiki-q rev-3921391, fetched 2026-09-18]
 - cast time: none [wiki-q rev-3921391, fetched 2026-09-18]
-- missile speed: 1450 – 1540 (based on channel time) [wiki-q rev-3921391, fetched 2026-09-18]
+- missile or dash speed: 1450 – 1540 (based on channel time) [wiki-q rev-3921391, fetched 2026-09-18]
 - targeting: Auto / Direction [wiki-q rev-3921391, fetched 2026-09-18]
 - damage type: physical [wiki-q rev-3921391, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-3921391, fetched 2026-09-18]
@@ -43,6 +44,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### E
 - name: Relentless Force [wiki-e rev-3986710, fetched 2026-09-18]
 - cost: 26 / 32 / 38 / 44 / 50 [wiki-e rev-3986710, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 1 [wiki-e rev-3986710, fetched 2026-09-18]
+- recharge timer for a stocked charge: 12 / 11 / 10 / 9 / 8 [wiki-e rev-3986710, fetched 2026-09-18]
 - what it does: Active: Vi empowers her next basic attack within 6 seconds to have an uncancellable windup, gain 50 bonus range and trigger a blast in the target's direction that deals modified physical damage to enemies hit in a cone. Relentless Force can critically strike for (100% + 30%) AD bonus physical damage against the primary target. Secondary targets take the same damage but do not count as being critically struck. Vi periodically stocks a Relentless Force charge, up to a maximum of 2. Relentless Force resets Vi's basic attack timer. [wiki-e rev-3986710, fetched 2026-09-18]
 - damage by rank: Physical Damage: 10 / 30 / 50 / 70 / 90 (+ 110% AD) (+ 100% AP) [wiki-e rev-3986710, fetched 2026-09-18]
 - cast time: none [wiki-e rev-3986710, fetched 2026-09-18]
@@ -59,7 +62,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 150 / 250 / 350 (+ 90% bonus AD) [wiki-r rev-4004943, fetched 2026-09-18]
 - target range: 800 [wiki-r rev-4004943, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r rev-4004943, fetched 2026-09-18]
-- missile speed: 800 [wiki-r rev-4004943, fetched 2026-09-18]
+- missile or dash speed: 800 [wiki-r rev-4004943, fetched 2026-09-18]
 - targeting: Unit [wiki-r rev-4004943, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4004943, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4004943, fetched 2026-09-18]
@@ -70,9 +73,9 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3986701, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vi%2FBlast%20Shield&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3986701, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vi%2FBlast%20Shield&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3921391, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vi%2FVault%20Breaker&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3932548, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vi%2FDenting%20Blows&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-3986710, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vi%2FRelentless%20Force&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-3986710, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vi%2FRelentless%20Force&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4004943, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vi%2FCease%20and%20Desist&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/vi/jungle?tier=emerald_plus

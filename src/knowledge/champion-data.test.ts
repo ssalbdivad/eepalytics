@@ -24,8 +24,7 @@ import {
 	championProvenance,
 	championRow,
 	championRowById,
-	championTableStaleness,
-	renderChampionKnowledge
+	championTableStaleness
 } from "./champion-data.ts"
 import { type } from "arktype"
 import {
@@ -137,39 +136,26 @@ describe("the two claims this repo invented", () => {
 	})
 })
 
-describe("the rendered block", () => {
-	const block = renderChampionKnowledge("Lillia", { gamePatch: CHAMPION_TABLE_PATCH })!
-
-	it("leads with its provenance rather than hiding it in a header a consumer strips", () => {
-		assert.match(block, /EVERY LINE BELOW WAS FETCHED, NOT WRITTEN/)
-		assert.ok(block.includes(championProvenance(lillia!)))
-		assert.match(block, new RegExp(`Data Dragon patch ${CHAMPION_TABLE_PATCH.replace(/\./g, "\\.")}`))
-	})
-
-	it("carries the sourced Swirlseed text and not the invented one", () => {
-		assert.match(block, /detonates upon hitting an enemy or terrain/i)
-		assert.doesNotMatch(block, /roll\w*\s+(over|through|past)\s+(terrain|walls?)/i)
-	})
-
+/*
+ * `renderChampionKnowledge` is DELETED and so are the four tests that exercised it. It was a second
+ * renderer for data `champion-brief.ts` already renders, nothing outside this file imported it, and
+ * the app reads committed text. What remains testable here is the part that survived: the staleness
+ * warning and the provenance line, neither of which says anything about League.
+ */
+describe("what the table says about itself", () => {
 	it("says which patch it is speaking for when that is not the game's", () => {
 		assert.equal(championTableStaleness(CHAMPION_TABLE_PATCH), null)
 		assert.equal(championTableStaleness(`${CHAMPION_TABLE_PATCH}.712.9876`), null)
 		const stale = championTableStaleness("16.24.1")
 		assert.ok(stale !== null)
 		assert.match(stale, /16\.24\.1/)
-		assert.match(renderChampionKnowledge("Lillia", { gamePatch: "16.24.1" })!, /^STALE:/m)
 	})
 
-	it("turns op.gg's ids into words out of Riot's own tables", () => {
-		assert.match(block, /op\.gg, jungle/)
-		assert.match(block, /Summoners: Flash \+ Smite/)
-		assert.match(block, /keystone Conqueror; Precision —/)
-		// Item ids join to the existing generated item table rather than to a map written by hand.
-		assert.doesNotMatch(block.split("## What actually wins")[1] ?? "", /item \d+/)
-	})
-
-	it("returns null for a champion nobody fetched, rather than something that reads like knowledge", () => {
-		assert.equal(renderChampionKnowledge("Not A Champion"), null)
+	it("names every source a champion's numbers rest on, with the revisions that make them checkable", () => {
+		const p = championProvenance(lillia!)
+		assert.match(p, new RegExp(`Data Dragon patch ${CHAMPION_TABLE_PATCH.replace(/\./g, "\\.")}`))
+		assert.match(p, /League of Legends Wiki ability data, revisions [\d/]+/)
+		assert.match(p, /op\.gg jungle/)
 	})
 })
 

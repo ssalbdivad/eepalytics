@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Mirror Image [wiki-p rev-4035723, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 60 [wiki-p rev-4035723, fetched 2026-09-18]
 - what it does: Innate: Periodically, when LeBlanc is damaged to 40% maximum health, she creates a clone of herself, after which they both instantly become invisible for 1 second. The clone can cast basic attacks with no effect and lasts 8 seconds. Upon spawning, it starts moving up to 1900 units toward a random direction in front of LeBlanc's movement, determined at the moment of its spawning. See Pets for more details about LeBlanc's clone. [wiki-p rev-4035723, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4035723, fetched 2026-09-18]
 
@@ -26,7 +27,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 65 / 90 / 115 / 140 / 165 (+ 40% AP) · Total Magic Damage: 130 / 180 / 230 / 280 / 330 (+ 80% AP) [wiki-q rev-3985524, fetched 2026-09-18]
 - target range: 700 [wiki-q rev-3985524, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-3985524, fetched 2026-09-18]
-- missile speed: 2000 [wiki-q rev-3985524, fetched 2026-09-18]
+- missile or dash speed: 2000 [wiki-q rev-3985524, fetched 2026-09-18]
 - targeting: Unit [wiki-q rev-3985524, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-3985524, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-3985524, fetched 2026-09-18]
@@ -40,7 +41,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 600 • Global [wiki-w rev-4057468, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4057468, fetched 2026-09-18]
 - effect radius: 240 [wiki-w rev-4057468, fetched 2026-09-18]
-- missile speed: 1450 [wiki-w rev-4057468, fetched 2026-09-18]
+- missile or dash speed: 1450 [wiki-w rev-4057468, fetched 2026-09-18]
 - targeting: Location • Auto [wiki-w rev-4057468, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4057468, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4057468, fetched 2026-09-18]
@@ -54,7 +55,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 950 [wiki-e rev-3954748, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-3954748, fetched 2026-09-18]
 - width: 110 [wiki-e rev-3954748, fetched 2026-09-18]
-- missile speed: 1750 [wiki-e rev-3954748, fetched 2026-09-18]
+- missile or dash speed: 1750 [wiki-e rev-3954748, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-3954748, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-3954748, fetched 2026-09-18]
 - spell shield: Special [wiki-e rev-3954748, fetched 2026-09-18]
@@ -69,7 +70,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4035723, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20LeBlanc%2FMirror%20Image&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4035723, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20LeBlanc%2FMirror%20Image&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3985524, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20LeBlanc%2FSigil%20of%20Malice&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4057468, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20LeBlanc%2FDistortion&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3954748, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20LeBlanc%2FEthereal%20Chains&prop=text

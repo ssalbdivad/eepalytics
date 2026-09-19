@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Rock Surfing [wiki-p rev-3986175, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 2 [wiki-p rev-3986175, fetched 2026-09-18]
 - what it does: Innate: While near terrain, Taliyah gains 10% / 15% / 25% / 40% (based on level) bonus movement speed, which builds up over 1 second while in range for at least 0.4 seconds, and decays at the same rate once out of range for at least 3 seconds. If Taliyah is casting an ability or enters champion combat, Rock Surfing cannot occur again for a few seconds. [wiki-p rev-3986175, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3986175, fetched 2026-09-18]
 - edge case: The movement speed builds up and decays linearly (by the same amount in the same interval), 25% of the maximum value every 0.25 seconds. [wiki-p rev-3986175, fetched 2026-09-18]
@@ -30,7 +31,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 [wiki-q rev-4013247, fetched 2026-09-18]
 - effect radius: 175 • 225 [wiki-q rev-4013247, fetched 2026-09-18]
 - width: 200 [wiki-q rev-4013247, fetched 2026-09-18]
-- missile speed: 3600 - 1800 • 2000 [wiki-q rev-4013247, fetched 2026-09-18]
+- missile or dash speed: 3600 - 1800 • 2000 [wiki-q rev-4013247, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4013247, fetched 2026-09-18]
 - damage type: magic [wiki-q rev-4013247, fetched 2026-09-18]
 - spell shield: Special [wiki-q rev-4013247, fetched 2026-09-18]
@@ -76,7 +77,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Active: Taliyah summons a torrent of spiraling rocks that cascades in the target direction, knocking aside champions hit and erecting a wall of terrain in its wake. The wall lasts for 4 seconds after completion, then slowly disintegrates from its starting point. Taliyah also channels for 1 second, during which Weaver's Wall can be recast and she reveals herself. Recast: Upon completing the channel, Taliyah surfs on the wall as it emerges, revealing herself in the process. After 0.75 seconds, she may input a movement command to jump off the wall to the target location, and automatically does so upon being immobilized or silenced or reaching maximum range. Once the wall has fully formed, Taliyah can recast to destroy the wall instantly. Weaver's Wall is placed on a 3-second static cooldown upon taking champion or turret damage. [wiki-r rev-4008075, fetched 2026-09-18]
 - target range: 2500 / 4500 / 6500 • 900 [wiki-r rev-4008075, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4008075, fetched 2026-09-18]
-- missile speed: 1500 • 1200 [wiki-r rev-4008075, fetched 2026-09-18]
+- missile or dash speed: 1500 • 1200 [wiki-r rev-4008075, fetched 2026-09-18]
 - targeting: Direction • Auto [wiki-r rev-4008075, fetched 2026-09-18]
 - spell shield: false [wiki-r rev-4008075, fetched 2026-09-18]
 - edge case: If a champion is standing next to a portion of the generated terrain and that portion expires by any means, enemies' spell shield will be consumed.(bug) [wiki-r rev-4008075, fetched 2026-09-18]
@@ -229,7 +230,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3986175, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taliyah%2FRock%20Surfing&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3986175, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taliyah%2FRock%20Surfing&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4013247, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taliyah%2FThreaded%20Volley&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4028078, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taliyah%2FSeismic%20Shove&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3985881, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taliyah%2FUnraveled%20Earth&prop=text

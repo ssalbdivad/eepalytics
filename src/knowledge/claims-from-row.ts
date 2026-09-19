@@ -51,6 +51,8 @@ export const AbilityRowShape = type({
 	"wikiDescription?": "string",
 	"leveling?": "string[]",
 	"cooldown?": "string",
+	"staticCooldown?": "string",
+	"recharge?": "string",
 	"cost?": "string",
 	"costType?": "string",
 	"targetRange?": "string",
@@ -278,6 +280,18 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 			push("cost", "ability.cost", ability.cost, { kind: "json", path: "cost" }, {
 				agreesWith: ["ddragon"]
 			})
+			/*
+			 * NOT marked `agreesWith`, deliberately. The fetcher compares Data Dragon's cooldown
+			 * against `cooldown || static || recharge`, so whichever of the three it actually used
+			 * was corroborated and the other two were not looked at. They ride the slot's `agreed`
+			 * flag — a slot with any disagreement ships none of them — without claiming a second
+			 * source read the specific number on the line.
+			 */
+			push("static", "ability.static-cooldown", ability.staticCooldown, {
+				kind: "json",
+				path: "staticCooldown"
+			})
+			push("recharge", "ability.recharge", ability.recharge, { kind: "json", path: "recharge" })
 		} else {
 			skipped.push(
 				`${row.key}.${slotId}: sources disagreed, so name/cooldown/cost withheld`

@@ -118,201 +118,24 @@ export const championProvenance = (row: ChampionRow): string => {
 	return parts.join(" · ")
 }
 
-/* ------------------------------------------------------------------ rendering */
-
-const line = (label: string, value: string): string | null => (value.trim() === "" ? null : `${label}: ${value}`)
-
-const join = (parts: (string | null)[], sep: string): string => parts.filter(p => p !== null && p !== "").join(sep)
-
-const SLOT_LABEL: Record<ChampionAbilityRow["slot"], string> = {
-	P: "Passive",
-	Q: "Q",
-	W: "W",
-	E: "E",
-	R: "R (ultimate)"
-}
-
-const renderAbility = (a: ChampionAbilityRow): string => {
-	const out: string[] = [`### ${SLOT_LABEL[a.slot]} — ${a.name}`]
-	// Riot's own wording and the wiki's own wording, both verbatim and both attributed, because they
-	// are independent transcriptions and a reader who can see both can see when one is thin.
-	if (a.riotTooltip !== "") out.push(`Riot's tooltip, verbatim: ${a.riotTooltip}`)
-	else if (a.riotSummary !== "") out.push(`Riot's description, verbatim: ${a.riotSummary}`)
-	if (a.wikiDescription !== "") out.push(`Wiki, with the numbers filled in: ${a.wikiDescription}`)
-	for (const l of a.leveling) out.push(l)
-
-	const stats = join(
-		[
-			line("Cooldown", a.cooldown),
-			line("Cost", join([a.cost, a.costType], " ")),
-			line("Target range", a.targetRange),
-			line("Cast time", a.castTime),
-			line("Effect radius", a.effectRadius),
-			line("Width", a.width),
-			line("Missile speed", a.speed),
-			line("Queue threshold", a.queueThreshold)
-		],
-		" · "
-	)
-	if (stats !== "") out.push(stats)
-
-	const shape = join(
-		[
-			line("Targeting", a.targeting),
-			line("Affects", a.affects),
-			line("Damage type", a.damageType),
-			line("Projectile", a.projectile),
-			line("Spell shield", a.spellShield)
-		],
-		" · "
-	)
-	if (shape !== "") out.push(shape)
-
-	if (a.notes.length > 0) out.push(["Wiki notes on this ability:", ...a.notes.map(n => `- ${n}`)].join("\n"))
-	// A withheld number is stated as withheld. Silence here would read as "there is no cooldown".
-	if (!a.agreed)
-		out.push(
-			`NUMBERS WITHHELD on this ability: Data Dragon and the wiki disagree (${a.conflicts.join("; ")}), ` +
-				`so no figure for it is quotable. Say the behaviour, not the number.`
-		)
-	return out.join("\n")
-}
-
-const pct = (x: number): string => `${(x * 100).toFixed(1)}%`
-
-const itemNames = (ids: number[]): string =>
-	ids.map(id => itemOf(id)?.name ?? `item ${id}`).join(" → ")
-
-/**
- * Tier 2 — what is built, maxed and won with. Counts only.
+/*
+ * THE RENDERER THAT USED TO LIVE HERE IS DELETED, 2026-09-19.
  *
- * Every figure carries its sample, and nothing here is turned into advice. op.gg publishes that
- * Lillia loses 53% into Shyvana; it publishes nothing at all about WHY or what to do, and the gap
- * between those two is exactly where a model starts writing coaching out of its own head.
- */
-const runeName = (id: number): string => RUNE_NAMES[id] ?? `rune ${id}`
-const spellName = (ids: number[]): string => ids.map(id => SUMMONER_SPELL_NAMES[id] ?? `spell ${id}`).join(" + ")
-
-const renderTier2 = (t: ChampionTier2Row): string => {
-	const out: string[] = [
-		`## What actually wins on this patch (op.gg, ${t.role.toLowerCase()}, ${t.tier}, patch ${t.metaVersion})`,
-		`These are COUNTS from ranked games, not opinions, and they say what is picked and what wins — ` +
-			`never why. ${t.play.toLocaleString()} games: ${pct(t.winRate)} win, ${pct(t.pickRate)} pick, ` +
-			`${pct(t.banRate)} ban` +
-			(t.opggTier !== null ? `, op.gg tier ${t.opggTier} rank ${t.opggRank}` : "") +
-			(t.opggRankPrevPatch !== null ? ` (rank ${t.opggRankPrevPatch} last patch)` : "") +
-			"."
-	]
-	if (t.skillOrder)
-		out.push(
-			`Skill order, ${t.skillOrder.play.toLocaleString()} games / ${t.skillOrder.win.toLocaleString()} wins: ` +
-				t.skillOrder.order.join(" ")
-		)
-	const build = (label: string, rows: { ids: number[]; play: number; win: number }[]): void => {
-		for (const r of rows.slice(0, 3))
-			out.push(`${label}: ${itemNames(r.ids)} — ${r.play.toLocaleString()} games, ${r.win.toLocaleString()} wins`)
-	}
-	build("Starter", t.starterItems)
-	build("Boots", t.boots)
-	build("Core", t.coreItems)
-	build("Most-finished item", t.lastItems)
-	for (const s of t.summonerSpells.slice(0, 2))
-		out.push(`Summoners: ${spellName(s.ids)} — ${s.play.toLocaleString()} games, ${s.win.toLocaleString()} wins`)
-	if (t.runePage)
-		out.push(
-			`Runes, ${t.runePage.play.toLocaleString()} games / ${t.runePage.win.toLocaleString()} wins: ` +
-				`keystone ${runeName(t.runePage.keystone)}; ` +
-				`${runeName(t.runePage.primaryTree)} — ${t.runePage.primaryRunes.map(runeName).join(", ")}; ` +
-				`${runeName(t.runePage.secondaryTree)} — ${t.runePage.secondaryRunes.map(runeName).join(", ")}; ` +
-				// Riot publishes no name table for the stat shards, so they stay ids and are labelled as
-				// ids. Naming them from memory is exactly the move this whole pipeline exists to stop.
-				`stat shard ids (Riot publishes no names for these): ${t.runePage.shards.join(", ")}`
-		)
-	if (t.counters.length > 0)
-		out.push(
-			`Win rate INTO other champions (a rate, not advice — nothing here says why): ` +
-				t.counters
-					.map(c => {
-						const foe = championRowById(c.championId)
-						return `${foe?.name ?? `champion ${c.championId}`} ${pct(c.win / Math.max(1, c.play))} of ${c.play}`
-					})
-					.join(", ")
-		)
-	if (t.trend.length > 1)
-		out.push(`Win rate by patch: ${t.trend.map(p => `${p.version} ${pct(p.rate)}`).join(", ")}`)
-	return out.join("\n")
-}
-
-const STAT_LINES: [key: string, label: string, growth: string | null][] = [
-	["hp_base", "HP", "hp_lvl"],
-	["mp_base", "resource", "mp_lvl"],
-	["dam_base", "attack damage", "dam_lvl"],
-	["arm_base", "armour", "arm_lvl"],
-	["mr_base", "magic resist", "mr_lvl"],
-	["as_base", "base attack speed", "as_lvl"],
-	["range", "attack range", null],
-	["ms", "move speed", null]
-]
-
-export interface RenderOptions {
-	/** The game's patch, so the block can say it is speaking for a different one. */
-	gamePatch?: string
-	/** `false` drops the op.gg section — the tier whose source has no terms grant. */
-	tier2?: boolean
-}
-
-/**
- * The whole sourced block for one champion, as markdown.
+ * `renderChampionKnowledge` turned a row into a markdown block with its own labels, its own
+ * headings and its own idea of what each field means — a second renderer for the same data, beside
+ * `champion-brief.ts`. Nothing imported it but this file's own test: the app reads
+ * `knowledge/context/`, which is committed text, and the runtime has no renderer at all.
  *
- * Returns `null` when the champion is not in the table, which is the correct output for a champion
- * nobody fetched: a coach with no notes still coaches the role and the numbers, and that is a far
- * better failure than a coach handed prose somebody made up.
+ * It goes rather than staying dormant because a second labelling of the same numbers is a second
+ * place to be wrong about them, and it WAS wrong in the same place the live path was: it labelled
+ * the wiki's `speed` field "Missile speed" on all 308 abilities that carry one, where the wiki
+ * documents it as "Speed of a missile OR DASH" and 89 of those abilities are dashes. One fix in
+ * one place is the whole point of having one place.
+ *
+ * What survives here is lookup and provenance — `championRow`, `championRowById`,
+ * `championTableStaleness`, `championProvenance`, `fetchedChampions` — none of which can produce a
+ * sentence about League.
  */
-export const renderChampionKnowledge = (name: string, opts: RenderOptions = {}): string | null => {
-	const row = championRow(name)
-	if (!row) return null
-	const out: string[] = [`# ${row.name} — ${row.title}`]
-
-	out.push(
-		`EVERY LINE BELOW WAS FETCHED, NOT WRITTEN. Sources: ${championProvenance(row)}. ` +
-			`If something about this champion is not in this block, it was not published by any of those ` +
-			`sources and you do not know it — say so rather than filling the gap.`
-	)
-	const stale = opts.gamePatch ? championTableStaleness(opts.gamePatch) : null
-	if (stale) out.push(`STALE: ${stale}`)
-
-	out.push("## Identity")
-	out.push(
-		join(
-			[
-				row.rangeType,
-				row.resource === "" ? null : `${row.resource} user`,
-				row.positions.length > 0 ? `client position ${row.positions.join(", ")}` : null,
-				row.roles.length > 0 ? `wiki role ${row.roles.join(", ")}` : null,
-				row.releasePatch === "" ? null : `released ${row.releasePatch}`,
-				row.lastChangedPatch === "" ? null : `last changed ${row.lastChangedPatch}`
-			],
-			" · "
-		)
-	)
-	const stats = STAT_LINES.map(([key, label, growth]) => {
-		const base = row.stats[key]
-		if (base === undefined) return null
-		const g = growth ? row.stats[growth] : undefined
-		return `${base}${g === undefined ? "" : ` (+${g}/lvl)`} ${label}`
-	})
-	const statLine = join(stats, " · ")
-	if (statLine !== "") out.push(`Base stats: ${statLine}`)
-
-	if (row.abilities.length > 0) {
-		out.push("## Abilities")
-		for (const a of row.abilities) out.push(renderAbility(a))
-	}
-
-	if (opts.tier2 !== false && row.tier2) out.push(renderTier2(row.tier2))
-
-	return out.join("\n\n")
-}
 
 /**
  * The champions with a fetched row, for the UI and for `doctor`.

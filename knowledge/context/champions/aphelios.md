@@ -83,7 +83,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1450 [wiki-q2 rev-3993664, fetched 2026-09-18]
 - cast time: 0.4 [wiki-q2 rev-3993664, fetched 2026-09-18]
 - width: 120 [wiki-q2 rev-3993664, fetched 2026-09-18]
-- missile speed: 1850 [wiki-q2 rev-3993664, fetched 2026-09-18]
+- missile or dash speed: 1850 [wiki-q2 rev-3993664, fetched 2026-09-18]
 - targeting: Direction [wiki-q2 rev-3993664, fetched 2026-09-18]
 - damage type: Physical [wiki-q2 rev-3993664, fetched 2026-09-18]
 - spell shield: True [wiki-q2 rev-3993664, fetched 2026-09-18]
@@ -148,6 +148,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### W
 - name: Phase [wiki-w rev-3970739, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 0.8 [wiki-w rev-3970739, fetched 2026-09-18]
 - what it does: Toggle: Aphelios switches between his main weapon and off-hand weapon over 0.25 seconds. [wiki-w rev-3970739, fetched 2026-09-18]
 - cast time: None [wiki-w rev-3970739, fetched 2026-09-18]
 - targeting: Auto [wiki-w rev-3970739, fetched 2026-09-18]
@@ -168,7 +169,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1300 [wiki-r rev-4052070, fetched 2026-09-18]
 - cast time: 0.6 [wiki-r rev-4052070, fetched 2026-09-18]
 - effect radius: 300 [wiki-r rev-4052070, fetched 2026-09-18]
-- missile speed: 1000 [wiki-r rev-4052070, fetched 2026-09-18]
+- missile or dash speed: 1000 [wiki-r rev-4052070, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-4052070, fetched 2026-09-18]
 - damage type: physical [wiki-r rev-4052070, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4052070, fetched 2026-09-18]
@@ -211,6 +212,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q4: League of Legends Wiki, ability data template, revision rev-3983351, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FBinding%20Eclipse&prop=text
 - wiki-q5: League of Legends Wiki, ability data template, revision rev-4034688, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FDuskwave&prop=text
 - wiki-q6: League of Legends Wiki, ability data template, revision rev-4034689, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FSentry&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-3970739, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FPhase&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-3970739, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FPhase&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3998993, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FWeapon%20Queue%20System&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4052070, fetched 2026-09-18 — 35 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FMoonlight%20Vigil&prop=text

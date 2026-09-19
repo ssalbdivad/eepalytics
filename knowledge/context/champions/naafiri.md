@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: We Are More [wiki-p rev-4025780, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 30 / 25 / 20 / 15 / 10 (based on level) [wiki-p rev-4025780, fetched 2026-09-18]
 - what it does: Innate: Periodically, Naafiri summons a Packmate that fights alongside her. She may have up to 2 / 3 / 4 / 5 (based on level) Packmates at a time. Naafiri summons the maximum number of Packmates when the game starts and upon respawning. Hitting champions or large monsters with abilities reduces the cooldown by 4 seconds. Killing enemies reduces it by 1 second. See Pets for full details on Packmates. [wiki-p rev-4025780, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4025780, fetched 2026-09-18]
 - edge case: Packmates do not count as abilities for triggering the cooldown reduction. [wiki-p rev-4025780, fetched 2026-09-18]
@@ -30,7 +31,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 900 [wiki-q rev-4025704, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4025704, fetched 2026-09-18]
 - width: 100 [wiki-q rev-4025704, fetched 2026-09-18]
-- missile speed: 1700 [wiki-q rev-4025704, fetched 2026-09-18]
+- missile or dash speed: 1700 [wiki-q rev-4025704, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4025704, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4025704, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4025704, fetched 2026-09-18]
@@ -59,7 +60,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 250 – 450 • 650 [wiki-e rev-4007772, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4007772, fetched 2026-09-18]
 - effect radius: 230 [wiki-e rev-4007772, fetched 2026-09-18]
-- missile speed: 900 [wiki-e rev-4007772, fetched 2026-09-18]
+- missile or dash speed: 900 [wiki-e rev-4007772, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4007772, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4007772, fetched 2026-09-18]
 - spell shield: true [wiki-e rev-4007772, fetched 2026-09-18]
@@ -74,7 +75,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 900 [wiki-r rev-4046586, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4046586, fetched 2026-09-18]
 - effect radius: 2100 [wiki-r rev-4046586, fetched 2026-09-18]
-- missile speed: 1800 [wiki-r rev-4046586, fetched 2026-09-18]
+- missile or dash speed: 1800 [wiki-r rev-4046586, fetched 2026-09-18]
 - targeting: Unit [wiki-r rev-4046586, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4046586, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4046586, fetched 2026-09-18]
@@ -144,7 +145,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4025780, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FWe%20Are%20More&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4025780, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FWe%20Are%20More&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4025704, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FDarkin%20Daggers&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4058060, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FThe%20Call%20of%20the%20Pack&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007772, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FEviscerate&prop=text

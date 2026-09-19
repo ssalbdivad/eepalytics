@@ -101,7 +101,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Guppy Damage: 180 / 300 / 420 (+ 60% AP) · Chomper Damage: 225 / 375 / 525 (+ 75% AP) · Gigalodon Damage: 270 / 450 / 630 (+ 90% AP) [wiki-r rev-4010638, fetched 2026-09-18]
 - target range: 1300 [wiki-r rev-4010638, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r rev-4010638, fetched 2026-09-18]
-- missile speed: 1300 [wiki-r rev-4010638, fetched 2026-09-18]
+- missile or dash speed: 1300 [wiki-r rev-4010638, fetched 2026-09-18]
 - targeting: Location [wiki-r rev-4010638, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4010638, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4010638, fetched 2026-09-18]

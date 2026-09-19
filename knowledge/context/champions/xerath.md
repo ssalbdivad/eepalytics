@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Mana Surge [wiki-p rev-3986753, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 16 [wiki-p rev-3986753, fetched 2026-09-18]
 - what it does: Innate: Periodically, Xerath empowers his next basic attack on-hit to restore 30 – 225 (based on level) mana, doubled to 60 – 450 (based on level) against enemy champions. Mana Surge's cooldown is reduced by 3.5 seconds whenever Xerath kills an enemy. Mana Surge does not trigger if Xerath would restore above his maximum mana. [wiki-p rev-3986753, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3986753, fetched 2026-09-18]
 - edge case: Mana Surge will trigger even if the attack is blocked, but not if it misses due to blind. [wiki-p rev-3986753, fetched 2026-09-18]
@@ -140,7 +141,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 70 / 100 / 130 / 160 / 190 (+ 45% AP) [wiki-e rev-3881560, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-3881560, fetched 2026-09-18]
 - width: 120 [wiki-e rev-3881560, fetched 2026-09-18]
-- missile speed: 1400 [wiki-e rev-3881560, fetched 2026-09-18]
+- missile or dash speed: 1400 [wiki-e rev-3881560, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-3881560, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-3881560, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-3881560, fetched 2026-09-18]
@@ -214,7 +215,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3986753, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FMana%20Surge&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3986753, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FMana%20Surge&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4057478, fetched 2026-09-18 — 93 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FArcanopulse&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008622, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FEye%20of%20Destruction&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3881560, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FShocking%20Orb&prop=text

@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Colossal Smash [wiki-p rev-4038336, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 5 [wiki-p rev-4038336, fetched 2026-09-18]
 - what it does: Innate: Periodically, Galio's next basic attack is empowered to have an uncancellable windup, gain 40% bonus attack speed and deal 15 – 115 (based on level) (+ 100% AD) (+ 40% AP) (+ 60% bonus magic resistance) modified magic damage to the target and all enemies near them. Whenever Galio hits at least one enemy champion or epic monster with an ability, Colossal Smash's current cooldown is reduced by 3 seconds. This may occur only once per cast. Colossal Smash's damage based on its AD ratio can critically strike for (200% + 30%) damage to all targets hit. [wiki-p rev-4038336, fetched 2026-09-18]
 - effect radius: 250 [wiki-p rev-4038336, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4038336, fetched 2026-09-18]
@@ -38,7 +39,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 [wiki-q rev-4016962, fetched 2026-09-18]
 - effect radius: 150 [wiki-q rev-4016962, fetched 2026-09-18]
 - width: 120 [wiki-q rev-4016962, fetched 2026-09-18]
-- missile speed: 1400 • 50 [wiki-q rev-4016962, fetched 2026-09-18]
+- missile or dash speed: 1400 • 50 [wiki-q rev-4016962, fetched 2026-09-18]
 - targeting: Location [wiki-q rev-4016962, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4016962, fetched 2026-09-18]
 - spell shield: Special [wiki-q rev-4016962, fetched 2026-09-18]
@@ -115,7 +116,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 250 - 650 [wiki-e rev-4016963, fetched 2026-09-18]
 - cast time: 0.4 [wiki-e rev-4016963, fetched 2026-09-18]
 - width: 400 [wiki-e rev-4016963, fetched 2026-09-18]
-- missile speed: 2300 [wiki-e rev-4016963, fetched 2026-09-18]
+- missile or dash speed: 2300 [wiki-e rev-4016963, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4016963, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4016963, fetched 2026-09-18]
 - edge case: Galio will initiate the dash even if his step backwards is knocked down. [wiki-e rev-4016963, fetched 2026-09-18]
@@ -229,7 +230,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4038336, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Galio%2FColossal%20Smash&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4038336, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Galio%2FColossal%20Smash&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4016962, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Galio%2FWinds%20of%20War&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3990299, fetched 2026-09-18 — 56 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Galio%2FShield%20of%20Durand&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4016963, fetched 2026-09-18 — 54 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Galio%2FJustice%20Punch&prop=text

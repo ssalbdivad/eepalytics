@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Prophet of an Elder God [wiki-p rev-4062254, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 18 – 7 (based on level) [wiki-p rev-4062254, fetched 2026-09-18]
 - what it does: Innate: Periodically, Illaoi spawns a Tentacle on the nearest terrain, if no other Tentacle is around it. Tentacles fully spawn after a 2 second delay and are untargetable in the meantime. Tentacles are commanded to attack by Illaoi's abilities, dealing 9 – 180 (based on level) (+ 110% AD) (+ 40% AP) physical damage to all enemies struck, increased by 0% – 30% (based on Tentacle Smash's rank). Each enemy individually reduces the slam damage by 50% for every slam they were hit by in the last 0.66 seconds, capped at 75% less damage. Each Tentacle also heals Illaoi for 5% of her missing health if it hits at least one enemy champion. See Pets for more details about Tentacles. [wiki-p rev-4062254, fetched 2026-09-18]
 - effect radius: 1000 [wiki-p rev-4062254, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4062254, fetched 2026-09-18]
@@ -142,7 +143,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Damage Transmission: 25 / 30 / 35 / 40 / 45% (+ 8% per 100 AD) [wiki-e rev-4061209, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4061209, fetched 2026-09-18]
 - width: 100 [wiki-e rev-4061209, fetched 2026-09-18]
-- missile speed: 1900 [wiki-e rev-4061209, fetched 2026-09-18]
+- missile or dash speed: 1900 [wiki-e rev-4061209, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4061209, fetched 2026-09-18]
 - damage type: Physical • Magic • True (Echoed damage) [wiki-e rev-4061209, fetched 2026-09-18]
 - spell shield: Special [wiki-e rev-4061209, fetched 2026-09-18]
@@ -269,7 +270,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4062254, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FProphet%20of%20an%20Elder%20God&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4062254, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FProphet%20of%20an%20Elder%20God&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4016298, fetched 2026-09-18 — 54 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FTentacle%20Smash&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4063660, fetched 2026-09-18 — 48 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FHarsh%20Lesson&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4061209, fetched 2026-09-18 — 101 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FTest%20of%20Spirit&prop=text

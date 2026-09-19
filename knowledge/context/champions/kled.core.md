@@ -16,7 +16,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Passive
 - name: Skaarl the Cowardly Lizard [wiki-p rev-4058479, fetched 2026-09-18]
 - what it does: Innate: Kled rides his semi-trusty mount, Skaarl. While Mounted, all damage dealt to the duo is suffered by Skaarl, who has 400 – 1400 (based on level) base health; additional sources of health are applied to Skaarl's maximum health. Effects based on percentage health consider Kled and Skaarl's combined maximum health. Being reduced below 0 health causes Skaarl to flee, forcing Kled to be Dismounted, with all damage in excess of Skaarl's health being ignored. Upon dismounting, Kled lunges in the direction of the allied Nexus, though not through terrain, while cleansing himself of all crowd control and becoming unable to act, untargetable, and immune to crowd control for 0.5 seconds. Dismounting resets the cooldown and charges of Pocket Pistol. While Kled is Dismounted, his base health and movement speed are reduced; however, he gains bonus movement speed while moving toward enemy champions. Additionally, he gains bonus attack range, and his attacks deal 85% / 90% / 95% / 100% (based on level) damage to champions. Bear Trap on a Rope is replaced with Pocket Pistol, while Jousting and Chaaaaaaaarge!!! become unusable. While Mounted, healing and health regeneration will first replenish Skaarl's health and will only apply to Kled's health while Skaarl is at full health. [wiki-p rev-4058479, fetched 2026-09-18]
-- missile speed: 400 [wiki-p rev-4058479, fetched 2026-09-18]
+- missile or dash speed: 400 [wiki-p rev-4058479, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4058479, fetched 2026-09-18]
 - name: Dismounted Skaarl the Cowardly Lizard [wiki-p2 rev-4038397, fetched 2026-09-18]
 - what it does: Innate: Kled is only vulnerable to death while Dismounted. Kled has 410 – 1838 (based on level) base health, which is not improved by sources of bonus health, his movement speed is reduced「 by 40 」「 to 305 」, and he gains 125 total attack range. Effects based on percentage health consider Kled and Skaarl's combined maximum health, meaning that a Dismounted Kled is never considered to be at full health. Kled gains 70 – 155 (based on level) bonus movement speed while facing and after attacking nearby visible enemy champions, but his basic attacks against them are reduced to 85% / 90% / 95% / 100% (based on level) AD physical damage. He also gains bonus armor and bonus magic resistance equal to 4 (+ 1% of bonus health), increased by 30% for each nearby visible enemy champion, up to a maximum of 10 (+ 2.5% bonus health) resistances. Additionally, he gains the ability to restore Skaarl's Courage to mount again. Innate - Courage: Kled gains 15 Courage after completing a basic attack against a champion and 5 Courage for lane minion kills and when basic attacking structures or epic monsters. He can also restore Courage from hitting enemies with Pocket Pistol. Upon reaching 100 Courage, Skaarl instantly restores 40% / 50% / 60% / 70% (based on level) of her maximum health and reunites with Kled over 0.25 seconds, after which he consumes all Courage to become Mounted and the duo become unable to declare basic attacks or cast their abilities for 0.25 seconds. Mounting up resets the cooldowns of Bear Trap on a Rope and Jousting. While at the allied fountain, 25 Courage is generated every 0.25 seconds. If reuniting outside of the fountain, Skaarl gets Frayed Nerves, which prevents Kled from gaining Courage for 30 seconds. Being within the fountain while Dismounted removes Frayed Nerves. [wiki-p2 rev-4038397, fetched 2026-09-18]
@@ -30,17 +30,18 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 30 / 55 / 80 / 105 / 130 (+ 60% bonus AD) Minion and Small Monster Damage: 45 / 82.5 / 120 / 157.5 / 195 (+ 90% bonus AD) · Physical Damage: 60 / 110 / 160 / 210 / 260 (+ 120% bonus AD) Total Physical Damage: 90 / 165 / 240 / 315 / 390 (+ 180% bonus AD) Slow: 30 / 35 / 40 / 45 / 50% [wiki-q rev-4059774, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4059774, fetched 2026-09-18]
 - width: 90 [wiki-q rev-4059774, fetched 2026-09-18]
-- missile speed: 1600 [wiki-q rev-4059774, fetched 2026-09-18]
+- missile or dash speed: 1600 [wiki-q rev-4059774, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4059774, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4059774, fetched 2026-09-18]
 - name: Pocket Pistol [wiki-q2 rev-4059773, fetched 2026-09-18]
 - cooldown: 3 [wiki-q2 rev-4059773, fetched 2026-09-18]
 - cost: 1 [wiki-q2 rev-4059773, fetched 2026-09-18]
+- recharge timer for a stocked charge: 18 / 16 / 14 / 12 / 10 [wiki-q2 rev-4059773, fetched 2026-09-18]
 - what it does: Active: Kled sprays a cone of five pellets in the target direction while recoiling 300 units in the opposite direction, dealing physical damage to enemies hit. Kled periodically stocks a Pocket Pistol charge, up to a maximum of 2. He will restore both charges after dismounting. Each pellet beyond the first to hit a target will only deal 20% damage. Pellets collide with the first enemy champion they hit. Each pellet that hits an enemy champion or epic monster restores Courage, by 5 and 2.5 respectively, for up to a total restore of 25 against champions and 12.5 versus epic monsters. [wiki-q2 rev-4059773, fetched 2026-09-18]
 - damage by rank: Physical Damage: 35 / 50 / 65 / 80 / 95 (+ 65% bonus AD) · Reduced Damage: 7 / 10 / 13 / 16 / 19 (+ 13% bonus AD) Maximum Damage: 63 / 90 / 117 / 144 / 171 (+ 117% bonus AD) [wiki-q2 rev-4059773, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q2 rev-4059773, fetched 2026-09-18]
 - width: 80 [wiki-q2 rev-4059773, fetched 2026-09-18]
-- missile speed: 3000 • 1025 [wiki-q2 rev-4059773, fetched 2026-09-18]
+- missile or dash speed: 3000 • 1025 [wiki-q2 rev-4059773, fetched 2026-09-18]
 - targeting: Direction [wiki-q2 rev-4059773, fetched 2026-09-18]
 - damage type: Physical [wiki-q2 rev-4059773, fetched 2026-09-18]
 - spell shield: True [wiki-q2 rev-4059773, fetched 2026-09-18]
@@ -60,7 +61,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 35 / 60 / 85 / 110 / 135 (+ 55% bonus AD) · Total Physical Damage: 70 / 120 / 170 / 220 / 270 (+ 110% bonus AD) [wiki-e rev-4059782, fetched 2026-09-18]
 - target range: 550 • 765 [wiki-e rev-4059782, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4059782, fetched 2026-09-18]
-- missile speed: 600 + 100% movement speed [wiki-e rev-4059782, fetched 2026-09-18]
+- missile or dash speed: 600 + 100% movement speed [wiki-e rev-4059782, fetched 2026-09-18]
 - targeting: Direction / Auto [wiki-e rev-4059782, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4059782, fetched 2026-09-18]
 - name: Dismounted Jousting [wiki-e2 rev-3942228, fetched 2026-09-18]
@@ -74,7 +75,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Total Shield: 200 / 300 / 400 (+ 300% bonus AD) Initial Shield: 40 / 60 / 80 (+ 60% bonus AD) Shield Per Instance: 20 / 30 / 40 (+ 30% bonus AD) · Minimum Magic Damage: 4 / 6 / 8% (+ 3% per 100 bonus AD) of target's maximum health Maximum Magic Damage: 12 / 18 / 24% (+ 9% per 100 bonus AD) of target's maximum health [wiki-r rev-4059781, fetched 2026-09-18]
 - target range: 500 - (3500 / 4000 / 4500) [wiki-r rev-4059781, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4059781, fetched 2026-09-18]
-- missile speed: 1000 • 600 [wiki-r rev-4059781, fetched 2026-09-18]
+- missile or dash speed: 1000 • 600 [wiki-r rev-4059781, fetched 2026-09-18]
 - targeting: location [wiki-r rev-4059781, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4059781, fetched 2026-09-18]
 - name: Dismounted Chaaaaaaaarge!!! [wiki-r2 rev-3942225, fetched 2026-09-18]
@@ -86,7 +87,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4058479, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FSkaarl%20the%20Cowardly%20Lizard&prop=text
 - wiki-p2: League of Legends Wiki, ability data template, revision rev-4038397, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FDismounted%20Skaarl%20the%20Cowardly%20Lizard&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4059774, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FBear%20Trap%20on%20a%20Rope&prop=text
-- wiki-q2: League of Legends Wiki, ability data template, revision rev-4059773, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FPocket%20Pistol&prop=text
+- wiki-q2: League of Legends Wiki, ability data template, revision rev-4059773, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FPocket%20Pistol&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4059722, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FViolent%20Tendencies&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4059782, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FJousting&prop=text
 - wiki-e2: League of Legends Wiki, ability data template, revision rev-3942228, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FDismounted%20Jousting&prop=text

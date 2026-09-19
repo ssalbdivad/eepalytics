@@ -24,7 +24,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Active: Bel'Veth dashes in the designated direction, though not through terrain, dealing physical damage to enemies she passes through. Against the first target, Void Surge can critically strike for (200% + 30%) damage and applies on-hit effects and life steal. Void Surge deals 70 bonus physical damage to monsters. Void Surge can be cast only within a cardinal direction that is off cooldown, and incurs a cooldown between casts. Each cardinal direction has a unique cooldown that is reduced equivalent to 0.2 ability haste per 1% bonus attack speed. These cooldowns reset upon respawning. Void Surge resets Bel'Veth's basic attack timer. [wiki-q rev-4050295, fetched 2026-09-18]
 - damage by rank: Physical Damage: 12 / 14 / 16 / 18 / 20 (+ 105% AD) [wiki-q rev-4050295, fetched 2026-09-18]
 - cast time: None [wiki-q rev-4050295, fetched 2026-09-18]
-- missile speed: 850 + 100% movement speed [wiki-q rev-4050295, fetched 2026-09-18]
+- missile or dash speed: 850 + 100% movement speed [wiki-q rev-4050295, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4050295, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4050295, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4050295, fetched 2026-09-18]

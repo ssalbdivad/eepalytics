@@ -27,7 +27,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1200 [wiki-q rev-4009163, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4009163, fetched 2026-09-18]
 - width: 160 [wiki-q rev-4009163, fetched 2026-09-18]
-- missile speed: 1300 [wiki-q rev-4009163, fetched 2026-09-18]
+- missile or dash speed: 1300 [wiki-q rev-4009163, fetched 2026-09-18]
 - targeting: Direction • Auto [wiki-q rev-4009163, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4009163, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4009163, fetched 2026-09-18]
@@ -35,11 +35,13 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### W
 - name: Brushmaker [wiki-w rev-4025374, fetched 2026-09-18]
 - cost: 30 [wiki-w rev-4025374, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 0.5 [wiki-w rev-4025374, fetched 2026-09-18]
+- recharge timer for a stocked charge: 20 [wiki-w rev-4025374, fetched 2026-09-18]
 - what it does: Passive: While Ivern is in brush, his basic attacks are empowered to fire a bolt at the target, dealing additional magic damage. This bonus persists for 3 seconds after leaving brush. Active: Ivern grows a patch of brush at the target location for 45 seconds, granting sight of the area within and around it for 8 seconds. Brushes despawn instantly after allied vision within them is lost. Spawning brush near terrain or other brush increases its radius. While allied champions are in any brush when Ivern is within 1000 units, their basic attacks are empowered to fire a bolt at the target, dealing additional magic damage. This bonus persists for 1.5 seconds after leaving brush. Ivern periodically stocks a Brushmaker charge, up to a maximum of 3. [wiki-w rev-4025374, fetched 2026-09-18]
 - damage by rank: Additional Magic Damage: 20 / 27.5 / 35 / 42.5 / 50 (+ 20% AP) · Ally Additional Magic Damage: 10 / 15 / 20 / 25 / 30 (+ 10% of Ivern's AP) [wiki-w rev-4025374, fetched 2026-09-18]
 - target range: 1000 [wiki-w rev-4025374, fetched 2026-09-18]
 - cast time: 0.25 [wiki-w rev-4025374, fetched 2026-09-18]
-- missile speed: 3500 [wiki-w rev-4025374, fetched 2026-09-18]
+- missile or dash speed: 3500 [wiki-w rev-4025374, fetched 2026-09-18]
 - targeting: Location [wiki-w rev-4025374, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4025374, fetched 2026-09-18]
 - spell shield: False [wiki-w rev-4025374, fetched 2026-09-18]
@@ -74,7 +76,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4038386, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FFriend%20of%20the%20Forest&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4009163, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FRootcaller&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4025374, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FBrushmaker&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4025374, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FBrushmaker&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3994759, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FTriggerseed&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3976509, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FDaisy!&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/ivern/jungle?tier=emerald_plus

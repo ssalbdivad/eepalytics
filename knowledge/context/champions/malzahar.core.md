@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Void Shift [wiki-p rev-4035856, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 30 / 24 / 18 / 12 (based on level) [wiki-p rev-4035856, fetched 2026-09-18]
 - what it does: Innate: Periodically, Malzahar gains Void Shift until he takes non- minion damage or negates a crowd control effect, to which it then lingers for 0.25 seconds before expiring. Void Shift: Malzahar gains crowd control immunity and 90% damage reduction. Void Shift's cooldown refreshes whenever Malzahar takes non- minion damage or is affected by a crowd control effect, and resets upon respawning. [wiki-p rev-4035856, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4035856, fetched 2026-09-18]
 
@@ -69,7 +70,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4035856, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malzahar%2FVoid%20Shift&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4035856, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malzahar%2FVoid%20Shift&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3906985, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malzahar%2FCall%20of%20the%20Void&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4041818, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malzahar%2FVoid%20Swarm&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4015185, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Malzahar%2FMalefic%20Visions&prop=text

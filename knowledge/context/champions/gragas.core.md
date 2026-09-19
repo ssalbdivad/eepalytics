@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Happy Hour [wiki-p rev-3985369, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 12 / 10 / 8 / 6 (based on level) [wiki-p rev-3985369, fetched 2026-09-18]
 - what it does: Innate: Periodically, after casting an ability, Gragas heals himself for 5.5% of his maximum health. [wiki-p rev-3985369, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3985369, fetched 2026-09-18]
 
@@ -27,7 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 850 [wiki-q rev-3907002, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-3907002, fetched 2026-09-18]
 - effect radius: 250 [wiki-q rev-3907002, fetched 2026-09-18]
-- missile speed: 1000 [wiki-q rev-3907002, fetched 2026-09-18]
+- missile or dash speed: 1000 [wiki-q rev-3907002, fetched 2026-09-18]
 - targeting: Location / Auto [wiki-q rev-3907002, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-3907002, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-3907002, fetched 2026-09-18]
@@ -53,7 +54,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 600 [wiki-e rev-4007602, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4007602, fetched 2026-09-18]
 - effect radius: 180 • 180 [wiki-e rev-4007602, fetched 2026-09-18]
-- missile speed: 910 [wiki-e rev-4007602, fetched 2026-09-18]
+- missile or dash speed: 910 [wiki-e rev-4007602, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4007602, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4007602, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4007602, fetched 2026-09-18]
@@ -77,7 +78,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3985369, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FHappy%20Hour&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3985369, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FHappy%20Hour&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3907002, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FBarrel%20Roll&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4013236, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FDrunken%20Rage&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007602, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FBody%20Slam&prop=text

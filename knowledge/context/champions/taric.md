@@ -28,6 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Starlight's Touch [wiki-q rev-3996427, fetched 2026-09-18]
 - cooldown: 3 [wiki-q rev-3996427, fetched 2026-09-18]
 - cost: 60 [wiki-q rev-3996427, fetched 2026-09-18]
+- recharge timer for a stocked charge: 15 [wiki-q rev-3996427, fetched 2026-09-18]
 - what it does: Active: Taric heals himself and nearby allied champions for 25 (+ 15% AP) (+ 1% of his maximum health) per charge of Starlight's Touch that he periodically stocks, up to a maximum amount. Bravado's empowered attacks each grant one charge. Starlight's Touch can heal up to a maximum of 125 (+ 75% AP) (+ 5% of Taric's maximum health) at 5 charges. [wiki-q rev-3996427, fetched 2026-09-18]
 - damage by rank: Maximum Charges: 1 / 2 / 3 / 4 / 5 [wiki-q rev-3996427, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-3996427, fetched 2026-09-18]
@@ -77,7 +78,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3986177, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taric%2FBravado&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-3996427, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taric%2FStarlight's%20Touch&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-3996427, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taric%2FStarlight's%20Touch&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3989049, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taric%2FBastion&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3907336, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taric%2FDazzle&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3907334, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Taric%2FCosmic%20Radiance&prop=text

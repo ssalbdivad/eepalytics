@@ -38,7 +38,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 950 [wiki-w rev-4012250, fetched 2026-09-18]
 - cast time: 0.25 [wiki-w rev-4012250, fetched 2026-09-18]
 - effect radius: 300 [wiki-w rev-4012250, fetched 2026-09-18]
-- missile speed: 1400 [wiki-w rev-4012250, fetched 2026-09-18]
+- missile or dash speed: 1400 [wiki-w rev-4012250, fetched 2026-09-18]
 - targeting: Location [wiki-w rev-4012250, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4012250, fetched 2026-09-18]
 
@@ -63,7 +63,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: Twitch's attack range [wiki-r rev-4063223, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4063223, fetched 2026-09-18]
 - width: 120 [wiki-r rev-4063223, fetched 2026-09-18]
-- missile speed: 5000 [wiki-r rev-4063223, fetched 2026-09-18]
+- missile or dash speed: 5000 [wiki-r rev-4063223, fetched 2026-09-18]
 - targeting: Auto [wiki-r rev-4063223, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4063223, fetched 2026-09-18]
 

@@ -42,7 +42,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 3000 [wiki-w rev-4034696, fetched 2026-09-18]
 - cast time: 0.4 [wiki-w rev-4034696, fetched 2026-09-18]
 - width: 200 [wiki-w rev-4034696, fetched 2026-09-18]
-- missile speed: 1750 [wiki-w rev-4034696, fetched 2026-09-18]
+- missile or dash speed: 1750 [wiki-w rev-4034696, fetched 2026-09-18]
 - targeting: Location [wiki-w rev-4034696, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4034696, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4034696, fetched 2026-09-18]
@@ -65,7 +65,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 2000 / 2500 / 3000 [wiki-r rev-4034697, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4034697, fetched 2026-09-18]
 - effect radius: 525 [wiki-r rev-4034697, fetched 2026-09-18]
-- missile speed: 3800 [wiki-r rev-4034697, fetched 2026-09-18]
+- missile or dash speed: 3800 [wiki-r rev-4034697, fetched 2026-09-18]
 - targeting: Location [wiki-r rev-4034697, fetched 2026-09-18]
 
 ### Where this section came from

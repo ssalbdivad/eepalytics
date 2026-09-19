@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Shurima's Legacy [wiki-p rev-3962342, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 90 [wiki-p rev-3962342, fetched 2026-09-18]
 - what it does: Innate: Whenever a turret outside the enemy team's base is destroyed, a marker is placed above its ruins which can be targeted by Azir. Innate - Disc of the Sun: Azir can select a marker to construct the Sun Disc above the ruins after a 0.5-second cast time. The Sun Disc will activate after being assembled over 5 seconds. Azir cannot construct a Sun Disc with the marker while he is affected by cast-inhibiting crowd control or a lockout that disables abilities. The Sun Disc functions the same as a standard inner turret but deals magic damage, gains 40% AP bonus attack damage, and grants its kill credit to Azir. The Sun Disc's health decays over 45 seconds and loses 100 armor and 100 magic resistance while Azir is not alive or is too far away. See Pets for more details about the Sun Disc. [wiki-p rev-3962342, fetched 2026-09-18]
 - target range: 700 [wiki-p rev-3962342, fetched 2026-09-18]
 - targeting: Unit [wiki-p rev-3962342, fetched 2026-09-18]
@@ -38,6 +39,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Arise! [wiki-w rev-4044339, fetched 2026-09-18]
 - cooldown: 1.5 [wiki-w rev-4044339, fetched 2026-09-18]
 - cost: 40 / 35 / 30 / 25 / 20 [wiki-w rev-4044339, fetched 2026-09-18]
+- recharge timer for a stocked charge: 12 / 10.5 / 9 / 7.5 / 6 [wiki-w rev-4044339, fetched 2026-09-18]
 - what it does: Active: Azir summons a Sand Soldier at the target location that is untargetable, lasts 10 seconds, and grants sight of its surroundings. The Sand Soldier expires twice as fast while within range of an enemy turret, and does so instantly if Azir is too far away. Azir periodically stocks a Sand Soldier, up to a maximum of 2. When Azir declares a basic attack against an enemy in a soldier's attack range, the Sand Soldier attacks in his stead, thrusting their spear in the target's direction to deal magic damage to enemies struck in a line. Against the primary target, the Sand Soldier's attack applies both on-hit and on-attack effects, the damage of which is reduced to 50% effectiveness. Targets hit beyond the closest take 20% – 100% (based on level) damage. Subsequent Sand Soldier attacks against the same target deal 25% damage without applying on-hit and on-attack effects. Sand Soldiers cannot attack structures, wards, nor traps. See Pets for more details about Sand Soldiers. [wiki-w rev-4044339, fetched 2026-09-18]
 - damage by rank: Magic Damage: 0 – 72 (based on level) (+ 50 / 65 / 80 / 95 / 110) (+ 35 / 42.5 / 50 / 57.5 / 65% AP) [wiki-w rev-4044339, fetched 2026-09-18]
 - target range: 525 [wiki-w rev-4044339, fetched 2026-09-18]
@@ -67,15 +69,15 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 400 • -325 [wiki-r rev-4042859, fetched 2026-09-18]
 - cast time: 0.5 [wiki-r rev-4042859, fetched 2026-09-18]
 - effect radius: 125 [wiki-r rev-4042859, fetched 2026-09-18]
-- missile speed: 1000 • 1400 [wiki-r rev-4042859, fetched 2026-09-18]
+- missile or dash speed: 1000 • 1400 [wiki-r rev-4042859, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-4042859, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4042859, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4042859, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3962342, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Azir%2FShurima's%20Legacy&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3962342, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Azir%2FShurima's%20Legacy&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4051339, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Azir%2FConquering%20Sands&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4044339, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Azir%2FArise!&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4044339, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Azir%2FArise!&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4022609, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Azir%2FShifting%20Sands&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4042859, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Azir%2FEmperor's%20Divide&prop=text

@@ -17,7 +17,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Drakehound's Step [wiki-p rev-4038211, fetched 2026-09-18]
 - what it does: Innate: During the lockout of Ambessa's abilities, inputting an attack or movement command causes her to dash to or towards the target or location, respectively, after the lockout ends. This dash cannot pass through terrain. Ambessa cannot dash while immobilized or grounded. Innate: Whenever Ambessa casts an ability, she generates a stack of Medarda Maxim after the ability's respective lockout for 4 seconds, refreshing with subsequent casts and stacking up to 3 times. Basic attacks consume one stack each to become empowered. Medarda Maxim: Ambessa's next basic attack on-attack is empowered to have an uncancellable windup, gain 75 bonus range and 50% bonus attack speed, deal 5 – 30 (based on level) (+ 25% bonus AD) bonus physical damage, and restore 40 / 55 / 70 (based on level) energy. [wiki-p rev-4038211, fetched 2026-09-18]
 - target range: 175 - 350 [wiki-p rev-4038211, fetched 2026-09-18]
-- missile speed: 770 / 830 / 890 / 950 (based on level) + 100% movement speed [wiki-p rev-4038211, fetched 2026-09-18]
+- missile or dash speed: 770 / 830 / 890 / 950 (based on level) + 100% movement speed [wiki-p rev-4038211, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4038211, fetched 2026-09-18]
 - damage type: physical [wiki-p rev-4038211, fetched 2026-09-18]
 - spell shield: false [wiki-p rev-4038211, fetched 2026-09-18]

@@ -74,7 +74,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage Per Tick: 18.75 / 31.25 / 43.75 (+ 13.75% AP) Total Magic Damage: 150 / 250 / 350 (+ 110% AP) [wiki-r rev-4008010, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r rev-4008010, fetched 2026-09-18]
 - effect radius: 450 • 375 [wiki-r rev-4008010, fetched 2026-09-18]
-- missile speed: 300 [wiki-r rev-4008010, fetched 2026-09-18]
+- missile or dash speed: 300 [wiki-r rev-4008010, fetched 2026-09-18]
 - targeting: Auto [wiki-r rev-4008010, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4008010, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4008010, fetched 2026-09-18]

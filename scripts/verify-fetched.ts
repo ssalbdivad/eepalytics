@@ -110,7 +110,9 @@ const LABEL_FIELD: Record<string, string> = {
 	"cast time": "cast time",
 	"effect radius": "effect radius",
 	width: "width",
-	"missile speed": "speed",
+	"missile or dash speed": "speed",
+	"static cooldown, not affected by ability haste": "static",
+	"recharge timer for a stocked charge": "recharge",
 	targeting: "targeting",
 	"damage type": "damagetype",
 	"spell shield": "spellshield",
@@ -455,7 +457,7 @@ export const verifyArticles = async (
 ): Promise<LineResult[]> => {
 	const out: LineResult[] = []
 	const RUN = /\d[\d.]*(?: \/ \d[\d.]*)+/g
-	const NUMERIC_LABEL = /^(cooldown|cost|damage by rank|effect radius|target range)$/
+	const NUMERIC_LABEL = /^(cooldown|cost|damage by rank|effect radius|target range|static cooldown[^:]*)$/
 	for (const key of keys) {
 		const path = join(CONTEXT, `${key}.md`)
 		if (!existsSync(path)) continue

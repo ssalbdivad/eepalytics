@@ -34,7 +34,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 825 [wiki-q rev-4007588, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4007588, fetched 2026-09-18]
 - effect radius: 275 • 500 [wiki-q rev-4007588, fetched 2026-09-18]
-- missile speed: 1100 [wiki-q rev-4007588, fetched 2026-09-18]
+- missile or dash speed: 1100 [wiki-q rev-4007588, fetched 2026-09-18]
 - targeting: Location [wiki-q rev-4007588, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4007588, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4007588, fetched 2026-09-18]
@@ -49,7 +49,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 300 - 600 [wiki-w rev-4007589, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4007589, fetched 2026-09-18]
 - effect radius: 200 [wiki-w rev-4007589, fetched 2026-09-18]
-- missile speed: 650 + 100% movement speed [wiki-w rev-4007589, fetched 2026-09-18]
+- missile or dash speed: 650 + 100% movement speed [wiki-w rev-4007589, fetched 2026-09-18]
 - targeting: Location [wiki-w rev-4007589, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4007589, fetched 2026-09-18]
 - spell shield: False [wiki-w rev-4007589, fetched 2026-09-18]
@@ -76,13 +76,14 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Missile Barrage [wiki-r rev-4042863, fetched 2026-09-18]
 - cooldown: 2 [wiki-r rev-4042863, fetched 2026-09-18]
 - cost: 35 [wiki-r rev-4042863, fetched 2026-09-18]
+- recharge timer for a stocked charge: 20 [wiki-r rev-4042863, fetched 2026-09-18]
 - what it does: Passive: Basic attacks on-hit against champions reduce Missile Barrage's remaining recharge time by 2 – 6 (based on critical strike chance) seconds. Active: Corki fires a missile in the target direction that explodes upon the first enemy hit, dealing physical damage to enemies within the area. Corki periodically stocks a Missile Barrage charge, up to a maximum of 4. He gains 2 charges upon learning the ability and maximum charges upon respawning. Every third missile Corki fires is a Big One, dealing 100% increased damage as well as gaining increased range and explosion radius. [wiki-r rev-4042863, fetched 2026-09-18]
 - damage by rank: Physical Damage: 90 / 170 / 250 (+ 85% bonus AD) · Big One Physical Damage: 180 / 340 / 500 (+ 170% bonus AD) [wiki-r rev-4042863, fetched 2026-09-18]
 - target range: 1300 • 1500 [wiki-r rev-4042863, fetched 2026-09-18]
 - cast time: 0.175 [wiki-r rev-4042863, fetched 2026-09-18]
 - effect radius: 150 • 300 [wiki-r rev-4042863, fetched 2026-09-18]
 - width: 80 [wiki-r rev-4042863, fetched 2026-09-18]
-- missile speed: 2000 [wiki-r rev-4042863, fetched 2026-09-18]
+- missile or dash speed: 2000 [wiki-r rev-4042863, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-4042863, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4042863, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4042863, fetched 2026-09-18]
@@ -100,4 +101,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007588, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Corki%2FPhosphorus%20Bomb&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007589, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Corki%2FValkyrie&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3948411, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Corki%2FGatling%20Gun&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4042863, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Corki%2FMissile%20Barrage&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4042863, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Corki%2FMissile%20Barrage&prop=text

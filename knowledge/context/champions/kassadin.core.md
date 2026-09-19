@@ -26,7 +26,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 65 / 95 / 125 / 155 / 185 (+ 80% AP) · Magic Shield Strength: 80 / 110 / 140 / 170 / 200 (+ 30% AP) [wiki-q rev-4060362, fetched 2026-09-18]
 - target range: 650 [wiki-q rev-4060362, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4060362, fetched 2026-09-18]
-- missile speed: 1400 [wiki-q rev-4060362, fetched 2026-09-18]
+- missile or dash speed: 1400 [wiki-q rev-4060362, fetched 2026-09-18]
 - targeting: Unit [wiki-q rev-4060362, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4060362, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4060362, fetched 2026-09-18]

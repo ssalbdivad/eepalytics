@@ -62,7 +62,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Slow: 20 / 22.5 / 25 / 27.5 / 30% · Magic Damage: 70 / 95 / 120 / 145 / 170 (+ 80% bonus AD) (+ 60% AP) Increased Damage: 105 / 142.5 / 180 / 217.5 / 255 (+ 120% bonus AD) (+ 90% AP) Slow: 20 / 22.5 / 25 / 27.5 / 30% [wiki-e rev-3985833, fetched 2026-09-18]
 - target range: 625 [wiki-e rev-3985833, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-3985833, fetched 2026-09-18]
-- missile speed: 1500 [wiki-e rev-3985833, fetched 2026-09-18]
+- missile or dash speed: 1500 [wiki-e rev-3985833, fetched 2026-09-18]
 - targeting: Unit [wiki-e rev-3985833, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-3985833, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-3985833, fetched 2026-09-18]

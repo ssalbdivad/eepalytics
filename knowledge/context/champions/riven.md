@@ -82,7 +82,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1100 [wiki-r2 rev-4046588, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r2 rev-4046588, fetched 2026-09-18]
 - width: 200 [wiki-r2 rev-4046588, fetched 2026-09-18]
-- missile speed: 1600 [wiki-r2 rev-4046588, fetched 2026-09-18]
+- missile or dash speed: 1600 [wiki-r2 rev-4046588, fetched 2026-09-18]
 - targeting: Direction [wiki-r2 rev-4046588, fetched 2026-09-18]
 - damage type: physical [wiki-r2 rev-4046588, fetched 2026-09-18]
 - spell shield: True [wiki-r2 rev-4046588, fetched 2026-09-18]

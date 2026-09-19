@@ -41,7 +41,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 70 / 85 / 100 / 115 / 130 (+ 20% bonus AD) (+ 60% AP) · Bonus Damage per Stack: 17.5 / 21.25 / 25 / 28.75 / 32.5 (+ 5% bonus AD) (+ 15% AP) Maximum Bonus Damage: 70 / 85 / 100 / 115 / 130 (+ 20% bonus AD) (+ 60% AP) Total Combined Damage: 140 / 170 / 200 / 230 / 260 (+ 40% bonus AD) (+ 120% AP) [wiki-e rev-4008638, fetched 2026-09-18]
 - target range: 475 [wiki-e rev-4008638, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4008638, fetched 2026-09-18]
-- missile speed: 750 + 60% movement speed [wiki-e rev-4008638, fetched 2026-09-18]
+- missile or dash speed: 750 + 60% movement speed [wiki-e rev-4008638, fetched 2026-09-18]
 - targeting: Unit [wiki-e rev-4008638, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4008638, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4008638, fetched 2026-09-18]

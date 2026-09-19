@@ -51,7 +51,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 30 / 50 / 70 / 90 / 110 (+ 30% AP) (+ 2.5 / 2.85 / 3.2 / 3.55 / 3.9% (+ 0.5% per Feast stack) of target's maximum health) Total Magic Damage: 90 / 150 / 210 / 270 / 330 (+ 90% AP) (+ 7.5 / 8.55 / 9.6 / 10.65 / 11.7% (+ 1.5% per Feast stack) of target's maximum health) Monster Damage: 110 / 160 / 210 / 260 / 310 (+ 30% AP) Total Monster Damage: 330 / 480 / 630 / 780 / 930 (+ 90% AP) Slow: 30 / 35 / 40 / 45 / 50% [wiki-e rev-4057853, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4057853, fetched 2026-09-18]
 - width: 340 – 500 (based on bonus size) [wiki-e rev-4057853, fetched 2026-09-18]
-- missile speed: 1475 [wiki-e rev-4057853, fetched 2026-09-18]
+- missile or dash speed: 1475 [wiki-e rev-4057853, fetched 2026-09-18]
 - targeting: Auto [wiki-e rev-4057853, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4057853, fetched 2026-09-18]
 - spell shield: False [wiki-e rev-4057853, fetched 2026-09-18]

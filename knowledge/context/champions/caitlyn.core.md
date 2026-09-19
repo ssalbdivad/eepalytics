@@ -16,7 +16,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Passive
 - name: Headshot [wiki-p rev-3982560, fetched 2026-09-18]
 - what it does: Innate: Caitlyn's basic attacks generate a stack of Count on-attack, doubled if she is within brush. At 5 stacks, or 4 while in brush, her next basic attack consumes all stacks on-attack to become a Headshot. Headshot: Caitlyn's basic attack is empowered to have an uncancellable windup and deal 60% / 80% / 100% (based on level) (+ 0% – 100% (+ 0% – 30%) (based on critical strike chance)) AD bonus physical damage, increased to 110% (+ 0% – 100% (+ 0% – 30%) (based on critical strike chance)) AD against non-champions. Enemies that step over a Yordle Snap Trap or are hit by 90 Caliber Net can grant an additional Headshot against them at 1300 range within 1.8 seconds, without consuming stacks. Each method grants only one Headshot at a time. [wiki-p rev-3982560, fetched 2026-09-18]
-- missile speed: 3000 [wiki-p rev-3982560, fetched 2026-09-18]
+- missile or dash speed: 3000 [wiki-p rev-3982560, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3982560, fetched 2026-09-18]
 - damage type: Physical [wiki-p rev-3982560, fetched 2026-09-18]
 - spell shield: False [wiki-p rev-3982560, fetched 2026-09-18]
@@ -29,7 +29,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 50 / 90 / 130 / 170 / 210 (+ 125 / 145 / 165 / 185 / 205% AD) Reduced Damage: 30 / 54 / 78 / 102 / 126 (+ 75 / 87 / 99 / 111 / 123% AD) [wiki-q rev-4007583, fetched 2026-09-18]
 - cast time: 0.625 [wiki-q rev-4007583, fetched 2026-09-18]
 - width: 120 • 180 [wiki-q rev-4007583, fetched 2026-09-18]
-- missile speed: 2200 [wiki-q rev-4007583, fetched 2026-09-18]
+- missile or dash speed: 2200 [wiki-q rev-4007583, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4007583, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4007583, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4007583, fetched 2026-09-18]
@@ -38,6 +38,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Yordle Snap Trap [wiki-w rev-4023135, fetched 2026-09-18]
 - cooldown: 0.5 [wiki-w rev-4023135, fetched 2026-09-18]
 - cost: 20 [wiki-w rev-4023135, fetched 2026-09-18]
+- recharge timer for a stocked charge: 26 / 22 / 18 / 14 / 10 [wiki-w rev-4023135, fetched 2026-09-18]
 - what it does: Active: Caitlyn sets a visible trap at the target location that is untargetable and arms after 1 second, lasting for a duration. The trap grants sight of the area for 1 second after being placed. Caitlyn periodically stocks a Yordle Snap Trap charge, up to a maximum amount. Deploying traps beyond the maximum destroys the oldest one. The next enemy champion that springs the trap is rooted for 1.5 seconds and revealed for 3 seconds, as well as takes additional damage from the Headshot granted by this ability. Trapped targets become immune to further Yordle Snap Traps for 3 seconds, preventing them from springing subsequent traps for the duration. [wiki-w rev-4023135, fetched 2026-09-18]
 - damage by rank: Trap Duration: 30 / 35 / 40 / 45 / 50 seconds · Maximum Number of Traps: 3 / 3 / 4 / 4 / 5 · Headshot Damage Increase: 35 / 80 / 125 / 170 / 215 (+ 30% bonus AD) [wiki-w rev-4023135, fetched 2026-09-18]
 - target range: 800 [wiki-w rev-4023135, fetched 2026-09-18]
@@ -53,7 +54,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 80 / 130 / 180 / 230 / 280 (+ 80% AP) [wiki-e rev-4007584, fetched 2026-09-18]
 - cast time: 0.15 [wiki-e rev-4007584, fetched 2026-09-18]
 - effect radius: 140 [wiki-e rev-4007584, fetched 2026-09-18]
-- missile speed: 1600 • 1000 [wiki-e rev-4007584, fetched 2026-09-18]
+- missile or dash speed: 1600 • 1000 [wiki-e rev-4007584, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4007584, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4007584, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4007584, fetched 2026-09-18]
@@ -67,7 +68,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 3500 [wiki-r rev-3982561, fetched 2026-09-18]
 - cast time: 0.375 [wiki-r rev-3982561, fetched 2026-09-18]
 - width: 80 [wiki-r rev-3982561, fetched 2026-09-18]
-- missile speed: 3200 [wiki-r rev-3982561, fetched 2026-09-18]
+- missile or dash speed: 3200 [wiki-r rev-3982561, fetched 2026-09-18]
 - targeting: Unit [wiki-r rev-3982561, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-3982561, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-3982561, fetched 2026-09-18]
@@ -76,6 +77,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3982560, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FHeadshot&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007583, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FPiltover%20Peacemaker&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4023135, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FYordle%20Snap%20Trap&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4023135, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FYordle%20Snap%20Trap&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007584, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2F90%20Caliber%20Net&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3982561, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FAce%20in%20the%20Hole&prop=text

@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Feline Friendship [wiki-p rev-4026485, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 20 – 8 (based on level) [wiki-p rev-4026485, fetched 2026-09-18]
 - what it does: Innate: Periodically, Yuumi's next basic attack against an enemy champion is empowered to have an uncancellable windup, gain 50 bonus range and become non-projectile. Upon hitting them with the basic attack or Prowling Projectile, or upon a Final Chapter hit on ally champions while attached, the buff is consumed to heal her for 20 – 120.59 (based on level) (+ 30% AP). If she is attached to an ally or does so within 4 seconds, they are healed for the same amount. Innate: While attached to an ally, Yuumi grants them 2 permanent Friendship stacks whenever they kill enemy champions or minions. The ally with the highest Friendship stacks becomes Yuumi's Best Friend, which empowers her abilities with additional effects while she is attached to them. [wiki-p rev-4026485, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4026485, fetched 2026-09-18]
 - edge case: Feline Friendship will not be consumed if Yuumi isn't missing health, except when triggered by a basic attack. While attached, it won't be consumed if both Yuumi and her anchor aren't missing health. [wiki-p rev-4026485, fetched 2026-09-18]
@@ -35,7 +36,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 850 [wiki-q rev-4008652, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4008652, fetched 2026-09-18]
 - width: 120 [wiki-q rev-4008652, fetched 2026-09-18]
-- missile speed: 950 • 850 • 1650 [wiki-q rev-4008652, fetched 2026-09-18]
+- missile or dash speed: 950 • 850 • 1650 [wiki-q rev-4008652, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4008652, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4008652, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4008652, fetched 2026-09-18]
@@ -225,7 +226,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1100 [wiki-r rev-4047717, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4047717, fetched 2026-09-18]
 - width: 450 [wiki-r rev-4047717, fetched 2026-09-18]
-- missile speed: 3000 [wiki-r rev-4047717, fetched 2026-09-18]
+- missile or dash speed: 3000 [wiki-r rev-4047717, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-4047717, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4047717, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4047717, fetched 2026-09-18]
@@ -281,7 +282,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4026485, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FFeline%20Friendship&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4026485, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FFeline%20Friendship&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008652, fetched 2026-09-18 — 57 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FProwling%20Projectile&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4011487, fetched 2026-09-18 — 118 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FYou%20and%20Me!&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4026487, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FZoomies&prop=text

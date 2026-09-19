@@ -30,7 +30,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 80 / 120 / 160 / 200 / 240 (+ 90% AP) Slow Duration: 1 / 1.4 / 1.8 / 2.2 / 2.6 seconds · Mana Restored per Kill: 20 / 22.5 / 25 / 27.5 / 30 Maximum Mana Restored: 60 / 67.5 / 75 / 82.5 / 90 [wiki-q rev-4008544, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4008544, fetched 2026-09-18]
 - width: 100 • 90 [wiki-q rev-4008544, fetched 2026-09-18]
-- missile speed: 1300 • 2100 [wiki-q rev-4008544, fetched 2026-09-18]
+- missile or dash speed: 1300 • 2100 [wiki-q rev-4008544, fetched 2026-09-18]
 - targeting: Direction • Auto [wiki-q rev-4008544, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4008544, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4008544, fetched 2026-09-18]
@@ -46,11 +46,13 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### W
 - name: Void Rift [wiki-w rev-4008545, fetched 2026-09-18]
 - cost: 50 / 55 / 60 / 65 / 70 [wiki-w rev-4008545, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 1.5 [wiki-w rev-4008545, fetched 2026-09-18]
+- recharge timer for a stocked charge: 19 / 18 / 17 / 16 / 15 [wiki-w rev-4008545, fetched 2026-09-18]
 - what it does: Active: Vel'Koz cracks a rift in the target direction that opens after a 0.25-second delay, cascading through the area over 0.65 seconds to deal magic damage to enemies within. After 0.75 seconds, the rift violently collapses, dealing magic damage to enemies within and granting sight of the surrounding area for 0.25 seconds. Vel'Koz periodically stocks a Void Rift charge, up to a maximum of 2. [wiki-w rev-4008545, fetched 2026-09-18]
 - damage by rank: Magic Damage: 30 / 50 / 70 / 90 / 110 (+ 20% AP) · Magic Damage: 45 / 75 / 105 / 135 / 165 (+ 25% AP) Total Magic Damage: 75 / 125 / 175 / 225 / 275 (+ 45% AP) [wiki-w rev-4008545, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4008545, fetched 2026-09-18]
 - width: 175 • 175 [wiki-w rev-4008545, fetched 2026-09-18]
-- missile speed: 1700 [wiki-w rev-4008545, fetched 2026-09-18]
+- missile or dash speed: 1700 [wiki-w rev-4008545, fetched 2026-09-18]
 - targeting: Direction [wiki-w rev-4008545, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4008545, fetched 2026-09-18]
 - spell shield: special [wiki-w rev-4008545, fetched 2026-09-18]
@@ -137,6 +139,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3986690, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FOrganic%20Deconstruction&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008544, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FPlasma%20Fission&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4008545, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FVoid%20Rift&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4008545, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FVoid%20Rift&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3952590, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FTectonic%20Disruption&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4012050, fetched 2026-09-18 — 55 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FLife%20Form%20Disintegration%20Ray&prop=text

@@ -34,7 +34,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 70 / 105 / 140 / 175 / 210 (+ 70% AP) [wiki-q rev-4007592, fetched 2026-09-18]
 - target range: 900 [wiki-q rev-4007592, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4007592, fetched 2026-09-18]
-- missile speed: 1900 • 2100 [wiki-q rev-4007592, fetched 2026-09-18]
+- missile or dash speed: 1900 • 2100 [wiki-q rev-4007592, fetched 2026-09-18]
 - targeting: Location [wiki-q rev-4007592, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4007592, fetched 2026-09-18]
 - spell shield: special [wiki-q rev-4007592, fetched 2026-09-18]

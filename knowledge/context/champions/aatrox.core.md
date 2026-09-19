@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Deathbringer Stance [wiki-p rev-4062881, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 22 – 10 (based on level) [wiki-p rev-4062881, fetched 2026-09-18]
 - what it does: Innate: Periodically, Aatrox empowers his next basic attack to gain 50 bonus range and deal bonus magic damage equal to 4% – 10% (based on level) of the target's maximum health, capped at 100 – 320 (based on level) against monsters. Deathbringer Stance's damage applies life steal. Aatrox heals for the post-mitigation bonus damage dealt, reduced to 25% against minions. Whenever Aatrox hits at least one enemy champion or large monster with a basic attack on-hit or an ability, Deathbringer Stance's current cooldown is reduced by 2 seconds, doubled to 4 if he hits with the Sweetspot of The Darkin Blade. [wiki-p rev-4062881, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4062881, fetched 2026-09-18]
 - damage type: magic [wiki-p rev-4062881, fetched 2026-09-18]
@@ -38,7 +39,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 30 / 40 / 50 / 60 / 70 (+ 40% AD) Minion Damage: 60 / 80 / 100 / 120 / 140 (+ 80% AD) Slow: 25 / 27.5 / 30 / 32.5 / 35% · Total Damage: 60 / 80 / 100 / 120 / 140 (+ 80% AD) [wiki-w rev-4009173, fetched 2026-09-18]
 - cast time: 0.25 [wiki-w rev-4009173, fetched 2026-09-18]
 - width: 160 [wiki-w rev-4009173, fetched 2026-09-18]
-- missile speed: 1800 [wiki-w rev-4009173, fetched 2026-09-18]
+- missile or dash speed: 1800 [wiki-w rev-4009173, fetched 2026-09-18]
 - targeting: Direction [wiki-w rev-4009173, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-4009173, fetched 2026-09-18]
 - spell shield: Special [wiki-w rev-4009173, fetched 2026-09-18]
@@ -49,7 +50,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Passive: Aatrox heals for 16% (+ 1.1% per 100 bonus health) of non- persistent post-mitigation damage he deals against enemy champions. Active: Aatrox dashes in the target direction. Umbral Dash resets Aatrox's basic attack timer and can be cast during his other abilities without cancelling them and vice versa. [wiki-e rev-4007771, fetched 2026-09-18]
 - target range: 75 - 300 • 500 [wiki-e rev-4007771, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4007771, fetched 2026-09-18]
-- missile speed: 800 • 1340 [wiki-e rev-4007771, fetched 2026-09-18]
+- missile or dash speed: 800 • 1340 [wiki-e rev-4007771, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4007771, fetched 2026-09-18]
 
 ### R
@@ -63,7 +64,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4062881, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FDeathbringer%20Stance&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4062881, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FDeathbringer%20Stance&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4027082, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FThe%20Darkin%20Blade&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4009173, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FInfernal%20Chains&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007771, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FUmbral%20Dash&prop=text

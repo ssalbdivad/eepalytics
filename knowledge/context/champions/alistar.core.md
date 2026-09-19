@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Triumphant Roar [wiki-p rev-4007561, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 3 [wiki-p rev-4007561, fetched 2026-09-18]
 - what it does: Innate: Alistar generates a stack of Triumph for each enemy champion he stuns or displaces with his abilities, and each time a nearby enemy minion or non-epic monster dies. He generates 7 stacks if a nearby enemy champion or epic monster dies. At 7 stacks, Alistar consumes them all to heal himself for 5% of his maximum health and nearby allied champions for 7% of his maximum health. Triumphant Roar can occur only once every few seconds, though Alistar may still generate stacks before then. [wiki-p rev-4007561, fetched 2026-09-18]
 - effect radius: 1000 • 950 [wiki-p rev-4007561, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4007561, fetched 2026-09-18]
@@ -39,7 +40,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 55 / 110 / 165 / 220 / 275 (+ 100% AP) [wiki-w rev-4007563, fetched 2026-09-18]
 - target range: 650 [wiki-w rev-4007563, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4007563, fetched 2026-09-18]
-- missile speed: 1200 • 1544 [wiki-w rev-4007563, fetched 2026-09-18]
+- missile or dash speed: 1200 • 1544 [wiki-w rev-4007563, fetched 2026-09-18]
 - targeting: Unit [wiki-w rev-4007563, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4007563, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4007563, fetched 2026-09-18]
@@ -67,7 +68,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4007561, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Alistar%2FTriumphant%20Roar&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4007561, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Alistar%2FTriumphant%20Roar&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007562, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Alistar%2FPulverize&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007563, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Alistar%2FHeadbutt&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4053303, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Alistar%2FTrample&prop=text

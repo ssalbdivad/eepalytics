@@ -142,7 +142,25 @@ export const CLAIM_FIELDS = {
 	"ability.range": { label: "target range", tier: "tier1-mechanics" },
 	"ability.radius": { label: "effect radius", tier: "tier1-mechanics" },
 	"ability.width": { label: "width", tier: "tier1-mechanics" },
-	"ability.speed": { label: "missile speed", tier: "tier1-mechanics" },
+	/*
+	 * The wiki documents this field as "Speed of a missile OR DASH", and 89 of the 308 abilities
+	 * that carry one describe a dash rather than a projectile — Tristana's W, Xin Zhao's E,
+	 * Rammus's R. Labelling all 308 "missile speed" made the LABEL a claim about the game that the
+	 * source does not make, on a line whose value was copied correctly. The source's own words fit
+	 * both.
+	 */
+	"ability.speed": { label: "missile or dash speed", tier: "tier1-mechanics" },
+	/*
+	 * The two cooldowns that were FETCHED and never delivered. The fetcher already reads `static`
+	 * and `recharge` — it falls back to them when it cross-checks a slot's cooldown against Data
+	 * Dragon — and then dropped them, so 51 abilities whose cooldown lives in `static` shipped with
+	 * no cooldown line at all: Anivia's Rebirth is a 240-second egg and her file said nothing.
+	 * The parenthetical on each label is the wiki's own documentation of the field, not a reading
+	 * of it: "Static cooldown, not affected by ability haste" and "Recharge timer for stock
+	 * abilities".
+	 */
+	"ability.static-cooldown": { label: "static cooldown, not affected by ability haste", tier: "tier1-mechanics" },
+	"ability.recharge": { label: "recharge timer for a stocked charge", tier: "tier1-mechanics" },
 	"ability.cast-time": { label: "cast time", tier: "tier1-mechanics" },
 	"ability.cc": { label: "crowd control", tier: "tier1-mechanics" },
 	"ability.targeting": { label: "targeting", tier: "tier1-mechanics" },

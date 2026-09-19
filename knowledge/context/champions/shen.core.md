@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Ki Barrier [wiki-p rev-3985839, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 11 [wiki-p rev-3985839, fetched 2026-09-18]
 - what it does: Innate: After completing an ability's effects, Shen grants himself a shield for 47 – 128.59 (based on level) (+ 13% bonus health) for 2.5 seconds. If Shen affects at least one other champion with an ability, Ki Barrier's cooldown is reduced by 4 – 8.25 (based on level) seconds. Shen manifests a Spirit Blade that he can control with Twilight Assault and Spirit's Refuge. [wiki-p rev-3985839, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3985839, fetched 2026-09-18]
 
@@ -27,7 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: none [wiki-q rev-4008038, fetched 2026-09-18]
 - effect radius: Global [wiki-q rev-4008038, fetched 2026-09-18]
 - width: 160 [wiki-q rev-4008038, fetched 2026-09-18]
-- missile speed: 2000 - 5000 [wiki-q rev-4008038, fetched 2026-09-18]
+- missile or dash speed: 2000 - 5000 [wiki-q rev-4008038, fetched 2026-09-18]
 - targeting: Auto [wiki-q rev-4008038, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4008038, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4008038, fetched 2026-09-18]
@@ -49,7 +50,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 60 / 85 / 110 / 135 / 160 (+ 11% bonus health) [wiki-e rev-4007754, fetched 2026-09-18]
 - target range: 300 - 600 [wiki-e rev-4007754, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4007754, fetched 2026-09-18]
-- missile speed: 800 + 100% movement speed [wiki-e rev-4007754, fetched 2026-09-18]
+- missile or dash speed: 800 + 100% movement speed [wiki-e rev-4007754, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4007754, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4007754, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4007754, fetched 2026-09-18]
@@ -65,7 +66,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3985839, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FKi%20Barrier&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3985839, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FKi%20Barrier&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008038, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FTwilight%20Assault&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3977238, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FSpirit's%20Refuge&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007754, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FShadow%20Dash&prop=text

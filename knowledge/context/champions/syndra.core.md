@@ -22,6 +22,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Dark Sphere [wiki-q rev-4026460, fetched 2026-09-18]
 - cooldown: 7 [wiki-q rev-4026460, fetched 2026-09-18]
 - cost: 40 / 45 / 50 / 55 / 60 [wiki-q rev-4026460, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 1.25 [wiki-q rev-4026460, fetched 2026-09-18]
+- recharge timer for a stocked charge: 7 [wiki-q rev-4026460, fetched 2026-09-18]
 - what it does: Active: Syndra conjures a Dark Sphere at the target location that appears after a 0.6-second delay, dealing magic damage to nearby enemies. The Dark Sphere then remains on the ground for 6 seconds. Transcendent Bonus: Collecting 40 Splinters of Wrath causes Syndra to periodically stock a Dark Sphere charge, up to a maximum of 2. [wiki-q rev-4026460, fetched 2026-09-18]
 - damage by rank: Magic Damage: 90 / 125 / 160 / 195 / 230 (+ 70% AP) [wiki-q rev-4026460, fetched 2026-09-18]
 - target range: 800 [wiki-q rev-4026460, fetched 2026-09-18]
@@ -52,7 +54,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 60 / 95 / 130 / 165 / 200 (+ 60% AP) [wiki-e rev-4008068, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4008068, fetched 2026-09-18]
 - width: 120 • 200 [wiki-e rev-4008068, fetched 2026-09-18]
-- missile speed: 2500 • 2000 [wiki-e rev-4008068, fetched 2026-09-18]
+- missile or dash speed: 2500 • 2000 [wiki-e rev-4008068, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4008068, fetched 2026-09-18]
 - damage type: magic [wiki-e rev-4008068, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4008068, fetched 2026-09-18]
@@ -73,7 +75,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4060367, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Syndra%2FTranscendent&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4026460, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Syndra%2FDark%20Sphere&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4026460, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Syndra%2FDark%20Sphere&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4060368, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Syndra%2FForce%20of%20Will&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008068, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Syndra%2FScatter%20the%20Weak&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4024661, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Syndra%2FUnleashed%20Power&prop=text

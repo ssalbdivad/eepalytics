@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Traveler's Call [wiki-p rev-4034690, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 50 • 8 – 4 (based on number of Chimes) [wiki-p rev-4034690, fetched 2026-09-18]
 - what it does: Innate - Ancient Chimes: Bard's presence causes sacred Chimes to periodically appear at random locations on the battlefield, lingering for up to 10 minutes. Collecting a Chime restores 12% maximum mana and grants Bard 20 + (1 per minute after 5 minutes) experience, as well as 24% bonus movement speed out of combat for 20 seconds, which stacks up to 10 times. Each Chime collected beyond the first instead grants an additional 14% bonus movement speed, up to a total of 150% bonus movement speed. Bard empowers his Meeps each time he collects 5 Chimes. Innate - Meeps: Bard's presence attracts Meeps every few seconds, which are small spirits that come to his side. While he has Meeps, his basic attacks are empowered to each consume a Meep on-attack to deal 30 (+ 6 per 5 Chimes collected) (+ 40% AP) bonus magic damage. - At 5 Chimes, Meeps slow damaged enemies by 25% – 75% (based on number of Chimes) for 1 second. - At 15 Chimes, Meeps deal the damage to enemies within 150 units of the primary target as well as those in a cone behind them. - At 35 Chimes, the cone's radius increases. Bard can have up to 1 – 9 (based on number of Chimes) Meeps at a time. [wiki-p rev-4034690, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4034690, fetched 2026-09-18]
 - damage type: Magic [wiki-p rev-4034690, fetched 2026-09-18]
@@ -29,7 +30,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 850 [wiki-q rev-4037681, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4037681, fetched 2026-09-18]
 - width: 120 [wiki-q rev-4037681, fetched 2026-09-18]
-- missile speed: 1500 [wiki-q rev-4037681, fetched 2026-09-18]
+- missile or dash speed: 1500 [wiki-q rev-4037681, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4037681, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4037681, fetched 2026-09-18]
 - spell shield: Special [wiki-q rev-4037681, fetched 2026-09-18]
@@ -46,7 +47,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Active: Bard opens a one-way magical corridor through a piece of terrain in the target direction for 10 seconds. A champion can pass through the corridor by selecting it while within proximity of it, becoming revealed during the travel. Bard and allies travel through the portal at 33% increased speed. A valid piece of terrain within the target range is required to cast this ability. Magical Journey cannot be taken while immobilized or grounded. [wiki-e rev-4007574, fetched 2026-09-18]
 - target range: 900 [wiki-e rev-4007574, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4007574, fetched 2026-09-18]
-- missile speed: 900 • 1197 [wiki-e rev-4007574, fetched 2026-09-18]
+- missile or dash speed: 900 • 1197 [wiki-e rev-4007574, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4007574, fetched 2026-09-18]
 
 ### R
@@ -62,7 +63,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4034690, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FTraveler's%20Call&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4034690, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FTraveler's%20Call&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4037681, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FCosmic%20Binding&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3960421, fetched 2026-09-18 — 2 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FCaretaker's%20Shrine&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007574, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FMagical%20Journey&prop=text

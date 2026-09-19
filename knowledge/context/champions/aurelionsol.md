@@ -89,7 +89,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Breath of Light Flat Damage Modifier: 108 / 109 / 110 / 111 / 112% [wiki-w rev-4057545, fetched 2026-09-18]
 - target range: 1500 (+ 7.5 × Stardust) [wiki-w rev-4057545, fetched 2026-09-18]
 - cast time: 0.4 • None [wiki-w rev-4057545, fetched 2026-09-18]
-- missile speed: 340 + 100% movement speed • 170 + 50% movement speed [wiki-w rev-4057545, fetched 2026-09-18]
+- missile or dash speed: 340 + 100% movement speed • 170 + 50% movement speed [wiki-w rev-4057545, fetched 2026-09-18]
 - targeting: Direction [wiki-w rev-4057545, fetched 2026-09-18]
 - edge case: If a takedown is scored while Astral Flight is active, the cooldown will be reduced after it ends. [wiki-w rev-4057545, fetched 2026-09-18]
 - edge case: Astral Flight cannot be used in the first 15 seconds of the game. [wiki-w rev-4057545, fetched 2026-09-18]

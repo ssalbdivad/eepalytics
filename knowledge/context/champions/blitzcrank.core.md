@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Mana Barrier [wiki-p rev-3908089, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 90 [wiki-p rev-3908089, fetched 2026-09-18]
 - what it does: Innate: Periodically, when damaged to 30% maximum health, Blitzcrank generates a shield equal to 35% of maximum mana, lasting for up to 10 seconds. [wiki-p rev-3908089, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3908089, fetched 2026-09-18]
 
@@ -26,7 +27,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 110 / 160 / 210 / 260 / 310 (+ 120% AP) [wiki-q rev-4026708, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4026708, fetched 2026-09-18]
 - width: 140 • 60 [wiki-q rev-4026708, fetched 2026-09-18]
-- missile speed: 1800 • 1800 [wiki-q rev-4026708, fetched 2026-09-18]
+- missile or dash speed: 1800 • 1800 [wiki-q rev-4026708, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4026708, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4026708, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4026708, fetched 2026-09-18]
@@ -65,7 +66,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3908089, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FMana%20Barrier&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3908089, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FMana%20Barrier&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4026708, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FRocket%20Grab&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3906572, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FOverdrive&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4041159, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FPower%20Fist&prop=text

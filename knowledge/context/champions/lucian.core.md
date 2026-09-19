@@ -40,7 +40,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 75 / 110 / 145 / 180 / 215 (+ 90% AP) · Bonus Movement Speed: 60 / 65 / 70 / 75 / 80 [wiki-w rev-3594941, fetched 2026-09-18]
 - cast time: 0.25 [wiki-w rev-3594941, fetched 2026-09-18]
 - width: 110 [wiki-w rev-3594941, fetched 2026-09-18]
-- missile speed: 1600 [wiki-w rev-3594941, fetched 2026-09-18]
+- missile or dash speed: 1600 [wiki-w rev-3594941, fetched 2026-09-18]
 - targeting: Direction [wiki-w rev-3594941, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-3594941, fetched 2026-09-18]
 - spell shield: special [wiki-w rev-3594941, fetched 2026-09-18]
@@ -52,7 +52,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Passive: Relentless Pursuit's current cooldown is reduced by 1 second for each Lightslinger shot hit, doubled to 2 seconds against enemy champions. Active: Lucian dashes in the target direction. Relentless Pursuit resets Lucian's basic attack timer. Lucian can cast any of his abilities during the dash. Relentless Pursuit can be cast during Ardent Blaze's cast time and during The Culling's channel. [wiki-e rev-4008455, fetched 2026-09-18]
 - target range: 200 - 425 [wiki-e rev-4008455, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4008455, fetched 2026-09-18]
-- missile speed: 1350 [wiki-e rev-4008455, fetched 2026-09-18]
+- missile or dash speed: 1350 [wiki-e rev-4008455, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4008455, fetched 2026-09-18]
 
 ### R
@@ -63,7 +63,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage Per Shot: 15 / 30 / 45 (+ 25% AD) (+ 15% AP) Minion Damage Per Shot: 30 / 60 / 90 (+ 50% AD) (+ 30% AP) [wiki-r rev-4007670, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4007670, fetched 2026-09-18]
 - width: 220 + offset [wiki-r rev-4007670, fetched 2026-09-18]
-- missile speed: 2800 [wiki-r rev-4007670, fetched 2026-09-18]
+- missile or dash speed: 2800 [wiki-r rev-4007670, fetched 2026-09-18]
 - targeting: Direction / Auto [wiki-r rev-4007670, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4007670, fetched 2026-09-18]
 - spell shield: Special [wiki-r rev-4007670, fetched 2026-09-18]

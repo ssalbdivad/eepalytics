@@ -28,7 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 80 / 120 / 160 / 200 / 240 (+ 75% AP) [wiki-q rev-4007675, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4007675, fetched 2026-09-18]
 - width: 140 [wiki-q rev-4007675, fetched 2026-09-18]
-- missile speed: 1200 [wiki-q rev-4007675, fetched 2026-09-18]
+- missile or dash speed: 1200 [wiki-q rev-4007675, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4007675, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4007675, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4007675, fetched 2026-09-18]
@@ -42,7 +42,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 [wiki-w rev-3992656, fetched 2026-09-18]
 - effect radius: 110 [wiki-w rev-3992656, fetched 2026-09-18]
 - width: 220 [wiki-w rev-3992656, fetched 2026-09-18]
-- missile speed: 2400 [wiki-w rev-3992656, fetched 2026-09-18]
+- missile or dash speed: 2400 [wiki-w rev-3992656, fetched 2026-09-18]
 - targeting: Direction [wiki-w rev-3992656, fetched 2026-09-18]
 
 ### E
@@ -54,7 +54,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 1100 [wiki-e rev-4007677, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4007677, fetched 2026-09-18]
 - effect radius: 310 • 650 [wiki-e rev-4007677, fetched 2026-09-18]
-- missile speed: 1200 [wiki-e rev-4007677, fetched 2026-09-18]
+- missile or dash speed: 1200 [wiki-e rev-4007677, fetched 2026-09-18]
 - targeting: Location • Auto [wiki-e rev-4007677, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4007677, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4007677, fetched 2026-09-18]

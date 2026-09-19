@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Adaptive Defenses [wiki-p rev-4051341, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 14 / 11 / 8 (based on level) [wiki-p rev-4051341, fetched 2026-09-18]
 - what it does: Innate: Periodically, Camille's next basic attack on-hit against an enemy champion grants her a shield equal to 10% / 15% / 20% (based on level) of her maximum health, lasting for 2 seconds and absorbing damage from either exclusively physical damage or magic damage, based on which type the target has previously dealt most of against champions as well as on Camille's current armor and magic resistance. [wiki-p rev-4051341, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4051341, fetched 2026-09-18]
 - edge case: Adaptive Defenses goes on cooldown after the shield expires or is destroyed. [wiki-p rev-4051341, fetched 2026-09-18]
@@ -73,7 +74,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 800 [wiki-e rev-3922084, fetched 2026-09-18]
 - cast time: none [wiki-e rev-3922084, fetched 2026-09-18]
 - width: 100 [wiki-e rev-3922084, fetched 2026-09-18]
-- missile speed: 1400 [wiki-e rev-3922084, fetched 2026-09-18]
+- missile or dash speed: 1400 [wiki-e rev-3922084, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-3922084, fetched 2026-09-18]
 - edge case: Camille may move while the grapple is in flight. [wiki-e rev-3922084, fetched 2026-09-18]
 - edge case: Hookshot can be cast while rooted but not while grounded. [wiki-e rev-3922084, fetched 2026-09-18]
@@ -86,7 +87,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 400 • 800 [wiki-e2 rev-4007586, fetched 2026-09-18]
 - cast time: none [wiki-e2 rev-4007586, fetched 2026-09-18]
 - effect radius: 130 [wiki-e2 rev-4007586, fetched 2026-09-18]
-- missile speed: 1050 + 100% movement speed [wiki-e2 rev-4007586, fetched 2026-09-18]
+- missile or dash speed: 1050 + 100% movement speed [wiki-e2 rev-4007586, fetched 2026-09-18]
 - targeting: Direction [wiki-e2 rev-4007586, fetched 2026-09-18]
 - damage type: Physical [wiki-e2 rev-4007586, fetched 2026-09-18]
 - spell shield: true [wiki-e2 rev-4007586, fetched 2026-09-18]
@@ -214,7 +215,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4051341, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Camille%2FAdaptive%20Defenses&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4051341, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Camille%2FAdaptive%20Defenses&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3972807, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Camille%2FPrecision%20Protocol&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4051342, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Camille%2FTactical%20Sweep&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3922084, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Camille%2FHookshot&prop=text

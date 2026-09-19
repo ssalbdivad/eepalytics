@@ -15,8 +15,9 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Iron Ambassador [wiki-p rev-3994225, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 16 / 12 / 8 / 6 (based on level) [wiki-p rev-3994225, fetched 2026-09-18]
 - what it does: Innate: Periodically, Poppy's next basic attack on-attack is empowered to throw her buckler, gaining 350 bonus range and dealing 20 – 198.82 (based on level) bonus magic damage. After it hits, the buckler then falls to a location near the target over 1 second, landing and remaining there for up to 4 seconds. Poppy can move over the buckler to retrieve it, gaining a shield for 11% – 21.06% (based on level) of her maximum health for 3 seconds. If the buckler kills the target, or if the target is already dead when the buckler hits it, the buckler will bounce back to Poppy instead of falling. Enemy champions can move over the buckler to destroy it. [wiki-p rev-3994225, fetched 2026-09-18]
-- missile speed: 1600 [wiki-p rev-3994225, fetched 2026-09-18]
+- missile or dash speed: 1600 [wiki-p rev-3994225, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3994225, fetched 2026-09-18]
 - damage type: Magic [wiki-p rev-3994225, fetched 2026-09-18]
 - spell shield: False [wiki-p rev-3994225, fetched 2026-09-18]
@@ -53,7 +54,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 40 / 60 / 80 / 100 / 120 (+ 60% bonus AD) · Stun Duration: 1.6 / 1.7 / 1.8 / 1.9 / 2 seconds Total Physical Damage: 80 / 120 / 160 / 200 / 240 (+ 120% bonus AD) [wiki-e rev-3946254, fetched 2026-09-18]
 - target range: 475 [wiki-e rev-3946254, fetched 2026-09-18]
 - cast time: none [wiki-e rev-3946254, fetched 2026-09-18]
-- missile speed: 1800 [wiki-e rev-3946254, fetched 2026-09-18]
+- missile or dash speed: 1800 [wiki-e rev-3946254, fetched 2026-09-18]
 - targeting: Unit [wiki-e rev-3946254, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-3946254, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-3946254, fetched 2026-09-18]
@@ -67,14 +68,14 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 • 0.35 [wiki-r rev-4007992, fetched 2026-09-18]
 - effect radius: 180 • 225 [wiki-r rev-4007992, fetched 2026-09-18]
 - width: 180 [wiki-r rev-4007992, fetched 2026-09-18]
-- missile speed: 2500 [wiki-r rev-4007992, fetched 2026-09-18]
+- missile or dash speed: 2500 [wiki-r rev-4007992, fetched 2026-09-18]
 - targeting: Auto • Direction [wiki-r rev-4007992, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4007992, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4007992, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3994225, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Poppy%2FIron%20Ambassador&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3994225, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Poppy%2FIron%20Ambassador&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4051348, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Poppy%2FHammer%20Shock&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4051176, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Poppy%2FSteadfast%20Presence&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3946254, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Poppy%2FHeroic%20Charge&prop=text

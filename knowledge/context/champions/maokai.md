@@ -15,6 +15,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Passive
 - name: Sap Magic [wiki-p rev-4038409, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 30 – 20 (based on level) [wiki-p rev-4038409, fetched 2026-09-18]
 - what it does: Innate: Periodically, Maokai empowers his next basic attack to have an uncancellable windup and heal him for 4% – 12.8% (based on level) maximum health after a 0.25-second delay. Each time Maokai casts an ability, hits at least one enemy champion or epic monster with Sapling Toss, or is struck by an enemy's ability, Sap Magic's cooldown is reduced by 4 seconds, modified to 1.5 if he is hit by a large monster's basic attack or ability. Sap Magic resets Maokai's basic attack timer, and will not trigger if he is above 95% maximum health. [wiki-p rev-4038409, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4038409, fetched 2026-09-18]
 - edge case: Sap Magic does not occur if Maokai begins his attack windup before its cooldown has elapsed.(unexpected) [wiki-p rev-4038409, fetched 2026-09-18]
@@ -33,7 +34,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 600 [wiki-q rev-4046583, fetched 2026-09-18]
 - cast time: 0.3 [wiki-q rev-4046583, fetched 2026-09-18]
 - effect radius: 325 [wiki-q rev-4046583, fetched 2026-09-18]
-- missile speed: 1600 [wiki-q rev-4046583, fetched 2026-09-18]
+- missile or dash speed: 1600 [wiki-q rev-4046583, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4046583, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4046583, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4046583, fetched 2026-09-18]
@@ -50,7 +51,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Magic Damage: 60 / 85 / 110 / 135 / 160 (+ 40% AP) Root Duration: 1 / 1.1 / 1.2 / 1.3 / 1.4 seconds [wiki-w rev-3946300, fetched 2026-09-18]
 - target range: 525 [wiki-w rev-3946300, fetched 2026-09-18]
 - cast time: none [wiki-w rev-3946300, fetched 2026-09-18]
-- missile speed: 1300 [wiki-w rev-3946300, fetched 2026-09-18]
+- missile or dash speed: 1300 [wiki-w rev-3946300, fetched 2026-09-18]
 - targeting: Unit [wiki-w rev-3946300, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-3946300, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-3946300, fetched 2026-09-18]
@@ -87,7 +88,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 3000 [wiki-r rev-3681487, fetched 2026-09-18]
 - cast time: 0.5 [wiki-r rev-3681487, fetched 2026-09-18]
 - width: 240 [wiki-r rev-3681487, fetched 2026-09-18]
-- missile speed: 100 / 400 / 700 / 750 (based on seconds active) [wiki-r rev-3681487, fetched 2026-09-18]
+- missile or dash speed: 100 / 400 / 700 / 750 (based on seconds active) [wiki-r rev-3681487, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-3681487, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-3681487, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-3681487, fetched 2026-09-18]
@@ -97,7 +98,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4038409, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FSap%20Magic&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4038409, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FSap%20Magic&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4046583, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FBramble%20Smash&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3946300, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FTwisted%20Advance&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007687, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FSapling%20Toss&prop=text

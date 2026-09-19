@@ -61,7 +61,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 800 OR 150% movement speed [wiki-r rev-4008005, fetched 2026-09-18]
 - cast time: None [wiki-r rev-4008005, fetched 2026-09-18]
 - effect radius: 400 • 400 [wiki-r rev-4008005, fetched 2026-09-18]
-- missile speed: 900 • 2000 [wiki-r rev-4008005, fetched 2026-09-18]
+- missile or dash speed: 900 • 2000 [wiki-r rev-4008005, fetched 2026-09-18]
 - targeting: Location [wiki-r rev-4008005, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4008005, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4008005, fetched 2026-09-18]

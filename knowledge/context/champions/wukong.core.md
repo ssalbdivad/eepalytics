@@ -38,7 +38,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Clone Outgoing Damage: 40 / 45 / 50 / 55 / 60% [wiki-w rev-4016976, fetched 2026-09-18]
 - target range: 100 - 300 [wiki-w rev-4016976, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4016976, fetched 2026-09-18]
-- missile speed: 900 [wiki-w rev-4016976, fetched 2026-09-18]
+- missile or dash speed: 900 [wiki-w rev-4016976, fetched 2026-09-18]
 - targeting: Location [wiki-w rev-4016976, fetched 2026-09-18]
 - damage type: physical [wiki-w rev-4016976, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4016976, fetched 2026-09-18]

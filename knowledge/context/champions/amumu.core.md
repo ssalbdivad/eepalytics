@@ -23,11 +23,13 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Q
 - name: Bandage Toss [wiki-q rev-4007564, fetched 2026-09-18]
 - cost: 50 [wiki-q rev-4007564, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 3 [wiki-q rev-4007564, fetched 2026-09-18]
+- recharge timer for a stocked charge: 16 / 15 / 14 / 13 / 12 [wiki-q rev-4007564, fetched 2026-09-18]
 - what it does: Active: Amumu throws a bandage in the target direction that deals magic damage to the first enemy hit, stunning them for 1 second and pulling him to them, during which they are revealed. Amumu periodically stocks a Bandage Toss charge, up to a maximum of 2. Despair can be cast during the dash. [wiki-q rev-4007564, fetched 2026-09-18]
 - damage by rank: Magic Damage: 70 / 95 / 120 / 145 / 170 (+ 85% AP) [wiki-q rev-4007564, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4007564, fetched 2026-09-18]
 - width: 160 [wiki-q rev-4007564, fetched 2026-09-18]
-- missile speed: 2000 • 1800 [wiki-q rev-4007564, fetched 2026-09-18]
+- missile or dash speed: 2000 • 1800 [wiki-q rev-4007564, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4007564, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4007564, fetched 2026-09-18]
 - spell shield: special [wiki-q rev-4007564, fetched 2026-09-18]
@@ -35,6 +37,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### W
 - name: Despair [wiki-w rev-4006735, fetched 2026-09-18]
 - cost: 8 [wiki-w rev-4006735, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 1 [wiki-w rev-4006735, fetched 2026-09-18]
 - what it does: Toggle: Amumu cries a continuous pool of tears, dealing magic damage every 0.5 seconds to nearby enemies. Despair is toggled off automatically if Amumu becomes unable to pay its mana cost. [wiki-w rev-4006735, fetched 2026-09-18]
 - damage by rank: Magic Damage Per Tick: 5 (+ 0.5 / 0.625 / 0.75 / 0.875 / 1% (+ 0.25% per 100 AP) of target's maximum health) [wiki-w rev-4006735, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4006735, fetched 2026-09-18]
@@ -74,8 +77,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4046475, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Amumu%2FCursed%20Touch&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4007564, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Amumu%2FBandage%20Toss&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4006735, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Amumu%2FDespair&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4007564, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Amumu%2FBandage%20Toss&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4006735, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Amumu%2FDespair&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3996197, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Amumu%2FTantrum&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3953818, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Amumu%2FCurse%20of%20the%20Sad%20Mummy&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/amumu/jungle?tier=emerald_plus

@@ -17,7 +17,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Ravenous Flock [wiki-p rev-4008055, fetched 2026-09-18]
 - what it does: Innate: Enemy champions that die will leave behind a Soul Fragment for 16 seconds. Swain's ravens will collect nearby dropped Soul Fragments, as well as rip the Soul Fragments out of champions hit by Vision of Empire or Nevermove's recast. Once a raven has collected a Soul Fragment, it will fly towards Swain to grant it to him, while also granting sight of its surroundings during the travel. Soul Fragment: For each stack, Swain gains 15 bonus health permanently. Upon claiming a fragment, he will heal for 6% of his maximum health. [wiki-p rev-4008055, fetched 2026-09-18]
 - effect radius: 1100 • 250 [wiki-p rev-4008055, fetched 2026-09-18]
-- missile speed: 1200 [wiki-p rev-4008055, fetched 2026-09-18]
+- missile or dash speed: 1200 [wiki-p rev-4008055, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4008055, fetched 2026-09-18]
 
 ### Q
@@ -55,7 +55,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 [wiki-e rev-4008056, fetched 2026-09-18]
 - effect radius: 100 • Global [wiki-e rev-4008056, fetched 2026-09-18]
 - width: 180 [wiki-e rev-4008056, fetched 2026-09-18]
-- missile speed: 1125 – 1800 (based on seconds in flight) • 2000 – 2800 (based on seconds in flight) [wiki-e rev-4008056, fetched 2026-09-18]
+- missile or dash speed: 1125 – 1800 (based on seconds in flight) • 2000 – 2800 (based on seconds in flight) [wiki-e rev-4008056, fetched 2026-09-18]
 - targeting: Direction • Auto [wiki-e rev-4008056, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4008056, fetched 2026-09-18]
 - spell shield: special [wiki-e rev-4008056, fetched 2026-09-18]
@@ -72,12 +72,13 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Magic [wiki-r rev-4020887, fetched 2026-09-18]
 - spell shield: False [wiki-r rev-4020887, fetched 2026-09-18]
 - name: Demonflare [wiki-r2 rev-4002226, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 8 [wiki-r2 rev-4002226, fetched 2026-09-18]
 - what it does: Active: Swain releases a nova of soulfire that deals magic damage to nearby enemies and slows them by 50%, decaying over 1.5 seconds. Swain can move during Demonflare's cast time. [wiki-r2 rev-4002226, fetched 2026-09-18]
 - damage by rank: Magic Damage: 150 / 250 / 350 (+ 40% AP) [wiki-r2 rev-4002226, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r2 rev-4002226, fetched 2026-09-18]
 - effect radius: 675 [wiki-r2 rev-4002226, fetched 2026-09-18]
 - width: 60 [wiki-r2 rev-4002226, fetched 2026-09-18]
-- missile speed: 3000 [wiki-r2 rev-4002226, fetched 2026-09-18]
+- missile or dash speed: 3000 [wiki-r2 rev-4002226, fetched 2026-09-18]
 - targeting: Auto [wiki-r2 rev-4002226, fetched 2026-09-18]
 - damage type: Magic [wiki-r2 rev-4002226, fetched 2026-09-18]
 - spell shield: True [wiki-r2 rev-4002226, fetched 2026-09-18]
@@ -89,4 +90,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3992667, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Swain%2FVision%20of%20Empire&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008056, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Swain%2FNevermove&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4020887, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Swain%2FDemonic%20Ascension&prop=text
-- wiki-r2: League of Legends Wiki, ability data template, revision rev-4002226, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Swain%2FDemonflare&prop=text
+- wiki-r2: League of Legends Wiki, ability data template, revision rev-4002226, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Swain%2FDemonflare&prop=text

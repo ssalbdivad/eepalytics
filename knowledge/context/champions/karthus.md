@@ -75,6 +75,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### E
 - name: Defile [wiki-e rev-4006733, fetched 2026-09-18]
 - cost: 30 / 42 / 54 / 66 / 78 [wiki-e rev-4006733, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 0.5 [wiki-e rev-4006733, fetched 2026-09-18]
 - what it does: Passive: Karthus restores mana whenever he kills an enemy. Toggle: Karthus surrounds himself in a necrotic aura that deals magic damage every 0.25 seconds to all nearby enemies. Toggling Defile off triggers a final tick of damage. Defile is toggled off automatically if Karthus becomes unable to pay its mana cost. Defile cannot be toggled off during Death Defied. [wiki-e rev-4006733, fetched 2026-09-18]
 - damage by rank: Mana Restored: 10 / 20 / 30 / 40 / 50 · Magic Damage Per Tick: 7.5 / 12.5 / 17.5 / 22.5 / 27.5 (+ 5% AP) Damage Per Second: 30 / 50 / 70 / 90 / 110 (+ 20% AP) [wiki-e rev-4006733, fetched 2026-09-18]
 - cast time: none [wiki-e rev-4006733, fetched 2026-09-18]
@@ -154,6 +155,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3985387, fetched 2026-09-18 — 34 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FDeath%20Defied&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4011136, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FLay%20Waste&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3990033, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FWall%20of%20Pain&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4006733, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FDefile&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4006733, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FDefile&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4015394, fetched 2026-09-18 — 56 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FRequiem&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/karthus/jungle?tier=emerald_plus

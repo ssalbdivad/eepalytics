@@ -40,7 +40,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Damage Stored: 25 / 27.5 / 30 / 32.5 / 35% of damage dealt [wiki-e rev-4050165, fetched 2026-09-18]
 - cast time: None • 0.225 [wiki-e rev-4050165, fetched 2026-09-18]
 - effect radius: Global [wiki-e rev-4050165, fetched 2026-09-18]
-- missile speed: 1200 [wiki-e rev-4050165, fetched 2026-09-18]
+- missile or dash speed: 1200 [wiki-e rev-4050165, fetched 2026-09-18]
 - targeting: Direction • Auto [wiki-e rev-4050165, fetched 2026-09-18]
 - damage type: True [wiki-e rev-4050165, fetched 2026-09-18]
 - spell shield: false [wiki-e rev-4050165, fetched 2026-09-18]

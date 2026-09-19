@@ -45,7 +45,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Active - Slice: Renekton dashes a fixed distance in the target direction, dealing physical damage to enemies he passes through. If Renekton hits an enemy, he can recast Slice and Dice within the next 4 seconds. Recast - Dice: Renekton repeats the first cast's effects. Both casts generate 2 Fury for each non-champion hit and 10 Fury for each champion hit, up to 30 total per cast. [wiki-e rev-3943397, fetched 2026-09-18]
 - damage by rank: Physical Damage: 40 / 70 / 100 / 130 / 160 (+ 90% bonus AD) · Total Physical Damage: 80 / 140 / 200 / 260 / 320 (+ 180% bonus AD) [wiki-e rev-3943397, fetched 2026-09-18]
 - cast time: none [wiki-e rev-3943397, fetched 2026-09-18]
-- missile speed: 760 + 100% movement speed [wiki-e rev-3943397, fetched 2026-09-18]
+- missile or dash speed: 760 + 100% movement speed [wiki-e rev-3943397, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-3943397, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-3943397, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-3943397, fetched 2026-09-18]

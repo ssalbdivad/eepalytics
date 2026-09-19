@@ -29,7 +29,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: none [wiki-q rev-4007693, fetched 2026-09-18]
 - effect radius: 100 • 250 • 275 • 190 [wiki-q rev-4007693, fetched 2026-09-18]
 - width: 120 [wiki-q rev-4007693, fetched 2026-09-18]
-- missile speed: 1200 [wiki-q rev-4007693, fetched 2026-09-18]
+- missile or dash speed: 1200 [wiki-q rev-4007693, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4007693, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4007693, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4007693, fetched 2026-09-18]
@@ -48,6 +48,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### E
 - name: Warm Hugs [wiki-e rev-3908079, fetched 2026-09-18]
 - cost: 50 / 60 / 70 / 80 / 90 [wiki-e rev-3908079, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 0.5 [wiki-e rev-3908079, fetched 2026-09-18]
+- recharge timer for a stocked charge: 17 / 16 / 15 / 14 / 13 [wiki-e rev-3908079, fetched 2026-09-18]
 - what it does: Active: Milio envelops himself or the target allied champion in protective flames, granting the target a shield and bonus movement speed for 2.5 seconds. Milio periodically stocks a Warm Hugs charge, up to a maximum of 2. Warm Hugs' effects can stack up to 2 times. [wiki-e rev-3908079, fetched 2026-09-18]
 - damage by rank: Shield Strength: 45 / 75 / 105 / 135 / 165 (+ 45% AP) Bonus Movement Speed: 12 / 14 / 16 / 18 / 20% [wiki-e rev-3908079, fetched 2026-09-18]
 - target range: 650 [wiki-e rev-3908079, fetched 2026-09-18]
@@ -69,5 +71,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4046868, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FFired%20Up!&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007693, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FUltra%20Mega%20Fire%20Kick&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007694, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FCozy%20Campfire&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-3908079, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FWarm%20Hugs&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-3908079, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FWarm%20Hugs&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3908080, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FBreath%20of%20Life&prop=text

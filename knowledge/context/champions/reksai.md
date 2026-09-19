@@ -42,7 +42,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.125 [wiki-q2 rev-3961898, fetched 2026-09-18]
 - effect radius: 150 [wiki-q2 rev-3961898, fetched 2026-09-18]
 - width: 130 [wiki-q2 rev-3961898, fetched 2026-09-18]
-- missile speed: 1950 [wiki-q2 rev-3961898, fetched 2026-09-18]
+- missile or dash speed: 1950 [wiki-q2 rev-3961898, fetched 2026-09-18]
 - targeting: Direction [wiki-q2 rev-3961898, fetched 2026-09-18]
 - damage type: Magic [wiki-q2 rev-3961898, fetched 2026-09-18]
 - spell shield: True [wiki-q2 rev-3961898, fetched 2026-09-18]
@@ -60,6 +60,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Burrow does not count as an ability activation for the purposes of on-cast effects such as Spellblade and triggering Force Pulse's passive. [wiki-w rev-3980688, fetched 2026-09-18]
 - edge case: Enemies detected by Tremor Sense are displayed as rings on the ground. Champions display larger rings and Rek'Sai will react to this detection. [wiki-w rev-3980688, fetched 2026-09-18]
 - name: Unburrow [wiki-w2 rev-4008007, fetched 2026-09-18]
+- static cooldown, not affected by ability haste: 1 [wiki-w2 rev-4008007, fetched 2026-09-18]
 - what it does: Active: Rek'Sai becomes Un-Burrowed, gaining access to her Un-Burrowed abilities and emerging from the ground to deal magic damage to nearby enemies and knock them up for 1 second. Minions and small monsters are instead knocked back a short distance. Targets hit cannot be displaced by Unburrow again for some time. Rek'Sai can also trigger Unburrow by issuing an attack command, casting the ability once she is in attack range of the target and applying the knock up against them. Rek'Sai becomes unable to move or attack for 0.15 seconds after hitting an enemy with Unburrow. [wiki-w2 rev-4008007, fetched 2026-09-18]
 - damage by rank: Magic Damage: 30 / 55 / 80 / 105 / 130 (+ 80% AP) [wiki-w2 rev-4008007, fetched 2026-09-18]
 - cast time: none [wiki-w2 rev-4008007, fetched 2026-09-18]
@@ -88,7 +89,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Active: Rek'Sai dashes in the target direction, leaving behind a Tunnel that has two interconnected entrances and lasts up to 10 minutes. The Tunnel can be traversed again when Rek'Sai targets either entrance, causing her to dash to the selected entrance before travelling through the Tunnel to the opposite side. Once a Tunnel has been traversed, it is shut down for a few seconds during which Rek'Sai cannot enter it again. Rek'Sai can have up to 8 Tunnels active on the battlefield at once. Deploying Tunnels beyond the maximum causes the oldest one to be destroyed. Enemy champions can destroy a Tunnel by standing on either entrance for 1.5 seconds, granting them 5 upon successfully destroying the Tunnel. If Rek'Sai attempts to enter a Tunnel while Un-Burrowed, she will automatically Burrow upon interacting with it, and automatically Unburrow after exiting it. This does not place Burrow on cooldown nor trigger Fury of the Xer'Sai, but does trigger other Burrow effects and Unburrow. If Burrow is on cooldown at the time of interacting with the Tunnel, the cooldown will be reset. Rek'Sai cannot enter a tunnel while immobilized, grounded, or silenced. [wiki-e2 rev-4007778, fetched 2026-09-18]
 - target range: 850 [wiki-e2 rev-4007778, fetched 2026-09-18]
 - cast time: none [wiki-e2 rev-4007778, fetched 2026-09-18]
-- missile speed: 500 + 100% movement speed [wiki-e2 rev-4007778, fetched 2026-09-18]
+- missile or dash speed: 500 + 100% movement speed [wiki-e2 rev-4007778, fetched 2026-09-18]
 - targeting: Direction [wiki-e2 rev-4007778, fetched 2026-09-18]
 - edge case: The tunnel cooldown is also incurred for the Tunnel that Rek'Sai leaves behind from casting the ability. [wiki-e2 rev-4007778, fetched 2026-09-18]
 - edge case: Rek'Sai will dash to the Tunnel's selected entrance before entering it only if she is not close enough to it already. If she is on top of the entrance, she will initiate the dash through the Tunnel instantly after selecting it. [wiki-e2 rev-4007778, fetched 2026-09-18]
@@ -107,7 +108,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Physical Damage: 150 / 250 / 350 (+ 100% bonus AD) (+ 15 / 20 / 25% of target's maximum health) [wiki-r rev-4004938, fetched 2026-09-18]
 - target range: 1500 [wiki-r rev-4004938, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r rev-4004938, fetched 2026-09-18]
-- missile speed: 1400 [wiki-r rev-4004938, fetched 2026-09-18]
+- missile or dash speed: 1400 [wiki-r rev-4004938, fetched 2026-09-18]
 - targeting: Unit [wiki-r rev-4004938, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4004938, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4004938, fetched 2026-09-18]
@@ -220,7 +221,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3983369, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FQueen's%20Wrath&prop=text
 - wiki-q2: League of Legends Wiki, ability data template, revision rev-3961898, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FPrey%20Seeker&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3980688, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FBurrow&prop=text
-- wiki-w2: League of Legends Wiki, ability data template, revision rev-4008007, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FUnburrow&prop=text
+- wiki-w2: League of Legends Wiki, ability data template, revision rev-4008007, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FUnburrow&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4034704, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FFurious%20Bite&prop=text
 - wiki-e2: League of Legends Wiki, ability data template, revision rev-4007778, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FTunnel&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4004938, fetched 2026-09-18 — 108 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FVoid%20Rush&prop=text

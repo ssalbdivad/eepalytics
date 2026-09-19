@@ -57,7 +57,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.25 • 0.3333 [wiki-e rev-4058111, fetched 2026-09-18]
 - effect radius: 150 • 300 [wiki-e rev-4058111, fetched 2026-09-18]
 - width: 120 • 100 [wiki-e rev-4058111, fetched 2026-09-18]
-- missile speed: 1500 • 1600 [wiki-e rev-4058111, fetched 2026-09-18]
+- missile or dash speed: 1500 • 1600 [wiki-e rev-4058111, fetched 2026-09-18]
 - targeting: Direction / Location [wiki-e rev-4058111, fetched 2026-09-18]
 - damage type: magic [wiki-e rev-4058111, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4058111, fetched 2026-09-18]

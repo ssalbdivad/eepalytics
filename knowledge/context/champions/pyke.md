@@ -253,7 +253,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: none [wiki-e rev-4044071, fetched 2026-09-18]
 - effect radius: 110 [wiki-e rev-4044071, fetched 2026-09-18]
 - width: 220 [wiki-e rev-4044071, fetched 2026-09-18]
-- missile speed: 3000 [wiki-e rev-4044071, fetched 2026-09-18]
+- missile or dash speed: 3000 [wiki-e rev-4044071, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4044071, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4044071, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4044071, fetched 2026-09-18]
