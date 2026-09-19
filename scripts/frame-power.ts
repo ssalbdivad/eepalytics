@@ -177,6 +177,23 @@ const stored = arg("stored", "")
 const rechoose = arg("rechoose", "")
 const verdictsOf = arg("verdicts", "")
 /**
+ * USD per million PROMPT tokens, for the cadence table's dollar column. `--price-in` overrides it.
+ *
+ * It is an argument with a documented default rather than a lookup, for `measure-ttft.ts`'s reason:
+ * a stored run must still be checkable after the rate card moves, so the rate that produced a
+ * dollar figure is written into the run file beside it.
+ *
+ * The default 0.75 is the figure THIS REPO already recorded for `gemini-3.8-flash` text input in
+ * `scripts/measure-ttft.ts`, and it is used here with a caveat that must travel with every dollar
+ * on this page: **a Live native-audio session is not billed at the flash text rate.** Google prices
+ * the Live API's audio input and audio output separately and this key's rate card for them is not
+ * something this run can read, so the dollars below cover PROMPT TEXT AND IMAGE TOKENS ONLY and are
+ * a LOWER BOUND on the session's true bill. What they are exactly right about is the RATIO between
+ * the arms, because every arm on this page is billed the same way for the same kind of token and
+ * differs only in how many of them it sent. The ratio is the decision; the absolute is an estimate.
+ */
+const pricePerMillionIn = Number(arg("price-in", "0.75"))
+/**
  * SOCKET or TURN, and they are different experiments rather than two settings of one.
  *
  * `socket` is the shipped live coach: one Gemini Live session per game, a thread the model keeps,
@@ -202,14 +219,24 @@ interface PicArm {
 	source: "real" | "decoy"
 	/** 1 = a picture every turn. 3 = every third turn and nothing on the other two. */
 	cadence: number
+	/**
+	 * A hard cap on how many pictures this arm may send in a whole game, or null for no cap.
+	 *
+	 * `cadence` alone cannot express the cheapest schedule there is — ONE picture, at the start,
+	 * and never again — because a modulus always fires again. That schedule is the champ-select
+	 * arm: the coach is shown the game once and then coaches from the brief. On the socket it is
+	 * also the only cadence whose frame bill does not grow at all, since a held thread re-bills
+	 * every picture it has ever been sent on every later turn.
+	 */
+	maxPictures: number | null
 	/** The arm this one is the decoy twin of, for the forced choice. Null when it has no twin. */
 	twinOf: string | null
 	what: string
 }
 
 const ARMS: readonly PicArm[] = [
-	{ id: "full", pic: "full", source: "real", cadence: 1, twinOf: null, what: "THE SHIPPED PATH" },
-	{ id: "fullD", pic: "full", source: "decoy", cadence: 1, twinOf: "full", what: "whole frame, wrong minute" },
+	{ id: "full", pic: "full", source: "real", cadence: 1, maxPictures: null, twinOf: null, what: "THE SHIPPED PATH" },
+	{ id: "fullD", pic: "full", source: "decoy", cadence: 1, maxPictures: null, twinOf: "full", what: "whole frame, wrong minute" },
 	/*
 	 * `full` a SECOND TIME, byte-identical, and it is the most important arm in the table.
 	 *
@@ -219,16 +246,48 @@ const ARMS: readonly PicArm[] = [
 	 * verdict gap between `full` and `full2` is the instrument talking, and no gap smaller than it
 	 * may be read as a finding anywhere else on the page.
 	 */
-	{ id: "full2", pic: "full", source: "real", cadence: 1, twinOf: null, what: "THE NOISE FLOOR — `full` again" },
-	{ id: "none", pic: "none", source: "real", cadence: 1, twinOf: null, what: "no picture at all" },
-	{ id: "map", pic: "map", source: "real", cadence: 1, twinOf: null, what: "the minimap crop, 4x, alone" },
-	{ id: "mapD", pic: "map", source: "decoy", cadence: 1, twinOf: "map", what: "that crop, wrong minute" },
-	{ id: "hud", pic: "hud", source: "real", cadence: 1, twinOf: null, what: "the HUD band, 2x, alone" },
-	{ id: "hudD", pic: "hud", source: "decoy", cadence: 1, twinOf: "hud", what: "that band, wrong minute" },
-	{ id: "both", pic: "full+map", source: "real", cadence: 1, twinOf: null, what: "frame AND minimap crop" },
-	{ id: "bothD", pic: "full+map", source: "decoy", cadence: 1, twinOf: "both", what: "both, wrong minute" },
-	{ id: "sparse", pic: "full", source: "real", cadence: 3, twinOf: null, what: "the frame every third turn" }
+	{ id: "full2", pic: "full", source: "real", cadence: 1, maxPictures: null, twinOf: null, what: "THE NOISE FLOOR — `full` again" },
+	{ id: "none", pic: "none", source: "real", cadence: 1, maxPictures: null, twinOf: null, what: "no picture at all" },
+	{ id: "map", pic: "map", source: "real", cadence: 1, maxPictures: null, twinOf: null, what: "the minimap crop, 4x, alone" },
+	{ id: "mapD", pic: "map", source: "decoy", cadence: 1, maxPictures: null, twinOf: "map", what: "that crop, wrong minute" },
+	{ id: "hud", pic: "hud", source: "real", cadence: 1, maxPictures: null, twinOf: null, what: "the HUD band, 2x, alone" },
+	{ id: "hudD", pic: "hud", source: "decoy", cadence: 1, maxPictures: null, twinOf: "hud", what: "that band, wrong minute" },
+	{ id: "both", pic: "full+map", source: "real", cadence: 1, maxPictures: null, twinOf: null, what: "frame AND minimap crop" },
+	{ id: "bothD", pic: "full+map", source: "decoy", cadence: 1, maxPictures: null, twinOf: "both", what: "both, wrong minute" },
+
+	/*
+	 * ------------------------------------------------------------------ THE CADENCE ARMS
+	 *
+	 * These four are one experiment and they are the only lever left on the frame bill. The forced
+	 * choice above says the picture does not reach the sentence (52% [47-57] over 420 trials,
+	 * excluding anything bigger than ~7 points) while `frame-value.ts` measured it at 30% of the
+	 * prompt bill and later on 28 of 31 turns by a median 345ms. What nobody has measured is
+	 * whether sending it LESS costs anything, and that is a product decision with a price on it.
+	 *
+	 * They carry no decoy twins deliberately: a forced choice needs a pair that differ only in
+	 * WHICH picture, and these differ in HOW MANY. The question here is the verdicts and the bill.
+	 */
+	{ id: "sparse", pic: "full", source: "real", cadence: 3, maxPictures: null, twinOf: null, what: "the frame every third turn" },
+	{ id: "once", pic: "full", source: "real", cadence: 1, maxPictures: 1, twinOf: null, what: "ONE frame, at the start, never again" }
 ]
+
+/**
+ * MAY THIS ARM SEND A PICTURE ON THIS ROUND? — the whole of the cadence mechanism, in one pure
+ * function, so it can be asserted rather than read.
+ *
+ * `sentSoFar` counts pictures that actually WENT in this window, not turns that were eligible. A
+ * turn whose frame was missing or whose crop failed spends nothing, so it must not spend the cap
+ * either, or an `once` arm that lost its only frame to a bad JPEG would go blind for a whole game
+ * while the run file recorded it as having sent one.
+ */
+export const mayPicture = (arm: Pick<PicArm, "pic" | "cadence" | "maxPictures">, round: number, sentSoFar: number): boolean => {
+	if (arm.pic === "none") return false
+	if (round % arm.cadence !== 0) return false
+	if (arm.maxPictures !== null && sentSoFar >= arm.maxPictures) return false
+	return true
+}
+
+export const PICTURE_ARMS = ARMS
 
 const chosen: PicArm[] = armsArg
 	.split(",")
@@ -368,6 +427,16 @@ export interface PowerCall {
 	text: string
 	spoke: boolean
 	latencyMs: number
+	/**
+	 * Milliseconds to the FIRST AUDIO CHUNK, and how many chunks arrived.
+	 *
+	 * `latencyMs` is to `turnComplete` — the end of a sentence. `firstAudioMs` is when he starts
+	 * hearing it, which is the number AGENTS.md quotes for both shapes ("p50 1.15s" on the socket,
+	 * "first spoken fragment" on the turn path) and the only one a cadence decision should be made
+	 * against. Null on a turn that produced no audio.
+	 */
+	firstAudioMs: number | null
+	audioChunks: number
 	/** What rode with this turn: how many image parts, from which frame, and how big. */
 	images: number
 	pic: Pic
@@ -420,6 +489,8 @@ export interface Graded {
 export interface RunFile {
 	ranAt: string
 	argv: string[]
+	/** The rate the dollar columns were computed at, stored so a re-read can check them. */
+	pricePerMillionIn?: number
 	level: string
 	shape: "socket" | "turn"
 	coach: { provider: string; model: string }
@@ -474,10 +545,17 @@ const runWindow = async (
 		process.stdout.write(` done${failed > 0 ? `, ${failed} FAILED` : ""}\n`)
 	}
 
+	/**
+	 * How many pictures each arm has sent in THIS window so far, for `maxPictures`.
+	 *
+	 * Per window rather than per run, because a socket is per window: the cap is a statement about
+	 * one game's thread, and an arm replayed over two games sends one picture in each.
+	 */
+	const sentPictures = new Map<string, number>()
+
 	/** The image parts for one arm on one turn, in the order they are sent. */
 	const partsFor = async (a: PicArm, t: StreamTurn, round: number): Promise<{ b64: string; of: PairedFrame }[]> => {
-		if (a.pic === "none") return []
-		if (round % a.cadence !== 0) return []
+		if (!mayPicture(a, round, sentPictures.get(a.id) ?? 0)) return []
 		const f = a.source === "decoy" ? (decoys.get(t.index) ?? null) : t.frame
 		if (f === null) return []
 		const out: { b64: string; of: PairedFrame }[] = []
@@ -495,6 +573,13 @@ const runWindow = async (
 			const b64 = await crop(f.path, "hud")
 			if (b64 !== null) out.push({ b64, of: f })
 		}
+		/*
+		 * The cap counts PICTURES THAT WENT, not turns that were eligible. A turn whose frame is
+		 * missing or whose crop failed spends nothing, so it must not spend the cap either — an
+		 * `once` arm that lost its only frame to a bad JPEG would otherwise go blind for the whole
+		 * game while the run file recorded it as having sent one.
+		 */
+		if (out.length > 0) sentPictures.set(a.id, (sentPictures.get(a.id) ?? 0) + 1)
 		return out
 	}
 
@@ -522,6 +607,8 @@ const runWindow = async (
 						{
 							text: sent.text.split("\n").find(l => l.startsWith("- "))?.slice(2, 110) ?? "",
 							latencyMs: 0,
+							firstAudioMs: null,
+							audioChunks: 0,
 							promptTokens: null,
 							responseTokens: null,
 							threadTurn: round,
@@ -548,6 +635,14 @@ const runWindow = async (
 							return {
 								text: res.text,
 								latencyMs: res.latencyMs,
+								/*
+								 * THE TURN PATH HAS NO AUDIO AT ALL — the browser speaks the text with
+								 * `speechSynthesis`, so there is no chunk to timestamp here and a zero
+								 * would read as "instant". It is null, and every first-audio figure in
+								 * the report is therefore a socket figure only.
+								 */
+								firstAudioMs: null,
+								audioChunks: 0,
 								promptTokens: null,
 								responseTokens: null,
 								threadTurn: round,
@@ -570,6 +665,8 @@ const runWindow = async (
 					text,
 					spoke,
 					latencyMs: r.latencyMs,
+					firstAudioMs: r.firstAudioMs,
+					audioChunks: r.audioChunks,
 					images: images.length,
 					pic: a.pic,
 					source: a.source,
@@ -1032,6 +1129,48 @@ const report = (run: RunFile): void => {
 			"  The picture's latency is UPLOAD, not tokens: a 288px crop and a 1536x864 frame bill the\n" +
 				"  same ~1,089 image tokens, and differ by about 10x in bytes on the wire."
 		)
+
+		/*
+		 * THE SAME TEST ON THE NUMBER HE ACTUALLY FEELS.
+		 *
+		 * `latencyMs` above is to `turnComplete` — the end of a sentence he has been listening to
+		 * for most of its length. `firstAudioMs` is when the coach starts talking. They are not
+		 * interchangeable and a cadence decision belongs to the second one, so it gets its own
+		 * paired test over the turns where BOTH arms produced audio.
+		 */
+		const audioPairs = run.calls.some(c => c.firstAudioMs !== null)
+		if (audioPairs) {
+			console.log("\nFIRST AUDIO — when he starts hearing it, paired the same way")
+			console.log("  arm      p50 ms   vs base: later on   median delta   p (sign)")
+			for (const id of ids) {
+				if (id === base) continue
+				const deltas: number[] = []
+				for (const c of run.calls) {
+					if (c.arm !== id || c.firstAudioMs === null) continue
+					const b = baseByTurn.get(`${c.window}|${c.index}`)
+					if (!b || b.firstAudioMs === null) continue
+					deltas.push(c.firstAudioMs - b.firstAudioMs)
+				}
+				if (deltas.length === 0) continue
+				const later = deltas.filter(d => d > 0).length
+				const ties = deltas.filter(d => d === 0).length
+				const sorted = [...deltas].sort((a, b) => a - b)
+				const mine = run.calls
+					.filter(c => c.arm === id && c.firstAudioMs !== null)
+					.map(c => c.firstAudioMs!)
+					.sort((a, b) => a - b)
+				console.log(
+					`  ${id.padEnd(8)} ${String(mine[Math.floor(mine.length / 2)] ?? 0).padStart(6)} ` +
+						`${`${later}/${deltas.length - ties}`.padStart(18)} ${`${sorted[Math.floor(sorted.length / 2)]!}ms`.padStart(14)}   ` +
+						`${signTest(later, deltas.length - ties).toFixed(4)}`
+				)
+			}
+			const baseAudio = run.calls.filter(c => c.arm === base && c.firstAudioMs !== null)
+			console.log(
+				`  \`${base}\` produced audio on ${baseAudio.length} of ${run.calls.filter(c => c.arm === base).length} turns; ` +
+					"a turn with no audio is not a fast turn and is out of every figure here."
+			)
+		}
 	}
 
 	/* ------------------------------------------------------------------ cost */
@@ -1067,6 +1206,234 @@ const report = (run: RunFile): void => {
 						"  the thread, so a picture sent at 3:00 is re-billed on every turn after it."
 				)
 			}
+		}
+	}
+
+
+	/* ------------------------------------------------------------- THE CADENCE */
+
+	/*
+	 * HOW OFTEN THE PICTURE GOES, priced.
+	 *
+	 * This is the only section here that answers a product question rather than a scientific one,
+	 * and the two halves of it have completely different power. The BILL is measured from the
+	 * socket's own `usageMetadata`, has no judge in it and essentially no variance — two arms that
+	 * differ only in how many JPEGs they were sent differ in prompt tokens by arithmetic. The
+	 * QUALITY is the verdict instrument, whose noise floor is printed at the end of this report and
+	 * is about a quarter of the scale. So the honest shape of a cadence finding is asymmetric: a
+	 * saving can be stated as a number, and "nothing got worse" can only ever be stated as "nothing
+	 * bigger than the floor got worse". The `full2` arm is in the table to make that floor visible
+	 * on this run's own lines rather than quoted from another afternoon.
+	 */
+	const cadenceArms = ids.filter(id => run.calls.some(c => c.arm === id))
+	if (cadenceArms.length > 1 && run.calls.some(c => c.promptTokens !== null)) {
+		const rate = run.pricePerMillionIn ?? 0.75
+		const games = [...new Set(run.calls.map(c => c.window))]
+		console.log("\nCADENCE — what each schedule sends, what it bills, and how fast he hears it")
+		console.log(`  prompt tokens are MEASURED; dollars are prompt text+image only at $${rate}/M (see the source).`)
+		console.log("\n  arm      pics/game  img MB/game   prompt tok/game    $/game   1st audio p50   spoke    useful                contra")
+		const perGame = (id: string, f: (c: PowerCall) => number): number => {
+			const cs = run.calls.filter(c => c.arm === id)
+			return cs.reduce((s, c) => s + f(c), 0) / Math.max(1, games.length)
+		}
+		const med = (xs: number[]): number | null =>
+			xs.length === 0 ? null : [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!
+		const rows = new Map<string, { tok: number; usd: number; audio: number | null }>()
+		for (const id of cadenceArms) {
+			const cs = run.calls.filter(c => c.arm === id)
+			const tok = perGame(id, c => c.promptTokens ?? 0)
+			const usd = (tok * rate) / 1e6
+			const audio = med(cs.filter(c => c.spoke && c.firstAudioMs !== null).map(c => c.firstAudioMs!))
+			rows.set(id, { tok, usd, audio })
+			const g = run.graded.filter(x => x.arm === id)
+			const useful = g.length === 0 ? "—" : pctOf(wilson(g.filter(x => x.verdict === "useful").length, g.length))
+			/*
+			 * `contradicted-by-picture` is the ONE label on this judge that is meaningful for a
+			 * cadence question, and it is the honest place to look for a cost. `only-with-picture`
+			 * is unusable — it was given to the BLIND arm on 7 of 30 lines of the 2026-09-11 run,
+			 * which is impossible by construction — but a line the screenshot shows to be wrong
+			 * about the instant is exactly what a coach that stopped being shown the instant would
+			 * be expected to produce more of. If dropping the picture costs anything, it shows up
+			 * here first.
+			 */
+			const contra = g.filter(x => x.framePower === "contradicted-by-picture").length
+			console.log(
+				`  ${id.padEnd(8)} ${perGame(id, c => c.images).toFixed(1).padStart(9)} ` +
+					`${(perGame(id, c => c.imageB64Chars) / 1024 / 1024).toFixed(1).padStart(12)} ` +
+					`${Math.round(tok).toLocaleString().padStart(17)} ` +
+					`${`$${usd.toFixed(3)}`.padStart(9)} ` +
+					`${(audio === null ? "—" : `${audio}ms`).padStart(15)} ` +
+					`${String(cs.filter(c => c.spoke).length).padStart(7)}   ${useful.padEnd(21)} ` +
+					`${g.length === 0 ? "—" : `${contra}/${g.length}`}`
+			)
+		}
+
+		/*
+		 * THE BILL, ON THE CLEAN PREFIX — and the reason the raw totals above may not be used for it.
+		 *
+		 * A socket that dies is rebuilt in front of the next turn with an EMPTY thread, so its
+		 * prompt count falls off a cliff and everything after it is billed against a shorter
+		 * context. On this run all five sockets took `closed 1011: The service is currently
+		 * unavailable` within one turn of each other — a service event, not an arm property — and
+		 * four arms recycled on turn 19 while `none` recycled on turn 20. That one-turn offset is
+		 * enough to make the whole-game totals nonsense: `sparse`, which sent ten pictures, totals
+		 * FEWER prompt tokens than `none`, which sent none, purely because it reset a turn earlier.
+		 *
+		 * So every figure below is taken over the CLEAN PREFIX: the turns before the first recycle
+		 * anywhere in that window, where every arm is on its original thread and the only thing
+		 * that differs between them is the pictures and their own divergent said-logs.
+		 */
+		const cleanPrefix = new Map<string, number>()
+		for (const w of games) {
+			const recycled = run.calls
+				.filter(c => c.window === w && c.recycled)
+				.map(c => c.index)
+				.sort((a, b) => a - b)
+			cleanPrefix.set(w, recycled.length === 0 ? Number.POSITIVE_INFINITY : recycled[0]!)
+		}
+		const isClean = (c: PowerCall): boolean => c.index < (cleanPrefix.get(c.window) ?? Number.POSITIVE_INFINITY)
+		const cleanTok = new Map<string, { tok: number; turns: number }>()
+		for (const id of cadenceArms) {
+			const cs = run.calls.filter(c => c.arm === id && isClean(c) && c.promptTokens !== null)
+			const perWindow = games.map(w => cs.filter(c => c.window === w))
+			const tok = perWindow.reduce((a, g) => a + g.reduce((x, c) => x + c.promptTokens!, 0), 0) / Math.max(1, games.length)
+			const turns = perWindow.reduce((a, g) => a + g.length, 0) / Math.max(1, games.length)
+			cleanTok.set(id, { tok, turns })
+		}
+		const cleanBase = cleanTok.get("full")
+		if (cleanBase && cleanBase.tok > 0) {
+			console.log(
+				`\n  THE BILL over the clean prefix — ${games
+					.map(w => `${w.slice(-6)}: turns 0-${(cleanPrefix.get(w) ?? 0) - 1}`)
+					.join(", ")}, one unbroken thread per arm:`
+			)
+			console.log("    arm      turns   prompt tok    $      vs full")
+			for (const id of cadenceArms) {
+				const c = cleanTok.get(id)!
+				const d = cleanBase.tok - c.tok
+				console.log(
+					`    ${id.padEnd(8)} ${c.turns.toFixed(0).padStart(5)} ${Math.round(c.tok).toLocaleString().padStart(12)} ` +
+						`${`$${((c.tok * rate) / 1e6).toFixed(4)}`.padStart(8)}   ` +
+						`${id === "full" ? "—" : `${d >= 0 ? "-" : "+"}${Math.abs(Math.round(d)).toLocaleString()} (${((100 * d) / cleanBase.tok).toFixed(1)}%)`}`
+				)
+			}
+			const floor = cleanTok.get("full2")
+			if (floor)
+				console.log(
+					`    \`full2\` is \`full\` RUN TWICE, so its ${Math.abs(((100 * (cleanBase.tok - floor.tok)) / cleanBase.tok)).toFixed(1)}% is this table's own noise floor:\n` +
+						"    two identical arms diverge because each carries its OWN said-log into its own payloads."
+			)
+		}
+
+		/*
+		 * WHAT ONE PICTURE COSTS, measured where nothing else can differ.
+		 *
+		 * On turn 0 of a thread every arm has an EMPTY history and `protocolFor` gives them all the
+		 * same full brief, byte for byte — so the only difference between the arm that sent a
+		 * picture and the arm that did not is the picture. That is the one instant in the whole run
+		 * where the marginal cost of an image is not confounded by the arms' divergent said-logs,
+		 * and it is worth more than any median over turns that have drifted apart.
+		 */
+		const firstTurn = Math.min(...run.calls.map(c => c.index))
+		const marginals: number[] = []
+		for (const w of games) {
+			const f = run.calls.find(c => c.window === w && c.arm === "full" && c.index === firstTurn)
+			const n = run.calls.find(c => c.window === w && c.arm === "none" && c.index === firstTurn)
+			if (f?.promptTokens != null && n?.promptTokens != null && f.payloadChars === n.payloadChars)
+				marginals.push(f.promptTokens - n.promptTokens)
+		}
+		if (marginals.length > 0)
+			console.log(
+				`\n  ONE PICTURE COSTS ${marginals.map(m => m.toLocaleString()).join(" and ")} prompt tokens on ${run.coach.model},\n` +
+					`  measured on turn ${firstTurn} of each window where \`full\` and \`none\` were handed a byte-identical payload.\n` +
+					"  The figure this repo carries elsewhere — 1,102 — was measured on `gemini-3.1-flash-live`, which is\n" +
+					"  no longer the socket that ships. A picture is not a fixed price; it is a price per model."
+			)
+
+		/*
+		 * DOES THE PICTURE COMPOUND? — the mechanism the whole cadence argument rests on.
+		 *
+		 * The 30%-of-the-bill figure this app quotes rests on a mechanism rather than a rate: one
+		 * socket per game holds the thread, so a picture sent at 3:00 is re-billed on every turn
+		 * after it and the frame bill grows as N squared while the rest of the prompt grows as N. A
+		 * different socket model is free to handle old media differently, and the model that ships
+		 * changed on 2026-09-18.
+		 *
+		 * It is visible in the SLOPE of the paired difference, over the clean prefix. If every
+		 * picture stays in the context and is re-billed, `full` minus `none` grows by one picture
+		 * per turn. If old media is dropped, the difference is flat at one picture.
+		 */
+		const gaps: { index: number; d: number }[] = []
+		for (const c of run.calls) {
+			if (c.arm !== "full" || c.promptTokens === null || !isClean(c)) continue
+			const n = run.calls.find(x => x.arm === "none" && x.window === c.window && x.index === c.index)
+			if (n?.promptTokens == null) continue
+			gaps.push({ index: c.index, d: c.promptTokens - n.promptTokens })
+		}
+		if (gaps.length >= 6) {
+			gaps.sort((a, b) => a.index - b.index)
+			const firsts = gaps.slice(0, 3)
+			const lasts = gaps.slice(-3)
+			const steps = gaps.slice(1).map((g, i) => g.d - gaps[i]!.d)
+			const medStep = [...steps].sort((a, b) => a - b)[Math.floor(steps.length / 2)]!
+			console.log(
+				`\n  COMPOUNDING — \`full\` minus \`none\`, over ${gaps.length} clean paired turns:\n` +
+					`    first turns ${firsts.map(g => g.d.toLocaleString()).join(", ")} … last turns ${lasts.map(g => g.d.toLocaleString()).join(", ")}\n` +
+					`    median step per turn ${medStep.toLocaleString()} tokens — a thread that RE-BILLS every picture steps by\n` +
+					"    about one picture a turn; one that drops old media stays flat at one picture."
+			)
+		}
+
+		/*
+		 * THE SHIPPED BILL — measured, not fitted, and it needs no extrapolation.
+		 *
+		 * `THREAD_MAX_TURNS` in `src/web/lib/geminiLive.ts` is 8: the shipped page recycles the
+		 * socket every eight turns, so the thread the player pays for is eight turns long and the
+		 * compounding restarts there. This bench holds ONE socket for a whole window, which is right
+		 * for a paired comparison and wrong as a picture of the bill.
+		 *
+		 * At the shipped `big-calls` schedule of ~8.5 asks a game, a game is very nearly ONE such
+		 * thread, so the first eight turns of each arm's own thread here ARE the shipped game.
+		 */
+		const THREAD_TURNS = 8
+		const shipped = new Map<string, number>()
+		for (const id of cadenceArms) {
+			const per = games.map(w =>
+				run.calls
+					.filter(c => c.arm === id && c.window === w && c.threadTurn < THREAD_TURNS && isClean(c) && c.promptTokens !== null)
+					.reduce((a, c) => a + c.promptTokens!, 0)
+			)
+			const usable = per.filter(t => t > 0)
+			if (usable.length > 0) shipped.set(id, usable.reduce((a, b) => a + b, 0) / usable.length)
+		}
+		const sb = shipped.get("full")
+		if (shipped.size > 1 && sb) {
+			console.log(
+				`\n  THE SHIPPED BILL — the first ${THREAD_TURNS} turns of one thread, which is what the page actually runs\n` +
+					"  (`THREAD_MAX_TURNS` recycles the socket every 8 turns) and is about one whole game at `big-calls`:"
+			)
+			for (const [id, tok] of shipped)
+				console.log(
+					`    ${id.padEnd(8)} ${Math.round(tok).toLocaleString().padStart(9)} prompt tok/game ` +
+						`${`$${((tok * rate) / 1e6).toFixed(4)}`.padStart(9)}` +
+						`${id === "full" ? "" : `   ${sb - tok >= 0 ? "saves" : "costs"} ${Math.abs(Math.round(sb - tok)).toLocaleString()} (${(Math.abs(100 * (sb - tok)) / sb).toFixed(1)}%)`}`
+				)
+		}
+
+		/*
+		 * THE HONEST READ, printed rather than left to a reader, and it names its own floor.
+		 */
+		const floorPair = ["full", "full2"].every(id => run.graded.some(g => g.arm === id))
+		if (floorPair) {
+			const f1 = run.graded.filter(g => g.arm === "full")
+			const f2 = run.graded.filter(g => g.arm === "full2")
+			const u1 = f1.filter(g => g.verdict === "useful").length / Math.max(1, f1.length)
+			const u2 = f2.filter(g => g.verdict === "useful").length / Math.max(1, f2.length)
+			console.log(
+				`\n  THE FLOOR ON THIS RUN'S OWN LINES: \`full\` and \`full2\` are the same arm run twice, ` +
+					`true difference exactly zero,\n  and they scored ${(100 * u1).toFixed(0)}% and ${(100 * u2).toFixed(0)}% useful ` +
+					`— ${Math.abs(100 * (u1 - u2)).toFixed(0)} points apart. No quality gap smaller than that may be\n  read as an effect of the cadence.`
+			)
 		}
 	}
 
@@ -1170,6 +1537,8 @@ const runStored = async (handle: ModelHandle, path: string): Promise<RunFile> =>
 			text: c.text,
 			spoke: c.spoke,
 			latencyMs: 0,
+			firstAudioMs: null,
+			audioChunks: 0,
 			images: 1,
 			pic: "full" as Pic,
 			source: c.arm === "decoy" ? ("decoy" as const) : ("real" as const),
@@ -1187,8 +1556,8 @@ const runStored = async (handle: ModelHandle, path: string): Promise<RunFile> =>
 		}))
 
 	const arms: PicArm[] = [
-		{ id: "frame", pic: "full", source: "real", cadence: 1, twinOf: null, what: "the stored shipped arm" },
-		{ id: "decoy", pic: "full", source: "decoy", cadence: 1, twinOf: "frame", what: "the stored decoy arm" }
+		{ id: "frame", pic: "full", source: "real", cadence: 1, maxPictures: null, twinOf: null, what: "the stored shipped arm" },
+		{ id: "decoy", pic: "full", source: "decoy", cadence: 1, maxPictures: null, twinOf: "frame", what: "the stored decoy arm" }
 	]
 	const trials = await runChoice(handle, calls, new Map([[old.windowId, decoys]]), arms)
 	return {
@@ -1322,6 +1691,7 @@ const main = async (): Promise<void> => {
 	const run: RunFile = {
 		ranAt: new Date().toISOString(),
 		argv,
+		pricePerMillionIn,
 		level: "commentary",
 		shape,
 		coach: { provider: shape === "turn" ? coachProvider : "gemini-live", model: shape === "turn" ? coachModel : GEMINI_LIVE_MODEL },

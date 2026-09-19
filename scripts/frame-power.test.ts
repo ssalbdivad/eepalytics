@@ -8,7 +8,7 @@
 
 import { ok, equal } from "node:assert/strict"
 import { test } from "node:test"
-import { CHOICE_SYSTEM, clusterBootstrap, signTest } from "./frame-power.ts"
+import { CHOICE_SYSTEM, PICTURE_ARMS, clusterBootstrap, mayPicture, signTest } from "./frame-power.ts"
 
 test("the null is exactly one half: an even split can never be evidence", () => {
 	equal(signTest(5, 10), 1)
@@ -51,4 +51,73 @@ test("a judge with a fixed style preference is scored at chance, by construction
 	ok(CHOICE_SYSTEM.includes("better advice and ignore which is better written"))
 	ok(!CHOICE_SYSTEM.toLowerCase().includes("decoy"))
 	ok(!CHOICE_SYSTEM.toLowerCase().includes("real frame"))
+})
+
+/* =============================================================== the cadence arms */
+
+/*
+ * The cadence experiment's arms differ from every other arm in this file in a way that is easy to
+ * break by accident: they are identical in WHAT they send and differ only in HOW OFTEN. A run whose
+ * `sparse` arm quietly sent a picture every turn would report a saving of zero and read as evidence
+ * that the cadence does not matter, which is the same shape of false null this whole file exists to
+ * avoid. So the schedule itself is pinned.
+ */
+
+test("`full` sends on every round and `none` on none of them", () => {
+	const full = PICTURE_ARMS.find(a => a.id === "full")!
+	const none = PICTURE_ARMS.find(a => a.id === "none")!
+	for (let r = 0; r < 30; r++) {
+		ok(mayPicture(full, r, r), `full must send on round ${r}`)
+		ok(!mayPicture(none, r, 0), `none must never send`)
+	}
+})
+
+test("`sparse` sends on rounds 0, 3, 6 … and nowhere else", () => {
+	const sparse = PICTURE_ARMS.find(a => a.id === "sparse")!
+	const sent = Array.from({ length: 30 }, (_, r) => r).filter(r => mayPicture(sparse, r, 0))
+	equal(sent.length, 10)
+	equal(sent[0], 0)
+	equal(sent[1], 3)
+	equal(sent[9], 27)
+})
+
+test("`once` sends exactly one picture in a whole game, whenever the first one lands", () => {
+	const once = PICTURE_ARMS.find(a => a.id === "once")!
+	let sent = 0
+	for (let r = 0; r < 30; r++) if (mayPicture(once, r, sent)) sent += 1
+	equal(sent, 1)
+})
+
+test("the cap counts pictures that WENT, so a lost frame does not blind the arm for the game", () => {
+	/*
+	 * The failure this pins: if the counter were incremented on every eligible turn rather than on
+	 * every picture actually sent, an `once` arm whose round-0 frame could not be read would have
+	 * spent its budget on nothing and gone blind for the rest of the game — while the run file
+	 * recorded it as an arm that had sent its picture.
+	 */
+	const once = PICTURE_ARMS.find(a => a.id === "once")!
+	let sent = 0
+	const lands: number[] = []
+	for (let r = 0; r < 10; r++) {
+		if (!mayPicture(once, r, sent)) continue
+		/* pretend the first two frames failed to read */
+		if (r < 2) continue
+		sent += 1
+		lands.push(r)
+	}
+	equal(sent, 1)
+	equal(lands[0], 2)
+})
+
+test("every arm in the table declares its cadence, and only the cadence arms are not every-turn", () => {
+	for (const a of PICTURE_ARMS) {
+		ok(a.cadence >= 1, `${a.id} has a nonsense cadence`)
+		ok(a.maxPictures === null || a.maxPictures >= 1, `${a.id} has a nonsense cap`)
+	}
+	const notEveryTurn = PICTURE_ARMS.filter(a => a.pic !== "none" && (a.cadence !== 1 || a.maxPictures !== null))
+	equal(
+		notEveryTurn.map(a => a.id).sort().join(","),
+		"once,sparse",
+		"a new cadence arm must be added to this list deliberately, not discovered in a run"
+	)
 })

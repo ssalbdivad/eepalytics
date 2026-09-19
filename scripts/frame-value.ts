@@ -413,6 +413,26 @@ export interface FrameCall {
 interface TurnResult {
 	text: string
 	latencyMs: number
+	/**
+	 * MILLISECONDS TO THE FIRST AUDIO CHUNK — the number he actually feels, and until now the one
+	 * number this driver threw away.
+	 *
+	 * `latencyMs` is measured to `turnComplete`, i.e. to the end of a sentence he has already been
+	 * listening to for most of its length. On a native-audio socket the model streams the spoken
+	 * answer as `inlineData` parts while it is still writing, so the first of those parts is the
+	 * moment the coach starts talking. AGENTS.md quotes the socket at "p50 1.15s" and every turn
+	 * arm at "first spoken fragment" — those are the same quantity, and comparing them against a
+	 * `turnComplete` figure compares a whole sentence against a first syllable.
+	 *
+	 * Null when the turn produced no audio at all, which is what a PASS looks like from here and is
+	 * NOT the same as a fast turn. Every rate computed from this field is taken over the turns that
+	 * actually spoke, for the reason `measure-ttft.ts` records: its first table scored an arm's
+	 * silence as its latency and put the quietest model at the top under the heading "BEATS the
+	 * socket".
+	 */
+	firstAudioMs: number | null
+	/** How many audio parts arrived. Zero with a transcript means the transcript is all there was. */
+	audioChunks: number
 	promptTokens: number | null
 	responseTokens: number | null
 	/** How many turns this socket had already answered when this one was sent. */
@@ -466,6 +486,7 @@ export const openArm = async (
 	let pending: { at: number; resolve: (v: TurnResult) => void; threadTurn: number; recycled: boolean } | null = null
 	let partial = ""
 	let audioParts = 0
+	let firstAudioAt: number | null = null
 	let usage: { prompt: number | null; response: number | null } = { prompt: null, response: null }
 	let timer: ReturnType<typeof setTimeout> | null = null
 
@@ -481,6 +502,8 @@ export const openArm = async (
 		p.resolve({
 			text,
 			latencyMs: Date.now() - p.at,
+			firstAudioMs: firstAudioAt === null ? null : firstAudioAt - p.at,
+			audioChunks: audioParts,
 			promptTokens: usage.prompt,
 			responseTokens: usage.response,
 			threadTurn: p.threadTurn,
@@ -521,7 +544,11 @@ export const openArm = async (
 				if (sc.outputTranscription?.text) partial += sc.outputTranscription.text
 				for (const p of sc.modelTurn?.parts ?? []) {
 					if (p.text) partial += p.text
-					if (p.inlineData) audioParts += 1
+					if (p.inlineData) {
+						/* The first one is the moment he hears the coach; the rest are the sentence. */
+						firstAudioAt = firstAudioAt ?? Date.now()
+						audioParts += 1
+					}
 				}
 				if (sc.turnComplete) {
 					/*
@@ -534,6 +561,7 @@ export const openArm = async (
 					settle(partial.trim(), dropped ? `audio produced (${audioParts} chunks), transcript empty` : null)
 					partial = ""
 					audioParts = 0
+					firstAudioAt = null
 				}
 			}
 			ws.onerror = () => {
@@ -577,6 +605,8 @@ export const openArm = async (
 					return {
 						text: "",
 						latencyMs: 0,
+						firstAudioMs: null,
+						audioChunks: 0,
 						promptTokens: null,
 						responseTokens: null,
 						threadTurn: 0,
@@ -589,6 +619,7 @@ export const openArm = async (
 			return await new Promise<TurnResult>(resolve => {
 				partial = ""
 				audioParts = 0
+				firstAudioAt = null
 				usage = { prompt: null, response: null }
 				pending = { at: Date.now(), resolve, threadTurn: socket.answered, recycled }
 				timer = setTimeout(() => settle("", `no answer within ${budgetMs}ms`), budgetMs)
