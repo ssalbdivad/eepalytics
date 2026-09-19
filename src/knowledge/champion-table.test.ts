@@ -190,7 +190,8 @@ describe("what the table says about itself", () => {
 		for (const [name, url, fetchedAt] of [
 			["ddragon", CHAMPION_TABLE_SOURCES.ddragon.url, CHAMPION_TABLE_SOURCES.ddragon.fetchedAt],
 			["wikiModule", CHAMPION_TABLE_SOURCES.wikiModule.url, CHAMPION_TABLE_SOURCES.wikiModule.fetchedAt],
-			["wikiAbilities", CHAMPION_TABLE_SOURCES.wikiAbilities.api, CHAMPION_TABLE_SOURCES.wikiAbilities.fetchedAt]
+			["wikiAbilities", CHAMPION_TABLE_SOURCES.wikiAbilities.api, CHAMPION_TABLE_SOURCES.wikiAbilities.fetchedAt],
+			["wikiRendered", CHAMPION_TABLE_SOURCES.wikiRendered.api, CHAMPION_TABLE_SOURCES.wikiRendered.fetchedAt]
 		] as [string, string, string][]) {
 			assert.match(url, /^https:\/\//, `${name} names no url`)
 			assert.match(fetchedAt, /^\d{4}-\d{2}-\d{2}T/, `${name} has no fetch date`)
@@ -216,31 +217,37 @@ describe("what the table says about itself", () => {
 	 * (glob the name as `*` + `.fetched`; it is written that way here only because the literal
 	 * would close this comment) — both of which a reader will otherwise trip over:
 	 *
-	 * 1. The declared stamp is 2026-09-19T07:26:27.648Z and the newest of the 46 stamps the table
-	 *    PUBLISHES is 2026-09-18T22:36:19.603Z — 8h50m older. That is not a wall clock leaking in.
-	 *    The generator maxes over FOUR cache stamps and only three of them are published: the
-	 *    fourth is the wiki RENDER cache (`data/champions/16.18.1/wiki-rendered-4.json.fetched`,
-	 *    whose stamp is 2026-09-19T07:26:27.648Z exactly). `CHAMPION_TABLE_SOURCES` names the
-	 *    ddragon, module and ability-wikitext fetches and not the render, so the table's own record
-	 *    cannot account for its own date. Publishing `wikiRendered` is a generator change and is
-	 *    NOT DONE.
-	 * 2. The max does NOT include the 43 tier-2 stamps. So "the newest source timestamp in this
-	 *    table" holds today only because op.gg was fetched before the last render — refresh op.gg
-	 *    alone and the table would declare a fetch date older than 43 of its own rows, and the
-	 *    reproducibility argument would still read as true. This case is what would notice.
+	 * Both halves of it were wrong when this case was written, in the same direction, and both are
+	 * FIXED as of 2026-09-19 — which is why the case now asserts EQUALITY rather than an
+	 * inequality, and why that is the stronger statement:
+	 *
+	 * 1. The declared stamp was 2026-09-19T07:26:27.648Z while the newest of the 46 stamps the
+	 *    table PUBLISHED was 2026-09-18T22:36:19.603Z — 8h50m older, which reads exactly like a
+	 *    wall clock leaking in and was not one. The generator maxed over FOUR cache stamps and
+	 *    published three; the fourth was the wiki RENDER cache
+	 *    (`data/champions/16.18.1/wiki-rendered-4.json.fetched`, whose stamp is that date exactly).
+	 *    `CHAMPION_TABLE_SOURCES` now names it as `wikiRendered`, so the record can account for its
+	 *    own date.
+	 * 2. The max did NOT include the 43 tier-2 stamps, so "the newest source timestamp in this
+	 *    table" held only because op.gg happened to be fetched before the last render — refresh
+	 *    op.gg alone and the table would have declared a date older than 43 of its own rows while
+	 *    the reproducibility argument still read as true. The max now includes them.
 	 */
-	it("declares a fetch date no older than any row it carries", () => {
+	it("declares exactly the newest of the stamps it publishes", () => {
 		assert.match(CHAMPION_TABLE_FETCHED_AT, /^\d{4}-\d{2}-\d{2}T/)
-		const newer = CHAMPION_ROWS.flatMap(r =>
-			r.tier2 && r.tier2.fetchedAt > CHAMPION_TABLE_FETCHED_AT ? [`${r.name} ${r.tier2.fetchedAt}`] : []
-		)
-		assert.deepEqual(newer, [], `tier-2 rows fetched after the table says it was: ${newer.join(", ")}`)
-		for (const stamp of [
+		const published = [
 			CHAMPION_TABLE_SOURCES.ddragon.fetchedAt,
 			CHAMPION_TABLE_SOURCES.wikiModule.fetchedAt,
-			CHAMPION_TABLE_SOURCES.wikiAbilities.fetchedAt
-		])
-			assert.ok(stamp <= CHAMPION_TABLE_FETCHED_AT, `source stamp ${stamp} is newer than the table's own`)
+			CHAMPION_TABLE_SOURCES.wikiAbilities.fetchedAt,
+			CHAMPION_TABLE_SOURCES.wikiRendered.fetchedAt,
+			...CHAMPION_ROWS.flatMap(r => (r.tier2 ? [r.tier2.fetchedAt] : []))
+		]
+		assert.equal(published.length, 47, "the table publishes 4 Tier 1 fetches and 43 tier-2 rows")
+		assert.equal(
+			CHAMPION_TABLE_FETCHED_AT,
+			[...published].sort().at(-1),
+			"the declared date is not the newest stamp this table publishes"
+		)
 	})
 })
 

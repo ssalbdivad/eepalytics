@@ -148,6 +148,16 @@ export interface ChampionTableSources {
 	ddragon: { url: string; patch: string; fetchedAt: string }
 	wikiModule: { url: string; fetchedAt: string }
 	wikiAbilities: { api: string; fetchedAt: string }
+	/**
+	 * The wiki's own EXPANSION of each ability template — a second fetch against the same endpoint
+	 * as `wikiAbilities`, which is what turns `{{ap|60 to 160}}` into `60 / 85 / 110 / 135 / 160`.
+	 *
+	 * It was missing from this record until 2026-09-19 while `CHAMPION_TABLE_FETCHED_AT` maxed over
+	 * it, so the table's declared date could be newer than every source the table published — 8h50m
+	 * newer on the 16.18.1 cut, which reads like a wall clock leaking into a file whose whole point
+	 * is that no wall clock reaches it.
+	 */
+	wikiRendered: { api: string; fetchedAt: string }
 }
 
 /**
@@ -274,6 +284,10 @@ export const CHAMPION_TABLE_SOURCES: ChampionTableSources = {
 	"wikiAbilities": {
 		"api": "https://wiki.leagueoflegends.com/en-us/api.php",
 		"fetchedAt": "2026-09-18T22:31:42.512Z"
+	},
+	"wikiRendered": {
+		"api": "https://wiki.leagueoflegends.com/en-us/api.php",
+		"fetchedAt": "2026-09-19T07:26:27.648Z"
 	}
 }
 
@@ -285,6 +299,13 @@ export const CHAMPION_TABLE_PATCH = "16.18.1"
  *
  * Deliberate: re-running the generator against an unchanged cache must produce the same bytes, or
  * every run is a one-line diff and a real change stops being visible in the noise.
+ *
+ * EVERY stamp the table rests on, which is not what it used to be: the four Tier 1 caches AND the
+ * tier-2 rows. Both halves of that were wrong in the same direction — the max ran over a wiki
+ * render cache this record did not publish, and it ignored all 43 op.gg stamps, so
+ * "the newest source timestamp in this table" held on 16.18.1 only because op.gg happened to be
+ * fetched before the last render. An op.gg-only refresh would have left this date older than a
+ * source in the same file.
  */
 export const CHAMPION_TABLE_FETCHED_AT = "2026-09-19T07:26:27.648Z"
 
