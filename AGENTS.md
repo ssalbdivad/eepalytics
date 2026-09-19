@@ -1049,15 +1049,16 @@ and is pinned to the shared one by source text AND by the 173 keys it produces, 
 vacuous check: 19 of the 173 names carry a character the strip removes, from Bel'Veth to Renata
 Glasc.
 
-One thing that retirement turned up, recorded as a test rather than as a sentence:
-`CHAMPION_TABLE_FETCHED_AT` is **8h50m newer than the newest of the 46 stamps the table
-publishes**, because the max runs over four cache stamps and the fourth — the wiki render cache —
-is not named in `CHAMPION_TABLE_SOURCES`, so the table's own source record cannot account for its
-own date. The max also ignores all 43 tier-2 stamps. A new case asserts the declared date is no
-older than any published source or tier-2 row, so an op.gg-only refresh fails loudly instead of
-quietly making the byte-reproducibility argument read as true. Publishing `wikiRendered` in
-`CHAMPION_TABLE_SOURCES` and folding the tier-2 stamps into the max is the actual fix, and it is
-NOT DONE — it needs a re-fetch.
+One thing that retirement turned up, and it is FIXED the same day rather than recorded:
+`CHAMPION_TABLE_FETCHED_AT` was **8h50m newer than the newest of the 46 stamps the table
+published**, because the max ran over four cache stamps and the fourth — the wiki render cache —
+was not named in `CHAMPION_TABLE_SOURCES`, so the table's own source record could not account for
+its own date. The max also ignored all 43 tier-2 stamps, so "the newest source timestamp in this
+table" held only because op.gg happened to be fetched before the last render. `wikiRendered` is
+published now and the tier-2 stamps are in the max, and the case that found it asserts EQUALITY
+against all 47 published stamps rather than the inequality that was all it could assert before.
+The re-cut ran OFFLINE against the warm cache — the path proved the same morning — so it is 21
+lines of source record, no value moved, and the context tree's sha256 is unchanged.
 
 **What is still UNFENCED, said plainly: `target range`.** Cooldown and cost are cross-checked
 against Data Dragon; range is not, and it ships from the wiki alone. Where both sources publish a
