@@ -66,6 +66,7 @@ import {
 } from "../src/knowledge/champion-brief.ts"
 import { CHAMPION_TABLE_PATCH, CHAMPION_TABLE_SOURCES } from "../src/knowledge/champion-table.ts"
 import { assemble, structureLine } from "../src/knowledge/provenance.ts"
+import { flattenedTableCells, soleSourcedClaims } from "../src/knowledge/claims-from-row.ts"
 import type { SourceRecord } from "../src/knowledge/provenance.ts"
 import { championKey } from "../src/knowledge/index.ts"
 
@@ -132,6 +133,15 @@ const generalFile = (): GeneratedFile => {
 	// Counted apart: one is a fact about the patch, the other a fact about this pipeline.
 	const withheld = diagnostics.filter(d => d.includes("sources disagreed")).length
 	const broken = diagnostics.filter(d => d.includes("expansion broke")).length
+	/*
+	 * The two 2026-09-19 figures. Both are counted off the RECORDS rather than off the diagnostic
+	 * strings, so they cannot drift from what the champion files actually contain, and both are
+	 * reported here because a champion file cannot carry them: `auditAssembled` builds its ledger
+	 * from `championBrief`'s own minted lines, so a sentence this generator adds to a champion file
+	 * after the fact reads as `untraced` in `pnpm audit:knowledge --all`.
+	 */
+	const tableCells = flattenedTableCells(facts.values())
+	const soleSourced = soleSourcedClaims(facts.values())
 
 	/*
 	 * The trailing source list is the table's own source records rather than a per-claim tally,
@@ -171,7 +181,15 @@ const generalFile = (): GeneratedFile => {
 		structureLine("blank"),
 		structureLine("section.preamble"),
 		structureLine("blank"),
-		structureLine("general.patch", { patch: CHAMPION_TABLE_PATCH, champions: facts.size, claims, withheld, broken }),
+		structureLine("general.patch", {
+			patch: CHAMPION_TABLE_PATCH,
+			champions: facts.size,
+			claims,
+			withheld,
+			broken,
+			tableCells,
+			soleSourced
+		}),
 		structureLine("blank"),
 		structureLine("general.silent"),
 		structureLine("blank"),

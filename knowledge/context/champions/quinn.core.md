@@ -68,6 +68,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Total Movement Speed Increase: 70 / 100 / 130% [wiki-r rev-4021953, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r rev-4021953, fetched 2026-09-18]
 - targeting: Auto [wiki-r rev-4021953, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Skystrike [wiki-r2 rev-4024769, fetched 2026-09-18]
 - what it does: Active: Quinn detaches from Valor, ending Behind Enemy Lines' effects and raining arrows down around her, dealing physical damage to nearby enemies and marking them with Harrier. Declaring a basic attack or casting Blinding Assault or Vault during Behind Enemy Lines automatically activates Skystrike. [wiki-r2 rev-4024769, fetched 2026-09-18]
 - damage by rank: Physical Damage: 60 / 90 / 120 (+ 35% bonus AD) [wiki-r2 rev-4024769, fetched 2026-09-18]

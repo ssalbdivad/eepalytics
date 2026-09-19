@@ -49,46 +49,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Blitzcrank will be ordered to basic attack the target once the target arrives. [wiki-q rev-4026708, fetched 2026-09-18]
 - edge case: If the target dies to Rocket Grab's damage, they will not be pulled. [wiki-q rev-4026708, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Type [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Cast time [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Attacking [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Abilities [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Movement [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Items [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: N/A [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Consumables [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Spells [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: N/A [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026708, fetched 2026-09-18]
-- edge case: Death, unless protected by Resurrection [wiki-q rev-4026708, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Overdrive [wiki-w rev-3906572, fetched 2026-09-18]
@@ -141,7 +102,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3908089, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FMana%20Barrier&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4026708, fetched 2026-09-18 — 65 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FRocket%20Grab&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4026708, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FRocket%20Grab&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3906572, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FOverdrive&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4041159, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FPower%20Fist&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3956748, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Blitzcrank%2FStatic%20Field&prop=text

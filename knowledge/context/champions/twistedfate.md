@@ -86,49 +86,10 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The following table refers for interactions while Twisted Fate is channeling: [wiki-r rev-4017975, fetched 2026-09-18]
 - edge case: Item actives with cast times as well as Titanic Hydra are disabled during the channel. [wiki-r rev-4017975, fetched 2026-09-18]
 - edge case: Trying to cast a disabled item active will buffer it to cast at the completion of the channel. [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Channel [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Pick a Card is usable. Wild Cards is disabled. [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: All the other item-actives are usable [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Zhonya's Hourglass [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: All summoner spells are disabled [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4017975, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4017975, fetched 2026-09-18]
 - edge case: Grounding effects [wiki-r rev-4017975, fetched 2026-09-18]
 - edge case: Immobilizing effects [wiki-r rev-4017975, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-r rev-4017975, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -136,4 +97,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3950864, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FWild%20Cards&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4004668, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FPick%20a%20Card&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3963571, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FStacked%20Deck&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4017975, fetched 2026-09-18 — 61 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FDestiny&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4017975, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FDestiny&prop=text

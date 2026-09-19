@@ -253,46 +253,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Redemption's beam will only affect targets in the realm it was cast, but its SFX will be heard in all realms.(bug) [wiki-r rev-4063933, fetched 2026-09-18]
 - edge case: Dark Harvest's souls VFX will not follow between realms, but they will still be reaped succesfully.(bug) [wiki-r rev-4063933, fetched 2026-09-18]
 - edge case: Glacial Augment's glacial rays will follow between realms, but they will be invisible.(bug) [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Cast time [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Teleport Recall Hexflash [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063933, fetched 2026-09-18]
-- edge case: Death, unless protected by Resurrection [wiki-r rev-4063933, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -300,4 +261,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4059697, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Mordekaiser%2FObliterate&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4016354, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Mordekaiser%2FIndestructible&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4059699, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Mordekaiser%2FDeath's%20Grasp&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4063933, fetched 2026-09-18 — 210 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Mordekaiser%2FRealm%20of%20Death&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4063933, fetched 2026-09-18 — 170 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Mordekaiser%2FRealm%20of%20Death&prop=text

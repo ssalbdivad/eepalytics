@@ -45,6 +45,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-w rev-4007735, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4007735, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4007735, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Snowball Barrage [wiki-e rev-4013466, fetched 2026-09-18]
@@ -71,6 +72,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-r rev-4010574, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4010574, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4010574, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 50.57% (n=4,046 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

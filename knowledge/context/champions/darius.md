@@ -75,46 +75,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: After the pull, Darius will attempt to basic attack the closest pulled target, prioritizing enemy champions. [wiki-e rev-3906616, fetched 2026-09-18]
 - edge case: The armor penetration stacks multiplicatively with other forms of percentage armor penetration. [wiki-e rev-3906616, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Type [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Cast time [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Attacking [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Abilities [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Movement [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Items [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: N/A [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Consumables [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Spells [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: N/A [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: Death, unless protected by Resurrection [wiki-e rev-3906616, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Noxian Guillotine [wiki-r rev-4004898, fetched 2026-09-18]
@@ -141,5 +102,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4063939, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FHemorrhage&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007591, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FDecimate&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4013692, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FCrippling%20Strike&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-3906616, fetched 2026-09-18 — 57 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FApprehend&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-3906616, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FApprehend&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4004898, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FNoxian%20Guillotine&prop=text

@@ -17,8 +17,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Inherent Glamour [wiki-p rev-4049951, fetched 2026-09-18]
 - what it does: Innate: Neeko has a collection of disguises to take on the appearance of allied champions, displayed on her Disguise Menu. She can use the menu to activate a disguise, switch her current disguise to a different one, or deactivate the current disguise by selecting herself, all of which place Inherent Glamour on a 0.5-second cooldown. Taking damage from a champion or turret while not disguised puts Inherent Glamour on a 2-second cooldown. Standing by the nearest visible allied or neutral non-champion non-structure unit while not disguised will gather its Sho'Ma over 2 seconds, adding its disguise to the collection. Activating this disguise places Inherent Glamour on a 1-second cooldown. Neeko can collect only one Sho'Ma, but can discard or consume it using her Disguise Menu. She can store Sho'Ma from the following units, as long as they are targetable: - Non-epic monsters - Minions - Traps - Wards - Pets - Jungle plants While disguised, Neeko can use basic attacks while keeping her form. Her disguise breaks if she: - uses a damaging ability, summoner spell, or item active - becomes immobilized - takes damage lethal to the disguise's form - enters the enemy team's spawn platform* - begins a channel other than Recall / Empowered Recall - deals damage to a structure with a non-champion disguise form - takes damage from a turret - dies Breaking the disguise via dying, being immobilized or taking damage from a turret puts Inherent Glamour on a 2-second cooldown, entering the enemy spawn platform does not put it on cooldown, and all other methods of breaking the disguise put Inherent Glamour on a 1-second cooldown. [wiki-p rev-4049951, fetched 2026-09-18]
 - targeting: Auto [wiki-p rev-4049951, fetched 2026-09-18]
-- edge case: : [wiki-p rev-4049951, fetched 2026-09-18]
-- edge case: This article or section is substantially or structurally incomplete. You can help the League of Legends Wiki by expanding it. For more projects, see the Community To Do List. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Additional information: This page is missing a full list of interactions with items, champion abilities, visual effects, map-specific interactions, and tips & tricks. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Contents [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: 1 Before disguising [wiki-p rev-4049951, fetched 2026-09-18]
@@ -174,6 +172,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: This includes Voidmites summoned by Rift Herald Rodeo if Rift Herald was attached to Neeko during the charge. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Visual Effects [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: TBD [wiki-p rev-4049951, fetched 2026-09-18]
+- WITHHELD (2 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Blooming Burst [wiki-q rev-3961205, fetched 2026-09-18]
@@ -261,51 +260,12 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Interactions: [wiki-r rev-4058467, fetched 2026-09-18]
 - edge case: On-cast effects are applied on activation. [wiki-r rev-4058467, fetched 2026-09-18]
 - edge case: Pop Blossom can start its cast time during stasis. [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Cast time [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash Mark Dash [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4058467, fetched 2026-09-18]
-- edge case: Death, unless protected by Resurrection [wiki-r rev-4058467, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4049951, fetched 2026-09-18 — 160 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FInherent%20Glamour&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4049951, fetched 2026-09-18 — 158 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FInherent%20Glamour&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3961205, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FBlooming%20Burst&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4022848, fetched 2026-09-18 — 34 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FShapesplitter&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4058450, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FTangle-Barbs&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4058467, fetched 2026-09-18 — 59 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FPop%20Blossom&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4058467, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FPop%20Blossom&prop=text

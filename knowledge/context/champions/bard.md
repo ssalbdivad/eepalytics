@@ -35,15 +35,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Only Meep cone attacks are absorbed by spell shields. Those that deal damage together with the basic attack don't. [wiki-p rev-4034690, fetched 2026-09-18]
 - edge case: If a Meep empowered auto attack is dodged, blocked or when Bard is blinded, the basic attack itself will deal no damage, but the Meep damage will still be applied. [wiki-p rev-4034690, fetched 2026-09-18]
 - edge case: The empowered attack will not trigger against structures and wards. [wiki-p rev-4034690, fetched 2026-09-18]
-- edge case: Minimum Time [wiki-p rev-4034690, fetched 2026-09-18]
-- edge case: : [wiki-p rev-4034690, fetched 2026-09-18]
-- edge case: Chimes [wiki-p rev-4034690, fetched 2026-09-18]
-- edge case: : [wiki-p rev-4034690, fetched 2026-09-18]
-- edge case: Effects [wiki-p rev-4034690, fetched 2026-09-18]
-- edge case: : [wiki-p rev-4034690, fetched 2026-09-18]
-- edge case: Base Damage [wiki-p rev-4034690, fetched 2026-09-18]
-- edge case: : [wiki-p rev-4034690, fetched 2026-09-18]
-- edge case: 3:20 [wiki-p rev-4034690, fetched 2026-09-18]
 - edge case: 5 [wiki-p rev-4034690, fetched 2026-09-18]
 - edge case: Meeps now Slow by 25%. [wiki-p rev-4034690, fetched 2026-09-18]
 - edge case: 36 [wiki-p rev-4034690, fetched 2026-09-18]
@@ -124,6 +115,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Meep limit increased to 9. [wiki-p rev-4034690, fetched 2026-09-18]
 - edge case: 150 [wiki-p rev-4034690, fetched 2026-09-18]
 - edge case: Every 5 thereafter only grants 6 bonus damage. [wiki-p rev-4034690, fetched 2026-09-18]
+- WITHHELD (9 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Cosmic Binding [wiki-q rev-4037681, fetched 2026-09-18]
@@ -205,7 +197,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4034690, fetched 2026-09-18 — 110 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FTraveler's%20Call&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4034690, fetched 2026-09-18 — 101 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FTraveler's%20Call&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4037681, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FCosmic%20Binding&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3960421, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FCaretaker's%20Shrine&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007574, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FMagical%20Journey&prop=text

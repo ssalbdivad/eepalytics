@@ -77,47 +77,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The spell indicator shows 11 equally spaced missile indicators when hovering the ability in the HUD, however the spell actually casts 15 equally spaced missiles. [wiki-e rev-3853799, fetched 2026-09-18]
 - edge case: The health cost may still drop Vladimir below the specified amount if he is above it. This is verified for every tick of health cost, i.e if the first tick drops him below it, the next ones will stop affecting him if he remains below it. [wiki-e rev-3853799, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Vladimir is channeling: [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Type [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Charge channel [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Attacking [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Abilities [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Sanguine Pool is usable. Transfusion and Hemoplague both interrupt after 0.25 seconds. [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Movement [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Allowed [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Items [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Hextech Rocketbelt [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: All item-actives not specified above interrupt [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Consumables [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Spells [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: N/A [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Teleport Recall Hexflash [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: : [wiki-e rev-3853799, fetched 2026-09-18]
-- edge case: Death [wiki-e rev-3853799, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-e rev-3853799, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Hemoplague [wiki-r rev-4039794, fetched 2026-09-18]
@@ -142,5 +103,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4053179, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FCrimson%20Pact&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3997094, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FTransfusion&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4034923, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FSanguine%20Pool&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-3853799, fetched 2026-09-18 — 56 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FTides%20of%20Blood&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-3853799, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FTides%20of%20Blood&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4039794, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FHemoplague&prop=text

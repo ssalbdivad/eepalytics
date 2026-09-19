@@ -260,8 +260,18 @@ describe("checkClaim", () => {
 		strictEqual(checkClaim({ ...noSample, sample: { games: 5186, bracket: "emerald+" } }, SOURCES), null)
 	})
 
-	/** The `fetch-items.ts` discipline: two publishers agree, or the number does not ship. */
-	it("refuses a cross-checked field that only one source produced", () => {
+	/**
+	 * The `fetch-items.ts` discipline, as it stands after 2026-09-19: a cross-checked field must SAY
+	 * what happened with the second source, and silence is refused.
+	 *
+	 * What changed is the accepted answers, not the strictness. It used to be satisfiable only by
+	 * `agreesWith`, and `claims-from-row.ts` satisfied it on 294 claims by inferring agreement from
+	 * an empty conflict list — Data Dragon publishes no passive and only the first form of each
+	 * slot, so on 245 of 937 abilities there was nothing to conflict with. `soleSource` is the
+	 * second answer, from a closed set, and the reasoning for allowing it rather than dropping 245
+	 * passive names out of the corpus is written at `crossChecked` in `provenance.ts`.
+	 */
+	it("refuses a cross-checked field that says nothing about the second source", () => {
 		const alone: ClaimRecord = {
 			id: "lillia.e.cooldown",
 			subject: "lillia",
@@ -272,8 +282,39 @@ describe("checkClaim", () => {
 			evidence: WIKI_E_TEMPLATE,
 			derivation: { kind: "wikitext", field: "cooldown" }
 		}
-		match(checkClaim(alone, SOURCES)!, /corroborated by a second tier-1 source/)
+		match(checkClaim(alone, SOURCES)!, /must say what happened with the second tier-1 source/)
 		strictEqual(checkClaim({ ...alone, agreesWith: ["ddragon"] }, SOURCES), null)
+	})
+
+	it("lets a cross-checked field ship on one source only when it names WHY there is no second", () => {
+		const passive: ClaimRecord = {
+			id: "lillia.e.cooldown",
+			subject: "lillia",
+			group: "E",
+			field: "ability.cooldown",
+			text: "12",
+			sourceId: "wiki",
+			evidence: WIKI_E_TEMPLATE,
+			derivation: { kind: "wikitext", field: "cooldown" }
+		}
+		strictEqual(checkClaim({ ...passive, soleSource: "ddragon-publishes-no-passive" }, SOURCES), null)
+		strictEqual(
+			checkClaim({ ...passive, soleSource: "ddragon-publishes-one-form-per-slot" }, SOURCES),
+			null
+		)
+		// The reason vocabulary is closed, so a new excuse is a reviewed code change and not a string.
+		match(
+			checkClaim({ ...passive, soleSource: "seemed-fine" as never }, SOURCES)!,
+			/is not one of the 2 recorded reasons/
+		)
+		// A claim cannot both have been corroborated and have had nothing to corroborate it.
+		match(
+			checkClaim(
+				{ ...passive, agreesWith: ["ddragon"], soleSource: "ddragon-publishes-no-passive" },
+				SOURCES
+			)!,
+			/only one of those can be true/
+		)
 	})
 
 	it("refuses a source that is not on the tier's host list, and one with no fetch time", () => {
@@ -400,8 +441,16 @@ describe("rendering", () => {
 			"Nothing here. No source this app fetches publishes anything about the support role, and nothing was written to stand in for one. If the coach wants to say something about this role, it is saying it out of its own head and should say less instead."
 		)
 		strictEqual(
-			STRUCTURE_TEMPLATES["general.patch"]({ patch: "16.18.1", champions: 173, claims: 9, withheld: 1, broken: 2 }),
-			"Patch 16.18.1. 173 champions, 9 checked lines, 1 ability slot withheld because two sources disagreed about the name, the cooldown or the cost, and 2 fields withheld because the wiki's own expansion of it came back broken."
+			STRUCTURE_TEMPLATES["general.patch"]({
+				patch: "16.18.1",
+				champions: 173,
+				claims: 9,
+				withheld: 1,
+				broken: 2,
+				tableCells: 6026,
+				soleSourced: 294
+			}),
+			"Patch 16.18.1. 173 champions, 9 checked lines, 1 ability slot withheld because two sources disagreed about the name, the cooldown or the cost, 2 fields withheld because the wiki's own expansion of it came back broken, and 6026 cells of tables inside the wiki's notes withheld because the rows and columns did not survive being flattened to text — a header and its value arrived as two separate lines and neither says anything on its own. 294 of the checked lines rest on ONE tier-1 source rather than two, because Data Dragon files a passive outside its spell list and publishes only the first form of each slot; each of those lines names the single wiki revision it was copied from."
 		)
 		/*
 		 * The two WITHHELD notices are pinned like the rest. They are the only lines in a champion
@@ -412,9 +461,20 @@ describe("rendering", () => {
 			STRUCTURE_TEMPLATES["group.withheld.disagreed"]({ fields: "name, cooldown, cost" }),
 			"- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it."
 		)
+		/*
+		 * REWORDED 2026-09-19 and the old words are here so the change is visible in the diff rather
+		 * than only in the corpus: it used to read "the wiki's own expansion of the field came back
+		 * broken", which was true of the two `Expression error` cases it then covered and false of
+		 * the flattened-table drop it now also covers, where the wiki's expansion succeeded and the
+		 * HTML-to-text flattening downstream of it lost the table's rows and columns.
+		 */
 		strictEqual(
 			STRUCTURE_TEMPLATES["group.withheld.render"]({ fields: "notes" }),
-			"- WITHHELD (notes): the wiki's own expansion of the field came back broken, so no value is shown. This app does not know what it is — say nothing about it."
+			"- WITHHELD (notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it."
+		)
+		strictEqual(
+			STRUCTURE_TEMPLATES["group.withheld.render"]({ fields: "38 cells of a table in the wiki's notes" }),
+			"- WITHHELD (38 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it."
 		)
 		deepStrictEqual(Object.keys(STRUCTURE_TEMPLATES).sort(), [
 			"blank",

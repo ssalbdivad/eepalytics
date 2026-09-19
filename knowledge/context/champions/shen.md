@@ -93,49 +93,10 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Stand United has a forgiveness radius of 100 units. [wiki-r rev-4004939, fetched 2026-09-18]
 - edge case: Experimental Hexplate's Overdrive, Fiendhunter Bolts' Opening Barrage, and Zeke's Convergence's Frostfire Tempest will activate at the end of Stand United's channel. [wiki-r rev-4004939, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Shen is channeling: [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Channel [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: All summoner spells are disabled [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4004939, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4004939, fetched 2026-09-18]
 - edge case: Grounding effects [wiki-r rev-4004939, fetched 2026-09-18]
 - edge case: Immobilizing effects [wiki-r rev-4004939, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-r rev-4004939, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -143,4 +104,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008038, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FTwilight%20Assault&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3977238, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FSpirit's%20Refuge&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007754, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FShadow%20Dash&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4004939, fetched 2026-09-18 — 62 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FStand%20United&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4004939, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shen%2FStand%20United&prop=text

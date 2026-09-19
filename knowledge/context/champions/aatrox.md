@@ -50,46 +50,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: This ability's damage is calculated based on the caster's current stats and changes dynamically. [wiki-q rev-4027082, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-q rev-4027082, fetched 2026-09-18]
 - edge case: The Darkin Blade maintains its casting angle direction in relation to Aatrox if he moves during the cast time. [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Type [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Cast time [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Attacking [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Abilities [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Umbral Dash can be cast. Other abilities are disabled. [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Movement [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Items [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: N/A [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Consumables [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Spells [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Teleport Recall Hexflash [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: N/A [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4027082, fetched 2026-09-18]
-- edge case: Death [wiki-q rev-4027082, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Infernal Chains [wiki-w rev-4009173, fetched 2026-09-18]
@@ -142,7 +103,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4062881, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FDeathbringer%20Stance&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4027082, fetched 2026-09-18 — 62 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FThe%20Darkin%20Blade&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4027082, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FThe%20Darkin%20Blade&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4009173, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FInfernal%20Chains&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007771, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FUmbral%20Dash&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3959270, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aatrox%2FWorld%20Ender&prop=text

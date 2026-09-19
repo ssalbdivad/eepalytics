@@ -88,44 +88,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Killing an enemy with the shuriken will still mark the last area of the shroud hit. [wiki-e rev-4007568, fetched 2026-09-18]
 - edge case: Attempting to cast Five Point Strike during either dash will buffer it to cast as soon as the dash ends. [wiki-e rev-4007568, fetched 2026-09-18]
 - edge case: This ability's damage is calculated based on the caster's stats at the time of its application. [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Attacking [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Abilities [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Twilight Shroud is usable. Shuriken Flip is disabled for 10 seconds and then interrupts. Both dashes of Perfect Execution interrupt. [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Movement [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Items [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: All the other item-actives are usable [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: N/A [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Hextech Rocketbelt [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Consumables [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Spells [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Teleport Recall [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Hexflash [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Flash [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4007568, fetched 2026-09-18]
-- edge case: Death [wiki-e rev-4007568, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-e rev-4007568, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Perfect Execution [wiki-r rev-4011498, fetched 2026-09-18]
@@ -150,5 +114,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4038192, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akali%2FAssassin's%20Mark&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007404, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akali%2FFive%20Point%20Strike&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007406, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akali%2FTwilight%20Shroud&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4007568, fetched 2026-09-18 — 64 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akali%2FShuriken%20Flip&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4007568, fetched 2026-09-18 — 27 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akali%2FShuriken%20Flip&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4011498, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akali%2FPerfect%20Execution&prop=text

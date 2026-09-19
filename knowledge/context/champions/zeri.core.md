@@ -52,6 +52,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - missile or dash speed: 600 + 100% movement speed [wiki-e rev-4015351, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4015351, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4015351, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Lightning Crash [wiki-r rev-4016978, fetched 2026-09-18]

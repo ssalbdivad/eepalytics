@@ -104,47 +104,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The damage will apply spell effects to targets in order of being spawned. Single target spell effects (such as Luden's Echo) are thus triggered on the leftmost champion on the loading screen. [wiki-r rev-4015394, fetched 2026-09-18]
 - edge case: Requiem will not affect Neeko if she's disguised as a non-champion if Karthus is affected by Death Defied.(bug) [wiki-r rev-4015394, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Karthus is channeling: [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Channel [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Teleport Recall Hexflash [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Flash [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015394, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4015394, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-r rev-4015394, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 48.78% (n=2,249 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]
@@ -156,5 +117,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4011136, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FLay%20Waste&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3990033, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FWall%20of%20Pain&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4006733, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FDefile&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4015394, fetched 2026-09-18 — 56 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FRequiem&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4015394, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Karthus%2FRequiem&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/karthus/jungle?tier=emerald_plus

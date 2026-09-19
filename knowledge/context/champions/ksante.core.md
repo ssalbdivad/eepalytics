@@ -26,6 +26,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Physical [wiki-q rev-4007617, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4007617, fetched 2026-09-18]
 - WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Path Maker [wiki-w rev-4007618, fetched 2026-09-18]
@@ -38,6 +39,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction • Auto [wiki-w rev-4007618, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-4007618, fetched 2026-09-18]
 - spell shield: true [wiki-w rev-4007618, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Footwork [wiki-e rev-4034698, fetched 2026-09-18]
@@ -62,6 +64,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: unit [wiki-r rev-4051537, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4051537, fetched 2026-09-18]
 - spell shield: true [wiki-r rev-4051537, fetched 2026-09-18]
+- WITHHELD (74 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

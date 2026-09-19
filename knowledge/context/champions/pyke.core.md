@@ -32,6 +32,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto • Direction [wiki-q rev-4007993, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4007993, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4007993, fetched 2026-09-18]
+- WITHHELD (77 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Ghostwater Dive [wiki-w rev-4050339, fetched 2026-09-18]

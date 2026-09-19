@@ -48,6 +48,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-w rev-3990299, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-3990299, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-3990299, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Justice Punch [wiki-e rev-4016963, fetched 2026-09-18]
@@ -61,6 +62,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - missile or dash speed: 2300 [wiki-e rev-4016963, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-4016963, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4016963, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Hero's Entrance [wiki-r rev-4017997, fetched 2026-09-18]
@@ -74,6 +76,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Unit [wiki-r rev-4017997, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4017997, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4017997, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

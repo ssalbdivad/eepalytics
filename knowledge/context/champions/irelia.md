@@ -69,46 +69,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-w rev-4057467, fetched 2026-09-18]
 - edge case: This refers to the recast. [wiki-w rev-4057467, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Irelia is channeling: [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Type [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Charge channel [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Attacking [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Abilities [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Movement [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Items [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Usable [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: N/A [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: N/A [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Consumables [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Disabled, but can still use trinkets [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Spells [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Usable [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Flash Teleport Recall [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Hexflash (Recasts) [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4057467, fetched 2026-09-18]
-- edge case: Death [wiki-w rev-4057467, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Flawless Duet [wiki-e rev-4021834, fetched 2026-09-18]
@@ -159,6 +120,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4045313, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FIonian%20Fervor&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4057466, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FBladesurge&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4057467, fetched 2026-09-18 — 59 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FDefiant%20Dance&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4057467, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FDefiant%20Dance&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4021834, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FFlawless%20Duet&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4057346, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FVanguard's%20Edge&prop=text

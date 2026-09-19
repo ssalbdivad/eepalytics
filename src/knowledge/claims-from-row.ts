@@ -106,6 +106,33 @@ const SLOT_GROUP: Record<string, ClaimGroup> = { P: "passive", Q: "Q", W: "W", E
 const wikiPageUrl = (title: string): string =>
 	`https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=${encodeURIComponent(title)}&prop=text`
 
+/**
+ * The `fields` string a flattened-table notice carries, so the count can be read back.
+ *
+ * Exported and matched rather than re-derived: `generate-context.ts` prints a corpus-level total in
+ * `general.md`, and a second implementation of the detector there would be a second thing that can
+ * disagree with this one about what a table cell is.
+ */
+export const FLATTENED_TABLE_FIELDS = /^(\d+) cells of a table in the wiki's notes$/
+
+/** How many wiki-table cells were withheld across a set of champion records. */
+export const flattenedTableCells = (facts: Iterable<ChampionFacts>): number => {
+	let n = 0
+	for (const f of facts)
+		for (const notice of f.withheld ?? []) {
+			const m = FLATTENED_TABLE_FIELDS.exec(notice.fields)
+			if (m) n += Number(m[1])
+		}
+	return n
+}
+
+/** How many shipped claims rest on one tier-1 source because no second one publishes the field. */
+export const soleSourcedClaims = (facts: Iterable<ChampionFacts>): number => {
+	let n = 0
+	for (const f of facts) for (const c of f.claims) if (c.soleSource !== undefined) n += 1
+	return n
+}
+
 export interface AdaptResult {
 	facts: ChampionFacts
 	/** Fields present in the row that produced no claim, and why. Never swallowed. */
@@ -268,18 +295,41 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 		 * and the wiki, and it BLANKS the numbers on a slot where they disagreed. So `agreed` is the
 		 * corroboration this fence requires; without it the three fields simply do not ship, which is
 		 * the same answer the fetcher already reached by blanking them.
+		 *
+		 * ## `agreed` is NOT the same statement on every slot, and until 2026-09-19 it was treated
+		 * as though it were
+		 *
+		 * `agreed` is the absence of a recorded conflict, and an absence means two different things
+		 * depending on whether there was ever anything to conflict WITH. Data Dragon's `spells`
+		 * array holds one entry per Q/W/E/R slot and files the passive separately with no cooldown
+		 * or cost arrays, so the fetcher's cross-check reaches the FIRST form of each non-passive
+		 * slot and stops. Counted over the committed 16.18.1 table: 937 abilities, 692 reached, and
+		 * 245 not — 181 passives and 64 second forms of a slot, Lee Sin's Resonating Strike, Elise's
+		 * spider-form Q, Jayce's second R. On those 245 nothing could have been recorded as
+		 * conflicting, and this file minted `agreesWith: ["ddragon"]` on 294 claims — 245 names, 29
+		 * cooldowns, 20 costs — saying a source agreed that had not been asked.
+		 *
+		 * It never reached a prompt (`agreesWith` is read only by `checkClaim`), so no one was told
+		 * anything wrong. What was wrong is that the GATE could be satisfied by an inference. Now
+		 * the two cases are distinguished HERE, where the row knows which it is, and the claim
+		 * carries the answer rather than the inference. The gate's side of the argument — why the
+		 * 294 still ship rather than being refused — is written out at `crossChecked` in
+		 * `provenance.ts`.
 		 */
 		const agreed = ability.agreed === true
+		/*
+		 * Derived from the row rather than from a fetcher flag on purpose: `slot` and `nth` are the
+		 * two facts that decide whether Data Dragon published a counterpart, both are already here,
+		 * and a second flag written upstream would be a second thing that can disagree with this.
+		 */
+		const ddragonPublished = ability.slot !== "P" && nth === 1
+		const corroboration: Partial<ClaimRecord> =
+			ddragonPublished ? { agreesWith: ["ddragon"] }
+			: { soleSource: ability.slot === "P" ? "ddragon-publishes-no-passive" : "ddragon-publishes-one-form-per-slot" }
 		if (agreed) {
-			push("name", "ability.name", ability.name, { kind: "json", path: "name" }, {
-				agreesWith: ["ddragon"]
-			})
-			push("cooldown", "ability.cooldown", ability.cooldown, { kind: "json", path: "cooldown" }, {
-				agreesWith: ["ddragon"]
-			})
-			push("cost", "ability.cost", ability.cost, { kind: "json", path: "cost" }, {
-				agreesWith: ["ddragon"]
-			})
+			push("name", "ability.name", ability.name, { kind: "json", path: "name" }, corroboration)
+			push("cooldown", "ability.cooldown", ability.cooldown, { kind: "json", path: "cooldown" }, corroboration)
+			push("cost", "ability.cost", ability.cost, { kind: "json", path: "cost" }, corroboration)
 			/*
 			 * NOT marked `agreesWith`, deliberately. The fetcher compares Data Dragon's cooldown
 			 * against `cooldown || static || recharge`, so whichever of the three it actually used
@@ -330,8 +380,113 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 			kind: "json",
 			path: "spellShield"
 		})
-		for (const [i, note] of (ability.notes ?? []).entries())
+		/*
+		 * ## The wiki's notes carry TABLES, and a table does not survive being flattened to a list
+		 *
+		 * `htmlToText` in `scripts/fetch-champions.ts` turns `</th>` into ": " and `</tr>` into a
+		 * newline, which is right for every other shape the notes take and wrong for a table laid
+		 * out with its header cells in their own rows. Those arrive as three consecutive notes — the
+		 * header, a bare ":", and the value — so one wiki table row became three claim lines and
+		 * none of them says anything:
+		 *
+		 *     - edge case: Attacking [wiki-p rev-4053172, fetched 2026-09-18]
+		 *     - edge case: : [wiki-p rev-4053172, fetched 2026-09-18]
+		 *     - edge case: Disabled [wiki-p rev-4053172, fetched 2026-09-18]
+		 *
+		 * Measured over the committed 16.18.1 corpus before this landed: 2,116 bare-":" lines across
+		 * 87 champion files (118,575 bytes), and 6,006 of the 13,205 `edge case` lines — 17.4% of all
+		 * 34,433 delivered claim lines — with a value of 25 characters or fewer. The top values were
+		 * "Disabled" x681, "Interrupted by" x465, "Usable" x402, "N/A" x363 and the six column
+		 * headers at x155 each. None of it is FALSE and every line carries its revision; it is the
+		 * other failure this repo names — true and useless — sitting in the prompt at scale, worst
+		 * on `ambessa.md` (78 bare colons), `tahmkench.md` (69) and `briar.md` (67). It missed
+		 * `lillia.md` entirely, which is why nobody noticed.
+		 *
+		 * ## Why the header is not rejoined to its value, which was the first thing tried
+		 *
+		 * `notes[i-1] + notes[i] + " " + notes[i+1]` reads "Attacking: Disabled" and looks free. It
+		 * is not: on 319 of the 2,113 triples (15.1%) the header is ITSELF the value of the triple
+		 * before it, because the wiki table has nested or merged cells. Kayn's passive flattens to
+		 * `Items / : / Usable / : / N/A`, so the triple reading ships both "Items: Usable" and
+		 * "Usable: N/A" and at most one of those is a pairing the wiki makes. A 15% rate of invented
+		 * pairings is worse than the 8.0% mechanical error rate that got the hand-written corpus
+		 * deleted, and the pairing would arrive wearing a revision id. Nothing in the stored
+		 * evidence recovers the table's shape — the fetch cache holds the already-flattened text,
+		 * not the HTML — so the join cannot be done without composing, and composing is the one
+		 * thing this pipeline may not do.
+		 *
+		 * ## And the whole run goes, not just the bare colon
+		 *
+		 * Dropping only the ":" would leave "Attacking" and "Disabled" as two separate sourced
+		 * lines, which is the same defect one line shorter. The long cells are the stronger case,
+		 * not the weaker one: 76 of the cells end in a full stop — "Umbral Dash can be cast. Other
+		 * abilities are disabled.", "Registers input for Drakehound's Step." — and a table cell
+		 * severed from its header is a statement whose CONDITION has been deleted. "Disabled" is
+		 * useless; "Other abilities are disabled." is a general claim about the champion that the
+		 * wiki never made. So a note is dropped if it is a bare ":" or if it is adjacent to one,
+		 * which removes 6,026 lines in 157 runs across 87 files and leaves the sentence that
+		 * introduces the table ("The following table refers for interactions while Kayn is
+		 * transforming:") standing, followed by the WITHHELD notice that says where the rest went.
+		 *
+		 * Note ids are the note's own index and are NOT renumbered, so a surviving line keeps the id
+		 * it had before this filter existed.
+		 *
+		 * ## What this does NOT catch, measured, so nobody re-derives it from scratch
+		 *
+		 * 473 `edge case` lines of the 7,179 that survive still have a value of 25 characters or
+		 * fewer — down from 6,006 of 13,205 — and they are two different things. Most are the wiki
+		 * saying something short and self-contained ("No additional details." x22), which is true,
+		 * useless and NOT this defect: dropping it would be a judgment about usefulness rather than
+		 * about structure, and this filter only claims to know about structure.
+		 *
+		 * 48 of them are the real residue: a table cell that got separated from its own separator by
+		 * a `<br>`. Kayn's R ends `"Interrupted by" / ":" / "Death" / "Cast-inhibiting effects"` —
+		 * the last cell held two lines, the `<br>` between them became a note boundary, and the
+		 * second line is two notes away from the ":" and therefore survives. ("Cast-inhibiting
+		 * effects" x53 is the single commonest residual value in the corpus.)
+		 *
+		 * The obvious extension — take the transitive closure, keep absorbing notes adjacent to a
+		 * dropped one — was NOT taken, and it is not a close call: the note immediately BEFORE the
+		 * first header is the sentence that introduces the table ("The following table refers for
+		 * interactions while Kayn is transforming:"), which is a real, whole, useful claim, and the
+		 * closure would eat it in every one of the 157 runs. A forward-only closure would need a
+		 * rule for when to stop, every candidate rule is a guess about sentence-hood, and the trade
+		 * is 48 lines against the risk of silently deleting real notes.
+		 *
+		 * The fix that actually closes it is upstream and outside this file: `htmlToText` in
+		 * `scripts/fetch-champions.ts` turns `</th>` into ": " and `<br>` into a newline, so a table
+		 * row is shredded before anything here sees it. Emitting one line per `<tr>` would let the
+		 * header and value arrive joined by the WIKI, which is the only party allowed to join them,
+		 * and this filter would then find nothing and cost nothing. That is a change to the fetcher
+		 * and a re-fetch, and it is not done.
+		 */
+		const notes = ability.notes ?? []
+		const isSeparator = (n: string | undefined): boolean => n !== undefined && n.trim() === ":"
+		const droppedNotes = notes.filter(
+			(note, i) => isSeparator(note) || isSeparator(notes[i - 1]) || isSeparator(notes[i + 1])
+		).length
+		for (const [i, note] of notes.entries()) {
+			if (isSeparator(note) || isSeparator(notes[i - 1]) || isSeparator(notes[i + 1])) continue
 			push(`note${i + 1}`, "ability.note", note, { kind: "json", path: `notes.${i}` })
+		}
+		if (droppedNotes > 0) {
+			/*
+			 * Phrased as a property of the SOURCE DOCUMENT — a table in the notes — and never as a
+			 * claim about what the table was about, which this app does not know once the rows are
+			 * gone. The substring "a table in the wiki's notes" is what `generate-context.ts` counts
+			 * for the corpus-level figure in `general.md`; the two other diagnostic shapes here are
+			 * counted by "sources disagreed" and "expansion broke", and none of the three collide.
+			 */
+			skipped.push(
+				`${row.key}.${slotId}: a table in the wiki's notes lost its rows and columns when it was flattened to text, so ${droppedNotes} cells withheld`
+			)
+			withheld.push({
+				group,
+				slotId,
+				fields: `${droppedNotes} cells of a table in the wiki's notes`,
+				kind: "render"
+			})
+		}
 	}
 
 	/* ---------------------------------------------------------------------------- what wins */

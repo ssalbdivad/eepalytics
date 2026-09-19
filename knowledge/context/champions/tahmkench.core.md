@@ -31,6 +31,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-q rev-4040842, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4040842, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4040842, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Abyssal Dive [wiki-w rev-4020963, fetched 2026-09-18]
@@ -44,6 +45,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Location [wiki-w rev-4020963, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4020963, fetched 2026-09-18]
 - spell shield: true [wiki-w rev-4020963, fetched 2026-09-18]
+- WITHHELD (80 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Thick Skin [wiki-e rev-4021898, fetched 2026-09-18]
@@ -59,6 +61,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Unit [wiki-r rev-4063964, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4063964, fetched 2026-09-18]
 - WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
+- WITHHELD (77 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Regurgitate [wiki-r2 rev-4013502, fetched 2026-09-18]
 - what it does: Active: Tahm Kench detaches the swallowed champion from himself and spits them out in the target direction. If they are an enemy, he deals magic damage to them at the end of the displacement. Tahm Kench is unable to act for 0.4 seconds after casting Regurgitate. If Regurgitate was cast automatically, Tahm Kench spits the target out in his facing direction. [wiki-r2 rev-4013502, fetched 2026-09-18]
 - damage by rank: Magic Damage: 100 / 250 / 400 (+ 15% (+ 7% per 100 AP) of the target's maximum health) [wiki-r2 rev-4013502, fetched 2026-09-18]

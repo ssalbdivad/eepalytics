@@ -108,43 +108,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: True [wiki-r rev-4008617, fetched 2026-09-18]
 - edge case: The individual missiles have 1100 range but start slightly behind Xayah, reducing their total range. [wiki-r rev-4008617, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Xayah is in Featherstorm: [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Allowed [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: All summoner spells are usable [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4008617, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4008617, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -152,4 +116,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008615, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FDouble%20Daggers&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4062257, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FDeadly%20Plumage&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4002073, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FBladecaller&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4008617, fetched 2026-09-18 — 49 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FFeatherstorm&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4008617, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FFeatherstorm&prop=text

@@ -50,43 +50,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Originally, Lee Sin would land 50 units in front of his target. Since there are no patch notes where this is noted to have changed, landing on top of his target may be a bug. [wiki-q2 rev-4026428, fetched 2026-09-18]
 - edge case: Resonating Strike cannot be cast without the marked target nearby or if the target is untargetable. [wiki-q2 rev-4026428, fetched 2026-09-18]
 - edge case: If Resonating Strike interrupts another dash, Tempest and Dragon's Rage can be cast during it (both otherwise cannot be cast). [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Attacking [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Disabled [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Abilities [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Safeguard, Iron Will, and Cripple can be cast. Tempest and Dragon's Rage are disabled. [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Movement [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Disabled [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Items [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Usable [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: All the other item-actives are usable [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Disabled [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: N/A [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Hextech Rocketbelt [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Consumables [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Usable [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Spells [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Usable [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Teleport [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Disabled [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Recall [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Flash [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: : [wiki-q2 rev-4026428, fetched 2026-09-18]
-- edge case: Death [wiki-q2 rev-4026428, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Safeguard [wiki-w rev-4024314, fetched 2026-09-18]
@@ -166,7 +130,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4015078, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lee%20Sin%2FFlurry&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4026427, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lee%20Sin%2FSonic%20Wave&prop=text
-- wiki-q2: League of Legends Wiki, ability data template, revision rev-4026428, fetched 2026-09-18 — 54 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lee%20Sin%2FResonating%20Strike&prop=text
+- wiki-q2: League of Legends Wiki, ability data template, revision rev-4026428, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lee%20Sin%2FResonating%20Strike&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4024314, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lee%20Sin%2FSafeguard&prop=text
 - wiki-w2: League of Legends Wiki, ability data template, revision rev-3992654, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lee%20Sin%2FIron%20Will&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4016969, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lee%20Sin%2FTempest&prop=text

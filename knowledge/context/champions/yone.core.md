@@ -44,6 +44,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction • Auto [wiki-e rev-4050165, fetched 2026-09-18]
 - damage type: True [wiki-e rev-4050165, fetched 2026-09-18]
 - spell shield: false [wiki-e rev-4050165, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Fate Sealed [wiki-r rev-4009198, fetched 2026-09-18]
@@ -55,6 +56,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r rev-4009198, fetched 2026-09-18]
 - damage type: Physical Magic [wiki-r rev-4009198, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4009198, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

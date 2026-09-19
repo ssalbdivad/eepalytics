@@ -175,46 +175,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Fear Beyond Death will not put the target inside terrain while reeling them in. [wiki-r rev-4015146, fetched 2026-09-18]
 - edge case: This does prevent the execution. [wiki-r rev-4015146, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Urgot is channeling: [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Channel [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Allowed [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Teleport [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4015146, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4015146, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -222,4 +183,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3952903, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FCorrosive%20Charge&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4058781, fetched 2026-09-18 — 32 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FPurge&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008211, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FDisdain&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4015146, fetched 2026-09-18 — 110 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FFear%20Beyond%20Death&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4015146, fetched 2026-09-18 — 70 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Urgot%2FFear%20Beyond%20Death&prop=text

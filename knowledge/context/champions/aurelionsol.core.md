@@ -28,6 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-q rev-4057543, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4057543, fetched 2026-09-18]
 - spell shield: special [wiki-q rev-4057543, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Astral Flight [wiki-w rev-4057545, fetched 2026-09-18]
@@ -39,6 +40,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: 0.4 • None [wiki-w rev-4057545, fetched 2026-09-18]
 - missile or dash speed: 340 + 100% movement speed • 170 + 50% movement speed [wiki-w rev-4057545, fetched 2026-09-18]
 - targeting: Direction [wiki-w rev-4057545, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Singularity [wiki-e rev-4038217, fetched 2026-09-18]

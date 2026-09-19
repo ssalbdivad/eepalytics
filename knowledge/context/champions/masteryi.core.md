@@ -32,6 +32,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Unit [wiki-q rev-4032850, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4032850, fetched 2026-09-18]
 - spell shield: Special [wiki-q rev-4032850, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Meditate [wiki-w rev-4039653, fetched 2026-09-18]
@@ -41,6 +42,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage by rank: Minimum Heal Per Tick: 15 / 25 / 35 / 45 / 55 (+ 12.5% AP) Maximum Heal Per Tick: 30 / 50 / 70 / 90 / 110 (+ 25% AP) Minimum Total Heal: 120 / 200 / 280 / 360 / 440 (+ 100% AP) Maximum Total Heal: 240 / 400 / 560 / 720 / 880 (+ 200% AP) · Modified Damage Reduction: 45 / 47.5 / 50 / 52.5 / 55% Turret Modified Damage Reduction: 22.5 / 23.75 / 25 / 26.25 / 27.5% [wiki-w rev-4039653, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4039653, fetched 2026-09-18]
 - targeting: Auto [wiki-w rev-4039653, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Wuju Style [wiki-e rev-3959670, fetched 2026-09-18]

@@ -18,6 +18,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Innate: Zaahen generates a stack of Determination for each enemy champion damaged by his basic attacks and abilities, lasting for 5 seconds, refreshing on subsequent triggers, and stacking up to 12 times. After the duration, the stacks expire by 1 / 2 / 3 / 4 / 5 (based on seconds elapsed) every 0.5 seconds. Determination: For each stack, Zaahen gains bonus attack damage equal to 1.5% – 2.95% (based on level) AD. At maximum stacks, Zaahen becomes filled with Determination, causing him to double the bonus to 36% – 70.87% (based on level) AD. Periodically, if Zaahen would take lethal damage while at maximum stacks of Determination, he refreshes its duration and enters resurrection for 4 seconds: becoming invulnerable, untargetable, and unable to act. Additionally, he restores「 30% / 45% / 60% / 75% (based on level) of his maximum health 」「 0.94% / 1.41% / 1.88% / 2.34% (based on level) of his maximum health every 0.125 seconds 」over the duration. Afterwards, he revives himself and refreshes the duration of Determination. [wiki-p rev-4060321, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4060321, fetched 2026-09-18]
 - spell shield: false [wiki-p rev-4060321, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: The Darkin Glaive [wiki-q rev-4060370, fetched 2026-09-18]
@@ -57,6 +58,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Location [wiki-e rev-4022487, fetched 2026-09-18]
 - damage type: Physical Magic [wiki-e rev-4022487, fetched 2026-09-18]
 - spell shield: true [wiki-e rev-4022487, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Grim Deliverance [wiki-r rev-4007768, fetched 2026-09-18]
@@ -71,6 +73,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Location [wiki-r rev-4007768, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4007768, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4007768, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 51.01% (n=941 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

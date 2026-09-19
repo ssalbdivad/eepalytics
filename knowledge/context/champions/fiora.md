@@ -112,43 +112,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The shock missile takes ~0.25 seconds to reach maximum range. [wiki-w rev-4007365, fetched 2026-09-18]
 - edge case: The shock missile will be fired from wherever Fiora is after the first 0.5 seconds of Riposte. [wiki-w rev-4007365, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Fiora is performing Riposte: [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Attacking [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Abilities [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Movement [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Items [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Usable [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: N/A [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: N/A [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Consumables [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Spells [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Usable [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Flash Teleport Recall [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: N/A [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4007365, fetched 2026-09-18]
-- edge case: Death [wiki-w rev-4007365, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Bladework [wiki-e rev-3906658, fetched 2026-09-18]
@@ -190,6 +154,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4038335, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FDuelist's%20Dance&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007770, fetched 2026-09-18 — 36 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FLunge&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4007365, fetched 2026-09-18 — 78 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FRiposte&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4007365, fetched 2026-09-18 — 41 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FRiposte&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3906658, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FBladework&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007516, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FGrand%20Challenge&prop=text

@@ -122,43 +122,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Elise can Rappel to Rift Herald from the other side of the Baron Nashor's pit as well as to Dragon by standing near the Scryer's Bloom spawn locations. This is a result of sight being granted in a smaller circle than the target range limit for descending and the Summoner's Rift map having height variations. [wiki-e2 rev-4007596, fetched 2026-09-18]
 - edge case: If Elise enters resurrection during Rappel, she will descend back down immediately. [wiki-e2 rev-4007596, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Elise is in Rappel: [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Attacking [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Descends onto the attack target. [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Abilities [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Disabled [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Movement [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Descends onto her current position. [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Items [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Usable [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: N/A [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Disabled [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: N/A [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Consumables [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Disabled [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Spells [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Usable [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: N/A [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Disabled [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: All summoner spells are disabled [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: N/A [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: : [wiki-e2 rev-4007596, fetched 2026-09-18]
-- edge case: Death [wiki-e2 rev-4007596, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Spider Form [wiki-r rev-3979322, fetched 2026-09-18]
@@ -182,6 +146,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3906822, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Elise%2FVolatile%20Spiderling&prop=text
 - wiki-w2: League of Legends Wiki, ability data template, revision rev-3980350, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Elise%2FSkittering%20Frenzy&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3906643, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Elise%2FCocoon&prop=text
-- wiki-e2: League of Legends Wiki, ability data template, revision rev-4007596, fetched 2026-09-18 — 59 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Elise%2FRappel&prop=text
+- wiki-e2: League of Legends Wiki, ability data template, revision rev-4007596, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Elise%2FRappel&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3979322, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Elise%2FSpider%20Form&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/elise/jungle?tier=emerald_plus

@@ -46,46 +46,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Displacement immunity will not resist the application of the stun. [wiki-q rev-4060365, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the start of the cast time. [wiki-q rev-4060365, fetched 2026-09-18]
 - edge case: The following table refers for interactions during Dredge Line's cast time. [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Type [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Cast time [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Attacking [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Abilities [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Movement [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Items [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: N/A [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Consumables [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Spells [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: N/A [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4060365, fetched 2026-09-18]
-- edge case: Death, unless protected by Resurrection [wiki-q rev-4060365, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Titan's Wrath [wiki-w rev-3981480, fetched 2026-09-18]
@@ -149,7 +110,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3985615, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nautilus%2FStaggering%20Blow&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4060365, fetched 2026-09-18 — 61 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nautilus%2FDredge%20Line&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4060365, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nautilus%2FDredge%20Line&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3981480, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nautilus%2FTitan's%20Wrath&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007701, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nautilus%2FRiptide&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007702, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nautilus%2FDepth%20Charge&prop=text

@@ -130,43 +130,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Death Mark does not cancel if the target enters a zombie state before the dash begins. [wiki-r rev-4050166, fetched 2026-09-18]
 - edge case: If the mark's post-mitigation damage is higher than the target's current health, a spinning shuriken will appear above the victim. This does not necessarily mean the target will die, as it does not consider shields or forms of damage modifiers that are not respected by this predictive calculation. [wiki-r rev-4050166, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Zed is performing Death Mark: [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash Mark Dash [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050166, fetched 2026-09-18]
-- edge case: Death, unless protected by Resurrection [wiki-r rev-4050166, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 48.11% (n=2,037 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]
@@ -178,5 +142,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4006897, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zed%2FRazor%20Shuriken&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4053262, fetched 2026-09-18 — 29 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zed%2FLiving%20Shadow&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4016889, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zed%2FShadow%20Slash&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4050166, fetched 2026-09-18 — 69 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zed%2FDeath%20Mark&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4050166, fetched 2026-09-18 — 32 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zed%2FDeath%20Mark&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/zed/jungle?tier=emerald_plus

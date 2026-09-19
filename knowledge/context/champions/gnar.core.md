@@ -57,6 +57,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-w2 rev-4022698, fetched 2026-09-18]
 - damage type: Physical [wiki-w2 rev-4022698, fetched 2026-09-18]
 - spell shield: True [wiki-w2 rev-4022698, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Hop [wiki-e rev-4007742, fetched 2026-09-18]
@@ -90,6 +91,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r rev-3936277, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-3936277, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-3936277, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

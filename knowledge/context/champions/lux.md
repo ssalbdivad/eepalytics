@@ -97,46 +97,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Final Spark grants sight of its surroundings during the cast time and for 0.5 seconds afterwards. [wiki-r rev-3919833, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the start of the cast time. [wiki-r rev-3919833, fetched 2026-09-18]
 - edge case: The ability will not preserve the caster's facing direction when using Flash and similar effects. [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Cast time [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Lucent Singularity can only be recast if it is present. Light Binding and Prismatic Barrier are disabled. [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Teleport Recall Hexflash [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3919833, fetched 2026-09-18]
-- edge case: Death, unless protected by Resurrection [wiki-r rev-3919833, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -144,4 +105,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007675, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FLight%20Binding&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3992656, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FPrismatic%20Barrier&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007677, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FLucent%20Singularity&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-3919833, fetched 2026-09-18 — 53 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FFinal%20Spark&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-3919833, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FFinal%20Spark&prop=text

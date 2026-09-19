@@ -45,6 +45,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - missile or dash speed: 1200 [wiki-w rev-4052441, fetched 2026-09-18]
 - targeting: Location [wiki-w rev-4052441, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-4052441, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Snack Attack [wiki-w2 rev-4015000, fetched 2026-09-18]
 - what it does: Active: Briar empowers her next basic attack within 5 seconds during Blood Frenzy to take a bite out of the target enemy, gaining 50 bonus range, dealing bonus physical damage and healing her for 5% of her maximum health plus a percentage of the post-mitigation damage dealt. Snack Attack deals 110% damage against minions and monsters, with the damage based on the target's health ratio being capped at 400. Snack Attack resets Briar's basic attack timer. [wiki-w2 rev-4015000, fetched 2026-09-18]
 - damage by rank: Bonus Physical Damage: 5 / 20 / 35 / 50 / 65 (+ 5% AD) (+ 9% (+ 2.5% per 100 bonus AD) of the target's missing health) Heal Percentage: 24 / 28 / 32 / 36 / 40% · Non-Champion Bonus Damage: 5.5 / 22 / 38.5 / 55 / 71.5 (+ 5.5% AD) (+ 9.9% (+ 2.75% per 100 bonus AD) of the target's missing health) [wiki-w2 rev-4015000, fetched 2026-09-18]
@@ -65,6 +66,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction • Auto [wiki-e rev-4007450, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4007450, fetched 2026-09-18]
 - spell shield: true [wiki-e rev-4007450, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Certain Death [wiki-r rev-4051322, fetched 2026-09-18]
@@ -79,6 +81,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r rev-4051322, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4051322, fetched 2026-09-18]
 - spell shield: true [wiki-r rev-4051322, fetched 2026-09-18]
+- WITHHELD (114 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 51.02% (n=7,411 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

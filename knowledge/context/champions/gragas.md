@@ -57,47 +57,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The empowered attack will trigger against structures. [wiki-w rev-4013236, fetched 2026-09-18]
 - edge case: The empowered attack will trigger against wards but not be consumed nor apply its effects against wards. [wiki-w rev-4013236, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Gragas is channeling: [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Type [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Channel [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Attacking [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Abilities [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Movement [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Allowed [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Items [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Usable [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: N/A [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Consumables [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Usable [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Spells [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Usable [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Disabled [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Teleport Recall Hexflash [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: N/A [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: : [wiki-w rev-4013236, fetched 2026-09-18]
-- edge case: Death [wiki-w rev-4013236, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-w rev-4013236, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Body Slam [wiki-e rev-4007602, fetched 2026-09-18]
@@ -138,7 +99,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3985369, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FHappy%20Hour&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3907002, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FBarrel%20Roll&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4013236, fetched 2026-09-18 — 55 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FDrunken%20Rage&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4013236, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FDrunken%20Rage&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007602, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FBody%20Slam&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3906845, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Gragas%2FExplosive%20Cask&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/gragas/jungle?tier=emerald_plus

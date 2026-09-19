@@ -23,43 +23,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If Rebirth triggers while Anivia is channeling Teleport, her channel won't be interrupted. [wiki-p rev-3906517, fetched 2026-09-18]
 - edge case: All other channels will be interrupted upon triggering Rebirth. [wiki-p rev-3906517, fetched 2026-09-18]
 - edge case: The following refers for interactions while Anivia is resurrecting: [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Attacking [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Disabled [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Abilities [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Disabled [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Movement [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Disabled [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Items [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Usable [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: N/A [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Disabled [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: N/A [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Consumables [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Disabled [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Spells [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Usable [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: N/A [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Disabled [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: All summoner spells are disabled [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: N/A [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: : [wiki-p rev-3906517, fetched 2026-09-18]
-- edge case: Death [wiki-p rev-3906517, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Flash Frost [wiki-q rev-4026612, fetched 2026-09-18]
@@ -132,7 +96,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3906517, fetched 2026-09-18 — 46 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FRebirth&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3906517, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FRebirth&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4026612, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FFlash%20Frost&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007565, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FCrystallize&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4057862, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FFrostbite&prop=text

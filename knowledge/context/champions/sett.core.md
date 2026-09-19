@@ -51,6 +51,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-e rev-4013095, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4013095, fetched 2026-09-18]
 - spell shield: true [wiki-e rev-4013095, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: The Show Stopper [wiki-r rev-3936244, fetched 2026-09-18]

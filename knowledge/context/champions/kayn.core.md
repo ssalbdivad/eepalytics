@@ -17,6 +17,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: The Darkin Scythe [wiki-p rev-4053172, fetched 2026-09-18]
 - what it does: Innate: Kayn has a secondary experience bar that tracks progress toward his Darkin Slayer and Shadow Assassin forms. He gathers orbs from champion takedowns and each instance of damage (excluding damage over time) dealt against champions. Once he has earned enough orbs, he unlocks a form based on whether he earned more from melee or ranged champions (for Darkin Slayer and Shadow Assassin, respectively), with the other form unlocked later. While near his team's summoning platform, Kayn can choose a form to enter transformation over 6 seconds, becoming invulnerable, untargetable, and unable to act for the duration. At the end of the transformation he is restored to full health and mana. The transformation will grant a passive bonus and permanently empower some of Kayn's abilities based on the form chosen. He gains a one-time Homeguard once the transformation is complete. Kayn cannot activate the transformation while he is affected by cast-inhibiting crowd control or a lockout that disables abilities. Shadow Assassin Bonus: Upon entering combat with enemy champions, Kayn becomes empowered for 3 seconds to deal 20% – 40% (based on level) of post-mitigation physical and magic damage dealt against enemy champions as bonus magic damage. This effect cannot trigger again until Kayn has been out of combat with champions for over 8 seconds, with the timer being reset if he recasts Umbral Trespass. Darkin Slayer Bonus: Rhaast heals for 25% (+ 0.5% per 100 bonus health) of the post-mitigation physical damage that he deals to enemy champions with his abilities. [wiki-p rev-4053172, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4053172, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Reaping Slash [wiki-q rev-4051323, fetched 2026-09-18]
@@ -41,6 +42,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-w rev-4007629, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-4007629, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4007629, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Shadow Step [wiki-e rev-3907115, fetched 2026-09-18]
@@ -63,6 +65,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Unit / Direction [wiki-r rev-4007627, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4007627, fetched 2026-09-18]
 - spell shield: Special [wiki-r rev-4007627, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 50.22% (n=8,936 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

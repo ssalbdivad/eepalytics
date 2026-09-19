@@ -84,46 +84,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-r rev-3712330, fetched 2026-09-18]
 - edge case: Surging Tides will trigger immediately on Nami on-cast. [wiki-r rev-3712330, fetched 2026-09-18]
 - edge case: The wave travels over 3.267 seconds. [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Cast time [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: Death, unless protected by Resurrection [wiki-r rev-3712330, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -131,4 +92,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007696, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FAqua%20Prison&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007697, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FEbb%20and%20Flow&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4042884, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FTidecaller's%20Blessing&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-3712330, fetched 2026-09-18 — 56 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FTidal%20Wave&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-3712330, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FTidal%20Wave&prop=text

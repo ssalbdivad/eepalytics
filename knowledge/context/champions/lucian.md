@@ -98,47 +98,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The damage dealt by each bullet of The Culling is calculated when the bullet reaches a target, just like single missile abilities. [wiki-r rev-4007670, fetched 2026-09-18]
 - edge case: Spell shield only blocks one instance of damage. [wiki-r rev-4007670, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Lucian is channeling: [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Channel [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Relentless Pursuit is usable. Piercing Light and Ardent Blaze are disabled. This ability recasts to end channel. [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Allowed [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: All the other item-actives are usable [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Zhonya's Hourglass [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash Teleport [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Recall Hexflash [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007670, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4007670, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-r rev-4007670, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -146,4 +107,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3982579, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lucian%2FPiercing%20Light&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3594941, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lucian%2FArdent%20Blaze&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008455, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lucian%2FRelentless%20Pursuit&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4007670, fetched 2026-09-18 — 59 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lucian%2FThe%20Culling&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4007670, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lucian%2FThe%20Culling&prop=text

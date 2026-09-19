@@ -250,6 +250,27 @@ export type Derivation =
 
 /* -------------------------------------------------------------------------------- claims */
 
+/**
+ * Why a `crossChecked` field shipped on ONE source, from a closed set.
+ *
+ * Closed, and free text is deliberately not allowed, for the same reason `CLAIM_FIELDS` is closed:
+ * an open reason field is a place to write an excuse, and an excuse that reads well is how an
+ * uncorroborated number keeps shipping. Each entry names a property of the SOURCES — what Data
+ * Dragon publishes — and says nothing about League, which is what makes it writable here at all.
+ *
+ * Both entries are measured on the committed 16.18.1 table, and the two populations are disjoint
+ * and exhaustive over the 245 abilities Data Dragon's spell list does not reach: 181 passives and
+ * 64 second forms.
+ */
+export const SOLE_SOURCE_REASONS = {
+	"ddragon-publishes-no-passive": "Data Dragon lists a champion's passive outside `spells`, with no cooldown or cost array, so there is no second transcription of this value to compare against",
+	"ddragon-publishes-one-form-per-slot": "Data Dragon publishes exactly one spell per Q/W/E/R slot, so a second form of the same slot has no counterpart in it to compare against"
+} as const satisfies Record<string, string>
+
+export type SoleSourceReason = keyof typeof SOLE_SOURCE_REASONS
+
+export const isSoleSourceReason = (s: string): s is SoleSourceReason => s in SOLE_SOURCE_REASONS
+
 export interface ClaimSample {
 	games: number
 	wins?: number
@@ -270,8 +291,29 @@ export interface ClaimRecord {
 	/** The bytes the fetch returned, kept so the claim can be re-checked with no network. */
 	evidence: string
 	derivation: Derivation
-	/** Other source ids that produced the same `text`. Required on `crossChecked` fields. */
+	/**
+	 * Other source ids that INDEPENDENTLY PRODUCED THE SAME `text`. Not "no source contradicted it".
+	 *
+	 * The distinction is the whole of the 2026-09-19 fix. See `soleSource` below and the long note
+	 * on `crossChecked` in `checkClaim`.
+	 */
 	agreesWith?: readonly string[]
+	/**
+	 * The other half of the corroboration answer: this claim has ONE source and here is the
+	 * structural reason no second one could be consulted.
+	 *
+	 * A `crossChecked` field must carry `agreesWith` or this, and may not carry both. Before this
+	 * existed, `claims-from-row.ts` inferred agreement from an EMPTY CONFLICT LIST — the fetcher
+	 * cross-checks Data Dragon against the wiki and blanks a slot's numbers on disagreement, so
+	 * `agreed === true` was read as "Data Dragon agreed". Measured on the committed 16.18.1 table
+	 * (`node --experimental-strip-types scripts/…`, re-derivable from `CHAMPION_ROWS`): Data Dragon
+	 * publishes one spell per non-passive slot, so of 937 abilities the cross-check reaches 692 and
+	 * stops. The other 245 — 181 passives and 64 second forms, Lee Sin's Resonating Strike, Elise's
+	 * spider-form Q — were transcribed from the wiki alone, nothing could be recorded as conflicting
+	 * with them, and 294 claims (245 names, 29 cooldowns, 20 costs) were minted saying Data Dragon
+	 * agreed when Data Dragon had said nothing at all.
+	 */
+	soleSource?: SoleSourceReason
 	sample?: ClaimSample
 }
 
@@ -348,6 +390,12 @@ export const ClaimRecordSchema = type({
 	evidence: "string",
 	derivation: DerivationSchema,
 	"agreesWith?": "string[]",
+	/*
+	 * A string here rather than the literal union, so a table written by a fetcher that learned a
+	 * new reason validates and is then refused BY NAME in `checkClaim` with the reason printed.
+	 * A schema failure would reject the whole row and lose every claim in it.
+	 */
+	"soleSource?": "string",
 	"sample?": { games: "number", "wins?": "number", "bracket?": "string" }
 })
 
@@ -620,8 +668,64 @@ export const checkClaim = (
 	}
 	if (spec.requiresSample && (claim.sample === undefined || claim.sample.games <= 0))
 		return `${claim.id}: ${claim.field} is a count of real games and may not ship without its sample size`
-	if (spec.crossChecked && (claim.agreesWith === undefined || claim.agreesWith.length === 0))
-		return `${claim.id}: ${claim.field} must be corroborated by a second tier-1 source before it ships`
+	/*
+	 * ## What `crossChecked` requires, and why it is NOT "two sources agreed"
+	 *
+	 * It requires the claim to STATE what happened with the second source, from a closed set, and
+	 * refuses silence. It does not require agreement, and the decision to stop short of that is the
+	 * one a later reader will want to argue with, so here is the argument.
+	 *
+	 * The old test was `agreesWith` non-empty, and `claims-from-row.ts` satisfied it by INFERRING
+	 * agreement from an empty conflict list: the fetcher compares Data Dragon against the wiki and
+	 * blanks a slot's name, cooldown and cost when they disagree, so `agreed === true` was read as
+	 * "Data Dragon agreed". Measured over the committed 16.18.1 `CHAMPION_ROWS`: 937 abilities, of
+	 * which Data Dragon's `spells` array reaches 692. The other 245 are 181 passives (Riot files a
+	 * passive outside `spells`) and 64 second forms of a slot (Lee Sin's Resonating Strike, Elise's
+	 * spider-form Q), and NOTHING could be recorded as conflicting with them. 294 claims — 245
+	 * names, 29 cooldowns, 20 costs — carried `agreesWith: ["ddragon"]` on a source that said
+	 * nothing. Nobody was ever told a wrong thing by it, because `agreesWith` never reaches a
+	 * prompt; the GATE was weaker than its name, which is a different defect and still a defect.
+	 *
+	 * ### Why the gate does not simply refuse those 294
+	 *
+	 * Refusing them is the move that looks principled and costs truth. It would delete the NAME of
+	 * every passive in the corpus — 245 lines across 173 champion files, "The Darkin Scythe" off
+	 * `kayn.md` — for zero gain in honesty, because:
+	 *
+	 * 1. The delivered LINE was never the thing that lied. Each of those 245 already ends in the
+	 *    single wiki revision it was copied from (`[wiki-p rev-4053172, fetched 2026-09-18]`), which
+	 *    is one source, visibly. Nothing in the file ever claimed two.
+	 * 2. "Uncorroborated" here means NO SECOND PUBLISHER EXISTS, not "the second publisher was not
+	 *    asked". A rule whose effect is "Riot files passives differently, so this app may not say
+	 *    what a passive is called" is a rule about Riot's JSON layout wearing the clothes of a rule
+	 *    about truth.
+	 * 3. The error this fence was built for — `lillia.md`'s Swirlseed rolling over terrain — was an
+	 *    INVENTED CAPABILITY, not an uncorroborated name, and it would have been refused here by
+	 *    `recheckDerivation` regardless of any second source.
+	 * 4. These lines are already checked by an instrument that shares no code with this one:
+	 *    `scripts/verify-fetched.ts --articles` compares the delivered value against the rendered
+	 *    wiki article a human reads.
+	 *
+	 * So the gate asks for the thing it can actually get — an explicit, closed-vocabulary statement
+	 * of the corroboration state — and refuses a claim that states nothing. That is strictly
+	 * stronger than the old test in the way that matters: `agreesWith` can no longer be minted by
+	 * inference, because `claims-from-row.ts` now has to decide, per slot, whether Data Dragon
+	 * published anything at all.
+	 *
+	 * If a later reader wants the strict gate anyway, the change is to make the `soleSource` branch
+	 * return a refusal instead of `null`. Before doing it, price it: 294 claims and 245 passive
+	 * names leave the corpus, and `knowledge/context/` must be regenerated in the same commit.
+	 */
+	if (spec.crossChecked) {
+		const agrees = claim.agreesWith !== undefined && claim.agreesWith.length > 0
+		const sole = claim.soleSource !== undefined
+		if (agrees && sole)
+			return `${claim.id}: ${claim.field} says both that a second source agreed and that no second source exists, and only one of those can be true`
+		if (!agrees && !sole)
+			return `${claim.id}: ${claim.field} must say what happened with the second tier-1 source — either agreesWith, or soleSource naming why there is no second one`
+		if (sole && !isSoleSourceReason(claim.soleSource!))
+			return `${claim.id}: ${claim.soleSource} is not one of the ${Object.keys(SOLE_SOURCE_REASONS).length} recorded reasons a tier-1 field can ship on one source`
+	}
 	if (spec.tier === "owner-authored" && claim.derivation.kind !== "owner")
 		return `${claim.id}: an owner note must use the owner derivation`
 	if (spec.tier !== "owner-authored" && claim.derivation.kind === "owner")
@@ -728,11 +832,24 @@ export const STRUCTURE_TEMPLATES = {
 	 * which one — nothing about League, which is why they may be written down in this file at all.
 	 * Both end on the same sentence because the reader's next move is the same either way: this app
 	 * does not know the number, so nothing may be said about it.
+	 *
+	 * `group.withheld.render` was REWORDED on 2026-09-19 and the old words are recorded here so the
+	 * change is arguable rather than invisible. It used to read "the wiki's own expansion of the
+	 * field came back broken", which was true of the two cases it then covered — a field carrying
+	 * an `Expression error`, a Lua `nil` or surviving wikitext — and became FALSE the moment it also
+	 * had to cover the flattened-table drop, where the wiki's expansion succeeded and it was the
+	 * HTML-to-text flattening downstream of it that lost the rows and columns. Blaming the wiki for
+	 * our own renderer is exactly the small untruth this module exists to refuse, so the sentence
+	 * now names the stage rather than the party, and the `fields` slot carries which case it is.
+	 *
+	 * A THIRD `kind` was the obvious alternative and is not available: `champion-brief.ts` picks the
+	 * template with `notice.kind === "disagreed" ? disagreed : render`, so any new kind silently
+	 * renders as this one. Adding one is a one-line change there, in a file this change did not own.
 	 */
 	"group.withheld.disagreed": (v: { fields: string }) =>
 		`- WITHHELD (${v.fields}): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.`,
 	"group.withheld.render": (v: { fields: string }) =>
-		`- WITHHELD (${v.fields}): the wiki's own expansion of the field came back broken, so no value is shown. This app does not know what it is — say nothing about it.`,
+		`- WITHHELD (${v.fields}): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.`,
 
 	"sources.heading": () => "### Where this section came from",
 	"sources.line": (v: { source: SourceRecord; claims: number }) =>
@@ -746,8 +863,23 @@ export const STRUCTURE_TEMPLATES = {
 	 * second place a sentence about League could enter without a reviewer seeing it as a diff.
 	 */
 	"general.heading": () => "# GENERAL CONTEXT — where every champion line in this app comes from",
-	"general.patch": (v: { patch: string; champions: number; claims: number; withheld: number; broken: number }) =>
-		`Patch ${v.patch}. ${v.champions} champions, ${v.claims} checked lines, ${v.withheld} ability slot${v.withheld === 1 ? "" : "s"} withheld because two sources disagreed about the name, the cooldown or the cost, and ${v.broken} field${v.broken === 1 ? "" : "s"} withheld because the wiki's own expansion of it came back broken.`,
+	/*
+	 * The two clauses after `broken` were added on 2026-09-19 and are the corpus-level half of the
+	 * two fixes landed that day. They are here rather than in the champion files because both are
+	 * facts about the PIPELINE, and because a line added to a champion file that `championBrief`
+	 * did not mint shows up as `untraced` in `auditAssembled` — the ledger is built from the
+	 * renderer's own lines, so the generator cannot add a sentence to a file after the fact.
+	 */
+	"general.patch": (v: {
+		patch: string
+		champions: number
+		claims: number
+		withheld: number
+		broken: number
+		tableCells: number
+		soleSourced: number
+	}) =>
+		`Patch ${v.patch}. ${v.champions} champions, ${v.claims} checked lines, ${v.withheld} ability slot${v.withheld === 1 ? "" : "s"} withheld because two sources disagreed about the name, the cooldown or the cost, ${v.broken} field${v.broken === 1 ? "" : "s"} withheld because the wiki's own expansion of it came back broken, and ${v.tableCells} cell${v.tableCells === 1 ? "" : "s"} of tables inside the wiki's notes withheld because the rows and columns did not survive being flattened to text — a header and its value arrived as two separate lines and neither says anything on its own. ${v.soleSourced} of the checked lines rest on ONE tier-1 source rather than two, because Data Dragon files a passive outside its spell list and publishes only the first form of each slot; each of those lines names the single wiki revision it was copied from.`,
 	/*
 	 * The negative half, and it is the honest one. Every entry names a CATEGORY that was probed for
 	 * and came back empty — it is a statement about sources, not about League, which is why it can

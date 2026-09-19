@@ -111,47 +111,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If the target becomes untargetable, dies, or is too far away or no longer in sight during the cast time, this ability will cancel but does not go on cooldown nor pay its cost (if applicable). [wiki-r rev-3982561, fetched 2026-09-18]
 - edge case: This excludes losing sight of the target. [wiki-r rev-3982561, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Caitlyn is channeling: [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Channel [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: All the other item-actives are disabled [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3982561, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-3982561, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-r rev-3982561, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -159,4 +120,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007583, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FPiltover%20Peacemaker&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4023135, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FYordle%20Snap%20Trap&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007584, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2F90%20Caliber%20Net&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-3982561, fetched 2026-09-18 — 70 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FAce%20in%20the%20Hole&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-3982561, fetched 2026-09-18 — 30 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FAce%20in%20the%20Hole&prop=text

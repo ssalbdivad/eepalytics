@@ -86,43 +86,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: During Cyclone, Wukong and his clone's attack ranges are reduced「 to 50 」「 by 125 」. [wiki-r rev-4021867, fetched 2026-09-18]
 - edge case: Spell shield will block one instance of damage. [wiki-r rev-4021867, fetched 2026-09-18]
 - edge case: Blocking the knock up will still grant immunity to it from either of Cyclone's casts. [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Other abilities are disabled for the first 0.3 seconds, casting them afterwards interrupts. [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Allowed [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: All items are usable [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash Teleport Hexflash [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Recall [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4021867, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4021867, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 52.35% (n=9,003 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]
@@ -134,5 +98,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4051479, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Wukong%2FCrushing%20Blow&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4016976, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Wukong%2FWarrior%20Trickster&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4021858, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Wukong%2FNimbus%20Strike&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4021867, fetched 2026-09-18 — 53 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Wukong%2FCyclone&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4021867, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Wukong%2FCyclone&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/monkeyking/jungle?tier=emerald_plus

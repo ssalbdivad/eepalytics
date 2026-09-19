@@ -106,43 +106,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Magic [wiki-e rev-4015351, fetched 2026-09-18]
 - edge case: Spark Surge's extended dash travels based on the thickness of the terrain, up to a maximum distance. [wiki-e rev-4015351, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Zeri is dashing: [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Attacking [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Abilities [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Burst Fire is disabled. Ultrashock Laser and Lightning Crash are usable. [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Movement [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Items [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: All the other item-actives are usable [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: N/A [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Hextech Rocketbelt [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Consumables [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Spells [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Teleport Recall [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: N/A [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Flash [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4015351, fetched 2026-09-18]
-- edge case: Death [wiki-e rev-4015351, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Lightning Crash [wiki-r rev-4016978, fetched 2026-09-18]
@@ -174,5 +138,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4051663, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zeri%2FLiving%20Battery&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4062236, fetched 2026-09-18 — 44 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zeri%2FBurst%20Fire&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4060386, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zeri%2FUltrashock%20Laser&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4015351, fetched 2026-09-18 — 48 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zeri%2FSpark%20Surge&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4015351, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zeri%2FSpark%20Surge&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4016978, fetched 2026-09-18 — 23 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zeri%2FLightning%20Crash&prop=text

@@ -18,6 +18,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Innate: Kled rides his semi-trusty mount, Skaarl. While Mounted, all damage dealt to the duo is suffered by Skaarl, who has 400 – 1400 (based on level) base health; additional sources of health are applied to Skaarl's maximum health. Effects based on percentage health consider Kled and Skaarl's combined maximum health. Being reduced below 0 health causes Skaarl to flee, forcing Kled to be Dismounted, with all damage in excess of Skaarl's health being ignored. Upon dismounting, Kled lunges in the direction of the allied Nexus, though not through terrain, while cleansing himself of all crowd control and becoming unable to act, untargetable, and immune to crowd control for 0.5 seconds. Dismounting resets the cooldown and charges of Pocket Pistol. While Kled is Dismounted, his base health and movement speed are reduced; however, he gains bonus movement speed while moving toward enemy champions. Additionally, he gains bonus attack range, and his attacks deal 85% / 90% / 95% / 100% (based on level) damage to champions. Bear Trap on a Rope is replaced with Pocket Pistol, while Jousting and Chaaaaaaaarge!!! become unusable. While Mounted, healing and health regeneration will first replenish Skaarl's health and will only apply to Kled's health while Skaarl is at full health. [wiki-p rev-4058479, fetched 2026-09-18]
 - missile or dash speed: 400 [wiki-p rev-4058479, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4058479, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Dismounted Skaarl the Cowardly Lizard [wiki-p2 rev-4038397, fetched 2026-09-18]
 - what it does: Innate: Kled is only vulnerable to death while Dismounted. Kled has 410 – 1838 (based on level) base health, which is not improved by sources of bonus health, his movement speed is reduced「 by 40 」「 to 305 」, and he gains 125 total attack range. Effects based on percentage health consider Kled and Skaarl's combined maximum health, meaning that a Dismounted Kled is never considered to be at full health. Kled gains 70 – 155 (based on level) bonus movement speed while facing and after attacking nearby visible enemy champions, but his basic attacks against them are reduced to 85% / 90% / 95% / 100% (based on level) AD physical damage. He also gains bonus armor and bonus magic resistance equal to 4 (+ 1% of bonus health), increased by 30% for each nearby visible enemy champion, up to a maximum of 10 (+ 2.5% bonus health) resistances. Additionally, he gains the ability to restore Skaarl's Courage to mount again. Innate - Courage: Kled gains 15 Courage after completing a basic attack against a champion and 5 Courage for lane minion kills and when basic attacking structures or epic monsters. He can also restore Courage from hitting enemies with Pocket Pistol. Upon reaching 100 Courage, Skaarl instantly restores 40% / 50% / 60% / 70% (based on level) of her maximum health and reunites with Kled over 0.25 seconds, after which he consumes all Courage to become Mounted and the duo become unable to declare basic attacks or cast their abilities for 0.25 seconds. Mounting up resets the cooldowns of Bear Trap on a Rope and Jousting. While at the allied fountain, 25 Courage is generated every 0.25 seconds. If reuniting outside of the fountain, Skaarl gets Frayed Nerves, which prevents Kled from gaining Courage for 30 seconds. Being within the fountain while Dismounted removes Frayed Nerves. [wiki-p2 rev-4038397, fetched 2026-09-18]
 - effect radius: 1200 / 1400 [wiki-p2 rev-4038397, fetched 2026-09-18]
@@ -45,6 +46,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-q2 rev-4059773, fetched 2026-09-18]
 - damage type: Physical [wiki-q2 rev-4059773, fetched 2026-09-18]
 - spell shield: True [wiki-q2 rev-4059773, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Violent Tendencies [wiki-w rev-4059722, fetched 2026-09-18]
@@ -64,6 +66,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - missile or dash speed: 600 + 100% movement speed [wiki-e rev-4059782, fetched 2026-09-18]
 - targeting: Direction / Auto [wiki-e rev-4059782, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4059782, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Dismounted Jousting [wiki-e2 rev-3942228, fetched 2026-09-18]
 - what it does: This ability is unusable while dismounted. [wiki-e2 rev-3942228, fetched 2026-09-18]
 - targeting: N/A [wiki-e2 rev-3942228, fetched 2026-09-18]
@@ -78,6 +81,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - missile or dash speed: 1000 • 600 [wiki-r rev-4059781, fetched 2026-09-18]
 - targeting: location [wiki-r rev-4059781, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4059781, fetched 2026-09-18]
+- WITHHELD (74 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Dismounted Chaaaaaaaarge!!! [wiki-r2 rev-3942225, fetched 2026-09-18]
 - what it does: This ability is unusable while dismounted. [wiki-r2 rev-3942225, fetched 2026-09-18]
 - targeting: N/A [wiki-r2 rev-3942225, fetched 2026-09-18]

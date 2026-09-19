@@ -29,6 +29,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-q rev-3988570, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-3988570, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-3988570, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Defensive Ball Curl [wiki-w rev-3982827, fetched 2026-09-18]
@@ -65,6 +66,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Location [wiki-r rev-4008005, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4008005, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4008005, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 52.93% (n=3,157 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

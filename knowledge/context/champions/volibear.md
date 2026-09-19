@@ -107,43 +107,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Disabling a turret does not prevent aggro of the current target it is locked onto. The increased turret shot damage from Ohmwrecker is also reset. [wiki-r rev-4007765, fetched 2026-09-18]
 - edge case: Turrets maintain the same targeting behavior even when disabled; damaging an enemy champion will still draw turret aggro. However, if the turret's desired target leaves range or has become an invalid target, it will lock onto the most previous target it was going to attack prior to becoming disabled, or instead, find a new one if that condition is not applicable. [wiki-r rev-4007765, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Volibear is dashing: [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4007765, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4007765, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -151,4 +115,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4046590, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Volibear%2FThundering%20Smash&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008612, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Volibear%2FFrenzied%20Maul&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008614, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Volibear%2FSky%20Splitter&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4007765, fetched 2026-09-18 — 59 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Volibear%2FStormbringer&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4007765, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Volibear%2FStormbringer&prop=text

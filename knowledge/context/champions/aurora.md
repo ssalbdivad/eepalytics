@@ -111,43 +111,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: This lockout applies to both the initial dash and the dashes in the formed rift. [wiki-r rev-4063510, fetched 2026-09-18]
 - edge case: The lockout during the initial cast's dash persists for another 0.5 seconds after the dash ends. [wiki-r rev-4063510, fetched 2026-09-18]
 - edge case: The lockout during the rift dash persists for another 0.15 seconds after the dash ends. [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4063510, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4063510, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -155,4 +119,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4021922, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aurora%2FTwofold%20Hex&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007570, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aurora%2FAcross%20the%20Veil&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3936382, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aurora%2FThe%20Weirding&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4063510, fetched 2026-09-18 — 65 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aurora%2FBetween%20Worlds&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4063510, fetched 2026-09-18 — 28 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aurora%2FBetween%20Worlds&prop=text

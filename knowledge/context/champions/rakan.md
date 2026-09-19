@@ -79,46 +79,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Magic [wiki-r rev-3971183, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-3971183, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Rakan is in cast time: [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Cast time [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Allowed [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Grand Entrance is disabled but can still be buffered. Gleaming Quill and Battle Dance are usable. [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Allowed [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: All items are usable [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Teleport Recall Hexflash [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Flash [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: : [wiki-r rev-3971183, fetched 2026-09-18]
-- edge case: Death, unless protected by Resurrection [wiki-r rev-3971183, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -126,4 +87,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3996425, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rakan%2FGleaming%20Quill&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007760, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rakan%2FGrand%20Entrance&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008001, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rakan%2FBattle%20Dance&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-3971183, fetched 2026-09-18 — 50 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rakan%2FThe%20Quickness&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-3971183, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rakan%2FThe%20Quickness&prop=text

@@ -37,47 +37,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Piercing Arrow will cast from wherever Varus is at the end of the channel. [wiki-q rev-4026469, fetched 2026-09-18]
 - edge case: At maximum damage charge, all damage caused by Piercing Arrow will trigger cosmetic critical strike text. [wiki-q rev-4026469, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Varus is channeling: [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Type [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Charge channel [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Attacking [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Abilities [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Blighted Quiver is usable during the first 0.85 seconds, otherwise, it's disabled. Hail of Arrows and Chain of Corruption are disabled. This ability recasts to end channel. [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Movement [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Allowed [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Items [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: N/A [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: All items are disabled [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: N/A [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Consumables [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Disabled, but can still use trinkets. [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Spells [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Usable [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Disabled [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Teleport Recall [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Hexflash (Recasts) [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: : [wiki-q rev-4026469, fetched 2026-09-18]
-- edge case: Death [wiki-q rev-4026469, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-q rev-4026469, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Blighted Quiver [wiki-w rev-4062256, fetched 2026-09-18]
@@ -141,7 +102,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4026465, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Varus%2FLiving%20Vengeance&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4026469, fetched 2026-09-18 — 57 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Varus%2FPiercing%20Arrow&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4026469, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Varus%2FPiercing%20Arrow&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4062256, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Varus%2FBlighted%20Quiver&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3969402, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Varus%2FHail%20of%20Arrows&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4008213, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Varus%2FChain%20of%20Corruption&prop=text

@@ -47,6 +47,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-w rev-4007365, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4007365, fetched 2026-09-18]
 - spell shield: true [wiki-w rev-4007365, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Bladework [wiki-e rev-3906658, fetched 2026-09-18]

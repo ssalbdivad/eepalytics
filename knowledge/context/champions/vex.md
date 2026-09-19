@@ -101,43 +101,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Shadow Surge grants the additional cast from scoring the takedown even if the target died to the ability. [wiki-r rev-4057925, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Vex is dashing: [wiki-r rev-4057925, fetched 2026-09-18]
 - edge case: All movement spells are disabled during the first 0.25 seconds of the dash. [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: All the other item-actives are usable [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Hextech Rocketbelt [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Teleport Recall [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Hexflash [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Flash [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4057925, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4057925, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -145,4 +109,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4053302, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FMistral%20Bolt&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008547, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FPersonal%20Space&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4034711, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FLooming%20Darkness&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4057925, fetched 2026-09-18 — 57 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FShadow%20Surge&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4057925, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vex%2FShadow%20Surge&prop=text

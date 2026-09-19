@@ -32,11 +32,13 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-q rev-4008652, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4008652, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4008652, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - what it does: Passive: While Yuumi is attached, she is untargetable (except by turrets and inbound projectiles) and casts her abilities from the Anchor's position, empowering them with additional effects. Active: Yuumi channels for 0.25 seconds, then upon completion dashes to the target allied champion and attaches to them upon arrival, designating them as her Anchor. You and Me! can be recast after 0.5 seconds of the attachment. Recast - Change of Plan: Yuumi detaches from her Anchor and dashes to the target allied champion to attach to them, refreshing the recast. She will detach automatically if her Anchor dies or under certain circumstances. If recast without a valid target, Yuumi will detach and dash 250-units in the target direction, placing You and Me! on a 0.25-second cooldown if it is not already on cooldown. Yuumi will be knocked down by any immobilizing or polymorphing crowd control during the dash to the ally. [wiki-w rev-4011487, fetched 2026-09-18]
 - targeting: Unit / Direction [wiki-w rev-4011487, fetched 2026-09-18]
 - WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
+- WITHHELD (77 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Zoomies [wiki-e rev-4026487, fetched 2026-09-18]
@@ -60,6 +62,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r rev-4047717, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4047717, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4047717, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

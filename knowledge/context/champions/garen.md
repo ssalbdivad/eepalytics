@@ -84,43 +84,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Each spin deals damage simultaneously to all enemies within its range when the spin is completed. [wiki-e rev-4009435, fetched 2026-09-18]
 - edge case: The spin animation is capped at 200% bonus attack speed, but the amount of ticks will keep on scaling. [wiki-e rev-4009435, fetched 2026-09-18]
 - edge case: The armor reduction stacks multiplicatively with other percentage armor penetration effects. [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Attacking [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Abilities [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Decisive Strike and Courage are usable. Demacian Justice interrupts. [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Movement [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Allowed [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Items [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: All items are usable [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: N/A [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: N/A [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Consumables [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Spells [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Usable [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite Flash Teleport Hexflash [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Disabled [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Recall [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: N/A [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: : [wiki-e rev-4009435, fetched 2026-09-18]
-- edge case: Death [wiki-e rev-4009435, fetched 2026-09-18]
+- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Demacian Justice [wiki-r rev-4042864, fetched 2026-09-18]
@@ -142,5 +106,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4038338, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Garen%2FPerseverance&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4004895, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Garen%2FDecisive%20Strike&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4059879, fetched 2026-09-18 — 23 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Garen%2FCourage&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4009435, fetched 2026-09-18 — 55 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Garen%2FJudgment&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4009435, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Garen%2FJudgment&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4042864, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Garen%2FDemacian%20Justice&prop=text

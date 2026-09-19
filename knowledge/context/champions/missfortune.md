@@ -98,47 +98,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Bullet Time fires the first wave at 0.066 seconds, and the last at 2.904 seconds. Times between waves are equally spread between these values. [wiki-r rev-4050364, fetched 2026-09-18]
 - edge case: Miss Fortune may cancel the last ~0.1 seconds of channel time at no loss of effect. [wiki-r rev-4050364, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Miss Fortune is channeling: [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Type [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Channel [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Attacking [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Interrupts [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Abilities [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Interrupts [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Movement [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Interrupts [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Items [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Shurelya's Battlesong Youmuu's Ghostblade Randuin's Omen [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Hextech Rocketbelt [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: All item-actives not specified above interrupt [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Consumables [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Spells [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Usable [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Barrier Clarity Cleanse Exhaust Ghost Heal Ignite Smite [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Disabled [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: N/A [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Flash Teleport Recall Hexflash [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Interrupted by [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: : [wiki-r rev-4050364, fetched 2026-09-18]
-- edge case: Death [wiki-r rev-4050364, fetched 2026-09-18]
 - edge case: Cast-inhibiting effects [wiki-r rev-4050364, fetched 2026-09-18]
+- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -146,4 +107,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3993572, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Miss%20Fortune%2FDouble%20Up&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4015416, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Miss%20Fortune%2FStrut&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3936384, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Miss%20Fortune%2FMake%20It%20Rain&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4050364, fetched 2026-09-18 — 65 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Miss%20Fortune%2FBullet%20Time&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4050364, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Miss%20Fortune%2FBullet%20Time&prop=text
