@@ -89,12 +89,12 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### R
 - what it does: Active: Jayce transforms into Cannon Stance, receiving access to its abilities, becoming ranged with 500 attack range, and empowering his next basic attack to reduce the target's armor and magic resistance by 20% / 25% / 30% / 35% (based on level) for 5 seconds. Jayce begins the game with Transform but cannot increase its rank. Instead, his basic abilities each have 6 ranks. [wiki-r rev-3989867, fetched 2026-09-18]
 - targeting: Auto [wiki-r rev-3989867, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Transform Mercury Hammer [wiki-r2 rev-4049966, fetched 2026-09-18]
 - cooldown: 6 [wiki-r2 rev-4049966, fetched 2026-09-18]
 - what it does: Active: Jayce transforms into Hammer Stance, receiving access to its abilities, becoming melee with 125 attack range, gaining 5 / 12 / 19 / 26 (based on level) (+ 7.5% bonus AD) bonus armor and bonus magic resistance, and empowering his next basic attack to deal 25 / 60 / 95 / 130 (based on level) (+ 30% bonus AD) bonus magic damage. Jayce begins the game with Transform but cannot increase its rank. Instead, his basic abilities each have 6 ranks. [wiki-r2 rev-4049966, fetched 2026-09-18]
 - cast time: none [wiki-r2 rev-4049966, fetched 2026-09-18]
 - targeting: Auto [wiki-r2 rev-4049966, fetched 2026-09-18]
-- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

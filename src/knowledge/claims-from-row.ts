@@ -296,7 +296,7 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 			skipped.push(
 				`${row.key}.${slotId}: sources disagreed, so name/cooldown/cost withheld`
 			)
-			withheld.push({ group, fields: "name, cooldown, cost", kind: "disagreed" })
+			withheld.push({ group, slotId, fields: "name, cooldown, cost", kind: "disagreed" })
 		}
 		/*
 		 * A field the wiki could not expand. The fetcher records WHICH ones rather than leaving the
@@ -306,7 +306,7 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 		const broken = (ability.withheld ?? []).map(w => w.split(":")[0]!.trim()).filter(w => w !== "")
 		if (broken.length > 0) {
 			skipped.push(`${row.key}.${slotId}: the wiki's expansion broke, so ${broken.join(", ")} withheld`)
-			withheld.push({ group, fields: broken.join(", "), kind: "render" })
+			withheld.push({ group, slotId, fields: broken.join(", "), kind: "render" })
 		}
 
 		push("effect", "ability.effect", ability.wikiDescription, {

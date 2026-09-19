@@ -295,6 +295,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Interrupted by [wiki-r rev-4063964, fetched 2026-09-18]
 - edge case: : [wiki-r rev-4063964, fetched 2026-09-18]
 - edge case: Death, unless protected by Resurrection [wiki-r rev-4063964, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Regurgitate [wiki-r2 rev-4013502, fetched 2026-09-18]
 - what it does: Active: Tahm Kench detaches the swallowed champion from himself and spits them out in the target direction. If they are an enemy, he deals magic damage to them at the end of the displacement. Tahm Kench is unable to act for 0.4 seconds after casting Regurgitate. If Regurgitate was cast automatically, Tahm Kench spits the target out in his facing direction. [wiki-r2 rev-4013502, fetched 2026-09-18]
 - damage by rank: Magic Damage: 100 / 250 / 400 (+ 15% (+ 7% per 100 AP) of the target's maximum health) [wiki-r2 rev-4013502, fetched 2026-09-18]
@@ -305,7 +306,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The target will face in the direction of Regurgitate's cast for the duration of the displacement. [wiki-r2 rev-4013502, fetched 2026-09-18]
 - edge case: The target will blink to Tahm Kench's location at the start of Regurgitate's cast time. [wiki-r2 rev-4013502, fetched 2026-09-18]
 - edge case: Regurgitate will also automatically cast if the target is affected by Fate's Call or enters resurrection. [wiki-r2 rev-4013502, fetched 2026-09-18]
-- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

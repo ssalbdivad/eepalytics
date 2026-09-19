@@ -522,24 +522,39 @@ export const championBrief = (
 		// number about it was withheld" is the most important thing that file can say.
 		if (inGroup.length === 0 && notices.length === 0) continue
 		lines.push(structureLine("group.heading", { title: GROUP_TITLES[group] }))
-		for (const claim of inGroup) {
+		/*
+		 * A notice belongs beside the ability it is about, not at the end of the group. `claims.id`
+		 * is `<champion>.<slotId>.<field>`, so the slot a claim belongs to is read back off its own
+		 * id rather than carried in a second place that could disagree with it.
+		 */
+		const slotOf = (claim: ClaimRecord): string => claim.id.split(".")[1] ?? ""
+		const emitted = new Set<string>()
+		const emitNotices = (slotId: string): void => {
+			if (emitted.has(slotId)) return
+			emitted.add(slotId)
+			for (const notice of notices.filter(n => n.slotId === slotId))
+				lines.push(
+					structureLine(
+						notice.kind === "disagreed" ? "group.withheld.disagreed" : "group.withheld.render",
+						{ fields: notice.fields }
+					)
+				)
+		}
+		for (const [i, claim] of inGroup.entries()) {
 			lines.push(renderClaimLine(claim, byId))
 			used.push(claim)
+			const next = inGroup[i + 1]
+			if (next === undefined || slotOf(next) !== slotOf(claim)) emitNotices(slotOf(claim))
 		}
 		/*
-		 * The withheld notices go LAST in their group, after the lines that did ship. They are not
-		 * claims and carry no citation, because they cite nothing — they say that a value the
-		 * sources hold did not survive the fence. Without them an ability whose cooldown was
-		 * withheld and an ability nobody documents render identically: Hecarim's Q shipped with no
-		 * name, no cooldown and no damage line, and nothing in the file said that was on purpose.
+		 * Anything left — a slot where every single line was withheld, so there was no claim to hang
+		 * the notice after. They are not claims and carry no citation, because they cite nothing:
+		 * they say a value the sources hold did not survive the fence. Without them an ability whose
+		 * cooldown was withheld and an ability nobody documents render identically, and Hecarim's Q
+		 * shipped with no name, no cooldown and no damage line, with nothing saying that was on
+		 * purpose.
 		 */
-		for (const notice of notices)
-			lines.push(
-				structureLine(
-					notice.kind === "disagreed" ? "group.withheld.disagreed" : "group.withheld.render",
-					{ fields: notice.fields }
-				)
-			)
+		for (const notice of notices) emitNotices(notice.slotId)
 		lines.push(structureLine("blank"))
 	}
 

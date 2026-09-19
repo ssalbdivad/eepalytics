@@ -76,6 +76,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Q
 - what it does: The active effect of Aphelios' varies based on his current main weapon. The individual actives do not share a cooldown. [wiki-q rev-3963883, fetched 2026-09-18]
 - targeting: N/A [wiki-q rev-3963883, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Moonshot [wiki-q2 rev-3993664, fetched 2026-09-18]
 - cooldown: 10 – 8 (based on level) [wiki-q2 rev-3993664, fetched 2026-09-18]
 - cost: 10 Moonlight + 60 [wiki-q2 rev-3993664, fetched 2026-09-18]
@@ -144,7 +145,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: While Sentry's attacks are modified by Severum, it will heal Aphelios for any damage it deals and its attacks cannot be intercepted by Wind Wall and Unbreakable. [wiki-q6 rev-4034689, fetched 2026-09-18]
 - edge case: The Sentry will stop upon colliding with Wind Wall. It will be deployed in front of the wall. [wiki-q6 rev-4034689, fetched 2026-09-18]
 - edge case: The Sentry's attacks can be dodged and blocked, but not missed from being blinded. [wiki-q6 rev-4034689, fetched 2026-09-18]
-- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Phase [wiki-w rev-3970739, fetched 2026-09-18]

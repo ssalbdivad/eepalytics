@@ -58,13 +58,13 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Active: Tahm Kench abducts the target champion, pulling them to him over the cast time and then swallowing them to carry them in his belly for up to 3 seconds. While inside, the target is attached to Tahm Kench and is rendered untargetable and displacement immune. Devour can only be cast on enemies with 3 stacks of An Acquired Taste. If the target is an ally, they become unable to act and are granted a shield, which decays in strength by 50 every 0.25 seconds after they are Regurgitated. Tahm Kench will also gain 60% bonus movement speed for 3 seconds and is unable to cast movement spells besides Abyssal Dive while an ally is inside of his belly. After 1 second, Tahm Kench can cast Regurgitate while a target is inside of his belly, and automatically does so after the duration. The swallowed ally can also input a movement command to force Tahm Kench to cast Regurgitate in a target direction of their choice, unless they are immobilized. An Acquired Taste Bonus: The target is suppressed during Devour's cast time and while attached. Tahm Kench will also be grounded and slowed by 40% under those same conditions. [wiki-r rev-4063964, fetched 2026-09-18]
 - targeting: Unit [wiki-r rev-4063964, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4063964, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Regurgitate [wiki-r2 rev-4013502, fetched 2026-09-18]
 - what it does: Active: Tahm Kench detaches the swallowed champion from himself and spits them out in the target direction. If they are an enemy, he deals magic damage to them at the end of the displacement. Tahm Kench is unable to act for 0.4 seconds after casting Regurgitate. If Regurgitate was cast automatically, Tahm Kench spits the target out in his facing direction. [wiki-r2 rev-4013502, fetched 2026-09-18]
 - damage by rank: Magic Damage: 100 / 250 / 400 (+ 15% (+ 7% per 100 AP) of the target's maximum health) [wiki-r2 rev-4013502, fetched 2026-09-18]
 - targeting: Direction [wiki-r2 rev-4013502, fetched 2026-09-18]
 - damage type: Magic [wiki-r2 rev-4013502, fetched 2026-09-18]
 - spell shield: false [wiki-r2 rev-4013502, fetched 2026-09-18]
-- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

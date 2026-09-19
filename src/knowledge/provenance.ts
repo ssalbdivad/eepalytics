@@ -287,6 +287,12 @@ export interface ClaimRecord {
  */
 export interface WithheldNotice {
 	group: ClaimGroup
+	/**
+	 * Which ability in the group, as `claims-from-row` numbers them — `r`, `r2`. A slot is not one
+	 * ability: Jayce carries two R rows, one per stance, and a notice parked at the end of the group
+	 * would read as being about whichever stance the reader was looking at.
+	 */
+	slotId: string
 	/** The ability or field list this is about, as the table spells it. */
 	fields: string
 	kind: "disagreed" | "render"
