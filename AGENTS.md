@@ -375,11 +375,42 @@ And the picture is SLOW: paired turn against turn on the socket, the frame arm c
 **28 of 31 turns by a median 345ms**, sign test p < 0.00001, beside a quality difference of zero.
 That latency is upload, not tokens.
 
-**What to do with it.** The picture is not earning its 15–30%, its 6.5MB or its 345ms, and three
-separate crops of it change nothing a reader can detect. Send it RARELY — at champ select, and on
-the handful of turns where nothing else can settle what is happening — or not at all, and spend the
-latency on the schedule instead, which is where AGENTS.md already says the next real gain is. Do
-not spend another run asking whether a different crop helps; three have been asked.
+**EVERY FIGURE IN THE TWO PARAGRAPHS ABOVE BELONGS TO A MODEL THAT NO LONGER SHIPS, and the cost
+case for cutting the picture died with it.** Re-measured 2026-09-19 on `models/gemini-3.8-live`,
+the socket default since the race — `data/eval/frame-cadence-20260919.json`, five arms over the 29
+turns of game 5639406342, `data/eval/frame-price-20260919.md` for the working:
+
+|  | 2026-09-11, gemini-3.1-flash-live | 2026-09-19, gemini-3.8-live |
+|---|---|---|
+| turn 0, no frame | 15,279 | 20,746 |
+| turn 0, one frame | 16,381 | 21,012 |
+| **one 1536x864 frame** | **1,102 tokens** | **266 tokens** |
+| the whole game | +543,412 over `noframe`, **30.1%** | +31,464 over `none`, **3.2%** |
+
+TURN ZERO is where to read it, because there is no thread history, the payload is byte-identical,
+and FOUR arms sent that first frame and all four report 21,012 to the token. The frames are the
+same shape — both 1536x864, same journal, same base64 path — so this is 1,102 against 266 for the
+same picture. **A picture is not a fixed price; it is a price per model**, and 266 is the Live
+API's video-frame rate where 1,102 is its image rate.
+
+The old 30.1% is exactly what N² re-billing looks like: 1,102 × 31 × 32 / 2 = 546,592, the measured
+figure to within 0.6%. Today's 31,464 for 29 frames is 1,085 per frame TOTAL over the whole game,
+about one frame's own price, once. At the shipped 8-turn thread (`THREAD_MAX_TURNS` recycles the
+socket) that is 224,066 prompt tokens a game with a frame every turn against 215,566 with none —
+**$0.168 against $0.162**. The arm-to-arm noise floor, the same arm run twice, is 3,345 tokens;
+`sparse` (10 frames) and `once` (1 frame) both land INSIDE it.
+
+Latency survives, smaller: paired first-audio, `full` against `none` is +193ms (19 of 29, p 0.14)
+and its twin `full2` +162ms (22 of 28, p 0.004), over a same-arm floor of +92ms — call it 170ms,
+against the 345ms measured on the old socket.
+
+**What to do with it.** Leave the picture where it is and stop buying runs to ask about it. Cutting
+it now saves 3.8% of the prompt bill and about 170ms, not a third of the bill and 345ms, and four
+separate measurements — three crops and a cadence sweep — have failed to find a quality difference
+either way. The cadence run's own verdict column is unreadable for exactly the reason this file
+keeps repeating: `full` and `full2` are the SAME ARM and scored 36% and 11% useful, 25 points apart
+(9 against 2 discordant, p = 0.065), so nothing smaller than 25 points in that table is an effect.
+Spend the latency on the schedule instead, which is where the next real gain is.
 
 Two candidate fixes for the two measured misuses are REFUTED and must not be re-drafted. Sending the
 JPEG after the text rather than before changed nothing (37% useful against 37%, p = 1.000).
@@ -528,9 +559,11 @@ without the other cannot be misled.
   bigger than ~7 points), but the verdict arm on the same run points the other way and is
   underpowered: over 41 graded lines `full` is 19 useful / 19 false and `none` is 15 / 25. Removing
   the frame would be acting on the direction the powered instrument could not measure and the
-  unpowered one contradicts. The only lever with a hard number on it is CADENCE — 31 pictures cost
-  543,412 prompt tokens across a 28-minute game, 30% of the whole bill, because one socket re-bills
-  every frame on every later turn — and `sparse` is written and unrun.
+  unpowered one contradicts. The lever that looked like it had a hard number on it was CADENCE, and
+  `sparse` has now been run: on the model that ships, the frames are **3.2%** of the bill rather
+  than 30%, because `gemini-3.8-live` prices a frame at **266 tokens** where `gemini-3.1-flash-live`
+  charged 1,102 and re-billed it on every later turn. See the table above; the cost case for cutting
+  the picture is gone and about 170ms of latency is what is left of it.
 
 #### Nobody could tell whether the coach ran at all, and that outranked every model finding
 
@@ -652,10 +685,12 @@ and when the count of those turns travels beside it. The first version of this t
 Haiku came out at 822ms under the heading "BEATS the socket".
 
 **A frame costs ONCE on this path.** +1,708 prompt tokens on Anthropic and +1,100 on Google, about
-+120ms to the first fragment (1 of 12 turns faster, p=0.006), and +$0.003 a turn. That is the
-structural difference from the socket, where one held thread re-bills every picture on every later
-turn — 543,412 prompt tokens and 30% of the bill for 31 frames. Nothing here says a frame is WORTH
-it; that is `frame-value.ts`'s null, unchanged.
++120ms to the first fragment (1 of 12 turns faster, p=0.006), and +$0.003 a turn. That used to be
+the structural difference from the socket, where one held thread re-billed every picture on every
+later turn — 543,412 prompt tokens and 30% of the bill for 31 frames. **On the socket model that
+ships now it is 266 tokens a frame and 3.2% of the bill**, so the structural difference has largely
+closed; see the table further up. Nothing here says a frame is WORTH it; that is
+`frame-value.ts`'s null, unchanged.
 
 **Two things this run found that are not about latency.** `claude-haiku-4-5` refuses `effort`.
 And the Gemini key's prepayment credits ran out DURING the second run — `generateContent` now answers
@@ -767,12 +802,21 @@ nothing can be recorded as conflicting with them, and `agreed` is therefore vacu
 245. The DELIVERED lines are honest about it, because each names the single wiki revision it came
 from (`- cost: 25 [wiki-q2 rev-4026428, fetched 2026-09-18]`), and that is why the bullet below —
 "cannot ship without a second tier-1 source agreeing" — is the sentence that needed correcting
-rather than the corpus. **294 claims** (245 names, 29 cooldowns, 20 costs) are minted carrying
+rather than the corpus. **294 claims** (245 names, 29 cooldowns, 20 costs) were minted carrying
 `agreesWith: ["ddragon"]` where Data Dragon said nothing at all. `agreesWith` is read by exactly one
-thing, the `crossChecked` gate in `provenance.ts`, and never reaches a prompt, so nobody has been
-told a wrong thing by it; what it means is that the gate is weaker than its name. The fix is one
-field in `claims-from-row.ts` — carry "a second source was consulted" rather than inferring it from
-an empty conflict list — and it is NOT DONE.
+thing, the `crossChecked` gate in `provenance.ts`, and never reaches a prompt, so nobody was ever
+told a wrong thing by it; what it meant is that the gate was weaker than its name.
+
+FIXED 2026-09-19. Those claims now carry a closed-vocabulary `soleSource` naming which of exactly
+two structural reasons no second source exists, and `crossChecked` requires a claim to STATE what
+happened with the second source rather than inferring corroboration from an empty conflict list —
+it refuses silence, an unknown reason, and a claim asserting both. **The gate does NOT refuse the
+294**, and the argument sits at `crossChecked` where the next person will argue with it: refusing
+would delete every passive ability NAME from 173 files for no truth gain, because each line already
+ends in the single wiki revision it came from, "uncorroborated" here means no second publisher
+EXISTS rather than that one was not asked, the Swirlseed error was an invented capability that
+`recheckDerivation` catches either way, and these lines are checked by `verify-fetched --articles`,
+which shares no code with this fence.
 
 **Every sentence carries its own source, in the line.** `src/knowledge/provenance.ts` is the fence
 and its load-bearing idea is `derivation`: a closed set of pure functions that RE-DERIVE a claim's
@@ -851,7 +895,8 @@ champions have all five slot sections, and every name and every cooldown the tab
 the delivered file — 0 missing of either.
 
 **`pnpm audit:knowledge --all` now asks the same question of every champion rather than of Lillia.**
-173 champions, 22,634 cited lines in the committed files, **0 untraced**, 0 uncited lines in any
+173 champions, **16,608** cited lines in the committed files (22,634 until the 6,026 valueless
+table cells were dropped on 2026-09-19), **0 untraced**, 0 missing, 0 uncited lines in any
 live instruction. That matters because the claim "no unsourced sentence reaches any prompt" was only
 ever exercised on two champions, which made it a claim about Lillia wearing a claim about the
 corpus. Doing it roster-wide also exposed that the REFUTED probe patterns need a SUBJECT: Riven's
@@ -906,12 +951,25 @@ agreement actually changed between the two patches, each carrying the WITHHELD l
 all 353 context files **byte for byte**, so the corpus is a pure function of (patch, cache) and a
 diff in it means a source moved.
 
-**It is a pure function of (patch, cache) and it still cannot be run with the network off**, which
-is worth separating because the two get quoted as the same property. Every source reads its cache
-unless `--refresh` is passed, tier 2 included — but `main()` fetches Data Dragon's `versions.json`
-before it looks at `--patch`, so `pnpm fetch:champions --patch 16.18.1` against a warm cache still
-needs the internet to be told a patch it was already given. Moving that call behind the `--patch`
-check is two lines and is NOT DONE. The GENERATE half has no such gap and is verified on every
+**It is a pure function of (patch, cache) and, since 2026-09-19, it RUNS WITH THE NETWORK OFF** —
+with `--patch`, which is the only form that can: "latest" is a question nobody can answer offline.
+The two used to get quoted as the same property and they were not, because `main()` fetched Data
+Dragon's `versions.json` before it looked at `--patch`, so `pnpm fetch:champions --patch 16.18.1`
+against a warm cache still needed the internet to be told a patch it was already given. Moving that
+call behind the check was the two lines this file predicted. **Proving it found a second cause that
+made the claim false anyway**: 12 ability templates the wiki itself reports as `missing` — Shyvana's
+Emberstrike 2 and 3, Inferno Aegis 2, Viktor's Glorious Evolution 2-5 and Arcane Storm 2-3, Yuumi's
+Prowling Projectile 2, Samira's splash coin, Milio's Cozy Campfire 2 — were asked for on every run
+and never cached, because only a HIT was ever written. One live `action=query` answers `"missing":
+true` for 12 of 12, so the absence is now recorded in `data/champions/wiki/wiki-absent.json` and
+the fetcher stops asking. The price is stated in the code and chosen deliberately: a
+`Template:Data` page CREATED later is not re-asked until `--refresh`, which beats a time-based
+expiry that would put the wall clock back into a pipeline whose whole property is being a pure
+function of (patch, cache). PROVEN in a network namespace against a copy of the warm cache, outputs
+deleted first: exit 0 in 3.46s, `champion-table.ts` byte-identical to `git show HEAD:` and all 353
+context files byte-identical to `git archive HEAD`, at the sha256 the committed MANIFEST records; a
+second offline run writes nothing; and the 16.18.1 -> 16.17.1 -> 16.18.1 round trip holds offline
+too. The GENERATE half has no such gap and is verified on every
 test run: `pnpm generate:context` is offline by construction, and `champion-context.test.ts`
 regenerates all 353 files into a temp directory and diffs them against what is committed, in both
 directions (17 cases, green as of 2026-09-19).
@@ -925,20 +983,35 @@ numbers is a second place to be wrong about them, and one fix in one place is th
 having one place. Lookup and provenance survive there; nothing in the file can produce a sentence
 about League any more.
 
-**And what survives is a facade nothing but that test imports.** `champion-data.ts` has no caller
-in `src/` or `scripts/` at all: `championRow`, `championRowById`, `championCount`,
-`championProvenance` and `fetchedChampions` are reached only from `champion-data.test.ts`, which
-uses the file as an import surface for `champion-table.ts` and for the fetch parsers. Two of its
-exports duplicate something live — `championKey` is the third copy of that four-line function
-(`knowledge/index.ts` owns the one the app calls; `scripts/fetch-champions.ts` keeps a deliberate
-private one), and `championTableStaleness` is the same sentence to the character as
-`championContextStaleness` in `champion-context.ts`, which is the one that ships because it asks
-the committed tree's manifest rather than the table. So a patch-warning fix applied in
-`champion-data.ts` would change nothing a player sees. It was left standing on 2026-09-19 rather
-than deleted because deleting it deletes the only test that checks the generated table against a
-fresh wiki fetch, and that test is worth more than the tidiness. The end state is to point those
-cases at `champion-table.ts` and drop the facade; it is ON THE LIST, not done, and the file's own
-header now says so at the top rather than describing a renderer that is gone.
+**And the facade that survived it is now deleted too.** `champion-data.ts` had no caller in `src/`
+or `scripts/` at all — `championRow`, `championRowById`, `championCount`, `championProvenance` and
+`fetchedChampions` were reached only from its own test, which used the file as an import surface
+for `champion-table.ts` and for the fetch parsers. It was left standing for a day because deleting
+it would have deleted the only test that checks the generated table against a FRESH WIKI FETCH, and
+that test is worth more than the tidiness. So every assertion was re-homed first — onto the table,
+onto the parsers, and onto the live `contextStaleness` for the four-part patch case nothing else
+covered — and only then was the file dropped, 166 lines. That patch case is not cosmetic: the
+client answers `16.18.712.9876` where the table says `16.18.1`, and if `patchPair` stopped
+truncating, every game would carry a false "these facts are from another patch" paragraph into the
+prompt.
+
+`championKey` is down from three copies to two. The three were verified BYTE-IDENTICAL before they
+were collapsed, the shared one lives in `src/shared/champion-key.ts` where a browser-safe pure
+string helper belongs, and `knowledge/index.ts` re-exports it so no caller moved. The generator's
+private copy stays on purpose — `scripts/fetch-champions.ts` must depend on nothing it generates —
+and is pinned to the shared one by source text AND by the 173 keys it produces, which is not a
+vacuous check: 19 of the 173 names carry a character the strip removes, from Bel'Veth to Renata
+Glasc.
+
+One thing that retirement turned up, recorded as a test rather than as a sentence:
+`CHAMPION_TABLE_FETCHED_AT` is **8h50m newer than the newest of the 46 stamps the table
+publishes**, because the max runs over four cache stamps and the fourth — the wiki render cache —
+is not named in `CHAMPION_TABLE_SOURCES`, so the table's own source record cannot account for its
+own date. The max also ignores all 43 tier-2 stamps. A new case asserts the declared date is no
+older than any published source or tier-2 row, so an op.gg-only refresh fails loudly instead of
+quietly making the byte-reproducibility argument read as true. Publishing `wikiRendered` in
+`CHAMPION_TABLE_SOURCES` and folding the tier-2 stamps into the max is the actual fix, and it is
+NOT DONE — it needs a re-fetch.
 
 **What is still UNFENCED, said plainly: `target range`.** Cooldown and cost are cross-checked
 against Data Dragon; range is not, and it ships from the wiki alone. Where both sources publish a
@@ -950,8 +1023,9 @@ wrong** — it is a measurement that the field is unchecked, unlike the two besi
 would withhold a quarter of all ranges on a comparison nobody here can adjudicate, so it is left
 shipping and left written down.
 
-**Every line is sourced. 17% of them say nothing, and that is a different defect.** Counted over
-the committed corpus on 2026-09-19: of **34,433** delivered claim lines in
+**Every line is sourced. 17% of them said nothing, and that was a different defect — fixed
+2026-09-19.** The state that prompted it, counted over the committed corpus that morning: of
+**34,433** delivered claim lines in
 `knowledge/context/champions/`, **13,205 are `edge case` lines** — the wiki's per-ability
 interaction notes, which are the layer that decides whether a coaching line is true and are worth
 their bytes. But **6,006 of them (17.4% of all delivered lines) have a value of 25 characters or
@@ -970,17 +1044,40 @@ file ships for HIM while the counterpart gets `.core`, which drops interaction n
 `kayn.md` carries 40 of the empty lines in 249 and `kayn.core.md` carries none. `lillia.md` happens
 to carry zero, which is why nobody noticed.
 
-The fix is a filter in `scripts/generate-context.ts` — drop a claim line whose value is empty, and
-decide deliberately what to do with a table cell that has no row header — plus a regeneration, and
-it is **NOT DONE**. It is a generator change during a run with other agents in the tree, and 87
-committed files move when it lands. Whoever takes it: `champion-context.test.ts` will fail until
-the tree is regenerated, which is the test doing its job.
+**They are DROPPED, and the rejoin that looks obvious is refuted with its number.** Of the 2,116
+separators, 2,113 sit between two non-colon notes — but on **319 of them (15.1%) the header is
+itself the VALUE of the preceding triple** (Kayn's passive reads Items / : / Usable / : / N/A), so
+a triple reading ships both "Items: Usable" and "Usable: N/A" and at most one of those is a pairing
+the wiki makes. 15.1% invented pairings is worse than the 8.0% error rate that got the hand-written
+corpus deleted, and the cache holds already-flattened text, so the table shape cannot be recovered
+downstream at all. Each dropped run leaves a `- WITHHELD (N cells of a table in the wiki's notes)`
+line saying how many went and why — 282 notices over 157 runs — because a reader has to be able to
+see from the file why the lines are gone.
+
+AFTER: **28,689 delivered lines, 7,179 edge-case lines, ZERO bare colons, 473 short values (1.6%,
+was 17.4%)**, and the tree is 4,365,221 bytes against 4,691,665. `audit:knowledge --all` still
+reports 173 champions, **16,608 cited lines, 0 untraced and 0 missing** — because the filter lands
+at claim-mint time in `claims-from-row.ts`, not in the generator. That is mechanical rather than
+stylistic: `auditAssembled` builds its ledger from `championBrief`'s own minted lines, so a line
+the GENERATOR drops becomes `missing` and a notice the generator adds becomes `untraced`, and 157
+untraced lines would fail the audit this file quotes as green.
+
+**The residue is measured and written into `claims-from-row.ts` rather than left to be
+rediscovered.** 473 short values survive; most are the wiki being genuinely terse ("No additional
+details." ×22), and 48 are real residue — a cell split from its separator by a `<br>`, "Interrupted
+by / : / Death / Cast-inhibiting effects" ×53. The obvious extension, a transitive closure over
+adjacent notes, is REFUTED in the file: the note immediately before the first header is the
+sentence introducing the table, and the closure eats it in all 157 runs. **The defect is born in
+`htmlToText` in `scripts/fetch-champions.ts`**, which turns a closing `</th>` into ": " and a
+`<br>` into a newline before anything downstream sees a row; emitting one line per `<tr>` would let
+the WIKI do the join and leave this filter with nothing to find. That is a fetcher change plus a
+re-fetch, and it is NOT DONE.
 
 #### The artefact is COMMITTED TEXT, and the runtime cannot render
 
 The table is an intermediate, not the thing the app reads. `scripts/generate-context.ts`
 (`pnpm generate:context`, and `pnpm fetch:champions` runs it) writes `knowledge/context/`: **one
-file per champion for all 173, one per role, one general, 353 files and 4,691,665 bytes, committed
+file per champion for all 173, one per role, one general, 353 files and 4,365,221 bytes, committed
 and diffable** — the counts `knowledge/context/MANIFEST.json` records beside the tree's sha256, and
 the reason to quote the byte count rather than a rounded one is that this line read "4.45 MB" for a
 day after three commits had moved it. At runtime `src/knowledge/champion-context.ts` picks the combination — his champion, the
