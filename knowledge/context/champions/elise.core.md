@@ -80,7 +80,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 825 • 900 [wiki-e2 rev-4007596, fetched 2026-09-18]
 - cast time: none [wiki-e2 rev-4007596, fetched 2026-09-18]
 - targeting: Location / Unit [wiki-e2 rev-4007596, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Spider Form [wiki-r rev-3979322, fetched 2026-09-18]

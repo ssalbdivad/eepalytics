@@ -18,7 +18,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - static cooldown, not affected by ability haste: 300 [wiki-p rev-4061399, fetched 2026-09-18]
 - what it does: Innate - The Secret Weapon: Zac gains increased percentage size equal to 1.5% of his bonus health, capped at 35% increased size at 2333.33 bonus health. Zac's size also reduces based on his missing health, down to 70% total size while at 0% health. Innate - Goo: Whenever Zac hits enemies with an ability, he sheds a number of chunks of himself to a nearby location, landing towards nearby visible enemy champions and lasting for 6 seconds. - Stretching Strikes: 1 chunk for the initial hit, and 1 chunk if the second hits a different enemy - Unstable Matter: 1 chunk if it hits at least one enemy - Elastic Slingshot: 1 chunk for each enemy champion hit, with a minimum of 1 if it hits at least one enemy - Let's Bounce!: 1 chunk for each bounce that hits at least one enemy Both Zac and enemy champions can interact with a chunk by being within 50 units of it: an enemy will destroy it, while Zac will consume it to heal for 4% – 8.47% (based on level) of his maximum health. Innate - Cell Division: Periodically, upon taking fatal damage, Zac enters resurrection for 8 / 7 / 6 / 5 / 4 (based on level) seconds, instantly restoring 50% of his maximum health and becoming untargetable and unable to act for the duration. Zac then splits into four uncontrollable bloblets away from his location, though stopping at terrain. After 1.5 seconds of the bloblets being untargetable, they start moving toward Zac's location over the remaining duration. Any damage the bloblets receive, excluding damage dealt in excess of each bloblet's total maximum health, is also echoed to Zac as true damage. While in resurrection, Zac cannot take damage from sources other than the echoed damage from his bloblets. [wiki-p rev-4061399, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4061399, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Stretching Strikes [wiki-q rev-4008654, fetched 2026-09-18]
@@ -33,7 +32,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-q rev-4008654, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4008654, fetched 2026-09-18]
 - spell shield: special [wiki-q rev-4008654, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Unstable Matter [wiki-w rev-4022472, fetched 2026-09-18]
@@ -60,7 +58,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction / Location [wiki-e rev-4046591, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4046591, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4046591, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Let's Bounce! [wiki-r rev-4013080, fetched 2026-09-18]
@@ -72,7 +69,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-r rev-4013080, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4013080, fetched 2026-09-18]
 - spell shield: Special [wiki-r rev-4013080, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 50.50% (n=4,303 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

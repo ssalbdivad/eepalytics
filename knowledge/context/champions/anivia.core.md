@@ -18,7 +18,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - static cooldown, not affected by ability haste: 240 [wiki-p rev-3906517, fetched 2026-09-18]
 - what it does: Innate: Periodically, upon taking fatal damage, Anivia enters resurrection for 6 seconds and restores all of her health. While under resurrection, Anivia is unable to act and gains -40 – 20 (based on level) bonus armor and bonus magic resistance. If Anivia remains alive by the end of the duration, she is revived with her current health. [wiki-p rev-3906517, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3906517, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Flash Frost [wiki-q rev-4026612, fetched 2026-09-18]

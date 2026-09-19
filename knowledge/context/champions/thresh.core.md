@@ -32,7 +32,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction • Auto [wiki-q rev-4008201, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4008201, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4008201, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Dark Passage [wiki-w rev-4017821, fetched 2026-09-18]
@@ -58,7 +57,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-e rev-4057474, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4057474, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4057474, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: The Box [wiki-r rev-4024674, fetched 2026-09-18]

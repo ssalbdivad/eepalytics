@@ -19,7 +19,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - effect radius: 2000 [wiki-p rev-4063473, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4063473, fetched 2026-09-18]
 - spell shield: False [wiki-p rev-4063473, fetched 2026-09-18]
-- WITHHELD (notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Piercing Darkness [wiki-q rev-4042887, fetched 2026-09-18]

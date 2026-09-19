@@ -17,7 +17,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Sovereign's Domination [wiki-p rev-4063480, fetched 2026-09-18]
 - what it does: Innate: Whenever Viego scores an enemy champion takedown while alive and within 3 seconds of damaging them, a Mist Wraith spawns from that champion's corpse for 8 seconds. Viego can basic attack a Mist Wraith to consume it: causing him to blink to its location after winding up for 1 second, during which he is untargetable (except to turrets) and unable to act. He then gains Possession and heals himself for 2% (+ 2.5% per 100 bonus AD) (+ 2% per 100 AP) (+ 0.4% per 100 bonus health) (+ 5% per 100% bonus attack speed) of the target's maximum health. Possession: For 10 seconds, Viego assumes the enemy champion's form and gains their basic attacks, basic abilities, items (excluding trinket items), and base stats (based on Viego's level). He also gains a free cast of Heartbreaker, which is initially placed on a 1.5-second cooldown, and 10% bonus movement speed while facing enemy champions within 2500 units. Viego cannot use the possessed champion's item actives or consumable items, and is unable to use the shop during Possession. Casting Heartbreaker or attacking a Mist Wraith ends Possession immediately. Viego will preserve his current health percentage between transformations. [wiki-p rev-4063480, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4063480, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Blade of the Ruined King [wiki-q rev-4063652, fetched 2026-09-18]
@@ -42,7 +41,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto • Direction [wiki-w rev-4008551, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4008551, fetched 2026-09-18]
 - spell shield: true [wiki-w rev-4008551, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Harrowed Path [wiki-e rev-4057854, fetched 2026-09-18]

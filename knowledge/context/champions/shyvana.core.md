@@ -17,7 +17,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Scalemail [wiki-p rev-4001512, fetched 2026-09-18]
 - what it does: Innate: Shyvana generates Scalemail stacks from scoring takedowns against certain enemies. Large monsters and large minions grant 1 stack, while enemy champions and epic monsters grant 3. Scalemail: For each stack, Shyvana gains 0.3 bonus armor and 0.3 bonus magic resistance. [wiki-p rev-4001512, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4001512, fetched 2026-09-18]
-- WITHHELD (notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Emberstrike [wiki-q rev-4049991, fetched 2026-09-18]
@@ -64,7 +63,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Location [wiki-r rev-4049822, fetched 2026-09-18]
 - damage type: magic [wiki-r rev-4049822, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4049822, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 50.70% (n=10,174 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

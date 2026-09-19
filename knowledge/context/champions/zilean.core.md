@@ -19,7 +19,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Innate: Zilean generates 2 / 3.5 / 5 / 6 / 12 (based on level) experience (does not count towards his own level up) every 5 seconds. Time in a Bottle is on cooldown when the game starts and becomes disabled when Zilean and his allied champions have reached their maximum level. When he has stored enough experience to level up an allied champion to their next level, he can select them to channel for 1.2 seconds after a 0.5-second cast time. The channel is interrupted and disabled upon entering combat with enemy champions or taking damage from turrets, placing it on a 10-second cooldown. If Zilean interrupts it himself, it is placed on a 1-second cooldown, increased to 2 if he used a basic attack against a turret to do so. Additionally, if Zilean becomes affected by any form of crowd control, the channel is placed on a 10-second cooldown. A successful channel will grant an equal amount of experience to the ally for them to level up as well as to Zilean, with a combined minimum of 15% of the stored experience. Zilean cannot initiate the channel while he is affected by cast-inhibiting crowd control or a lockout that disables abilities. [wiki-p rev-4056302, fetched 2026-09-18]
 - target range: 875 [wiki-p rev-4056302, fetched 2026-09-18]
 - targeting: Unit [wiki-p rev-4056302, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Time Bomb [wiki-q rev-4008679, fetched 2026-09-18]
@@ -62,7 +61,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - target range: 900 [wiki-r rev-3907350, fetched 2026-09-18]
 - cast time: none [wiki-r rev-3907350, fetched 2026-09-18]
 - targeting: Unit [wiki-r rev-3907350, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

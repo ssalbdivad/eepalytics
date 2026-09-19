@@ -21,7 +21,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Passive [wiki-p rev-4038211, fetched 2026-09-18]
 - damage type: physical [wiki-p rev-4038211, fetched 2026-09-18]
 - spell shield: false [wiki-p rev-4038211, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Cunning Sweep [wiki-q rev-4038210, fetched 2026-09-18]
@@ -34,7 +33,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-q rev-4038210, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4038210, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4038210, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Sundering Slam [wiki-q2 rev-4038213, fetched 2026-09-18]
 - cost: 70 [wiki-q2 rev-4038213, fetched 2026-09-18]
 - what it does: Active: Ambessa enters a 0.225-second lockout, at the end of which she slams her twin drakehounds in a line in the target direction, dealing physical damage to enemies hit. The damage is doubled against the first enemy hit. Drakehound's Step's dash may be buffered during the lockout or initiated within 0.275 seconds of the lockout ending, and Ambessa will perform the dash after her slam completes. Against monsters, Sundering Slam deals 75 bonus physical damage and the damage based on their health ratio is capped at 100 – 300 (based on level). [wiki-q2 rev-4038213, fetched 2026-09-18]
@@ -44,7 +42,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-q2 rev-4038213, fetched 2026-09-18]
 - damage type: Physical [wiki-q2 rev-4038213, fetched 2026-09-18]
 - spell shield: true [wiki-q2 rev-4038213, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Repudiation [wiki-w rev-4038212, fetched 2026-09-18]
@@ -57,7 +54,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-w rev-4038212, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-4038212, fetched 2026-09-18]
 - spell shield: true [wiki-w rev-4038212, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Lacerate [wiki-e rev-3976866, fetched 2026-09-18]
@@ -70,7 +66,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-e rev-3976866, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-3976866, fetched 2026-09-18]
 - spell shield: true [wiki-e rev-3976866, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Public Execution [wiki-r rev-4042088, fetched 2026-09-18]
@@ -82,7 +77,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r rev-4042088, fetched 2026-09-18]
 - damage type: Physical [wiki-r rev-4042088, fetched 2026-09-18]
 - spell shield: true [wiki-r rev-4042088, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 47.58% (n=1,801 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

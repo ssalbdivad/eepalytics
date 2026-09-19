@@ -68,7 +68,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: none [wiki-r rev-4008025, fetched 2026-09-18]
 - effect radius: 465 • 515 [wiki-r rev-4008025, fetched 2026-09-18]
 - targeting: Location [wiki-r rev-4008025, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

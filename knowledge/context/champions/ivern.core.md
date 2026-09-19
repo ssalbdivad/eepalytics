@@ -17,7 +17,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Friend of the Forest [wiki-p rev-4038386, fetched 2026-09-18]
 - what it does: Innate: Ivern cannot attack nor damage non-epic monsters. Instead, targeting a jungle camp initiates a 2.5 second channel that will plant a grove upon the camp. Placing a grove costs 94.5 – 0.14 (based on level) health and 90 – 0.37 (based on level) mana. The channel cannot be cancelled in the first 0.15 seconds and in the last 0.5 seconds. Ivern cannot place a grove while he is affected by cast-inhibiting crowd control or a lockout that disables abilities. The grove matures over 40 – 1 (based on level) seconds. When fully matured, Ivern can target the camp again to free it after a 0.5-second cast time, clearing the camp and receiving the full gold and full experience bounties. Using Smite on a monster within the grove will instantly free the camp regardless of maturity. If the camp's large monster has already been slain prior to planting a grove, Ivern will free the camp upon completing the channel at no cost. Similarly, the grove will instantly mature if the large monster is slain. [wiki-p rev-4038386, fetched 2026-09-18]
 - targeting: Unit [wiki-p rev-4038386, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Rootcaller [wiki-q rev-4009163, fetched 2026-09-18]

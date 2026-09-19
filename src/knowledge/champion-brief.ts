@@ -61,7 +61,7 @@ import { fileURLToPath } from "node:url"
 import { type } from "arktype"
 import { KNOWLEDGE_DIR, championKey } from "./index.ts"
 import { CHAMPION_ROWS, CHAMPION_TABLE_SOURCES } from "./champion-table.ts"
-import { factsFromRow } from "./claims-from-row.ts"
+import { FLATTENED_TABLE_FIELDS, factsFromRow } from "./claims-from-row.ts"
 import {
 	CLAIM_FIELDS,
 	CLAIM_GROUPS,
@@ -501,6 +501,32 @@ export const championBrief = (
 	const claims = opts.edgeCases === false ? all.filter(c => c.field !== "ability.note") : all
 	if (claims.length === 0) return null
 
+	/*
+	 * A BUDGET VARIANT MAY NOT ANNOUNCE WHAT IT WITHHELD FROM A LAYER IT DOES NOT SHIP.
+	 *
+	 * `edgeCases: false` drops the wiki's per-ability notes WHOLESALE and says nothing about it —
+	 * `kayn.core.md` carries 0 of `kayn.md`'s 78 note lines and no notice. When the flattened-table
+	 * cells started being withheld, their notices went into that file too, so the counterpart's
+	 * section announced "37 cells of a table were withheld" while silently omitting the other 78
+	 * lines of the same layer. Measured on the live prompt: Lillia vs Kayn grew 639 characters, all
+	 * of it three notices in `kayn.core.md`, on a matchup where nothing a player could use was lost.
+	 *
+	 * A DISAGREED notice is different and stays: it says a NUMBER this file does ship — a name, a
+	 * cooldown, a cost — was withheld because two sources disagreed, and that is a fact about the
+	 * lines beside it rather than about a layer that is absent by design. The same test, not the
+	 * same rule: a RENDER fault on the `notes` field alone goes for exactly the reason the table
+	 * cells do, and a render fault on any field the budget file still carries stays.
+	 */
+	const aboutNotesOnly = (fields: string): boolean =>
+		FLATTENED_TABLE_FIELDS.test(fields) ||
+		fields
+			.split(",")
+			.map(f => f.trim())
+			.every(f => f === "notes")
+	const withheld = (facts?.withheld ?? []).filter(
+		n => opts.edgeCases !== false || !aboutNotesOnly(n.fields)
+	)
+
 	const sources: SourceRecord[] = [...(facts?.sources ?? [])]
 	if (owner) sources.push(owner.source)
 	const byId = new Map(sources.map(s => [s.id, s]))
@@ -517,7 +543,7 @@ export const championBrief = (
 	for (const group of CLAIM_GROUPS) {
 		if (group === "judgment") continue
 		const inGroup = claims.filter(c => c.group === group)
-		const notices = (facts?.withheld ?? []).filter(n => n.group === group)
+		const notices = withheld.filter(n => n.group === group)
 		// A group with nothing but notices still gets its heading: "this ability exists and every
 		// number about it was withheld" is the most important thing that file can say.
 		if (inGroup.length === 0 && notices.length === 0) continue

@@ -19,7 +19,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Passive [wiki-p rev-4063954, fetched 2026-09-18]
 - damage type: Magic [wiki-p rev-4063954, fetched 2026-09-18]
 - spell shield: true [wiki-p rev-4063954, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Volcanic Rupture [wiki-q rev-3998234, fetched 2026-09-18]
@@ -47,7 +46,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-w rev-4011962, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4011962, fetched 2026-09-18]
 - spell shield: Special [wiki-w rev-4011962, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Searing Charge [wiki-e rev-4007982, fetched 2026-09-18]
@@ -62,7 +60,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-e rev-4007982, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4007982, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4007982, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Call of the Forge God [wiki-r rev-4007985, fetched 2026-09-18]
@@ -78,7 +75,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r rev-4007985, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4007985, fetched 2026-09-18]
 - spell shield: Special [wiki-r rev-4007985, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

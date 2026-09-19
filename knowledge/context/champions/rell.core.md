@@ -44,7 +44,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Location [wiki-w rev-4007762, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4007762, fetched 2026-09-18]
 - spell shield: true [wiki-w rev-4007762, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Ferromancy: Mount Up [wiki-w2 rev-3976244, fetched 2026-09-18]
 - cooldown: 10 [wiki-w2 rev-3976244, fetched 2026-09-18]
 - what it does: Passive: While Rell is Dismounted, she gains 15% bonus armor, 15% bonus magic resistance, 20% bonus attack speed, and 75 bonus attack range. Active: Rell becomes Mounted, gaining 30% bonus movement speed decaying over 2 seconds and empowering her next basic attack within 3.5 seconds to have a 0.2-second cast time, gain 100 bonus attack range and 40% bonus attack speed, and cause her to charge at the target's location. Upon arrival or collision of the charge, her basic attack deals bonus magic damage, stuns the target for 0.6 seconds, and flings them 150 units over herself, though not through terrain, over 0.4 seconds. While Rell is Mounted, she can cast Ferromancy: Crash Down. Ferromancy: Mount Up resets Rell's basic attack timer. This ability can be cast only while Rell is Dismounted. [wiki-w2 rev-3976244, fetched 2026-09-18]

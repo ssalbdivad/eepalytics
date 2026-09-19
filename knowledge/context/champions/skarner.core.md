@@ -66,7 +66,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-e rev-4000401, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4000401, fetched 2026-09-18]
 - spell shield: true [wiki-e rev-4000401, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Impale [wiki-r rev-4059028, fetched 2026-09-18]
@@ -79,7 +78,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r rev-4059028, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4059028, fetched 2026-09-18]
 - spell shield: true [wiki-r rev-4059028, fetched 2026-09-18]
-- WITHHELD (74 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 48.81% (n=1,770 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

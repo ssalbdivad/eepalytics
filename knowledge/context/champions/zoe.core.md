@@ -44,7 +44,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-w rev-4013273, fetched 2026-09-18]
 - damage type: magic [wiki-w rev-4013273, fetched 2026-09-18]
 - spell shield: true [wiki-w rev-4013273, fetched 2026-09-18]
-- WITHHELD (15 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Sleepy Trouble Bubble [wiki-e rev-4053170, fetched 2026-09-18]
@@ -59,7 +58,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-e rev-4053170, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4053170, fetched 2026-09-18]
 - spell shield: special [wiki-e rev-4053170, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Portal Jump [wiki-r rev-4005248, fetched 2026-09-18]
@@ -68,7 +66,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Active: After a 0.15-second delay, Zoe blinks in the target direction and remains there for 0.95 seconds to 1.25 seconds, during which she sets her movement speed to a static 0 and has unobstructed vision. Afterwards, she blinks back to her casting position. Portal Jump resets Zoe's basic attack timer. Zoe briefly becomes unable to act after casting Portal Jump as well as after blinking back. [wiki-r rev-4005248, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r rev-4005248, fetched 2026-09-18]
 - targeting: Direction [wiki-r rev-4005248, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

@@ -42,7 +42,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Proximity [wiki-w rev-3936351, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-3936351, fetched 2026-09-18]
 - spell shield: Special [wiki-w rev-3936351, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Reap [wiki-e rev-3906828, fetched 2026-09-18]
@@ -67,7 +66,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - effect radius: 600 [wiki-r rev-4004933, fetched 2026-09-18]
 - targeting: Location [wiki-r rev-4004933, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4004933, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 51.19% (n=3,454 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

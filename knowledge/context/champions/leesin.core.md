@@ -42,7 +42,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Proximity [wiki-q2 rev-4026428, fetched 2026-09-18]
 - damage type: Physical [wiki-q2 rev-4026428, fetched 2026-09-18]
 - spell shield: True [wiki-q2 rev-4026428, fetched 2026-09-18]
-- WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Safeguard [wiki-w rev-4024314, fetched 2026-09-18]

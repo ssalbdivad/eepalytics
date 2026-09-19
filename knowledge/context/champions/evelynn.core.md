@@ -74,7 +74,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r rev-4006700, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4006700, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4006700, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 51.00% (n=3,512 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]

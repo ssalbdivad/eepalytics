@@ -17,7 +17,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Inherent Glamour [wiki-p rev-4049951, fetched 2026-09-18]
 - what it does: Innate: Neeko has a collection of disguises to take on the appearance of allied champions, displayed on her Disguise Menu. She can use the menu to activate a disguise, switch her current disguise to a different one, or deactivate the current disguise by selecting herself, all of which place Inherent Glamour on a 0.5-second cooldown. Taking damage from a champion or turret while not disguised puts Inherent Glamour on a 2-second cooldown. Standing by the nearest visible allied or neutral non-champion non-structure unit while not disguised will gather its Sho'Ma over 2 seconds, adding its disguise to the collection. Activating this disguise places Inherent Glamour on a 1-second cooldown. Neeko can collect only one Sho'Ma, but can discard or consume it using her Disguise Menu. She can store Sho'Ma from the following units, as long as they are targetable: - Non-epic monsters - Minions - Traps - Wards - Pets - Jungle plants While disguised, Neeko can use basic attacks while keeping her form. Her disguise breaks if she: - uses a damaging ability, summoner spell, or item active - becomes immobilized - takes damage lethal to the disguise's form - enters the enemy team's spawn platform* - begins a channel other than Recall / Empowered Recall - deals damage to a structure with a non-champion disguise form - takes damage from a turret - dies Breaking the disguise via dying, being immobilized or taking damage from a turret puts Inherent Glamour on a 2-second cooldown, entering the enemy spawn platform does not put it on cooldown, and all other methods of breaking the disguise put Inherent Glamour on a 1-second cooldown. [wiki-p rev-4049951, fetched 2026-09-18]
 - targeting: Auto [wiki-p rev-4049951, fetched 2026-09-18]
-- WITHHELD (2 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Blooming Burst [wiki-q rev-3961205, fetched 2026-09-18]
@@ -66,7 +65,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-r rev-4058467, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4058467, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4058467, fetched 2026-09-18]
-- WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
