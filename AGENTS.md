@@ -924,12 +924,14 @@ the end of it, which is the shape a correct line has:
    LIST leaked too: `- edge case: ↑ Bard Q&A comment by Rabid Llama` was delivered to the coach
    twice, dressed as an ability interaction. All of it is stripped in `htmlToText` now.
 
-**Where it stands after the fix, with the n beside it.** All 173 champions, every cited line:
-**22,544 of 22,544 checkable delivered lines match the live source, 0 do not**, 4 moved since the
+**Where it stands after the fix, with the n beside it.** All 173 champions, every cited line, re-run
+against the live wiki AFTER the 6,026 valueless table cells were dropped:
+**16,516 of 16,516 checkable delivered lines match the live source, 0 do not**, 6 moved since the
 fetch (the wiki is edited continuously; those are reported as `stale` with both revisions, not as
-defects) and 86 are op.gg lines, deliberately not re-fetched because tier 2 changes hourly and a
-difference there would say nothing about the renderer
-(`data/eval/verify-fetched-all-20260919-c.json`). On the independent instrument: every per-rank run
+defects — Wukong's `rev-4051479` is now `rev-4064066`) and 86 are op.gg lines, deliberately not
+re-fetched because tier 2 changes hourly and a difference there would say nothing about the
+renderer (`data/eval/verify-fetched-all-20260919-d.json`; the 22,544-line pass before the drop is
+`-c.json` beside it). On the independent instrument: every per-rank run
 this app delivers appears verbatim in the wiki article a human reads
 (`verify-articles-20260919.json`). A third check, delivered text against the cached fetched bytes,
 is clean on every line of all 173 files. And the Riot half is checked the same way rather than
