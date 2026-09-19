@@ -931,9 +931,10 @@ fetch (the wiki is edited continuously; those are reported as `stale` with both 
 defects — Wukong's `rev-4051479` is now `rev-4064066`) and 86 are op.gg lines, deliberately not
 re-fetched because tier 2 changes hourly and a difference there would say nothing about the
 renderer (`data/eval/verify-fetched-all-20260919-d.json`; the 22,544-line pass before the drop is
-`-c.json` beside it). On the independent instrument: every per-rank run
-this app delivers appears verbatim in the wiki article a human reads
-(`verify-articles-20260919.json`). A third check, delivered text against the cached fetched bytes,
+`-c.json` beside it). On the independent instrument, re-run the same morning:
+**2,554 of 2,554 per-rank runs this app delivers appear verbatim in the wiki ARTICLE a human
+reads, 0 do not, 0 unchecked** (`data/eval/verify-articles-20260919-b.json`) — the check that
+shares no code with the pipeline it checks. A third check, delivered text against the cached fetched bytes,
 is clean on every line of all 173 files. And the Riot half is checked the same way rather than
 trusted: a live `championFull.json` fetch is byte-identical to the cached copy the table was cut
 from, and **all 643 delivered cooldowns agree with Riot's own numbers**.
