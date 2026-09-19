@@ -1357,41 +1357,59 @@ obeying it. `category: vision` was 2 of 96 before the demotion and 1 of 92 after
 vision pillar in the output to demote. **Two of the three things that commit claims to have fixed
 were not happening.**
 
-**Blind quality is a NULL, and the one thing that is NOT null points the wrong way.** Both arms'
-items were pooled per game with the arm labels stripped and the ids reshuffled under a seed, shown
-to `anthropic/claude-sonnet-5` with the same digest the coach saw, and graded on two axes
-(`…-judged-claude-sonnet-5-uncapped.json`, 30 of 30 games, 188 items). **Useful is flat: 49%
-[39-59] 47/96 old against 50% [40-60] 46/92 new, two-proportion p 0.89.** Pooling the sonnet run's
-105 items with it leaves 59% against 58%, p 0.85. The re-aim did not make the reviews more useful
-and must not be quoted as though it did.
+**Quality was graded BLIND, five times.** Both arms' items are pooled per game with the arm labels
+stripped and the ids reshuffled under a seed, handed to a judge with the same digest the coach saw,
+and graded on two axes: `useful` (would it change his next game, and would it read identically
+pasted onto a different one) and `supported` (is every figure in it present in the digest). Three
+judge models, five passes, every pass covering every game. One trap is worth carrying forward: the
+first pass capped the judge at 8,000 output tokens and `claude-sonnet-5` spent all of them on
+thinking and returned an EMPTY string on 11 of 30 games — the truncation this file already warns
+about, one section up. That crippled run is kept as `…-judged-claude-sonnet-5.json` beside the
+32,000-token one rather than over it.
 
-**Supported got worse, and it is the only separated quality finding here.** Pooled over both runs
-the judge could verify every figure in **82% [75-87] 124/152** of old items against **67% [59-75]
-95/141** of new ones — Wilson intervals separated, two-proportion p 0.0052 (flash alone p 0.028,
-sonnet alone p 0.082, same direction in both). It is not a composition artefact of asking for more
-objectives items: drop that category entirely and it is still 13% unsupported against 26%,
-p 0.015. It concentrates exactly where the re-aim landed — **the NEW arm's on-target items are 53%
-[40-65] unsupported against 19% [12-29] for its own off-target ones**, which is the old arm's rate.
+**Supported got worse, and which judges see it is the whole of the evidence.** The share of items
+whose every figure a judge could verify against the digest:
 
-**The mechanism is real and the citation fence cannot see it.** `parse.ts` policed 60 reviews and
-found **one** `unknown-metric-key` in 96 old items and **zero** citation warnings of any kind in 92
-new ones — no `fabricated-citations`, no `baseline-mismatch`, in either arm. So nothing the
-allowlist covers regressed. What the judge is flagging is figures in PROSE, which the allowlist
-never policed, and its own reasons name two classes. First, a FIX that invents its trigger:
-*"Position around grubs by 5:30"*, where 5:30 is in no file. Second, and worse, the early ledger
-invites an attribution the digest cannot support — *"Zero early objectives by 10:00 while Cho'Gath
-took drake and 3 grubs"* on game 5644514466, whose `## OBJECTIVES` list says `8:17 — HORDE taken by
-the enemy` and names no champion on any row. Part 2 already says credit is KILLER-ONLY and to
-phrase it as his team; it does not say the enemy row names nobody at all, and the coach fills the
-gap with the counterpart.
+| coach run | judge | old | new | |
+|---|---|---|---|---|
+| flash, 188 items | `claude-sonnet-5` | 82% [73-89] 79/96 | 68% [58-77] 63/92 | p 0.028 |
+| flash, the SAME 188 items | `gemini-3.6-flash` | 90% [82-94] 86/96 | 88% [80-93] 81/92 | p 0.74 |
+| sonnet, 105 items | `claude-sonnet-5` | 80% [68-89] 45/56 | 65% [51-77] 32/49 | p 0.082 |
+| sonnet, the SAME 105 items | `claude-opus-5` | 86% [74-93] 48/56 | 65% [51-77] 32/49 | p 0.014 |
 
-**What this does NOT establish.** One judge, one pass, no replicate, so the `supported` rate has no
-noise floor beside it — and at least some verdicts conflate "supported" with "permitted" (one cites
-the digest's own no-blame rule as the reason a figure is unsupported), which makes 67% an
-underestimate of what is actually sourced rather than a fabrication rate. The sonnet run's judge is
-the same model as its coach. Two arms, one prompt pair, one player. And the fix suggested by all of
-it — police prose figures the way ids are policed, and say in the digest that an objective row names
-no killer — is NOT DONE and is a change to files this run did not own.
+**Every judge INDEPENDENT of the coach reports the gap, and the one that does not is grading its
+own output.** The gemini judge on the flash run is `gemini-3.6-flash` reading items written by
+`gemini-3.6-flash`; it scores both arms near ninety and separates nothing, which is what a judge
+that barely discriminates looks like. The two Anthropic judges on the sonnet run agree with each
+other on **93% [87-97]** of the same 105 items and land on the same 21- and 15-point gaps. That is
+not proof — every judge that sees it is from one vendor, and the opus pass
+(`…-sonnet-judged-claude-opus-5.json`) was produced by another agent running this same committed
+script in this tree rather than by this run — but "it does not replicate" would be the wrong
+summary. And one thing IS consistent across all five passes including the gemini ones: **the NEW
+arm's own on-target items are the unsupported ones**, every time. Its on-target against its
+off-target unsupported rate is 46% / 23% (flash, sonnet judge), 23% / 5% and 26% / 7% (flash,
+gemini and its replicate), 64% / 11% and 68% / 7% (sonnet run, sonnet and opus judges). The judges
+disagree wildly on the LEVEL and not at all on where the difficulty sits: in the items the re-aim
+added.
+
+**USEFUL is flat everywhere and is not measurable here at all.** 49% against 50% (p 0.89) under
+sonnet on the flash run, 67% against 74% (p 0.28) under gemini on the same items, 77% against 73%
+(p 0.69) and 54% against 61% (p 0.43) on the sonnet run. The reason to stop asking was measured
+rather than assumed: the gemini judge was re-run over the SAME 188 items under a different shuffle
+seed (`…-judged-gemini-3.6-flash-replicate.json`, 30 of 30 games), true difference zero, and it
+**agrees with itself on `useful` on only 72% [66-78]**, with its own old-arm rate moving 67% to 78%
+between the two passes — an eleven-point swing on identical items, larger than any arm difference
+on that axis anywhere here. On `supported` the same replicate agrees with itself on **91%
+[86-94]**, which is why that axis can carry a reading and this one cannot.
+
+**What this does NOT establish.** Three judge models over five passes, all of them one-shot, and
+every judge that reports the `supported` gap is from ONE VENDOR — so the gap is reproduced but not
+independent, and nothing here says how much of it is real fabrication rather than a judge's
+strictness. Some verdicts conflate "supported" with "permitted" (one cites the digest's own
+no-blame rule as the reason a figure is unsupported), so 65-68% is a floor on what is sourced, not
+a fabrication rate. Two arms, one prompt pair, one player, one day. The fixes all this suggests — police prose figures the way ids are policed, and
+say in the digest that an objective row names no killer — are NOT DONE and are changes to files
+this run did not own.
 
 ### Architecture in one breath
 
