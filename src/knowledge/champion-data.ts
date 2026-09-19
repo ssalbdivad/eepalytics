@@ -1,39 +1,48 @@
 /**
- * The loader for the FETCHED champion table — the sourced replacement for hand-written prose.
+ * Lookup and provenance over the FETCHED champion table.
  *
- * ## The rule this module exists to enforce
+ * ## READ THIS FIRST: nothing outside this file's own test imports it
  *
- * Every sentence it returns is a string that `scripts/fetch-champions.ts` copied off a URL, or a
- * label naming the field that string came from. Nothing here writes a claim about a champion, and
+ * That is the state as of 2026-09-19 and it is not an accident of grepping. The renderer this
+ * module was built around — `renderChampionKnowledge` — was deleted on 2026-09-19 (the note where
+ * it stood says why), and the app reads `knowledge/context/`, which is committed text assembled by
+ * `champion-context.ts`. So every export below is reachable only from `champion-data.test.ts`,
+ * which uses this file as an import surface for `champion-table.ts` and for the fetch parsers in
+ * `scripts/fetch-champions.ts`.
+ *
+ * Two of those exports DUPLICATE something live, which is the reason to say all this out loud
+ * rather than leave the file looking load-bearing:
+ *
+ * - `championKey` is the third copy of a four-line function (see its own note);
+ * - `championTableStaleness` is the same sentence, to the character, as `championContextStaleness`
+ *   in `champion-context.ts` — and the one in `champion-context.ts` is the one that ships, because
+ *   it asks the committed tree's manifest which patch it was cut on rather than asking the table.
+ *   A patch-warning fix applied here would change nothing a player ever sees.
+ *
+ * Deleting the file would delete its test, which is a rule this repo does not break casually, and
+ * that test is worth keeping: it is the only place the generated table is checked against a fresh
+ * wiki fetch and against the two claims this repo invented. The honest end state is to point those
+ * cases at `champion-table.ts` and drop this facade. It is on the list, not done.
+ *
+ * ## The rule this module still enforces
+ *
+ * Every string it returns was copied off a URL by `scripts/fetch-champions.ts`, or is a label
+ * naming the field that string came from. Nothing here writes a claim about a champion, and
  * nothing here may start to: if a fact is not in `champion-table.ts`, the honest output is its
- * absence. That is the whole difference between this file and the 232KB of `knowledge/champions/`
- * prose it is built to replace, which read exactly the same whether it was true or invented.
- *
- * So the renderer below reformats and labels. It never summarises, never paraphrases, never fills
- * a gap and never decides what a fact implies. "Swirlseed detonates upon hitting an enemy or
- * terrain" reaches the model because the wiki wrote it; "so use it to check the far side of a
- * wall" does not reach the model at all, because nobody published it.
- *
- * ## Provenance is content, not a header to strip
- *
- * `src/review/live-knowledge-full.ts` throws away everything before the first `\n---` in a
- * markdown note, on the grounds that a provenance header is not coaching prose. Under a generated
- * pipeline that is backwards: the source, the patch and the date are the most valuable lines in
- * the block, because they are what lets a claim be dismissed by AGE rather than by vibe. So the
- * block this module renders puts its provenance IN the text, at the top, where the model reads it.
+ * absence. That is the whole difference between this file and the 184,104 bytes of
+ * `knowledge/champions/` prose it replaced, which read exactly the same whether it was true or
+ * invented.
  *
  * ## Staleness is a state, not a warning nobody sees
  *
- * `stalenessWarning` in `./index.ts` already does this for hand-written notes. The same idea
- * applies harder here: a table fetched on 16.18 and read during a 16.20 game is not wrong, it is
- * UNVERIFIED, and the difference has to be said out loud rather than left for a reader to work
- * out from a version string.
+ * A table fetched on 16.18 and read during a 16.20 game is not wrong, it is UNVERIFIED, and the
+ * difference has to be said out loud rather than left for a reader to work out from a version
+ * string. `champion-context.ts` is where that reaches a prompt.
  *
  * Node-friendly and browser-safe: this module is pure data and string work. The table it imports
- * is large, so nothing in `src/web/` should pull it in.
+ * is 2.8 MB, so nothing in `src/web/` should pull it in — and today nothing outside a test does.
  */
 
-import { itemOf } from "../shared/items.ts"
 import {
 	CHAMPION_ROWS,
 	CHAMPION_TABLE_PATCH,
@@ -46,7 +55,17 @@ import type { ChampionAbilityRow, ChampionRow, ChampionTier2Row } from "./champi
 export type { ChampionAbilityRow, ChampionRow, ChampionTier2Row }
 export { CHAMPION_ROWS, CHAMPION_TABLE_PATCH, CHAMPION_TABLE_SOURCES, RUNE_NAMES, SUMMONER_SPELL_NAMES }
 
-/** `Bel'Veth` -> `belveth`, `Nunu & Willump` -> `nunuwillump`. Same key the markdown notes use. */
+/**
+ * `Bel'Veth` -> `belveth`, `Nunu & Willump` -> `nunuwillump`. Same key the markdown notes use.
+ *
+ * THE THIRD COPY of this function, and it is here because this module claims to be browser-safe
+ * while `./index.ts` — which owns the one the app calls — imports `node:fs`. The other two are
+ * `championKey` in `./index.ts` (every runtime and generation caller) and a private one in
+ * `scripts/fetch-champions.ts` (deliberate: the generator depends on nothing it generates for).
+ * All three are byte-identical today and none of them is tested against the others, so the honest
+ * home for it is `src/shared/`. That move is on the list rather than done here, because this
+ * module is itself only reachable from its own test.
+ */
 export const championKey = (name: string): string => name.toLowerCase().replace(/[^a-z]/g, "")
 
 const BY_KEY = new Map<string, ChampionRow>(CHAMPION_ROWS.map(r => [r.key, r]))
@@ -138,9 +157,10 @@ export const championProvenance = (row: ChampionRow): string => {
  */
 
 /**
- * The champions with a fetched row, for the UI and for `doctor`.
+ * The champions with a fetched row.
  *
- * Parallel to `knownChampions()` in `./index.ts`, which lists hand-written markdown instead. Both
- * exist while the two knowledge paths do.
+ * It said "for the UI and for `doctor`" until 2026-09-19 and neither was ever true after the
+ * context tree landed — nothing but this file's own test calls it. `knownChampions()` in
+ * `./index.ts`, which it said it was parallel to, is deleted along with the markdown it listed.
  */
 export const fetchedChampions = (): string[] => CHAMPION_ROWS.map(r => r.name).sort()

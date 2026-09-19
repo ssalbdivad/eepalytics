@@ -37,7 +37,14 @@ revision and date **in every line**.
 Then it stops. **The rendering happens at generation time, not at request time**, and
 `scripts/generate-context.ts` writes the result to `context/` as committed text — one file per
 champion, one per role, one general. `pnpm fetch:champions` runs it; `pnpm generate:context`
-re-runs it on its own with no network.
+re-runs it on its own with no network. Today that is 353 files and 4,691,665 bytes on patch
+16.18.1, and `context/MANIFEST.json` records those counts beside the sha256 of the tree.
+
+What the cross-check does and does not cover is in `SOURCES.md`, and the short version belongs
+here too: Data Dragon publishes one spell per slot, so 692 of the table's 937 abilities are checked
+against a second source and **245 — the passives and the second-form abilities — are transcribed
+from the wiki alone.** Their lines cite that one wiki revision and are honest; the claim ledger
+behind them marks them `agreesWith: ["ddragon"]` anyway, which is the weakness `SOURCES.md` names.
 
 ### `context/` — the committed artefact, and what the app actually reads
 
@@ -73,9 +80,13 @@ Riot's own data for exactly the same reason.
 
 ### `general/jungle.md` — role prose, unsourced, labelled
 
-Read by `src/review/live-knowledge-full.ts` for the live coach's system instruction. It is still
-model-authored and no site publishes it, so the prompt puts a line above it saying so and telling
-the model the fetched lines win where the two disagree.
+**It is a generator INPUT, not a runtime read**, and this page said otherwise until 2026-09-19.
+`scripts/generate-context.ts` strips its provenance header, demotes its headings a level, puts
+`ROLE_CAVEAT` above it and writes the result to `context/roles/jungle.md` — and THAT file is what
+`src/review/live-knowledge-full.ts` reads for the live coach's system instruction. Editing this one
+changes nothing until `pnpm generate:context` runs, and the diff of the generated file is the
+review. It is still model-authored and no site publishes it, so the caveat above it says so and
+tells the model the fetched lines win where the two disagree.
 
 It survives the deletion for one reason: **it makes no claim about any champion's kit**, which is
 the class of error that was actually measured. It is about tempo, camps, crabs and objectives —
@@ -83,6 +94,10 @@ things true of the role whoever he locked in. Deleting it is a live option and n
 argues against it.
 
 ### `owner/<champion>.md` — his own judgment, and the only unsourced champion channel
+
+**The directory does not exist today.** `ownerDirDigest` treats a missing directory as an empty one
+and `champion-brief.test.ts` pins the digest of nothing, so the channel is open, wired and unused —
+and the first file to appear in it fails the suite until someone updates that pin deliberately.
 
 Routes, clear order, gank conditions, spike timing, what an item purchase implies — roughly half of
 what the deleted files said — have **no source**. This was probed: op.gg's payload contains no key

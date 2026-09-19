@@ -86,9 +86,16 @@ import type { VisionState } from "./live-state.ts"
 export type LiveCoachMode = "trusted" | "cite-or-quiet" | "fenced"
 
 /**
- * `trusted` ships as the default and is the only mode that is NOT a measured arm.
+ * `trusted` ships as the default, and all three modes are measured arms.
  *
- * The two below it are, and they stay byte-identical forever — `live-coach-mode.test.ts` asserts
+ * This sentence said `trusted` was "the only mode that is NOT a measured arm" until 2026-09-19,
+ * while the entry for it forty lines below carried `measured: true` and a numbers-bearing evidence
+ * line — the two halves of one claim, in one file, disagreeing. AGENTS.md had already corrected
+ * the same claim on 2026-09-11 and left the instruction to keep them in step; this is the copy
+ * that was missed. Three blind-judged corpora exist: `integrate-corpus-20260911` (17 games, 529
+ * lines), `mixfix-corpus-20260911` (19, 630) and `integrate2-corpus-20260912` (28, 840).
+ *
+ * `cite-or-quiet` and `fenced` stay byte-identical forever — `live-coach-mode.test.ts` asserts
  * both against `src/review/ablation-arms.ts`. Everything new lives in `TRUSTED_PROMPT`, added
  * beside them rather than over them, so the run that justified `cite-or-quiet` still describes a
  * prompt this repo can produce.

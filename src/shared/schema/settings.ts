@@ -60,8 +60,10 @@ export const Settings = type({
 	/**
 	 * Which ARCHITECTURE the live coach runs on. See `shared/live-coach-mode.ts` for the run.
 	 *
-	 * `trusted` is the default and the only unmeasured one: the whole brief every few seconds, both
-	 * champions' notes as prose, and nothing telling her what to say or when. `cite-or-quiet` gives
+	 * `trusted` is the default: the whole brief every few seconds, both
+	 * champions' notes as prose, and nothing telling her what to say or when. It called itself
+	 * "the only unmeasured one" here until 2026-09-19; it has been a measured arm since
+	 * 2026-09-11 and `LIVE_COACH_MODES` has carried `measured: true` for it since. `cite-or-quiet` gives
 	 * her the ground-truth block, the frame and the persona under one rule — cite it or say nothing.
 	 * `fenced` is the old shape, where `analysis/live-facts.ts` ranks every candidate line in
 	 * TypeScript and she may only pick from that list.

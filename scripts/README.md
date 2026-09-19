@@ -9,6 +9,15 @@ than an old one was to find.
 **Before adding a script, find the question below.** If it is already here, extend that file.
 If the new question is really a new one, add a row.
 
+**And the row is not optional, because an index with holes is worse than no index.** On 2026-09-19
+a sweep found **nine files with no row**: `frame-power.ts`, `measure-asks.ts`,
+`measure-deadclock-replay.ts`, `measure-latency-floor.ts`, `measure-ttft.ts`, `socket-bake.ts`,
+`model-race.ts`, `generate-context.ts` and `verify-fetched.ts` — including the instrument that
+settled the screenshot question and the one that opens the knowledge loop. Every one of them was
+written during the week this page was warning that a new file is easier to write than an old one is
+to find. They are added below. A cheap check, if you want one:
+`for f in scripts/*.ts; do grep -q "\`$(basename $f)\`" scripts/README.md || echo "$f"; done`.
+
 ---
 
 ## The live coach
@@ -16,8 +25,14 @@ If the new question is really a new one, add a row.
 | file | the question it answers |
 |---|---|
 | `bench-stream.ts` | **THE live bench.** Replay one real game's recorded client samples and paired frames at every model at once: what did each say, how fast, and how does it score on the six axes? Arms, `@mode` architectures, `+noframe` twins, event or timer schedules, blinded sheet. |
-| `frame-value.ts` | What is the screenshot worth, and is it read at all? Paired throughout (McNemar, from `lib/stats.ts`), because two independent Wilson intervals at n=30 call almost anything "not separated". |
+| `frame-value.ts` | What is the screenshot worth, and is it read at all? Paired throughout (McNemar, from `lib/stats.ts`), because two independent Wilson intervals at n=30 call almost anything "not separated". Its own `--agree` pass measured its noise floor and found the same arm agrees with itself on 13 of 30 turns, which is why the next file exists. |
+| `frame-power.ts` | **The same question with an instrument that could see the answer.** A FORCED CHOICE — one screenshot, both arms' sentences, no payload, no labels, every turn asked twice so 50% is the null by construction. 360 trials, 52% [47-57], p 0.43: nothing bigger than about 7 points survives. Read it before proposing another crop; three have been asked. |
 | `bench-events.ts` | How many times would the coach be ASKED? The event detector against the fixed timer, over a whole game. Free — no model. |
+| `measure-asks.ts` | **WHICH ask kind raised the wrong line**, per kind, re-derived on the stored runs with no model consulted. The instrument behind `SPEAK_LEVELS`: `--level <id>` replays the real detector over the 28-game corpus and joins each turn to the graded line at the same clock. `data/eval/asks-speaklevel-*.json`. |
+| `measure-latency-floor.ts` | Where do the seconds between a state change and the first syllable actually GO? Decomposes the floor per stage. `--socket` COSTS MONEY and says so. |
+| `measure-ttft.ts` | What does a turn-based coach cost him in WAITING, and do a cached prefix and a streamed answer change which models are ELIGIBLE? Paired per turn with the arm order rotated inside each turn. The run that made `claude-sonnet-5` eligible (1,616ms first syllable) and left Opus out (3,248ms). |
+| `socket-bake.ts` | Race every socket-capable model over ONE game's real turns, interleaved. The census that found the incumbent returning zero audio chunks on 34 of 60 turns. |
+| `model-race.ts` | **SOCKET against TURN, same stored payloads, seven arms, one blind judge, one shuffled pool.** The head-to-head that made `gemini-3.8-live` the socket default and `claude-sonnet-5` the Anthropic one. Two judges disagree more than the campaign's replicate noise, so read the ordering and not the rates — the file says so at length. |
 | `measure-staleness.ts` | Is a line still TRUE when its last syllable lands? |
 | `measure-speech.ts` | Does the coach SAY it right? The only instrument that reads AUDIO rather than text. |
 | `attribute-sections.ts` | **Which part of the PAYLOAD produced the line?** Joins every graded line back to the exact payload the coach held, cuts that payload into channels, and reports each one's presence, character cost, redundancy and the phrase/subject tests over what was actually said. Its own header carries the retraction that matters: exclusive number provenance does NOT work on this payload, and the file says why at length. Free — no model. |
@@ -100,7 +115,8 @@ distinguishes the games he wins, which is a different question and had never bee
 | `read-frame-ablation.ts` | What did the frame/no-frame ablation say, and does the picture change the coaching? The reader for the four `kind: "e2e-real-game-run"` files whose writer (`e2e-real-game.ts`) was deleted. |
 | `compare-corpora.ts` | The PAIRED comparison between two `judge-corpus` runs of DIFFERENT nights over the same games — *did the coach get better?* Weaker than `compare-arms.ts` and says so: two runs are two judge conversations, so it prints the replicate-noise floor (~±6pp useful, ±9pp false) beside every rate. |
 | `audit-build-claims.ts` | Adjudicates the BUILD claims in a graded corpus against the real recipes, with no model in it. Exists because `price` is the item's own cost line, so neither coach nor judge could tell a finished item from a component. |
-| `measure-deadclock.ts` | Does a spoken death time match the client's own kill log? The elapsed/remaining inversion, re-derivable on the stored runs. |
+| `measure-deadclock.ts` | Does a spoken death time match the client's own kill log? The elapsed/remaining inversion, measured on the INPUT: replays stored turns through the memory and the brief as they now stand and asks whether the payload states the elapsed figure the sentence needed (129 of 129 after the fix). Re-derivable on the stored runs. |
+| `measure-deadclock-replay.ts` | The OUTPUT half of the same question — **the same moments asked again**, to see whether the coach speaks the clock it was given. Two files because a payload that carries the figure and a coach that ignores it are different defects with different fixes, and one number cannot tell them apart. |
 | `audit-citations.ts` | Do the reviews already in the database pass the citation and baseline checks? |
 | `audit-live-fields.ts` | Does every field the live brief renders match the exact post-game truth? (This is the one that caught `scores.creepScore` being visibility-limited.) |
 
@@ -123,7 +139,9 @@ distinguishes the games he wins, which is a different question and had never bee
 | `check-patch.ts` | Is the generated champion table stale against the live patch? Reads Riot's version list; `--json` for CI. |
 | `fetch-items.ts` | Vendor the item table from Riot's static data, because the live feed's `price` is a cost line and not what the item cost. |
 | `fetch-champions.ts` | `pnpm fetch:champions`. Vendor EVERY champion's mechanics from Data Dragon and the League wiki, and what wins from op.gg, into the generated `src/knowledge/champion-table.ts` — because a model-authored knowledge base has an unbounded error rate and `lillia.md` said Swirlseed rolls over terrain when both sources say terrain stops it. Refuses to write a number the two Tier 1 sources disagree about. |
-| `audit-knowledge.ts` | `pnpm audit:knowledge [champion]`. Assembles the live and post-game prompts and audits the delivered bytes line for line: what is untraced, what refuted sentence is back, what the table refused. The command that makes "every sentence was copied off a URL" checkable rather than claimed. |
+| `generate-context.ts` | `pnpm generate:context`. Writes the COMMITTED artefact — `knowledge/context/`, 353 files, one per champion (full and `.core`), one per role, one general — out of the checked-in table. NODE ONLY, **no network**, no wall clock: dates come from the table's own `fetchedAt`, which is what makes it reproduce byte for byte. `pnpm fetch:champions` runs it; `champion-context.test.ts` regenerates the whole tree into a temp directory and diffs it both ways, so a hand edit under `knowledge/context/` fails the suite. |
+| `audit-knowledge.ts` | `pnpm audit:knowledge [champion]`. Assembles the live and post-game prompts and audits the delivered bytes line for line: what is untraced, what refuted sentence is back, what the table refused. The command that makes "every sentence was copied off a URL" checkable rather than claimed. **It is a CLOSED loop** — it compares the pipeline against the ledger the pipeline wrote — which is the next row's whole reason for existing. |
+| `verify-fetched.ts` | `pnpm verify:fetched`. **The open loop.** Reads the committed file the coach is handed, takes the citation off the end of each line, GOES BACK TO THAT URL and requires the value to be what the source says today. `--articles` compares against the rendered wiki ARTICLE a human reads, which **shares no code with the thing it checks** and is the only reason it can see a render fault: it caught 204 fields over 75 ability pages shipping their prose with every number expanded to the empty string. A value that merely MOVED since the fetch is reported as `stale` with both revision ids, not as a defect. Network only; read-only on the repo without `--out`. |
 | `run-daemon.sh` · `install-service.sh` | The `systemd --user` launcher and its installer. |
 | `dev-daemon.sh` | Restart the daemon detached from this shell, for development. |
 | `make-icon.mjs` · `shoot.mjs` · `voices.mjs` | Artwork, screenshots, and the browser voice list. |

@@ -23,17 +23,23 @@
  * generated `champion-table.ts`, `claims-from-row.ts` attributes it per sentence, `provenance.ts`
  * re-derives each sentence from the bytes it came from, and `champion-brief.ts` renders it with the
  * URL, revision and fetch date inline. `championNote`, `defaultNote`, `knownChampions` and
- * `stalenessWarning` are gone with the files they read; `championTableStaleness` in
- * `champion-data.ts` is the staleness that replaced the last of them.
+ * `stalenessWarning` are gone with the files they read; the staleness that replaced the last of
+ * them is `championContextStaleness` in `champion-context.ts`, which asks the COMMITTED tree's own
+ * manifest which patch it was cut on. (`championTableStaleness` in `champion-data.ts` is the same
+ * sentence over `champion-table.ts`, and nothing outside that file's own test calls it.)
  *
  * ## What still lives on disk here
  *
- * - `knowledge/general/jungle.md` — ROLE prose, read by `review/live-knowledge-full.ts`. Still
- *   model-authored and still unsourced, and labelled as such in the prompt. It survives the
- *   deletion because it makes no claim about any champion's kit, which is the class of error that
- *   was actually measured.
- * - `knowledge/owner/<champion>.md` — HIS notes, read by `champion-brief.ts`. The one channel
- *   allowed to carry unsourced judgment, because he is the only person here who has it.
+ * - `knowledge/general/jungle.md` — ROLE prose, and it is a GENERATOR INPUT rather than a runtime
+ *   read: `scripts/generate-context.ts` demotes its headings, puts `ROLE_CAVEAT` above it and
+ *   writes it out as `knowledge/context/roles/jungle.md`, which is the file
+ *   `review/live-knowledge-full.ts` actually reads. Still model-authored and still unsourced, and
+ *   labelled as such in the prompt. It survives the deletion because it makes no claim about any
+ *   champion's kit, which is the class of error that was actually measured.
+ * - `knowledge/owner/<champion>.md` — HIS notes, read by `champion-brief.ts` at GENERATION time.
+ *   The one channel allowed to carry unsourced judgment, because he is the only person here who
+ *   has it. The directory does not exist today: `ownerDirDigest` returns the digest of nothing and
+ *   `champion-brief.test.ts` pins that, so the first file to appear there fails the suite.
  * - `knowledge/pronunciations.md` — the say-it-like-this table below.
  *
  * NODE ONLY (reads the filesystem).

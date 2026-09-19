@@ -747,9 +747,9 @@ without a patch bump, and the only thing that notices is `pnpm verify:fetched`, 
 after the corpus was cut.
 
 **The validation is the point of the script, not a nicety.** Data Dragon and the wiki are
-independent transcriptions of the same patch, so every slot is checked for agreement on NAME,
-COOLDOWN per rank and COST per rank: **662 of 692** agree (660 until 2026-09-19, when two of the
-thirty "conflicts" turned out to be punctuation — see the pipe below). A slot that does not keeps
+independent transcriptions of the same patch, so every slot DATA DRAGON PUBLISHES is checked for
+agreement on NAME, COOLDOWN per rank and COST per rank: **662 of 692** agree (660 until 2026-09-19,
+when two of the thirty "conflicts" turned out to be punctuation — see the pipe below). A slot that does not keeps
 its prose, loses every number, and SAYS the number was withheld — which it now actually does, as a
 `- WITHHELD (…)` line in the champion's own file. It did not before: Hecarim's Q shipped with no
 name, no cooldown and no damage line and nothing saying that was deliberate, which reads exactly
@@ -759,12 +759,28 @@ op.gg, one undocumented endpoint with no terms grant — is ArkType-fenced at th
 closed PER CHAMPION: one bad claim drops the whole meta section, because half a meta section is
 worse than none.
 
+**692 IS NOT 937, and `agreed: true` is not the same statement on the difference.** The table
+carries 937 abilities. Data Dragon publishes one spell per slot, so the cross-check reaches the
+FIRST form of each non-passive slot and stops: the other **245 — 181 passives and 64 second forms**
+like Lee Sin's Resonating Strike or Elise's spider-form Q — are transcribed from the wiki alone,
+nothing can be recorded as conflicting with them, and `agreed` is therefore vacuously true on all
+245. The DELIVERED lines are honest about it, because each names the single wiki revision it came
+from (`- cost: 25 [wiki-q2 rev-4026428, fetched 2026-09-18]`), and that is why the bullet below —
+"cannot ship without a second tier-1 source agreeing" — is the sentence that needed correcting
+rather than the corpus. **294 claims** (245 names, 29 cooldowns, 20 costs) are minted carrying
+`agreesWith: ["ddragon"]` where Data Dragon said nothing at all. `agreesWith` is read by exactly one
+thing, the `crossChecked` gate in `provenance.ts`, and never reaches a prompt, so nobody has been
+told a wrong thing by it; what it means is that the gate is weaker than its name. The fix is one
+field in `claims-from-row.ts` — carry "a second source was consulted" rather than inferring it from
+an empty conflict list — and it is NOT DONE.
+
 **Every sentence carries its own source, in the line.** `src/knowledge/provenance.ts` is the fence
 and its load-bearing idea is `derivation`: a closed set of pure functions that RE-DERIVE a claim's
 text from the evidence stored beside it, so a sentence that cannot be reproduced from its own bytes
 is refused. The field vocabulary is closed too and bound to a tier — op.gg cannot supply a cooldown,
 Riot cannot supply a win rate, a tier-2 figure cannot ship without its sample size, and an ability's
-name, cooldown or cost cannot ship without a second tier-1 source agreeing. Prompt lines can only be
+name, cooldown or cost cannot ship without `agreesWith` set — which, per the paragraph above, means
+"no second source contradicted it" and not, on 245 of 937 abilities, "a second source agreed". Prompt lines can only be
 minted by `renderClaimLine` or by a frozen structural template, and the brand is a runtime symbol
 rather than a type, because `--experimental-strip-types` erases types and the point is that an
 unsourced string cannot reach the renderer even through `any`.
@@ -890,6 +906,16 @@ agreement actually changed between the two patches, each carrying the WITHHELD l
 all 353 context files **byte for byte**, so the corpus is a pure function of (patch, cache) and a
 diff in it means a source moved.
 
+**It is a pure function of (patch, cache) and it still cannot be run with the network off**, which
+is worth separating because the two get quoted as the same property. Every source reads its cache
+unless `--refresh` is passed, tier 2 included — but `main()` fetches Data Dragon's `versions.json`
+before it looks at `--patch`, so `pnpm fetch:champions --patch 16.18.1` against a warm cache still
+needs the internet to be told a patch it was already given. Moving that call behind the `--patch`
+check is two lines and is NOT DONE. The GENERATE half has no such gap and is verified on every
+test run: `pnpm generate:context` is offline by construction, and `champion-context.test.ts`
+regenerates all 353 files into a temp directory and diffs them against what is committed, in both
+directions (17 cases, green as of 2026-09-19).
+
 **One renderer is DELETED rather than left dormant.** `renderChampionKnowledge` in
 `src/knowledge/champion-data.ts` turned a row into a markdown block with its own labels and its own
 headings — a second renderer for data `champion-brief.ts` already renders. Nothing but its own test
@@ -898,6 +924,21 @@ was: it labelled `speed` "Missile speed" on all 308 abilities. A second labellin
 numbers is a second place to be wrong about them, and one fix in one place is the whole point of
 having one place. Lookup and provenance survive there; nothing in the file can produce a sentence
 about League any more.
+
+**And what survives is a facade nothing but that test imports.** `champion-data.ts` has no caller
+in `src/` or `scripts/` at all: `championRow`, `championRowById`, `championCount`,
+`championProvenance` and `fetchedChampions` are reached only from `champion-data.test.ts`, which
+uses the file as an import surface for `champion-table.ts` and for the fetch parsers. Two of its
+exports duplicate something live — `championKey` is the third copy of that four-line function
+(`knowledge/index.ts` owns the one the app calls; `scripts/fetch-champions.ts` keeps a deliberate
+private one), and `championTableStaleness` is the same sentence to the character as
+`championContextStaleness` in `champion-context.ts`, which is the one that ships because it asks
+the committed tree's manifest rather than the table. So a patch-warning fix applied in
+`champion-data.ts` would change nothing a player sees. It was left standing on 2026-09-19 rather
+than deleted because deleting it deletes the only test that checks the generated table against a
+fresh wiki fetch, and that test is worth more than the tidiness. The end state is to point those
+cases at `champion-table.ts` and drop the facade; it is ON THE LIST, not done, and the file's own
+header now says so at the top rather than describing a renderer that is gone.
 
 **What is still UNFENCED, said plainly: `target range`.** Cooldown and cost are cross-checked
 against Data Dragon; range is not, and it ships from the wiki alone. Where both sources publish a
@@ -909,12 +950,40 @@ wrong** — it is a measurement that the field is unchecked, unlike the two besi
 would withhold a quarter of all ranges on a comparison nobody here can adjudicate, so it is left
 shipping and left written down.
 
+**Every line is sourced. 17% of them say nothing, and that is a different defect.** Counted over
+the committed corpus on 2026-09-19: of **34,433** delivered claim lines in
+`knowledge/context/champions/`, **13,205 are `edge case` lines** — the wiki's per-ability
+interaction notes, which are the layer that decides whether a coaching line is true and are worth
+their bytes. But **6,006 of them (17.4% of all delivered lines) have a value of 25 characters or
+fewer**, and **2,116 have NO VALUE AT ALL**: the literal line is `- edge case: : [wiki-e rev-…,
+fetched …]`, 118,575 bytes of it across **87 champions**, worst at Ambessa (78), Tahm Kench (69),
+Briar (67). The rest of the short group is the wiki's CHANNELING TABLE flattened into one cell per
+line — `Disabled` ×681, `Interrupted by` ×465, `Usable` ×402, `Attacking` ×155, `Abilities` ×155 —
+where the row header and the row value became two separate sourced lines and neither means anything
+on its own.
+
+None of that is a FALSE sentence and none of it breaks the citation rule: every one of those lines
+names the revision it came from, and a reader who follows the link finds a table cell that really
+does say `Disabled`. It is the other failure this repo already named — **true and useless** — and
+it is now sitting inside the prompt at scale. It hits his own champion hardest, because the full
+file ships for HIM while the counterpart gets `.core`, which drops interaction notes entirely:
+`kayn.md` carries 40 of the empty lines in 249 and `kayn.core.md` carries none. `lillia.md` happens
+to carry zero, which is why nobody noticed.
+
+The fix is a filter in `scripts/generate-context.ts` — drop a claim line whose value is empty, and
+decide deliberately what to do with a table cell that has no row header — plus a regeneration, and
+it is **NOT DONE**. It is a generator change during a run with other agents in the tree, and 87
+committed files move when it lands. Whoever takes it: `champion-context.test.ts` will fail until
+the tree is regenerated, which is the test doing its job.
+
 #### The artefact is COMMITTED TEXT, and the runtime cannot render
 
 The table is an intermediate, not the thing the app reads. `scripts/generate-context.ts`
 (`pnpm generate:context`, and `pnpm fetch:champions` runs it) writes `knowledge/context/`: **one
-file per champion for all 173, one per role, one general, 353 files and 4.45 MB, committed and
-diffable.** At runtime `src/knowledge/champion-context.ts` picks the combination — his champion, the
+file per champion for all 173, one per role, one general, 353 files and 4,691,665 bytes, committed
+and diffable** — the counts `knowledge/context/MANIFEST.json` records beside the tree's sha256, and
+the reason to quote the byte count rather than a rounded one is that this line read "4.45 MB" for a
+day after three commits had moved it. At runtime `src/knowledge/champion-context.ts` picks the combination — his champion, the
 enemy jungler's, his role — reads those files and concatenates them. There is no renderer, no
 template, no claim checker and no branch below that boundary that can produce a word about League.
 **If the runtime path can generate a sentence, the design is wrong.**
@@ -944,7 +1013,16 @@ about any champion's kit, which is the class of error that was actually measured
 `pnpm audit:knowledge [champion]` audits the DELIVERED bytes — the committed file, not the
 renderer's own output — against the ledger that produced them, line for line. Today, for Lillia vs Kayn: 141 of 141 champion lines in the live
 system instruction carry an inline citation, the post-game block is 77 claim lines with 0 untraced,
-and every refuted sentence is absent from all three paths.
+and every refuted sentence is absent from all three paths. Re-verified 2026-09-19; both figures
+still hold.
+
+**That audit runs on ONE matchup, and the all-champion version of the claim is a test, not a
+script.** `champion-context.test.ts` walks all 346 committed champion files and fails on any `- `
+line that does not end in `[<source>, fetched YYYY-MM-DD]`, exempting only the owner block (whose
+trailing list IS its sources) and the `- WITHHELD (…)` notice (which says a value did not survive
+the fence, so there is nothing to cite). So "no unsourced sentence reaches any prompt, for any
+champion" is enforced continuously across the whole corpus rather than sampled at Lillia — which
+matters, because Lillia is the one champion every hand-check in this repo has ever used.
 
 **What this does NOT solve, and it is roughly half of what the deleted files said.** Routes and
 clear order, gank-failure conditions, clear tempo, objective-pressure narrative, spike timing,

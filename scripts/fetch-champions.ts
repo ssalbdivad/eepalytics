@@ -1385,12 +1385,20 @@ const main = async (): Promise<void> => {
  *
  * ## What \`agreed\` means, and why some fields are empty
  *
- * Data Dragon and the wiki are independent transcriptions of the same patch, so for every slot
- * this table checks that they agree on the ability's NAME, its COOLDOWN per rank and its COST per
- * rank. ${slotsAgreed} of ${slotsChecked} slots agree. A slot that does not keeps its prose — both sources
- * carry the same sentences — and has every NUMERIC field blanked, with the disagreement recorded
- * in \`conflicts\`. An empty \`cooldown\` therefore means "the sources disagreed and the number was
- * withheld", never "no cooldown".
+ * Data Dragon and the wiki are independent transcriptions of the same patch, so wherever Data
+ * Dragon publishes a slot this table checks that the two agree on the ability's NAME, its COOLDOWN
+ * per rank and its COST per rank. ${slotsAgreed} of ${slotsChecked} slots agree. A slot that does not keeps its prose
+ * — both sources carry the same sentences — and has every NUMERIC field blanked, with the
+ * disagreement recorded in \`conflicts\`. An empty \`cooldown\` therefore means "the sources
+ * disagreed and the number was withheld", never "no cooldown".
+ *
+ * **\`agreed: true\` does NOT mean "two sources were compared".** Data Dragon publishes one spell
+ * per slot, so the comparison reaches the FIRST form of each non-passive slot and no further.
+ * PASSIVES and SECOND-FORM abilities — Lee Sin's Resonating Strike, Elise's spider-form Q — are
+ * transcribed from the wiki alone, no conflict can be recorded against them, and \`agreed\` is
+ * therefore vacuously true. Their numbers ship, and every delivered line names the single wiki
+ * revision it came from, so the TEXT is honest; the flag is what overstates. Read \`agreed\` as
+ * "nothing contradicted this", never as "something corroborated this".
  *
  * Regenerate with \`pnpm fetch:champions\`. A new patch is a new diff.
  */
