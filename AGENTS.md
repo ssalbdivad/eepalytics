@@ -1051,11 +1051,14 @@ a triple reading ships both "Items: Usable" and "Usable: N/A" and at most one of
 the wiki makes. 15.1% invented pairings is worse than the 8.0% error rate that got the hand-written
 corpus deleted, and the cache holds already-flattened text, so the table shape cannot be recovered
 downstream at all. Each dropped run leaves a `- WITHHELD (N cells of a table in the wiki's notes)`
-line saying how many went and why — 282 notices over 157 runs — because a reader has to be able to
-see from the file why the lines are gone.
+line saying how many went and why — **141 notices over 157 runs, in the FULL files only** — because
+a reader has to be able to see from the file why the lines are gone. The `.core` variant gets none
+of them: it drops the whole notes layer without comment, so announcing what it withheld from a
+layer it does not ship made the counterpart's section 639 characters longer and said nothing (the
+measurement, on the live Lillia vs Kayn prompt, is in `champion-brief.ts`).
 
 AFTER: **28,689 delivered lines, 7,179 edge-case lines, ZERO bare colons, 473 short values (1.6%,
-was 17.4%)**, and the tree is 4,365,221 bytes against 4,691,665. `audit:knowledge --all` still
+was 17.4%)**, and the tree is **4,334,544 bytes** against 4,691,665. `audit:knowledge --all` still
 reports 173 champions, **16,608 cited lines, 0 untraced and 0 missing** — because the filter lands
 at claim-mint time in `claims-from-row.ts`, not in the generator. That is mechanical rather than
 stylistic: `auditAssembled` builds its ledger from `championBrief`'s own minted lines, so a line
@@ -1077,7 +1080,7 @@ re-fetch, and it is NOT DONE.
 
 The table is an intermediate, not the thing the app reads. `scripts/generate-context.ts`
 (`pnpm generate:context`, and `pnpm fetch:champions` runs it) writes `knowledge/context/`: **one
-file per champion for all 173, one per role, one general, 353 files and 4,365,221 bytes, committed
+file per champion for all 173, one per role, one general, 353 files and 4,334,544 bytes, committed
 and diffable** — the counts `knowledge/context/MANIFEST.json` records beside the tree's sha256, and
 the reason to quote the byte count rather than a rounded one is that this line read "4.45 MB" for a
 day after three commits had moved it. At runtime `src/knowledge/champion-context.ts` picks the combination — his champion, the
