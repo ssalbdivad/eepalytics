@@ -1392,6 +1392,25 @@ gemini and its replicate), 64% / 11% and 68% / 7% (sonnet run, sonnet and opus j
 disagree wildly on the LEVEL and not at all on where the difficulty sits: in the items the re-aim
 added.
 
+**A MODEL SWITCH THIS RUN NEARLY JUSTIFIED, on the axis the paragraph above says cannot carry a
+reading.** The two runs differ in COACH as well as in prompt, so the same stored items answer a
+second question: should `POSTGAME_MODEL` still be `gemini-3.6-flash`? It is flash because five
+models were indistinguishable on a frozen bundle WITH 16 frames and flash is four times faster,
+and these games carry NO frames, so the old measurement does not cover them. Pooling both arms over
+the 14 games both runs share:
+
+| judge | flash wrote it | sonnet wrote it | |
+|---|---|---|---|
+| `claude-sonnet-5` | useful 52% 46/88 | useful **75%** 79/105 | looks decisive |
+| `claude-opus-5` | useful 59% 52/88 | useful 57% 60/105 | z -0.27, **p 0.77** |
+| `claude-opus-5` | supported **83%** | supported 76% | flash, if anything, ahead |
+
+Twenty-three points under the judge that shares a model with one of the writers; two points the
+OTHER way under the one that does not. **The default stays flash**, and the thing to carry forward
+is the size of the artefact rather than the decision: on 193 items, a judge grading its own model's
+prose was worth 23 points of `useful` — comfortably larger than any prompt effect measured on this
+page, and on the axis whose own self-agreement is 72%.
+
 **USEFUL is flat everywhere and is not measurable here at all.** 49% against 50% (p 0.89) under
 sonnet on the flash run, 67% against 74% (p 0.28) under gemini on the same items, 77% against 73%
 (p 0.69) and 54% against 61% (p 0.43) on the sonnet run. The reason to stop asking was measured
