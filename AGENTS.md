@@ -1310,6 +1310,89 @@ larger, so it neither confirms nor refutes any of the early findings, and the tw
 both fall to non-significance inside it (0.57 and 0.37). Dead time is MODELLED from the published
 respawn formula because the match blob has no such field, and is never spoken to him.
 
+#### Did the re-aim reach the OUTPUT? Yes exactly where it aimed, and it cost something
+
+The rewrite above changed Part 2, which is the shipped post-game system prompt, and nothing checked
+that it changed a single review. `scripts/persona-ab.ts` runs the two Part 2s against each other
+over **30 real ranked jungle games** out of his own library (17 won, 13 lost, 15:16 to 46:35, all
+Lillia): same digest, same rendered pack, same model, same intensity, the arms differing in the
+SYSTEM PROMPT ALONE — the run hashes the user turn and refuses to continue if the two arms' bytes
+differ. The old Part 2 comes out of git through the app's own `extractPersona`, so an arm cannot
+drift from what the app would have loaded that day. 60 calls on `gemini-3.6-flash`, the shipped
+post-game model, 0 failed reviews (`data/eval/persona-ab-20260919-flash.json`; reprint it with
+`scripts/persona-ab.ts --read <file>`, which consults no model and costs nothing).
+
+**The primary number has no judge in it.** An item is scored from its own structured fields —
+`category`, `tSec`, and the clock carried inside every moment id it cites — and never from its
+prose. Part 2's own worked examples both land inside that definition, which is what
+`scripts/persona-ab.test.ts` pins.
+
+| | OLD (`0859e35^`) | NEW | |
+|---|---|---|---|
+| items about the 10:00-15:00 death window | 6% [3-13] 6/96 | **21% [14-30] 19/92** | separated |
+| items about the early objective ledger | 0% [0-4] 0/96 | **17% [11-26] 16/92** | separated |
+| either — ON TARGET | 6% [3-13] 6/96 | **38% [29-48] 35/92** | separated |
+| items clocked at or after 15:00 | 58% 56/96 | 39% 36/92 | |
+| `category: objectives` / `tempo` | 7 / 14 | 18 / 2 | |
+
+Paired game for game it is not close: the new arm produced at least one on-target item in **25 of
+30** games against the old arm's **6**, discordant 19-0, McNemar p 0.0000038. The ledger alone is
+16-0, p 0.00003. The window alone, over only the **23 games that HAVE a death in it**, is 13-0,
+p 0.0002, and per-game coverage goes 6/23 to 19/23. That ceiling is reported rather than hidden: a
+game with no death between 10:00 and 15:00 cannot carry an on-window item however the prompt is
+worded, and restricted to the games that do, the share is 8% [4-17] against 27% [18-38].
+
+**Not a property of the cheap model.** The same design on `claude-sonnet-5` over the 14 most recent
+of those games (`data/eval/persona-ab-20260919-sonnet.json`) moves the same way: on target 14%
+[7-26] 8/56 to **45% [32-59] 22/49**, separated, with the window 11% to 24% and the ledger 4% to
+20%, both directional and both overlapping at n=14. Paired it is 5-0 discordant, p 0.0625, which at
+fourteen games cannot reach significance whatever the effect.
+
+**The three things the commit WITHDREW moved the right way and only one is worth a sentence.**
+Items naming unspent gold — the signal measured to point the OTHER way on his games — fall from 13%
+[7-21] 12/96 to 3% [1-9] 3/92, intervals OVERLAPPING, so that is directional and not a result.
+Deaths in the enemy jungle are 5/96 against 3/92, and among `deaths` items specifically 2 of 26 in
+BOTH arms: withdrawing that standing order changed nothing measurable, because the coach was barely
+obeying it. `category: vision` was 2 of 96 before the demotion and 1 of 92 after — there was no
+vision pillar in the output to demote. **Two of the three things that commit claims to have fixed
+were not happening.**
+
+**Blind quality is a NULL, and the one thing that is NOT null points the wrong way.** Both arms'
+items were pooled per game with the arm labels stripped and the ids reshuffled under a seed, shown
+to `anthropic/claude-sonnet-5` with the same digest the coach saw, and graded on two axes
+(`…-judged-claude-sonnet-5-uncapped.json`, 30 of 30 games, 188 items). **Useful is flat: 49%
+[39-59] 47/96 old against 50% [40-60] 46/92 new, two-proportion p 0.89.** Pooling the sonnet run's
+105 items with it leaves 59% against 58%, p 0.85. The re-aim did not make the reviews more useful
+and must not be quoted as though it did.
+
+**Supported got worse, and it is the only separated quality finding here.** Pooled over both runs
+the judge could verify every figure in **82% [75-87] 124/152** of old items against **67% [59-75]
+95/141** of new ones — Wilson intervals separated, two-proportion p 0.0052 (flash alone p 0.028,
+sonnet alone p 0.082, same direction in both). It is not a composition artefact of asking for more
+objectives items: drop that category entirely and it is still 13% unsupported against 26%,
+p 0.015. It concentrates exactly where the re-aim landed — **the NEW arm's on-target items are 53%
+[40-65] unsupported against 19% [12-29] for its own off-target ones**, which is the old arm's rate.
+
+**The mechanism is real and the citation fence cannot see it.** `parse.ts` policed 60 reviews and
+found **one** `unknown-metric-key` in 96 old items and **zero** citation warnings of any kind in 92
+new ones — no `fabricated-citations`, no `baseline-mismatch`, in either arm. So nothing the
+allowlist covers regressed. What the judge is flagging is figures in PROSE, which the allowlist
+never policed, and its own reasons name two classes. First, a FIX that invents its trigger:
+*"Position around grubs by 5:30"*, where 5:30 is in no file. Second, and worse, the early ledger
+invites an attribution the digest cannot support — *"Zero early objectives by 10:00 while Cho'Gath
+took drake and 3 grubs"* on game 5644514466, whose `## OBJECTIVES` list says `8:17 — HORDE taken by
+the enemy` and names no champion on any row. Part 2 already says credit is KILLER-ONLY and to
+phrase it as his team; it does not say the enemy row names nobody at all, and the coach fills the
+gap with the counterpart.
+
+**What this does NOT establish.** One judge, one pass, no replicate, so the `supported` rate has no
+noise floor beside it — and at least some verdicts conflate "supported" with "permitted" (one cites
+the digest's own no-blame rule as the reason a figure is unsupported), which makes 67% an
+underestimate of what is actually sourced rather than a fabrication rate. The sonnet run's judge is
+the same model as its coach. Two arms, one prompt pair, one player. And the fix suggested by all of
+it — police prose figures the way ids are policed, and say in the digest that an objective row names
+no killer — is NOT DONE and is a change to files this run did not own.
+
 ### Architecture in one breath
 
 Vite 8 + React 19 frontend · Hono 4 + `@hono/node-server` backend (one Node
@@ -1386,6 +1469,7 @@ scripts/verify-fetched.ts      the DELIVERED line against the LIVE source it cit
                                --articles, against the wiki page a human reads, sharing no code with it
 scripts/audit-live-fields.ts   every rendered field against the post-game truth, by side
 scripts/what-wins.ts           what separates his WINS from his LOSSES over the whole library
+scripts/persona-ab.ts          the SHIPPED review prompt against its predecessor, on his own games
 scripts/probe-minimap.ts       how accurate a minimap read is — the one thing bench-stream cannot grade
 scripts/blind-judge.ts         re-grades a stored ablation run, labels stripped
 scripts/socket-bake.ts         races every socket-capable model over one game, interleaved

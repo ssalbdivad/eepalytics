@@ -604,8 +604,31 @@ ${
 			.join("\n")
 }`)
 
+	/*
+	 * NO ROW HERE NAMES A PLAYER, and saying so is the difference between a gap and a fabrication.
+	 *
+	 * Measured: `scripts/persona-ab.ts` over 30 of his own games found the re-aimed prompt's
+	 * on-target items 53% [40-65] unsupported against 19% [12-29] for its own off-target ones, and
+	 * the judge's reasons name this list. On game 5644514466 a review said "Zero early objectives by
+	 * 10:00 while Cho'Gath took drake and 3 grubs" where the row says `8:17 — HORDE taken by the
+	 * enemy` and names nobody at all. Part 2 already says objective credit is KILLER-ONLY and to
+	 * phrase it as his TEAM; what it never said is that the enemy row carries no name, so the model
+	 * filled the gap with the counterpart it did know about — which is a claim about who was
+	 * standing there, invented.
+	 *
+	 * This is a statement about the FEED'S OWN PROPERTIES, which is the only editorial content any
+	 * payload in this app is allowed to carry. It does not tell the model what to say about an
+	 * objective.
+	 *
+	 * The better fix is to CARRY the killer where the timeline knows it — `killerId` is the reliable
+	 * half of `ELITE_MONSTER_KILL` (its `assistingParticipantIds` name the other team 23% of the
+	 * time) and `review/pack.ts` already prints `takenByChampion` on the frame path. That is a
+	 * change to the digest's own shape and its schema, and it is NOT DONE.
+	 */
 	if (d.objectives && d.objectives.length > 0)
 		sections.push(`## OBJECTIVES
+No row below names a player. The timeline says WHICH TEAM took each one and this digest carries no
+killer, so "the enemy took it" is the whole of what is known — naming a champion is inventing one.
 
 ${d.objectives
 	.map(
