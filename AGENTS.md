@@ -135,6 +135,12 @@ its sentence at 17:50 and three turns had fired inside twelve seconds. Meanwhile
 counterfactual in the corpus. **Nothing in the schedule knows that a turn about to arrive is worth
 more than the turn in front of it.**
 
+**Half of that is now closed and the half that mattered is not.** The 4:20-7:17 hole is a question
+at 5:52 at every level as of 2026-09-19 — see the standing-objective ask below, which costs +0.87
+asks per 28 minutes and displaces nothing. The 18:02 cluster is untouched: it is the OTHER failure,
+a schedule spending its sentence on the turn in front of it, and nothing here looks ahead. That is
+still the open bottleneck, and the standing ask is not progress on it.
+
 #### HOW OFTEN she is asked is now his, and the default changed
 
 `SPEAK_LEVELS` in `src/analysis/live-events.ts` is an allowlist of ask kinds and it is the only knob
@@ -144,19 +150,56 @@ line. That is the same line the rest of this section draws: when she is asked is
 decision, what she says is hers.
 
 Three levels, replayed through the real detector over the same 28 games and joined turn-for-turn to
-the graded lines (`scripts/measure-asks.ts --level <id>`, no model consulted, tables in
-`data/eval/asks-speaklevel-*-20260917.json`). Per 28-minute game:
+the graded lines (`scripts/measure-asks.ts --level <id>` for the grades, `--standing` for the asks
+and the silences, no model consulted, tables in `data/eval/asks-speaklevel-*-20260917.json` and
+`data/eval/asks-standing-20260919.json`). Per 28-minute game:
 
-| level | asks | spoken | clean-useful | wrong | median longest silence |
-|---|---|---|---|---|---|
-| `commentary` | 27.5 | 26.2 | 18.8 | 6.8 | 2.9m |
-| `key-moments` | 10.0 | 9.4 | 6.6 | 1.5 | 5.5m |
-| `big-calls` (default) | 8.5 | 7.8 | 6.4 | 1.3 | 5.6m |
+| level | asks | spoken | clean-useful | wrong | median longest silence | ungraded |
+|---|---|---|---|---|---|---|
+| `commentary` | 27.5 | 26.2 | 18.9 | 6.8 | 3.0m | 0/851 |
+| `key-moments` | 10.5 | 9.8 | 7.9 | 1.8 | 4.3m | 52/325 |
+| `big-calls` (default) | 10.0 | 9.3 | 7.6 | 1.5 | 5.3m | 33/309 |
 
-`big-calls` keeps `window.open`, `level.spike` and `item.completed`; `key-moments` adds
-`respawn.self`, `window.standing` and a 6-minute floor. Everything else is demoted exactly as the
+**Two of those rows moved on 2026-09-19 and only part of it is a behaviour change.** `big-calls`
+genuinely gained two questions a game, the 10:00-15:00 floor and the standing-objective ask below,
+and that is +1.5 asks. The rest is a counting fix: the previous printing priced `asks` on the turns
+a stored line exists for while pricing `spoken` on all of them, so every quiet level's ask count sat
+on a different basis from its own spoken count, and `key-moments` moved from 10.0/9.4/6.6 to
+10.5/9.8/7.9 with not one line of its schedule changed. `commentary` has 0 ungraded turns and is
+unaffected by the fix, which is the check that the fix is a fix. A turn at a clock no stored run
+took is counted here at its level's own measured speak and grade rates and its raw count travels in
+the last column, because that is a convention and not a measurement.
+
+`big-calls` keeps `window.open`, `window.standing`, `level.spike` and `item.completed`;
+`key-moments` adds `respawn.self` and a 6-minute floor. Everything else is demoted exactly as the
 third and fifth cuts demote — the detectors still fire, their notes still ride a turn as context,
 they simply cannot summon one.
+
+**`big-calls` gained `window.standing` on 2026-09-19, capped at ONE question a game, and the cap is
+the whole finding.** The default asked nothing about an objective nobody had taken, which is what
+left 4:21-7:17 of game 5639406342 silent over a drake free from 5:00. The obvious repair — put the
+kind in the allowlist — is measured wrong at every gate (`--standing`, the real detector over the
+28 games, no model): uncapped, every gate short enough to fire inside a 176-second hole costs
+between 2.5 and 10.4 extra asks a game (7.46 standing asks a game at 90s, which takes the level from
+9.1 to 15.1), and the two gates that keep the volume, 180 and 210, are longer than the hole and can
+never be satisfied inside it. Capped at one at a 90s gate it closes the hole for **+0.87 asks per 28
+minutes, zero turns lost, zero turns whose asks changed**, and a per-kind delta over all 28 games of
+`{window.standing: +27}` and nothing else. 120s costs a `hinge.silence` turn and 150s costs a
+`window.open`, so the value came from the sweep rather than from taste.
+
+**It is not a detector and is not labelled as one.** It fires in 27 of 28 games — the one it misses
+is a 3.2-minute remake that never reaches 5:00 — and 24 of those 27 land between 5:04 and 5:53,
+because its silence gate counts from a `window.open` that fires at about 4:21 in every game of
+League. It is one guaranteed question about the early objective ledger, which is the second of the
+two things `scripts/what-wins.ts` says his own 138 games are decided by, exactly as `hinge.silence`
+is one guaranteed question inside the first. **And the cap has no quality argument**: splitting
+`commentary`'s 56 graded `window.standing` turns by how many that game had already had gives 21%
+[9-40] wrong / 71% [51-85] useful for the first, 22% / 78% for the second and 21% / 71% for the
+third or later — flat, so the 6.5 questions a game the cap declines are as good as the one it keeps,
+and the case for the cap is volume and the level's own premise. `key-moments` therefore keeps ALL of
+them: measured, the same swap there saves no volume at all (10.52 asks against 10.55) and lengthens
+the median longest silence from 4.3m to 5.3m, because at that level the standing ask is also what
+covers an objective standing free at 24:00.
 
 **The trade is not a quality win and must not be quoted as one.** Paired over 27 games on one
 corpus, `big-calls` takes 6.3 wrong lines a game off him and 14.2 useful ones — down in 27 of 27
@@ -169,10 +212,13 @@ Two things a later edit will get wrong. **The heartbeat and the standing ask bot
 silence**, so a floor shorter than the standing gate takes every lull first and `window.standing`
 never fires — the first replay of `key-moments` paired 180s with 210s and lost the kind entirely.
 And `STANDING_SILENCE_SEC` is 90 only because the coach is noisy: with `window.changed` gone the
-same gate re-fires about seven times a game, which is the timer this file replaced coming back
-through the silence door. `src/analysis/live-events.test.ts` pins every level's set, both clocks and
-the real per-game turn counts (29/31 → 9/9 on the two paired games), so a well-meaning edit fails
-the suite rather than quietly making her chatty again.
+same gate re-fires **7.46 times a game** — the estimate in this paragraph read "about seven" for two
+days before anything replayed it, and it was right — which is the timer this file replaced coming
+back through the silence door. What the replay adds is that the gate was never the lever: a cap of
+one makes 90 seconds safe at a quiet level, and no gate without a cap is. `src/analysis/live-events.test.ts`
+pins every level's set, all three clocks and the real per-game turn counts (29/31 → 11/11 on the two
+paired games, with the standing ask at 5:52 and 5:47 and exactly one of it in each), so a
+well-meaning edit fails the suite rather than quietly making her chatty again.
 
 `commentary` is the schedule every stored measurement in this repo was taken on and it stays
 byte-identical: it replays the 28-game corpus at 30.39 asks, 28.89 spoken, 20.75 clean-useful and

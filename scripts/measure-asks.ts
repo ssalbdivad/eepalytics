@@ -524,3 +524,408 @@ if (OUT !== "") {
 	)
 	console.log(`\nwrote ${OUT}`)
 }
+
+/* ========================================================== the standing-objective ask */
+
+/**
+ * `--standing` — SHOULD `big-calls` GET A STANDING-OBJECTIVE ASK, AND UNDER WHAT GATE?
+ *
+ * This is the other half of the question `--cuts` asks. Everything above prices REMOVING an ask
+ * against the lines it takes away; this prices ADDING one, on the same 28 games, with no model in
+ * the loop and nothing anywhere in it that tells the model what to say.
+ *
+ * ## The hole it is aimed at
+ *
+ * `window.standing` is the only ask in this app that covers an objective nobody has taken. It is a
+ * `key-moments` kind and it does not fire at `big-calls`, which is the default and the schedule he
+ * uses. `observeTick`'s own comment names what that costs: on game 5639406342 the drake window
+ * opens at 4:21, the drake spawns at 5:00 and stands untaken until roughly 7:20, and in all that
+ * time no field of `materialDiff`'s fingerprint moves, so the detector raises nothing between 4:21
+ * and 7:17. Two minutes fifty-seven seconds of silence over a free drake — AGENTS.md calls it the
+ * biggest missed counterfactual in the corpus. That game is `js-mtvxb5f4-f81a-t29817812` in this
+ * corpus (Lillia into Kayn, 28.2 minutes, the only game of that length with Kayn on the other
+ * team), and the sweep reports its hole by name in the `hole` column.
+ *
+ * ## How the two arms are built, and why OFF is not "the level as it ships"
+ *
+ * OFF is the level with `standingSilenceSec: Infinity` — the standing ask gone entirely, at every
+ * level. ON is the same level with `alsoAsk: ["window.standing"]` and `standingSilenceSec` /
+ * `standingAskCap` set to the row under test — the fourth and fifth instrument knobs in
+ * `observeTick`, which exist because the only other way to price this was to ship it and measure
+ * afterwards. Nothing else moves: the fire site, the notes, the prompt and the payload are
+ * untouched.
+ *
+ * Making OFF the SHIPPED level would have been the obvious choice and it rots the table the moment
+ * anything ships. It did: the first run of this sweep priced the standing ask at `big-calls` against
+ * a `big-calls` that did not have one, the ask shipped on the strength of it, and the same command
+ * then printed a per-kind delta of `{}` for the row that had just been chosen — because OFF now
+ * contained the thing under test. A baseline that moves when the answer ships cannot re-derive the
+ * answer. `standingSilenceSec: Infinity` is fixed forever, which is what the knob is for, and it is
+ * why the shipped configuration appears as a ROW in this table rather than as the zero of it.
+ *
+ * A turn is GAINED when the ON arm takes a turn at a clock the OFF arm did not, LOST the other way
+ * round, and CHANGED when both took a turn at the same clock carrying different kinds. A count
+ * hides that distinction and it is the one that matters: a standing ask merging into a turn some
+ * other kind was raising anyway costs nothing and buys nothing.
+ *
+ * ## What a gained turn can and cannot be graded on
+ *
+ * Mostly it cannot. A turn the stored runs never took has no line, and this script never guesses
+ * one. But the corpus was recorded at `commentary`, which takes ~30 turns a game, so SOME gained
+ * clocks coincide with a clock a stored line sits at, and those are graded by the same two
+ * instruments as everything else. The count travels beside the rate, because a rate over three
+ * lines is not a rate — and `graded` is NOT a column to choose a gate on: the corpus's own standing
+ * gate is 90s, so a 90s replay lands on the stored clocks far more often than any other value, and
+ * that is an alignment artefact rather than a property of the gate.
+ *
+ *   node --experimental-strip-types scripts/measure-asks.ts --standing [--standing-out <file>]
+ */
+const STANDING = process.argv.includes("--standing")
+
+/** The game whose 4:21-7:17 hole this exists to close. See the docblock. */
+const HOLE_GAME = "js-mtvxb5f4-f81a-t29817812"
+const HOLE_FROM_SEC = 261
+const HOLE_TO_SEC = 437
+
+const clockOf = (sec: number): string =>
+	`${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`
+
+if (STANDING) {
+	/*
+	 * Every sample file is projected ONCE and the ticks are reused for the whole sweep. 28 games
+	 * times three levels times six gates times up to three caps is hundreds of passes over 433MB of
+	 * ndjson if each one re-reads; projecting first makes the sweep about ten seconds instead of
+	 * twenty minutes, and `projectTick` is pure, so the ticks cannot differ between passes.
+	 */
+	const ticksOf = new Map<string, NonNullable<ReturnType<typeof projectTick>>[]>()
+	for (const w of run.windows)
+		ticksOf.set(
+			w.id,
+			readVerbatim(w.sampleFile)
+				.map(row => projectTick(row.data as LiveAllGameData))
+				.filter(t => t !== null)
+		)
+
+	interface SweepTurn {
+		atSec: number
+		kinds: string[]
+	}
+	const sweep = (
+		windowId: string,
+		level: SpeakLevel,
+		on: boolean,
+		gate: number,
+		cap: number
+	): { turns: SweepTurn[]; lastSampleSec: number } => {
+		const watch = newEventWatch()
+		const turns: SweepTurn[] = []
+		let lastSampleSec = 0
+		for (const tick of ticksOf.get(windowId)!) {
+			lastSampleSec = tick.gameTimeSec
+			watch.pending.push(
+				...observeTick(watch, tick, {
+					level,
+					/* ON moves the gate and the cap together; OFF has no standing ask at all. */
+					...(on ?
+						{
+							alsoAsk: ["window.standing" as const],
+							standingSilenceSec: gate,
+							standingAskCap: cap
+						}
+					:	{ standingSilenceSec: Infinity })
+				})
+			)
+			const reason = dueTurn(watch, tick.gameTimeSec, { level })
+			if (!reason) continue
+			commitTurn(watch, reason, tick.gameTimeSec)
+			turns.push({
+				atSec: tick.gameTimeSec,
+				kinds:
+					reason.heartbeat ? ["heartbeat"] : reason.events.filter(e => e.asks).map(e => e.kind)
+			})
+		}
+		return { turns, lastSampleSec }
+	}
+
+	/**
+	 * The longest stretch with no turn in it, over a bounded slice of the clock.
+	 *
+	 * The slice's own edges count as marks, so a game asked nothing at all between 0:00 and 10:00
+	 * reports a 600-second hole rather than no hole — which is the case this whole measurement is
+	 * about, and the shape a gap-between-consecutive-turns statistic cannot see.
+	 */
+	const longestHole = (turns: SweepTurn[], from: number, to: number, end: number): number => {
+		const hi = Math.min(to, end)
+		if (hi <= from) return 0
+		const marks = [from, ...turns.filter(t => t.atSec >= from && t.atSec < hi).map(t => t.atSec), hi]
+		let worst = 0
+		for (let i = 1; i < marks.length; i += 1) worst = Math.max(worst, marks[i]! - marks[i - 1]!)
+		return worst
+	}
+	const median = (xs: number[]): number =>
+		xs.length === 0 ? 0 : [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!
+
+	/** A stored line at this exact clock, if the corpus happens to have taken a turn there. */
+	const storedAt = new Map<
+		string,
+		{ text: string; payload: string; windowId: string; index: number }
+	>()
+	for (const r of run.records)
+		if (r.arm === ARM) storedAt.set(`${r.windowId}@${r.atSec.toFixed(2)}`, r)
+	const gradeStored = (
+		windowId: string,
+		atSec: number
+	): ReturnType<typeof gradeOf> | null => {
+		const stored = storedAt.get(`${windowId}@${atSec.toFixed(2)}`)
+		return stored ?
+				gradeOf(stored.text, stored.payload, verdictOf.get(`${stored.windowId}#${stored.index}`))
+			:	null
+	}
+
+	/* ---------------------------------------- is the FIRST standing ask the good one? */
+
+	/**
+	 * THE CAP'S OWN EVIDENCE, and it needs no new run at all.
+	 *
+	 * `commentary` asks about standing objectives with no cap, and 56 of its turns in this corpus
+	 * are `window.standing` at 21% [13-34] wrong and 73% [60-83] clean-useful. If the first standing
+	 * ask of a game is the one worth having and the repeats are the noise, that shows up as a split
+	 * by ordinal WITHIN the game — on lines that are already graded, with no model consulted and
+	 * nothing re-run.
+	 *
+	 * It is a small n and it is reported with its n. It is also the only part of this measurement
+	 * that says anything about line QUALITY rather than about volume, so it is the part to distrust
+	 * first.
+	 */
+	const ordinalSplit = (): void => {
+		const buckets = new Map<string, { spoke: number; wrong: number; useful: number }>()
+		for (const w of run.windows) {
+			/*
+			 * ON at `commentary`'s OWN gate and cap, which is that level exactly as it ships — the
+			 * `false` arm has no standing ask at all since this sweep's baseline was rebased, and
+			 * asking it for standing turns returned an empty table with no error. Nothing said so
+			 * until the JSON was read back.
+			 */
+			const { turns } = sweep(
+				w.id,
+				"commentary",
+				true,
+				askPolicy("commentary").standingSilenceSec,
+				askPolicy("commentary").standingAskCap
+			)
+			let n = 0
+			for (const t of turns) {
+				if (!t.kinds.includes("window.standing")) continue
+				n += 1
+				const g = gradeStored(w.id, t.atSec)
+				if (!g || g.grade === "pass") continue
+				const k = n === 1 ? "1st of the game" : n === 2 ? "2nd" : "3rd or later"
+				const c = buckets.get(k) ?? { spoke: 0, wrong: 0, useful: 0 }
+				c.spoke += 1
+				if (g.grade === "wrong") c.wrong += 1
+				if (g.grade === "useful") c.useful += 1
+				buckets.set(k, c)
+			}
+		}
+		console.log(
+			"\nIS THE FIRST STANDING ASK THE GOOD ONE? — `commentary`'s own graded lines, split by how" +
+				"\nmany standing asks that game had already had. No model consulted, nothing re-run."
+		)
+		console.log(`  ${"".padEnd(18)}${"spoke".padStart(6)}${"wrong".padStart(16)}${"clean-useful".padStart(16)}`)
+		for (const k of ["1st of the game", "2nd", "3rd or later"]) {
+			const c = buckets.get(k)
+			if (!c) continue
+			console.log(
+				`  ${k.padEnd(18)}${String(c.spoke).padStart(6)}${pct(c.wrong, c.spoke).padStart(16)}${pct(
+					c.useful,
+					c.spoke
+				).padStart(16)}`
+			)
+		}
+		standingReport.ordinalSplit = Object.fromEntries(buckets)
+	}
+
+	/* ------------------------------------------------------------------- the sweep */
+
+	const GATES = [60, 90, 120, 150, 180, 210]
+	/**
+	 * THE CAP IS SWEPT ONLY AT `big-calls`, and that is the shape of the whole answer.
+	 *
+	 * A flat silence gate is a rate limit with no memory: satisfy it once and it can be satisfied
+	 * again a minute later, which is the "timer walking back in through the silence door" that
+	 * `STANDING_SILENCE_SEC` warns about — measured in the uncapped rows below at 7.46 standing asks
+	 * a game at a 90s gate. A cap is the memory.
+	 *
+	 * `key-moments` is swept capped too, because the same question is open there: it has the kind
+	 * already and a 210s gate, and 210 is longer than the 176-second hole, so it cannot reach inside
+	 * it either. `commentary` is swept uncapped ONLY — it is the schedule every stored measurement
+	 * in `data/eval/` was taken on, a capped row would be a schedule nobody can re-derive, and the
+	 * uncapped rows are there to show what moving its gate would have cost.
+	 */
+	const CAPS: Record<string, number[]> = {
+		"big-calls": [1, 2, Infinity],
+		"key-moments": [1, Infinity],
+		commentary: [Infinity]
+	}
+	const LEVELS: SpeakLevel[] = ["big-calls", "key-moments", "commentary"]
+	const sweepRows: Record<string, unknown>[] = []
+	const standingReport: Record<string, unknown> = {}
+
+	console.log(
+		`\nTHE STANDING-OBJECTIVE ASK — ${run.windows.length} games, no model in the loop.` +
+			"\nOFF is the level with NO standing ask at all (`standingSilenceSec: Infinity`), which is a baseline" +
+			"\nthat cannot move when something ships. ON allows the kind at the gate and cap shown." +
+			"\nasks/28m is whole-game asks normalised by each game's own last SAMPLE, never its last turn."
+	)
+	for (const level of LEVELS) {
+		const base = new Map<string, SweepTurn[]>()
+		let baseAsks = 0
+		let minutes = 0
+		const baseEarly: number[] = []
+		const baseWhole: number[] = []
+		for (const w of run.windows) {
+			const { turns, lastSampleSec } = sweep(w.id, level, false, 0, Infinity)
+			base.set(w.id, turns)
+			baseAsks += turns.length
+			minutes += lastSampleSec / 60
+			baseEarly.push(longestHole(turns, 0, 600, lastSampleSec))
+			baseWhole.push(longestHole(turns, 0, Infinity, lastSampleSec))
+		}
+		const per28 = (n: number): string => ((28 * n) / (minutes / run.windows.length)).toFixed(2)
+		const holeBase = base
+			.get(HOLE_GAME)!
+			.filter(t => t.atSec > HOLE_FROM_SEC && t.atSec < HOLE_TO_SEC)
+		console.log(
+			`\n  ${level} — WITH NO STANDING ASK AT ALL: ${per28(baseAsks / run.windows.length)} asks/28min, ` +
+				`median longest silence ${(median(baseWhole) / 60).toFixed(1)}m, ` +
+				`median longest pre-10:00 silence ${(median(baseEarly) / 60).toFixed(1)}m, ` +
+				`${HOLE_GAME.slice(-9)} 4:21-7:17 has ${holeBase.length} turn(s)`
+		)
+		console.log(
+			`  ${"gate".padStart(5)}${"cap".padStart(5)}${"asks/28m".padStart(10)}${"stand/gm".padStart(10)}${"gained".padStart(8)}${"LOST".padStart(6)}${"changed".padStart(9)}` +
+				`${"med silence".padStart(13)}${"med pre-10".padStart(12)}${"hole".padStart(6)}${"graded".padStart(18)}`
+		)
+		for (const gate of GATES)
+			for (const cap of CAPS[level]!) {
+				let asks = 0
+				let standAsks = 0
+				let gained = 0
+				let lost = 0
+				let changed = 0
+				const early: number[] = []
+				const whole: number[] = []
+				const lostDetail: string[] = []
+				const gainedDetail: string[] = []
+				const standingAt: number[] = []
+				const kindDelta = new Map<string, number>()
+				let holeTurns = 0
+				const gradedRows: ReturnType<typeof gradeOf>[] = []
+				for (const w of run.windows) {
+					const { turns, lastSampleSec } = sweep(w.id, level, true, gate, cap)
+					const off = base.get(w.id)!
+					asks += turns.length
+					early.push(longestHole(turns, 0, 600, lastSampleSec))
+					whole.push(longestHole(turns, 0, Infinity, lastSampleSec))
+					for (const t of off)
+						for (const k of new Set(t.kinds)) kindDelta.set(k, (kindDelta.get(k) ?? 0) - 1)
+					for (const t of turns)
+						for (const k of new Set(t.kinds)) kindDelta.set(k, (kindDelta.get(k) ?? 0) + 1)
+					const offAt = new Map(off.map(t => [t.atSec.toFixed(2), t.kinds.join("+")]))
+					const onAt = new Set(turns.map(t => t.atSec.toFixed(2)))
+					for (const t of turns) {
+						if (t.kinds.includes("window.standing")) {
+							standAsks += 1
+							standingAt.push(t.atSec)
+						}
+						const was = offAt.get(t.atSec.toFixed(2))
+						if (was === undefined) {
+							gained += 1
+							gainedDetail.push(`${w.id}@${clockOf(t.atSec)} ${t.kinds.join("+")}`)
+							const g = gradeStored(w.id, t.atSec)
+							if (g) gradedRows.push(g)
+						} else if (was !== t.kinds.join("+")) changed += 1
+					}
+					for (const t of off)
+						if (!onAt.has(t.atSec.toFixed(2))) {
+							lost += 1
+							lostDetail.push(`${w.id}@${clockOf(t.atSec)} ${t.kinds.join("+")}`)
+						}
+					if (w.id === HOLE_GAME)
+						holeTurns += turns.filter(
+							t => t.atSec > HOLE_FROM_SEC && t.atSec < HOLE_TO_SEC
+						).length
+				}
+				const spoke = gradedRows.filter(r => r.grade !== "pass")
+				const graded =
+					spoke.length === 0 ?
+						`0 of ${gained}`
+					:	`${spoke.filter(r => r.grade === "useful").length}u/${spoke.filter(r => r.grade === "wrong").length}w of ${spoke.length}`
+				standingAt.sort((a, b) => a - b)
+				const shipped =
+					gate === askPolicy(level).standingSilenceSec &&
+					cap === askPolicy(level).standingAskCap &&
+					askPolicy(level).kinds.includes("window.standing")
+				console.log(
+					`${shipped ? " *" : "  "}${String(gate).padStart(5)}${(cap === Infinity ? "—" : String(cap)).padStart(5)}${per28(asks / run.windows.length).padStart(10)}${(standAsks / run.windows.length).toFixed(2).padStart(10)}` +
+						`${String(gained).padStart(8)}${String(lost).padStart(6)}${String(changed).padStart(9)}` +
+						`${`${(median(whole) / 60).toFixed(1)}m`.padStart(13)}${`${(median(early) / 60).toFixed(1)}m`.padStart(12)}` +
+						`${String(holeTurns).padStart(6)}${graded.padStart(18)}`
+				)
+				sweepRows.push({
+					level,
+					gate,
+					cap: cap === Infinity ? null : cap,
+					/** True on the row this level actually ships, so the table says which one is live. */
+					shipped,
+					asksPer28Min: Number(per28(asks / run.windows.length)),
+					standingAsksPerGame: standAsks / run.windows.length,
+					/* Where it lands, which is how a silence gate is caught being a clock. */
+					standingAtSec: standingAt,
+					standingBandSec:
+						standingAt.length === 0 ?
+							null
+						:	{
+								first: standingAt[0]!,
+								median: median(standingAt),
+								last: standingAt.at(-1)!,
+								before10Min: standingAt.filter(s => s < 600).length
+							},
+					turnsGained: gained,
+					turnsLost: lost,
+					turnsChanged: changed,
+					medianLongestSilenceSec: median(whole),
+					medianLongestPre10SilenceSec: median(early),
+					holeGameTurnsInHole: holeTurns,
+					perKindChange: Object.fromEntries([...kindDelta].filter(([, n]) => n !== 0)),
+					lostDetail,
+					gainedDetail
+				})
+			}
+	}
+	console.log(
+		"\n  `hole` is how many turns land inside 4:21-7:17 of the drake game; 0 is the hole as it is today." +
+			"\n  `graded` counts only gained turns whose clock a stored commentary line happens to sit on, and" +
+			"\n  a 90s row lands on those clocks because the corpus's own gate is 90s. Do not pick a gate on it." +
+			"\n  A row marked * is the configuration that level ships today."
+	)
+	ordinalSplit()
+
+	const STANDING_OUT = arg("--standing-out", "")
+	if (STANDING_OUT !== "")
+		writeFileSync(
+			STANDING_OUT,
+			`${JSON.stringify(
+				{
+					what: "Should `big-calls` get a standing-objective ask, and under what gate and cap? The real detector replayed over the 28-game corpus at every level, gate and cap, ON against OFF. No model is consulted and no line is generated; re-derive with `node --experimental-strip-types scripts/measure-asks.ts --standing`.",
+					ranAt: new Date().toISOString(),
+					corpus: RUN,
+					judged: JUDGED,
+					holeGame: { id: HOLE_GAME, fromSec: HOLE_FROM_SEC, toSec: HOLE_TO_SEC },
+					...standingReport,
+					sweep: sweepRows
+				},
+				null,
+				"\t"
+			)}\n`
+		)
+}

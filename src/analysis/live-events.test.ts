@@ -39,6 +39,7 @@ import {
 	DRAKE_FIRST_SPAWN_SEC,
 	GRUBS_SPAWN_SEC,
 	nextOpeningSec,
+	STANDING_ASK_CAP,
 	STANDING_SILENCE_SEC,
 	HINGE_FROM_SEC,
 	HINGE_TO_SEC,
@@ -1786,9 +1787,16 @@ describe("two games, one session", () => {
 describe("speak levels", () => {
 	it("pins the ask set of every level", () => {
 		deepStrictEqual(askPolicy("big-calls"), {
-			kinds: ["window.open", "level.spike", "item.completed", "hinge.silence"],
+			kinds: [
+				"window.open",
+				"window.standing",
+				"level.spike",
+				"item.completed",
+				"hinge.silence"
+			],
 			heartbeatSec: Infinity,
-			standingSilenceSec: 210
+			standingSilenceSec: STANDING_SILENCE_SEC,
+			standingAskCap: STANDING_ASK_CAP
 		})
 		deepStrictEqual(askPolicy("key-moments"), {
 			kinds: [
@@ -1800,7 +1808,8 @@ describe("speak levels", () => {
 				"hinge.silence"
 			],
 			heartbeatSec: 360,
-			standingSilenceSec: 210
+			standingSilenceSec: 210,
+			standingAskCap: Infinity
 		})
 		deepStrictEqual(askPolicy("commentary"), {
 			kinds: [
@@ -1814,7 +1823,8 @@ describe("speak levels", () => {
 				"game.start"
 			],
 			heartbeatSec: HEARTBEAT_SEC,
-			standingSilenceSec: STANDING_SILENCE_SEC
+			standingSilenceSec: STANDING_SILENCE_SEC,
+			standingAskCap: Infinity
 		})
 	})
 
@@ -1970,12 +1980,20 @@ describe("speak levels", () => {
 		}
 		/*
 		 * `key-moments` and `big-calls` each gained ONE against the counts this pinned before the
-		 * hinge floor: the 10:00-15:00 question, at 13:29 on Kayn and 13:00 on Fiddlesticks. The
-		 * commentary column is unchanged to the turn, which is what freezing that schedule means.
+		 * hinge floor: the 10:00-15:00 question, at 13:28 on Kayn and 12:59 on Fiddlesticks.
+		 *
+		 * `big-calls` then gained ONE MORE when the standing-objective ask arrived there — at 5:52
+		 * on Kayn and 5:47 on Fiddlesticks, one each, which is the cap doing its job over 28 and 31
+		 * minutes of play. `key-moments` did NOT move, although it has the same kind: it already
+		 * asked about standing objectives and it is uncapped, so nothing about it changed. See
+		 * `STANDING_ASK_CAP`.
+		 *
+		 * The commentary column is unchanged to the turn through both of those, which is what
+		 * freezing that schedule means.
 		 */
 		const expected = {
-			kayn: { commentary: 29, "key-moments": 13, "big-calls": 10 },
-			fiddle: { commentary: 31, "key-moments": 12, "big-calls": 10 }
+			kayn: { commentary: 29, "key-moments": 13, "big-calls": 11 },
+			fiddle: { commentary: 31, "key-moments": 12, "big-calls": 11 }
 		} as const
 		for (const [name, file] of Object.entries(FILES))
 			for (const level of ["commentary", "key-moments", "big-calls"] as const) {
@@ -1983,6 +2001,87 @@ describe("speak levels", () => {
 				if (got === null) return t.skip(`${file} is not on this machine`)
 				strictEqual(got, expected[name as keyof typeof expected][level], `${name} @ ${level}`)
 			}
+	})
+
+	/*
+	 * THE HOLE, AT THE LEVEL THAT SHIPS. The case above pins it at `commentary`, which has asked
+	 * about standing objectives since the fourth cut; this pins it at `big-calls`, which is the
+	 * DEFAULT and did not until 2026-09-19. Same game, same stretch, and the baseline arm is the
+	 * schedule as it stood the day before — `standingSilenceSec: Infinity`, the knob that turns the
+	 * ask off, rather than an edited allowlist, so this comparison keeps working however the
+	 * allowlist moves later.
+	 *
+	 * 5:52 on Kayn, 5:47 on Fiddlesticks. See `STANDING_ASK_CAP` for why it is one question and not
+	 * the 7.46 a game an uncapped 90-second gate produces at this level.
+	 */
+	it("the default level breaks the 4:21-7:17 silence, once", t => {
+		const FILES = {
+			kayn: "data/live-samples/js-mtvxb5f4-f81a-t29817812.ndjson",
+			fiddle: "data/live-samples/js-mtvxb5f4-f81a-t29817845.ndjson"
+		}
+		const replayAt = (
+			file: string,
+			opts: { standingSilenceSec?: number; standingAskCap?: number } = {}
+		): Array<{ atSec: number; kinds: LiveEventKind[] }> | null => {
+			let text: string
+			try {
+				text = readFileSync(file, "utf8")
+			} catch {
+				return null
+			}
+			const watch = newEventWatch()
+			const out: Array<{ atSec: number; kinds: LiveEventKind[] }> = []
+			for (const line of text.split("\n")) {
+				if (line.trim() === "") continue
+				let parsed: { data?: unknown }
+				try {
+					parsed = JSON.parse(line) as { data?: unknown }
+				} catch {
+					continue
+				}
+				const tick = projectTick(parsed.data as never)
+				if (tick === null) continue
+				watch.pending.push(
+					...observeTickAtLevel(watch, tick, { level: "big-calls", ...opts })
+				)
+				const reason = dueTurnAtLevel(watch, tick.gameTimeSec, { level: "big-calls" })
+				if (reason === null) continue
+				commitTurn(watch, reason, tick.gameTimeSec)
+				out.push({ atSec: tick.gameTimeSec, kinds: reason.events.filter(e => e.asks).map(e => e.kind) })
+			}
+			return out
+		}
+
+		const kayn = replayAt(FILES.kayn)
+		if (kayn === null) return t.skip(`${FILES.kayn} is not on this machine`)
+		const inHole = kayn.filter(x => x.atSec > 262 && x.atSec < 435)
+		strictEqual(inHole.length, 1, inHole.map(x => `${Math.round(x.atSec)}s`).join(" | "))
+		deepStrictEqual(inHole[0]!.kinds, ["window.standing"])
+		strictEqual(
+			replayAt(FILES.kayn, { standingSilenceSec: Infinity })!.filter(
+				x => x.atSec > 262 && x.atSec < 435
+			).length,
+			0,
+			"the schedule this replaces asked nothing in that stretch — if it did, the claim is stale"
+		)
+
+		/*
+		 * THE CAP IS THE WHOLE OF THE VOLUME ARGUMENT, so it is pinned as a count and against the
+		 * uncapped arm it replaces. Uncapped at the same gate these two games take 7 and 8 standing
+		 * asks and 16 and 17 turns, against 1 and 11; the corpus figure behind `STANDING_ASK_CAP` is
+		 * 7.46 standing asks a game over 28 games.
+		 */
+		for (const file of Object.values(FILES)) {
+			const capped = replayAt(file)!.filter(x => x.kinds.includes("window.standing"))
+			strictEqual(capped.length, 1, `${file}: ${capped.length} standing asks under a cap of one`)
+			const uncapped = replayAt(file, { standingAskCap: Infinity })!.filter(x =>
+				x.kinds.includes("window.standing")
+			)
+			ok(
+				uncapped.length >= 5,
+				`${file}: uncapped is ${uncapped.length} standing asks — if this is small the cap is pinning nothing`
+			)
+		}
 	})
 
 	/*

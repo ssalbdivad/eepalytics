@@ -858,8 +858,113 @@ export const CONTEXT_CARRY_SEC = 90
  *
  * Below about 60 it starts to fire in ordinary play and becomes a slower timer; above about 120 it
  * misses the 5:00-7:20 drake, which is the whole thing it was built for.
+ *
+ * THE "IT RE-FIRES SEVEN TIMES A GAME AT A QUIET LEVEL" WARNING IS NOW A NUMBER, and it is 7.46.
+ * This comment and `key-moments`'s own note used to say "about seven times a game" from a reading
+ * of the mechanism rather than from a replay. Measured: `scripts/measure-asks.ts --standing` over
+ * the 28-game corpus puts a 90s gate with no cap at **7.46 standing asks a game**, which takes
+ * `big-calls` from 9.13 asks per 28 minutes to 15.11 — the timer this file replaced walking back in
+ * through the silence door, exactly as written, and the estimate was right to two significant
+ * figures. What the same replay adds is that the GATE was never the thing that needed raising: see
+ * `STANDING_ASK_CAP`.
  */
 export const STANDING_SILENCE_SEC = 90
+
+/**
+ * HOW MANY STANDING-OBJECTIVE QUESTIONS ONE GAME MAY RAISE — the memory a silence gate does not have.
+ *
+ * ## The hole this closes, and why a bigger gate could not close it
+ *
+ * `window.standing` is the only ask in this app that covers an objective nobody has taken, and
+ * until 2026-09-19 it was a `key-moments` kind: at `big-calls`, which is the default and the
+ * schedule he uses, the fire site below raised it with `asks: false` and the coach said nothing.
+ * What that costs is the stretch this file's own fire-site comment names — the drake window opens
+ * at 4:21 of game 5639406342, the drake spawns at 5:00 and stands untaken until roughly 7:20, no
+ * field of `materialDiff`'s fingerprint moves, and the detector raises nothing between 4:21 and
+ * 7:17. AGENTS.md calls those 2m57s the biggest missed counterfactual in the corpus.
+ *
+ * The obvious repair — put the kind in `big-calls`'s allowlist — was measured and it is wrong at
+ * every gate. `scripts/measure-asks.ts --standing`, the real detector over the 28-game corpus with
+ * no model in the loop, ON against the level exactly as it ships. `stand/gm` is standing asks a
+ * game, `hole` is turns landing inside 4:21-7:17 of that game, and LOST is turns the level was
+ * taking that it now does not:
+ *
+ * ```
+ *   gate   cap   asks/28m   stand/gm   gained   LOST   changed   hole   where it lands
+ *     60     —      19.55      12.64      345     23        16      2
+ *     90     —      15.11       7.46      204     19        10      1
+ *    120     —      12.75       4.64      126     14         5      1
+ *    150     —      11.59       3.00       82      6         4      1
+ *    180     —      10.74       2.04       57      7         5      0
+ *    210     —      10.06       1.25       34      5         4      0     (the gate it shipped with)
+ *     60      1     10.00       0.96       27      0         0      1     5:03-5:22, median 5:16
+ *     90      1     10.00       0.96       27      0         0      1     5:04-8:54, median 5:47
+ *    120      1      9.97       0.96       27      1         0      1     5:35-20:11, median 6:17
+ *    150      1      9.94       0.96       27      2         1      1     6:05-21:18, median 6:47
+ *    180      1      9.71       0.89       20      2         5      0
+ *    210      1      9.51       0.64       15      3         4      0
+ *     90      2     10.45       1.93       50      9         8      1
+ * ```
+ *
+ * `big-calls` as it ships is 9.13 asks per 28 minutes. **Uncapped, there is no gate that closes the
+ * hole and leaves the level recognisable**: every value that reaches inside 4:21-7:17 costs between
+ * 2.5 and 10.4 extra asks a game, and the two that keep the volume (180, 210) cannot reach inside a
+ * 176-second hole at all, because a gate longer than the hole is never satisfied in it. That is
+ * arithmetic and not a measurement, and it is why the gate was the wrong knob.
+ *
+ * **ONE is the knob.** Capped at one question a game the hole closes at +0.87 asks per 28 minutes,
+ * and at a 90s gate it takes NOTHING: zero turns lost, zero turns whose asks changed, and the
+ * per-kind delta over all 28 games is `{window.standing: +27}` and nothing else. 120 costs one
+ * `hinge.silence` turn and 150 costs a `window.open` — the best kind at this level, 82% [76-86]
+ * clean-useful — so the sweep picks 90 rather than taste, and 90 is `STANDING_SILENCE_SEC`, which
+ * the app already had.
+ *
+ * ## WHAT IT IS NOT: A DETECTOR. Said plainly, because the numbers say it plainly.
+ *
+ * At a 90s gate with a cap of one it fires in **27 of 28 games** — the one it skips is
+ * `js-mtvxb5f4-f81a-t29819280`, a 3.2-minute remake that never reaches 5:00, so among games that
+ * reach the first drake it is **27 of 27** — and **24 of those 27 land between 5:04 and 5:53**. It
+ * is a question at roughly 5:47 about a drake that spawned at 5:00, and its silence gate is
+ * measured from a `window.open` that fires at about 4:21 in every game of League. A gate counting
+ * from a fixed clock is a fixed clock.
+ *
+ * So it is labelled the way `hinge.silence` is labelled: ONE GUARANTEED QUESTION, here about the
+ * early objective ledger, and not a detector of a rare standing opportunity. Two things are still
+ * true of it that are not true of a timer — it cannot fire while any other ask is queued or raised
+ * on the same tick, and it cannot fire unless the objective is genuinely still standing — and this
+ * corpus simply never exercises either, because the drake was still free at 5:47 in all 27.
+ *
+ * ## WHY ONE AND NOT SIX, when each of the six is as good as the first
+ *
+ * The tempting story is that the first standing ask of a game is the good one and the repeats are
+ * noise. **It is false, and the corpus already contained the refutation.** `commentary` asks with no
+ * cap, and splitting its 56 graded `window.standing` turns by how many that game had already had
+ * (`--standing`, no model consulted, nothing re-run):
+ *
+ * ```
+ *   1st of the game    24 spoke    21% [9-40] wrong    71% [51-85] clean-useful
+ *   2nd                18 spoke    22% [9-45] wrong    78% [55-91] clean-useful
+ *   3rd or later       14 spoke    21% [8-48] wrong    71% [45-88] clean-useful
+ * ```
+ *
+ * Flat. The cap therefore has NO quality argument and must not be given one: the 6.5 questions a
+ * game it declines are, as far as this instrument can see, exactly as good as the one it keeps.
+ * The argument is the level's own and it is about VOLUME — the same argument AGENTS.md makes for
+ * `big-calls` itself, which "removes four good lines for every bad one" and is justified by the
+ * owner's 0/10 on the chatty schedule rather than by a quality win. Uncapped at 90 this one kind
+ * would add 7.46 asks a game to a level that has 8.5.
+ *
+ * ## WHAT IS NOT KNOWN
+ *
+ * Nothing here says the added question produces a good sentence. 27 turns are gained and 14 of them
+ * sit at a clock a stored `commentary` line happens to occupy, graded 12 useful to 1 wrong — but
+ * that alignment exists BECAUSE `commentary`'s own standing gate is 90 seconds, so it is a property
+ * of the corpus and not evidence for this gate, and 14 lines is not a rate. The honest comparable
+ * is the kind's own corpus figure: `window.standing` is 21% [13-34] wrong and 73% [60-83]
+ * clean-useful over 56 turns, better than the 25%/69% pooled rate and beaten only by `window.open`,
+ * `level.spike` and `item.completed`, which are the three kinds `big-calls` already had.
+ */
+export const STANDING_ASK_CAP = 1
 
 /* ------------------------------------------------- THE HINGE, AND THE ASK IT IS NOT */
 
@@ -994,6 +1099,15 @@ export const HINGE_TO_SEC = 900
  *   commentary    27.54 -> 27.54       5.48 -> 5.48    nothing; the gate is unreachable there
  * ```
  *
+ * THE `big-calls` ROW'S TWO ABSOLUTE FIGURES MOVED ON 2026-09-19 AND NOTHING ELSE IN THIS BLOCK
+ * DID. That level gained a standing-objective ask (`STANDING_ASK_CAP`), so re-running
+ * `--trade` today prints `9.39 -> 10.00` for the same +0.61. Everything this table was written to
+ * establish reproduces to the digit: hinge.silence +20 over 28 games, 0 turns lost, 1 turn's asks
+ * changed, in-window 2.11 -> 2.81, landing 12:33 to 14:19 with a median of 12:41. The two schedule
+ * changes do not interact, and the reason is in the gate — this one counts silence from
+ * `max(last turn, 10:00)` and the standing question lands at a median 5:47, so it cannot spend a
+ * lull that has not started yet.
+ *
  * At `big-calls` — the default, and the one he uses — it adds 20 asks over 28 games and removes
  * none: not one existing turn disappears and not one moves. At `key-moments` it costs THREE asks
  * over the same 28 games, one standing-objective ask and two heartbeats, because those two also
@@ -1063,19 +1177,31 @@ export const HINGE_SILENCE_SEC = 150
  * INTO SILENCE, so removing `window.changed` makes them fire more often, and adding up rows of the
  * table above would have missed it. See `standingSilenceSec` below for the one that bit.
  *
- * A turn at a clock the stored run never took has no line to grade; those are counted and reported
- * as ungraded rather than guessed at in either direction, and the per-level `linesPerGame` here is
- * the SPOKEN count including them at the level's own measured PASS rate.
+ * A turn at a clock the stored run never took has no line to grade. Those are counted and reported
+ * as UNGRADED rather than guessed at in either direction, and the table below then counts them at
+ * the level's own measured speak and grade rates — which is a convention, so it is stated here and
+ * the raw count travels in its own column.
  *
  * ```
- *   level               asks/g   spoken/g   clean-useful/g   wrong/g   longest silence
- *   commentary            27.5       26.2             18.8       6.8             2.9m
- *   key-moments           10.0        9.4              6.6       1.5             5.5m
- *   big-calls              8.5        7.8              6.4       1.3             5.6m
+ *   level               asks/g   spoken/g   clean-useful/g   wrong/g   longest silence   ungraded
+ *   commentary            27.5       26.2             18.9       6.8             3.0m       0/851
+ *   key-moments           10.5        9.8              7.9       1.8             4.3m      52/325
+ *   big-calls             10.0        9.3              7.6       1.5             5.3m      33/309
  * ```
  *
  * Per 28-minute game, scaled from the corpus's own mean of 30.9 minutes. Re-derive any row with
- * `scripts/measure-asks.ts --level <id>`, which replays exactly this and needs no model.
+ * `scripts/measure-asks.ts --level <id>` for the grades and `--standing` for the asks and the
+ * silences; neither needs a model.
+ *
+ * TWO OF THESE ROWS MOVED ON 2026-09-19 AND ONLY PART OF IT IS A BEHAVIOUR CHANGE, which is worth
+ * separating because a reader comparing against the previous printing will otherwise credit the
+ * whole difference to the new ask. `big-calls` genuinely gained two questions a game — the
+ * 10:00-15:00 floor and the standing-objective ask — and that is +1.5 asks. The rest is a counting
+ * fix: the old rows priced `asks/g` on JOINED turns only while pricing `spoken/g` on all of them,
+ * so every quiet level's ask count was reported below its own spoken count's basis, and
+ * `key-moments` moved from 10.0/9.4/6.6 to 10.5/9.8/7.9 without one line of its schedule changing.
+ * `commentary` is unaffected by the fix because it has 0 ungraded turns, and it reproduces to the
+ * tenth — which is the check that the fix is a fix.
  *
  * The shape of the cut is the point: `big-calls` removes two thirds of the talking and one third
  * of the good lines, because the kinds it drops are the ones with the most turns and the worst hit
@@ -1101,6 +1227,8 @@ export interface AskPolicy {
 	heartbeatSec: number
 	/** How long nothing may have been asked before a standing objective becomes the news. */
 	standingSilenceSec: number
+	/** How many standing-objective questions one game may raise here. See `STANDING_ASK_CAP`. */
+	standingAskCap: number
 }
 
 /**
@@ -1131,10 +1259,10 @@ export const SPEAK_LEVELS: {
 		id: "big-calls",
 		label: "Big calls only",
 		blurb:
-			"An objective window opening, a spike level, a finished legendary — plus one question inside 10:00-15:00 if that stretch would otherwise pass in silence. Nothing else opens her mouth, and the board on the live page keeps showing the standing state with no model in it.",
-		linesPerGame: 8.4,
+			"An objective window opening, a spike level, a finished legendary — plus one question about an objective standing free that nobody has taken, and one inside 10:00-15:00 if that stretch would otherwise pass in silence. Nothing else opens her mouth, and the board on the live page keeps showing the standing state with no model in it.",
+		linesPerGame: 9.3,
 		evidence:
-			"28 real games replayed: 9.1 asks and about 8.4 spoken lines in a 28-minute game. 8.5 of those asks are the measured ones — 82% [76-86] clean-useful and 17% [13-22] wrong, 6.4 good lines a game and 1.3 bad ones, against 18.8 good and 6.8 bad when she reacts to everything. The extra 0.6 is the 10:00-15:00 floor, which lands at instants no stored run took and is therefore UNGRADED; it removes no existing ask. Median longest silence 5.6 minutes.",
+			"28 real games replayed: 10.0 asks and about 9.3 spoken lines in a 28-minute game — 82% [77-86] clean-useful and 16% [12-21] wrong over the 257 of 276 joined turns that spoke, so about 7.6 good lines a game and 1.5 bad ones, against 18.8 good and 6.8 bad when she reacts to everything. Two of those asks are floors rather than detectors and are counted at the same rates as the rest: the 10:00-15:00 question (+0.6) and one question a game about a free objective (+0.9), which closes the 2m57s of silence over an untaken drake that was the biggest missed counterfactual in the corpus. Median longest silence 5.3 minutes.",
 		policy: {
 			/*
 			 * THREE KINDS, and the third is the one to argue about. `item.completed` costs 1.0 asks
@@ -1151,7 +1279,24 @@ export const SPEAK_LEVELS: {
 			 * could pass with a 259-second gap in them. See `HINGE_SILENCE_SEC` — it costs +1.00
 			 * asks a game, it fires only into a lull, and it displaces nothing.
 			 */
-			kinds: ["window.open", "level.spike", "item.completed", "hinge.silence"],
+			/*
+			 * THE FIFTH IS THE FREE OBJECTIVE NOBODY TOOK, and it is capped at one question a game.
+			 *
+			 * This level asked nothing about a standing objective until 2026-09-19, which is what
+			 * left 4:21-7:17 of game 5639406342 silent over a drake that stood free from 5:00 — the
+			 * biggest missed counterfactual in the corpus. Adding the kind without the cap is the
+			 * obvious repair and it is measured wrong at every gate: see `STANDING_ASK_CAP` for the
+			 * whole sweep. Capped at one at a 90s gate it costs +0.87 asks per 28 minutes, closes
+			 * the hole, and takes nothing — zero turns lost, zero changed, `{window.standing: +27}`
+			 * over 28 games and no other kind moved.
+			 */
+			kinds: [
+				"window.open",
+				"window.standing",
+				"level.spike",
+				"item.completed",
+				"hinge.silence"
+			],
 			/*
 			 * NO FLOOR UNDER SILENCE. The heartbeat is the ask that exists because nothing else did,
 			 * and this level's whole premise is that nothing else did is an acceptable answer — the
@@ -1160,11 +1305,16 @@ export const SPEAK_LEVELS: {
 			 */
 			heartbeatSec: Infinity,
 			/*
-			 * The gate still runs at 210 although `window.standing` is not in `kinds`, and that is
-			 * deliberate: the detector fires, the note rides the next turn as context, and the bench
-			 * can still count it. Demote, never delete.
+			 * 90 AND ONE, and the pair is the finding. The gate shipped at 210 here for a year on the
+			 * reading that a 90s gate re-fires about seven times a game at a quiet level — which the
+			 * replay confirms at 7.46 — so the gate was raised and the kind was vetoed instead. Both
+			 * were the wrong lever: a gate longer than a 176-second hole can never be satisfied
+			 * inside it, so 210 cannot reach the thing the ask exists for. The cap is the memory the
+			 * gate never had, and with it in place the gate can go back to the value the rest of the
+			 * app uses. See `STANDING_ASK_CAP`.
 			 */
-			standingSilenceSec: 210
+			standingSilenceSec: STANDING_SILENCE_SEC,
+			standingAskCap: STANDING_ASK_CAP
 		}
 	},
 	{
@@ -1172,9 +1322,9 @@ export const SPEAK_LEVELS: {
 		label: "Key moments",
 		blurb:
 			"Everything above, plus him coming back up, an objective that has stood free for a while, and a floor under long silences. Still no running commentary on a window that is already open.",
-		linesPerGame: 9.9,
+		linesPerGame: 9.8,
 		evidence:
-			"10.5 asks and about 9.9 spoken lines in a 28-minute game. The measured 10.0 of those are 80% [75-84] clean-useful — 6.6 good lines and 1.5 bad ones; 8.2 are joined to a real stored line and the rest land at instants no recorded run ever took, so they are counted at the same speak rate rather than assumed silent. The 10:00-15:00 floor adds 0.6 and costs 0.1: over 28 games it takes one standing-objective ask and two heartbeats, because those fire into silence too.",
+			"10.5 asks and about 9.8 spoken lines in a 28-minute game, 80% [75-84] clean-useful — 7.9 good lines a game and 1.8 bad ones. 8.8 of the asks are joined to a real stored line and 1.7 land at instants no recorded run ever took, counted at the same speak and grade rates rather than assumed silent. The 10:00-15:00 floor adds 0.6 and costs 0.1: over 28 games it takes one standing-objective ask and two heartbeats, because those fire into silence too. This level keeps EVERY standing-objective ask, 1.25 a game, where the quiet one keeps one.",
 		policy: {
 			kinds: [
 				"window.open",
@@ -1184,8 +1334,13 @@ export const SPEAK_LEVELS: {
 				"item.completed",
 				/*
 				 * It costs LESS here than at `big-calls` — 0.93 asks a game against 1.00 — because
-				 * this level already has a standing ask and a 360s floor to break a lull with, and
-				 * both of them reset the same silence clock. See `HINGE_SILENCE_SEC`.
+				 * this level has an uncapped standing ask and a 360s floor to break a lull with, and
+				 * both of them reset the same silence clock. See `HINGE_SILENCE_SEC`. `big-calls`
+				 * gained a standing ask on 2026-09-19 and that did NOT change its hinge count: its
+				 * one question lands at a median 5:47, and the hinge's clock runs from
+				 * `max(last turn, 10:00)`, so an ask before the window cannot spend the lull inside
+				 * it. Measured: the per-kind delta of that change over all 28 games is
+				 * `{window.standing: +27}` and nothing else.
 				 */
 				"hinge.silence"
 			],
@@ -1200,11 +1355,23 @@ export const SPEAK_LEVELS: {
 			 *
 			 * 210 rather than the shipped 90 because the shipped figure was measured while the coach
 			 * was noisy, where anything at all resets the silence clock. With `window.changed` gone
-			 * the same 90s gate re-fires about seven times a game, which is the timer this whole
-			 * file replaced walking back in through the silence door.
+			 * the same 90s gate re-fires 7.46 times a game — measured, `--standing` — which is the
+			 * timer this whole file replaced walking back in through the silence door.
+			 *
+			 * UNCAPPED, AND `big-calls` IS NOT. That asymmetry is deliberate and it is measured
+			 * rather than assumed. `big-calls` takes the cap because a 210s gate cannot reach inside
+			 * the 176-second hole the ask exists for and a shorter gate without a cap is the timer
+			 * above; here the same swap is a bad trade. From the `--standing` table: this level
+			 * ships at 210 uncapped for 10.52 asks per 28 minutes with a median longest silence of
+			 * 4.3 minutes, and 90-capped-at-one is 10.55 asks — no volume saved at all — for a median
+			 * longest silence of 5.3 minutes. It buys the drake hole and sells back every later lull,
+			 * because at this level the standing ask is also the thing covering an objective standing
+			 * free at 24:00 and the cap spends its one question at 5:47. `key-moments` is the level
+			 * for someone who wants more of them, so it keeps all of them.
 			 */
 			heartbeatSec: 360,
-			standingSilenceSec: 210
+			standingSilenceSec: 210,
+			standingAskCap: Infinity
 		}
 	},
 	{
@@ -1243,7 +1410,16 @@ export const SPEAK_LEVELS: {
 				 */
 			],
 			heartbeatSec: HEARTBEAT_SEC,
-			standingSilenceSec: STANDING_SILENCE_SEC
+			standingSilenceSec: STANDING_SILENCE_SEC,
+			/*
+			 * UNCAPPED, and this is the one field in this level that had to be argued rather than
+			 * copied. Every stored measurement in `data/eval/` was taken with no cap here, so a cap
+			 * would make them unre-derivable — and the cap is not even tempting: this schedule's
+			 * standing ask is 2.00 a game, not the 7.46 a 90s gate produces at a quiet level, because
+			 * at this cadence something else has almost always asked inside the last 90 seconds.
+			 * Measured, `--standing`: 27.54 asks per 28 minutes with the ask, 25.92 without.
+			 */
+			standingAskCap: Infinity
 		}
 	}
 ]
@@ -1440,7 +1616,8 @@ export interface EventWatch {
 	 * after a send arrives, and `commitTurn` clears it when the turn leaves.
 	 */
 	settleSinceSec: number | null
-	/** Standing-opportunity asks raised this game. Their dedupe keys, and the bench's tally. */
+	/** Standing-opportunity asks raised this game. Their dedupe keys, the cap's counter, and the
+	 * bench's tally. */
 	standingAsks: number
 	/** When a standing-opportunity ask was last RAISED — the gate's own clock. */
 	lastStandingAskAtSec: number | null
@@ -1703,6 +1880,31 @@ export const observeTick = (
 		 */
 		hingeSilenceSec?: number
 		/**
+		 * `standingAskCap` is the fifth, and it is a knob because the value shipped at `big-calls`
+		 * was chosen from a sweep of it — see `STANDING_ASK_CAP`. `Infinity` is the uncapped
+		 * schedule, which is what `key-moments` and `commentary` have and what every stored
+		 * measurement in `data/eval/` was taken under.
+		 */
+		standingAskCap?: number
+		/**
+		 * `alsoAsk` is the fourth instrument knob, and it is the only one that points the other way:
+		 * the three above turn an ask OFF, and this one puts a kind the LEVEL vetoes back, so a
+		 * bench can ask what a level WOULD get from a kind it does not currently allow.
+		 *
+		 * It can only ADD. A bench cannot use it to take a kind away from `commentary`, which is the
+		 * schedule every stored measurement in `data/eval/` was taken on — subtraction already has a
+		 * knob per kind and each of those names the arm it reproduces. Adding is the missing
+		 * direction: before `scripts/measure-asks.ts --standing`, the only way to price
+		 * "what if `big-calls` allowed `window.standing`" was to ship it and measure afterwards,
+		 * which is exactly the order this repo refuses.
+		 *
+		 * Never passed by the app, on the same footing as the three knobs above: nothing enforces
+		 * that but review, which is why it can only widen a level and never narrow one — the worst a
+		 * forgotten `alsoAsk` can do is ask more, loudly, where a forgotten subtraction would make
+		 * the coach quieter and look like nothing at all.
+		 */
+		alsoAsk?: readonly LiveEventKind[]
+		/**
 		 * HOW OFTEN SHE IS ASKED — see `SPEAK_LEVELS`. Absent means `DEFAULT_SPEAK_LEVEL`, which is
 		 * the quiet one, so a caller that forgets gets the shipped default rather than the schedule
 		 * the owner rated 0/10. Every replay that means the OLD schedule therefore has to say
@@ -1741,7 +1943,9 @@ export const observeTick = (
 			 * question today. An event the level vetoes is not dropped: it keeps its note, rides the
 			 * next turn as context, and is still there for the bench to count. See `AskPolicy`.
 			 */
-			asks: e.asks === true && policy.kinds.includes(e.kind),
+			asks:
+				e.asks === true &&
+				(policy.kinds.includes(e.kind) || (opts.alsoAsk?.includes(e.kind) ?? false)),
 			windowKey: e.windowKey ?? null,
 			/*
 			 * NOW, not `atSec`. A window's `atSec` is its spawn and a kill's is the log's own clock;
@@ -2385,12 +2589,25 @@ export const observeTick = (
 				 * for `STANDING_SILENCE_SEC` AND nothing is already queued to ask — so any ordinary
 				 * game, where something is always moving, never reaches it. Over the two paired games
 				 * it fires twice in an hour.
+				 *
+				 * THE CAP STOPS THE DETECTOR, not just the ask, and that is the one place in this
+				 * file that departs from "demote, never delete". The rule exists so a kind a LEVEL
+				 * does not want still carries its note as context; a spent per-game budget is a
+				 * different thing, because the note a demoted standing event carries reads "drake
+				 * still up 51s, nothing asked for 90s" — a sentence about a question that cannot
+				 * now be asked, which is payload noise rather than context. The order of magnitude is
+				 * the uncapped fire rate at this level, 7.46 a game against the capped 0.96 — so
+				 * roughly six notes a game about a question that cannot be asked. That figure is the
+				 * uncapped arm's, not a replay of a fire-uncapped-ask-capped variant, which was
+				 * never built. The bench keeps the full picture by passing
+				 * `standingAskCap: Infinity`, which is what that knob is for.
 				 */
 				const nothingQueued =
 					!watch.pending.some(e => e.asks) && !out.some(e => e.asks)
 				if (
 					standing &&
 					nothingQueued &&
+					watch.standingAsks < (opts.standingAskCap ?? policy.standingAskCap) &&
 					watch.lastTurnAtSec !== null &&
 					now - watch.lastTurnAtSec >= (opts.standingSilenceSec ?? policy.standingSilenceSec) &&
 					(watch.lastStandingAskAtSec === null ||
