@@ -24,9 +24,13 @@
  * re-derives each sentence from the bytes it came from, and `champion-brief.ts` renders it with the
  * URL, revision and fetch date inline. `championNote`, `defaultNote`, `knownChampions` and
  * `stalenessWarning` are gone with the files they read; the staleness that replaced the last of
- * them is `championContextStaleness` in `champion-context.ts`, which asks the COMMITTED tree's own
- * manifest which patch it was cut on. (`championTableStaleness` in `champion-data.ts` is the same
- * sentence over `champion-table.ts`, and nothing outside that file's own test calls it.)
+ * them is `contextStaleness` in `champion-context.ts` — AGENTS.md calls it
+ * `championContextStaleness`, but the exported name is the shorter one — which asks the COMMITTED
+ * tree's own manifest which patch it was cut on. (`champion-data.ts` carried
+ * `championTableStaleness`, the same sentence over `champion-table.ts` with no caller but its own
+ * test. That file was deleted on 2026-09-19 and every assertion its test made was re-homed onto
+ * `champion-table.ts`, the parsers, and — for the four-part patch string nothing else covered —
+ * onto `contextStaleness` itself.)
  *
  * ## What still lives on disk here
  *
@@ -46,6 +50,7 @@
  */
 
 import { readFileSync } from "node:fs"
+import { championKey } from "../shared/champion-key.ts"
 import { parsePronunciations } from "../shared/pronounce.ts"
 import type { Pronunciation } from "../shared/pronounce.ts"
 import { join, resolve, dirname } from "node:path"
@@ -58,9 +63,23 @@ export const KNOWLEDGE_DIR = (process.env.EEPALYTICS_KNOWLEDGE_DIR ?? process.en
 
 /**
  * `Bel'Veth` -> `belveth`, `Dr. Mundo` -> `drmundo`, `Nunu & Willump` -> `nunuwillump`.
- * Riot's own spellings vary across endpoints, so normalise hard rather than trusting them.
+ *
+ * RE-EXPORTED, not defined: the function moved to `../shared/champion-key.ts` on 2026-09-19 and
+ * this line is here so that the dozen callers who import it from `knowledge/` — `champion-brief`,
+ * `champion-context`, `live-coach-knowledge`, `routes/live`, `generate-context`,
+ * `audit-knowledge` — keep working without a churn commit across files three other agents are in.
+ *
+ * It left because this module reads `node:fs` for the pronunciation table, so importing four lines
+ * of string normalisation dragged the filesystem in behind it, and because there were three copies
+ * of it — here, in the now-deleted `champion-data.ts`, and privately in `scripts/fetch-champions.ts`
+ * — none of which was ever checked against another. The first two were verified byte-identical and
+ * collapsed; the generator's stays private on purpose and `shared/champion-key.test.ts` now pins it
+ * to the shared one, both by source and by the 173 keys it actually produced.
+ *
+ * Prefer importing it from `shared/champion-key.ts` in new code. This re-export is a compatibility
+ * shim, not a second home.
  */
-export const championKey = (name: string): string => name.toLowerCase().replace(/[^a-z]/g, "")
+export { championKey }
 
 /** Test seam — `clearKnowledgeCache()` after editing files on disk. */
 export const clearKnowledgeCache = (): void => {

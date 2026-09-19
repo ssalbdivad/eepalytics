@@ -13,19 +13,38 @@
  *
  * The network test is skipped rather than failed when the wiki is unreachable. A test suite that
  * goes red on someone else's outage gets ignored, and an ignored suite catches nothing.
+ *
+ * ## Why the filename says `champion-data` and nothing else does
+ *
+ * `src/knowledge/champion-data.ts` was DELETED on 2026-09-19. It was a facade: `championRow`,
+ * `championRowById`, `championCount`, `championProvenance`, `championTableStaleness` and
+ * `fetchedChampions`, with no importer anywhere in `src/` or `scripts/` except this file. The app
+ * reads `knowledge/context/`, which is committed text; `champion-context.ts` does its own key
+ * lookup over filenames and carries its own staleness sentence, character for character. A fix
+ * applied in the facade could not have changed anything a player saw.
+ *
+ * It outlived its usefulness by a day because deleting it would have deleted THIS file, which is
+ * the only place the generated table is checked against a FRESH WIKI FETCH and the only place the
+ * two refuted Lillia claims are asserted absent. So every assertion it made is still here, re-homed
+ * onto `champion-table.ts` and onto the parsers in `scripts/fetch-champions.ts` directly — the two
+ * things this file was ever really testing. The four-line lookup the facade exported now lives
+ * below as `row()`, because a test needing to find Lillia is not a reason to ship a module.
+ *
+ * The file keeps its name only because renaming it to `champion-table.test.ts` was outside the set
+ * of files this change was allowed to touch. That rename is the last step and it is not done.
  */
 
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 import {
 	CHAMPION_ROWS,
+	CHAMPION_TABLE_FETCHED_AT,
 	CHAMPION_TABLE_PATCH,
-	CHAMPION_TABLE_SOURCES,
-	championProvenance,
-	championRow,
-	championRowById,
-	championTableStaleness
-} from "./champion-data.ts"
+	CHAMPION_TABLE_SOURCES
+} from "./champion-table.ts"
+import type { ChampionRow } from "./champion-table.ts"
+import { contextPatch, contextStaleness } from "./champion-context.ts"
+import { championKey } from "../shared/champion-key.ts"
 import { type } from "arktype"
 import {
 	OpggResponse,
@@ -39,7 +58,20 @@ import {
 	stripFileLinks
 } from "../../scripts/fetch-champions.ts"
 
-const lillia = championRow("Lillia")
+/*
+ * What `championRow` did, in the one place that needed it. The client spells champions three ways
+ * across its endpoints — display name, apiname, and `MonkeyKing` for Wukong — so both the key and
+ * the apiname resolve here. `null` is a normal answer and must degrade to "say nothing
+ * champion-specific", never to a guess, which is the assertion on `Not A Champion` below.
+ */
+const BY_KEY = new Map<string, ChampionRow>(CHAMPION_ROWS.map(r => [r.key, r]))
+const BY_APINAME = new Map<string, ChampionRow>(CHAMPION_ROWS.map(r => [r.apiname.toLowerCase(), r]))
+const BY_ID = new Map<number, ChampionRow>(CHAMPION_ROWS.map(r => [r.id, r]))
+
+const row = (name: string): ChampionRow | null =>
+	BY_KEY.get(championKey(name)) ?? BY_APINAME.get(name.toLowerCase()) ?? null
+
+const lillia = row("Lillia")
 
 describe("the generated table", () => {
 	it("joins every champion to an id, a key and at least one ability", () => {
@@ -58,13 +90,13 @@ describe("the generated table", () => {
 	})
 
 	it("resolves the spellings the client actually uses", () => {
-		assert.equal(championRow("Bel'Veth")?.apiname, "Belveth")
-		assert.equal(championRow("Belveth")?.apiname, "Belveth")
-		assert.equal(championRow("MonkeyKing")?.name, "Wukong")
-		assert.equal(championRow("Wukong")?.apiname, "MonkeyKing")
-		assert.equal(championRow("Nunu & Willump")?.apiname, "Nunu")
-		assert.equal(championRowById(876)?.name, "Lillia")
-		assert.equal(championRow("Not A Champion"), null)
+		assert.equal(row("Bel'Veth")?.apiname, "Belveth")
+		assert.equal(row("Belveth")?.apiname, "Belveth")
+		assert.equal(row("MonkeyKing")?.name, "Wukong")
+		assert.equal(row("Wukong")?.apiname, "MonkeyKing")
+		assert.equal(row("Nunu & Willump")?.apiname, "Nunu")
+		assert.equal(BY_ID.get(876)?.name, "Lillia")
+		assert.equal(row("Not A Champion"), null)
 	})
 
 	it("carries every ability's own wiki revision, so a claim stays checkable after the page moves", () => {
@@ -139,23 +171,96 @@ describe("the two claims this repo invented", () => {
 /*
  * `renderChampionKnowledge` is DELETED and so are the four tests that exercised it. It was a second
  * renderer for data `champion-brief.ts` already renders, nothing outside this file imported it, and
- * the app reads committed text. What remains testable here is the part that survived: the staleness
- * warning and the provenance line, neither of which says anything about League.
+ * the app reads committed text.
+ *
+ * `championTableStaleness` and `championProvenance` are deleted too, 2026-09-19, and the two cases
+ * below are what their tests were actually asserting once the dead function is taken out of the
+ * middle. The provenance case reads the table's own source record instead of a sentence assembled
+ * from it. The staleness case is pointed at `contextStaleness`, the LIVE twin — see the note on it.
  */
 describe("what the table says about itself", () => {
+	/*
+	 * THIS CASE IS SQUATTING and should move to `champion-context.test.ts`.
+	 *
+	 * `championTableStaleness` and `contextStaleness` were the same sentence to the character over
+	 * two different patch strings, and only the dead one was tested on the case that matters: a
+	 * four-part patch string. The client answers `16.18.712.9876` where the table records
+	 * `16.18.1`, and those are the SAME patch — if `patchPair` ever stopped truncating, every game
+	 * would carry a spurious "these facts are from another patch" paragraph into the prompt, which
+	 * is a false statement about the data rather than a cosmetic one. Deleting the facade would
+	 * have deleted the only coverage of it, so the case is re-pointed at the function that ships.
+	 * `champion-context.test.ts` was outside the files this change could touch; moving it there is
+	 * the right end state and is NOT DONE.
+	 */
 	it("says which patch it is speaking for when that is not the game's", () => {
-		assert.equal(championTableStaleness(CHAMPION_TABLE_PATCH), null)
-		assert.equal(championTableStaleness(`${CHAMPION_TABLE_PATCH}.712.9876`), null)
-		const stale = championTableStaleness("16.24.1")
+		const patch = contextPatch()
+		assert.notEqual(patch, "", "the committed context tree has no manifest to be stale against")
+		assert.equal(contextStaleness(patch), null)
+		assert.equal(contextStaleness(`${patch.split(".").slice(0, 2).join(".")}.712.9876`), null)
+		const stale = contextStaleness("16.24.1")
 		assert.ok(stale !== null)
 		assert.match(stale, /16\.24\.1/)
 	})
 
 	it("names every source a champion's numbers rest on, with the revisions that make them checkable", () => {
-		const p = championProvenance(lillia!)
-		assert.match(p, new RegExp(`Data Dragon patch ${CHAMPION_TABLE_PATCH.replace(/\./g, "\\.")}`))
-		assert.match(p, /League of Legends Wiki ability data, revisions [\d/]+/)
-		assert.match(p, /op\.gg jungle/)
+		// One source record for the whole table — all 173 rows are cut from the same two fetches —
+		// so the per-champion half of provenance is the revision on each ability and the tier-2
+		// row's own url and date. Both halves have to be present or a line cannot be re-checked.
+		assert.equal(CHAMPION_TABLE_SOURCES.ddragon.patch, CHAMPION_TABLE_PATCH)
+		for (const [name, url, fetchedAt] of [
+			["ddragon", CHAMPION_TABLE_SOURCES.ddragon.url, CHAMPION_TABLE_SOURCES.ddragon.fetchedAt],
+			["wikiModule", CHAMPION_TABLE_SOURCES.wikiModule.url, CHAMPION_TABLE_SOURCES.wikiModule.fetchedAt],
+			["wikiAbilities", CHAMPION_TABLE_SOURCES.wikiAbilities.api, CHAMPION_TABLE_SOURCES.wikiAbilities.fetchedAt]
+		] as [string, string, string][]) {
+			assert.match(url, /^https:\/\//, `${name} names no url`)
+			assert.match(fetchedAt, /^\d{4}-\d{2}-\d{2}T/, `${name} has no fetch date`)
+		}
+		assert.ok(
+			lillia!.abilities.every(a => a.wikiRevId > 0),
+			"an ability with no revision cannot be re-checked after the page moves"
+		)
+		assert.equal(lillia!.tier2?.role, "jungle")
+		assert.match(lillia!.tier2!.sourceUrl, /op\.gg/)
+		assert.match(lillia!.tier2!.fetchedAt, /^\d{4}-\d{2}-\d{2}T/)
+	})
+
+	/*
+	 * `CHAMPION_TABLE_FETCHED_AT` calls itself "the NEWEST source timestamp in this table, not the
+	 * wall clock at generation", and that sentence is load-bearing: it is why re-running the
+	 * generator against an unchanged cache reproduces the file byte for byte instead of minting a
+	 * one-line diff that buries a real change. NOTHING CHECKED IT, so this does.
+	 *
+	 * Two things measured on the table committed on 2026-09-19 — the tier-2 half is what the case
+	 * below computes, and the cache stamps come from
+	 * `find data/champions -name '?.fetched' -exec sh -c 'echo "$(cat "$1") $1"' _ {} + | sort`
+	 * (glob the name as `*` + `.fetched`; it is written that way here only because the literal
+	 * would close this comment) — both of which a reader will otherwise trip over:
+	 *
+	 * 1. The declared stamp is 2026-09-19T07:26:27.648Z and the newest of the 46 stamps the table
+	 *    PUBLISHES is 2026-09-18T22:36:19.603Z — 8h50m older. That is not a wall clock leaking in.
+	 *    The generator maxes over FOUR cache stamps and only three of them are published: the
+	 *    fourth is the wiki RENDER cache (`data/champions/16.18.1/wiki-rendered-4.json.fetched`,
+	 *    whose stamp is 2026-09-19T07:26:27.648Z exactly). `CHAMPION_TABLE_SOURCES` names the
+	 *    ddragon, module and ability-wikitext fetches and not the render, so the table's own record
+	 *    cannot account for its own date. Publishing `wikiRendered` is a generator change and is
+	 *    NOT DONE.
+	 * 2. The max does NOT include the 43 tier-2 stamps. So "the newest source timestamp in this
+	 *    table" holds today only because op.gg was fetched before the last render — refresh op.gg
+	 *    alone and the table would declare a fetch date older than 43 of its own rows, and the
+	 *    reproducibility argument would still read as true. This case is what would notice.
+	 */
+	it("declares a fetch date no older than any row it carries", () => {
+		assert.match(CHAMPION_TABLE_FETCHED_AT, /^\d{4}-\d{2}-\d{2}T/)
+		const newer = CHAMPION_ROWS.flatMap(r =>
+			r.tier2 && r.tier2.fetchedAt > CHAMPION_TABLE_FETCHED_AT ? [`${r.name} ${r.tier2.fetchedAt}`] : []
+		)
+		assert.deepEqual(newer, [], `tier-2 rows fetched after the table says it was: ${newer.join(", ")}`)
+		for (const stamp of [
+			CHAMPION_TABLE_SOURCES.ddragon.fetchedAt,
+			CHAMPION_TABLE_SOURCES.wikiModule.fetchedAt,
+			CHAMPION_TABLE_SOURCES.wikiAbilities.fetchedAt
+		])
+			assert.ok(stamp <= CHAMPION_TABLE_FETCHED_AT, `source stamp ${stamp} is newer than the table's own`)
 	})
 })
 
