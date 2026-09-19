@@ -558,6 +558,8 @@ export type LiveEventKind =
 	| "window.changed"
 	| "window.standing"
 	| "heartbeat"
+	/* ---- the floor under silence inside the five minutes that decide his games. See `HINGE_SILENCE_SEC`. ---- */
+	| "hinge.silence"
 	/* ---- the two FIELD decisions, which ask only in the open ground. See `fieldAsks`. ---- */
 	| "respawn.self"
 	| "level.spike"
@@ -859,6 +861,154 @@ export const CONTEXT_CARRY_SEC = 90
  */
 export const STANDING_SILENCE_SEC = 90
 
+/* ------------------------------------------------- THE HINGE, AND THE ASK IT IS NOT */
+
+/**
+ * The five minutes of his own games that decide them — and the one stretch this schedule could
+ * pass over in complete silence.
+ *
+ * `scripts/what-wins.ts` over 138 ranked solo games, 69 won and 69 lost, AUC with a seeded
+ * bootstrap, Mann-Whitney, BH across 78 rows: **nothing he personally does before 10:00 separates
+ * his wins from his losses** — not CS at 10 (0.56 [0.46-0.66], q 0.34), not gold, xp, level or
+ * gold against the counterpart, not deaths by 10:00, not his first back, not first blood, not early
+ * enemy-half presence. The first thing of his that separates arrives in this window and it is
+ * deaths: **no death between 10:00 and 15:00 wins 70% [56-80] over 53 games against 38% [28-48]
+ * over 85**, and it is the only personal metric at any checkpoint that survives the two-term
+ * logistic with team gold at 10:00 in the model (OR 0.63 per SD [0.43-0.93], p 0.018).
+ *
+ * The bounds are the finding's own and are not tuned here. Deaths BY 10:00 do not separate and
+ * deaths after 20:00 are consequence; it is this window, so this is the window.
+ */
+export const HINGE_FROM_SEC = 600
+export const HINGE_TO_SEC = 900
+
+/**
+ * How long nothing may have been asked before the hinge window gets its one guaranteed question.
+ *
+ * ## THIS IS NOT A DEATH PREDICTOR, AND THE FOUR CANDIDATES FOR ONE ARE REFUTED HERE
+ *
+ * The obvious reading of the finding above is to fire a turn when a death is coming. Four shapes
+ * were proposed for that — he is low and the counterpart is unaccounted for, he is deep with no
+ * vision, two enemies are unlocated while he is in their half, his escape is on cooldown — and
+ * every one of them was checked against the feed before anything was designed on it. Two are not
+ * computable at all and two are measured NULL or backwards. All four are written down rather than
+ * left for the next person to re-draft.
+ *
+ * **NOT COMPUTABLE.** `allPlayers` carries no coordinates for anyone, so "deep", "in their half"
+ * and "unlocated" have no referent in this feed; the minimap read that does carry a position lives
+ * in `daemon/minimap-watch.ts`, on the far side of the `analysis/` no-I/O fence, is refused on 44%
+ * of frames, and exists on no text-only game in the corpus. Summoner spell COOLDOWNS are not in the
+ * feed either — `allPlayers` carries spell names and nothing else — which is the one thing
+ * `AGENTS.md` records the HUD band as genuinely knowing that the Live Client Data API does not. So
+ * three of the four candidate joins cannot be built, and saying so is the answer rather than a gap.
+ *
+ * **MEASURED, on the 28-game corpus** (`scripts/measure-hinge.ts`, no model in the loop): 1,271
+ * alive ticks inside 10:00-15:00, 15 of his deaths in the window, base hazard of dying within 25
+ * seconds 4.7%.
+ *
+ * ```
+ *   predicate at a tick                     ticks   hazard(25s)    else   deaths caught
+ *   his HP under 40%                           68   18% [10-28]    4.0%      10 of 15
+ *     ... and his bar is FALLING (>=10%/12s)   31   35% [21-53]    4.0%      10 of 15
+ *     ... and his bar is STEADY                37    3% [ 0-14]    4.8%       1 of 15
+ *     ... and he has been low 10s or more      23    0% [ 0-14]    4.8%       0 of 15
+ *   counterpart's row stale 45s or more       226    4% [ 2- 8]    3.4%
+ *   counterpart's row stale 75s or more        68    3% [ 1-10]    3.7%
+ *   four or more enemies off a respawn clock 1163    5% [ 4- 6]    3.7%
+ * ```
+ *
+ * **The whole of the low-HP signal is the fight he is already losing.** Split by whether his bar is
+ * moving, the actionable half — low, steady, the decision still open — is at 3% [0-14] against a
+ * base of 4.8%, and low for ten seconds or more caught NONE of the fifteen deaths while firing 0.46
+ * times a game. A coach asked there is asked about a moment he is if anything SAFER in, about the
+ * one number on his screen he cannot miss, and the answer would land after the fight either way:
+ * the shipped turn path reaches its first syllable at 1.6-3.7s. The counterpart going dark, the
+ * best fact this app owns, predicts nothing here at all.
+ *
+ * **And the one ingredient a previous design was built on is a BASE RATE.**
+ * `data/eval/CLIMB-COACH-20260918.md` proposed `window.contested` — an objective window open, the
+ * clock in this window, and four or more enemies not on a respawn clock — on the finding that 87%
+ * of his 125 post-game deaths in the window happen with four or five enemies up. On the live
+ * samples **92% of ALL window ticks have four or more enemies up**, against 93% of the ticks within
+ * ten seconds of a death. It carries no information. The full conjunction fires **3.68 times a
+ * game** inside the window, which would nearly triple what the window already gets, at a hazard of
+ * 6% [4-8] against 3.8%. It is not built, and it should not be rebuilt without a different
+ * ingredient.
+ *
+ * POWER, before any of that is read as settled: fifteen deaths in the window across 28 games. A
+ * predicate flagging ~5% of ticks needs a hazard ratio of roughly three before this instrument
+ * separates it from the base rate. What is claimed is narrow and is what the table supports — the
+ * actionable predicates point the WRONG WAY or catch no deaths at all, and the only one with a
+ * ratio describes the death rather than preceding it.
+ *
+ * ## SO WHAT THIS IS: A FLOOR UNDER SILENCE, SCOPED TO THE HINGE, ONCE
+ *
+ * `big-calls` deleted the floor under silence outright (`heartbeatSec: Infinity`) and that is still
+ * the right default for the other 25 minutes — the board renders the standing state with no model
+ * in it. This gives back exactly one question, inside the only five minutes his own 138 games say
+ * are his to decide, and only when nothing else has asked for `HINGE_SILENCE_SEC`.
+ *
+ * The evidence that an ask into silence is worth making is the corpus's own: over the 879-turn
+ * table, `heartbeat` — an ask with no subject whatever — is 68% [53-80] clean-useful at 10% [4-23]
+ * wrong, the LOWEST wrong rate of any kind in the app, under `window.open`'s 17%. Asking into a
+ * lull is not where this coach goes wrong.
+ *
+ * ## THE SILENCE IS MEASURED INSIDE THE WINDOW, AND THAT IS THE WHOLE DIFFERENCE
+ *
+ * The first version of this counted silence from the last turn wherever it was. Replayed, it fired
+ * between 10:45 and 10:55 in three quarters of the games — because at `big-calls` the coach has
+ * ALREADY been quiet for about 160 seconds by the time 10:00 arrives, so a gate of any ordinary
+ * size is satisfied on the first tick of the window and the ask is a clock ask wearing a silence
+ * gate. The claim being acted on is that THIS WINDOW should not pass in silence, so the clock runs
+ * from `max(last turn, 10:00)` and a lull that happened at 8:00 buys nothing.
+ *
+ * 150 seconds, measured that way with the real detector over the 28-game corpus
+ * (`scripts/measure-hinge.ts --trade --gate N`, no model in the loop). Asks a game, where it lands,
+ * and what `big-calls` gets inside the window before and after:
+ *
+ * ```
+ *   gate   asks/game   it lands        in-window 2.11 ->   turns LOST
+ *    90s      0.96     11:33-13:11           3.11            0
+ *   120s      0.93     12:03-14:20           3.00            1
+ *   150s      0.71     12:33-14:19           2.81            0
+ *   180s      0.50     13:04-14:00           2.59            0
+ *   210s      0.32     13:30-14:00           2.44            0
+ * ```
+ *
+ * The median gap between asks INSIDE this window is 51 seconds at `big-calls` and the longest in
+ * the corpus is 259, so 150 is about three times an ordinary lull and well under the worst one: it
+ * is a hole rather than a pause. It lands where the window actually is — 12:33 to 14:19, median
+ * 12:41 — and it costs under one ask a game. Ninety fires in all but one game and lands in a
+ * 98-second band at the front of the window, which is a cadence wearing a gate; 210 covers a third
+ * of them and only the last thirty seconds.
+ *
+ * It yields to everything with a subject. It cannot fire while any ask is queued or raised on the
+ * same tick, so a window opening, a standing objective, a spike or an item always takes the turn
+ * instead. What it CANNOT yield to is an ask that has not happened yet, and that is the one cost,
+ * measured rather than asserted:
+ *
+ * ```
+ *   level         whole game /28min   in-window/game   what moved
+ *   big-calls      8.51 -> 9.13        2.11 -> 2.81    hinge.silence +20, and NOTHING else
+ *   key-moments    9.97 -> 10.52       2.37 -> 3.00    hinge.silence +20, standing -1, heartbeat -2
+ *   commentary    27.54 -> 27.54       5.48 -> 5.48    nothing; the gate is unreachable there
+ * ```
+ *
+ * At `big-calls` — the default, and the one he uses — it adds 20 asks over 28 games and removes
+ * none: not one existing turn disappears and not one moves. At `key-moments` it costs THREE asks
+ * over the same 28 games, one standing-objective ask and two heartbeats, because those two also
+ * fire into silence and there is only so much silence to go round. That is the same trap the
+ * heartbeat-against-standing ordering was found in; it is smaller here and it is stated rather than
+ * designed away, because the fix — a longer gate — was measured at every value from 90 to 210 and
+ * does not remove it.
+ *
+ * NOTHING HERE SAYS THE ADDED QUESTION PRODUCES A GOOD SENTENCE. Every one of those 20 asks lands
+ * at an instant no stored run ever took, so there is no line to grade and none is estimated. What
+ * is known is the nearest comparable: an ask into silence with no subject at all is the app's
+ * least-wrong kind.
+ */
+export const HINGE_SILENCE_SEC = 150
+
 /* ------------------------------------------------- HOW OFTEN SHE SPEAKS AT ALL */
 
 /**
@@ -981,10 +1131,10 @@ export const SPEAK_LEVELS: {
 		id: "big-calls",
 		label: "Big calls only",
 		blurb:
-			"An objective window opening, a spike level, a finished legendary. Nothing else opens her mouth — no running commentary, no floor under silence, and the board on the live page keeps showing the standing state with no model in it.",
-		linesPerGame: 7.8,
+			"An objective window opening, a spike level, a finished legendary — plus one question inside 10:00-15:00 if that stretch would otherwise pass in silence. Nothing else opens her mouth, and the board on the live page keeps showing the standing state with no model in it.",
+		linesPerGame: 8.4,
 		evidence:
-			"28 real games replayed: 8.5 asks and 7.8 spoken lines in a 28-minute game, 82% [76-86] clean-useful and 17% [13-22] wrong — 6.4 good lines a game and 1.3 bad ones, against 18.8 good and 6.8 bad when she reacts to everything. Median longest silence 5.6 minutes.",
+			"28 real games replayed: 9.1 asks and about 8.4 spoken lines in a 28-minute game. 8.5 of those asks are the measured ones — 82% [76-86] clean-useful and 17% [13-22] wrong, 6.4 good lines a game and 1.3 bad ones, against 18.8 good and 6.8 bad when she reacts to everything. The extra 0.6 is the 10:00-15:00 floor, which lands at instants no stored run took and is therefore UNGRADED; it removes no existing ask. Median longest silence 5.6 minutes.",
 		policy: {
 			/*
 			 * THREE KINDS, and the third is the one to argue about. `item.completed` costs 1.0 asks
@@ -994,7 +1144,14 @@ export const SPEAK_LEVELS: {
 			 * is not the place to economise either way: it is the most precise kind in the corpus
 			 * (94% [72-99]) and it costs 0.6 asks a game.
 			 */
-			kinds: ["window.open", "level.spike", "item.completed"],
+			/*
+			 * THE FOURTH IS THE ONLY THING THIS LEVEL ASKS THAT IS NOT AN EVENT, and it is one
+			 * question a game. This level has no floor under silence anywhere else (below), and
+			 * measured over the 28-game corpus the five minutes his own 138 games say decide them
+			 * could pass with a 259-second gap in them. See `HINGE_SILENCE_SEC` — it costs +1.00
+			 * asks a game, it fires only into a lull, and it displaces nothing.
+			 */
+			kinds: ["window.open", "level.spike", "item.completed", "hinge.silence"],
 			/*
 			 * NO FLOOR UNDER SILENCE. The heartbeat is the ask that exists because nothing else did,
 			 * and this level's whole premise is that nothing else did is an acceptable answer — the
@@ -1015,16 +1172,22 @@ export const SPEAK_LEVELS: {
 		label: "Key moments",
 		blurb:
 			"Everything above, plus him coming back up, an objective that has stood free for a while, and a floor under long silences. Still no running commentary on a window that is already open.",
-		linesPerGame: 9.4,
+		linesPerGame: 9.9,
 		evidence:
-			"10.0 asks and about 9.4 spoken lines in a 28-minute game, 80% [75-84] clean-useful — 6.6 good lines and 1.5 bad ones. 8.2 of those lines are joined to a real stored line; the other 1.2 land at instants no recorded run ever took, so they are counted at the same speak rate rather than assumed silent.",
+			"10.5 asks and about 9.9 spoken lines in a 28-minute game. The measured 10.0 of those are 80% [75-84] clean-useful — 6.6 good lines and 1.5 bad ones; 8.2 are joined to a real stored line and the rest land at instants no recorded run ever took, so they are counted at the same speak rate rather than assumed silent. The 10:00-15:00 floor adds 0.6 and costs 0.1: over 28 games it takes one standing-objective ask and two heartbeats, because those fire into silence too.",
 		policy: {
 			kinds: [
 				"window.open",
 				"window.standing",
 				"respawn.self",
 				"level.spike",
-				"item.completed"
+				"item.completed",
+				/*
+				 * It costs LESS here than at `big-calls` — 0.93 asks a game against 1.00 — because
+				 * this level already has a standing ask and a 360s floor to break a lull with, and
+				 * both of them reset the same silence clock. See `HINGE_SILENCE_SEC`.
+				 */
+				"hinge.silence"
 			],
 			/*
 			 * 360 AND 210, IN THAT ORDER, and the order is load-bearing.
@@ -1068,6 +1231,16 @@ export const SPEAK_LEVELS: {
 				 * The fire site decides; this only declines to overrule it.
 				 */
 				"game.start"
+				/*
+				 * `hinge.silence` IS DELIBERATELY ABSENT, and it is the one place in this file where
+				 * a level is decided by something other than the level's own argument.
+				 *
+				 * This schedule is the one every stored measurement in `data/eval/` was taken on, and
+				 * it stays byte-identical or those runs stop being re-derivable. The kind's own gate
+				 * would not reach it anyway — 210s of total silence never happens inside 10:00-15:00
+				 * on any of the 28 games at this cadence — so the allowlist and the clock agree, and
+				 * the allowlist is what makes it a guarantee rather than a coincidence.
+				 */
 			],
 			heartbeatSec: HEARTBEAT_SEC,
 			standingSilenceSec: STANDING_SILENCE_SEC
@@ -1523,6 +1696,12 @@ export const observeTick = (
 		reach?: ReachFn
 		standingSilenceSec?: number
 		asksBeforeFifthCut?: boolean
+		/**
+		 * `hingeSilenceSec` is the third instrument knob of the same family: `Infinity` turns the
+		 * hinge ask off, so a bench can replay the schedule as it stood before it and the before/after
+		 * comparison stays derivable from the same samples forever. Never passed by the app.
+		 */
+		hingeSilenceSec?: number
 		/**
 		 * HOW OFTEN SHE IS ASKED — see `SPEAK_LEVELS`. Absent means `DEFAULT_SPEAK_LEVEL`, which is
 		 * the quiet one, so a caller that forgets gets the shipped default rather than the schedule
@@ -2259,6 +2438,55 @@ export const observeTick = (
 				} — ${moved.join(", ")}`
 			})
 		}
+
+	/* -------------------------------------------------- the hinge window */
+	/*
+	 * ONE GUARANTEED QUESTION INSIDE THE FIVE MINUTES THAT DECIDE HIS GAMES — see
+	 * `HINGE_SILENCE_SEC` for the four death-predictor shapes this is NOT, each with the
+	 * measurement that refuted it, and `HINGE_FROM_SEC` for where the bounds come from.
+	 *
+	 * Everything about it yields. It is checked after the contest windows so that `out` already
+	 * holds anything they raised; an ask queued or raised on this tick takes the turn instead and
+	 * this never fires. He has to be ALIVE, on the same rule the windows follow — a stretch he is
+	 * watching a grey screen through is not a decision he has. Once per game, by the dedupe key,
+	 * because the claim being acted on is that the window should not pass in silence and not that it
+	 * wants a cadence.
+	 *
+	 * It is DETECTED at every level and asks only where the level allows it, exactly as everything
+	 * else here does. Under `commentary` the gate is unreachable on all 28 games of the corpus
+	 * anyway, which is the second of the two reasons that schedule replays byte for byte.
+	 */
+	const hingeSilenceSec = opts.hingeSilenceSec ?? HINGE_SILENCE_SEC
+	/*
+	 * FROM THE WINDOW'S OWN START, never from a lull that happened before it — see
+	 * `HINGE_SILENCE_SEC`. `lastTurnAtSec` is non-null from the first tick of any game, because the
+	 * opening look seeds it even though it no longer asks anything.
+	 */
+	const quietSince = Math.max(watch.lastTurnAtSec ?? HINGE_FROM_SEC, HINGE_FROM_SEC)
+	if (
+		!tick.me.dead &&
+		now >= HINGE_FROM_SEC &&
+		now < HINGE_TO_SEC &&
+		watch.lastTurnAtSec !== null &&
+		now - quietSince >= hingeSilenceSec &&
+		!watch.pending.some(e => e.asks) &&
+		!out.some(e => e.asks)
+	)
+		fire({
+			kind: "hinge.silence",
+			atSec: now,
+			/*
+			 * NOT reactive. Nothing about it decays — it is a stretch of the clock and a lull — so it
+			 * is worth the 1.3-3.0s minimap read that turns a question about the next two minutes
+			 * into a question about the next two minutes FROM WHERE HE IS STANDING.
+			 */
+			reactive: false,
+			asks: true,
+			key: "hinge",
+			note: `10:00-15:00 decides his games, nothing asked inside it for ${Math.round(
+				now - quietSince
+			)}s`
+		})
 
 	/* -------------------------------------------------- the opening look */
 	/*

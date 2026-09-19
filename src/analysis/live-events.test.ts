@@ -40,6 +40,9 @@ import {
 	GRUBS_SPAWN_SEC,
 	nextOpeningSec,
 	STANDING_SILENCE_SEC,
+	HINGE_FROM_SEC,
+	HINGE_TO_SEC,
+	HINGE_SILENCE_SEC,
 	askPolicy,
 	DEFAULT_SPEAK_LEVEL,
 	SPEAK_LEVELS,
@@ -1437,6 +1440,154 @@ describe("the schedule's lookahead and its floor over a standing objective", () 
 })
 
 /*
+ * THE HINGE — the five minutes of his own games that decide them, and the floor under them.
+ *
+ * `scripts/what-wins.ts`, 138 ranked games: nothing he does before 10:00 separates his wins from
+ * his losses, and a death between 10:00 and 15:00 is the only personal metric at any checkpoint
+ * that survives the team-gold control (70% [56-80] clean against 38% [28-48], OR 0.63 per SD
+ * [0.43-0.93], p 0.018).
+ *
+ * Every case here pins that this is a FLOOR and not a death predictor. The four precursor shapes
+ * that were proposed instead are refuted in `HINGE_SILENCE_SEC`'s docblock with the table from
+ * `scripts/measure-hinge.ts`; the short version is that the only predicate with a hazard ratio is
+ * his health bar FALLING, which is the fight already happening, and the actionable reading of it —
+ * low and steady — runs at 3% [0-14] against a base of 4.8% and caught one of fifteen deaths.
+ */
+/** The fixture's drake spawns at 300 and the grubs at `GRUBS_SPAWN_SEC`; both open a lead earlier. */
+const OPENS_DRAKE = DRAKE_FIRST_SPAWN_SEC - OBJECTIVE_LEAD_SEC
+const OPENS_GRUBS = GRUBS_SPAWN_SEC - OBJECTIVE_LEAD_SEC
+
+describe("the hinge window's floor", () => {
+	/*
+	 * AT `big-calls`, deliberately: it is the shipped default and the level whose only floor under
+	 * silence this is. The rest of this file pins the fire sites at `commentary`, where this kind is
+	 * detected and never asked — see `the frozen schedule does not gain the new kind`.
+	 */
+	const LEVEL = "big-calls" as const
+
+	/**
+	 * A watch sitting in a genuine lull INSIDE the window: every objective that opens before 10:00
+	 * has opened and been spent, so nothing is queued and nothing is about to arrive.
+	 *
+	 * The standing ask is switched off here (`standingSilenceSec: Infinity`) because these cases run
+	 * at `commentary`, where it would take the same lull first and prove nothing about this one.
+	 */
+	const inTheLull = (): EventWatch => {
+		const watch = newEventWatch()
+		step(watch, 100)
+		for (const t of [OPENS_DRAKE, OPENS_GRUBS, HINGE_FROM_SEC]) {
+			watch.pending.push(...step(watch, t))
+			const due = dueTurnAtLevel(watch, t, { level: LEVEL })
+			if (due !== null) commitTurn(watch, due, t)
+		}
+		strictEqual(watch.lastTurnAtSec, OPENS_GRUBS, "the last question was the grubs, before 10:00")
+		return watch
+	}
+
+	const step = (watch: EventWatch, t: number, opts: { dead?: boolean } = {}): LiveEvent[] =>
+		observeTickAtLevel(watch, tickOf({ t, dead: opts.dead }), {
+			level: LEVEL,
+			standingSilenceSec: Infinity
+		})
+
+	/*
+	 * THE SILENCE IS THE WINDOW'S OWN, and this is the case that decides the whole design. At
+	 * `big-calls` the coach has typically been quiet for 160 seconds by the time 10:00 arrives, so a
+	 * gate that inherited that lull would fire on the first tick of the window in three games out of
+	 * four — a clock ask wearing a silence gate. The clock runs from `max(last turn, 10:00)`.
+	 */
+	it("counts the silence from 10:00, not from a lull that happened before it", () => {
+		const watch = inTheLull()
+		const inherited = HINGE_FROM_SEC + 10 - OPENS_GRUBS
+		ok(inherited >= HINGE_SILENCE_SEC, `this case is only meaningful while ${inherited}s clears the gate`)
+		strictEqual(
+			step(watch, HINGE_FROM_SEC + 10).filter(e => e.kind === "hinge.silence").length,
+			0,
+			"ten seconds into the window is not a hole in the window"
+		)
+	})
+
+	it("asks once the window itself has been quiet, and says how long for", () => {
+		const watch = inTheLull()
+		strictEqual(step(watch, HINGE_FROM_SEC + HINGE_SILENCE_SEC - 10).length, 0, "not yet")
+		const fired = step(watch, HINGE_FROM_SEC + HINGE_SILENCE_SEC)
+		const hinge = fired.find(e => e.kind === "hinge.silence")
+		ok(hinge !== undefined, fired.map(e => e.kind).join(",") || "nothing fired")
+		ok(hinge!.asks, "it is an ask at this level")
+		strictEqual(hinge!.reactive, false, "nothing about a stretch of clock decays in seconds")
+		ok(hinge!.note.includes(`${HINGE_SILENCE_SEC}s`), hinge!.note)
+	})
+
+	it("asks once a game, however long the rest of the window stays quiet", () => {
+		const watch = inTheLull()
+		let fired = 0
+		for (let t = HINGE_FROM_SEC; t < HINGE_TO_SEC; t += 5)
+			fired += step(watch, t).filter(e => e.kind === "hinge.silence").length
+		strictEqual(fired, 1, "a floor under one stretch is not a cadence inside it")
+	})
+
+	it("never asks outside the window", () => {
+		const watch = inTheLull()
+		let fired = 0
+		for (let t = HINGE_TO_SEC; t < HINGE_TO_SEC + 600; t += 5)
+			fired += step(watch, t).filter(e => e.kind === "hinge.silence").length
+		strictEqual(fired, 0, "15:00 is where the finding stops, so it is where this stops")
+	})
+
+	/* A stretch he is watching a grey screen through is not a decision he has — the windows' rule. */
+	it("does not ask while he is dead", () => {
+		const watch = inTheLull()
+		const t = HINGE_FROM_SEC + HINGE_SILENCE_SEC + 20
+		strictEqual(step(watch, t, { dead: true }).filter(e => e.kind === "hinge.silence").length, 0)
+		ok(
+			step(watch, t + 5).some(e => e.kind === "hinge.silence"),
+			"…and asks on the tick he is back up, with the window still open"
+		)
+	})
+
+	/*
+	 * IT YIELDS TO ANYTHING WITH A SUBJECT. The silence is about to end on its own, and adding to it
+	 * is the three-turns-in-twelve-seconds cluster the third cut removed.
+	 */
+	it("stays quiet when a question is already queued", () => {
+		const watch = inTheLull()
+		watch.pending.push(ev({ kind: "window.open", atSec: 999, key: "queued", asks: true }))
+		strictEqual(
+			step(watch, HINGE_FROM_SEC + HINGE_SILENCE_SEC + 30).filter(e => e.kind === "hinge.silence")
+				.length,
+			0
+		)
+	})
+
+	it("yields to a window opening on the very same tick", () => {
+		const watch = inTheLull()
+		/*
+		 * Herald spawns at 15:00 and its window opens 45s before that, which is inside the hinge. Step
+		 * straight to it: the window ask and the floor both become true on this tick and only the one
+		 * with a subject may fire.
+		 */
+		const heraldOpens = 900 - OBJECTIVE_LEAD_SEC
+		ok(heraldOpens - HINGE_FROM_SEC >= HINGE_SILENCE_SEC, "the gate has to be open by then")
+		const fired = step(watch, heraldOpens)
+		ok(fired.some(e => e.kind === "window.open" && e.asks), fired.map(e => e.kind).join(","))
+		ok(!fired.some(e => e.kind === "hinge.silence"), "the floor took a turn a real question wanted")
+	})
+
+	/* The instrument knob, so a bench can replay the schedule as it stood before this existed. */
+	it("can be switched off entirely, which is how the before column stays derivable", () => {
+		const watch = inTheLull()
+		let fired = 0
+		for (let t = HINGE_FROM_SEC; t < HINGE_TO_SEC; t += 5)
+			fired += observeTickAtLevel(watch, tickOf({ t }), {
+				level: LEVEL,
+				standingSilenceSec: Infinity,
+				hingeSilenceSec: Infinity
+			}).filter(e => e.kind === "hinge.silence").length
+		strictEqual(fired, 0)
+	})
+})
+
+/*
  * THE FOURTH CUT, replayed over BOTH paired games — the two failures it was built for, kept
  * runnable.
  *
@@ -1635,7 +1786,7 @@ describe("two games, one session", () => {
 describe("speak levels", () => {
 	it("pins the ask set of every level", () => {
 		deepStrictEqual(askPolicy("big-calls"), {
-			kinds: ["window.open", "level.spike", "item.completed"],
+			kinds: ["window.open", "level.spike", "item.completed", "hinge.silence"],
 			heartbeatSec: Infinity,
 			standingSilenceSec: 210
 		})
@@ -1645,7 +1796,8 @@ describe("speak levels", () => {
 				"window.standing",
 				"respawn.self",
 				"level.spike",
-				"item.completed"
+				"item.completed",
+				"hinge.silence"
 			],
 			heartbeatSec: 360,
 			standingSilenceSec: 210
@@ -1667,14 +1819,42 @@ describe("speak levels", () => {
 	})
 
 	/*
-	 * A LEVEL MAY ONLY SUBTRACT. It is an allowlist over the fire sites, and the fire sites are
-	 * where the measured cuts live — a level that named a kind `commentary` does not carry would be
-	 * re-enabling something the second, third or fifth cut removed, with no measurement behind it.
+	 * A LEVEL MAY ONLY SUBTRACT — from the FIRE SITES, which is where the measured cuts live. A
+	 * level that named a kind no fire site raises with `asks: true` would be claiming to re-enable
+	 * something the second, third or fifth cut removed; it could not actually do it, because
+	 * `observeTick` ANDs the level against the fire site, and a list that lies about what it does is
+	 * worse than one that cannot.
+	 *
+	 * This used to be written as "⊆ commentary", which is the same statement only while commentary
+	 * is the union of every level. It stopped being that when `hinge.silence` was added to the two
+	 * quiet levels and deliberately kept OUT of commentary — see that level's own note — so the
+	 * invariant is now written against what it always meant.
 	 */
-	it("no level asks about anything the full schedule does not", () => {
+	it("no level asks about anything a fire site does not raise", () => {
+		/* Every kind this file passes `asks: true` for, read off the fire sites. */
+		const CAN_ASK: LiveEventKind[] = [
+			"window.open",
+			"window.changed",
+			"window.standing",
+			"hinge.silence",
+			"respawn.self",
+			"level.spike",
+			"item.completed",
+			"death.counterpart",
+			"game.start"
+		]
 		for (const l of SPEAK_LEVELS)
-			for (const k of l.policy.kinds)
-				ok(askPolicy("commentary").kinds.includes(k), `${l.id} adds ${k}`)
+			for (const k of l.policy.kinds) ok(CAN_ASK.includes(k), `${l.id} adds ${k}`)
+	})
+
+	/*
+	 * COMMENTARY IS FROZEN, and this is the one place a level is decided by something other than its
+	 * own argument. Every stored measurement in `data/eval/` was taken on that schedule and stays
+	 * re-derivable only while it replays byte for byte, so a new ask kind does not go into it — even
+	 * one whose gate is measured unreachable there on all 28 games.
+	 */
+	it("the frozen schedule does not gain the new kind", () => {
+		ok(!askPolicy("commentary").kinds.includes("hinge.silence"))
 	})
 
 	/*
@@ -1788,9 +1968,14 @@ describe("speak levels", () => {
 			}
 			return turns
 		}
+		/*
+		 * `key-moments` and `big-calls` each gained ONE against the counts this pinned before the
+		 * hinge floor: the 10:00-15:00 question, at 13:29 on Kayn and 13:00 on Fiddlesticks. The
+		 * commentary column is unchanged to the turn, which is what freezing that schedule means.
+		 */
 		const expected = {
-			kayn: { commentary: 29, "key-moments": 12, "big-calls": 9 },
-			fiddle: { commentary: 31, "key-moments": 11, "big-calls": 9 }
+			kayn: { commentary: 29, "key-moments": 13, "big-calls": 10 },
+			fiddle: { commentary: 31, "key-moments": 12, "big-calls": 10 }
 		} as const
 		for (const [name, file] of Object.entries(FILES))
 			for (const level of ["commentary", "key-moments", "big-calls"] as const) {
