@@ -3,19 +3,19 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Unforgiven [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Unforgiven [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Flow [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top, Middle, Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V3.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V3.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 590, hp_lvl 110, mp_base 100, mp_lvl 0, arm_base 32, arm_lvl 4.6, mr_base 32, mr_lvl 2.05, hp5_base 6.5, hp5_lvl 0.9, mp5_base 0, mp5_lvl 0, dam_base 60, dam_lvl 2.5, as_base 0.697, as_lvl 3.5, range 175, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Passive
 - name: Way of the Wanderer [wiki-p rev-4051866, fetched 2026-09-18]
-- what it does: Innate - Intent: Yasuo's total critical strike chance is doubled from all other sources. Additionally,「 every 1% critical strike chance in excess of 100% is converted into 0.5 bonus attack damage. 」「 every 50% critical strike chance in excess of 100% is converted into 25 bonus attack damage. 」 Yasuo's critical strikes deal only「 (190% + 28.5%) AD physical damage. 」「 95% of the critical damage champions usually have. 」 Innate - Resolve: Yasuo generates a stack of Flow for every to for 3 (based on level) units he travels by any means. At「 100 stacks 」「 *100 to *100 for 3 (based on level) units traveled 」and upon taking damage from an enemy champion or monster, Yasuo consumes all Flow to grant himself a shield for +((-)/17*(x-1)*(0.7025+0.0175*(x-1))) for 20 (based on level) that lasts for 1 second. [wiki-p rev-4051866, fetched 2026-09-18]
+- what it does: Innate - Intent: Yasuo's total critical strike chance is doubled from all other sources. Additionally,「 every 1% critical strike chance in excess of 100% is converted into 0.5 bonus attack damage. 」「 every 50% critical strike chance in excess of 100% is converted into 25 bonus attack damage. 」 Yasuo's critical strikes deal only「 (190% + 28.5%) AD physical damage. 」「 95% of the critical damage champions usually have. 」 Innate - Resolve: Yasuo generates a stack of Flow for every 59 / 52.5 / 46 (based on level) units he travels by any means. At「 100 stacks 」「 5900 / 5250 / 4600 (based on level) units traveled 」and upon taking damage from an enemy champion or monster, Yasuo consumes all Flow to grant himself a shield for 125 – 674.46 (based on level) that lasts for 1 second. [wiki-p rev-4051866, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4051866, fetched 2026-09-18]
 
 ### Q
@@ -23,6 +23,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction • Auto [wiki-q rev-4058549, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4058549, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4058549, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Wind Wall [wiki-w rev-4008635, fetched 2026-09-18]

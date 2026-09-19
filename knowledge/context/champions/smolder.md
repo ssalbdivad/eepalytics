@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Fiery Fledgling [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Fiery Fledgling [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V14.2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V14.2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 575, hp_lvl 100, mp_base 300, mp_lvl 40, arm_base 24, arm_lvl 4, mr_base 33, mr_lvl 1.1, hp5_base 3.75, hp5_lvl 0.6, mp5_base 8.5, mp5_lvl 0.7, dam_base 58, dam_lvl 2.3, as_base 0.638, as_lvl 4, range 550, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -28,8 +28,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Super Scorcher Breath [wiki-q rev-4030432, fetched 2026-09-18]
 - cooldown: 5.5 / 5 / 4.5 / 4 / 3.5 [wiki-q rev-4030432, fetched 2026-09-18]
 - cost: 25 [wiki-q rev-4030432, fetched 2026-09-18]
-- what it does: Active: Smolder spits a fireball at the target enemy that deals physical damage, increased by 0% – 75% (+ 0% – 22.5%) (based on critical strike chance); applies on-hit effects; applies life steal at 50% effectiveness; and triggers on-attack effects. If Super Scorcher Breath kills at least one target, Smolder restores 15 mana. Super Scorcher Breath becomes empowered with new effects based on the number of Dragon Practice stacks: Tier 1 - 25 stacks: The fireball explodes upon collision to deal the same physical damage to nearby enemies. The explosion benefits from life steal at 50% effectiveness and applies on-hit effects. Tier 2 - 125 stacks: The fireball sends forth 2 (+ 0.8 per 100 Dragon Practice stacks) bolts of fire in an arc upon collision that explode at maximum range, dealing - 100% of the same damage to enemies hit. The bolts benefit from life steal at 50% effectiveness and apply on-hit effects. [wiki-q rev-4030432, fetched 2026-09-18]
-- damage by rank: Physical Damage: to (+ % bonus AD) · Physical Damage: - to * (+ - % bonus AD) [wiki-q rev-4030432, fetched 2026-09-18]
+- what it does: Active: Smolder spits a fireball at the target enemy that deals physical damage, increased by 0% – 75% (+ 0% – 22.5%) (based on critical strike chance); applies on-hit effects; applies life steal at 50% effectiveness; and triggers on-attack effects. If Super Scorcher Breath kills at least one target, Smolder restores 15 mana. Super Scorcher Breath becomes empowered with new effects based on the number of Dragon Practice stacks: Tier 1 - 25 stacks: The fireball explodes upon collision to deal the same physical damage to nearby enemies. The explosion benefits from life steal at 50% effectiveness and applies on-hit effects. Tier 2 - 125 stacks: The fireball sends forth 2 (+ 0.8 per 100 Dragon Practice stacks) bolts of fire in an arc upon collision that explode at maximum range, dealing 50% of the same damage to enemies hit. The bolts benefit from life steal at 50% effectiveness and apply on-hit effects. [wiki-q rev-4030432, fetched 2026-09-18]
+- damage by rank: Physical Damage: 60 / 70 / 80 / 90 / 100 (+ 130% bonus AD) · Physical Damage: 30 / 35 / 40 / 45 / 50 (+ 65% bonus AD) [wiki-q rev-4030432, fetched 2026-09-18]
 - target range: 550 (+ 100% bonus attack range) [wiki-q rev-4030432, fetched 2026-09-18]
 - cast time: 100% of Smolder's windup time (0.261 at base attack speed) [wiki-q rev-4030432, fetched 2026-09-18]
 - effect radius: 285 • 150 [wiki-q rev-4030432, fetched 2026-09-18]
@@ -47,7 +47,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If Super Scorcher Breath would damage the target to below the execution threshold, they are executed on the same damage instance. [wiki-q rev-4030432, fetched 2026-09-18]
 - edge case: The number of additional bolts launched based on Dragon Practice stacks is rounded up.(unexpected) [wiki-q rev-4030432, fetched 2026-09-18]
 - edge case: At 125 Dragon Practice stacks, the fireball will launch 3 bolts. [wiki-q rev-4030432, fetched 2026-09-18]
-- edge case: At 225 Dragon Practice stacks, the burn's damage based on the target's health ratio will increase by at least Expression error: Unexpected * operator.%. [wiki-q rev-4030432, fetched 2026-09-18]
+- edge case: At 225 Dragon Practice stacks, the burn's damage based on the target's health ratio will increase by at least 1.125%. [wiki-q rev-4030432, fetched 2026-09-18]
 - edge case: Super Scorcher Breath can only hit enemies once per cast. [wiki-q rev-4030432, fetched 2026-09-18]
 - edge case: The minion and monster damage modifier applies only to the physical damage. [wiki-q rev-4030432, fetched 2026-09-18]
 - edge case: Super Scorcher Breath's initial fireball, explosion and extra bolts can all be blocked and dodged. [wiki-q rev-4030432, fetched 2026-09-18]

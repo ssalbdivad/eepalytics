@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Energy [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top, Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V14.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V14.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 110, mp_base 200, mp_lvl 0, arm_base 35, arm_lvl 4.9, mr_base 32, mr_lvl 2.05, hp5_base 8.5, hp5_lvl 0.75, mp5_base 50, mp5_lvl 0, dam_base 63, dam_lvl 3, as_base 0.625, as_lvl 2.5, range 125, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]

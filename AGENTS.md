@@ -733,12 +733,27 @@ hand-written name map anywhere), Data Dragon's `championFull.json`, the wiki's p
 `Template:Data <Champion>/<Ability>` expanded BY THE WIKI so `{{ap|60 to 160}}` arrives as
 `60 / 85 / 110 / 135 / 160`, Data Dragon's rune and summoner names, and op.gg per role — cached
 under `data/champions/<patch>/` and generated into `src/knowledge/champion-table.ts`: 173 champions,
-937 abilities, patch-pinned, byte-identical across two consecutive runs.
+937 abilities, byte-identical across two consecutive runs.
+
+**"Patch-pinned" is true of HALF the table and the other half is pinned differently**, which is
+worth saying out loud because the two halves fail differently. Data Dragon is requested AT a patch,
+so `--patch 16.18.1` fetches 16.18.1 and a bump is a new cache directory and a visible diff. The
+wiki has no patch parameter at all: `Module:ChampionData/data` and every `Template:Data` page are
+fetched at HEAD, whatever the wiki says today. What pins them is the REVISION ID recorded on each
+ability and printed in each line's citation — an after-the-fact pin, which is enough to re-derive a
+line and not enough to ask for last patch's. So a wiki edit lands in the corpus on the next fetch
+without a patch bump, and the only thing that notices is `pnpm verify:fetched`, which reports it as
+`stale` with both revision ids rather than as a defect. Four lines were in that state the morning
+after the corpus was cut.
 
 **The validation is the point of the script, not a nicety.** Data Dragon and the wiki are
 independent transcriptions of the same patch, so every slot is checked for agreement on NAME,
-COOLDOWN per rank and COST per rank: 660 of 692 agree. A slot that does not keeps its prose, loses
-every number, and SAYS the number was withheld. A disagreement means a patch landed mid-fetch or one
+COOLDOWN per rank and COST per rank: **662 of 692** agree (660 until 2026-09-19, when two of the
+thirty "conflicts" turned out to be punctuation — see the pipe below). A slot that does not keeps
+its prose, loses every number, and SAYS the number was withheld — which it now actually does, as a
+`- WITHHELD (…)` line in the champion's own file. It did not before: Hecarim's Q shipped with no
+name, no cooldown and no damage line and nothing saying that was deliberate, which reads exactly
+like an ability nobody documented. A disagreement means a patch landed mid-fetch or one
 source is stale, and shipping either alone is how a wrong number sounds like a right one. Tier 2 —
 op.gg, one undocumented endpoint with no terms grant — is ArkType-fenced at the boundary and fails
 closed PER CHAMPION: one bad claim drops the whole meta section, because half a meta section is
@@ -753,6 +768,97 @@ name, cooldown or cost cannot ship without a second tier-1 source agreeing. Prom
 minted by `renderClaimLine` or by a frozen structural template, and the brand is a runtime symbol
 rather than a type, because `--experimental-strip-types` erases types and the point is that an
 unsourced string cannot reach the renderer even through `any`.
+
+#### The second read: what the DELIVERED bytes say against what the SOURCE says
+
+Everything above is a closed loop. `audit-knowledge.ts` proves a delivered line traces to a claim in
+the ledger; `champion-context.test.ts` proves the committed tree is what the generator writes. Both
+compare the pipeline against itself, so **a pipeline that misreads its source passes every one of
+them** — which is the exact shape of the failure that cost this app months, because `lillia.md` was
+internally consistent and said the Swirlseed rolls over terrain.
+
+`scripts/verify-fetched.ts` (`pnpm verify:fetched`) opens the loop. It reads the committed file the
+coach is handed, takes the citation off the end of each line, GOES BACK TO THAT URL and requires the
+value to be what the source says today. It has two modes and the second is the one that matters:
+
+- the default compares against the `Template:Data` page the fetcher reads, expanded the way the
+  fetcher expands it. It shares a render path with the pipeline, so a fault INSIDE that render is
+  invisible to it;
+- `--articles` compares every per-rank run this app delivers — `60 / 85 / 110 / 135 / 160` — against
+  the rendered wiki ARTICLE a human reads, where the wiki assembles the whole ability box itself.
+  **That check shares no code with the thing it checks**, which is the only reason it can see a
+  render fault at all.
+
+**It found three, and all three were shipping.** Each produced a grammatical line with a citation on
+the end of it, which is the shape a correct line has:
+
+1. **A field rendered ALONE loses the variables its own page defines.** Every `Template:Data X/Y`
+   opens with a `{{#vardefine:}}` block — Lucian's R sets `r_d1|15`, `r_d3|45`, `r_ad|25`,
+   `r_ap|15` — and then writes `|leveling = {{ap|{{#var:r_d1}} to {{#var:r_d3}}}} …`. Posting the
+   field back on its own expanded every `{{#var:}}` to the EMPTY STRING, and the wiki returned
+   *"Physical Damage Per Shot: to (+ % AD) (+ % AP)"* where the source says
+   *"15 / 30 / 45 (+ 25% AD) (+ 15% AP)"*. **204 of 14,984 rendered fields, 75 ability pages, 47 of
+   173 champions.** 31 delivered lines carried a visible "Expression error"; the rest just lost
+   their quantities, which is worse. Master Yi's Q said "(+ nil% AD)" where the source says
+   "(+ 70% AD)". The fix is to copy the page's own vardefines onto every fragment, byte for byte —
+   still the wiki doing the arithmetic on the wiki's own values, which is the line this pipeline is
+   drawn along.
+2. **A field that STILL comes back broken now fails closed.** Thirteen `{{#var:}}` uses name
+   variables their page never defines (they come from the champion's stat block, which exists only
+   while the whole box renders) and cannot be recovered by anything this pipeline holds.
+   `renderFault` refuses a field carrying an expression error, a Lua `nil`, surviving wikitext or a
+   dangling operand, and the row records WHICH field was dropped, so "the source publishes no cast
+   time" and "the cast time did not survive the render" stop being the same empty string. 2 fields
+   on 16.18.1, both notes blocks, both said so in the file.
+3. **The wiki's footnote markers are numbers that mean nothing, and they are not reproducible.**
+   `<sup class="reference">[17]</sup>` survived tag-stripping as the text `[17]`, pointing at a
+   reference list that is nowhere in the delivered file — **167 of them across 28 champions** — and
+   the integer is assigned PER PARSE REQUEST, so the same note came back `[17]` inside the fetcher's
+   batch and `[5]` re-rendered alone. A bare `[https://…]` autonumbers the same way. The reference
+   LIST leaked too: `- edge case: ↑ Bard Q&A comment by Rabid Llama` was delivered to the coach
+   twice, dressed as an ability interaction. All of it is stripped in `htmlToText` now.
+
+**Where it stands after the fix, with the n beside it.** All 173 champions, every cited line:
+**22,481 of 22,481 checkable delivered lines match the live source, 0 do not**, 4 moved since the
+fetch (the wiki is edited continuously; those are reported as `stale` with both revisions, not as
+defects) and 86 are op.gg lines, deliberately not re-fetched because tier 2 changes hourly and a
+difference there would say nothing about the renderer
+(`data/eval/verify-fetched-all-20260919-b.json`). On the independent instrument: **2,547 of 2,547
+per-rank runs appear verbatim in the wiki article a human reads** (`verify-articles-20260919.json`).
+A third check, delivered text against the cached fetched bytes, is 22,571 of 22,571.
+
+**`pnpm audit:knowledge --all` now asks the same question of every champion rather than of Lillia.**
+173 champions, 22,571 cited lines in the committed files, **0 untraced**, 0 uncited lines in any
+live instruction. That matters because the claim "no unsourced sentence reaches any prompt" was only
+ever exercised on two champions, which made it a claim about Lillia wearing a claim about the
+corpus. Doing it roster-wide also exposed that the REFUTED probe patterns need a SUBJECT: Riven's
+passive genuinely deals "bonus damage to monsters" and the wiki says so, so Lillia's W pattern
+reported a fabrication that was a fetched fact.
+
+**Three smaller things the second read turned up.**
+
+- **`title` cited a source it had not read.** The line said `- title: the Darkin Blade [wikiModule
+  raw@…]` and the string came off Data Dragon. The two differ on **149 of 173** champions (the wiki
+  capitalises the article), so the citation was wrong on 86% of the roster. Now it takes the value
+  from the source it names.
+- **One label meant two different facts.** `identity.release` was used for BOTH the release patch
+  and the last-changed patch, so Lillia's file carried `released / last changed: V10.15` and
+  `released / last changed: V26.08` with nothing to say which was which — a reader taking the second
+  is told she was released two years from now. They are separate fields with separate labels now.
+- **Data Dragon separates a two-form slot's names with `/` OR with `|`.** Splitting only on the
+  slash made Yunara's "Arc of Judgment | Arc of Ruin" a NAME CONFLICT, which withheld her W's and
+  E's cooldown and cost — two numbers both sources agreed on. Failing closed is right when the
+  sources disagree and is a bug when they do not.
+
+**What is still UNFENCED, said plainly: `target range`.** Cooldown and cost are cross-checked
+against Data Dragon; range is not, and it ships from the wiki alone. Where both sources publish a
+bare scalar they disagree on **62 of 255 slots (24%)** — Ezreal Q 1200 against 1150, Ryze W 550
+against 615, Fiora W 900 against 750. Most of that is probably definitional rather than wrong
+(ddragon answers 4,294,967,295 for Janna's W and 25,000 for Seraphine's R, which is an engine
+value, not a range a player experiences), and **this note is NOT a claim that either source is
+wrong** — it is a measurement that the field is unchecked, unlike the two beside it. Fencing it
+would withhold a quarter of all ranges on a comparison nobody here can adjudicate, so it is left
+shipping and left written down.
 
 #### The artefact is COMMITTED TEXT, and the runtime cannot render
 
@@ -999,6 +1105,8 @@ scripts/frame-power.ts         the FORCED CHOICE: which picture was this line sa
 scripts/measure-ttft.ts        first token, first SYLLABLE, cache hits and cost per game, paired per turn
 scripts/fetch-champions.ts     fetches, caches and generates the champion table — no model, no key
 scripts/audit-knowledge.ts     what the champion knowledge in the prompts is standing on, line by line
+scripts/verify-fetched.ts      the DELIVERED line against the LIVE source it cites — and, with
+                               --articles, against the wiki page a human reads, sharing no code with it
 scripts/audit-live-fields.ts   every rendered field against the post-game truth, by side
 scripts/what-wins.ts           what separates his WINS from his LOSSES over the whole library
 scripts/probe-minimap.ts       how accurate a minimap read is — the one thing bench-stream cannot grade

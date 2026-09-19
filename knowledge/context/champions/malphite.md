@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V0.9.22.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.09 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V0.9.22.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.09 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 665, hp_lvl 104, mp_base 280, mp_lvl 60, arm_base 40, arm_lvl 4.95, mr_base 28, mr_lvl 2.05, hp5_base 7, hp5_lvl 0.55, mp5_base 7.3, mp5_lvl 0.55, dam_base 62, dam_lvl 4, as_base 0.736, as_lvl 3.4, range 125, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -46,7 +46,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 10 / 9.5 / 9 / 8.5 / 8 [wiki-w rev-4013417, fetched 2026-09-18]
 - cost: 30 / 35 / 40 / 45 / 50 [wiki-w rev-4013417, fetched 2026-09-18]
 - what it does: Passive: Malphite gains bonus armor, tripled while Granite Shield is active. Active: Malphite empowers his next basic attack within 6 seconds to have an uncancellable windup, gain 50 bonus range, and deal additional physical damage on-hit. Additionally, Malphite's basic attacks on-hit for the next 5 seconds are empowered to trigger a cone in the direction of the target that deals physical damage to enemies hit. Thunderclap deals 180% damage against monsters. [wiki-w rev-4013417, fetched 2026-09-18]
-- damage by rank: Bonus Armor: to% armor Increased Bonus Armor: - to *% armor · Additional Physical Damage: 30 / 40 / 50 / 60 / 70 (+ % AP) (+ % armor) · Physical Damage: 15 / 25 / 35 / 45 / 55 (+ % AP) (+ % armor) [wiki-w rev-4013417, fetched 2026-09-18]
+- damage by rank: Bonus Armor: 10 / 15 / 20 / 25 / 30% armor Increased Bonus Armor: 30 / 45 / 60 / 75 / 90% armor · Additional Physical Damage: 30 / 40 / 50 / 60 / 70 (+ 20% AP) (+ 15% armor) · Physical Damage: 15 / 25 / 35 / 45 / 55 (+ 30% AP) (+ 15% armor) [wiki-w rev-4013417, fetched 2026-09-18]
 - cast time: None [wiki-w rev-4013417, fetched 2026-09-18]
 - targeting: Auto [wiki-w rev-4013417, fetched 2026-09-18]
 - damage type: physical [wiki-w rev-4013417, fetched 2026-09-18]
@@ -70,7 +70,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 7 [wiki-e rev-3985874, fetched 2026-09-18]
 - cost: 50 / 55 / 60 / 65 / 70 [wiki-e rev-3985874, fetched 2026-09-18]
 - what it does: Active: Malphite slams the ground beneath him, dealing magic damage to nearby enemies and crippling them for 3 seconds. [wiki-e rev-3985874, fetched 2026-09-18]
-- damage by rank: Magic Damage: 60 / 95 / 130 / 165 / 200 (+ % AP) (+ % armor) Cripple Strength: 30 / 35 / 40 / 45 / 50% [wiki-e rev-3985874, fetched 2026-09-18]
+- damage by rank: Magic Damage: 60 / 95 / 130 / 165 / 200 (+ 60% AP) (+ 40% armor) Cripple Strength: 30 / 35 / 40 / 45 / 50% [wiki-e rev-3985874, fetched 2026-09-18]
 - cast time: 0.2419 [wiki-e rev-3985874, fetched 2026-09-18]
 - effect radius: 400 [wiki-e rev-3985874, fetched 2026-09-18]
 - targeting: Auto [wiki-e rev-3985874, fetched 2026-09-18]

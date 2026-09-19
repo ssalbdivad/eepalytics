@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Exemplar of Demacia [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Exemplar of Demacia [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.112 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.19 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.112 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.19 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 640, hp_lvl 104, mp_base 300, mp_lvl 55, arm_base 36, arm_lvl 4.6, mr_base 32, mr_lvl 2.05, hp5_base 8, hp5_lvl 0.7, mp5_base 6.5, mp5_lvl 0.45, dam_base 64, dam_lvl 3, as_base 0.658, as_lvl 2.5, range 175, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -92,11 +92,10 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The initial cast and the manual recast count as ability activations for the purposes of on-cast effects such as Spellblade and triggering Force Pulse's passive. [wiki-r rev-4017869, fetched 2026-09-18]
 - edge case: If the ability is not manually recasted, the secondary effect will trigger without being considered as an ability activation. [wiki-r rev-4017869, fetched 2026-09-18]
 - edge case: Spell shield will block the damage but not the terrain generation. [wiki-r rev-4017869, fetched 2026-09-18]
-- edge case: If Jarvan IV's leap is interrupted by another by another forced movement (eg. old Skarner's Impale[1]), the terrain will be generated at Jarvan IV's location when the forced movement ends. [wiki-r rev-4017869, fetched 2026-09-18]
+- edge case: If Jarvan IV's leap is interrupted by another by another forced movement (eg. old Skarner's Impale), the terrain will be generated at Jarvan IV's location when the forced movement ends. [wiki-r rev-4017869, fetched 2026-09-18]
 - edge case: Cataclysm will not deal damage, generate terrain, nor refund its cooldown if Jarvan IV is killed while leaping. [wiki-r rev-4017869, fetched 2026-09-18]
 - edge case: The perimeter is made up of 24 units with 95 pathing radius, 65 gameplay radius and 1350 sight radius each. Only every other unit is rendered visible. [wiki-r rev-4017869, fetched 2026-09-18]
 - edge case: Ornn's Searing Charge will not destroy the whole ring but only the part that Ornn collides with. [wiki-r rev-4017869, fetched 2026-09-18]
-- edge case: ↑ Jarvan IV R vs old Skarner R [wiki-r rev-4017869, fetched 2026-09-18]
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 48.44% (n=6,705 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]
@@ -108,5 +107,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4042687, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jarvan%20IV%2FDragon%20Strike&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3906940, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jarvan%20IV%2FGolden%20Aegis&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4013709, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jarvan%20IV%2FDemacian%20Standard&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4017869, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jarvan%20IV%2FCataclysm&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4017869, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Jarvan%20IV%2FCataclysm&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/jarvaniv/jungle?tier=emerald_plus

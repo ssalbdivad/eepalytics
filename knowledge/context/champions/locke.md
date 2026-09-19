@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Ashen Exorcist [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Ashen Exorcist [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V26.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 620, hp_lvl 109, mp_base 280, mp_lvl 70, arm_base 32, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 9, hp5_lvl 0.9, mp5_base 7, mp5_lvl 0.8, dam_base 58, dam_lvl 3, as_base 0.688, as_lvl 3.3, range 125, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -24,7 +24,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 10 / 9 / 8 / 7 / 6 [wiki-q rev-4046580, fetched 2026-09-18]
 - cost: 70 [wiki-q rev-4046580, fetched 2026-09-18]
 - what it does: Active: Locke hurls a nail in the target direction that deals magic damage to enemies hit, slows them by 25% for 1 second, and applies a stack of Soul Nails for 4 seconds, refreshing on subsequent applications and stacking up to 3 times. Against targets with at least 2 stacks, the slow is increased to 60% and lasts for 2 seconds. Ritual Nails can be recast twice more within 4 seconds of the activation at no additional cost, with a 0.5-second static cooldown between casts. Recast: Locke mimics the first cast's effects. For each recast not used when Ritual Nails ends, 20% – 35% (based on level) of the ability's cooldown and mana cost is refunded, up to a 40% – 70% (based on level) refund for two remaining recasts. Locke's next damaging basic attack or Ashen Pursuit against an enemy with Soul Nails stacks consumes them all to deal bonus magic damage based on the amount of stacks. [wiki-q rev-4046580, fetched 2026-09-18]
-- damage by rank: Magic Damage per Nail: to (+ % AP) Maximum Nail Damage: - 3 to *3 (+ - 3% AP) · One Stack Bonus Damage: to (+ to% AP) Two Stacks Bonus Damage: - 2*1.2 to *2*1.2 (+ - 2*1.2 to *2*1.2% AP) Three Stacks Bonus Damage: - 3*1.4 to *3*1.4 (+ - 3*1.4 to *3*1.4% AP) Maximum Total Magic Damage: (+*1.4)*3 to (+*1.4)*3 (+ (+*1.4)*3 to (+*1.4)*3% AP) [wiki-q rev-4046580, fetched 2026-09-18]
+- damage by rank: Magic Damage per Nail: 40 / 48 / 56 / 64 / 72 (+ 20% AP) Maximum Nail Damage: 120 / 144 / 168 / 192 / 216 (+ 60% AP) · One Stack Bonus Damage: 18 / 26 / 34 / 42 / 50 (+ 25 / 27.5 / 30 / 32.5 / 35% AP) Two Stacks Bonus Damage: 43.2 / 62.4 / 81.6 / 100.8 / 120 (+ 60 / 66 / 72 / 78 / 84% AP) Three Stacks Bonus Damage: 75.6 / 109.2 / 142.8 / 176.4 / 210 (+ 105 / 115.5 / 126 / 136.5 / 147% AP) Maximum Total Magic Damage: 195.6 / 253.2 / 310.8 / 368.4 / 426 (+ 165 / 175.5 / 186 / 196.5 / 207% AP) [wiki-q rev-4046580, fetched 2026-09-18]
 - target range: 950 [wiki-q rev-4046580, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4046580, fetched 2026-09-18]
 - width: 100 [wiki-q rev-4046580, fetched 2026-09-18]

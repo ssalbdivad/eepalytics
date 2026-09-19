@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Seneschal of Demacia [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Seneschal of Demacia [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.96 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.96 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 620, hp_lvl 106, mp_base 274, mp_lvl 55, arm_base 35, arm_lvl 4.4, mr_base 32, mr_lvl 2.05, hp5_base 8, hp5_lvl 0.7, mp5_base 7.25, mp5_lvl 0.45, dam_base 63, dam_lvl 3, as_base 0.645, as_lvl 3.5, range 175, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]

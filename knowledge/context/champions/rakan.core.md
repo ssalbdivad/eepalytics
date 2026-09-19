@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V7.8 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.19 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V7.8 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.19 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 610, hp_lvl 99, mp_base 315, mp_lvl 50, arm_base 30, arm_lvl 4.9, mr_base 32, mr_lvl 2.05, hp5_base 5, hp5_lvl 0.5, mp5_base 8.75, mp5_lvl 0.5, dam_base 62, dam_lvl 3.5, as_base 0.635, as_lvl 3, range 300, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -52,6 +52,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### E
 - what it does: Active: Rakan grants a shield to the target allied champion for 3 seconds and then dashes to and around them. Battle Dance can be recast within 5 seconds at no additional cost. Recast: Rakan mimics the first cast's effects. Rakan will be knocked down by any immobilizing or polymorphing crowd control during the dash. If Xayah is the target, Battle Dance can be cast from an increased range. [wiki-e rev-4008001, fetched 2026-09-18]
 - targeting: Unit [wiki-e rev-4008001, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: The Quickness [wiki-r rev-3971183, fetched 2026-09-18]

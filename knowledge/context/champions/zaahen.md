@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top, Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.23 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V25.23 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 640, hp_lvl 114, mp_base 350, mp_lvl 55, arm_base 36, arm_lvl 5, mr_base 32, mr_lvl 2.05, hp5_base 7.5, hp5_lvl 0.8, mp5_base 8.15, mp5_lvl 0.75, dam_base 63, dam_lvl 4, as_base 0.625, as_lvl 2.5, range 175, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -81,7 +81,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 10 / 9 / 8 / 7 / 6 [wiki-q rev-4060370, fetched 2026-09-18]
 - cost: 25 [wiki-q rev-4060370, fetched 2026-09-18]
 - what it does: Active: Zaahen empowers his next basic attack within 4 seconds to have an uncancellable windup and gain 25 bonus range. On-attack, he strikes the target twice. If the target was a champion, minion, or monster, he also heals himself. The strikes deal modified physical damage and the heal is reduced to 50% against minions and monsters. Each strike applies on-hit effects and can critically strike for「 (50% + 15%) 」「 50% bonus critical damage 」AD bonus physical damage. After 1.5 seconds of using the empowered attack, The Darkin Glaive can be recast within the next 4 seconds at no additional cost, modifying it with a new effect. Recast: Zaahen empowers his next basic attack within 4 seconds to have an uncancellable windup, gain 25 bonus range, deal bonus physical damage and knock up the target for 0.75 seconds. The Darkin Glaive deals 200% damage against monsters. [wiki-q rev-4060370, fetched 2026-09-18]
-- damage by rank: Total Physical Damage: 15 / 30 / 45 / 60 / 75 (+ 100% AD) (+ to% bonus AD) Physical Damage per Hit: 7.5 / 15 / 22.5 / 30 / 37.5 (+ 50% AD) (+ /2 to /2% bonus AD) Champion Healing: 5 / 6 / 7 / 8 / 9% of his maximum health Non-Champion Healing: 2.5 / 3 / 3.5 / 4 / 4.5% of his maximum health · Bonus Physical Damage: 30 / 60 / 90 / 120 / 150 (+ to% bonus AD) [wiki-q rev-4060370, fetched 2026-09-18]
+- damage by rank: Total Physical Damage: 15 / 30 / 45 / 60 / 75 (+ 100% AD) (+ 20 / 25 / 30 / 35 / 40% bonus AD) Physical Damage per Hit: 7.5 / 15 / 22.5 / 30 / 37.5 (+ 50% AD) (+ 10 / 12.5 / 15 / 17.5 / 20% bonus AD) Champion Healing: 5 / 6 / 7 / 8 / 9% of his maximum health Non-Champion Healing: 2.5 / 3 / 3.5 / 4 / 4.5% of his maximum health · Bonus Physical Damage: 30 / 60 / 90 / 120 / 150 (+ 20 / 25 / 30 / 35 / 40% bonus AD) [wiki-q rev-4060370, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4060370, fetched 2026-09-18]
 - targeting: Auto [wiki-q rev-4060370, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4060370, fetched 2026-09-18]
@@ -138,7 +138,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: true [wiki-e rev-4022487, fetched 2026-09-18]
 - edge case: Aureate Rush has no minimum dash range. [wiki-e rev-4022487, fetched 2026-09-18]
 - edge case: If the dash is interrupted, Zaahen will fail to deal damage. [wiki-e rev-4022487, fetched 2026-09-18]
-- edge case: Zaahen will, however, deal damage if the dash is interrupted at the very end, shortly before the damage would occur. [1] (bug) [wiki-e rev-4022487, fetched 2026-09-18]
+- edge case: Zaahen will, however, deal damage if the dash is interrupted at the very end, shortly before the damage would occur. (bug) [wiki-e rev-4022487, fetched 2026-09-18]
 - edge case: The mixed damage is applied in two instances, and the physical damage will be dealt first within the same game tick. [wiki-e rev-4022487, fetched 2026-09-18]
 - edge case: If the physical damage finishes off the unit, the magic damage will not be dealt against it.(bug) [wiki-e rev-4022487, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Zaahen is dashing: [wiki-e rev-4022487, fetched 2026-09-18]

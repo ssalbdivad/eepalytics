@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Pride of Nazumah [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Pride of Nazumah [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V12.21 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V12.21 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 625, hp_lvl 120, mp_base 320, mp_lvl 60, arm_base 36, arm_lvl 5.2, mr_base 30, mr_lvl 2.1, hp5_base 9.5, hp5_lvl 1, mp5_base 7, mp5_lvl 1, dam_base 64, dam_lvl 3.5, as_base 0.688, as_lvl 2.5, range 150, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -25,6 +25,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-q rev-4007617, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4007617, fetched 2026-09-18]
 - spell shield: true [wiki-q rev-4007617, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Path Maker [wiki-w rev-4007618, fetched 2026-09-18]

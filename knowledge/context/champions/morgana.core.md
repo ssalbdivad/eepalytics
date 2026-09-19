@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Fallen [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Fallen [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support, Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.21 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.21 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 104, mp_base 340, mp_lvl 60, arm_base 25, arm_lvl 4.2, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.4, mp5_base 11, mp5_lvl 0.4, dam_base 56, dam_lvl 3.5, as_base 0.625, as_lvl 1.53, range 450, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]

@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Rebel [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Rebel [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V7.8 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V7.8 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 107, mp_base 340, mp_lvl 40, arm_base 25, arm_lvl 4.2, mr_base 33, mr_lvl 1.1, hp5_base 3.25, hp5_lvl 0.75, mp5_base 8.25, mp5_lvl 0.8, dam_base 60, dam_lvl 3.5, as_base 0.658, as_lvl 3.9, range 525, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]

@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Joy Unbound [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Joy Unbound [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V12.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V12.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 570, hp_lvl 101, mp_base 350, mp_lvl 35, arm_base 27, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 6, hp5_lvl 0.9, mp5_base 8.2, mp5_lvl 0.7, dam_base 58, dam_lvl 2, as_base 0.697, as_lvl 1.25, range 225, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -63,6 +63,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Formless Blade used during Slipstream might not register, rendering it on cooldown without being casted.(bug) [wiki-e rev-3927625, fetched 2026-09-18]
 - edge case: Slipstream has a chance of visually not using charge, causing it to showing one available charge without possibility of using it.(bug) [wiki-e rev-3927625, fetched 2026-09-18]
 - edge case: Dashing to target through a wall within casting range will cancel the dash if wall is longer than dash range.(bug) [wiki-e rev-3927625, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Apotheosis [wiki-r rev-4007709, fetched 2026-09-18]

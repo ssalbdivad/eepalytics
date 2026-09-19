@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Hand of Noxus [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Hand of Noxus [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.140 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.140 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 652, hp_lvl 114, mp_base 263, mp_lvl 58, arm_base 37, arm_lvl 5.2, mr_base 32, mr_lvl 2.05, hp5_base 10, hp5_lvl 0.95, mp5_base 6.6, mp5_lvl 0.35, dam_base 64, dam_lvl 5, as_base 0.625, as_lvl 1, range 175, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -130,7 +130,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Noxian Guillotine's cooldown after the recast or recast window is calculated by taking the values at the end, and using this formula: (Noxian Guillotine's Cooldown - time since first cast) × 100 ÷ (100 + AH). [wiki-r rev-4004898, fetched 2026-09-18]
 - edge case: Noxian Guillotine applies Hemorrhage after the damage. [wiki-r rev-4004898, fetched 2026-09-18]
 - edge case: Darius will only leap towards the target if it is at range, or leap backwards if it is very close. [wiki-r rev-4004898, fetched 2026-09-18]
-- edge case: This leap can pass very thin terrain and will otherwise not be able to. In any case, Darius will still hit the target.[1] [wiki-r rev-4004898, fetched 2026-09-18]
+- edge case: This leap can pass very thin terrain and will otherwise not be able to. In any case, Darius will still hit the target. [wiki-r rev-4004898, fetched 2026-09-18]
 - edge case: The ability is disabled while grounded or rooted even if Darius is in the range in which he does not leap. [wiki-r rev-4004898, fetched 2026-09-18]
 - edge case: Noxian Guillotine will not reset nor trigger Noxian Might if used to kill a clone or a target protected by resurrection. [wiki-r rev-4004898, fetched 2026-09-18]
 - edge case: Noxian Guillotine will reset but not trigger Noxian Might if it finishes off a target that is in a zombie state. [wiki-r rev-4004898, fetched 2026-09-18]

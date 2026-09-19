@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Swift Scout [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Swift Scout [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.11 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.11 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 615, hp_lvl 104, mp_base 334, mp_lvl 25, arm_base 24, arm_lvl 4.5, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.65, mp5_base 9.6, mp5_lvl 0.45, dam_base 54, dam_lvl 3, as_base 0.69, as_lvl 3.38, range 500, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -42,8 +42,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### E
 - name: Toxic Shot [wiki-e rev-4062253, fetched 2026-09-18]
-- what it does: Passive: Teemo's basic attacks on-hit deal bonus magic damage and inflict poison. poison: The target takes magic damage every second over 4 seconds. Subsequent inflictions refresh the duration. Toxic Shot deals - 100% damage against monsters. [wiki-e rev-4062253, fetched 2026-09-18]
-- damage by rank: Magic Damage On-Hit: to (+ % bonus AD) (+ % AP) Magic Damage per Tick: to (+ nil% bonus AD) (+ % AP) Total Poison Damage: - to * (+ - % bonus AD) (+ - % AP) · Monster Damage On-Hit: - to * (+ - % bonus AD) (+ - % AP) Monster Damage per Tick: - to * (+ - % bonus AD) (+ - % AP) Total Monster Poison Damage: - to ** (+ - % bonus AD) (+ - % AP) [wiki-e rev-4062253, fetched 2026-09-18]
+- what it does: Passive: Teemo's basic attacks on-hit deal bonus magic damage and inflict poison. poison: The target takes magic damage every second over 4 seconds. Subsequent inflictions refresh the duration. Toxic Shot deals 160% damage against monsters. [wiki-e rev-4062253, fetched 2026-09-18]
+- damage by rank: Magic Damage On-Hit: 9 / 23 / 37 / 51 / 65 (+ 5% bonus AD) (+ 30% AP) Magic Damage per Tick: 6 / 12 / 18 / 24 / 30 (+ 2.5% bonus AD) (+ 10% AP) Total Poison Damage: 24 / 48 / 72 / 96 / 120 (+ 10% bonus AD) (+ 40% AP) · Monster Damage On-Hit: 14.4 / 36.8 / 59.2 / 81.6 / 104 (+ 8% bonus AD) (+ 48% AP) Monster Damage per Tick: 9.6 / 19.2 / 28.8 / 38.4 / 48 (+ 4% bonus AD) (+ 16% AP) Total Monster Poison Damage: 38.4 / 76.8 / 115.2 / 153.6 / 192 (+ 16% bonus AD) (+ 64% AP) [wiki-e rev-4062253, fetched 2026-09-18]
 - targeting: Passive [wiki-e rev-4062253, fetched 2026-09-18]
 - damage type: Magic [wiki-e rev-4062253, fetched 2026-09-18]
 - spell shield: False [wiki-e rev-4062253, fetched 2026-09-18]

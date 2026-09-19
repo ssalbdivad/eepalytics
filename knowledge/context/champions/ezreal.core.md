@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Prodigal Explorer [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Prodigal Explorer [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.79 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.79 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 600, hp_lvl 102, mp_base 375, mp_lvl 70, arm_base 24, arm_lvl 4.2, mr_base 33, mr_lvl 1.1, hp5_base 4, hp5_lvl 0.65, mp5_base 8.5, mp5_lvl 1, dam_base 60, dam_lvl 3.75, as_base 0.625, as_lvl 2.5, range 550, ms 325 [wikiModule raw@2026-09-18, fetched 2026-09-18]

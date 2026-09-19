@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Spear of Vengeance [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Spear of Vengeance [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V4.20 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V4.20 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 560, hp_lvl 114, mp_base 300, mp_lvl 45, arm_base 24, arm_lvl 5.2, mr_base 33, mr_lvl 1.1, hp5_base 4, hp5_lvl 0.75, mp5_base 6.3, mp5_lvl 0.8, dam_base 57, dam_lvl 4.75, as_base 0.694, as_lvl 4.5, range 525, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -95,7 +95,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Kalista will be unable to cast Rend if there are no stacks on an enemy in range. [wiki-e rev-4004071, fetched 2026-09-18]
 - edge case: Rend cannot cast on allies, even if a valid enemy target exists. As such, any spears on allied units are purely cosmetic. [wiki-e rev-4004071, fetched 2026-09-18]
 - edge case: Rend has a lower cast range than effect range. [wiki-e rev-4004071, fetched 2026-09-18]
-- edge case: Rend at maximum stacks will deal a total of ( to )+( to )*253 (+ +( to )*253% AD) (+ Expression error: Unexpected * operator.% AP) physical damage. [wiki-e rev-4004071, fetched 2026-09-18]
+- edge case: Rend at maximum stacks will deal a total of 1776 / 3557 / 5338 / 7119 / 8900 (+ 5130 / 7027.5 / 8925 / 10822.5 / 12720% AD) (+ 12715% AP) physical damage. [wiki-e rev-4004071, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Fate's Call [wiki-r rev-4015001, fetched 2026-09-18]

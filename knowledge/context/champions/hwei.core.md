@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Visionary [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Visionary [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle, Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V13.24 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V13.24 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 580, hp_lvl 109, mp_base 480, mp_lvl 30, arm_base 21, arm_lvl 4.7, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.55, mp5_base 7.5, mp5_lvl 0.75, dam_base 54, dam_lvl 3.3, as_base 0.69, as_lvl 2.5, range 550, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -40,7 +40,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: true [wiki-q2 rev-4026403, fetched 2026-09-18]
 - name: Severing Bolt [wiki-q3 rev-4026406, fetched 2026-09-18]
 - what it does: Active - QW: Hwei calls upon a lightning bolt to strike at the target location after 1 second, dealing magic damage to enemies within the area. If Severing Bolt hits only one enemy or immobilized enemies, it deals increased damage based on the target's missing health. This bonus damage is capped at 300 against monsters. Severing Bolt deals 50% damage to minions and non-epic monsters. [wiki-q3 rev-4026406, fetched 2026-09-18]
-- damage by rank: Magic Damage: to (+ % AP) · Maximum Damage Increase: - 100 to *100% Maximum Damage: - / (+(-)*(1/4))*(+(-)*(1/4)) / (+(-)*(2/4))*(+(-)*(2/4)) / (+(-)*(3/4))*(+(-)*(3/4)) / - (+ - to *% AP) [wiki-q3 rev-4026406, fetched 2026-09-18]
+- damage by rank: Magic Damage: 60 / 85 / 110 / 135 / 160 (+ 30% AP) · Maximum Damage Increase: 200 / 237.5 / 275 / 312.5 / 350% Maximum Damage: 120 / 201.875 / 302.5 / 421.875 / 560 (+ 60 / 71.25 / 82.5 / 93.75 / 105% AP) [wiki-q3 rev-4026406, fetched 2026-09-18]
 - target range: 1900 [wiki-q3 rev-4026406, fetched 2026-09-18]
 - cast time: 0.5 [wiki-q3 rev-4026406, fetched 2026-09-18]
 - effect radius: 225 [wiki-q3 rev-4026406, fetched 2026-09-18]

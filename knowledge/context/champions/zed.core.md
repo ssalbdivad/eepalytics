@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Master of Shadows [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Master of Shadows [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Energy [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle, Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.151 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.151 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 654, hp_lvl 99, mp_base 200, mp_lvl 0, arm_base 32, arm_lvl 4.7, mr_base 29, mr_lvl 2.05, hp5_base 7, hp5_lvl 0.65, mp5_base 50, mp5_lvl 0, dam_base 63, dam_lvl 3.4, as_base 0.651, as_lvl 3.3, range 125, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]

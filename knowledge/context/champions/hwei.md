@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Visionary [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Visionary [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle, Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V13.24 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V13.24 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 580, hp_lvl 109, mp_base 480, mp_lvl 30, arm_base 21, arm_lvl 4.7, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.55, mp5_base 7.5, mp5_lvl 0.75, dam_base 54, dam_lvl 3.3, as_base 0.69, as_lvl 2.5, range 550, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -51,7 +51,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-q2 rev-4026403, fetched 2026-09-18]
 - name: Severing Bolt [wiki-q3 rev-4026406, fetched 2026-09-18]
 - what it does: Active - QW: Hwei calls upon a lightning bolt to strike at the target location after 1 second, dealing magic damage to enemies within the area. If Severing Bolt hits only one enemy or immobilized enemies, it deals increased damage based on the target's missing health. This bonus damage is capped at 300 against monsters. Severing Bolt deals 50% damage to minions and non-epic monsters. [wiki-q3 rev-4026406, fetched 2026-09-18]
-- damage by rank: Magic Damage: to (+ % AP) · Maximum Damage Increase: - 100 to *100% Maximum Damage: - / (+(-)*(1/4))*(+(-)*(1/4)) / (+(-)*(2/4))*(+(-)*(2/4)) / (+(-)*(3/4))*(+(-)*(3/4)) / - (+ - to *% AP) [wiki-q3 rev-4026406, fetched 2026-09-18]
+- damage by rank: Magic Damage: 60 / 85 / 110 / 135 / 160 (+ 30% AP) · Maximum Damage Increase: 200 / 237.5 / 275 / 312.5 / 350% Maximum Damage: 120 / 201.875 / 302.5 / 421.875 / 560 (+ 60 / 71.25 / 82.5 / 93.75 / 105% AP) [wiki-q3 rev-4026406, fetched 2026-09-18]
 - target range: 1900 [wiki-q3 rev-4026406, fetched 2026-09-18]
 - cast time: 0.5 [wiki-q3 rev-4026406, fetched 2026-09-18]
 - effect radius: 225 [wiki-q3 rev-4026406, fetched 2026-09-18]
@@ -59,11 +59,11 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Magic [wiki-q3 rev-4026406, fetched 2026-09-18]
 - spell shield: true [wiki-q3 rev-4026406, fetched 2026-09-18]
 - edge case: Severing Bolt's damage against immobilized or isolated enemies is increased based on both its rank and a target's missing health. The list below shows the total damage multiplier at various thresholds as a percentage of the base/non-increased damage. [wiki-q3 rev-4026406, fetched 2026-09-18]
-- edge case: Rank 1: 1*100 to *100 for 11% [wiki-q3 rev-4026406, fetched 2026-09-18]
-- edge case: Rank 2: 1*100 to (+(-)*(1/4))*100 for 11% [wiki-q3 rev-4026406, fetched 2026-09-18]
-- edge case: Rank 3: 1*100 to (+(-)*(2/4))*100 for 11% [wiki-q3 rev-4026406, fetched 2026-09-18]
-- edge case: Rank 4: 1*100 to (+(-)*(3/4))*100 for 11% [wiki-q3 rev-4026406, fetched 2026-09-18]
-- edge case: Rank 5: 1*100 to *100 for 11% [wiki-q3 rev-4026406, fetched 2026-09-18]
+- edge case: Rank 1: 100% – 200% [wiki-q3 rev-4026406, fetched 2026-09-18]
+- edge case: Rank 2: 100% – 237.5% [wiki-q3 rev-4026406, fetched 2026-09-18]
+- edge case: Rank 3: 100% – 275% [wiki-q3 rev-4026406, fetched 2026-09-18]
+- edge case: Rank 4: 100% – 312.5% [wiki-q3 rev-4026406, fetched 2026-09-18]
+- edge case: Rank 5: 100% – 350% [wiki-q3 rev-4026406, fetched 2026-09-18]
 - name: Molten Fissure [wiki-q4 rev-4026407, fetched 2026-09-18]
 - what it does: Active - QE: Hwei marks a blazing path in the target direction. After 0.6 seconds, the path erupts into volcanic explosions every 0.2 seconds from the point of cast, for a total of 7 explosions. Each explosion creates a shockwave that deals magic damage to nearby enemies. Each explosion also leaves a lava fissure in its wake. A fissure lasts for 2.5 seconds, dealing magic damage every 0.25 seconds to enemies within the area and slowing them by 35%. Enemies may be damaged by multiple fissures at once. Molten Fissure's damage is reduced to 60% against minions and increased to 135% against monsters. Molten Fissure's slow stacks multiplicatively with the slows applied by Grim Visage, Crushing Maw, and Spiraling Despair. [wiki-q4 rev-4026407, fetched 2026-09-18]
 - damage by rank: Magic Damage: 20 / 35 / 50 / 65 / 80 (+ 30% AP) · Magic Damage per Tick: 5 / 8.75 / 12.5 / 16.25 / 20 (+ 6% AP) Total Fissure Magic Damage: 50 / 87.5 / 125 / 162.5 / 200 (+ 60% AP) [wiki-q4 rev-4026407, fetched 2026-09-18]

@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V12.2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V12.2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 600, hp_lvl 110, mp_base 250, mp_lvl 45, arm_base 24, arm_lvl 4.2, mr_base 33, mr_lvl 1.1, hp5_base 3.25, hp5_lvl 0.7, mp5_base 6, mp5_lvl 0.8, dam_base 56, dam_lvl 2, as_base 0.658, as_lvl 2, range 550, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -31,7 +31,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If Last Hit Indicator enabled, it will indicate Living Battery's execute threshold instead of its usual function. [wiki-p rev-4051663, fetched 2026-09-18]
 
 ### Q
-- what it does: Active: Zeri fires a burst of rounds in the target direction over the cast time, each dealing physical damage to the first enemy hit. Burst Fire's projectile is treated as a basic attack: it hits any enemy unit a typical basic attack can; deals basic damage; can critically strike for (200% + 30%) damage; and applies on-hit and on-attack effects to the first enemy hit. Burst Fire's cooldown and cast time are reduced with attack speed, with the maximum of nil attacks per second. Expression error: Unexpected * operator.% of attack speed in excess of the cap is converted into bonus attack damage. Zeri can cast Burst Fire even while silenced. [wiki-q rev-4062236, fetched 2026-09-18]
+- what it does: Active: Zeri fires a burst of 7 rounds in the target direction over the cast time, each dealing physical damage to the first enemy hit. Burst Fire's projectile is treated as a basic attack: it hits any enemy unit a typical basic attack can; deals basic damage; can critically strike for (200% + 30%) damage; and applies on-hit and on-attack effects to the first enemy hit. Burst Fire's cooldown and cast time are reduced with attack speed, with the maximum of 1.5 attacks per second. 60% of attack speed in excess of the cap is converted into bonus attack damage. Zeri can cast Burst Fire even while silenced. [wiki-q rev-4062236, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4062236, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4062236, fetched 2026-09-18]
 - spell shield: false [wiki-q rev-4062236, fetched 2026-09-18]
@@ -72,16 +72,17 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Destroying a ward that is targetable but not visible to Zeri's team (e.g. a Control Ward in Fog of War) via Burst Fire uniquely allows her to remove its accompanying ward timer (if it exists) without seeing the ward being destroyed. [wiki-q rev-4062236, fetched 2026-09-18]
 - edge case: If Zeri is affected by an ally Bard's Tempered Fate during Burst Fire's cast time, she will be able to cast it during the effect.(bug) [wiki-q rev-4062236, fetched 2026-09-18]
 - edge case: The bonus AD calculates off of excess bonus attack speed percent - not the raw excess attack speed. [wiki-q rev-4062236, fetched 2026-09-18]
-- edge case: For example, if she has 150% bonus attack speed percent, but needs only 135% to reach the attack speed cap, she will gain × (150 − 135) = × 15 = Expression error: Unexpected * operator. AD [wiki-q rev-4062236, fetched 2026-09-18]
+- edge case: For example, if she has 150% bonus attack speed percent, but needs only 135% to reach the 1.5 attack speed cap, she will gain 0.6 × (150 − 135) = 0.6 × 15 = 9 AD [wiki-q rev-4062236, fetched 2026-09-18]
 - edge case: The excess attack speed is calculated after any cripple effects (like Frozen Heart's Winter's Caress), meaning they can reduce both her attack speed and attack damage. [wiki-q rev-4062236, fetched 2026-09-18]
 - edge case: The excess attack speed is calculated before Zeri's Lightning Crash applies its effects. Using it won't change the attack damage, despite her gaining additional attack speed and the cap changing. [wiki-q rev-4062236, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Ultrashock Laser [wiki-w rev-4060386, fetched 2026-09-18]
 - cooldown: 12 / 11 / 10 / 9 / 8 [wiki-w rev-4060386, fetched 2026-09-18]
 - cost: 50 / 60 / 70 / 80 / 90 [wiki-w rev-4060386, fetched 2026-09-18]
-- what it does: Active: Zeri fires an electric pulse in the target direction that deals physical damage to the first enemy hit and slows them for 2 seconds. If the pulse hits terrain, it transforms into a laser in a line that grants sight of the area for 1.75 seconds and fires after 0.85 seconds, applying the same effects to enemies hit and critically striking for Expression error: Unexpected < operator.Expression error: Unexpected < operator.Expression error: Unexpected < operator.Expression error: Unexpected < operator. damage against champions and monsters. [wiki-w rev-4060386, fetched 2026-09-18]
-- damage by rank: Physical Damage: to (+ % AD) (+ % AP) Critical Strike Damage: - /100 to */100 (+ - /100% AD) (+ - /100% AP) Infinity Edge Damage: - (/100+) to *(/100+) (+ - (/100+)% AD) (+ - (/100+)% AP) Slow: 30 / 35 / 40 / 45 / 50% [wiki-w rev-4060386, fetched 2026-09-18]
+- what it does: Active: Zeri fires an electric pulse in the target direction that deals physical damage to the first enemy hit and slows them for 2 seconds. If the pulse hits terrain, it transforms into a laser in a line that grants sight of the area for 1.75 seconds and fires after 0.85 seconds, applying the same effects to enemies hit and critically striking for (150% + 15%) damage against champions and monsters. [wiki-w rev-4060386, fetched 2026-09-18]
+- damage by rank: Physical Damage: 30 / 70 / 110 / 150 / 190 (+ 100% AD) (+ 50% AP) Critical Strike Damage: 45 / 105 / 165 / 225 / 285 (+ 150% AD) (+ 75% AP) Infinity Edge Damage: 49.5 / 115.5 / 181.5 / 247.5 / 313.5 (+ 165% AD) (+ 82.5% AP) Slow: 30 / 35 / 40 / 45 / 50% [wiki-w rev-4060386, fetched 2026-09-18]
 - cast time: 0.55 – 0.3 (based on bonus attack speed) [wiki-w rev-4060386, fetched 2026-09-18]
 - width: 80 • 200 [wiki-w rev-4060386, fetched 2026-09-18]
 - missile speed: 2500 [wiki-w rev-4060386, fetched 2026-09-18]
@@ -161,7 +162,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: It does not block Burst Fire electricity chain. [wiki-r rev-4016978, fetched 2026-09-18]
 - edge case: Clones count for granting Overcharge. [wiki-r rev-4016978, fetched 2026-09-18]
 - edge case: Lightning Crash's and Spark Surge's empowerments to Burst Fire can combine together. [wiki-r rev-4016978, fetched 2026-09-18]
-- edge case: Burst Fire electricity chain will not trigger if the first target hit is a ward or trap, even if it is stealthed. [1] (bug) [wiki-r rev-4016978, fetched 2026-09-18]
+- edge case: Burst Fire electricity chain will not trigger if the first target hit is a ward or trap, even if it is stealthed. (bug) [wiki-r rev-4016978, fetched 2026-09-18]
 - edge case: Burst Fire electricity chain will not chain across structures. [wiki-r rev-4016978, fetched 2026-09-18]
 - edge case: Entering resurrection causes Zeri to lose all stacks of Hypercharged. [wiki-r rev-4016978, fetched 2026-09-18]
 - edge case: Overcharged is not removed, however.(unexpected) [wiki-r rev-4016978, fetched 2026-09-18]

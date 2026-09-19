@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: The Fire below the Mountain [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Fire Below the Mountain [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V7.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V7.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 660, hp_lvl 109, mp_base 341, mp_lvl 65, arm_base 33, arm_lvl 5.2, mr_base 32, mr_lvl 2.05, hp5_base 9, hp5_lvl 0.9, mp5_base 8, mp5_lvl 0.6, dam_base 69, dam_lvl 3.5, as_base 0.625, as_lvl 2, range 175, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -35,7 +35,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If the item has health and only one other upgradeable stat, it receives +185 health and health is valued at 2.702 per point. [wiki-p rev-4063954, fetched 2026-09-18]
 - edge case: If the item has health and two other upgradeable stats, it receives +125 health and health is valued at 2.6 per point. [wiki-p rev-4063954, fetched 2026-09-18]
 - edge case: If the item has health and three other upgradeable stats, it receives +90 health and health is valued at 2.7 per point. [wiki-p rev-4063954, fetched 2026-09-18]
-- edge case: While not currently possible, if an item has no upgradeable stats, 1000 worth of health (valued at 2.6 per point) is added to the item.[1] [wiki-p rev-4063954, fetched 2026-09-18]
+- edge case: While not currently possible, if an item has no upgradeable stats, 1000 worth of health (valued at 2.6 per point) is added to the item. [wiki-p rev-4063954, fetched 2026-09-18]
 - edge case: The Masterwork stat increases are rounded down (any decimal values are lost). [wiki-p rev-4063954, fetched 2026-09-18]
 - edge case: Living Forge's bonus armor and magic resist increase stacks additively with Jak'Sho, The Protean's Voidborn Resilience and multiplicatively with Mountainous Vigor. [wiki-p rev-4063954, fetched 2026-09-18]
 - edge case: Health and mana items built on the field will retain Ornn's previous health and mana percentage. Returning to base still brings health and mana back to full. [wiki-p rev-4063954, fetched 2026-09-18]
@@ -291,8 +291,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Interrupted by [wiki-r rev-4007985, fetched 2026-09-18]
 - edge case: : [wiki-r rev-4007985, fetched 2026-09-18]
 - edge case: Death, unless protected by Resurrection [wiki-r rev-4007985, fetched 2026-09-18]
-- edge case: ↑ GalaxySmash on if an item has no upgradeable stats [wiki-r rev-4007985, fetched 2026-09-18]
-- edge case: ↑ GalaxySmash on if an item has no upgradeable stats [wiki-r rev-4007985, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -300,4 +298,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3998234, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ornn%2FVolcanic%20Rupture&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4011962, fetched 2026-09-18 — 57 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ornn%2FBellows%20Breath&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007982, fetched 2026-09-18 — 61 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ornn%2FSearing%20Charge&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4007985, fetched 2026-09-18 — 63 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ornn%2FCall%20of%20the%20Forge%20God&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4007985, fetched 2026-09-18 — 61 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ornn%2FCall%20of%20the%20Forge%20God&prop=text

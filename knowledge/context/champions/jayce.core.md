@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Defender of Tomorrow [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Defender of Tomorrow [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.142 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.142 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 590, hp_lvl 109, mp_base 375, mp_lvl 45, arm_base 22, arm_lvl 5, mr_base 30, mr_lvl 1.3, hp5_base 6, hp5_lvl 0.6, mp5_base 6, mp5_lvl 0.8, dam_base 59, dam_lvl 4.25, as_base 0.658, as_lvl 3, range 125, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -94,6 +94,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Active: Jayce transforms into Hammer Stance, receiving access to its abilities, becoming melee with 125 attack range, gaining 5 / 12 / 19 / 26 (based on level) (+ 7.5% bonus AD) bonus armor and bonus magic resistance, and empowering his next basic attack to deal 25 / 60 / 95 / 130 (based on level) (+ 30% bonus AD) bonus magic damage. Jayce begins the game with Transform but cannot increase its rank. Instead, his basic abilities each have 6 ranks. [wiki-r2 rev-4049966, fetched 2026-09-18]
 - cast time: none [wiki-r2 rev-4049966, fetched 2026-09-18]
 - targeting: Auto [wiki-r2 rev-4049966, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

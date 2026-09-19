@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Card Master [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Card Master [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle, Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 604, hp_lvl 108, mp_base 333, mp_lvl 39, arm_base 24, arm_lvl 4.35, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.6, mp5_base 8, mp5_lvl 0.8, dam_base 52, dam_lvl 2.5, as_base 0.625, as_lvl 2.5, range 525, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]

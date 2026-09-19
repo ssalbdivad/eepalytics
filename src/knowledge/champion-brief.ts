@@ -517,12 +517,29 @@ export const championBrief = (
 	for (const group of CLAIM_GROUPS) {
 		if (group === "judgment") continue
 		const inGroup = claims.filter(c => c.group === group)
-		if (inGroup.length === 0) continue
+		const notices = (facts?.withheld ?? []).filter(n => n.group === group)
+		// A group with nothing but notices still gets its heading: "this ability exists and every
+		// number about it was withheld" is the most important thing that file can say.
+		if (inGroup.length === 0 && notices.length === 0) continue
 		lines.push(structureLine("group.heading", { title: GROUP_TITLES[group] }))
 		for (const claim of inGroup) {
 			lines.push(renderClaimLine(claim, byId))
 			used.push(claim)
 		}
+		/*
+		 * The withheld notices go LAST in their group, after the lines that did ship. They are not
+		 * claims and carry no citation, because they cite nothing — they say that a value the
+		 * sources hold did not survive the fence. Without them an ability whose cooldown was
+		 * withheld and an ability nobody documents render identically: Hecarim's Q shipped with no
+		 * name, no cooldown and no damage line, and nothing in the file said that was on purpose.
+		 */
+		for (const notice of notices)
+			lines.push(
+				structureLine(
+					notice.kind === "disagreed" ? "group.withheld.disagreed" : "group.withheld.render",
+					{ fields: notice.fields }
+				)
+			)
 		lines.push(structureLine("blank"))
 	}
 

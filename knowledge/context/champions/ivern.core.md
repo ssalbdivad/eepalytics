@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Green Father [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Green Father [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V6.20 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V6.20 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 99, mp_base 450, mp_lvl 60, arm_base 27, arm_lvl 4.7, mr_base 30, mr_lvl 1.3, hp5_base 7, hp5_lvl 0.85, mp5_base 6, mp5_lvl 0.75, dam_base 50, dam_lvl 3, as_base 0.644, as_lvl 3.4, range 475, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]

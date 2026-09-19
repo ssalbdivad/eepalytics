@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.143 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.08 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.143 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.08 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 574, hp_lvl 93, mp_base 418, mp_lvl 25, arm_base 29, arm_lvl 4.2, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.5, mp5_base 7, mp5_lvl 0.8, dam_base 53, dam_lvl 3.2, as_base 0.681, as_lvl 2.11, range 575, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -55,6 +55,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Upon first rank up, Rampant Growth gains 2 charges. [wiki-w rev-4044057, fetched 2026-09-18]
 - edge case: Seeds are untargetable. [wiki-w rev-4044057, fetched 2026-09-18]
 - edge case: Rampant Growth cannot be learnt at level 1. [wiki-w rev-4044057, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Grasping Roots [wiki-e rev-4013460, fetched 2026-09-18]

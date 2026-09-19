@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Prophet of the Void [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Prophet of the Void [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.86 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.86 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 580, hp_lvl 101, mp_base 375, mp_lvl 28, arm_base 18, arm_lvl 4.7, mr_base 30, mr_lvl 1.3, hp5_base 6, hp5_lvl 0.6, mp5_base 8, mp5_lvl 0.8, dam_base 55, dam_lvl 3, as_base 0.625, as_lvl 1.5, range 500, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -24,7 +24,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: However, if Malzahar has a spell shield and is hit by an effect that isn't negated by the spell shield, then if the shield fully mitigates the damage, Void Shift will not be consumed. [wiki-p rev-4035856, fetched 2026-09-18]
 - edge case: Spell shields take priority over Void Shift for abilities that contain a crowd control effect. [wiki-p rev-4035856, fetched 2026-09-18]
 - edge case: Void Shift will specifically not deactivate if Malzahar eats Honeyfruit or is within a hostile Frozen Heart passive aura. [wiki-p rev-4035856, fetched 2026-09-18]
-- edge case: Void Shift does not prevent Zoe's Sleepy Trouble Bubble's trap drowsy. [1] (unexpected) [wiki-p rev-4035856, fetched 2026-09-18]
+- edge case: Void Shift does not prevent Zoe's Sleepy Trouble Bubble's trap drowsy. (unexpected) [wiki-p rev-4035856, fetched 2026-09-18]
 - edge case: Void Shift is special cased to prevent Fizz's Chum the Waters, and Thresh's Death Sentence from attaching to Malzahar. [wiki-p rev-4035856, fetched 2026-09-18]
 
 ### Q
@@ -83,7 +83,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Magic [wiki-r rev-4015186, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4015186, fetched 2026-09-18]
 - edge case: Applies persistent damage for the tether, and persistent area damage additionally tagged as indirect to enemies within the Null Zone. [wiki-r rev-4015186, fetched 2026-09-18]
-- edge case: Spell shield prevents both the tether and the Null Zone from appearing, however Malzahar will continue to channel. [2] [wiki-r rev-4015186, fetched 2026-09-18]
+- edge case: Spell shield prevents both the tether and the Null Zone from appearing, however Malzahar will continue to channel. [wiki-r rev-4015186, fetched 2026-09-18]
 - edge case: The tether will not break if the target enters a zombie state or enters resurrection. [wiki-r rev-4015186, fetched 2026-09-18]
 - edge case: As long as the target is within the tether radius, they will take the full tether damage over 2.5 seconds even if they are not tethered due to the tether being broken early into the channel.(bug) [wiki-r rev-4015186, fetched 2026-09-18]
 - edge case: This occurs regardless of how the tether was broken. [wiki-r rev-4015186, fetched 2026-09-18]

@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Piltover Enforcer [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Piltover Enforcer [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.153 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.153 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 655, hp_lvl 105, mp_base 295, mp_lvl 65, arm_base 30, arm_lvl 4.7, mr_base 32, mr_lvl 2.05, hp5_base 10, hp5_lvl 1, mp5_base 8, mp5_lvl 0.65, dam_base 63, dam_lvl 3.5, as_base 0.644, as_lvl 2, range 125, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -104,7 +104,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Relentless Force [wiki-e rev-3986710, fetched 2026-09-18]
 - cost: 26 / 32 / 38 / 44 / 50 [wiki-e rev-3986710, fetched 2026-09-18]
 - what it does: Active: Vi empowers her next basic attack within 6 seconds to have an uncancellable windup, gain 50 bonus range and trigger a blast in the target's direction that deals modified physical damage to enemies hit in a cone. Relentless Force can critically strike for (100% + 30%) AD bonus physical damage against the primary target. Secondary targets take the same damage but do not count as being critically struck. Vi periodically stocks a Relentless Force charge, up to a maximum of 2. Relentless Force resets Vi's basic attack timer. [wiki-e rev-3986710, fetched 2026-09-18]
-- damage by rank: Physical Damage: 10 / 30 / 50 / 70 / 90 (+ Expression error: Unexpected * operator.% AD) (+ 100% AP) [wiki-e rev-3986710, fetched 2026-09-18]
+- damage by rank: Physical Damage: 10 / 30 / 50 / 70 / 90 (+ 110% AD) (+ 100% AP) [wiki-e rev-3986710, fetched 2026-09-18]
 - cast time: none [wiki-e rev-3986710, fetched 2026-09-18]
 - effect radius: 600 [wiki-e rev-3986710, fetched 2026-09-18]
 - targeting: Auto [wiki-e rev-3986710, fetched 2026-09-18]

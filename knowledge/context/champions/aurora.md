@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Witch Between Worlds [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Witch Between Worlds [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle, Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V14.14 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V14.14 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 607, hp_lvl 110, mp_base 475, mp_lvl 30, arm_base 23, arm_lvl 4.5, mr_base 32, mr_lvl 1.3, hp5_base 6, hp5_lvl 0.55, mp5_base 8, mp5_lvl 0.8, dam_base 53, dam_lvl 3, as_base 0.668, as_lvl 2, range 550, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -26,8 +26,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Twofold Hex [wiki-q rev-4021922, fetched 2026-09-18]
 - cooldown: 9 / 8.5 / 8 / 7.5 / 7 [wiki-q rev-4021922, fetched 2026-09-18]
 - cost: 60 [wiki-q rev-4021922, fetched 2026-09-18]
-- what it does: Active: Aurora fires a bolt of energy in the target direction that deals magic damage to enemies hit and marks them with a curse for 3.5 seconds. Twofold Hex can be recast after 0.1 seconds while at least one target is marked, and does so automatically at the end of the mark's duration. Recast: Aurora expunges the curse from all marked targets, drawing the spiritual energy back to her as bolts that each deal magic damage to all enemies they pass through, reduced to 40% against minions and 50% against monsters and increased by 0% – -100% (based on target's missing health). Subsequent bolts against an enemy deal - 100% damage. [wiki-q rev-4021922, fetched 2026-09-18]
-- damage by rank: Magic Damage: to (+ % AP) · Minimum Magic Damage: to (+ % AP) Maximum Magic Damage: - to * (+ - % AP) Subsequent Bolt Minimum Magic Damage: - to * (+ - % AP) Subsequent Bolt Maximum Magic Damage: - to ** (+ - % AP) [wiki-q rev-4021922, fetched 2026-09-18]
+- what it does: Active: Aurora fires a bolt of energy in the target direction that deals magic damage to enemies hit and marks them with a curse for 3.5 seconds. Twofold Hex can be recast after 0.1 seconds while at least one target is marked, and does so automatically at the end of the mark's duration. Recast: Aurora expunges the curse from all marked targets, drawing the spiritual energy back to her as bolts that each deal magic damage to all enemies they pass through, reduced to 40% against minions and 50% against monsters and increased by 0% – 50% (based on target's missing health). Subsequent bolts against an enemy deal 20% damage. [wiki-q rev-4021922, fetched 2026-09-18]
+- damage by rank: Magic Damage: 45 / 70 / 95 / 120 / 145 (+ 40% AP) · Minimum Magic Damage: 45 / 70 / 95 / 120 / 145 (+ 40% AP) Maximum Magic Damage: 67.5 / 105 / 142.5 / 180 / 217.5 (+ 60% AP) Subsequent Bolt Minimum Magic Damage: 9 / 14 / 19 / 24 / 29 (+ 8% AP) Subsequent Bolt Maximum Magic Damage: 13.5 / 21 / 28.5 / 36 / 43.5 (+ 12% AP) [wiki-q rev-4021922, fetched 2026-09-18]
 - cast time: 0.25 • None [wiki-q rev-4021922, fetched 2026-09-18]
 - effect radius: Global [wiki-q rev-4021922, fetched 2026-09-18]
 - width: 180 • 180 [wiki-q rev-4021922, fetched 2026-09-18]

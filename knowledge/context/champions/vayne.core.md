@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Night Hunter [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Night Hunter [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.118 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.118 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 580, hp_lvl 98, mp_base 232, mp_lvl 35, arm_base 23, arm_lvl 4.6, mr_base 33, mr_lvl 1.1, hp5_base 4, hp5_lvl 0.5, mp5_base 7, mp5_lvl 0.4, dam_base 60, dam_lvl 2.35, as_base 0.658, as_lvl 2.8, range 550, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]

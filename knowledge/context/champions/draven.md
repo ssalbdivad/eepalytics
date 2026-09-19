@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Glorious Executioner [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Glorious Executioner [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.140b [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.140b [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 675, hp_lvl 104, mp_base 361, mp_lvl 39, arm_base 29, arm_lvl 4.5, mr_base 33, mr_lvl 1.1, hp5_base 3.75, hp5_lvl 0.7, mp5_base 8.05, mp5_lvl 0.65, dam_base 62, dam_lvl 3.4, as_base 0.679, as_lvl 2.7, range 550, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -22,7 +22,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: League of Draven grants over 300 gold. [wiki-p rev-4040578, fetched 2026-09-18]
 - edge case: League of Draven gets reduced. [wiki-p rev-4040578, fetched 2026-09-18]
 - edge case: None of the parts of League of Draven require actually using a Spinning Axe for a kill to get Adoration stacks, as well as to cash Adoration stacks. [wiki-p rev-4040578, fetched 2026-09-18]
-- edge case: League of Draven will trigger upon receiving an assist on an enemy executed by Pyke's Death from Below.[1] [wiki-p rev-4040578, fetched 2026-09-18]
+- edge case: League of Draven will trigger upon receiving an assist on an enemy executed by Pyke's Death from Below. [wiki-p rev-4040578, fetched 2026-09-18]
 - edge case: When receiving gold from an ally executing a minion through Shared Riches ( World Atlas, Runic Compass), Draven is also awarded a Strike stack.(bug) [wiki-p rev-4040578, fetched 2026-09-18]
 - edge case: A Strike stack lasts up to 10 seconds or until Draven fails to catch an axe or a nearby minion dies without him killing it. Upon reacing 6 stacks, Draven consumes the stacks to gain 2 stacks of Adoration. [wiki-p rev-4040578, fetched 2026-09-18]
 - edge case: Other sources of gaining Strike stacks were removed in patch V25.06. [wiki-p rev-4040578, fetched 2026-09-18]

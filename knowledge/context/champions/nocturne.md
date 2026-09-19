@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Eternal Nightmare [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Eternal Nightmare [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.113 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.113 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 640, hp_lvl 109, mp_base 275, mp_lvl 35, arm_base 36, arm_lvl 4.2, mr_base 32, mr_lvl 1.55, hp5_base 7, hp5_lvl 0.75, mp5_base 7, mp5_lvl 0.45, dam_base 62, dam_lvl 2.6, as_base 0.721, as_lvl 2.7, range 125, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -97,7 +97,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Paranoia cannot be recast while grounded or rooted. [wiki-r rev-4049972, fetched 2026-09-18]
 - edge case: Paranoia's nearsight does not apply to clones. [wiki-r rev-4049972, fetched 2026-09-18]
 - edge case: Players' screens will turn a different color when Paranoia is cast, based on their perspective: blue for allies and red for enemies. [wiki-r rev-4049972, fetched 2026-09-18]
-- edge case: If an existing player overlay is overwritten, it will not be added back once Paranoia ends. [1] (unexpected) [wiki-r rev-4049972, fetched 2026-09-18]
+- edge case: If an existing player overlay is overwritten, it will not be added back once Paranoia ends. (unexpected) [wiki-r rev-4049972, fetched 2026-09-18]
 - edge case: Experimental Hexplate's Overdrive, Fiendhunter Bolts' Opening Barrage, and Zeke's Convergence's Frostfire Tempest will activate immediately upon Paranoia's first cast. If the recast is used, the buff's duration is refreshed at the end of the dash. [wiki-r rev-4049972, fetched 2026-09-18]
 - edge case: A spell indicator telegraphed to Nocturne and his allies will be placed on all enemy champions within range of Paranoia's recast while the ability is active. The following images display the indicator for the default skin: [wiki-r rev-4049972, fetched 2026-09-18]
 

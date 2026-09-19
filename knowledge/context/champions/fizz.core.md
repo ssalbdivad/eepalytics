@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Tidal Trickster [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Tidal Trickster [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.129 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.129 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 640, hp_lvl 106, mp_base 317, mp_lvl 52, arm_base 26, arm_lvl 4.6, mr_base 32, mr_lvl 2.05, hp5_base 8, hp5_lvl 0.7, mp5_base 6, mp5_lvl 0.8, dam_base 58, dam_lvl 3, as_base 0.658, as_lvl 3.1, range 175, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -66,8 +66,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Chum the Waters [wiki-r rev-4010638, fetched 2026-09-18]
 - cooldown: 120 / 100 / 80 [wiki-r rev-4010638, fetched 2026-09-18]
 - cost: 100 [wiki-r rev-4010638, fetched 2026-09-18]
-- what it does: Active: Fizz throws down a lure at the target location that attracts a shark, granting sight of the area before it emerges to chomp at the lure after 2 seconds, dealing magic damage to nearby enemies, knocking them back, though not through terrain, and slowing them for 2 seconds. The further the lure travels in its initial flight, the larger the shark that is attracted; increasing Chum the Waters' damage, slow, eruption radius and knock back distance. Guppy (<455): 40% slow, 200 eruption radius and 150 unit knock back distance. Chomper (455-910): 50% damage, 60% slow, 325 eruption radius and 250 unit knock back distance. Gigalodon (>910): - 100% damage, 80% slow, 450 eruption radius and 350 unit knock back distance. [wiki-r rev-4010638, fetched 2026-09-18]
-- damage by rank: Guppy Damage: to (+ % AP) · Chomper Damage: - (1+(-1)*(1/2)) to *(1+(-1)*(1/2)) (+ - (1+(-1)*(1/2))% AP) · Gigalodon Damage: - to * (+ - % AP) [wiki-r rev-4010638, fetched 2026-09-18]
+- what it does: Active: Fizz throws down a lure at the target location that attracts a shark, granting sight of the area before it emerges to chomp at the lure after 2 seconds, dealing magic damage to nearby enemies, knocking them back, though not through terrain, and slowing them for 2 seconds. The further the lure travels in its initial flight, the larger the shark that is attracted; increasing Chum the Waters' damage, slow, eruption radius and knock back distance. Guppy (<455): 40% slow, 200 eruption radius and 150 unit knock back distance. Chomper (455-910): 125% damage, 60% slow, 325 eruption radius and 250 unit knock back distance. Gigalodon (>910): 150% damage, 80% slow, 450 eruption radius and 350 unit knock back distance. [wiki-r rev-4010638, fetched 2026-09-18]
+- damage by rank: Guppy Damage: 180 / 300 / 420 (+ 60% AP) · Chomper Damage: 225 / 375 / 525 (+ 75% AP) · Gigalodon Damage: 270 / 450 / 630 (+ 90% AP) [wiki-r rev-4010638, fetched 2026-09-18]
 - target range: 1300 [wiki-r rev-4010638, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r rev-4010638, fetched 2026-09-18]
 - missile speed: 1300 [wiki-r rev-4010638, fetched 2026-09-18]

@@ -3,22 +3,23 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Redeemer [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Redeemer [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom, Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V9.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V9.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 530, hp_lvl 89, mp_base 350, mp_lvl 45, arm_base 25, arm_lvl 4, mr_base 33, mr_lvl 1.1, hp5_base 3.5, hp5_lvl 0.55, mp5_base 11.5, mp5_lvl 0.7, dam_base 50, dam_lvl 0, as_base 0.625, as_lvl 2.6, range 600, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Passive
 - name: Absolution [wiki-p rev-4063473, fetched 2026-09-18]
-- what it does: Innate - Weakened Soul: Senna's basic attacks on-hit and abilities mark enemy champions hit for 4 seconds. Subsequent attacks or ability hits against marked targets will consume the mark to grant Senna a stack of Mist and deal bonus physical damage equal to 1% – 10% (based on level) of the target's current health, rendering the target immune to being marked again for a few seconds. This damage applies life steal at 100% effectiveness. Innate: Enemies that die near Senna may spawn a Mist Wraith from their corpse. A Mist Wraith lasts 8 seconds and Senna can basic attack or hit it with Piercing Darkness or Dawning Shadow to kill it instantly, granting her nil and a stack of Mist. - Enemy champions and large monsters will spawn a Mist Wraith. - Epic monsters will spawn 2 Mist Wraiths. - Minions and lesser monsters that Senna kills have a 5% chance to spawn a Mist Wraith. - Large minions that Senna does not kill will always spawn a Mist Wraith, while lesser minions and lesser monsters that Senna does not kill have a 32% chance to spawn one. - Lesser minions executed by an allied champion's Support Quest item have a 8.4% chance to spawn a Mist Wraith. Mist: For each stack of Mist, Senna gains nil bonus attack damage. For every stacks, she also gains 20 bonus attack range and % critical strike chance. Additionally, every 1% critical strike chance in excess of 100% is converted into nil% life steal. Innate - Relic Cannon: Senna's basic attacks on-hit deal 20% AD bonus physical damage and grant her 10% / 15% / 20% (based on level) of the target's movement speed as bonus movement speed for 0.5 seconds. The damage applies life steal at 100% effectiveness. [wiki-p rev-4063473, fetched 2026-09-18]
+- what it does: Innate - Weakened Soul: Senna's basic attacks on-hit and abilities mark enemy champions hit for 4 seconds. Subsequent attacks or ability hits against marked targets will consume the mark to grant Senna a stack of Mist and deal bonus physical damage equal to 1% – 10% (based on level) of the target's current health, rendering the target immune to being marked again for a few seconds. This damage applies life steal at 100% effectiveness. Innate: Enemies that die near Senna may spawn a Mist Wraith from their corpse. A Mist Wraith lasts 8 seconds and Senna can basic attack or hit it with Piercing Darkness or Dawning Shadow to kill it instantly, granting her 8 and a stack of Mist. - Enemy champions and large monsters will spawn a Mist Wraith. - Epic monsters will spawn 2 Mist Wraiths. - Minions and lesser monsters that Senna kills have a 5% chance to spawn a Mist Wraith. - Large minions that Senna does not kill will always spawn a Mist Wraith, while lesser minions and lesser monsters that Senna does not kill have a 32% chance to spawn one. - Lesser minions executed by an allied champion's Support Quest item have a 8.4% chance to spawn a Mist Wraith. Mist: For each stack of Mist, Senna gains 0.75 bonus attack damage. For every 20 stacks, she also gains 20 bonus attack range and 10% critical strike chance. Additionally, every 1% critical strike chance in excess of 100% is converted into 0.35% life steal. Innate - Relic Cannon: Senna's basic attacks on-hit deal 20% AD bonus physical damage and grant her 10% / 15% / 20% (based on level) of the target's movement speed as bonus movement speed for 0.5 seconds. The damage applies life steal at 100% effectiveness. [wiki-p rev-4063473, fetched 2026-09-18]
 - effect radius: 2000 [wiki-p rev-4063473, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4063473, fetched 2026-09-18]
 - spell shield: False [wiki-p rev-4063473, fetched 2026-09-18]
+- WITHHELD (notes): the wiki's own expansion of the field came back broken, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Piercing Darkness [wiki-q rev-4042887, fetched 2026-09-18]

@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Monkey King [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Monkey King [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.122 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.122 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 610, hp_lvl 99, mp_base 330, mp_lvl 65, arm_base 31, arm_lvl 4.7, mr_base 28, mr_lvl 2.05, hp5_base 3.5, hp5_lvl 0.65, mp5_base 8, mp5_lvl 0.8, dam_base 66, dam_lvl 3.5, as_base 0.69, as_lvl 3, range 175, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -35,7 +35,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 22 / 21 / 20 / 19 / 18 [wiki-w rev-4016976, fetched 2026-09-18]
 - cost: 60 / 55 / 50 / 45 / 40 [wiki-w rev-4016976, fetched 2026-09-18]
 - what it does: Active: Wukong enters invisibility for 1 second and dashes in the target direction, leaving behind a clone of himself at his casting position for 4 seconds. The clone is untargetable to allies and can basic attack autonomously, prioritizing the last enemy Wukong damaged. It can also gain the effects of Crushing Blow and Nimbus Strike's bonus attack speed, and casts Cyclone whenever Wukong does. The clone deals reduced damage. See Pets for more details about Wukong's clone. Wukong can cast any of his abilities during the dash. [wiki-w rev-4016976, fetched 2026-09-18]
-- damage by rank: Clone Outgoing Damage: to% [wiki-w rev-4016976, fetched 2026-09-18]
+- damage by rank: Clone Outgoing Damage: 40 / 45 / 50 / 55 / 60% [wiki-w rev-4016976, fetched 2026-09-18]
 - target range: 100 - 300 [wiki-w rev-4016976, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4016976, fetched 2026-09-18]
 - missile speed: 900 [wiki-w rev-4016976, fetched 2026-09-18]

@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Soul's Reflection [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Soul's Reflection [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle, Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.02 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.08 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V25.02 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.08 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 99, mp_base 480, mp_lvl 28, arm_base 21, arm_lvl 5.2, mr_base 30, mr_lvl 1.3, hp5_base 6, hp5_lvl 0.55, mp5_base 9, mp5_lvl 0.9, dam_base 54, dam_lvl 3.3, as_base 0.625, as_lvl 2.5, range 550, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -85,13 +85,14 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Non-ultimate ability missile: [wiki-w rev-4050141, fetched 2026-09-18]
 - edge case: Ultimate ability missile: [wiki-w rev-4050141, fetched 2026-09-18]
 - edge case: Ability with global or near-global range missile: [wiki-w rev-4050141, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Solar Snare [wiki-e rev-4007692, fetched 2026-09-18]
 - cooldown: 11 / 10.5 / 10 / 9.5 / 9 [wiki-e rev-4007692, fetched 2026-09-18]
 - cost: 50 / 60 / 70 / 80 / 90 [wiki-e rev-4007692, fetched 2026-09-18]
-- what it does: Active: Mel fires an orb in the target direction that grants sight of its surroundings every 0.25 seconds as it travels. Enemies hit by the orb are dealt magic damage and rooted for 1.5 seconds. The orb emanates a field of solar radiation that additionally expands after a 0.5-second delay. Enemies within the field are dealt magic damage and slowed by 30% every 0.125 seconds, lingering for 0.25 seconds after exiting. Both the orb and the field of Solar Snare deal Expression error: Unexpected * operator.% damage against minions. [wiki-e rev-4007692, fetched 2026-09-18]
-- damage by rank: Orb Magic Damage: to (+ % AP) · Field Magic Damage per Tick: to (+ % AP) Field Magic Damage per Second: - 8 to *8 (+ - 8% AP) · Orb Minion Magic Damage: - to * (+ - % AP) Field Minion Magic Damage per Tick: - to * (+ - % AP) Field Magic Damage per Second: - 8 to **8 (+ - 8% AP) [wiki-e rev-4007692, fetched 2026-09-18]
+- what it does: Active: Mel fires an orb in the target direction that grants sight of its surroundings every 0.25 seconds as it travels. Enemies hit by the orb are dealt magic damage and rooted for 1.5 seconds. The orb emanates a field of solar radiation that additionally expands after a 0.5-second delay. Enemies within the field are dealt magic damage and slowed by 30% every 0.125 seconds, lingering for 0.25 seconds after exiting. Both the orb and the field of Solar Snare deal 50% damage against minions. [wiki-e rev-4007692, fetched 2026-09-18]
+- damage by rank: Orb Magic Damage: 60 / 105 / 150 / 195 / 240 (+ 70% AP) · Field Magic Damage per Tick: 2 / 3.5 / 5 / 6.5 / 8 (+ 1% AP) Field Magic Damage per Second: 16 / 28 / 40 / 52 / 64 (+ 8% AP) · Orb Minion Magic Damage: 30 / 52.5 / 75 / 97.5 / 120 (+ 35% AP) Field Minion Magic Damage per Tick: 1 / 1.75 / 2.5 / 3.25 / 4 (+ 0.5% AP) Field Magic Damage per Second: 8 / 14 / 20 / 26 / 32 (+ 4% AP) [wiki-e rev-4007692, fetched 2026-09-18]
 - cast time: 0.25 [wiki-e rev-4007692, fetched 2026-09-18]
 - effect radius: 70 • 70 • 230 • 60 • 400 [wiki-e rev-4007692, fetched 2026-09-18]
 - missile speed: 1100 [wiki-e rev-4007692, fetched 2026-09-18]

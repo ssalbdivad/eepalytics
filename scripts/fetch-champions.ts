@@ -30,6 +30,16 @@
  * champion, with markers between them, and what comes back is rendered HTML that only has to be
  * stripped of tags. Reformatting a fetched string is allowed here; producing one is not.
  *
+ * A field posted back ALONE is not the same field. It loses two things its own page gives it, and
+ * both were losing numbers until 2026-09-19: `{{#var:abilityprogressionname}}`, which decides
+ * whether `{{ap|150 to 110}}` is three ranks or five, and the `{{#vardefine:}}` block the page
+ * writes above its field list, which holds the actual figures — so `{{#var:r_ap}}` expanded to
+ * nothing and the wiki returned "Physical Damage Per Shot: to (+ % AD) (+ % AP)" with a straight
+ * face. Both now ride along with every fragment, copied off the page byte for byte. Anything that
+ * still comes back with an error or a hole in it is WITHHELD rather than shipped: see
+ * `renderFault`, and `scripts/verify-fetched.ts`, which is what found this by going back to the
+ * URL and comparing the delivered line to what the source says today.
+ *
  * ## The four sources, and what each is for
  *
  * 1. `Module:ChampionData/data` (wiki, one call for everybody) — the JOIN TABLE. apiname -> wiki
@@ -94,6 +104,20 @@ const OPGG = "https://lol-api-champion.op.gg/api/na/champions/ranked"
 
 const CACHE_ROOT = "data/champions"
 const OUT = "src/knowledge/champion-table.ts"
+
+/**
+ * Bumped whenever the way a fetched page becomes TEXT changes, so the rendered cache is re-cut
+ * instead of silently mixing two renderers. The file is `wiki-rendered-<n>.json` and the older ones
+ * stay on disk: each is the evidence of what the corpus shipped at the time was cut from.
+ *
+ * 1. the original — every field rendered ALONE, so 204 fields across 47 champions lost the numbers
+ *    their page defines above the field list (`{{#var:r_ap}}` -> the empty string -> "(+ % AP)");
+ * 2. + the page's own `{{#vardefine:}}` preamble, so the wiki fills those in;
+ * 3. + the wiki's footnote markers and footnote list removed — `[17]` pointed at a list that is not
+ *    in the delivered file, and its number depended on what else was in the same parse request;
+ * 4. + bare external links, which autonumber into the same kind of bracketed integer.
+ */
+const RENDERER_VERSION = 4
 
 /** One request at a time to the wiki, with a gap. It is a volunteer wiki, not a CDN. */
 const WIKI_GAP_MS = 350
@@ -191,6 +215,33 @@ const decodeEntities = (s: string): string =>
 export const htmlToText = (html: string): string => {
 	let s = html
 	s = s.replace(/<(script|style)[\s\S]*?<\/\1>/gi, "")
+	/*
+	 * The wiki's own footnotes, and they are two separate defects in one feature.
+	 *
+	 * The INLINE marker renders as `<sup class="reference"><a>[17]</a></sup>`, which survives
+	 * tag-stripping as the bare text `[17]` — a bracketed integer in a coaching prompt pointing at a
+	 * reference list that is nowhere in the delivered file. 167 of them shipped across 28 champions.
+	 * Worse, the number is assigned by the wiki PER PARSE REQUEST, so it counts refs from every
+	 * other field rendered in the same POST: the same note came back `[17]` in the fetcher's batch
+	 * and `[5]` when re-rendered alone. A value that depends on what it was batched with is not
+	 * reproducible, and reproducibility is the contract this cache is built on.
+	 *
+	 * The LIST itself renders as `<div class="mw-references-wrap">`, whose backlink arrows survive
+	 * as their own lines — which is how `- edge case: ↑ Bard Q&A comment by Rabid Llama` reached
+	 * Bard's file twice, dressed as an ability interaction.
+	 *
+	 * Both go before anything else is read. Nothing is rewritten: the footnote is removed whole.
+	 */
+	s = s.replace(/<div[^>]*class="[^"]*mw-references-wrap[^"]*"[\s\S]*?<\/div>/gi, "")
+	s = s.replace(/<ol[^>]*class="[^"]*references[^"]*"[\s\S]*?<\/ol>/gi, "")
+	s = s.replace(/<sup[^>]*class="[^"]*reference[^"]*"[\s\S]*?<\/sup>/gi, "")
+	/*
+	 * And the OTHER bracketed integer, which is not a footnote at all: a bare `[https://…]` in
+	 * wikitext renders as `<a class="external autonumber">[1]</a>`, numbered per parse request the
+	 * same way. Fiora's Riposte notes carry three of them pointing at YouTube clips. The link text
+	 * is the number, so removing the anchor removes the whole thing.
+	 */
+	s = s.replace(/<a[^>]*class="[^"]*autonumber[^"]*"[^>]*>[\s\S]*?<\/a>/gi, "")
 	// Icons carry an `alt` describing the icon ("An icon representing the keyword Slow"), which is
 	// about the picture and not about the ability. The linked word next to it survives.
 	s = s.replace(/<img\b[^>]*>/gi, "")
@@ -386,6 +437,85 @@ export const parseTemplateFields = (wikitext: string): Record<string, string> =>
 }
 
 /**
+ * The `{{#vardefine:...}}` calls a `Template:Data X/Y` page makes ABOVE its own field list.
+ *
+ * This is the second thing a field loses when it is rendered on its own, and it is the expensive
+ * one. `Template:Data Lucian/The Culling` opens with
+ *
+ *     {{#vardefine:r_d1|15}}{{#vardefine:r_d3|45}}{{#vardefine:r_ad|25}}{{#vardefine:r_ap|15}}
+ *
+ * and then writes `|leveling = {{st|Physical Damage Per Shot|{{ap|{{#var:r_d1}} to {{#var:r_d3}}}}
+ * {{as|(+ {{#var:r_ad}}% AD)}} {{as|(+ {{#var:r_ap}}% AP)}}}}`. Rendered alone, every `{{#var:}}`
+ * expands to the EMPTY STRING and the wiki cheerfully returns
+ *
+ *     Physical Damage Per Shot: to (+ % AD) (+ % AP)
+ *
+ * — a grammatical sentence with the numbers deleted, which is worse than an error because nothing
+ * downstream can see it. That is what shipped: measured on the 16.18.1 cache, 204 of 14,984
+ * rendered fields across 75 ability pages and 47 champions referenced a variable their own page
+ * defines outside the field, and 31 delivered lines carried a visible "Expression error" while the
+ * rest simply lost their quantities.
+ *
+ * So each fragment is prefixed with the vardefines its own page wrote, copied byte for byte and in
+ * order (a later one may read an earlier one). This is still the wiki doing the arithmetic on the
+ * wiki's own values; it is only being handed the values its own page set.
+ */
+export const pageVariablePreamble = (wikitext: string): string => {
+	const first = /^\|\s*[A-Za-z]/m.exec(wikitext)
+	const head = first ? wikitext.slice(0, first.index) : wikitext
+	const out: string[] = []
+	for (let i = head.indexOf("{{#vardefine:"); i !== -1; i = head.indexOf("{{#vardefine:", i + 2)) {
+		// Balanced, because `{{#vardefine:i_maxd|{{#expr:1+({{#var:i_maxs}} - 1)*{{#var:i_s}}}}}}`
+		// is a real line on Briar's page and a non-greedy `[^{}]*` would cut it in half.
+		let depth = 0
+		let end = -1
+		for (let j = i; j < head.length - 1; j++) {
+			if (head[j] === "{" && head[j + 1] === "{") {
+				depth += 1
+				j += 1
+			} else if (head[j] === "}" && head[j + 1] === "}") {
+				depth -= 1
+				j += 1
+				if (depth === 0) {
+					end = j + 1
+					break
+				}
+			}
+		}
+		if (end === -1) break
+		out.push(head.slice(i, end))
+		i = end - 2
+	}
+	return out.join("")
+}
+
+/**
+ * Whether a rendered field came back BROKEN, and why.
+ *
+ * The preamble above recovers the variables a page defines for itself. Thirteen `{{#var:}}` uses in
+ * the 16.18.1 cache name variables the page never defines — they come from the champion's stat
+ * block, which only exists while the whole ability box is rendering — and those cannot be recovered
+ * by handing the wiki anything this pipeline holds. A field in that state renders as an expression
+ * error, or as prose with a hole in it, and BOTH have to fail closed: an empty field is a fact this
+ * app does not have, which is the answer it is allowed to give.
+ *
+ * The dangling-operand patterns are the ones a missing `{{#var:}}` leaves behind — `(+ % AP)`,
+ * `Damage: to `, `( to )`. They are deliberately aggressive. The cost of a false positive is a
+ * withheld line; the cost of a false negative is a coach reading "(+ % AP)" out loud.
+ */
+export const renderFault = (text: string): string | null => {
+	if (/Expression error|Script error|Lua error|Template loop detected/i.test(text))
+		return "the wiki returned an expression or script error"
+	// `nil` is what a wiki Lua module prints when it is handed an empty argument. Master Yi's Q
+	// leveling line said "(+ nil% AD)" for as long as the fields were rendered alone.
+	if (/\bnil\b/.test(text)) return "a wiki Lua module was handed an empty value and printed nil"
+	if (/\{\{|\}\}|#var:|#expr:/.test(text)) return "unexpanded wikitext survived the render"
+	if (/\(\+\s*%|\(\+\s*-\s*%|:\s*to\s|\sto\s*%|\(\s*to\s*\)|\/\s*to\s*\//.test(text))
+		return "an operand is missing — a number the source supplies did not reach the text"
+	return null
+}
+
+/**
  * `[[File: Swirlseed collision indicator.png|175px|thumb|left|Collision indicator]]` renders as a
  * figure whose CAPTION survives tag-stripping and arrives looking like an ability note. There are
  * no images in this pipeline's output, so the whole link goes before rendering.
@@ -557,7 +687,7 @@ const OpggRunePage = type({
 	}).array()
 })
 
-const OpggResponse = type({
+export const OpggResponse = type({
 	meta: { version: "string", "cached_at?": "string" },
 	data: {
 		summary: {
@@ -594,7 +724,7 @@ const OpggResponse = type({
 	}
 })
 
-interface Tier2 {
+export interface Tier2 {
 	sourceUrl: string
 	metaVersion: string
 	cachedAt: string
@@ -631,7 +761,7 @@ interface Tier2 {
 
 const numIds = (ids: (number | string)[]): number[] => ids.map(Number).filter(n => Number.isFinite(n))
 
-const toTier2 = (
+export const toTier2 = (
 	raw: typeof OpggResponse.infer,
 	opts: { sourceUrl: string; fetchedAt: string; role: string; tier: string }
 ): Tier2 | null => {
@@ -741,6 +871,12 @@ interface AbilityRow {
 	agreed: boolean
 	/** What they disagreed about, in the form `field: ddragon vs wiki`. Empty when `agreed`. */
 	conflicts: string[]
+	/**
+	 * Fields the wiki returned BROKEN, in the form `field: why`. They are empty above, and this is
+	 * the difference between "the source publishes no cast time" and "the cast time did not survive
+	 * the render" — two answers that otherwise look identical to every reader downstream.
+	 */
+	withheld: string[]
 }
 
 interface ChampionRow {
@@ -890,7 +1026,7 @@ const main = async (): Promise<void> => {
 
 	/* ---------------------------- tier 1, source 3b: let the WIKI expand its own templates */
 
-	const renderPath = join(cacheDir, "wiki-rendered.json")
+	const renderPath = join(cacheDir, `wiki-rendered-${RENDERER_VERSION}.json`)
 	const renderCached = refresh ? null : readCache(renderPath)
 	let rendered: Record<string, Record<string, string>> =
 		renderCached ? (JSON.parse(renderCached.content) as Record<string, Record<string, string>>) : {}
@@ -911,11 +1047,12 @@ const main = async (): Promise<void> => {
 				// slot letter is the fallback. Riot and the wiki disagree on nothing here, but the
 				// wiki's own spelling is what its own templates key off.
 				const skill = (fields.skill ?? "").trim() || (w.slot === "P" ? "I" : w.slot)
+				const preamble = pageVariablePreamble(rawAbilities[w.title]!.wikitext)
 				for (const f of KEPT_FIELDS) {
 					const v = fields[f]
 					if (v === undefined || v.trim() === "") continue
 					keys.push({ title: w.title, field: f })
-					fragments.push({ wikitext: stripFileLinks(v), skill })
+					fragments.push({ wikitext: preamble + stripFileLinks(v), skill })
 				}
 			}
 			const texts = await renderWikitext(fragments)
@@ -1028,16 +1165,40 @@ const main = async (): Promise<void> => {
 				seenRevs.add(src.revId)
 				const fields = parseTemplateFields(src.wikitext)
 				const r = rendered[title] ?? {}
-				const pick = (k: string): string => r[k] ?? ""
+				/*
+				 * The fault check lives HERE and not in the render loop on purpose: the cache holds
+				 * what the wiki said, faults included, because that file is the evidence. The table
+				 * holds what passed the fence. A field the wiki could not expand is dropped and the
+				 * drop is recorded per ability, so "no cast time" and "the cast time did not survive
+				 * the render" are different answers in the row rather than the same empty string.
+				 */
+				const renderWithheld: string[] = []
+				const pick = (k: string): string => {
+					const v = r[k] ?? ""
+					if (v === "") return ""
+					const fault = renderFault(v)
+					if (fault === null) return v
+					renderWithheld.push(`${k}: ${fault}`)
+					return ""
+				}
 				const spell = idx === 0 ? ddBySlot[slot] : null
 
 				const conflicts: string[] = []
 				if (spell) {
 					slotsChecked += 1
-					// Data Dragon names a two-form slot "Sonic Wave / Resonating Strike"; the wiki gives each
-					// form its own template and `Module:ChampionData` lists both under `skill_q`. Matching
-					// against either side is agreement, not laxity — both sources name the same two abilities.
-					const ddNames = spell.name.split("/").map(nameSignature)
+					/*
+					 * Data Dragon names a two-form slot "Sonic Wave / Resonating Strike"; the wiki gives
+					 * each form its own template and `Module:ChampionData` lists both under `skill_q`.
+					 * Matching against either side is agreement, not laxity — both sources name the same
+					 * two abilities.
+					 *
+					 * The PIPE is there because Riot uses both separators and the difference is nothing
+					 * but punctuation: Yunara's W is "Arc of Judgment | Arc of Ruin". Splitting only on
+					 * the slash made that a name CONFLICT, which withheld her W's and E's cooldown and
+					 * cost — two numbers both sources agreed on — for a spelling reason. Failing closed
+					 * is right when the sources disagree and is a bug when they do not.
+					 */
+					const ddNames = spell.name.split(/[/|]/).map(nameSignature)
 					if (!ddNames.includes(nameSignature(name)))
 						conflicts.push(`name: ddragon "${spell.name}" vs wiki "${name}"`)
 					const ddCd = numberSignature(spell.cooldownBurn)
@@ -1091,6 +1252,7 @@ const main = async (): Promise<void> => {
 					wikiTitle: title,
 					wikiRevId: src.revId,
 					agreed: conflicts.length === 0,
+					withheld: [...new Set(renderWithheld)].sort(),
 					conflicts:
 						declared !== "" && idx === 0 && declared.toUpperCase() !== slot && slot !== "P" ?
 							[...conflicts, `slot: module says ${slot}, template says ${declared}`]
@@ -1104,7 +1266,16 @@ const main = async (): Promise<void> => {
 			apiname: dd.id,
 			id: Number(dd.key),
 			name: dd.name,
-			title: dd.title,
+			/*
+			 * The WIKI's title, not Data Dragon's, and the difference is a provenance bug rather
+			 * than a spelling one. `claims-from-row.ts` attributes `identity.title` to
+			 * `Module:ChampionData/data`, so every champion file said "title: the Darkin Blade
+			 * [wikiModule ...]" while the string came off Riot's `championFull.json`. Measured on
+			 * 16.18.1 the two differ on 149 of 173 champions (the wiki capitalises the article), so
+			 * the line was citing a source it had not read on 86% of the roster. Taking the value
+			 * from the source the line names is the one-word repair.
+			 */
+			title: wiki.title || dd.title,
 			wikiPage: wiki.wikiPage,
 			resource: wiki.resource || dd.partype,
 			rangeType: wiki.rangeType,
@@ -1231,6 +1402,8 @@ export interface ChampionAbilityRow {
 	wikiRevId: number
 	agreed: boolean
 	conflicts: string[]
+	/** Fields the wiki could not expand, as \`field: why\`. Empty above, and SAID to be empty. */
+	withheld: string[]
 }
 
 export interface ChampionTier2Row {

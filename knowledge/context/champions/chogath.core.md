@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Terror of the Void [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Terror of the Void [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: June 26, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: June 26, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 644, hp_lvl 94, mp_base 270, mp_lvl 60, arm_base 38, arm_lvl 4.5, mr_base 32, mr_lvl 2.05, hp5_base 9, hp5_lvl 0.85, mp5_base 7.2, mp5_lvl 0.45, dam_base 69, dam_lvl 4.2, as_base 0.658, as_lvl 1.44, range 125, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]

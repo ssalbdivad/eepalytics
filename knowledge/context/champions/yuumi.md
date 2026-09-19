@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Magical Cat [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Magical Cat [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V9.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V9.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 500, hp_lvl 69, mp_base 440, mp_lvl 45, arm_base 25, arm_lvl 4.2, mr_base 25, mr_lvl 1.1, hp5_base 5, hp5_lvl 0.55, mp5_base 10, mp5_lvl 0.4, dam_base 49, dam_lvl 3.1, as_base 0.625, as_lvl 1, range 425, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -204,6 +204,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Buffering Interactions: [wiki-w rev-4011487, fetched 2026-09-18]
 - edge case: All of Yuumi's abilities can be buffered while channeling and dashing. [wiki-w rev-4011487, fetched 2026-09-18]
 - edge case: Summon Aery and Tear of the Goddess would not trigger from the heal or shield when buffered.(bug) [wiki-w rev-4011487, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Zoomies [wiki-e rev-4026487, fetched 2026-09-18]

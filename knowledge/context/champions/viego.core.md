@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: None [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V11.2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V11.2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 109, mp_base 0, mp_lvl 0, arm_base 34, arm_lvl 4.6, mr_base 32, mr_lvl 2.05, hp5_base 7, hp5_lvl 0.7, mp5_base 0, mp5_lvl 0, dam_base 57, dam_lvl 4, as_base 0.658, as_lvl 2.75, range 200, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -21,9 +21,9 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Q
 - name: Blade of the Ruined King [wiki-q rev-4063652, fetched 2026-09-18]
 - cooldown: 5 / 4.5 / 4 / 3.5 / 3 [wiki-q rev-4063652, fetched 2026-09-18]
-- what it does: Passive: Viego's basic attacks deal bonus physical damage on-hit. This damage can critically strike for (170% + 15%) damage, has a minimum threshold and is capped at against monsters. Additionally, his damaging abilities apply a mark to enemies hit for seconds. Viego's next basic attack against a marked target is empowered to consume the mark on-hit to strike a second time, dealing % AD (+ % AP) physical damage. He also heals himself for a portion of the post-mitigation damage dealt by the second strike: % against minions, % against monsters, and % against other targets. The second strike applies on-hit effects and can critically strike for (200% + 30%) damage. Active: Viego stabs in a line in the target direction that deals physical damage to enemies hit, increased by 0% – 60% (+ 0% – 18%) (based on critical strike chance). [wiki-q rev-4063652, fetched 2026-09-18]
-- damage by rank: Bonus Physical Damage: to% of target's current health Critical Bonus Physical Damage: - 1.7 to *1.7% of target's current health Minimum Bonus Damage: to · Physical Damage: to (+ % AD) [wiki-q rev-4063652, fetched 2026-09-18]
-- cast time: - 100% of Viego's windup time ( - (1/0.658)*0.16447 at base attack speed) [wiki-q rev-4063652, fetched 2026-09-18]
+- what it does: Passive: Viego's basic attacks deal bonus physical damage on-hit. This damage can critically strike for (170% + 15%) damage, has a minimum threshold and is capped at 80 against monsters. Additionally, his damaging abilities apply a mark to enemies hit for 4 seconds. Viego's next basic attack against a marked target is empowered to consume the mark on-hit to strike a second time, dealing 20% AD (+ 15% AP) physical damage. He also heals himself for a portion of the post-mitigation damage dealt by the second strike: 100% against minions, 125% against monsters, and 150% against other targets. The second strike applies on-hit effects and can critically strike for (200% + 30%) damage. Active: Viego stabs in a line in the target direction that deals physical damage to enemies hit, increased by 0% – 60% (+ 0% – 18%) (based on critical strike chance). [wiki-q rev-4063652, fetched 2026-09-18]
+- damage by rank: Bonus Physical Damage: 2 / 3 / 4 / 5 / 6% of target's current health Critical Bonus Physical Damage: 3.4 / 5.1 / 6.8 / 8.5 / 10.2% of target's current health Minimum Bonus Damage: 10 / 15 / 20 / 25 / 30 · Physical Damage: 25 / 40 / 55 / 70 / 85 (+ 70% AD) [wiki-q rev-4063652, fetched 2026-09-18]
+- cast time: 140% of Viego's windup time (0.35 at base attack speed) [wiki-q rev-4063652, fetched 2026-09-18]
 - width: 125 [wiki-q rev-4063652, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4063652, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4063652, fetched 2026-09-18]

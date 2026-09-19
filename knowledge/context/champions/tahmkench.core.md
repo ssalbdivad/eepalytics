@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V5.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.09 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V5.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.09 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 640, hp_lvl 103, mp_base 325, mp_lvl 50, arm_base 39, arm_lvl 4.7, mr_base 32, mr_lvl 2.05, hp5_base 6.5, hp5_lvl 0.55, mp5_base 8, mp5_lvl 1, dam_base 56, dam_lvl 3.2, as_base 0.658, as_lvl 2.5, range 175, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -64,6 +64,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r2 rev-4013502, fetched 2026-09-18]
 - damage type: Magic [wiki-r2 rev-4013502, fetched 2026-09-18]
 - spell shield: false [wiki-r2 rev-4013502, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

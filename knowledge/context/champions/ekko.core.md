@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Boy Who Shattered Time [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Boy Who Shattered Time [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle, Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V5.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V5.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 655, hp_lvl 99, mp_base 280, mp_lvl 70, arm_base 32, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 9, hp5_lvl 0.9, mp5_base 7, mp5_lvl 0.8, dam_base 58, dam_lvl 3, as_base 0.688, as_lvl 3.3, range 125, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]

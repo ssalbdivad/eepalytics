@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Saltwater Scourge [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Saltwater Scourge [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V0.9.22.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.01 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V0.9.22.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.01 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 114, mp_base 280, mp_lvl 60, arm_base 31, arm_lvl 4.7, mr_base 32, mr_lvl 2.05, hp5_base 6, hp5_lvl 0.6, mp5_base 8, mp5_lvl 0.7, dam_base 64, dam_lvl 4.2, as_base 0.658, as_lvl 3.2, range 125, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -59,7 +59,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Physical [wiki-e rev-4058497, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4058497, fetched 2026-09-18]
 - edge case: The slow, bonus physical damage to champions, and keg health decay speed are determined when the keg is placed. [wiki-e rev-4058497, fetched 2026-09-18]
-- edge case: The keg health decay timer indicator is instead based on Gangplank's current level, which can lead to desynchronization. [1] (bug) [wiki-e rev-4058497, fetched 2026-09-18]
+- edge case: The keg health decay timer indicator is instead based on Gangplank's current level, which can lead to desynchronization. (bug) [wiki-e rev-4058497, fetched 2026-09-18]
 - edge case: The triggering attack's damage can include Parrrley's base damage and Spellblade. [wiki-e rev-4058497, fetched 2026-09-18]
 - edge case: The percentage armor penetration stacks multiplicatively with other sources of percentage armor penetration. [wiki-e rev-4058497, fetched 2026-09-18]
 - edge case: When triggered with critical strike, Spellblade and the bonus damage to champions are added after the calculations. [wiki-e rev-4058497, fetched 2026-09-18]
@@ -98,6 +98,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: While at maximum charges, ranking up the ability to rank 3 or 5 grants the remaining charge immediately regardless of the recharge timer. [wiki-e rev-4058497, fetched 2026-09-18]
 - edge case: If a keg is destroyed during the 0.33 seconds-delay between explosions, Gangplank will plunder gold and Silver Serpents upon killing enemies as if he had done so using Parrrley.(bug) [wiki-e rev-4058497, fetched 2026-09-18]
 - edge case: This effect persists through death and will only end upon killing an enemy with Parrrley. [wiki-e rev-4058497, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Cannon Barrage [wiki-r rev-4048098, fetched 2026-09-18]

@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Mad Chemist [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Mad Chemist [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: April 18, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: April 18, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 650, hp_lvl 96, mp_base 330, mp_lvl 45, arm_base 34, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 9.5, hp5_lvl 0.55, mp5_base 7.5, mp5_lvl 0.55, dam_base 63, dam_lvl 3.4, as_base 0.7, as_lvl 1.9, range 125, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -23,6 +23,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Toggle: Singed continually creates a toxic cloud in his wake that lingers for 3.25 seconds. The cloud inflicts poison to enemies within. Poison Trail is toggled off automatically if Singed becomes unable to pay its mana cost. poison: The target takes magic damage every 0.25 seconds over 2 seconds as well as upon being hit if not currently affected. Subsequent inflictions refresh the duration. Singed earns the kill credit of enemy minions that are poisoned and would die to the damage of allied minions within the time before the next damage instance. [wiki-q rev-4006737, fetched 2026-09-18]
 - targeting: Auto [wiki-q rev-4006737, fetched 2026-09-18]
 - damage type: Magic [wiki-q rev-4006737, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Mega Adhesive [wiki-w rev-4001677, fetched 2026-09-18]

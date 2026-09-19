@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top, Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.70 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.70 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 610, hp_lvl 110, mp_base 300, mp_lvl 45, arm_base 35, arm_lvl 5, mr_base 32, mr_lvl 2.05, hp5_base 9, hp5_lvl 0.8, mp5_base 7, mp5_lvl 0.7, dam_base 56, dam_lvl 4, as_base 0.658, as_lvl 2.5, range 125, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]

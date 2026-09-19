@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Enlightened One [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Enlightened One [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle, Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.110 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.110 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 109, mp_base 374, mp_lvl 40, arm_base 28, arm_lvl 5, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.55, mp5_base 13, mp5_lvl 0.8, dam_base 49, dam_lvl 3, as_base 0.625, as_lvl 2.3, range 525, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -69,8 +69,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cast time: none [wiki-e rev-4008449, fetched 2026-09-18]
 - targeting: Unit [wiki-e rev-4008449, fetched 2026-09-18]
 - name: Defiance [wiki-e2 rev-4004072, fetched 2026-09-18]
-- what it does: Mantra - Active: Inspire grants a bonus amount of shielding. Inspire spreads to surrounding allied champions, granting them a shield for 2.5 seconds and % bonus movement speed for 2 seconds. Defiance scales with Mantra's rank. [wiki-e2 rev-4004072, fetched 2026-09-18]
-- damage by rank: Bonus Primary Target Shield: to 4 (+ % AP) Total Primary Target Shield: 80 / 130 / 180 / 230 / 280 (+ to 4) (+ 60+% AP) Secondary Target Shield: * to * 4 (+ - % AP) [wiki-e2 rev-4004072, fetched 2026-09-18]
+- what it does: Mantra - Active: Inspire grants a bonus amount of shielding. Inspire spreads to surrounding allied champions, granting them a shield for 2.5 seconds and 15% bonus movement speed for 2 seconds. Defiance scales with Mantra's rank. [wiki-e2 rev-4004072, fetched 2026-09-18]
+- damage by rank: Bonus Primary Target Shield: 45 / 85 / 125 / 165 (+ 45% AP) Total Primary Target Shield: 80 / 130 / 180 / 230 / 280 (+ 45 / 85 / 125 / 165) (+ 105% AP) Secondary Target Shield: 45 / 85 / 125 / 165 (+ 45% AP) [wiki-e2 rev-4004072, fetched 2026-09-18]
 - cast time: none [wiki-e2 rev-4004072, fetched 2026-09-18]
 - effect radius: 700 [wiki-e2 rev-4004072, fetched 2026-09-18]
 - targeting: Unit [wiki-e2 rev-4004072, fetched 2026-09-18]

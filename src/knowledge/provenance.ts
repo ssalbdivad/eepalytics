@@ -127,7 +127,8 @@ export const CLAIM_FIELDS = {
 	"identity.title": { label: "title", tier: "tier1-mechanics" },
 	"identity.resource": { label: "resource", tier: "tier1-mechanics" },
 	"identity.range-type": { label: "melee or ranged", tier: "tier1-mechanics" },
-	"identity.release": { label: "released / last changed", tier: "tier1-mechanics" },
+	"identity.release": { label: "released in patch", tier: "tier1-mechanics" },
+	"identity.last-changed": { label: "last changed in patch", tier: "tier1-mechanics" },
 	"identity.positions": { label: "positions Riot's client lists", tier: "tier1-mechanics" },
 	"identity.ratings": { label: "Riot's own ratings", tier: "tier1-mechanics" },
 
@@ -257,6 +258,22 @@ export interface ClaimRecord {
 }
 
 /** A champion's whole fetched record. This is the contract `scripts/fetch-champions.ts` writes. */
+/**
+ * A field the sources HAVE and this app does not ship, and which group it belongs under.
+ *
+ * It is not a claim: it makes no statement about League, only about the fetch. It exists because a
+ * withheld number and a number nobody publishes look identical in a file that says nothing about
+ * either, and those are different facts about the world. `Hecarim Q` shipped with no name, no
+ * cooldown and no damage line and no word about why; a reader of that file — human or model —
+ * cannot tell it from an ability the wiki never documented.
+ */
+export interface WithheldNotice {
+	group: ClaimGroup
+	/** The ability or field list this is about, as the table spells it. */
+	fields: string
+	kind: "disagreed" | "render"
+}
+
 export interface ChampionFacts {
 	/** `championKey()` — lowercase letters only. */
 	key: string
@@ -265,6 +282,8 @@ export interface ChampionFacts {
 	displayName: string
 	sources: readonly SourceRecord[]
 	claims: readonly ClaimRecord[]
+	/** What the fence dropped, so the file can SAY it dropped it. Never a claim. */
+	withheld?: readonly WithheldNotice[]
 }
 
 /* -------------------------------------------------------------- the generated-table contract */
@@ -680,6 +699,17 @@ export const STRUCTURE_TEMPLATES = {
 	"owner.warning": () =>
 		"The lines under this heading have no source. They are the owner's own judgment, written by " +
 		"him on the date shown. Treat them as opinion you may act on, never as a fact you may assert.",
+	/*
+	 * The two WITHHELD notices. They say that a value exists upstream and is not here, and they say
+	 * which one — nothing about League, which is why they may be written down in this file at all.
+	 * Both end on the same sentence because the reader's next move is the same either way: this app
+	 * does not know the number, so nothing may be said about it.
+	 */
+	"group.withheld.disagreed": (v: { fields: string }) =>
+		`- WITHHELD (${v.fields}): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.`,
+	"group.withheld.render": (v: { fields: string }) =>
+		`- WITHHELD (${v.fields}): the wiki's own expansion of the field came back broken, so no value is shown. This app does not know what it is — say nothing about it.`,
+
 	"sources.heading": () => "### Where this section came from",
 	"sources.line": (v: { source: SourceRecord; claims: number }) =>
 		`- ${v.source.id}: ${v.source.publisher}, revision ${v.source.revision}, fetched ${v.source.fetchedAt.slice(0, 10)} — ${v.claims} line${v.claims === 1 ? "" : "s"} — ${v.source.url}`,
@@ -692,8 +722,8 @@ export const STRUCTURE_TEMPLATES = {
 	 * second place a sentence about League could enter without a reviewer seeing it as a diff.
 	 */
 	"general.heading": () => "# GENERAL CONTEXT — where every champion line in this app comes from",
-	"general.patch": (v: { patch: string; champions: number; claims: number; withheld: number }) =>
-		`Patch ${v.patch}. ${v.champions} champions, ${v.claims} checked lines, ${v.withheld} ability slot${v.withheld === 1 ? "" : "s"} withheld because two sources disagreed about the name, the cooldown or the cost.`,
+	"general.patch": (v: { patch: string; champions: number; claims: number; withheld: number; broken: number }) =>
+		`Patch ${v.patch}. ${v.champions} champions, ${v.claims} checked lines, ${v.withheld} ability slot${v.withheld === 1 ? "" : "s"} withheld because two sources disagreed about the name, the cooldown or the cost, and ${v.broken} field${v.broken === 1 ? "" : "s"} withheld because the wiki's own expansion of it came back broken.`,
 	/*
 	 * The negative half, and it is the honest one. Every entry names a CATEGORY that was probed for
 	 * and came back empty — it is a statement about sources, not about League, which is why it can

@@ -129,7 +129,9 @@ const championFiles = (displayName: string): GeneratedFile[] => {
 const generalFile = (): GeneratedFile => {
 	const { facts, diagnostics } = championTableSync()
 	const claims = [...facts.values()].reduce((n, f) => n + f.claims.length, 0)
-	const withheld = diagnostics.filter(d => d.startsWith("WITHHELD ")).length
+	// Counted apart: one is a fact about the patch, the other a fact about this pipeline.
+	const withheld = diagnostics.filter(d => d.includes("sources disagreed")).length
+	const broken = diagnostics.filter(d => d.includes("expansion broke")).length
 
 	/*
 	 * The trailing source list is the table's own source records rather than a per-claim tally,
@@ -169,7 +171,7 @@ const generalFile = (): GeneratedFile => {
 		structureLine("blank"),
 		structureLine("section.preamble"),
 		structureLine("blank"),
-		structureLine("general.patch", { patch: CHAMPION_TABLE_PATCH, champions: facts.size, claims, withheld }),
+		structureLine("general.patch", { patch: CHAMPION_TABLE_PATCH, champions: facts.size, claims, withheld, broken }),
 		structureLine("blank"),
 		structureLine("general.silent"),
 		structureLine("blank"),

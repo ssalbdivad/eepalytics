@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Blade's Shadow [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Blade's Shadow [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.124 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.124 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 658, hp_lvl 109, mp_base 400, mp_lvl 37, arm_base 30, arm_lvl 4.7, mr_base 36, mr_lvl 2.05, hp5_base 8.5, hp5_lvl 0.75, mp5_base 7.6, mp5_lvl 0.8, dam_base 68, dam_lvl 3.1, as_base 0.625, as_lvl 2.9, range 125, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -49,6 +49,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### E
 - what it does: Active: Talon dashes up to 800 units over the target area of terrain while within proximity of it, during which he gains unobstructed vision. Talon cannot cast Assassin's Path on the same area of terrain for a set duration. Shadow Assault can be cast during the dash. [wiki-e rev-3907201, fetched 2026-09-18]
 - targeting: Location [wiki-e rev-3907201, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Shadow Assault [wiki-r rev-4008078, fetched 2026-09-18]

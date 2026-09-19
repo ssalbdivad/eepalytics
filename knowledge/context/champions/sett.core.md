@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Boss [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Boss [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Grit [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V10.1 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V10.1 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 670, hp_lvl 114, mp_base 0, mp_lvl 0, arm_base 33, arm_lvl 4.7, mr_base 28, mr_lvl 2.05, hp5_base 7, hp5_lvl 0.5, mp5_base 0, mp5_lvl 0, dam_base 60, dam_lvl 4, as_base 0.625, as_lvl 1.75, range 125, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]

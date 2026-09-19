@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle, Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.144 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.144 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 640, hp_lvl 109, mp_base 375, mp_lvl 25, arm_base 31, arm_lvl 4.3, mr_base 32, mr_lvl 2.05, hp5_base 6.5, hp5_lvl 0.85, mp5_base 8, mp5_lvl 0.8, dam_base 57, dam_lvl 3, as_base 0.625, as_lvl 2, range 150, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -22,7 +22,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: true [wiki-p rev-4047026, fetched 2026-09-18]
 - edge case: Moonsilver Blade will affect structures. [wiki-p rev-4047026, fetched 2026-09-18]
 - edge case: Each attack has a distinct animation and she will glow when the empowered attack is ready. [wiki-p rev-4047026, fetched 2026-09-18]
-- edge case: When the stacks are consumed on-hit (e.g Guinsoo's Rageblade, Dusk and Dawn), additional damage is only applied to the on-hit target, without triggering the cleave on nearby enemies. [1] [wiki-p rev-4047026, fetched 2026-09-18]
+- edge case: When the stacks are consumed on-hit (e.g Guinsoo's Rageblade, Dusk and Dawn), additional damage is only applied to the on-hit target, without triggering the cleave on nearby enemies. [wiki-p rev-4047026, fetched 2026-09-18]
 - edge case: Sometimes, the empowered basic attack will not consume the stacks.(bug) [wiki-p rev-4047026, fetched 2026-09-18]
 - edge case: In this case, the attack will also not deal its damage. [wiki-p rev-4047026, fetched 2026-09-18]
 

@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V11.8 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V11.8 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 620, hp_lvl 115, mp_base 330, mp_lvl 40, arm_base 39, arm_lvl 4.9, mr_base 32, mr_lvl 2.05, hp5_base 9, hp5_lvl 0.9, mp5_base 7.5, mp5_lvl 0.7, dam_base 63, dam_lvl 3, as_base 0.69, as_lvl 2.25, range 150, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -25,7 +25,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 6.5 / 5.75 / 5 / 4.25 / 3.5 [wiki-q rev-4026398, fetched 2026-09-18]
 - cost: 40 [wiki-q rev-4026398, fetched 2026-09-18]
 - what it does: Passive: Gwen's basic attacks generate a stack of Snippy on-hit for 6 seconds, stacking up to 4 times and refreshing on subsequent attacks. Active: Gwen snips at least twice with her scissors in a cone in the target direction over the cast time, dealing magic damage per snip to all enemies within the area, with the final snip dealing increased damage. The center of each snip converts 50% of the damage to true damage, then applies A Thousand Cuts. Snip Snip! deals 80% damage against minions, and executes them on the first damage instance if they are below 20% health. If Gwen has any Snippy stacks, she consumes them to snip an additional time for each. [wiki-q rev-4026398, fetched 2026-09-18]
-- damage by rank: Damage per Snip: to (+ % AP) Center Damage per Snip: to (+ % AP) (+ % (+ nil% per 100 AP) of the target's maximum health) Final Snip Damage: to (+ % AP) Final Snip Center Damage: to (+ % AP) (+ % (+ *1% per 100 AP) of the target's maximum health) · Minimum Damage: +* to +* (+ +*% AP) Minimum Center Damage: +* to +* (+ +*% AP) (+ +*% (+ +*% per 100 AP) of the target's maximum health) Maximum Damage: +* to +* (+ +*% AP) Maximum Center Damage: +* to +* (+ +*% AP) (+ +*% (+ +*% per 100 AP) of the target's maximum health) [wiki-q rev-4026398, fetched 2026-09-18]
+- damage by rank: Damage per Snip: 10 / 14 / 18 / 22 / 26 (+ 5% AP) Center Damage per Snip: 10 / 14 / 18 / 22 / 26 (+ 5% AP) (+ 1% (+ 0.6% per 100 AP) of the target's maximum health) Final Snip Damage: 60 / 85 / 110 / 135 / 160 (+ 35% AP) Final Snip Center Damage: 60 / 85 / 110 / 135 / 160 (+ 35% AP) (+ 1% (+ 0.6% per 100 AP) of the target's maximum health) · Minimum Damage: 70 / 99 / 128 / 157 / 186 (+ 40% AP) Minimum Center Damage: 70 / 99 / 128 / 157 / 186 (+ 40% AP) (+ 2% (+ 1.2% per 100 AP) of the target's maximum health) Maximum Damage: 110 / 155 / 200 / 245 / 290 (+ 60% AP) Maximum Center Damage: 110 / 155 / 200 / 245 / 290 (+ 60% AP) (+ 6% (+ 3.6% per 100 AP) of the target's maximum health) [wiki-q rev-4026398, fetched 2026-09-18]
 - cast time: 0.5 [wiki-q rev-4026398, fetched 2026-09-18]
 - effect radius: -50 – 465 [wiki-q rev-4026398, fetched 2026-09-18]
 - width: 75 • 360 • 25 [wiki-q rev-4026398, fetched 2026-09-18]
@@ -80,7 +80,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 120 / 100 / 80 [wiki-r rev-4007603, fetched 2026-09-18]
 - cost: 100 [wiki-r rev-4007603, fetched 2026-09-18]
 - what it does: Active: Gwen launches a needle in the target direction that deals magic damage to enemies hit and slows them for 1.5 seconds. Needlework can be recast twice more within 8 seconds of the activation at no additional cost, with a 1-second static cooldown between casts. Each subsequent cast refreshes the duration and increases the number of needles launched by 2. Needle hits beyond the first apply a slow against each individual target. Recast: Gwen mimics the first cast's effects, while barraging three needles on the second cast and five on the third cast. Gwen can move during Needlework's cast times. [wiki-r rev-4007603, fetched 2026-09-18]
-- damage by rank: Magic Damage per Needle: to (+ % AP) Damage with A Thousand Cuts: to (+ % AP) (+ % (+ - 1% per 100 AP) of the target's maximum health) Slow: 30 / 45 / 60% · Subsequent Slow: 15 / 20 / 25% · Second Cast Total Damage: - 3 to *3 (+ - 3% AP) (+ *3% (+ *3% per 100 AP) of the target's maximum health) Third Cast Total Damage: - 5 to *5 (+ - 5% AP) (+ *5% (+ *5% per 100 AP) of the target's maximum health) Maximum Total Damage: - 9 to *9 (+ - 9% AP) (+ *9% (+ *9% per 100 AP) of the target's maximum health) [wiki-r rev-4007603, fetched 2026-09-18]
+- damage by rank: Magic Damage per Needle: 30 / 50 / 70 (+ 10% AP) Damage with A Thousand Cuts: 30 / 50 / 70 (+ 10% AP) (+ 1% (+ 0.6% per 100 AP) of the target's maximum health) Slow: 30 / 45 / 60% · Subsequent Slow: 15 / 20 / 25% · Second Cast Total Damage: 90 / 150 / 210 (+ 30% AP) (+ 3% (+ 1.8% per 100 AP) of the target's maximum health) Third Cast Total Damage: 150 / 250 / 350 (+ 50% AP) (+ 5% (+ 3% per 100 AP) of the target's maximum health) Maximum Total Damage: 270 / 450 / 630 (+ 90% AP) (+ 9% (+ 5.4% per 100 AP) of the target's maximum health) [wiki-r rev-4007603, fetched 2026-09-18]
 - cast time: 0.25 • 0.5 [wiki-r rev-4007603, fetched 2026-09-18]
 - width: 240 - 30 [wiki-r rev-4007603, fetched 2026-09-18]
 - missile speed: 1800 [wiki-r rev-4007603, fetched 2026-09-18]

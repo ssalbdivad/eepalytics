@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Magus Ascendant [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Magus Ascendant [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle, Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.126 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.126 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 575, hp_lvl 106, mp_base 400, mp_lvl 22, arm_base 22, arm_lvl 4.7, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.55, mp5_base 6.85, mp5_lvl 0.8, dam_base 55, dam_lvl 3, as_base 0.658, as_lvl 1.36, range 525, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -21,9 +21,9 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Q
 - name: Arcanopulse [wiki-q rev-4057478, fetched 2026-09-18]
 - cooldown: 9 / 8 / 7 / 6 / 5 [wiki-q rev-4057478, fetched 2026-09-18]
-- cost: to [wiki-q rev-4057478, fetched 2026-09-18]
+- cost: 80 / 90 / 100 / 110 / 120 [wiki-q rev-4057478, fetched 2026-09-18]
 - what it does: Active: Xerath charges while being slowed by 0% – 40% (based on channel time) for up to 3 seconds to increase Arcanopulse's range over the first 1.5 to 1.75 seconds of the channel. Arcanopulse can be recast within the duration. If the charge is interrupted or completes without reactivation, Arcanopulse is cancelled and refunds half the mana cost. Recast: Xerath becomes unable to act for 0.528 seconds and afterwards fires a beam of energy in a line in the target direction that deals magic damage to enemies hit. [wiki-q rev-4057478, fetched 2026-09-18]
-- damage by rank: Mana Refunded: /2 to /2 · Magic Damage: 70 / 110 / 150 / 190 / 230 (+ 90% AP) [wiki-q rev-4057478, fetched 2026-09-18]
+- damage by rank: Mana Refunded: 40 / 45 / 50 / 55 / 60 · Magic Damage: 70 / 110 / 150 / 190 / 230 (+ 90% AP) [wiki-q rev-4057478, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4057478, fetched 2026-09-18]
 - width: 145 [wiki-q rev-4057478, fetched 2026-09-18]
 - targeting: Auto / Direction [wiki-q rev-4057478, fetched 2026-09-18]

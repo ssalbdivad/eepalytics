@@ -26,7 +26,7 @@
  *
  * Data Dragon and the wiki are independent transcriptions of the same patch, so for every slot
  * this table checks that they agree on the ability's NAME, its COOLDOWN per rank and its COST per
- * rank. 660 of 692 slots agree. A slot that does not keeps its prose — both sources
+ * rank. 662 of 692 slots agree. A slot that does not keeps its prose — both sources
  * carry the same sentences — and has every NUMERIC field blanked, with the disagreement recorded
  * in `conflicts`. An empty `cooldown` therefore means "the sources disagreed and the number was
  * withheld", never "no cooldown".
@@ -65,6 +65,8 @@ export interface ChampionAbilityRow {
 	wikiRevId: number
 	agreed: boolean
 	conflicts: string[]
+	/** Fields the wiki could not expand, as `field: why`. Empty above, and SAID to be empty. */
+	withheld: string[]
 }
 
 export interface ChampionTier2Row {
@@ -272,7 +274,7 @@ export const CHAMPION_TABLE_PATCH = "16.18.1"
  * Deliberate: re-running the generator against an unchanged cache must produce the same bytes, or
  * every run is a one-line diff and a real change stops being visible in the noise.
  */
-export const CHAMPION_TABLE_FETCHED_AT = "2026-09-18T22:33:53.268Z"
+export const CHAMPION_TABLE_FETCHED_AT = "2026-09-19T07:26:27.648Z"
 
 export const CHAMPION_ROWS: readonly ChampionRow[] = [
 	{
@@ -280,7 +282,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Annie",
 		"id": 1,
 		"name": "Annie",
-		"title": "the Dark Child",
+		"title": "The Dark Child",
 		"wikiPage": "Annie",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -354,6 +356,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Annie/Pyromania",
 				"wikiRevId": 3932255,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -386,6 +389,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Annie/Disintegrate",
 				"wikiRevId": 3992633,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -418,6 +422,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Annie/Incinerate",
 				"wikiRevId": 3952555,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -454,6 +459,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Annie/Molten Shield",
 				"wikiRevId": 4038214,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -491,6 +497,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Annie/Summon: Tibbers",
 				"wikiRevId": 4012758,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -501,7 +508,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Olaf",
 		"id": 2,
 		"name": "Olaf",
-		"title": "the Berserker",
+		"title": "The Berserker",
 		"wikiPage": "Olaf",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -573,6 +580,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Olaf/Berserker Rage",
 				"wikiRevId": 4046494,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -610,6 +618,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Olaf/Undertow",
 				"wikiRevId": 4046495,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -643,6 +652,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Olaf/Tough It Out",
 				"wikiRevId": 4033201,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -652,10 +662,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Olaf ferociously swings his axes, dealing <trueDamage>{{ totaldamage }} true damage</trueDamage>. If the enemy dies, the cost is refunded.<br /><br />Attacks lower the Cooldown of this Ability by 1 second, increased to 2 seconds when attacking monsters.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Olaf strikes thunder onto the target enemy, dealing true damage.\n\nIf Reckless Swing kills the target, Olaf heals himself equal to the health cost.\n\nBasic attacks reduce Reckless Swing's cooldown by 1 second, increased to 2 against monsters.",
 				"leveling": [
-					"True Damage: to (+ % AD)"
+					"True Damage: 70 / 115 / 160 / 205 / 250 (+ 50% AD)"
 				],
 				"cooldown": "11 / 10 / 9 / 8 / 7",
-				"cost": "- 0.4 to *0.4 (+\n- 0.4% AD)",
+				"cost": "28 / 46 / 64 / 82 / 100 (+ 20% AD)",
 				"costType": "Health",
 				"targetRange": "325",
 				"castTime": "0.25 – 0.175 (based on bonus attack speed)",
@@ -680,6 +690,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Olaf/Reckless Swing",
 				"wikiRevId": 4060268,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -718,6 +729,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Olaf/Ragnarok",
 				"wikiRevId": 3939795,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -728,7 +740,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Galio",
 		"id": 3,
 		"name": "Galio",
-		"title": "the Colossus",
+		"title": "The Colossus",
 		"wikiPage": "Galio",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -806,6 +818,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Galio/Colossal Smash",
 				"wikiRevId": 4038336,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -841,6 +854,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Galio/Winds of War",
 				"wikiRevId": 4016962,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -918,6 +932,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Galio/Shield of Durand",
 				"wikiRevId": 3990299,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -991,6 +1006,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Galio/Justice Punch",
 				"wikiRevId": 4016963,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1073,6 +1089,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Galio/Hero's Entrance",
 				"wikiRevId": 4017997,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -1083,7 +1100,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "TwistedFate",
 		"id": 4,
 		"name": "Twisted Fate",
-		"title": "the Card Master",
+		"title": "The Card Master",
 		"wikiPage": "Twisted Fate",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -1157,6 +1174,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twisted Fate/Loaded Dice",
 				"wikiRevId": 4005221,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1188,6 +1206,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twisted Fate/Wild Cards",
 				"wikiRevId": 3950864,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1227,6 +1246,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twisted Fate/Pick a Card",
 				"wikiRevId": 4004668,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1260,6 +1280,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twisted Fate/Stacked Deck",
 				"wikiRevId": 3963571,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1341,6 +1362,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twisted Fate/Destiny",
 				"wikiRevId": 4017975,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -1351,7 +1373,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "XinZhao",
 		"id": 5,
 		"name": "Xin Zhao",
-		"title": "the Seneschal of Demacia",
+		"title": "The Seneschal of Demacia",
 		"wikiPage": "Xin Zhao",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -1446,6 +1468,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xin Zhao/Determination",
 				"wikiRevId": 4051470,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1479,6 +1502,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xin Zhao/Three Talon Strike",
 				"wikiRevId": 3986754,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1505,7 +1529,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"projectile": "False",
 				"spellShield": "true",
 				"notes": [
-					"PENDING FOR TEST: The self-reveal has not been fully tested for complete confirmation. Is the ability invisible when hitting minions and there is no enemy champion nearby? Is the tip of the ability enough to reveal him? Whether it can hit a minion or not? Just if he's around the exit of the fog of war, and even if he points towards the inside of the fog of war? [1]",
+					"PENDING FOR TEST: The self-reveal has not been fully tested for complete confirmation. Is the ability invisible when hitting minions and there is no enemy champion nearby? Is the tip of the ability enough to reveal him? Whether it can hit a minion or not? Just if he's around the exit of the fog of war, and even if he points towards the inside of the fog of war?",
 					"Spell shield will block both the slashes and the thrust.",
 					"If the spell shield blocks the first, or sometimes the second slash, it will block the rest of the ability, including the thrust. If it is activated after the first slash, it will only block up to 2 slashes and will not block the trust.(bug)",
 					"This ability will cast from wherever the caster is at the end of the cast time.",
@@ -1523,6 +1547,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xin Zhao/Wind Becomes Lightning",
 				"wikiRevId": 4026481,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1557,6 +1582,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xin Zhao/Audacious Charge",
 				"wikiRevId": 4026484,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1590,6 +1616,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xin Zhao/Crescent Guard",
 				"wikiRevId": 4008632,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -1876,7 +1903,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Urgot",
 		"id": 6,
 		"name": "Urgot",
-		"title": "the Dreadnought",
+		"title": "The Dreadnought",
 		"wikiPage": "Urgot",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -1961,6 +1988,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Urgot/Echoing Flames",
 				"wikiRevId": 4051193,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -1992,6 +2020,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Urgot/Corrosive Charge",
 				"wikiRevId": 3952903,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2042,6 +2071,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Urgot/Purge",
 				"wikiRevId": 4058781,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2081,6 +2111,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Urgot/Disdain",
 				"wikiRevId": 4008211,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2208,6 +2239,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Urgot/Fear Beyond Death",
 				"wikiRevId": 4015146,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -2218,7 +2250,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Leblanc",
 		"id": 7,
 		"name": "LeBlanc",
-		"title": "the Deceiver",
+		"title": "The Deceiver",
 		"wikiPage": "LeBlanc",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -2293,6 +2325,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data LeBlanc/Mirror Image",
 				"wikiRevId": 4035723,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2327,6 +2360,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data LeBlanc/Sigil of Malice",
 				"wikiRevId": 3985524,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2365,6 +2399,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data LeBlanc/Distortion",
 				"wikiRevId": 4057468,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2401,6 +2436,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data LeBlanc/Ethereal Chains",
 				"wikiRevId": 3954748,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2435,6 +2471,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data LeBlanc/Mimic",
 				"wikiRevId": 4057469,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -2445,7 +2482,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Vladimir",
 		"id": 8,
 		"name": "Vladimir",
-		"title": "the Crimson Reaper",
+		"title": "The Crimson Reaper",
 		"wikiPage": "Vladimir",
 		"resource": "Crimson Rush",
 		"rangeType": "Ranged",
@@ -2495,7 +2532,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Crimson Pact",
 				"riotSummary": "Every 30 points of bonus Health gives Vladimir 1 Ability Power and every 1 point of Ability Power gives Vladimir 1.6 bonus Health (does not stack with itself).",
 				"riotTooltip": "",
-				"wikiDescription": "Innate: Vladimir gains (nil% bonus health) as ability power and (% AP) as bonus health. These two bonuses do not stack with each other.",
+				"wikiDescription": "Innate: Vladimir gains (3.333% bonus health) as ability power and (160% AP) as bonus health. These two bonuses do not stack with each other.",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -2515,14 +2552,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Crimson Pact only affects Vladimir's maximum health and will not increase Vladimir's current health to prevent Vladimir from restoring health whenever his ability power fluctuates.",
 					"The only exception is purchasing applicable items while inside the fountain, which will restore health equal to the bonus gained.",
 					"Vladimir's current health can decrease to match his maximum health if Crimson Pact's bonus health is lost.",
-					"Crimson Pact's bonus ability power stacks multiplicatively with other sources of % ability power but its bonus health stacks additively with other sources of bonus health. With Rabadon's Deathcap's Magical Opus, the total is (% AP +",
-					"(1+/100)% bonus health) bonus ability power and (",
-					"(1+/100)% AP +",
-					"/10000% bonus health) bonus health."
+					"Crimson Pact's bonus ability power stacks multiplicatively with other sources of % ability power but its bonus health stacks additively with other sources of bonus health. With Rabadon's Deathcap's Magical Opus, the total is (30% AP + 4.3329% bonus health) bonus ability power and (208% AP + 1.59984% bonus health) bonus health."
 				],
 				"wikiTitle": "Template:Data Vladimir/Crimson Pact",
 				"wikiRevId": 4053179,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2564,6 +2599,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vladimir/Transfusion",
 				"wikiRevId": 3997094,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2601,6 +2637,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vladimir/Sanguine Pool",
 				"wikiRevId": 4034923,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2676,6 +2713,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vladimir/Tides of Blood",
 				"wikiRevId": 3853799,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2712,6 +2750,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vladimir/Hemoplague",
 				"wikiRevId": 4039794,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -2722,7 +2761,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Fiddlesticks",
 		"id": 9,
 		"name": "Fiddlesticks",
-		"title": "the Ancient Fear",
+		"title": "The Ancient Fear",
 		"wikiPage": "Fiddlesticks",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -2811,6 +2850,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiddlesticks/A Harmless Scarecrow",
 				"wikiRevId": 4058532,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2875,6 +2915,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiddlesticks/Terrify",
 				"wikiRevId": 4058043,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2882,10 +2923,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Bountiful Harvest",
 				"riotSummary": "Fiddlesticks drains health from nearby enemies, dealing bonus execute damage at the end of the duration.",
 				"riotTooltip": "Fiddlesticks channels and drains the souls of nearby enemies, dealing <magicDamage>{{ draindamagecalc }} magic damage</magicDamage> per second for 2 seconds, plus <magicDamage>{{ percentfortooltip }}% missing Health magic damage</magicDamage> at the end. Fiddlesticks restores <healing>{{ vamppercentage }}% of damage as Health</healing>.<br /><br />If Fiddlesticks ends the channel without interruption, the remaining Cooldown is reduced by 60%.<br />{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Fiddlesticks forms a tether between itself and each nearby enemy over the cast time, then channels for up to seconds to harvest their souls, revealing them in the process.\n\nWhile Fiddlesticks is channeling, the tethered enemies are dealt magic damage every nil seconds. The final tick at the end of the channel deals additional magic damage, capped at 400 against monsters. Bountiful Harvest deals\n- 100% damage against monsters and\n- 100% damage against minions.\n\nFiddlesticks heals itself for a portion of the pre-mitigation damage dealt, modified to\n- 100% against monsters and\n- 100% against minions.\n\nBountiful Harvest ends if all targets have died or broken their tethers. If the channel was not interrupted, 60% of the current cooldown is refunded.",
+				"wikiDescription": "Active: Fiddlesticks forms a tether between itself and each nearby enemy over the cast time, then channels for up to 2 seconds to harvest their souls, revealing them in the process.\n\nWhile Fiddlesticks is channeling, the tethered enemies are dealt magic damage every 0.25 seconds. The final tick at the end of the channel deals additional magic damage, capped at 400 against monsters. Bountiful Harvest deals 135% damage against monsters and 50% damage against minions.\n\nFiddlesticks heals itself for a portion of the pre-mitigation damage dealt, modified to 45% against monsters and 15% against minions.\n\nBountiful Harvest ends if all targets have died or broken their tethers. If the channel was not interrupted, 60% of the current cooldown is refunded.",
 				"leveling": [
-					"Damage per second: / to / (+ Expression error: Unexpected / operator.% AP)\nDamage per Instance: / to / (+ Expression error: Unexpected / operator.% AP)\nLast Tick of Damage: / to / (+ Expression error: Unexpected / operator.% AP) (+ to% of target's missing health)\nTotal Magic Damage: to (+ % AP) (+ to% of target's missing health)",
-					"Champion Heal Portion: to%\nTotal Heal per Champion: ( to )*( to )/100 (+ /100*( to )% AP) (+ ( to )*( to )/100% of target's missing health)\nTotal Heal per Monster: \n- - to ** (+\n- % AP) (+\n- to **% of target's missing health)\nTotal Heal per Minion: \n- to ** (+\n- % AP) (+\n- to **% of target's missing health)"
+					"Damage per second: 60 / 90 / 120 / 150 / 180 (+ 45% AP)\nDamage per Instance: 15 / 22.5 / 30 / 37.5 / 45 (+ 11.25% AP)\nLast Tick of Damage: 15 / 22.5 / 30 / 37.5 / 45 (+ 11.25% AP) (+ 12 / 14.5 / 17 / 19.5 / 22% of target's missing health)\nTotal Magic Damage: 120 / 180 / 240 / 300 / 360 (+ 90% AP) (+ 12 / 14.5 / 17 / 19.5 / 22% of target's missing health)",
+					"Champion Heal Portion: 25 / 32.5 / 40 / 47.5 / 55%\nTotal Heal per Champion: 30 / 58.5 / 96 / 142.5 / 198 (+ 22.5 / 29.25 / 36 / 42.75 / 49.5% AP) (+ 3 / 4.7125 / 6.8 / 9.2625 / 12.1% of target's missing health)\nTotal Heal per Monster: 72.9 / 109.35 / 145.8 / 182.25 / 218.7 (+ 54.675% AP) (+ 7.29 / 8.80875 / 10.3275 / 11.84625 / 13.365% of target's missing health)\nTotal Heal per Minion: 9 / 13.5 / 18 / 22.5 / 27 (+ 6.75% AP) (+ 0.9 / 1.0875 / 1.275 / 1.4625 / 1.65% of target's missing health)"
 				],
 				"cooldown": "10 / 9.5 / 9 / 8.5 / 8",
 				"cost": "60 / 65 / 70 / 75 / 80",
@@ -2950,6 +2991,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiddlesticks/Bountiful Harvest",
 				"wikiRevId": 3936351,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -2981,6 +3023,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiddlesticks/Reap",
 				"wikiRevId": 3906828,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -3058,6 +3101,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiddlesticks/Crowstorm",
 				"wikiRevId": 4004933,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -3343,7 +3387,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Kayle",
 		"id": 10,
 		"name": "Kayle",
-		"title": "the Righteous",
+		"title": "The Righteous",
 		"wikiPage": "Kayle",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -3451,6 +3495,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayle/Divine Ascent",
 				"wikiRevId": 4051190,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -3500,6 +3545,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayle/Radiant Blast",
 				"wikiRevId": 4005105,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -3534,6 +3580,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayle/Celestial Blessing",
 				"wikiRevId": 3997873,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -3589,6 +3636,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayle/Starfire Spellblade",
 				"wikiRevId": 3982990,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -3635,6 +3683,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayle/Divine Judgment",
 				"wikiRevId": 3962015,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -3645,7 +3694,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "MasterYi",
 		"id": 11,
 		"name": "Master Yi",
-		"title": "the Wuju Bladesman",
+		"title": "The Wuju Bladesman",
 		"wikiPage": "Master Yi",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -3728,6 +3777,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Master Yi/Double Strike",
 				"wikiRevId": 4057839,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -3735,9 +3785,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Alpha Strike",
 				"riotSummary": "Master Yi teleports across the battlefield with blinding speed, dealing physical damage to multiple units in his path, while simultaneously becoming untargetable. Alpha Strike can critically strike and deals bonus physical damage to monsters. Basic attacks reduce Alpha Strike's cooldown.",
 				"riotTooltip": "Master Yi becomes Untargetable and teleports to rapidly strike enemies near his target, dealing <physicalDamage>{{ totaldamage }} physical damage</physicalDamage> to all enemies hit after {{ alphastrikebounces }} hits. <br /><br />This Ability can strike the same enemy repeatedly if there are no other targets, dealing {{ subsequenthitmultiplier*100 }}% damage for subsequent hits (<physicalDamage>{{ subesquentdamage }}</physicalDamage>), for a maximum single target total of <physicalDamage>{{ singletotaldamage }} physical damage</physicalDamage>.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Master Yi vanishes and becomes unable to act. After 0.231 seconds, he marks the target enemy and then proceeds to mark the nearest visible un-marked enemy within 600 units, recurring every 0.231 seconds「 up to 3 times. 」「 for a total of 4 marks. 」If there are no other un-marked targets before then, Master Yi can mark the same enemies again. During Alpha Strike, Master Yi can select a direction from the primary target.\n\nUpon finishing marking, Master Yi reappears 75 units in the targeted direction, or in front of the target otherwise, and then becomes able to act again「 after 0.165 seconds. 」「 1.087 seconds total after the start of the cast with 4 bounces. 」If the primary target dies or is too far away during the delay, Master Yi will reappear at the initial cast location instead.\n\nMaster Yi then detonates the marks to deal physical damage and apply on-hit effects, with on-hit damage reduced to % effectiveness. Marks after the first on the same target instead detonate instantly upon application to deal Expression error: Unexpected * operator.% damage and apply on-hit effects, with on-hit damage reduced to\n- % effectiveness. Alpha Strike deals bonus physical damage to monsters per hit.\n\nAlpha Strike's primary and lesser damage can critically strike for「 Expression error: Unexpected < operator.10000%Expression error: Unexpected < operator.Expression error: Unexpected < operator.Expression error: Unexpected < operator. damage. 」「 100% +\n- 100% of bonus critical damage. 」",
+				"wikiDescription": "Active: Master Yi vanishes and becomes unable to act. After 0.231 seconds, he marks the target enemy and then proceeds to mark the nearest visible un-marked enemy within 600 units, recurring every 0.231 seconds「 up to 3 times. 」「 for a total of 4 marks. 」If there are no other un-marked targets before then, Master Yi can mark the same enemies again. During Alpha Strike, Master Yi can select a direction from the primary target.\n\nUpon finishing marking, Master Yi reappears 75 units in the targeted direction, or in front of the target otherwise, and then becomes able to act again「 after 0.165 seconds. 」「 1.087 seconds total after the start of the cast with 4 bounces. 」If the primary target dies or is too far away during the delay, Master Yi will reappear at the initial cast location instead.\n\nMaster Yi then detonates the marks to deal physical damage and apply on-hit effects, with on-hit damage reduced to 75% effectiveness. Marks after the first on the same target instead detonate instantly upon application to deal 25% damage and apply on-hit effects, with on-hit damage reduced to 18.75% effectiveness. Alpha Strike deals bonus physical damage to monsters per hit.\n\nAlpha Strike's primary and lesser damage can critically strike for「 (200% + 30%) damage. 」「 100% + 100% of bonus critical damage. 」",
 				"leveling": [
-					"Primary Physical Damage: to (+ nil% AD)\nReduced Damage per hit: \n- to * (+\n- % AD)\nMaximum Single-Target Damage: \n- (1+*3) to *(1+*3) (+\n- (1+*3)% AD)\nPrimary Bonus Monster Damage: to\nCombined Primary Monster Damage: + to + (+ nil% AD)\nReduced Monster Damage per hit: (+)* to (+)* (+\n- % AD)\nMax Single-Target Monster Damage: (+)*(1+*3) to (+)*(1+*3) (+\n- (1+*3)% AD)"
+					"Primary Physical Damage: 20 / 40 / 60 / 80 / 100 (+ 70% AD)\nReduced Damage per hit: 5 / 10 / 15 / 20 / 25 (+ 17.5% AD)\nMaximum Single-Target Damage: 35 / 70 / 105 / 140 / 175 (+ 122.5% AD)\nPrimary Bonus Monster Damage: 60 / 85 / 110 / 135 / 160\nCombined Primary Monster Damage: 80 / 125 / 170 / 215 / 260 (+ 70% AD)\nReduced Monster Damage per hit: 20 / 31.25 / 42.5 / 53.75 / 65 (+ 17.5% AD)\nMax Single-Target Monster Damage: 140 / 218.75 / 297.5 / 376.25 / 455 (+ 122.5% AD)"
 				],
 				"cooldown": "20 / 19.5 / 19 / 18.5 / 18",
 				"cost": "50 / 55 / 60 / 65 / 70",
@@ -3820,6 +3870,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Master Yi/Alpha Strike",
 				"wikiRevId": 4032850,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -3895,6 +3946,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Master Yi/Meditate",
 				"wikiRevId": 4039653,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -3931,6 +3983,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Master Yi/Wuju Style",
 				"wikiRevId": 3959670,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -3962,6 +4015,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Master Yi/Highlander",
 				"wikiRevId": 4060364,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -4247,7 +4301,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Alistar",
 		"id": 12,
 		"name": "Alistar",
-		"title": "the Minotaur",
+		"title": "The Minotaur",
 		"wikiPage": "Alistar",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -4323,6 +4377,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Alistar/Triumphant Roar",
 				"wikiRevId": 4007561,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4356,6 +4411,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Alistar/Pulverize",
 				"wikiRevId": 4007562,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4398,6 +4454,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Alistar/Headbutt",
 				"wikiRevId": 4007563,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4433,6 +4490,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Alistar/Trample",
 				"wikiRevId": 4053303,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4465,6 +4523,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Alistar/Unbreakable Will",
 				"wikiRevId": 3956937,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -4475,7 +4534,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Ryze",
 		"id": 13,
 		"name": "Ryze",
-		"title": "the Rune Mage",
+		"title": "The Rune Mage",
 		"wikiPage": "Ryze",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -4524,7 +4583,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Arcane Mastery",
 				"riotSummary": "<mainText>Ryze's spells deal extra damage based on his Bonus Mana, and he gains a percentage increase to his maximum Mana based on his Ability Power.</mainText>",
 				"riotTooltip": "",
-				"wikiDescription": "Innate: Ryze increases his maximum mana by (% per 100 AP).",
+				"wikiDescription": "Innate: Ryze increases his maximum mana by (10% per 100 AP).",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -4542,13 +4601,14 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "",
 				"notes": [
 					"Any increase in maximum mana is treated as bonus mana.",
-					"With Rabadon's Deathcap, a total of Expression error: Unexpected / operator.% (% AP) maximum mana is gained.",
+					"With Rabadon's Deathcap, a total of 16.9% (10% AP) maximum mana is gained.",
 					"Arcane Mastery together with Archangel's Staff or Seraph's Embrace creates a recursive stat loop: ability power giving mana and so on.",
 					"Another way to create a recursive stat loop, is to have any converter of mana to health ( Winter's Approach, Fimbulwinter or the U.R.F. buff) and Riftmaker. The first converter giving mana to health, Riftmaker giving health to ability power and Arcane Mastery giving ability power to mana."
 				],
 				"wikiTitle": "Template:Data Ryze/Arcane Mastery",
 				"wikiRevId": 4059875,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4584,6 +4644,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ryze/Overload",
 				"wikiRevId": 3936361,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4616,6 +4677,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ryze/Rune Prison",
 				"wikiRevId": 3989878,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4651,6 +4713,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ryze/Spell Flux",
 				"wikiRevId": 4008024,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4741,6 +4804,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ryze/Realm Warp",
 				"wikiRevId": 4008025,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -4877,6 +4941,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sion/Glory in Death",
 				"wikiRevId": 4058210,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4915,6 +4980,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sion/Death Surge",
 				"wikiRevId": 3968660,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -4924,8 +4990,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "<charge>Begin Charging</charge>: Sion charges a heavy blow for up to 2 seconds.<br /><br /><release>Release</release>: Sion slams his axe down, briefly <status>Slowing</status> and dealing between <physicalDamage>{{ mindamagetotal }} and {{ maxdamagetotal }} physical damage</physicalDamage> based on charge time. If Sion charged for at least 1 second, enemies are <status>Knocked Up</status> and <status>Stunned</status> for between {{ basestuntime }} and 2.25 seconds based on charge time.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Sion prepares a strike in the target direction, charging for up to 2 seconds to increase Decimating Smash's range over an area, knock up duration, stun duration, and damage every 0.25 seconds, which has up to a maximum bonus for the base damage and up to a 200% bonus for the scaling damage.\n\nDecimating Smash can be recast within the duration, and does so automatically afterwards. If the charge is interrupted, Decimating Smash is placed on a 2-second cooldown.\n\nRecast: Sion flails his axe in the direction he targeted at the time of cast, dealing physical damage to enemies hit and slowing them by 50% for 0.25 seconds. Decimating Smash deals 165% damage against monsters and 60% damage against minions.\n\nIf Decimating Smash was charged for at least 1 second, Sion instead slams his axe down, dealing physical damage to enemies hit, knocking them up for 0.5 – 1 (based on channel time) seconds, and stunning them for 1.25 – 2.25 (based on channel time) seconds.",
 				"leveling": [
-					"Maximum Base Damage Increase: /*100-100 / (+1/3*)/(+1/3*)*100-100 / (+)/(+)*100-100 / (+3*)/(+3*)*100-100 / /*100-100%\nMinimum Physical Damage: to (+ to% AD)\nMaximum Physical Damage: to (+\n- 3 to *3% AD)",
-					"Minimum Monster Damage: \n- 1.65 to *1.65 (+\n- 1.65 to *1.65% AD)\nMaximum Monster Damage: \n- 1.65 to *1.65 (+\n- 1.65*3 to *1.65*3% AD)\nMinimum Minion Damage: \n- 0.6 to *0.6 (+\n- 0.6 to *0.6% AD)\nMaximum Minion Damage: \n- 0.6 to *0.6 (+\n- 0.6*3 to *0.6*3% AD)"
+					"Maximum Base Damage Increase: 200 / 244.44 / 266.67 / 280 / 288.89%\nMinimum Physical Damage: 30 / 45 / 60 / 75 / 90 (+ 40 / 50 / 60 / 70 / 80% AD)\nMaximum Physical Damage: 90 / 155 / 220 / 285 / 350 (+ 120 / 150 / 180 / 210 / 240% AD)",
+					"Minimum Monster Damage: 49.5 / 74.25 / 99 / 123.75 / 148.5 (+ 66 / 82.5 / 99 / 115.5 / 132% AD)\nMaximum Monster Damage: 148.5 / 255.75 / 363 / 470.25 / 577.5 (+ 198 / 247.5 / 297 / 346.5 / 396% AD)\nMinimum Minion Damage: 18 / 27 / 36 / 45 / 54 (+ 24 / 30 / 36 / 42 / 48% AD)\nMaximum Minion Damage: 54 / 93 / 132 / 171 / 210 (+ 72 / 90 / 108 / 126 / 144% AD)"
 				],
 				"cooldown": "10 / 9 / 8 / 7 / 6",
 				"cost": "45",
@@ -5002,6 +5068,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sion/Decimating Smash",
 				"wikiRevId": 4034709,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5060,6 +5127,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sion/Soul Furnace",
 				"wikiRevId": 4034710,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5094,6 +5162,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sion/Roar of the Slayer",
 				"wikiRevId": 4008040,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5197,6 +5266,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sion/Unstoppable Onslaught",
 				"wikiRevId": 4004940,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -5207,7 +5277,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Sivir",
 		"id": 15,
 		"name": "Sivir",
-		"title": "the Battle Mistress",
+		"title": "The Battle Mistress",
 		"wikiPage": "Sivir",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -5278,6 +5348,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sivir/Fleet of Foot",
 				"wikiRevId": 3985850,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5314,6 +5385,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sivir/Boomerang Blade",
 				"wikiRevId": 4016378,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5348,6 +5420,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sivir/Ricochet",
 				"wikiRevId": 4062258,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5380,6 +5453,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sivir/Spell Shield",
 				"wikiRevId": 3788826,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5412,6 +5486,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sivir/On the Hunt",
 				"wikiRevId": 3936364,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -5422,7 +5497,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Soraka",
 		"id": 16,
 		"name": "Soraka",
-		"title": "the Starchild",
+		"title": "The Starchild",
 		"wikiPage": "Soraka",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -5494,6 +5569,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Soraka/Salvation",
 				"wikiRevId": 3681502,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5529,6 +5605,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Soraka/Starcall",
 				"wikiRevId": 3953362,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5563,6 +5640,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Soraka/Astral Infusion",
 				"wikiRevId": 4007066,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cost: ddragon 40/45/50/55/60 vs wiki 10"
 				]
@@ -5598,6 +5676,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Soraka/Equinox",
 				"wikiRevId": 3907153,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5634,6 +5713,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Soraka/Wish",
 				"wikiRevId": 3907154,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -5644,7 +5724,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Teemo",
 		"id": 17,
 		"name": "Teemo",
-		"title": "the Swift Scout",
+		"title": "The Swift Scout",
 		"wikiPage": "Teemo",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -5724,6 +5804,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Teemo/Guerrilla Warfare",
 				"wikiRevId": 4010103,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5760,6 +5841,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Teemo/Blinding Dart",
 				"wikiRevId": 3948425,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5793,6 +5875,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Teemo/Move Quick",
 				"wikiRevId": 4010102,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5800,10 +5883,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Toxic Shot",
 				"riotSummary": "Each of Teemo's attacks will poison the target %i:OnHit% <OnHit>On-Hit</OnHit>, dealing damage on impact and each second after for 4 seconds.",
 				"riotTooltip": "<spellPassive>Passive:</spellPassive> Teemo's Attacks apply poison %i:OnHit% <OnHit>On-Hit</OnHit>, dealing an additional <magicDamage>{{ impactcalculateddamage }} magic damage</magicDamage> plus <magicDamage>{{ totaldotdamage }} magic damage</magicDamage> over {{ poisonduration }} seconds.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Passive: Teemo's basic attacks on-hit deal bonus magic damage and inflict poison.\npoison: The target takes magic damage every second over 4 seconds. Subsequent inflictions refresh the duration.\n\nToxic Shot deals\n- 100% damage against monsters.",
+				"wikiDescription": "Passive: Teemo's basic attacks on-hit deal bonus magic damage and inflict poison.\npoison: The target takes magic damage every second over 4 seconds. Subsequent inflictions refresh the duration.\n\nToxic Shot deals 160% damage against monsters.",
 				"leveling": [
-					"Magic Damage On-Hit: to (+ % bonus AD) (+ % AP)\nMagic Damage per Tick: to (+ nil% bonus AD) (+ % AP)\nTotal Poison Damage: \n- to * (+\n- % bonus AD) (+\n- % AP)",
-					"Monster Damage On-Hit: \n- to * (+\n- % bonus AD) (+\n- % AP)\nMonster Damage per Tick: \n- to * (+\n- % bonus AD) (+\n- % AP)\nTotal Monster Poison Damage: \n- to ** (+\n- % bonus AD) (+\n- % AP)"
+					"Magic Damage On-Hit: 9 / 23 / 37 / 51 / 65 (+ 5% bonus AD) (+ 30% AP)\nMagic Damage per Tick: 6 / 12 / 18 / 24 / 30 (+ 2.5% bonus AD) (+ 10% AP)\nTotal Poison Damage: 24 / 48 / 72 / 96 / 120 (+ 10% bonus AD) (+ 40% AP)",
+					"Monster Damage On-Hit: 14.4 / 36.8 / 59.2 / 81.6 / 104 (+ 8% bonus AD) (+ 48% AP)\nMonster Damage per Tick: 9.6 / 19.2 / 28.8 / 38.4 / 48 (+ 4% bonus AD) (+ 16% AP)\nTotal Monster Poison Damage: 38.4 / 76.8 / 115.2 / 153.6 / 192 (+ 16% bonus AD) (+ 64% AP)"
 				],
 				"cooldown": "",
 				"cost": "",
@@ -5829,6 +5912,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Teemo/Toxic Shot",
 				"wikiRevId": 4062253,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5868,6 +5952,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Teemo/Noxious Trap",
 				"wikiRevId": 4015245,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -5878,7 +5963,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Tristana",
 		"id": 18,
 		"name": "Tristana",
-		"title": "the Yordle Gunner",
+		"title": "The Yordle Gunner",
 		"wikiPage": "Tristana",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -5950,6 +6035,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tristana/Draw a Bead",
 				"wikiRevId": 3986179,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -5981,6 +6067,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tristana/Rapid Fire",
 				"wikiRevId": 4026462,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -6016,6 +6103,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tristana/Rocket Jump",
 				"wikiRevId": 4007758,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -6023,11 +6111,11 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Explosive Charge",
 				"riotSummary": "When Tristana kills a unit, her cannonballs burst into shrapnel, dealing damage to surrounding enemies. Can be activated to place a bomb on a target enemy that explodes after a short duration dealing damage to surrounding units.",
 				"riotTooltip": "<spellPassive>Passive: </spellPassive>Tristana's Attacks that kill enemies deal <magicDamage>{{ passivedamage }} magic damage</magicDamage> to surrounding enemies.<br /><br /><spellActive>Active:</spellActive> Tristana attaches a bomb to an enemy or turret that deals <physicalDamage>{{ activedamage }} physical damage</physicalDamage> to surrounding enemies after {{ activeduration }} seconds. The damage is increased by {{ activeperstackamp*100 }}% each time Tristana hits an Attack or Ability (max 4 stacks).<br /><br />At {{ activemaxstacks }} stacks, the bomb explodes immediately (max <physicalDamage>{{ activemaxdamage }} physical damage</physicalDamage>).{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Passive: Tristana's basic attacks are empowered to trigger an explosion when they kill the target, dealing magic damage to nearby enemies.\n\nActive: Tristana tosses an explosive charge at the target enemy that attaches to them for 4 seconds. The charge then detonates, dealing physical damage to nearby enemies. Explosive Charge can target and damage turrets, and explodes in a larger radius on a turret.\n\nTristana's basic attacks on-hit and abilities against the target increase Explosive Charge's damage by\n- 100%, stacking up to 4 times for a maximum\n- 400% increase, upon which the charge also detonates instantly. The charge's total damage is additionally increased by 0% – 40% (+ 0% – 12%) (based on critical strike chance).\n\nIf Buster Shot is used to apply the last stack, the detonation will instead be delayed until the end of the knock back or the 4 seconds expire.",
+				"wikiDescription": "Passive: Tristana's basic attacks are empowered to trigger an explosion when they kill the target, dealing magic damage to nearby enemies.\n\nActive: Tristana tosses an explosive charge at the target enemy that attaches to them for 4 seconds. The charge then detonates, dealing physical damage to nearby enemies. Explosive Charge can target and damage turrets, and explodes in a larger radius on a turret.\n\nTristana's basic attacks on-hit and abilities against the target increase Explosive Charge's damage by 25%, stacking up to 4 times for a maximum 100% increase, upon which the charge also detonates instantly. The charge's total damage is additionally increased by 0% – 40% (+ 0% – 12%) (based on critical strike chance).\n\nIf Buster Shot is used to apply the last stack, the detonation will instead be delayed until the end of the knock back or the 4 seconds expire.",
 				"leveling": [
-					"Magic Damage: to (+ % AP)",
-					"Minimum Physical Damage: to (+ % bonus AD) (+ % AP)",
-					"Bonus Damage Per Stack: ( to )* (+\n- % bonus AD) (+\n- % AP)\nFull Stack Bonus Damage: ( to )*(*4) (+\n- (*4)% bonus AD) (+\n- (*4)% AP)\nFull Stack Physical Damage: ( to )*(1+*4) (+\n- (1+*4)% bonus AD) (+\n- (1+*4)% AP)"
+					"Magic Damage: 45 / 60 / 75 / 90 / 105 (+ 25% AP)",
+					"Minimum Physical Damage: 60 / 85 / 110 / 135 / 160 (+ 80% bonus AD) (+ 50% AP)",
+					"Bonus Damage Per Stack: 15 / 21.25 / 27.5 / 33.75 / 40 (+ 20% bonus AD) (+ 12.5% AP)\nFull Stack Bonus Damage: 60 / 85 / 110 / 135 / 160 (+ 80% bonus AD) (+ 50% AP)\nFull Stack Physical Damage: 120 / 170 / 220 / 270 / 320 (+ 160% bonus AD) (+ 100% AP)"
 				],
 				"cooldown": "16 / 15.5 / 15 / 14.5 / 14",
 				"cost": "50 / 55 / 60 / 65 / 70",
@@ -6063,6 +6151,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tristana/Explosive Charge",
 				"wikiRevId": 4008204,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -6102,6 +6191,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tristana/Buster Shot",
 				"wikiRevId": 4008205,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -6112,7 +6202,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Warwick",
 		"id": 19,
 		"name": "Warwick",
-		"title": "the Uncaged Wrath of Zaun",
+		"title": "The Uncaged Wrath of Zaun",
 		"wikiPage": "Warwick",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -6193,6 +6283,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Warwick/Eternal Hunger",
 				"wikiRevId": 4051829,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -6293,6 +6384,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Warwick/Jaws of the Beast",
 				"wikiRevId": 4007380,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -6354,6 +6446,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Warwick/Blood Hunt",
 				"wikiRevId": 4052302,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -6391,6 +6484,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Warwick/Primal Howl",
 				"wikiRevId": 4047663,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -6523,6 +6617,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Warwick/Infinite Duress",
 				"wikiRevId": 4052859,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -6809,7 +6904,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Nunu",
 		"id": 20,
 		"name": "Nunu & Willump",
-		"title": "the Boy and His Yeti",
+		"title": "The Boy and His Yeti",
 		"wikiPage": "Nunu & Willump",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -6888,6 +6983,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nunu & Willump/Call of the Freljord",
 				"wikiRevId": 4013400,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -6895,10 +6991,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Consume",
 				"riotSummary": "Willump takes a bite out of a minion, monster, or enemy champion, dealing damage and healing himself.",
 				"riotTooltip": "Nunu asks Willump to take a bite of an enemy, dealing <trueDamage>{{ monsterminiondamage }} true damage</trueDamage> and restoring <healing>{{ monsterhealing }} Health</healing> when used against a minion or jungle monster. Against a champion, it instead deals <magicDamage>{{ totalchampiondamage }} magic damage</magicDamage> and restores <healing>{{ championhealing }} Health</healing>.<br /><br />The <healing>healing</healing> is increased by {{ lowhealthhealingscalar*100 }}% when Nunu and Willump are below {{ lowhealththreshhold*100 }}% Health.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Willump takes a bite out of the target enemy, dealing damage and healing himself. The heal is increased by -100% while he is below 50% maximum health.\n\nAgainst minions and monsters, he deals true damage. Additionally, if Consume would kill the target minion or small or medium monster, Willump devours the target, stunning and pulling them towards him over the cast time.\n\nAgainst champions, he deals magic damage and the heal is reduced to\n- 100%.",
+				"wikiDescription": "Active: Willump takes a bite out of the target enemy, dealing damage and healing himself. The heal is increased by 50% while he is below 50% maximum health.\n\nAgainst minions and monsters, he deals true damage. Additionally, if Consume would kill the target minion or small or medium monster, Willump devours the target, stunning and pulling them towards him over the cast time.\n\nAgainst champions, he deals magic damage and the heal is reduced to 60%.",
 				"leveling": [
-					"Non-Champion True Damage: 400 / 600 / 800 / 1000 / 1200\nBase Non-Champion Heal: 65 / 95 / 125 / 155 / 185 (+ 90% AP) (+ 10% bonus health)\nEmpowered Non-Champion Heal: 65* to 185* (+ 90*% AP) (+ 10*% bonus health)",
-					"Champion Magic Damage: 60 / 100 / 140 / 180 / 220 (+ 65% AP) (+ 5% bonus health)\nBase Champion Heal: 65* to 185* (+ 90*% AP) (+ 10*% bonus health)\nEmpowered Champion Heal: 65** to 185** (+ 90**% AP) (+ 10**% bonus health)"
+					"Non-Champion True Damage: 400 / 600 / 800 / 1000 / 1200\nBase Non-Champion Heal: 65 / 95 / 125 / 155 / 185 (+ 90% AP) (+ 10% bonus health)\nEmpowered Non-Champion Heal: 97.5 / 142.5 / 187.5 / 232.5 / 277.5 (+ 135% AP) (+ 15% bonus health)",
+					"Champion Magic Damage: 60 / 100 / 140 / 180 / 220 (+ 65% AP) (+ 5% bonus health)\nBase Champion Heal: 39 / 57 / 75 / 93 / 111 (+ 54% AP) (+ 6% bonus health)\nEmpowered Champion Heal: 58.5 / 85.5 / 112.5 / 139.5 / 166.5 (+ 81% AP) (+ 9% bonus health)"
 				],
 				"cooldown": "13 / 12 / 11 / 10 / 9",
 				"cost": "60",
@@ -6923,6 +7019,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nunu & Willump/Consume",
 				"wikiRevId": 3985877,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7016,6 +7113,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nunu & Willump/Biggest Snowball Ever!",
 				"wikiRevId": 4007735,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7053,6 +7151,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nunu & Willump/Snowball Barrage",
 				"wikiRevId": 4013466,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7129,6 +7228,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nunu & Willump/Absolute Zero",
 				"wikiRevId": 4010574,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -7417,7 +7517,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "MissFortune",
 		"id": 21,
 		"name": "Miss Fortune",
-		"title": "the Bounty Hunter",
+		"title": "The Bounty Hunter",
 		"wikiPage": "Miss Fortune",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -7491,6 +7591,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Miss Fortune/Love Tap",
 				"wikiRevId": 4027989,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7534,6 +7635,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Miss Fortune/Double Up",
 				"wikiRevId": 3993572,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7566,6 +7668,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Miss Fortune/Strut",
 				"wikiRevId": 4015416,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7597,6 +7700,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Miss Fortune/Make It Rain",
 				"wikiRevId": 3936384,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7680,6 +7784,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Miss Fortune/Bullet Time",
 				"wikiRevId": 4050364,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -7690,7 +7795,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Ashe",
 		"id": 22,
 		"name": "Ashe",
-		"title": "the Frost Archer",
+		"title": "The Frost Archer",
 		"wikiPage": "Ashe",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -7765,6 +7870,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ashe/Frost Shot",
 				"wikiRevId": 4062251,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7774,7 +7880,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "<spellPassive>Passive: </spellPassive>Ashe's Attacks grant a stack for {{ stackduration }} seconds. At {{ maxstacks }} stacks, she may activate this Ability.<br /><br /><spellPassive>Active:</spellPassive> Ashe gains <attackSpeed>{{ bonusas }}% Attack Speed</attackSpeed> and her Attacks deal <physicalDamage>{{ empowereddamage }} damage</physicalDamage> instead for {{ buffduration }} seconds.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Passive: While Ranger's Focus is inactive, Ashe's basic attacks on-attack generate a stack of Focus for 4 seconds, refreshing on subsequent attacks and stacking up to 4 times. Stacks expire one by one every second when the duration ends.\n\nActive: For 6 seconds, Ashe gains bonus attack speed and empowers her basic attacks to fire a flurry of five arrows that deal modified physical damage. The flurries apply life steal and Frost Shot per arrow, but apply on-hit effects only once.\n\nRanger's Focus resets Ashe's basic attack timer.",
 				"leveling": [
-					"Bonus Attack Speed: 20 / 30 / 40 / 50 / 60%\nPhysical Damage Per Arrow: /5 to /5% AD\nTotal Damage Per Flurry: to% AD"
+					"Bonus Attack Speed: 20 / 30 / 40 / 50 / 60%\nPhysical Damage Per Arrow: 22 / 23 / 24 / 25 / 26% AD\nTotal Damage Per Flurry: 110 / 115 / 120 / 125 / 130% AD"
 				],
 				"cooldown": "",
 				"cost": "30",
@@ -7793,8 +7899,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"notes": [
 					"The flurries deal 1 instance of basic damage followed by 4 instances of a non-reactive type of damage (either default or proc).",
 					"The flurries are classified as a basic attack on a script level, but are considered an ability for other effects (e.g. Maokai's Sap Magic).(bug)",
-					"The first flurry of a Ranger's Focus cast fires「 one additional arrow, dealing 20% increased total damage. 」「 six arrows, dealing a total of",
-					"1.2 to *1.2% attack damage. 」",
+					"The first flurry of a Ranger's Focus cast fires「 one additional arrow, dealing 20% increased total damage. 」「 six arrows, dealing a total of 132 / 138 / 144 / 150 / 156% attack damage. 」",
 					"Ranger's Focus works against structures.",
 					"Flat damage reductions (e.g. Amumu's Tantrum, Fizz's Nimble Fighter, or Leona's Eclipse) apply per arrow, resulting in extremely increased effectiveness against Ranger's Focus.",
 					"The sole exception is Warden's Mail's Rock Solid, as that applies per cast instance rather than per damage instance.",
@@ -7808,6 +7913,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ashe/Ranger's Focus",
 				"wikiRevId": 4053426,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7842,6 +7948,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ashe/Volley",
 				"wikiRevId": 4007430,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7875,6 +7982,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ashe/Hawkshot",
 				"wikiRevId": 3936951,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -7908,6 +8016,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ashe/Enchanted Crystal Arrow",
 				"wikiRevId": 4026934,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -7918,7 +8027,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Tryndamere",
 		"id": 23,
 		"name": "Tryndamere",
-		"title": "the Barbarian King",
+		"title": "The Barbarian King",
 		"wikiPage": "Tryndamere",
 		"resource": "Fury",
 		"rangeType": "Melee",
@@ -7968,7 +8077,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Battle Fury",
 				"riotSummary": "Tryndamere gains Fury for each attack, critical strike, and killing blow he makes. Fury passively increases his Critical Strike Chance and can be consumed with his Bloodlust spell.",
 				"riotTooltip": "",
-				"wikiDescription": "Innate: Tryndamere generates Fury on his basic attacks on-hit, and Fury on critical strikes and each time he kills an enemy. After 8 seconds without dealing or taking damage, Tryndamere loses 5 Fury per second.\n\nTryndamere gains Error: Variables are unmatched. critical strike chance.",
+				"wikiDescription": "Innate: Tryndamere generates 5 Fury on his basic attacks on-hit, and 10 Fury on critical strikes and each time he kills an enemy. After 8 seconds without dealing or taking damage, Tryndamere loses 5 Fury per second.\n\nTryndamere gains 0% – 50% (based on Fury) critical strike chance.",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -7986,26 +8095,25 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "",
 				"notes": [
 					"Fury generation stacks additively: if the given action triggers multiple ways of generating Fury, all of them apply.",
-					"Killing an enemy with a basic attack basic attack generates + Fury ( Fury from the basic attack + Fury from the kill).",
-					"Killing an enemy with a critical strike generates + Fury ( Fury from the critical strike + Fury from the kill).",
+					"Killing an enemy with a basic attack basic attack generates 15 Fury (5 Fury from the basic attack + 10 Fury from the kill).",
+					"Killing an enemy with a critical strike generates 20 Fury (10 Fury from the critical strike + 10 Fury from the kill).",
 					"The Fury gain for killing an enemy also stacks with Spinning Slash's Fury generation per enemy hit.",
 					"Attacks against structures will not grant bonus Fury, but will still reset the timer on Fury decay.",
-					"Attacks against wards behave like attacks on normal enemies, generating Fury and resetting the decay timer. Attacks against wards can critically strike, generating Fury.",
-					"Attacks against jungle plants will generate Fury and reset the decay timer. Attacks can also critically strike, generating Fury. Additionally, Honeyfruit drops restore Fury for each pod collected and reset the decay timer.",
-					"Attacking an Honeyfruit and collecting the pods generates",
-					"5+ Fury, or",
-					"5+ Fury if the plant was hit by a critical strike.",
+					"Attacks against wards behave like attacks on normal enemies, generating 5 Fury and resetting the decay timer. Attacks against wards can critically strike, generating 10 Fury.",
+					"Attacks against jungle plants will generate 5 Fury and reset the decay timer. Attacks can also critically strike, generating 10 Fury. Additionally, Honeyfruit drops restore 5 Fury for each pod collected and reset the decay timer.",
+					"Attacking an Honeyfruit and collecting the pods generates 30 Fury, or 35 Fury if the plant was hit by a critical strike.",
 					"Fury is only granted if the basic attack hits and will not be granted if Tryndamere cancels his attack windup.",
 					"Tryndamere will not generate Fury if the attack is dodged or misses due to blind.",
 					"PENDING FOR TEST: Fury generation with parrying effects ( block)",
-					"Sundered Sky's Lightshield Strike will generate Fury.",
+					"Sundered Sky's Lightshield Strike will generate 10 Fury.",
 					"Effects that apply on-hit effects twice (e.g. Dusk and Dawn's Spellblade and Guinsoo's Rageblade's Phantom Hit) will always generate the same amount of Fury as their triggering attack.",
-					"If the triggering attack critically strikes, then the additional on-hit will also generate Fury, if it doesn't, then the additional on-hit will generate Fury.",
-					"Battle Fury's bonus is worth Error: Variables are unmatched.."
+					"If the triggering attack critically strikes, then the additional on-hit will also generate 10 Fury, if it doesn't, then the additional on-hit will generate 5 Fury.",
+					"Battle Fury's bonus is worth 0 – 2000 (based on Fury)."
 				],
 				"wikiTitle": "Template:Data Tryndamere/Battle Fury",
 				"wikiRevId": 4041166,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8013,9 +8121,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Bloodlust",
 				"riotSummary": "Tryndamere thrives on the thrills of combat, increasing his Attack Damage as he is more and more wounded. He can cast Bloodlust to consume his Fury and heal himself.",
 				"riotTooltip": "<spellPassive>Passive:</spellPassive> Tryndamere thirsts for blood, gaining up to <scaleAD>{{ maximumbonusad }} Attack Damage</scaleAD> based on his missing Health.<br /><br /><spellActive>Active:</spellActive> Tryndamere consumes his <keywordMajor>Fury</keywordMajor>, restoring <healing>{{ baseheal }} plus {{ healperfury }} Health per Fury (max: {{ maximumheal }})</healing>. {{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Passive: Tryndamere gains bonus attack damage based on his missing health, up to a maximum amount at % missing health.\n\nActive: Tryndamere consumes all of his Fury to heal himself, increased for every point of Fury consumed.",
+				"wikiDescription": "Passive: Tryndamere gains bonus attack damage based on his missing health, up to a maximum amount at 90% missing health.\n\nActive: Tryndamere consumes all of his Fury to heal himself, increased for every point of Fury consumed.",
 				"leveling": [
-					"Maximum Bonus Attack Damage: to\nBonus Attack Damage per 1% missing health: Expression error: Unexpected round operator. to Expression error: Unexpected round operator.",
+					"Maximum Bonus Attack Damage: 20 / 35 / 50 / 65 / 80\nBonus Attack Damage per 1% missing health: 0.22 / 0.3875 / 0.555 / 0.7225 / 0.89",
 					"Minimum Heal: 30 / 40 / 50 / 60 / 70 (+ 30% AP)\nHeal Per 1 Fury: 0.5 / 0.95 / 1.4 / 1.85 / 2.3 (+ 1.2% AP)\nMaximum Heal: 80 / 135 / 190 / 245 / 300 (+ 150% AP)"
 				],
 				"cooldown": "12",
@@ -8039,12 +8147,13 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"This means that if Bloodlust is cast during Tryndamere's attack windup, the attack will use the critical strike chance given by the Fury before the Bloodlust cast.",
 					"Furthermore, the Fury for that basic attack will be given once the windup completes. This lets Tryndamere start building Fury immediately.",
 					"Bloodlust's attack damage gold value:",
-					"At % missing health, it is worth Expression error: Unexpected round operator. to Expression error: Unexpected round operator..",
-					"The bonus is worth Expression error: Unexpected * operator. to Expression error: Unexpected * operator. more per 1% missing health."
+					"At 90% missing health, it is worth 700 / 1225 / 1750 / 2275 / 2800.",
+					"The bonus is worth 7.78 / 13.6125 / 19.445 / 25.2775 / 31.11 more per 1% missing health."
 				],
 				"wikiTitle": "Template:Data Tryndamere/Bloodlust",
 				"wikiRevId": 4058457,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8083,6 +8192,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tryndamere/Mocking Shout",
 				"wikiRevId": 4052438,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8123,6 +8233,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tryndamere/Spinning Slash",
 				"wikiRevId": 4007759,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8154,6 +8265,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tryndamere/Undying Rage",
 				"wikiRevId": 4018945,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -8239,6 +8351,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jax/Relentless Assault",
 				"wikiRevId": 4038387,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8272,6 +8385,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jax/Leap Strike",
 				"wikiRevId": 4026413,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8304,6 +8418,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jax/Empower",
 				"wikiRevId": 3973571,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8337,6 +8452,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jax/Counter Strike",
 				"wikiRevId": 4026415,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8377,6 +8493,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jax/Grandmaster-at-Arms",
 				"wikiRevId": 3973573,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -8663,7 +8780,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Morgana",
 		"id": 25,
 		"name": "Morgana",
-		"title": "the Fallen",
+		"title": "The Fallen",
 		"wikiPage": "Morgana",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -8736,6 +8853,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Morgana/Soul Siphon",
 				"wikiRevId": 3985603,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8767,6 +8885,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Morgana/Dark Binding",
 				"wikiRevId": 3936353,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8798,6 +8917,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Morgana/Tormented Shadow",
 				"wikiRevId": 3949929,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8837,6 +8957,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Morgana/Black Shield",
 				"wikiRevId": 4050925,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -8874,6 +8995,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Morgana/Soul Shackles",
 				"wikiRevId": 4020315,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -8884,7 +9006,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Zilean",
 		"id": 26,
 		"name": "Zilean",
-		"title": "the Chronokeeper",
+		"title": "The Chronokeeper",
 		"wikiPage": "Zilean",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -9002,6 +9124,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zilean/Time in a Bottle",
 				"wikiRevId": 4056302,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9049,6 +9172,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zilean/Time Bomb",
 				"wikiRevId": 4008679,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9078,6 +9202,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zilean/Rewind",
 				"wikiRevId": 4008463,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9109,6 +9234,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zilean/Time Warp",
 				"wikiRevId": 3433210,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9185,6 +9311,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zilean/Chronoshift",
 				"wikiRevId": 3907350,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -9195,7 +9322,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Singed",
 		"id": 27,
 		"name": "Singed",
-		"title": "the Mad Chemist",
+		"title": "The Mad Chemist",
 		"wikiPage": "Singed",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -9265,6 +9392,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Singed/Noxious Slipstream",
 				"wikiRevId": 3985843,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9300,6 +9428,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Singed/Poison Trail",
 				"wikiRevId": 4006737,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 1"
 				]
@@ -9334,6 +9463,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Singed/Mega Adhesive",
 				"wikiRevId": 4001677,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9370,6 +9500,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Singed/Fling",
 				"wikiRevId": 4026605,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9401,6 +9532,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Singed/Insanity Potion",
 				"wikiRevId": 4005000,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -9489,6 +9621,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Evelynn/Demon Shade",
 				"wikiRevId": 4038334,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9530,6 +9663,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Evelynn/Hate Spike",
 				"wikiRevId": 4012756,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9569,6 +9703,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Evelynn/Allure",
 				"wikiRevId": 3968322,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9602,6 +9737,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Evelynn/Whiplash",
 				"wikiRevId": 3909221,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9638,6 +9774,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Evelynn/Empowered Whiplash",
 				"wikiRevId": 3984296,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -9713,6 +9850,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Evelynn/Last Caress",
 				"wikiRevId": 4006700,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -10002,7 +10140,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Twitch",
 		"id": 29,
 		"name": "Twitch",
-		"title": "the Plague Rat",
+		"title": "The Plague Rat",
 		"wikiPage": "Twitch",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -10076,6 +10214,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twitch/Deadly Venom",
 				"wikiRevId": 4062255,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10111,6 +10250,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twitch/Ambush",
 				"wikiRevId": 3982645,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10143,6 +10283,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twitch/Venom Cask",
 				"wikiRevId": 4012250,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10178,6 +10319,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twitch/Contaminate",
 				"wikiRevId": 3907215,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10224,6 +10366,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Twitch/Spray and Pray",
 				"wikiRevId": 4063223,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -10234,7 +10377,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Karthus",
 		"id": 30,
 		"name": "Karthus",
-		"title": "the Deathsinger",
+		"title": "The Deathsinger",
 		"wikiPage": "Karthus",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -10335,6 +10478,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karthus/Death Defied",
 				"wikiRevId": 3985387,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10368,6 +10512,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karthus/Lay Waste",
 				"wikiRevId": 4011136,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 1"
 				]
@@ -10400,6 +10545,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karthus/Wall of Pain",
 				"wikiRevId": 3990033,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10435,6 +10581,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karthus/Defile",
 				"wikiRevId": 4006733,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10511,6 +10658,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karthus/Requiem",
 				"wikiRevId": 4015394,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -10797,7 +10945,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Chogath",
 		"id": 31,
 		"name": "Cho'Gath",
-		"title": "the Terror of the Void",
+		"title": "The Terror of the Void",
 		"wikiPage": "Cho'Gath",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -10866,11 +11014,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"notes": [
 					"Carnivore will also trigger when Cho'Gath destroys a turret, but not from other structures.",
 					"Carnivore does not trigger upon destroying wards and possibly other similar units.",
-					"It does trigger upon killing one of Illaoi's Tentacles. [1]"
+					"It does trigger upon killing one of Illaoi's Tentacles."
 				],
 				"wikiTitle": "Template:Data Cho'Gath/Carnivore",
 				"wikiRevId": 4038297,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10906,6 +11055,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Cho'Gath/Rupture",
 				"wikiRevId": 4053169,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10938,6 +11088,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Cho'Gath/Feral Scream",
 				"wikiRevId": 4052916,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -10975,6 +11126,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Cho'Gath/Vorpal Spikes",
 				"wikiRevId": 4057853,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -11014,6 +11166,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Cho'Gath/Feast",
 				"wikiRevId": 3932267,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -11024,7 +11177,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Amumu",
 		"id": 32,
 		"name": "Amumu",
-		"title": "the Sad Mummy",
+		"title": "The Sad Mummy",
 		"wikiPage": "Amumu",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -11100,6 +11253,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Amumu/Cursed Touch",
 				"wikiRevId": 4046475,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -11138,6 +11292,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Amumu/Bandage Toss",
 				"wikiRevId": 4007564,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -11170,6 +11325,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Amumu/Despair",
 				"wikiRevId": 4006735,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -11206,6 +11362,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Amumu/Tantrum",
 				"wikiRevId": 3996197,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -11237,6 +11394,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Amumu/Curse of the Sad Mummy",
 				"wikiRevId": 3953818,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -11523,7 +11681,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Rammus",
 		"id": 33,
 		"name": "Rammus",
-		"title": "the Armordillo",
+		"title": "The Armordillo",
 		"wikiPage": "Rammus",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -11594,6 +11752,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rammus/Spiked Shell",
 				"wikiRevId": 3910990,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -11676,6 +11835,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rammus/Powerball",
 				"wikiRevId": 3988570,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -11711,6 +11871,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rammus/Defensive Ball Curl",
 				"wikiRevId": 3982827,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -11742,6 +11903,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rammus/Frenzying Taunt",
 				"wikiRevId": 4052309,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -11813,6 +11975,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rammus/Soaring Slam",
 				"wikiRevId": 4008005,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -12099,7 +12262,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Anivia",
 		"id": 34,
 		"name": "Anivia",
-		"title": "the Cryophoenix",
+		"title": "The Cryophoenix",
 		"wikiPage": "Anivia",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -12211,6 +12374,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Anivia/Rebirth",
 				"wikiRevId": 3906517,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -12246,6 +12410,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Anivia/Flash Frost",
 				"wikiRevId": 4026612,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -12281,6 +12446,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Anivia/Crystallize",
 				"wikiRevId": 4007565,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -12314,6 +12480,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Anivia/Frostbite",
 				"wikiRevId": 4057862,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -12351,6 +12518,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Anivia/Glacial Storm",
 				"wikiRevId": 4006729,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -12361,7 +12529,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Shaco",
 		"id": 35,
 		"name": "Shaco",
-		"title": "the Demon Jester",
+		"title": "The Demon Jester",
 		"wikiPage": "Shaco",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -12433,6 +12601,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shaco/Backstab",
 				"wikiRevId": 3985836,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -12468,6 +12637,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shaco/Deceive",
 				"wikiRevId": 4023266,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -12504,6 +12674,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shaco/Jack in the Box",
 				"wikiRevId": 4061736,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -12537,6 +12708,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shaco/Two-Shiv Poison",
 				"wikiRevId": 3985833,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -12577,6 +12749,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shaco/Hallucinate",
 				"wikiRevId": 4013796,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -12864,7 +13037,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "DrMundo",
 		"id": 36,
 		"name": "Dr. Mundo",
-		"title": "the Madman of Zaun",
+		"title": "The Madman of Zaun",
 		"wikiPage": "Dr. Mundo",
 		"resource": "Health",
 		"rangeType": "Melee",
@@ -12941,6 +13114,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Dr. Mundo/Goes Where He Pleases",
 				"wikiRevId": 4038331,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -12974,6 +13148,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Dr. Mundo/Infected Bonesaw",
 				"wikiRevId": 4008441,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13010,6 +13185,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Dr. Mundo/Heart Zapper",
 				"wikiRevId": 4038332,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13017,11 +13193,11 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Blunt Force Trauma",
 				"riotSummary": "Passive - Dr. Mundo gains bonus Attack Damage, increasing based on his max Health.<br><br>Active - Dr. Mundo slams his “medical” bag into an enemy, dealing additional damage based on his missing Health. If the enemy dies they are swatted away, dealing damage to enemies they pass through.",
 				"riotTooltip": "<spellPassive>Passive:</spellPassive> Dr Mundo gains <physicalDamage>{{ passivebonusad }} Attack Damage</physicalDamage>.<br /><br /><spellActive>Active:</spellActive> Dr Mundo violently swings his \"medical\" bag, causing his next Attack to deal an additional <physicalDamage>{{ additionaldamage }} physical damage</physicalDamage>, increased by up to {{ maxdamageamptooltip }} based on his missing Health. If the enemy is killed, Mundo swats them away, dealing <physicalDamage>{{ additionaldamage }} physical damage</physicalDamage> to enemies they pass through.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Passive: Dr. Mundo gains bonus attack damage.\n\nActive: Dr. Mundo empowers his next basic attack within 4 seconds to have an uncancellable windup, gain 50 bonus range, and deal bonus physical damage, increased by <span class=\"pp-tooltip\" style=\"position:relative; border-bottom:1px dotted; cursor:help; color:#21B053;\" data-top-label=\"Dr. Mundo's missing health\" data-displayformula=\"0.57% per missing health %, up to a cap of 70%.\" data-bot-values=\"0 to Expression error: Unexpected * operator. for 11\" data-top-values=\"0\" data-bot-key=\"%\" data-top-key=\"%\">0 to Expression error: Unexpected * operator. for 11% (based on Dr. Mundo's missing health). If the target dies or is a small monster, they are sent flying away in a line, though not through terrain, causing all enemies they pass through to take 100% AD physical damage plus Blunt Force Trauma's minimum bonus damage.\n\nBlunt Force Trauma as well as the triggering attack's damage is increased to Expression error: Unexpected * operator.% against minions and Expression error: Unexpected * operator.% against monsters.\n\nBlunt Force Trauma resets Dr. Mundo's basic attack timer.",
+				"wikiDescription": "Passive: Dr. Mundo gains bonus attack damage.\n\nActive: Dr. Mundo empowers his next basic attack within 4 seconds to have an uncancellable windup, gain 50 bonus range, and deal bonus physical damage, increased by 0% – 40% (based on Dr. Mundo's missing health). If the target dies or is a small monster, they are sent flying away in a line, though not through terrain, causing all enemies they pass through to take 100% AD physical damage plus Blunt Force Trauma's minimum bonus damage.\n\nBlunt Force Trauma as well as the triggering attack's damage is increased to 140% against minions and 140% against monsters.\n\nBlunt Force Trauma resets Dr. Mundo's basic attack timer.",
 				"leveling": [
 					"Bonus Attack Damage: 2 / 2.3 / 2.6 / 2.9 / 3.2% maximum health",
-					"Minimum Bonus Physical Damage: to (+ % bonus health)\nMaximum Bonus Physical Damage: \n- to * (+\n- % bonus health)",
-					"Minimum Minion Physical Damage: \n- to * (+\n- % bonus health)\nMaximum Minion Physical Damage: \n- to ** (+\n- % bonus health)\nMinimum Monster Physical Damage: \n- to * (+\n- % bonus health)\nMaximum Monster Physical Damage: \n- to ** (+\n- % bonus health)"
+					"Minimum Bonus Physical Damage: 5 / 15 / 25 / 35 / 45 (+ 5% bonus health)\nMaximum Bonus Physical Damage: 7 / 21 / 35 / 49 / 63 (+ 7% bonus health)",
+					"Minimum Minion Physical Damage: 7 / 21 / 35 / 49 / 63 (+ 7% bonus health)\nMaximum Minion Physical Damage: 9.8 / 29.4 / 49 / 68.6 / 88.2 (+ 9.8% bonus health)\nMinimum Monster Physical Damage: 7 / 21 / 35 / 49 / 63 (+ 7% bonus health)\nMaximum Monster Physical Damage: 9.8 / 29.4 / 49 / 68.6 / 88.2 (+ 9.8% bonus health)"
 				],
 				"cooldown": "9 / 8.25 / 7.5 / 6.75 / 6",
 				"cost": "10 / 25 / 40 / 55 / 70",
@@ -13049,6 +13225,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Dr. Mundo/Blunt Force Trauma",
 				"wikiRevId": 4059881,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13083,6 +13260,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Dr. Mundo/Maximum Dosage",
 				"wikiRevId": 4037515,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -13385,6 +13563,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sona/Power Chord",
 				"wikiRevId": 4047882,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13420,6 +13599,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sona/Hymn of Valor",
 				"wikiRevId": 4049803,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13454,6 +13634,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sona/Aria of Perseverance",
 				"wikiRevId": 4008052,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13485,6 +13666,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sona/Song of Celerity",
 				"wikiRevId": 4012188,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13517,6 +13699,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sona/Crescendo",
 				"wikiRevId": 4047883,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -13527,7 +13710,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Kassadin",
 		"id": 38,
 		"name": "Kassadin",
-		"title": "the Void Walker",
+		"title": "The Void Walker",
 		"wikiPage": "Kassadin",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -13599,6 +13782,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kassadin/Void Stone",
 				"wikiRevId": 3913958,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13631,6 +13815,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kassadin/Null Sphere",
 				"wikiRevId": 4060362,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13667,6 +13852,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kassadin/Nether Blade",
 				"wikiRevId": 4022982,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13700,6 +13886,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kassadin/Force Pulse",
 				"wikiRevId": 4007623,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13730,6 +13917,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kassadin/Riftwalk",
 				"wikiRevId": 4060363,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cost: ddragon 40 vs wiki 40/80/160/320/640"
 				]
@@ -13742,7 +13930,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Irelia",
 		"id": 39,
 		"name": "Irelia",
-		"title": "the Blade Dancer",
+		"title": "The Blade Dancer",
 		"wikiPage": "Irelia",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -13818,6 +14006,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Irelia/Ionian Fervor",
 				"wikiRevId": 4045313,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13861,6 +14050,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Irelia/Bladesurge",
 				"wikiRevId": 4057466,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13939,6 +14129,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Irelia/Defiant Dance",
 				"wikiRevId": 4057467,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -13976,6 +14167,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Irelia/Flawless Duet",
 				"wikiRevId": 4021834,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14015,6 +14207,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Irelia/Vanguard's Edge",
 				"wikiRevId": 4057346,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -14025,7 +14218,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Janna",
 		"id": 40,
 		"name": "Janna",
-		"title": "the Storm's Fury",
+		"title": "The Storm's Fury",
 		"wikiPage": "Janna",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -14097,6 +14290,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Janna/Tailwind",
 				"wikiRevId": 3985378,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14129,6 +14323,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Janna/Howling Gale",
 				"wikiRevId": 3800440,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14162,6 +14357,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Janna/Zephyr",
 				"wikiRevId": 3971180,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14196,6 +14392,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Janna/Eye of the Storm",
 				"wikiRevId": 3933659,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14268,6 +14465,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Janna/Monsoon",
 				"wikiRevId": 3959332,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -14278,7 +14476,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Gangplank",
 		"id": 41,
 		"name": "Gangplank",
-		"title": "the Saltwater Scourge",
+		"title": "The Saltwater Scourge",
 		"wikiPage": "Gangplank",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -14351,6 +14549,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gangplank/Trial by Fire",
 				"wikiRevId": 4038337,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14388,6 +14587,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gangplank/Parrrley",
 				"wikiRevId": 4063653,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14420,6 +14620,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gangplank/Remove Scurvy",
 				"wikiRevId": 3906839,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14445,7 +14646,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "True",
 				"notes": [
 					"The slow, bonus physical damage to champions, and keg health decay speed are determined when the keg is placed.",
-					"The keg health decay timer indicator is instead based on Gangplank's current level, which can lead to desynchronization. [1] (bug)",
+					"The keg health decay timer indicator is instead based on Gangplank's current level, which can lead to desynchronization. (bug)",
 					"The triggering attack's damage can include Parrrley's base damage and Spellblade.",
 					"The percentage armor penetration stacks multiplicatively with other sources of percentage armor penetration.",
 					"When triggered with critical strike, Spellblade and the bonus damage to champions are added after the calculations.",
@@ -14488,6 +14689,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gangplank/Powder Keg",
 				"wikiRevId": 4058497,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 0.5"
 				]
@@ -14526,6 +14728,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gangplank/Cannon Barrage",
 				"wikiRevId": 4048098,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -14536,7 +14739,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Corki",
 		"id": 42,
 		"name": "Corki",
-		"title": "the Daring Bombardier",
+		"title": "The Daring Bombardier",
 		"wikiPage": "Corki",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -14613,6 +14816,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Corki/Hextech Munitions",
 				"wikiRevId": 4050625,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14644,6 +14848,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Corki/Phosphorus Bomb",
 				"wikiRevId": 4007588,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14675,6 +14880,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Corki/Valkyrie",
 				"wikiRevId": 4007589,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14710,6 +14916,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Corki/Gatling Gun",
 				"wikiRevId": 3948411,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14748,6 +14955,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Corki/Missile Barrage",
 				"wikiRevId": 4042863,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -14758,7 +14966,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Karma",
 		"id": 43,
 		"name": "Karma",
-		"title": "the Enlightened One",
+		"title": "The Enlightened One",
 		"wikiPage": "Karma",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -14833,6 +15041,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karma/Gathering Fire",
 				"wikiRevId": 3985386,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14866,6 +15075,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karma/Inner Flame",
 				"wikiRevId": 3875842,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14900,6 +15110,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karma/Soulflare",
 				"wikiRevId": 3875841,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14936,6 +15147,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karma/Focused Resolve",
 				"wikiRevId": 3968365,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -14973,6 +15185,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karma/Renewal",
 				"wikiRevId": 4013452,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15004,6 +15217,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karma/Inspire",
 				"wikiRevId": 4008449,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15011,9 +15225,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Defiance",
 				"riotSummary": "",
 				"riotTooltip": "",
-				"wikiDescription": "Mantra - Active: Inspire grants a bonus amount of shielding.\nInspire spreads to surrounding allied champions, granting them a shield for 2.5 seconds and % bonus movement speed for 2 seconds.\n\nDefiance scales with Mantra's rank.",
+				"wikiDescription": "Mantra - Active: Inspire grants a bonus amount of shielding.\nInspire spreads to surrounding allied champions, granting them a shield for 2.5 seconds and 15% bonus movement speed for 2 seconds.\n\nDefiance scales with Mantra's rank.",
 				"leveling": [
-					"Bonus Primary Target Shield: to 4 (+ % AP)\nTotal Primary Target Shield: 80 / 130 / 180 / 230 / 280 (+ to 4) (+ 60+% AP)\nSecondary Target Shield: * to * 4 (+\n- % AP)"
+					"Bonus Primary Target Shield: 45 / 85 / 125 / 165 (+ 45% AP)\nTotal Primary Target Shield: 80 / 130 / 180 / 230 / 280 (+ 45 / 85 / 125 / 165) (+ 105% AP)\nSecondary Target Shield: 45 / 85 / 125 / 165 (+ 45% AP)"
 				],
 				"cooldown": "",
 				"cost": "",
@@ -15035,6 +15249,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karma/Defiance",
 				"wikiRevId": 4004072,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15062,6 +15277,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Karma/Mantra",
 				"wikiRevId": 4005102,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -15072,7 +15288,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Taric",
 		"id": 44,
 		"name": "Taric",
-		"title": "the Shield of Valoran",
+		"title": "The Shield of Valoran",
 		"wikiPage": "Taric",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -15149,6 +15365,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taric/Bravado",
 				"wikiRevId": 3986177,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15180,6 +15397,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taric/Starlight's Touch",
 				"wikiRevId": 3996427,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15216,6 +15434,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taric/Bastion",
 				"wikiRevId": 3989049,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15247,6 +15466,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taric/Dazzle",
 				"wikiRevId": 3907336,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15277,6 +15497,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taric/Cosmic Radiance",
 				"wikiRevId": 3907334,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -15287,7 +15508,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Veigar",
 		"id": 45,
 		"name": "Veigar",
-		"title": "the Tiny Master of Evil",
+		"title": "The Tiny Master of Evil",
 		"wikiPage": "Veigar",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -15359,6 +15580,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Veigar/Phenomenal Evil Power",
 				"wikiRevId": 3932550,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15394,6 +15616,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Veigar/Baleful Strike",
 				"wikiRevId": 4050924,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15424,6 +15647,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Veigar/Dark Matter",
 				"wikiRevId": 3991312,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 8/0"
 				]
@@ -15463,6 +15687,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Veigar/Event Horizon",
 				"wikiRevId": 4016714,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15494,6 +15719,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Veigar/Primordial Burst",
 				"wikiRevId": 4004085,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -15504,7 +15730,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Trundle",
 		"id": 48,
 		"name": "Trundle",
-		"title": "the Troll King",
+		"title": "The Troll King",
 		"wikiPage": "Trundle",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -15576,6 +15802,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Trundle/King's Tribute",
 				"wikiRevId": 3986655,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15612,6 +15839,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Trundle/Chomp",
 				"wikiRevId": 3949665,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15643,6 +15871,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Trundle/Frozen Domain",
 				"wikiRevId": 4057475,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15677,6 +15906,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Trundle/Pillar of Ice",
 				"wikiRevId": 4008207,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15719,6 +15949,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Trundle/Subjugate",
 				"wikiRevId": 4015247,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -15729,7 +15960,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Swain",
 		"id": 50,
 		"name": "Swain",
-		"title": "the Noxian Grand General",
+		"title": "The Noxian Grand General",
 		"wikiPage": "Swain",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -15803,6 +16034,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Swain/Ravenous Flock",
 				"wikiRevId": 4008055,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15837,6 +16069,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Swain/Death's Hand",
 				"wikiRevId": 4042686,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15872,6 +16105,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Swain/Vision of Empire",
 				"wikiRevId": 3992667,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15910,6 +16144,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Swain/Nevermove",
 				"wikiRevId": 4008056,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15942,6 +16177,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Swain/Demonic Ascension",
 				"wikiRevId": 4020887,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -15972,11 +16208,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Demonflare counts as an ability activation for the purposes of on-cast effects such as Spellblade and triggering Force Pulse's passive.",
 					"Demonflare passes through champions. Effects like Yasuo's Wind Wall and Braum's Unbreakable will block the portion of the nova they intercept.",
 					"Demonflare will fire from wherever Swain is at the end of the cast time.",
-					"Demonflare will fire twice if cast moments before the end of Demonic Ascension. [1] (bug)"
+					"Demonflare will fire twice if cast moments before the end of Demonic Ascension. (bug)"
 				],
 				"wikiTitle": "Template:Data Swain/Demonflare",
 				"wikiRevId": 4002226,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -15987,7 +16224,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Caitlyn",
 		"id": 51,
 		"name": "Caitlyn",
-		"title": "the Sheriff of Piltover",
+		"title": "The Sheriff of Piltover",
 		"wikiPage": "Caitlyn",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -16069,6 +16306,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Caitlyn/Headshot",
 				"wikiRevId": 3982560,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16102,6 +16340,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Caitlyn/Piltover Peacemaker",
 				"wikiRevId": 4007583,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16135,6 +16374,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Caitlyn/Yordle Snap Trap",
 				"wikiRevId": 4023135,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16171,6 +16411,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Caitlyn/90 Caliber Net",
 				"wikiRevId": 4007584,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16259,6 +16500,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Caitlyn/Ace in the Hole",
 				"wikiRevId": 3982561,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -16269,7 +16511,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Blitzcrank",
 		"id": 53,
 		"name": "Blitzcrank",
-		"title": "the Great Steam Golem",
+		"title": "The Great Steam Golem",
 		"wikiPage": "Blitzcrank",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -16344,6 +16586,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Blitzcrank/Mana Barrier",
 				"wikiRevId": 3908089,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16428,6 +16671,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Blitzcrank/Rocket Grab",
 				"wikiRevId": 4026708,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16460,6 +16704,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Blitzcrank/Overdrive",
 				"wikiRevId": 3906572,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16495,6 +16740,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Blitzcrank/Power Fist",
 				"wikiRevId": 4041159,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16533,6 +16779,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Blitzcrank/Static Field",
 				"wikiRevId": 3956748,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -16617,6 +16864,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Malphite/Granite Shield",
 				"wikiRevId": 3973718,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16654,6 +16902,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Malphite/Seismic Shard",
 				"wikiRevId": 4003493,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16663,9 +16912,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "<spellPassive>Passive: </spellPassive>Malphite gains <scaleArmor>{{ bonusarmorpassive*100 }}% Armor (%i:scaleArmor%{{ f1 }})</scaleArmor>. This effect is increased to <scaleArmor>{{ bonusarmorpassive*300 }}% (%i:scaleArmor%{{ f2 }})</scaleArmor> while <spellName>Granite Shield</spellName> is active.<br /><br /><spellPassive>Active: </spellPassive>Malphite's next Attack deals an additional <physicalDamage>{{ totalbonusdamage }} physical damage</physicalDamage> and creates an aftershock which deals <physicalDamage>{{ thunderclapsplash }} physical damage</physicalDamage> %i:OnHit% <OnHit>On-Hit</OnHit> in their direction. His Attacks continue to create aftershocks %i:OnHit% <OnHit>On-Hit</OnHit> for the next {{ thunderclapbuffduration }} seconds.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Passive: Malphite gains bonus armor, tripled while Granite Shield is active.\n\nActive: Malphite empowers his next basic attack within 6 seconds to have an uncancellable windup, gain 50 bonus range, and deal additional physical damage on-hit.\n\nAdditionally, Malphite's basic attacks on-hit for the next 5 seconds are empowered to trigger a cone in the direction of the target that deals physical damage to enemies hit.\n\nThunderclap deals 180% damage against monsters.",
 				"leveling": [
-					"Bonus Armor: to% armor\nIncreased Bonus Armor: \n- to *% armor",
-					"Additional Physical Damage: 30 / 40 / 50 / 60 / 70 (+ % AP) (+ % armor)",
-					"Physical Damage: 15 / 25 / 35 / 45 / 55 (+ % AP) (+ % armor)"
+					"Bonus Armor: 10 / 15 / 20 / 25 / 30% armor\nIncreased Bonus Armor: 30 / 45 / 60 / 75 / 90% armor",
+					"Additional Physical Damage: 30 / 40 / 50 / 60 / 70 (+ 20% AP) (+ 15% armor)",
+					"Physical Damage: 15 / 25 / 35 / 45 / 55 (+ 30% AP) (+ 15% armor)"
 				],
 				"cooldown": "10 / 9.5 / 9 / 8.5 / 8",
 				"cost": "30 / 35 / 40 / 45 / 50",
@@ -16699,6 +16948,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Malphite/Thunderclap",
 				"wikiRevId": 4013417,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16708,7 +16958,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Malphite slams the ground, dealing <magicDamage>{{ edamagecalc }} magic damage</magicDamage> and reducing <attackSpeed>Attack Speed by {{ asreduction }}%</attackSpeed> for {{ duration }} seconds.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Malphite slams the ground beneath him, dealing magic damage to nearby enemies and crippling them for 3 seconds.",
 				"leveling": [
-					"Magic Damage: 60 / 95 / 130 / 165 / 200 (+ % AP) (+ % armor)\nCripple Strength: 30 / 35 / 40 / 45 / 50%"
+					"Magic Damage: 60 / 95 / 130 / 165 / 200 (+ 60% AP) (+ 40% armor)\nCripple Strength: 30 / 35 / 40 / 45 / 50%"
 				],
 				"cooldown": "7",
 				"cost": "50 / 55 / 60 / 65 / 70",
@@ -16731,6 +16981,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Malphite/Ground Slam",
 				"wikiRevId": 3985874,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16766,6 +17017,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Malphite/Unstoppable Force",
 				"wikiRevId": 4007750,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -16776,7 +17028,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Katarina",
 		"id": 55,
 		"name": "Katarina",
-		"title": "the Sinister Blade",
+		"title": "The Sinister Blade",
 		"wikiPage": "Katarina",
 		"resource": "None",
 		"rangeType": "Melee",
@@ -16851,6 +17103,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Katarina/Voracity",
 				"wikiRevId": 4038392,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16885,6 +17138,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Katarina/Bouncing Blade",
 				"wikiRevId": 4015158,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16916,6 +17170,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Katarina/Preparation",
 				"wikiRevId": 3845920,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -16996,6 +17251,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Katarina/Shunpo",
 				"wikiRevId": 4007625,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17078,6 +17334,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Katarina/Death Lotus",
 				"wikiRevId": 4044343,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -17088,7 +17345,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Nocturne",
 		"id": 56,
 		"name": "Nocturne",
-		"title": "the Eternal Nightmare",
+		"title": "The Eternal Nightmare",
 		"wikiPage": "Nocturne",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -17163,6 +17420,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nocturne/Umbra Blades",
 				"wikiRevId": 4007794,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17202,6 +17460,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nocturne/Duskbringer",
 				"wikiRevId": 4026429,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17234,6 +17493,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nocturne/Shroud of Darkness",
 				"wikiRevId": 3948584,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17269,6 +17529,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nocturne/Unspeakable Horror",
 				"wikiRevId": 4015219,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17305,13 +17566,14 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Paranoia cannot be recast while grounded or rooted.",
 					"Paranoia's nearsight does not apply to clones.",
 					"Players' screens will turn a different color when Paranoia is cast, based on their perspective: blue for allies and red for enemies.",
-					"If an existing player overlay is overwritten, it will not be added back once Paranoia ends. [1] (unexpected)",
+					"If an existing player overlay is overwritten, it will not be added back once Paranoia ends. (unexpected)",
 					"Experimental Hexplate's Overdrive, Fiendhunter Bolts' Opening Barrage, and Zeke's Convergence's Frostfire Tempest will activate immediately upon Paranoia's first cast. If the recast is used, the buff's duration is refreshed at the end of the dash.",
 					"A spell indicator telegraphed to Nocturne and his allies will be placed on all enemy champions within range of Paranoia's recast while the ability is active. The following images display the indicator for the default skin:"
 				],
 				"wikiTitle": "Template:Data Nocturne/Paranoia",
 				"wikiRevId": 4049972,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -17598,7 +17860,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Maokai",
 		"id": 57,
 		"name": "Maokai",
-		"title": "the Twisted Treant",
+		"title": "The Twisted Treant",
 		"wikiPage": "Maokai",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -17675,6 +17937,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Maokai/Sap Magic",
 				"wikiRevId": 4038409,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17709,6 +17972,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Maokai/Bramble Smash",
 				"wikiRevId": 4046583,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17743,6 +18007,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Maokai/Twisted Advance",
 				"wikiRevId": 3946300,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17780,6 +18045,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Maokai/Sapling Toss",
 				"wikiRevId": 4007687,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17814,6 +18080,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Maokai/Nature's Grasp",
 				"wikiRevId": 3681487,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -17824,7 +18091,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Renekton",
 		"id": 58,
 		"name": "Renekton",
-		"title": "the Butcher of the Sands",
+		"title": "The Butcher of the Sands",
 		"wikiPage": "Renekton",
 		"resource": "Fury",
 		"rangeType": "Melee",
@@ -17898,6 +18165,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renekton/Reign of Anger",
 				"wikiRevId": 3961774,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17930,6 +18198,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renekton/Cull the Meek",
 				"wikiRevId": 4008014,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17972,6 +18241,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renekton/Ruthless Predator",
 				"wikiRevId": 4015473,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -17981,8 +18251,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Renekton dashes, dealing <physicalDamage>{{ basicdamage }} physical damage</physicalDamage>. He generates <keywordMajor>{{ minionragegeneration }} Fury</keywordMajor> per non-champion and <keywordMajor>{{ championragegeneration }} Fury</keywordMajor> per champion hit. Hitting at least one enemy allows Renekton to <recast>Recast</recast> this Ability once for {{ dicetimer }} seconds. <br /><br /><keywordMajor>Fury Bonus</keywordMajor>: The <recast>Recast</recast> dash deals <physicalDamage>{{ empdamage }} physical damage</physicalDamage> instead and removes <scaleArmor>{{ enragedarmorshred }}% Armor</scaleArmor> for {{ shredtimer }} seconds. Does not generate <keywordMajor>Fury</keywordMajor>.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active - Slice: Renekton dashes a fixed distance in the target direction, dealing physical damage to enemies he passes through.\n\nIf Renekton hits an enemy, he can recast Slice and Dice within the next 4 seconds.\n\nRecast - Dice: Renekton repeats the first cast's effects.\n\nBoth casts generate 2 Fury for each non-champion hit and 10 Fury for each champion hit, up to 30 total per cast.",
 				"leveling": [
-					"Physical Damage: to (+ % bonus AD)",
-					"Total Physical Damage: \n- 2 to *2 (+ Expression error: Unexpected * operator.% bonus AD)"
+					"Physical Damage: 40 / 70 / 100 / 130 / 160 (+ 90% bonus AD)",
+					"Total Physical Damage: 80 / 140 / 200 / 260 / 320 (+ 180% bonus AD)"
 				],
 				"cooldown": "16 / 14.5 / 13 / 11.5 / 10",
 				"cost": "",
@@ -18004,6 +18274,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renekton/Slice and Dice",
 				"wikiRevId": 3943397,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18038,6 +18309,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renekton/Dominus",
 				"wikiRevId": 3963895,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -18048,7 +18320,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "JarvanIV",
 		"id": 59,
 		"name": "Jarvan IV",
-		"title": "the Exemplar of Demacia",
+		"title": "The Exemplar of Demacia",
 		"wikiPage": "Jarvan IV",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -18123,6 +18395,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jarvan IV/Martial Cadence",
 				"wikiRevId": 4003791,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18161,6 +18434,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jarvan IV/Dragon Strike",
 				"wikiRevId": 4042687,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18194,6 +18468,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jarvan IV/Golden Aegis",
 				"wikiRevId": 3906940,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18231,6 +18506,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jarvan IV/Demacian Standard",
 				"wikiRevId": 4013709,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18260,15 +18536,15 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"The initial cast and the manual recast count as ability activations for the purposes of on-cast effects such as Spellblade and triggering Force Pulse's passive.",
 					"If the ability is not manually recasted, the secondary effect will trigger without being considered as an ability activation.",
 					"Spell shield will block the damage but not the terrain generation.",
-					"If Jarvan IV's leap is interrupted by another by another forced movement (eg. old Skarner's Impale[1]), the terrain will be generated at Jarvan IV's location when the forced movement ends.",
+					"If Jarvan IV's leap is interrupted by another by another forced movement (eg. old Skarner's Impale), the terrain will be generated at Jarvan IV's location when the forced movement ends.",
 					"Cataclysm will not deal damage, generate terrain, nor refund its cooldown if Jarvan IV is killed while leaping.",
 					"The perimeter is made up of 24 units with 95 pathing radius, 65 gameplay radius and 1350 sight radius each. Only every other unit is rendered visible.",
-					"Ornn's Searing Charge will not destroy the whole ring but only the part that Ornn collides with.",
-					"↑ Jarvan IV R vs old Skarner R"
+					"Ornn's Searing Charge will not destroy the whole ring but only the part that Ornn collides with."
 				],
 				"wikiTitle": "Template:Data Jarvan IV/Cataclysm",
 				"wikiRevId": 4017869,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -18555,7 +18831,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Elise",
 		"id": 60,
 		"name": "Elise",
-		"title": "the Spider Queen",
+		"title": "The Spider Queen",
 		"wikiPage": "Elise",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -18633,6 +18909,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Elise/Spider Queen",
 				"wikiRevId": 3996449,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18665,6 +18942,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Elise/Neurotoxin",
 				"wikiRevId": 3982568,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18706,6 +18984,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Elise/Venomous Bite",
 				"wikiRevId": 3982567,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18739,6 +19018,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Elise/Volatile Spiderling",
 				"wikiRevId": 3906822,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18771,6 +19051,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Elise/Skittering Frenzy",
 				"wikiRevId": 3980350,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18804,6 +19085,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Elise/Cocoon",
 				"wikiRevId": 3906643,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18886,6 +19168,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Elise/Rappel",
 				"wikiRevId": 4007596,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -18917,6 +19200,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Elise/Spider Form",
 				"wikiRevId": 3979322,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -19204,7 +19488,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Orianna",
 		"id": 61,
 		"name": "Orianna",
-		"title": "the Lady of Clockwork",
+		"title": "The Lady of Clockwork",
 		"wikiPage": "Orianna",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -19279,6 +19563,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Orianna/Clockwork Windup",
 				"wikiRevId": 4026443,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -19316,6 +19601,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Orianna/Command: Attack",
 				"wikiRevId": 3995779,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -19348,6 +19634,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Orianna/Command: Dissonance",
 				"wikiRevId": 3958109,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -19387,6 +19674,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Orianna/Command: Protect",
 				"wikiRevId": 3804030,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -19421,6 +19709,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Orianna/Command: Shockwave",
 				"wikiRevId": 4026444,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -19431,7 +19720,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "MonkeyKing",
 		"id": 62,
 		"name": "Wukong",
-		"title": "the Monkey King",
+		"title": "The Monkey King",
 		"wikiPage": "Wukong",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -19503,6 +19792,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Wukong/Stone Skin",
 				"wikiRevId": 3986748,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -19536,6 +19826,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Wukong/Crushing Blow",
 				"wikiRevId": 4051479,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -19545,7 +19836,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Wukong dashes and becomes <keywordStealth>Invisible</keywordStealth> for {{ stealthduration }} second, leaving behind a stationary <keywordMajor>Clone</keywordMajor> for {{ cloneduration }} seconds.<br /><br />The <keywordMajor>Clone</keywordMajor> Attacks nearby enemies Wukong has recently damaged and will mimic his ultimate, each dealing {{ clonedamagemod*100 }}% of normal damage.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Wukong enters invisibility for 1 second and dashes in the target direction, leaving behind a clone of himself at his casting position for 4 seconds.\n\nThe clone is untargetable to allies and can basic attack autonomously, prioritizing the last enemy Wukong damaged. It can also gain the effects of Crushing Blow and Nimbus Strike's bonus attack speed, and casts Cyclone whenever Wukong does.\n\nThe clone deals reduced damage.\n\nSee Pets for more details about Wukong's clone. Wukong can cast any of his abilities during the dash.",
 				"leveling": [
-					"Clone Outgoing Damage: to%"
+					"Clone Outgoing Damage: 40 / 45 / 50 / 55 / 60%"
 				],
 				"cooldown": "22 / 21 / 20 / 19 / 18",
 				"cost": "60 / 55 / 50 / 45 / 40",
@@ -19571,6 +19862,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Wukong/Warrior Trickster",
 				"wikiRevId": 4016976,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -19598,7 +19890,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"projectile": "false",
 				"spellShield": "True",
 				"notes": [
-					"The clones can block non-targeted attacks or abilities for 0.25 seconds after hitting their targets. [1] (unexpected)",
+					"The clones can block non-targeted attacks or abilities for 0.25 seconds after hitting their targets. (unexpected)",
 					"Casting Nimbus Strike interrupts the attack windup of enemies targeting Wukong.(bug)",
 					"Nimbus Strike has an offset distance of 75 units from the target dashed to.",
 					"The ability applies a stack of Electrocute even if the target is untargetable."
@@ -19606,6 +19898,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Wukong/Nimbus Strike",
 				"wikiRevId": 4021858,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -19680,6 +19973,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Wukong/Cyclone",
 				"wikiRevId": 4021867,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -19966,7 +20260,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Brand",
 		"id": 63,
 		"name": "Brand",
-		"title": "the Burning Vengeance",
+		"title": "The Burning Vengeance",
 		"wikiPage": "Brand",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -20045,6 +20339,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Brand/Blaze",
 				"wikiRevId": 4052621,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20078,6 +20373,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Brand/Sear",
 				"wikiRevId": 4007576,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20110,6 +20406,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Brand/Pillar of Flame",
 				"wikiRevId": 3955084,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20143,6 +20440,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Brand/Conflagration",
 				"wikiRevId": 4034693,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20183,6 +20481,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Brand/Pyroclasm",
 				"wikiRevId": 3955099,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -20193,7 +20492,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "LeeSin",
 		"id": 64,
 		"name": "Lee Sin",
-		"title": "the Blind Monk",
+		"title": "The Blind Monk",
 		"wikiPage": "Lee Sin",
 		"resource": "Energy",
 		"rangeType": "Melee",
@@ -20263,6 +20562,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lee Sin/Flurry",
 				"wikiRevId": 4015078,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20294,6 +20594,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lee Sin/Sonic Wave",
 				"wikiRevId": 4026427,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20368,6 +20669,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lee Sin/Resonating Strike",
 				"wikiRevId": 4026428,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20406,6 +20708,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lee Sin/Safeguard",
 				"wikiRevId": 4024314,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20437,6 +20740,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lee Sin/Iron Will",
 				"wikiRevId": 3992654,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20470,6 +20774,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lee Sin/Tempest",
 				"wikiRevId": 4016969,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20499,6 +20804,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lee Sin/Cripple",
 				"wikiRevId": 4007641,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20540,6 +20846,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lee Sin/Dragon's Rage",
 				"wikiRevId": 4032576,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -20826,7 +21133,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Vayne",
 		"id": 67,
 		"name": "Vayne",
-		"title": "the Night Hunter",
+		"title": "The Night Hunter",
 		"wikiPage": "Vayne",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -20898,6 +21205,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vayne/Night Hunter",
 				"wikiRevId": 3920984,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20933,6 +21241,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vayne/Tumble",
 				"wikiRevId": 4057476,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -20967,6 +21276,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vayne/Silver Bolts",
 				"wikiRevId": 4057477,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21006,6 +21316,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vayne/Condemn",
 				"wikiRevId": 4008541,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21040,6 +21351,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vayne/Final Hour",
 				"wikiRevId": 3807995,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -21050,7 +21362,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Rumble",
 		"id": 68,
 		"name": "Rumble",
-		"title": "the Mechanized Menace",
+		"title": "The Mechanized Menace",
 		"wikiPage": "Rumble",
 		"resource": "Heat",
 		"rangeType": "Melee",
@@ -21123,6 +21435,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rumble/Junkyard Titan",
 				"wikiRevId": 3985666,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21130,10 +21443,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Flamespitter",
 				"riotSummary": "Rumble torches opponents in front of him, dealing magic damage in a cone for 3 seconds. While in Danger Zone this damage is increased.",
 				"riotTooltip": "Rumble ignites his flamethrower, dealing <magicDamage>{{ flatdamage }} plus {{ healthdamage*100 }}% max Health magic damage</magicDamage> over {{ flamespitterduration }} seconds, reduced to <attention>{{ minionmod*100 }}%</attention> against minions.<br /><br /><keywordMajor>Danger Zone:</keywordMajor> Damage is increased to <magicDamage>{{ empowereddamage }} plus {{ empoweredhealth }} max Health</magicDamage>.<br /><br /><rules>Percent damage is limited to {{ monstercap }} damage on Monsters. </rules>{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Rumble generates 20 Heat to activate his flamethrower for 3 seconds, spewing forth flames in a frontal cone every 0.25 seconds. Enemies hit by the flame are scorched for 0.6 seconds, taking magic damage every 0.25 seconds as well as upon being hit if not currently scorched, refreshing on subsequent inflictions.\nFlamespitter's damage is reduced to\n- 100% against minions.\n\nDanger Zone Bonus: Flamespitter's damage is increased by 50%.\nFlamespitter's total damage based on the target's health is capped at 65 – 336.84 (based on level) against monsters.",
+				"wikiDescription": "Active: Rumble generates 20 Heat to activate his flamethrower for 3 seconds, spewing forth flames in a frontal cone every 0.25 seconds. Enemies hit by the flame are scorched for 0.6 seconds, taking magic damage every 0.25 seconds as well as upon being hit if not currently scorched, refreshing on subsequent inflictions.\nFlamespitter's damage is reduced to 70% against minions.\n\nDanger Zone Bonus: Flamespitter's damage is increased by 50%.\nFlamespitter's total damage based on the target's health is capped at 65 – 336.84 (based on level) against monsters.",
 				"leveling": [
-					"Minimum Magic Damage: (/12)*3 to (/12)*3 (+ (/12)*3% AP) (+ (/12)*3 to (/12)*3% of target's maximum health)\nMagic Damage per Second: (/12)*4 to (/12)*4 (+ (/12)*4% AP) (+ (/12)*4 to (/12)*4% of target's maximum health)\nMagic Damage per Tick: /12 to /12 (+ /12% AP) (+ /12 to /12% of target's maximum health)\nMaximum Magic Damage: \n- (15/12) to *(15/12) (+\n- (15/12)% AP) (+\n- (15/12) to *(15/12)% of target's maximum health)\nMinimum Minion Damage: (/12)*3* to (/12)*3* (+ (/12)*3*% AP) (+ (/12)*3* to (/12)*3*% of target's maximum health)\nMinion Damage per Second: (/12)*4* to (/12)*4* (+ (/12)*4*% AP) (+ (/12)*4* to (/12)*4*% of target's maximum health)\nMinion Damage per Tick: (/12)* to (/12)* (+ (*)/12% AP) (+ (/12)* to (/12)*% of target's maximum health)\nMaximum Minion Damage: \n- (15/12)* to *(15/12)* (+\n- (15/12)*% AP) (+\n- (15/12)* to *(15/12)*% of target's maximum health)",
-					"Minimum Enhanced Damage: (/12)*3*1.5 to (/12)*3*1.5 (+ (/12)*3*1.5% AP) (+ (/12)*3*1.5 to (/12)*3*1.5% of target's maximum health)\nEnhanced Damage per Second: (/12)*4*1.5 to (/12)*4*1.5 (+ (/12)*4*1.5% AP) (+ (/12)*4*1.5 to (/12)*4*1.5% of target's maximum health)\nEnhanced Damage per Tick: (/12)*1.5 to (/12)*1.5 (+ (/12)*1.5% AP) (+ (/12)*1.5 to (/12)*1.5% of target's maximum health)\nMaximum Enhanced Damage: \n- (15/12)*1.5 to *(15/12)*1.5 (+\n- (15/12)*1.5% AP) (+\n- (15/12)*1.5 to *(15/12)*1.5% of target's maximum health)\nMinimum Enhanced Minion Damage: (/12)*3**1.5 to (/12)*3**1.5 (+ (/12)*3**1.5% AP) (+ (/12)*3**1.5 to (/12)*3**1.5% of target's maximum health)\nEnhanced Minion Damage per Second: (/12)*4**1.5 to (/12)*4**1.5 (+ (/12)*4**1.5% AP) (+ (/12)*4**1.5 to (/12)*4**1.5% of target's maximum health)\nEnhanced Minion Damage per Tick: (/12)**1.5 to (/12)**1.5 (+ (/12)**1.5% AP) (+ (/12)**1.5 to (/12)**1.5% of target's maximum health)\nMaximum Enhanced Minion Damage: \n- (15/12)**1.5 to *(15/12)**(15/12)*1.5 (+\n- (15/12)**1.5% AP) (+\n- (15/12)**1.5 to *(15/12)**1.5% of target's maximum health)"
+					"Minimum Magic Damage: 12.5 / 18.75 / 25 / 31.25 / 37.5 (+ 26.25% AP) (+ 1.5 / 1.625 / 1.75 / 1.875 / 2% of target's maximum health)\nMagic Damage per Second: 16.67 / 25 / 33.33 / 41.67 / 50 (+ 35% AP) (+ 2 / 2.167 / 2.333 / 2.5 / 2.667% of target's maximum health)\nMagic Damage per Tick: 4.167 / 6.25 / 8.333 / 10.417 / 12.5 (+ 8.75% AP) (+ 0.5 / 0.542 / 0.583 / 0.625 / 0.667% of target's maximum health)\nMaximum Magic Damage: 62.5 / 93.75 / 125 / 156.25 / 187.5 (+ 131.25% AP) (+ 7.5 / 8.13 / 8.75 / 9.38 / 10% of target's maximum health)\nMinimum Minion Damage: 8.75 / 13.13 / 17.5 / 21.88 / 26.25 (+ 18.38% AP) (+ 1.05 / 1.14 / 1.23 / 1.31 / 1.4% of target's maximum health)\nMinion Damage per Second: 11.67 / 17.5 / 23.33 / 29.17 / 35 (+ 24.5% AP) (+ 1.4 / 1.52 / 1.63 / 1.75 / 1.87% of target's maximum health)\nMinion Damage per Tick: 2.917 / 4.375 / 5.833 / 7.292 / 8.75 (+ 6.125% AP) (+ 0.35 / 0.379 / 0.408 / 0.438 / 0.467% of target's maximum health)\nMaximum Minion Damage: 43.75 / 65.63 / 87.5 / 109.38 / 131.25 (+ 91.88% AP) (+ 5.25 / 5.69 / 6.13 / 6.56 / 7% of target's maximum health)",
+					"Minimum Enhanced Damage: 18.75 / 28.125 / 37.5 / 46.875 / 56.25 (+ 39.375% AP) (+ 2.25 / 2.438 / 2.625 / 2.813 / 3% of target's maximum health)\nEnhanced Damage per Second: 25 / 37.5 / 50 / 62.5 / 75 (+ 52.5% AP) (+ 3 / 3.25 / 3.5 / 3.75 / 4% of target's maximum health)\nEnhanced Damage per Tick: 6.25 / 9.375 / 12.5 / 15.625 / 18.75 (+ 13.125% AP) (+ 0.75 / 0.813 / 0.875 / 0.938 / 1% of target's maximum health)\nMaximum Enhanced Damage: 93.75 / 140.63 / 187.5 / 234.38 / 281.25 (+ 196.88% AP) (+ 11.25 / 12.19 / 13.13 / 14.06 / 15% of target's maximum health)\nMinimum Enhanced Minion Damage: 13.125 / 19.688 / 26.25 / 32.813 / 39.375 (+ 27.563% AP) (+ 1.575 / 1.706 / 1.838 / 1.969 / 2.1% of target's maximum health)\nEnhanced Minion Damage per Second: 17.5 / 26.25 / 35 / 43.75 / 52.5 (+ 36.75% AP) (+ 2.1 / 2.275 / 2.45 / 2.625 / 2.8% of target's maximum health)\nEnhanced Minion Damage per Tick: 4.375 / 6.563 / 8.75 / 10.938 / 13.125 (+ 9.188% AP) (+ 0.525 / 0.569 / 0.613 / 0.656 / 0.7% of target's maximum health)\nMaximum Enhanced Minion Damage: 65.63 / 110.74 / 155.86 / 200.98 / 246.09 (+ 137.81% AP) (+ 7.88 / 8.53 / 9.19 / 9.84 / 10.5% of target's maximum health)"
 				],
 				"cooldown": "10 / 9 / 8 / 7 / 6",
 				"cost": "",
@@ -21160,6 +21473,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rumble/Flamespitter",
 				"wikiRevId": 4034705,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21169,9 +21483,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Rumble tosses up a barrier, gaining <shield>{{ totalshield }} Shield</shield> for {{ shieldduration.1 }} seconds and <speed>{{ movespeed*100 }}% Move Speed</speed> for {{ movespeedduration }} second.<br /><br /><keywordMajor>Danger Zone:</keywordMajor> The barrier grants <shield>{{ empoweredshield }} Shield</shield> and <speed>{{ empoweredms }} Move Speed</speed> instead.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Rumble generates 20 Heat to grant himself a shield for 1.5 seconds.\n\nRumble also gains bonus movement speed for 1 to 1.32 seconds.\n\nDanger Zone Bonus: Scrap Shield's shield strength and bonus movement speed are increased in effectiveness by 50%.",
 				"leveling": [
-					"Shield Strength: to (+ % AP) (+ % of maximum health)",
-					"Bonus Movement Speed: to%",
-					"Enhanced Shield Strength: \n- 1.5 to *1.5 (+\n- 1.5% AP) (+\n- 1.5% of maximum health)\nEnhanced Bonus Movement Speed: \n- 1.5 to *1.5%"
+					"Shield Strength: 25 / 55 / 85 / 115 / 145 (+ 30% AP) (+ 4% of maximum health)",
+					"Bonus Movement Speed: 10 / 15 / 20 / 25 / 30%",
+					"Enhanced Shield Strength: 37.5 / 82.5 / 127.5 / 172.5 / 217.5 (+ 45% AP) (+ 6% of maximum health)\nEnhanced Bonus Movement Speed: 15 / 22.5 / 30 / 37.5 / 45%"
 				],
 				"cooldown": "6",
 				"cost": "",
@@ -21194,6 +21508,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rumble/Scrap Shield",
 				"wikiRevId": 3923327,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21203,8 +21518,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Rumble launches an electrified harpoon, dealing <magicDamage>{{ totaldamage }} magic damage</magicDamage>, <status>Slowing</status> by {{ baseslowamount }}% for {{ slowduration }} seconds, and reducing the enemy's <scaleMR>Magic Resist</scaleMR> by {{ percmagicpen*100 }}% for {{ shredduration }} seconds.<br /><br />Hitting an enemy who's already <status>Slowed</status> by this Ability increases the <status>Slow</status> to {{ empoweredslowamount }}% and reduces the enemy's <scaleMR>Magic Resist</scaleMR> by {{ enhancedmagicpen*100 }}%<br /><br /><keywordMajor>Danger Zone:</keywordMajor> The harpoon deals <magicDamage>{{ empdamage }} magic damage</magicDamage> instead and the <status>Slow</status> and reduced <scaleMR>Magic Resist</scaleMR> are increased by 50%.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Rumble generates 20 Heat to shoot a harpoon in the target direction that deals magic damage to the first enemy hit, inflicting them with magic resistance reduction for 4 seconds and slowing them for 2 seconds. These effects stack additively with multiple harpoons, refreshing their duration and stacking up to 2 times.\n\nRumble periodically stocks an Electro Harpoon charge, up to a maximum of 2.\n\nDanger Zone Bonus: Electro Harpoon's effects are increased by 50%.\n\nIf Rumble casts Electro Harpoon before his mech becomes Overheated, he may still use another charge within 3 seconds of the initial cast.",
 				"leveling": [
-					"Magic Damage: to (+ % AP)\nTotal Magic Damage: \n- 2 to *2 (+\n- 2% AP)\nMagic Resistance Reduction: to%\nTotal MR Reduction: \n- 2 to *2%\nSlow: to%\nTotal Slow: \n- 2 to *2%",
-					"Enhanced Damage: \n- 1.5 to *1.5 (+\n- 1.5% AP)\nTotal Enhanced Damage: \n- 1.5*2 to *1.5*2 (+\n- 1.5*2% AP)\nEnhanced Magic Resistance Reduction: \n- 1.5 to *1.5%\nTotal Enhanced MR Reduction: \n- 1.5*2 to *1.5*2%\nEnhanced Slow: \n- 1.5 to *1.5%\nTotal Enhanced Slow: \n- 1.5*2 to *1.5*2%"
+					"Magic Damage: 55 / 80 / 105 / 130 / 155 (+ 50% AP)\nTotal Magic Damage: 110 / 160 / 210 / 260 / 310 (+ 100% AP)\nMagic Resistance Reduction: 10 / 12 / 14 / 16 / 18%\nTotal MR Reduction: 20 / 24 / 28 / 32 / 36%\nSlow: 15 / 20 / 25 / 30 / 35%\nTotal Slow: 30 / 40 / 50 / 60 / 70%",
+					"Enhanced Damage: 82.5 / 120 / 157.5 / 195 / 232.5 (+ 75% AP)\nTotal Enhanced Damage: 165 / 240 / 315 / 390 / 465 (+ 150% AP)\nEnhanced Magic Resistance Reduction: 15 / 18 / 21 / 24 / 27%\nTotal Enhanced MR Reduction: 30 / 36 / 42 / 48 / 54%\nEnhanced Slow: 22.5 / 30 / 37.5 / 45 / 52.5%\nTotal Enhanced Slow: 45 / 60 / 75 / 90 / 105%"
 				],
 				"cooldown": "0.5",
 				"cost": "",
@@ -21232,6 +21547,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rumble/Electro Harpoon",
 				"wikiRevId": 4008020,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21241,7 +21557,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Rumble launches a line of rockets, creating a burning trail that lasts {{ trailduration }} seconds, <status>Slowing</status> by {{ slowamount }}% and dealing <magicDamage>{{ damagepersecond }} magic damage</magicDamage> per second.<br /><br />Rumble can control the direction of the trail by clicking and dragging while casting this Ability.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Rumble deploys a barrage of rockets from the sky along the target path in a line over 0.75 seconds. Each rocket impacts the ground to create a field of fire that lasts 4.5 seconds.\n\nEnemies struck by the impact or within the field are marked Burning for 1 second, taking magic damage every 0.25 seconds and being slowed by 35%, refreshing while in the area. Enemies may be Burning for up to 5 seconds, for a total of 20 instances of its effect.",
 				"leveling": [
-					"Magic Damage per Tick: /4 to /4 (+ /4% AP)\nMagic Damage per Second: to (+ % AP)\nMaximum Magic Damage: \n- 5 to *5 (+\n- 5% AP)"
+					"Magic Damage per Tick: 30 / 50 / 70 (+ 8.75% AP)\nMagic Damage per Second: 120 / 200 / 280 (+ 35% AP)\nMaximum Magic Damage: 600 / 1000 / 1400 (+ 175% AP)"
 				],
 				"cooldown": "130 / 105 / 80",
 				"cost": "",
@@ -21266,6 +21582,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rumble/The Equalizer",
 				"wikiRevId": 4008021,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -21276,7 +21593,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Cassiopeia",
 		"id": 69,
 		"name": "Cassiopeia",
-		"title": "the Serpent's Embrace",
+		"title": "The Serpent's Embrace",
 		"wikiPage": "Cassiopeia",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -21345,6 +21662,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Cassiopeia/Serpentine Grace",
 				"wikiRevId": 4060357,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21385,6 +21703,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Cassiopeia/Noxious Blast",
 				"wikiRevId": 4060358,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21420,6 +21739,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Cassiopeia/Miasma",
 				"wikiRevId": 3936292,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21459,6 +21779,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Cassiopeia/Twin Fang",
 				"wikiRevId": 4060419,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21496,6 +21817,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Cassiopeia/Petrifying Gaze",
 				"wikiRevId": 4060360,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -21506,7 +21828,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Skarner",
 		"id": 72,
 		"name": "Skarner",
-		"title": "the Primordial Sovereign",
+		"title": "The Primordial Sovereign",
 		"wikiPage": "Skarner",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -21581,6 +21903,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Skarner/Threads of Vibration",
 				"wikiRevId": 4050105,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21641,6 +21964,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Skarner/Shattered Earth",
 				"wikiRevId": 4051324,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21679,6 +22003,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Skarner/Upheaval",
 				"wikiRevId": 4008045,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21712,6 +22037,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Skarner/Seismic Bastion",
 				"wikiRevId": 4008046,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21798,6 +22124,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Skarner/Ixtal's Impact",
 				"wikiRevId": 4000401,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -21913,6 +22240,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Skarner/Impale",
 				"wikiRevId": 4059028,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -22199,7 +22527,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Heimerdinger",
 		"id": 74,
 		"name": "Heimerdinger",
-		"title": "the Revered Inventor",
+		"title": "The Revered Inventor",
 		"wikiPage": "Heimerdinger",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -22271,6 +22599,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Heimerdinger/Hextech Affinity",
 				"wikiRevId": 3428651,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22304,6 +22633,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Heimerdinger/H-28G Evolution Turret",
 				"wikiRevId": 4036534,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22334,6 +22664,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Heimerdinger/H-28Q Apex Turret",
 				"wikiRevId": 4025020,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22341,10 +22672,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Hextech Micro-Rockets",
 				"riotSummary": "Heimerdinger fires long-range rockets that converge on his cursor.",
 				"riotTooltip": "Heimerdinger unleashes a barrage of {{ rockets }} rockets that deal <magicDamage>{{ damage }} magic damage</magicDamage> to the first enemy hit. Additional rocket hits deal reduced damage.<br /><br />Max Damage: <magicDamage>{{ totaldamage }} magic damage</magicDamage>.<br /><br />Nearby <keywordMajor>Turrets</keywordMajor> gain 20% charge per rocket that hits a champion.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Heimerdinger launches a wave of 5 rockets that converge upon the target location and fan beyond it up to a maximum range, with each one dealing magic damage to the first enemy it hits. Every rocket hitting an enemy champion grants 20% beam charge to all turrets within 1000 range, up to a maximum of 100% beam charge when hitting 5 rockets on an enemy champion.\n\nEnemies can be hit by multiple rockets, but receive less damage from ones beyond the first. Against minions, this lesser damage is increased by -100%.",
+				"wikiDescription": "Active: Heimerdinger launches a wave of 5 rockets that converge upon the target location and fan beyond it up to a maximum range, with each one dealing magic damage to the first enemy it hits. Every rocket hitting an enemy champion grants 20% beam charge to all turrets within 1000 range, up to a maximum of 100% beam charge when hitting 5 rockets on an enemy champion.\n\nEnemies can be hit by multiple rockets, but receive less damage from ones beyond the first. Against minions, this lesser damage is increased by 200%.",
 				"leveling": [
-					"Initial Rocket Magic Damage: to (+ % AP)",
-					"Subsequent Rocket Magic Damage: to (+ % AP)\nTotal Subsequent Non-Minion Damage: 4* to 4* (+ 4*% AP)\nCombined Total Non-Minion Damage: +4* to +4* (+ +4*% AP)\nSubsequent Rocket Minion Damage: \n- to * (+\n- % AP)\nTotal Subsequent Minion Damage: 4** to 4** (+ 4**% AP)\nCombined Total Minion Damage: +4** to +4** (+ +4**% AP)"
+					"Initial Rocket Magic Damage: 50 / 75 / 100 / 125 / 150 (+ 55% AP)",
+					"Subsequent Rocket Magic Damage: 10 / 15 / 20 / 25 / 30 (+ 12% AP)\nTotal Subsequent Non-Minion Damage: 40 / 60 / 80 / 100 / 120 (+ 48% AP)\nCombined Total Non-Minion Damage: 90 / 135 / 180 / 225 / 270 (+ 103% AP)\nSubsequent Rocket Minion Damage: 30 / 45 / 60 / 75 / 90 (+ 36% AP)\nTotal Subsequent Minion Damage: 120 / 180 / 240 / 300 / 360 (+ 144% AP)\nCombined Total Minion Damage: 170 / 255 / 340 / 425 / 510 (+ 199% AP)"
 				],
 				"cooldown": "11 / 10 / 9 / 8 / 7",
 				"cost": "50 / 60 / 70 / 80 / 90",
@@ -22368,6 +22699,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Heimerdinger/Hextech Micro-Rockets",
 				"wikiRevId": 3989864,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22375,10 +22707,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Hextech Rocket Swarm",
 				"riotSummary": "",
 				"riotTooltip": "",
-				"wikiDescription": "UPGRADE!!! - Active: Heimerdinger unleashes 4 waves of 5 rockets in quick succession that converge upon the target location. Each rocket deals magic damage to the first enemy hit.\n\nEnemies can be hit by multiple rockets. Champions and monsters receive less damage from the second to fifth rockets that hit them, which is reduced by\n- 100% for rockets beyond the fifth. Minions instead always receive 100% of the initial damage from every single rocket.",
+				"wikiDescription": "UPGRADE!!! - Active: Heimerdinger unleashes 4 waves of 5 rockets in quick succession that converge upon the target location. Each rocket deals magic damage to the first enemy hit.\n\nEnemies can be hit by multiple rockets. Champions and monsters receive less damage from the second to fifth rockets that hit them, which is reduced by 50% for rockets beyond the fifth. Minions instead always receive 100% of the initial damage from every single rocket.",
 				"leveling": [
-					"Hextech Rocket Swarm scales with UPGRADE!!!'s rank\nInitial Rocket Damage: to 3 (+ % AP)",
-					"Rockets 2–5 Magic Damage: to 3 (+ % AP)\nRockets 6–20 Magic Damage: \n- 0.5 to *0.5 3 (+\n- 0.5% AP)\nCombined Total Non-Minion Damage: +4*+15**0.5 to +4*+15**0.5 3 (+ +4*+15**0.5% AP)\nMinion Damage per Rocket: to 3 (+ % AP)\nCombined Total Minion Damage: 20* to 20* 3 (+ 20*% AP)"
+					"Hextech Rocket Swarm scales with UPGRADE!!!'s rank\nInitial Rocket Damage: 135 / 180 / 225 (+ 45% AP)",
+					"Rockets 2–5 Magic Damage: 32 / 45 / 58 (+ 12% AP)\nRockets 6–20 Magic Damage: 16 / 22.5 / 29 (+ 6% AP)\nCombined Total Non-Minion Damage: 503 / 697.5 / 892 (+ 183% AP)\nMinion Damage per Rocket: 135 / 180 / 225 (+ 45% AP)\nCombined Total Minion Damage: 2700 / 3600 / 4500 (+ 900% AP)"
 				],
 				"cooldown": "11 / 10 / 9 / 8 / 7",
 				"cost": "",
@@ -22403,6 +22735,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Heimerdinger/Hextech Rocket Swarm",
 				"wikiRevId": 3965590,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22435,6 +22768,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Heimerdinger/CH-2 Electron Storm Grenade",
 				"wikiRevId": 4022980,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22466,6 +22800,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Heimerdinger/CH-3X Lightning Grenade",
 				"wikiRevId": 3965591,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22497,6 +22832,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Heimerdinger/UPGRADE!!!",
 				"wikiRevId": 4006857,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -22507,7 +22843,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Nasus",
 		"id": 75,
 		"name": "Nasus",
-		"title": "the Curator of the Sands",
+		"title": "The Curator of the Sands",
 		"wikiPage": "Nasus",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -22579,6 +22915,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nasus/Soul Eater",
 				"wikiRevId": 4057470,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22615,6 +22952,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nasus/Siphoning Strike",
 				"wikiRevId": 4052280,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22649,6 +22987,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nasus/Wither",
 				"wikiRevId": 4063986,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22681,6 +23020,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nasus/Spirit Fire",
 				"wikiRevId": 4035787,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22713,6 +23053,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nasus/Fury of the Sands",
 				"wikiRevId": 4007699,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -22723,7 +23064,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Nidalee",
 		"id": 76,
 		"name": "Nidalee",
-		"title": "the Bestial Huntress",
+		"title": "The Bestial Huntress",
 		"wikiPage": "Nidalee",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -22793,6 +23134,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nidalee/Prowl",
 				"wikiRevId": 4007706,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22828,6 +23170,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nidalee/Javelin Toss",
 				"wikiRevId": 3971597,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22866,6 +23209,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nidalee/Takedown",
 				"wikiRevId": 3948934,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22897,6 +23241,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nidalee/Bushwhack",
 				"wikiRevId": 4015217,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22931,6 +23276,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nidalee/Pounce",
 				"wikiRevId": 4007707,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22962,6 +23308,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nidalee/Primal Surge",
 				"wikiRevId": 3907033,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -22995,6 +23342,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nidalee/Swipe",
 				"wikiRevId": 3959337,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -23024,6 +23372,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nidalee/Aspect of the Cougar",
 				"wikiRevId": 3547669,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -23311,7 +23660,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Udyr",
 		"id": 77,
 		"name": "Udyr",
-		"title": "the Spirit Walker",
+		"title": "The Spirit Walker",
 		"wikiPage": "Udyr",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -23395,6 +23744,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Udyr/Bridge Between",
 				"wikiRevId": 3983420,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -23402,9 +23752,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Wilding Claw",
 				"riotSummary": "Udyr gains attack speed and his next two attacks deal bonus physical damage. Recast: Gain even more attack speed, and the next two attacks call lightning to strike the target.",
 				"riotTooltip": "<spellActive>Claw Stance:</spellActive> Udyr gains <attackSpeed>{{ attackspeedbase*100 }}% Attack Speed</attackSpeed> and his Attacks deal <physicalDamage>{{ onhitdamage }} physical damage</physicalDamage> %i:OnHit% <OnHit>On-Hit</OnHit> for {{ attackspeeddurationbase }} seconds. Additionally, Udyr's next two Attacks in this stance deal a bonus <physicalDamage>{{ maxhponhit1 }} max Health physical damage</physicalDamage> and gain {{ attackrange }} range.<br /><br /><keywordMajor>Awaken:</keywordMajor> Increase bonus <attackSpeed>Attack Speed</attackSpeed> to <attackSpeed>{{ empoweredtotalas }}</attackSpeed> and max Health damage to <physicalDamage>{{ q2totalonhithpdamage }}</physicalDamage>. Additionally, Udyr's next two Attacks call lightning six times, dealing a total of <magicDamage>{{ empoweredlightningbonusmax }} max Health magic damage</magicDamage> to isolated targets (strikes bounce to other nearby targets when possible).<br />{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active - Stance: Udyr enters Claw Stance, empowering his next two basic attacks to gain 50 bonus range and deal bonus physical damage on-hit, capped at 15 (+ 100% bonus AD) (+ 50% AP) against monsters.\n\nAdditionally, Udyr gains bonus attack speed and deals bonus physical damage on-hit for 4 seconds.\n\nRecast - Awaken: Udyr gains an additional 20% – 75.88% (based on level) bonus attack speed. The empowered attacks deal an additional 2% – 4.24% (based on level) (+ nil% per 100 bonus AD) (+ 0.1% per 100 bonus health) of the target's maximum health bonus physical damage if used within 4 seconds. Udyr's next two basic attacks on-hit in any Stance within 4 seconds are each empowered to strike with lightning「 6 times over 1 second, 」「 every 0.2 seconds over 1 second, 」dealing bonus magic damage equal to 1.5% – 3.18% (based on level) (+ 0.6% per 100 AP) of the target's maximum health per hit, chaining to up to 3 nearby visible enemies and being able to hit the same target multiple times, for a total of 9% – 19.06% (based on level) (+ 3.6% per 100 AP) of the target's maximum health. Each lightning strike deals a minimum of 40 – 174.12 (based on level) against minions and is capped at 15 (+ 100% bonus AD) (+ 50% AP) against monsters.",
+				"wikiDescription": "Active - Stance: Udyr enters Claw Stance, empowering his next two basic attacks to gain 50 bonus range and deal bonus physical damage on-hit, capped at 15 (+ 100% bonus AD) (+ 50% AP) against monsters.\n\nAdditionally, Udyr gains bonus attack speed and deals bonus physical damage on-hit for 4 seconds.\n\nRecast - Awaken: Udyr gains an additional 20% – 75.88% (based on level) bonus attack speed. The empowered attacks deal an additional 2% – 4.24% (based on level) (+ 1.5% per 100 bonus AD) (+ 0.1% per 100 bonus health) of the target's maximum health bonus physical damage if used within 4 seconds. Udyr's next two basic attacks on-hit in any Stance within 4 seconds are each empowered to strike with lightning「 6 times over 1 second, 」「 every 0.2 seconds over 1 second, 」dealing bonus magic damage equal to 1.5% – 3.18% (based on level) (+ 0.6% per 100 AP) of the target's maximum health per hit, chaining to up to 3 nearby visible enemies and being able to hit the same target multiple times, for a total of 9% – 19.06% (based on level) (+ 3.6% per 100 AP) of the target's maximum health. Each lightning strike deals a minimum of 40 – 174.12 (based on level) against minions and is capped at 15 (+ 100% bonus AD) (+ 50% AP) against monsters.",
 				"leveling": [
-					"Bonus Physical Damage: 3 / 4 / 5 / 6 / 7 / 8% (+ nil% per 100 bonus AD) of target's maximum health\nTotal Physical Damage: 6 / 8 / 10 / 12 / 14 / 16% (+\n- 2% per 100 bonus AD) of target's maximum health",
+					"Bonus Physical Damage: 3 / 4 / 5 / 6 / 7 / 8% (+ 3.5% per 100 bonus AD) of target's maximum health\nTotal Physical Damage: 6 / 8 / 10 / 12 / 14 / 16% (+ 7% per 100 bonus AD) of target's maximum health",
 					"Bonus Attack Speed: 20 / 32 / 44 / 56 / 68 / 80%\nBonus Physical Damage On-Hit: 6 / 12 / 18 / 24 / 30 / 36 (+ 20% bonus AD) (+ 1 / 1.2 / 1.4 / 1.6 / 1.8 / 2% bonus health)"
 				],
 				"cooldown": "6",
@@ -23432,6 +23782,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Udyr/Wilding Claw",
 				"wikiRevId": 4049976,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -23439,7 +23790,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Iron Mantle",
 				"riotSummary": "Udyr gains a shield and his next two attacks heal him. Recast: Gain an even bigger shield and heal based on max health over the next couple seconds.",
 				"riotTooltip": "<spellPassive>Mantle Stance:</spellPassive> Udyr gains <shield>{{ totalshield }} Shield</shield> for {{ shieldduration }} seconds. Additionally, Udyr's next two Attacks gain {{ lifesteal*100 }}% Life Steal and restore <healing>{{ lifeonhit }} Health</healing>.<br /><br /><keywordMajor>Awaken:</keywordMajor> Gain <shield>{{ recastshield }} Shield</shield>, restore <healing>{{ recastheal }} Health</healing> over {{ shieldduration }} seconds, and Udyr's next two Attacks instead have {{ lifesteal*200 }}% Life Steal and restore <healing>{{ lifeonhitawakened }} Health</healing>.<br />{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active - Stance: Udyr enters Mantle Stance, empowering his next two basic attacks on-hit to gain life steal and heal him for nil% of his maximum health (+ % AP).\n\nAdditionally, Udyr grants himself a shield for seconds.\n\nRecast - Awaken: Udyr increases the shield's strength, stacking with the remaining shield from the first cast, and heals every nil seconds over the next seconds, as well as causes the empowered attacks to instead gain doubled life steal and heal him for\n- 2% of his maximum health (+\n- 2% AP).\n\nHealing on-hit is reduced to 60% against minions.",
+				"wikiDescription": "Active - Stance: Udyr enters Mantle Stance, empowering his next two basic attacks on-hit to gain life steal and heal him for 1.2% of his maximum health (+ 8% AP).\n\nAdditionally, Udyr grants himself a shield for 4 seconds.\n\nRecast - Awaken: Udyr increases the shield's strength, stacking with the remaining shield from the first cast, and heals every 0.25 seconds over the next 4 seconds, as well as causes the empowered attacks to instead gain doubled life steal and heal him for 2.4% of his maximum health (+ 16% AP).\n\nHealing on-hit is reduced to 60% against minions.",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -23463,6 +23814,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Udyr/Iron Mantle",
 				"wikiRevId": 4013279,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cost: ddragon 40 vs wiki 40/21"
 				]
@@ -23498,6 +23850,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Udyr/Blazing Stampede",
 				"wikiRevId": 4052353,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cost: ddragon 40 vs wiki 40/21"
 				]
@@ -23540,6 +23893,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Udyr/Wingborne Storm",
 				"wikiRevId": 4008208,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cost: ddragon 40 vs wiki 40/21"
 				]
@@ -23902,6 +24256,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Poppy/Iron Ambassador",
 				"wikiRevId": 3994225,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -23935,6 +24290,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Poppy/Hammer Shock",
 				"wikiRevId": 4051348,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -23971,6 +24327,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Poppy/Steadfast Presence",
 				"wikiRevId": 4051176,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24009,6 +24366,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Poppy/Heroic Charge",
 				"wikiRevId": 3946254,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24130,6 +24488,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Poppy/Keeper's Verdict",
 				"wikiRevId": 4007992,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -24140,7 +24499,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Gragas",
 		"id": 79,
 		"name": "Gragas",
-		"title": "the Rabble Rouser",
+		"title": "The Rabble Rouser",
 		"wikiPage": "Gragas",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -24212,6 +24571,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gragas/Happy Hour",
 				"wikiRevId": 3985369,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24250,6 +24610,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gragas/Barrel Roll",
 				"wikiRevId": 3907002,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24326,6 +24687,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gragas/Drunken Rage",
 				"wikiRevId": 4013236,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24359,6 +24721,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gragas/Body Slam",
 				"wikiRevId": 4007602,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24390,6 +24753,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gragas/Explosive Cask",
 				"wikiRevId": 3906845,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -24624,7 +24988,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Pantheon",
 		"id": 80,
 		"name": "Pantheon",
-		"title": "the Unbreakable Spear",
+		"title": "The Unbreakable Spear",
 		"wikiPage": "Pantheon",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -24697,6 +25061,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pantheon/Mortal Will",
 				"wikiRevId": 3963570,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24776,6 +25141,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pantheon/Comet Spear",
 				"wikiRevId": 4016044,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24816,6 +25182,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pantheon/Shield Vault",
 				"wikiRevId": 4026707,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24894,6 +25261,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pantheon/Aegis Assault",
 				"wikiRevId": 4049965,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -24981,6 +25349,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pantheon/Grand Starfall",
 				"wikiRevId": 4046502,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -24991,7 +25360,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Ezreal",
 		"id": 81,
 		"name": "Ezreal",
-		"title": "the Prodigal Explorer",
+		"title": "The Prodigal Explorer",
 		"wikiPage": "Ezreal",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -25063,6 +25432,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ezreal/Rising Spell Force",
 				"wikiRevId": 3932280,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25098,6 +25468,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ezreal/Mystic Shot",
 				"wikiRevId": 4013233,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25135,6 +25506,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ezreal/Essence Flux",
 				"wikiRevId": 4059864,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25167,6 +25539,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ezreal/Arcane Shift",
 				"wikiRevId": 3989862,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25200,6 +25573,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ezreal/Trueshot Barrage",
 				"wikiRevId": 4013235,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -25210,7 +25584,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Mordekaiser",
 		"id": 82,
 		"name": "Mordekaiser",
-		"title": "the Iron Revenant",
+		"title": "The Iron Revenant",
 		"wikiPage": "Mordekaiser",
 		"resource": "Shield",
 		"rangeType": "Melee",
@@ -25286,12 +25660,13 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"The on-hit event is not triggered if the triggering attack is dodged, blocked, or missed while Mordekaiser is blinded, thus not generating a Darkness Rise stack. It is still triggered against invulnerable targets, generating a Darkness Rise stack.",
 					"Darkness Rise's area damage alone does not refresh Darkness Rise's buff.",
 					"If Darkness Rise is activated through either Obliterate or Death's Grasp, it will be treated as the same cast instance as the triggering spell.(bug)",
-					"Under these conditions, Darkness Rise will fail to interact with effects that only do so once per cast instance (e.g Conqueror), but will interact with effects such as Spear of Shojin's Focused Will's stacking, which would normally not interact with innate abilities.[1]",
-					"Darkness Rise's damage will be grouped with the triggering spell's damage in the death recap.[2]"
+					"Under these conditions, Darkness Rise will fail to interact with effects that only do so once per cast instance (e.g Conqueror), but will interact with effects such as Spear of Shojin's Focused Will's stacking, which would normally not interact with innate abilities.",
+					"Darkness Rise's damage will be grouped with the triggering spell's damage in the death recap."
 				],
 				"wikiTitle": "Template:Data Mordekaiser/Darkness Rise",
 				"wikiRevId": 4059720,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25301,7 +25676,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Mordekaiser smashes the ground with Nightfall dealing <magicDamage>{{ qdamage }} magic damage</magicDamage>, increased to <magicDamage>{{ empowereddamagetooltip }}</magicDamage> if it hits only a single enemy.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Mordekaiser strikes his mace down in a line in the target direction, dealing magic damage to enemies within, increased if only one enemy is hit.",
 				"leveling": [
-					"Magic Damage: Error: Variables are unmatched. (+ to) (+ % bonus AD) (+ % AP)\nIsolated Damage Increase: -100 / -100 / -100 / -100 / -100%"
+					"Magic Damage: 0 – 55 (based on level) (+ 80 / 115 / 150 / 185 / 220) (+ 120% bonus AD) (+ 70% AP)\nIsolated Damage Increase: 30 / 35 / 40 / 45 / 50%"
 				],
 				"cooldown": "8 / 7 / 6 / 5 / 4",
 				"cost": "",
@@ -25321,18 +25696,19 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"This ability always employs Quick cast.",
 					"This ability will cast from wherever the caster is at the end of the cast time.",
 					"The ability will cast to wherever the caster's cursor was at the start of the cast time.",
-					"If Mordekaiser's location changes during the cast time, the visual effects of Obliterate will be divided into three sections: one forming toward the caster's cursor at the start of the cast, one forming toward the original cast direction, and one following Mordekaiser's facing direction. Only the first will portray the spell's effect accurately.(bug)[3]",
+					"If Mordekaiser's location changes during the cast time, the visual effects of Obliterate will be divided into three sections: one forming toward the caster's cursor at the start of the cast, one forming toward the original cast direction, and one following Mordekaiser's facing direction. Only the first will portray the spell's effect accurately.(bug)",
 					"Applies spell damage if it hits one target and area damage to multiple targets.",
 					"Obliterate's damage against isolated enemies at:",
-					"Rank 1: Error: Variables are unmatched. (+ Expression error: Unexpected * operator.% bonus AD) (+ Expression error: Unexpected * operator.% AP)",
-					"Rank 2: Error: Variables are unmatched. (+ Expression error: Unexpected * operator.% bonus AD) (+ Expression error: Unexpected * operator.% AP)",
-					"Rank 3: Error: Variables are unmatched. (+ Expression error: Unexpected * operator.% bonus AD) (+ Expression error: Unexpected * operator.% AP)",
-					"Rank 4: Error: Variables are unmatched. (+ Expression error: Unexpected * operator.% bonus AD) (+ Expression error: Unexpected * operator.% AP)",
-					"Rank 5: Error: Variables are unmatched. (+ Expression error: Unexpected * operator.% bonus AD) (+ Expression error: Unexpected * operator.% AP)"
+					"Rank 1: 104 – 175.5 (based on level) (+ 156% bonus AD) (+ 91% AP)",
+					"Rank 2: 155.25 – 229.5 (based on level) (+ 162% bonus AD) (+ 94.5% AP)",
+					"Rank 3: 210 – 287 (based on level) (+ 168% bonus AD) (+ 98% AP)",
+					"Rank 4: 268.25 – 348 (based on level) (+ 174% bonus AD) (+ 101.5% AP)",
+					"Rank 5: 330 – 412.5 (based on level) (+ 180% bonus AD) (+ 105% AP)"
 				],
 				"wikiTitle": "Template:Data Mordekaiser/Obliterate",
 				"wikiRevId": 4059697,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25340,9 +25716,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Indestructible",
 				"riotSummary": "Mordekaiser stores damage he deals and takes to create a shield. He may consume the shield to heal.",
 				"riotTooltip": "<passive>Passive:</passive> Mordekaiser stores {{ damageconversion*100 }}% of the damage he deals and {{ damagetakenconversion*100 }}% of the damage he takes.<br /><br /><active>Active:</active> Mordekaiser gains the stored damage as <shield>Shield</shield>. He may <recast>Recast</recast> this Ability to restore <healing>{{ healingpercent*100 }}% of the remaining Shield as Health</healing>.<br /><br />Minimum Shield: <shield>{{ minhealthtooltip }}</shield><br />Maximum Shield: <shield>{{ maxhealthtooltip }}</shield>{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Passive: Mordekaiser stores nil% of the post-mitigation damage he deals and nil% of the pre-mitigation damage he takes,「 reduced by (1-)*100% for non-champion sources, 」「 reduced to\n- % of damage dealt and\n- % of damage taken for non-champion sources, 」as Potential Shield on his secondary resource bar, up to nil% of his maximum health. The Potential Shield decays by 8 – 25 (based on level) every second after not dealing or taking damage for 1 second. While Indestructible is not on cooldown, the Potential Shield will not decay below a minimum of nil% of his maximum health, and it will be set to that amount when it comes off cooldown if it was previously below it.\n\nActive: Mordekaiser consumes his Potential Shield to grant himself a shield for the same amount for 4 seconds. The shield decays exponentially over the duration. Indestructible can be recast after 0.5 seconds while the shield is active.\n\nRecast: Mordekaiser consumes the remaining shield, healing for a portion of the amount.",
+				"wikiDescription": "Passive: Mordekaiser stores 45% of the post-mitigation damage he deals and 7.5% of the pre-mitigation damage he takes,「 reduced by 75% for non-champion sources, 」「 reduced to 11.25% of damage dealt and 1.875% of damage taken for non-champion sources, 」as Potential Shield on his secondary resource bar, up to 30% of his maximum health. The Potential Shield decays by 8 – 25 (based on level) every second after not dealing or taking damage for 1 second. While Indestructible is not on cooldown, the Potential Shield will not decay below a minimum of 5% of his maximum health, and it will be set to that amount when it comes off cooldown if it was previously below it.\n\nActive: Mordekaiser consumes his Potential Shield to grant himself a shield for the same amount for 4 seconds. The shield decays exponentially over the duration. Indestructible can be recast after 0.5 seconds while the shield is active.\n\nRecast: Mordekaiser consumes the remaining shield, healing for a portion of the amount.",
 				"leveling": [
-					"Shield to Healing: \n- 100 to *100%"
+					"Shield to Healing: 35 / 37.5 / 40 / 42.5 / 45%"
 				],
 				"cooldown": "12 / 11 / 10 / 9 / 8",
 				"cost": "",
@@ -25360,18 +25736,13 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "",
 				"notes": [
 					"Both casts count as ability activations for the purposes of on-cast effects such as Spellblade and triggering Force Pulse's passive.",
-					"The recast will heal Mordekaiser for a minimum of",
-					"to *% and up to",
-					"to *% of his maximum health.",
-					"It also effectively converts",
-					"to *% of damage dealt and",
-					"to *% of damage taken, reduced to",
-					"to **% and",
-					"to **% for non-champion sources respectively."
+					"The recast will heal Mordekaiser for a minimum of 1.75 / 1.875 / 2 / 2.125 / 2.25% and up to 10.5 / 11.25 / 12 / 12.75 / 13.5% of his maximum health.",
+					"It also effectively converts 15.75 / 16.875 / 18 / 19.125 / 20.25% of damage dealt and 2.625 / 2.8125 / 3 / 3.1875 / 3.375% of damage taken, reduced to 3.9375 / 4.2188 / 4.5 / 4.7813 / 5.0625% and 0.6563 / 0.7031 / 0.75 / 0.7969 / 0.8438% for non-champion sources respectively."
 				],
 				"wikiTitle": "Template:Data Mordekaiser/Indestructible",
 				"wikiRevId": 4016354,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25406,6 +25777,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Mordekaiser/Death's Grasp",
 				"wikiRevId": 4059699,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25434,7 +25806,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Structures exist in all realms at the same time. Turrets will behave normally as if all units were in the same realm.",
 					"The boundaries of the arena are impassable but not considered terrain themselves ( Unstoppable Onslaught exception), and enemies that try to move out of the area will be displaced back inside.",
 					"Dashes, blinks, displacements and other forms of movement will cap their effect range to the boundary. Targets will stop at the boundary even after it expired.",
-					"During the cast time of Realm of Death, it is possible to pathfind outside the boundaries of the arena by issuing a movement command toward an area that becomes inaccessible due to terrain inside the Death Realm.(bug)[4]",
+					"During the cast time of Realm of Death, it is possible to pathfind outside the boundaries of the arena by issuing a movement command toward an area that becomes inaccessible due to terrain inside the Death Realm.(bug)",
 					"Realm of Death retains Mordekaiser's previous current health percentage when granting him a portion of the target's maximum health.",
 					"Realm of Death's healing is affected by healing modifiers.",
 					"Realm of Death's target will be marked by Mordekaiser for assist credit when entering the Death Realm.",
@@ -25444,14 +25816,14 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Note that all of the above are ineffective if they are applied after the target has been banished.",
 					"The target is a clone or Sion when his Glory in Death is active.",
 					"If the target becomes untargetable, dies, is too far away or Mordekaiser loses sight of them due to nearsight during the cast time, this ability will cancel but does not go on cooldown.",
-					"If either Mordekaiser or the target dies at the same time of the transition into the Death Realm, the Death Realm will not end prematurely and will continue until its full duration has ended.(bug)[5]",
+					"If either Mordekaiser or the target dies at the same time of the transition into the Death Realm, the Death Realm will not end prematurely and will continue until its full duration has ended.(bug)",
 					"If the target dies this way, Mordekaiser will not keep their stats after leaving the Death Realm.",
-					"Tahm Kench's Devour will always trigger this bug if used during the cast of Realm of Death and the spit would kill Mordekaiser.[6]",
+					"Tahm Kench's Devour will always trigger this bug if used during the cast of Realm of Death and the spit would kill Mordekaiser.",
 					"If Mordekaiser or the target cast another Realm of Death, the affected champions will remain stuck for the duration of the new circle.",
 					"The previous circle will be overridden by the new one; it will be dispelled to enter the new circle.",
 					"Spell shield will not block the initial slow.",
 					"The reveal effect lasts for 1.25 seconds from the start of the cast time if the cast does not complete. Otherwise, the reveal ends as soon as the cast time completes.",
-					"Upon entering or leaving the Death Realm, targets revealed by effects such as Ignite or Ashe's Hawkshot will keep the reveal VFX but will stop being revealed.(bug)[7]",
+					"Upon entering or leaving the Death Realm, targets revealed by effects such as Ignite or Ashe's Hawkshot will keep the reveal VFX but will stop being revealed.(bug)",
 					"Camouflaged units will become visible if an enemy champion is within their detection range, even if the champion is in a different realm.(bug)",
 					"If the target's current health is lower than the amount that should be stolen, they will be brought down to 1 health. Mordekaiser will still get the intended amount of maximum health.",
 					"Realm of Death's maximum health reduction ignores invulnerability effects.",
@@ -25468,29 +25840,29 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"The champion's portrait will ocasionally stay even after Mordekaiser has lost hold of the enemy's stats.(bug)",
 					"Realm of Death's interactions with other elements/abilities (This list might be incomplete, last updated on patch V26.16):",
 					"Multiple Death Realms (possible through a hijacked Realm of Death or if multiple Mordekaisers are in the same match) spawned will exist in the same realm, allowing champions to see and interact with champions bound to other circles. Champions are only affected by their boundaries and are not able to see the others.",
-					"If another Realm of Death is cast while one is already active, upon leaving, the spirits from the second Realm of Death will be invisible from the perspective of the players affected by the first Realm of Death.(bug)[8]",
+					"If another Realm of Death is cast while one is already active, upon leaving, the spirits from the second Realm of Death will be invisible from the perspective of the players affected by the first Realm of Death.(bug)",
 					"Tahm Kench's Devour can carry a target outside of their circle, but they will be displaced back inside once Regurgitated.",
 					"An active Cease and Desist on a target outside the perimeter will cause Vi to continue her charge until her circle ends. She can knock back and damage secondary targets multiple times.",
 					"Champions inside the Death Realm continue gaining gold and experience from any source, which includes nearby and global bounties as well as neutral buffs.",
 					"Turret's Crystalline Overgrowth can still be triggered while inside the Death Realm.",
-					"The Overgrowth's VFX of the Outer Turrets (Tier 1) will be invisible inside the Death Realm.(bug)[9]",
+					"The Overgrowth's VFX of the Outer Turrets (Tier 1) will be invisible inside the Death Realm.(bug)",
 					"Wards placed in the Death Realm will not be destroyed at its end.",
 					"The ward limit for each champion will be separate for the Death Realm.",
 					"The faelights and jungle plants ( Blast Cone, Honeyfruit, Scryer's Bloom) will not be present in the Death Realm.",
-					"The faelights indicator will still be visible if the player's cursor is placed in their location.(bug)[10]",
-					"The Blast Cone's landing indicator will still be visible while in the Death Realm and within its range.(bug)[11]",
-					"Monsters, with the exception of Voidgrub's, will be visible for a brief moment after entering the Death Realm, but they will be untargetable.(bug)[12]",
+					"The faelights indicator will still be visible if the player's cursor is placed in their location.(bug)",
+					"The Blast Cone's landing indicator will still be visible while in the Death Realm and within its range.(bug)",
+					"Monsters, with the exception of Voidgrub's, will be visible for a brief moment after entering the Death Realm, but they will be untargetable.(bug)",
 					"Hex-gates on Hextech Rift will not be present between realms.",
 					"Eye of the Herald and Teleport are disabled while in the Death Realm.",
 					"Using Unsealed Spellbook to obtain Teleport while in the Death Realm will enable the user to use it.(bug)",
-					"Using Unsealed Spellbook to swap Teleport for another summoner spell while in the Death Realm will disable the new summoner spell until the user leaves the realm.(bug)[13]",
+					"Using Unsealed Spellbook to swap Teleport for another summoner spell while in the Death Realm will disable the new summoner spell until the user leaves the realm.(bug)",
 					"The Eye of the Herald can still spawn in the Death Realm if its automatically consumed while inside.(unexpected)",
 					"The Herald will die at the end of Realm of Death.",
 					"Controllable pets and clones can still be commanded between realms.",
 					"Mordekaiser will be given gold, if applicable, for pets killed at the end of Realm of Death.",
 					"Clones and Illaoi's Tentacles will not be killed at the end of Realm of Death.(unexpected)",
 					"Annie's Tibbers, Heimerdinger's H-28Q Apex Turret, Ivern's Daisy and Yorick's Maiden are considered as \"large pets\" for the purposes of this ability and will follow their respective champions between realms.",
-					"If Mordekaiser dies inside of the Death Realm while his Darkness Rise is hitting any of these pets, Darkness Rise will keep affecting the pets until they die or Darkness Rise deactivates normally.(bug)[14]",
+					"If Mordekaiser dies inside of the Death Realm while his Darkness Rise is hitting any of these pets, Darkness Rise will keep affecting the pets until they die or Darkness Rise deactivates normally.(bug)",
 					"Switching realms detaches all attached champions on either of the two champions entering the realm.",
 					"The allied health, resource, and ultimate indicators (champion portraits located on the screen) will not update between realms as the players have no vision of them.",
 					"Pings used in the Death Realm will appear in the chat and mini-map, but will not appear in the map.(unexpected)",
@@ -25498,7 +25870,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Except for some cases, spells that require a target to be cast (e.g Akali's Shuriken Flip, Twitch's Contaminate) will not affect enemies in other realms nor will be castable if there's no targets in the same realm as the caster.",
 					"Amumu's Bandage Toss, Blitzcrank's Rocket Grab, Leona's Zenith Blade, Nautilus' Dredge Line, Pyke's Bone Skewer and Thresh's Death Sentence will still hit targets if their caster switches realms before they hit.",
 					"Camille's The Hextech Ultimatum, Dr. Mundo's Goes Where He Pleases, Nunu & Willump's Biggest Snowball Ever! and Absolute Zero, Pyke's Death from Below, Ryze's Realm Warp, Shen's Spirit's Refuge, Taliyah's Worked Ground and Zed's Shadows will follow their caster between realms.",
-					"Braum's Glacial Fissure[15], Pantheon's Grand Starfall*[16], Singed's Mega Adhesive[17], Varus' Hail of Arrows[18], Yasuo's Wind Wall[19], Ziggs' Satchel Charge*[20] and Zilean's Time Bomb*[21] will follow their caster between realms but will only be visible in the realm they were cast.(bug)",
+					"Braum's Glacial Fissure, Pantheon's Grand Starfall*, Singed's Mega Adhesive, Varus' Hail of Arrows, Yasuo's Wind Wall, Ziggs' Satchel Charge* and Zilean's Time Bomb* will follow their caster between realms but will only be visible in the realm they were cast.(bug)",
 					"Ahri's Orb of Deception will stay in the realm it was cast.",
 					"The orb will still go back towards Ahri's position.",
 					"Akshan's Avengerang will stay in the realm it was cast.",
@@ -25508,41 +25880,41 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Bel'Veth's Void Corals will only be present in the realm they spawned in.",
 					"If Bel'Veth switches realms while she is consuming a Void Coral, the Void Coral will dissappear and she will not get her True Form nor deal damage to nearby enemies.",
 					"Camille will still be able to use Hookshot's dash if she switches realms before the spell hits.",
-					"Ekko's Parallel Convergence will only be visible in the realm it was cast, but he will still be able to trigger the spell's effect from another realm and it will only affect enemies in said realm.(bug)[22]",
+					"Ekko's Parallel Convergence will only be visible in the realm it was cast, but he will still be able to trigger the spell's effect from another realm and it will only affect enemies in said realm.(bug)",
 					"Fizz's Chum the Waters will follow its target between realms.",
-					"Galio's Winds of War will follow him if the spell was already on the ground before the realm switch, but it will only be visible in the realm it was cast.(bug)[23]",
-					"Gnar's Boulder Toss boulder will only be visible in the realm it was cast, but he can still pick it up if he goes to its location.(bug)[24]",
+					"Galio's Winds of War will follow him if the spell was already on the ground before the realm switch, but it will only be visible in the realm it was cast.(bug)",
+					"Gnar's Boulder Toss boulder will only be visible in the realm it was cast, but he can still pick it up if he goes to its location.(bug)",
 					"Illaoi's Test of Spirit tether will be destroyed if her target switches realms.",
 					"Test of Spirit's target will not be made into a Vessel.",
 					"Irelia's Flawless Duet will be recast automatically when switching realms, and will only affect enemies in the realm it was cast.",
 					"Ivern's Rootcaller can still be recast if the target is in a different realm than him.",
-					"Ivern's Brushmaker brushes might be visible for a few seconds after switching realms.(bug)[25]",
+					"Ivern's Brushmaker brushes might be visible for a few seconds after switching realms.(bug)",
 					"Passing by the position of a brush created by Brushmaker in another realm will make units transparent for a few seconds, but they will still be visible to the enemy team.",
 					"Jarvan IV's Cataclysm deactivation VFX will appear in the realm he is at.",
 					"Kai'Sa's Killer Instinct can only be cast towards enemies in the same realm she is at.",
 					"Kalista's Fate's Call cannot be cast if her oathsworn is in another realm, but if the spell was cast before entering the Death Realm, it will function as normal and will only affect targets in the oathsworn's realm.",
 					"Karthus' Requiem will damage enemies in all realms.",
 					"Kayn's Umbral Trespass will be interrupted and will not deal damage if its target switches realms.",
-					"Kog'Maw's Void Ooze will follow him between realms.(bug)[26]",
+					"Kog'Maw's Void Ooze will follow him between realms.(bug)",
 					"A part of the VFX will be left in the realm it was cast.",
 					"Lillia's Lilting Lullaby will only affect enemies in the same realm as her.",
 					"Lissandra's Glacial Path can still be recast if the spell was initially cast in another realm.",
 					"Lulu's Pix will follow her between realms.",
-					"However, if Pix is on another champion, it will visually stay in Lulu's realm but will keep affecting enemies in the Death Realm.(bug)[27]",
+					"However, if Pix is on another champion, it will visually stay in Lulu's realm but will keep affecting enemies in the Death Realm.(bug)",
 					"Pix will still be able to return to Lulu as normal, even if her ally's still in the Death Realm.",
 					"If Locke's Purgatory's totem is in the ground, it will follow Locke between realms.(bug)",
 					"If the totem closes in a different realm than Locke, the totem will be visible in Locke's realm but it will only be pickable in the realm it closed.(bug)",
 					"Lux's Prismatic Barrier will grant her its second shield if she switches realms as the wand is coming back.",
 					"Lux's Final Spark will follow her between realms.",
-					"The beam's VFX will only be visible in the realm it was cast.(bug)[28]",
+					"The beam's VFX will only be visible in the realm it was cast.(bug)",
 					"Malzahar's Void Shift is special cased to not resist the slow but instead resist the realm switch after the cast completes.",
-					"Malzahar's Call of the Void will follow him if used moments before the realm switch. Also, a part of the VFX will be left in the realm it was cast.(bug)[29]",
+					"Malzahar's Call of the Void will follow him if used moments before the realm switch. Also, a part of the VFX will be left in the realm it was cast.(bug)",
 					"Mel's Golden Eclipse will only deal damage to enemies in the same realm she is at the end of the cast.",
-					"Miss Fortune's Make It Rain will follow her between realms.(bug)[30]",
+					"Miss Fortune's Make It Rain will follow her between realms.(bug)",
 					"The spell's area VFX will not follow.(bug)",
 					"Naafiri's Hounds' Pursuit dash will still go through if she switches realms during the cast.",
 					"Nasus' Spirit Fire will stay in the realm it was cast.",
-					"However, the spell will keep affecting enemies in another realm if they were already affected by it before switching realms and they have not left the spell's area.(bug)[31]",
+					"However, the spell will keep affecting enemies in another realm if they were already affected by it before switching realms and they have not left the spell's area.(bug)",
 					"Nautilus' Depth Charge will not follow its target between realms.",
 					"Neeko's Inherent Glamour does not copy Mordekaiser's Realm of Death form.",
 					"Neeko's Pop Blossom will follow her between realms but only the leap VFX will be visible.",
@@ -25551,14 +25923,14 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Nocturne's Paranoia only applies nearsight to enemy champions in the same realm as him.",
 					"Orianna's Ball will go back to her after switching realms.",
 					"Orianna's Command: Shockwave will follow her between realms if her ball is not on the ground.",
-					"However, if her ball is on the ground, Command: Shockwave will still follow her between realms but its shockwave will be invisible.(bug)[32]",
-					"Additionally, if Command: Shockwave is buffered while her ball is still flying and she switches realms, Command: Shockwave's will appear on top of Orianna, but the actual shockwave will occur at the location her ball was supposed to land.(bug)[33]",
-					"Poppy's Keeper's Verdict can send Mordekaiser outside of the Death Realm arena if she uses it during Realm of Death's cast.(bug)[34]",
+					"However, if her ball is on the ground, Command: Shockwave will still follow her between realms but its shockwave will be invisible.(bug)",
+					"Additionally, if Command: Shockwave is buffered while her ball is still flying and she switches realms, Command: Shockwave's will appear on top of Orianna, but the actual shockwave will occur at the location her ball was supposed to land.(bug)",
+					"Poppy's Keeper's Verdict can send Mordekaiser outside of the Death Realm arena if she uses it during Realm of Death's cast.(bug)",
 					"Pyke's Phantom Undertow will not follow him if he switches realms while the Phantom is coming back.",
-					"Rakan's Grand Entrance will follow him between realms, but its initial VFX will not.(bug)[35]",
+					"Rakan's Grand Entrance will follow him between realms, but its initial VFX will not.(bug)",
 					"Rek'Sai's Tunnels will not follow her between realms.",
 					"If Rek'Sai is already on a tunnel when switching realms, her dash will not be interrupted.",
-					"Sion's Decimating Smash VFX will follow him between realms, but the spell will only affect enemies in the realm it was cast.(bug)[36]",
+					"Sion's Decimating Smash VFX will follow him between realms, but the spell will only affect enemies in the realm it was cast.(bug)",
 					"Soraka's Wish will heal targets in all realms.",
 					"Swain's Nevermove can still be recast if the target is in another realm, but nothing will happen.(unexpected)",
 					"Sylas' Abduct will not hit enemies if he switches realms during the spell's animation.",
@@ -25569,7 +25941,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Talon's Shadow Assault will follow him between realms but the blades will be invisible. The blades will become visible again on recast.",
 					"Taric's Bastion link will be temporarily disabled while in the Death Realm. The link will not break.",
 					"Thresh's Dark Passage will go back to him on realm switch.",
-					"Thresh's The Box pillars will be visible in all realms, but it will only affect enemies in the realm it was cast.(bug)[37]",
+					"Thresh's The Box pillars will be visible in all realms, but it will only affect enemies in the realm it was cast.(bug)",
 					"Udyr's Wingborne Storm will stay in the realm it was cast.",
 					"If the storm's target is sent to a different realm than Udyr, the storm will start following him instead.",
 					"The storm's tracking VFX will stay in its target until the end of the spell.(bug)",
@@ -25582,16 +25954,16 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Xayah's Bladecaller cannot call Feathers between realms.",
 					"Yasuo's Last Breath will be interrupted if its target switches realms, unless the target is Mordekaiser.",
 					"Yone's Soul Unbound cannot be recast inside of the Death Realm.",
-					"Yorick's Maiden will not die with him if he dies inside of the Death Realm.(bug)[38]",
+					"Yorick's Maiden will not die with him if he dies inside of the Death Realm.(bug)",
 					"Eulogy of the Isles will still go on cooldown and Yorick will be able to summon another Maiden once the cooldown ends.",
 					"If Yorick has more than one Maiden and one of them dies, Eulogy of the Isles will go on cooldown, even though there is still a Maiden in the map.",
 					"Zaahen's Dreaded Return will only pull affected enemies in the same realm it was cast.",
 					"Cryptbloom's nova will spawn at the user's realm and will only affect targets in said realm.",
-					"Elixir of Iron's trail will follow between realms, but it will be invisible.(bug)[39]",
-					"Iceborn Gauntlet's frost field will follow between realms, but it will be invisible.(bug)[40]",
-					"Redemption's beam will only affect targets in the realm it was cast, but its SFX will be heard in all realms.(bug)[41]",
-					"Dark Harvest's souls VFX will not follow between realms, but they will still be reaped succesfully.(bug)[42]",
-					"Glacial Augment's glacial rays will follow between realms, but they will be invisible.(bug)[43]",
+					"Elixir of Iron's trail will follow between realms, but it will be invisible.(bug)",
+					"Iceborn Gauntlet's frost field will follow between realms, but it will be invisible.(bug)",
+					"Redemption's beam will only affect targets in the realm it was cast, but its SFX will be heard in all realms.(bug)",
+					"Dark Harvest's souls VFX will not follow between realms, but they will still be reaped succesfully.(bug)",
+					"Glacial Augment's glacial rays will follow between realms, but they will be invisible.(bug)",
 					"Type",
 					":",
 					"Cast time",
@@ -25636,6 +26008,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Mordekaiser/Realm of Death",
 				"wikiRevId": 4063933,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -25718,6 +26091,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yorick/Shepherd of Souls",
 				"wikiRevId": 4008645,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25749,6 +26123,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yorick/Last Rites",
 				"wikiRevId": 4001491,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25780,6 +26155,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yorick/Awakening",
 				"wikiRevId": 3907373,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25809,12 +26185,13 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Dark Procession has a turret prioritization value of 6, equal to that of super minions.",
 					"Yorick's other pets each have a lower prioritization value, allowing him to delay the turret from targeting the The Maiden or a Mist Walker for one attack.",
 					"Dark Procession deals 0 proc true damage to enemies it knocks aside, which triggers in-combat effects such as drawing turret and monster aggression, Sudden Impact or applying Elixir of Sorcery.",
-					"The perimeter is made up of 18 units with 100 pathing radius and 20 gameplay radius each, which interact with effects like Warwick's Eternal Hunger. [1]",
+					"The perimeter is made up of 18 units with 100 pathing radius and 20 gameplay radius each, which interact with effects like Warwick's Eternal Hunger.",
 					"Yorick marks any enemy champion within repeatedly while the cage persists in order to gain assist credit, lasting for the standard credit timer."
 				],
 				"wikiTitle": "Template:Data Yorick/Dark Procession",
 				"wikiRevId": 4051828,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25850,6 +26227,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yorick/Mourning Mist",
 				"wikiRevId": 4046036,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -25886,6 +26264,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yorick/Eulogy of the Isles",
 				"wikiRevId": 3972823,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -25896,7 +26275,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Akali",
 		"id": 84,
 		"name": "Akali",
-		"title": "the Rogue Assassin",
+		"title": "The Rogue Assassin",
 		"wikiPage": "Akali",
 		"resource": "Energy",
 		"rangeType": "Melee",
@@ -25976,6 +26355,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akali/Assassin's Mark",
 				"wikiRevId": 4038192,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26010,6 +26390,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akali/Five Point Strike",
 				"wikiRevId": 4007404,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26044,6 +26425,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akali/Twilight Shroud",
 				"wikiRevId": 4007406,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26126,6 +26508,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akali/Shuriken Flip",
 				"wikiRevId": 4007568,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26163,6 +26546,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akali/Perfect Execution",
 				"wikiRevId": 4011498,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -26173,7 +26557,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Kennen",
 		"id": 85,
 		"name": "Kennen",
-		"title": "the Heart of the Tempest",
+		"title": "The Heart of the Tempest",
 		"wikiPage": "Kennen",
 		"resource": "Energy",
 		"rangeType": "Ranged",
@@ -26245,6 +26629,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kennen/Mark of the Storm",
 				"wikiRevId": 3932481,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26276,6 +26661,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kennen/Thundering Shuriken",
 				"wikiRevId": 3936401,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26314,6 +26700,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kennen/Electrical Surge",
 				"wikiRevId": 4057481,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26347,6 +26734,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kennen/Lightning Rush",
 				"wikiRevId": 4015350,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26378,6 +26766,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kennen/Slicing Maelstrom",
 				"wikiRevId": 4051345,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -26463,6 +26852,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Garen/Perseverance",
 				"wikiRevId": 4038338,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26497,11 +26887,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"The enhanced attack will still complete and hit the target even if they become untargetable during the attack's windup.",
 					"Decisive Strike will not prevent the reapplication of slows (e.g. the persistent slow from Pillar of Ice will be immediately reapplied after removal if Garen is still within its area of effect).",
 					"Spell shield will only negate the silence.",
-					"Decisive Strike's lunge can pass very thin terrain and will otherwise not be able to. In any case, Garen will still hit his target.[1]"
+					"Decisive Strike's lunge can pass very thin terrain and will otherwise not be able to. In any case, Garen will still hit his target."
 				],
 				"wikiTitle": "Template:Data Garen/Decisive Strike",
 				"wikiRevId": 4004895,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26549,6 +26940,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Garen/Courage",
 				"wikiRevId": 4059879,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26556,10 +26948,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Judgment",
 				"riotSummary": "Garen rapidly spins his sword around his body, dealing physical damage to nearby enemies.",
 				"riotTooltip": "Garen rapidly spins his sword for {{ duration }} seconds, dealing <physicalDamage>{{ totaldamage }} physical damage</physicalDamage> {{ f1 }} times over the duration. The nearest enemy takes <physicalDamage>{{ nearestenemybonus*100 }}% increased damage</physicalDamage>. Champions hit by {{ stackstoshred }} strikes lose <scaleArmor>{{ shredamount*100 }}% Armor</scaleArmor> for {{ shredduration }} seconds.<br /><br /><recast>Recast</recast>: Garen ends this Ability early.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Garen rapidly spins his sword around himself (+ 1 per % bonus attack speed) times over 3 seconds, becoming unable to declare basic attacks but gaining ghosting and dealing physical damage to nearby enemies periodically. Judgment can be recast after 1 second while active, and does so automatically after it ends.\n\nEnemy champions hit 6 times by Judgment are inflicted with 25% armor reduction for 6 seconds, with the duration refreshing upon the 7th hit and every 6th hit thereafter.\n\nJudgment deals -100% increased damage against the nearest enemy hit.\n\nRecast: Garen ends Judgment.",
+				"wikiDescription": "Active: Garen rapidly spins his sword around himself 7 (+ 1 per 25% bonus attack speed) times over 3 seconds, becoming unable to declare basic attacks but gaining ghosting and dealing physical damage to nearby enemies periodically. Judgment can be recast after 1 second while active, and does so automatically after it ends.\n\nEnemy champions hit 6 times by Judgment are inflicted with 25% armor reduction for 6 seconds, with the duration refreshing upon the 7th hit and every 6th hit thereafter.\n\nJudgment deals 25% increased damage against the nearest enemy hit.\n\nRecast: Garen ends Judgment.",
 				"leveling": [
-					"Physical Damage Per Spin: 4 / 7 / 10 / 13 / 16 (+ to% AD)\nCritical Strike Damage Per Spin: 4*(1+) to 16*(1+) (+\n- (1+) to *(1+)% AD)\nIE Damage Per Spin: 4*(1++) to 16*(1++) (+\n- (1++) to *(1++)% AD)",
-					"Increased Damage Per Spin: 4* to 16* (+\n- to *% AD)\nIncreased Critical Strike Damage Per Spin: 4**(1+) to 16**(1+) (+\n- (1+) to **(1+)% AD)\nIncreased IE Damage Per Spin: 4**(1++) to 16**(1++) (+\n- (1++) to **(1++)% AD)"
+					"Physical Damage Per Spin: 4 / 7 / 10 / 13 / 16 (+ 40 / 43 / 46 / 49 / 52% AD)\nCritical Strike Damage Per Spin: 5.2 / 9.1 / 13 / 16.9 / 20.8 (+ 52 / 55.9 / 59.8 / 63.7 / 67.6% AD)\nIE Damage Per Spin: 5.56 / 9.73 / 13.9 / 18.07 / 22.24 (+ 55.6 / 59.77 / 63.94 / 68.11 / 72.28% AD)",
+					"Increased Damage Per Spin: 5 / 8.75 / 12.5 / 16.25 / 20 (+ 50 / 53.75 / 57.5 / 61.25 / 65% AD)\nIncreased Critical Strike Damage Per Spin: 6.5 / 11.375 / 16.25 / 21.125 / 26 (+ 65 / 69.875 / 74.75 / 79.625 / 84.5% AD)\nIncreased IE Damage Per Spin: 6.95 / 12.1625 / 17.375 / 22.5875 / 27.8 (+ 69.5 / 74.7125 / 79.925 / 85.1375 / 90.35% AD)"
 				],
 				"cooldown": "9 / 8.25 / 7.5 / 6.75 / 6",
 				"cost": "",
@@ -26576,7 +26968,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"projectile": "",
 				"spellShield": "false",
 				"notes": [
-					"At level 20, Garen will spin a minimum of +Expression error: Missing operand for /. times.",
+					"At level 20, Garen will spin a minimum of 9 times.",
 					"Deactivating the ability manually does not count as an ability activation for the purposes of on-cast effects such as Spellblade and triggering Force Pulse's passive.",
 					"Each spin triggers a stack of Conqueror.",
 					"For the purpose of moving closer to an enemy when right clicking them, Judgment also reduces Garen's attack range 「 to 100 」「 by 75 」 for the duration.",
@@ -26626,6 +27018,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Garen/Judgment",
 				"wikiRevId": 4009435,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26635,7 +27028,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Garen calls upon the might of Demacia to slay his enemy, dealing <trueDamage>{{ basedamage }} plus {{ executedamage*100 }}% missing Health true damage</trueDamage>.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Garen calls upon the might of Demacia onto the target enemy champion, dealing them true damage as well as revealing them for 1 second at the start of the cast time.",
 				"leveling": [
-					"True Damage: to (+ to% of target's missing health)"
+					"True Damage: 125 / 200 / 275 (+ 25 / 30 / 35% of target's missing health)"
 				],
 				"cooldown": "120 / 100 / 80",
 				"cost": "",
@@ -26652,7 +27045,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"projectile": "",
 				"spellShield": "True",
 				"notes": [
-					"The target will die if they're at least under ( to )/(1+( to )/100)% maximum health + ( to )/(1+( to )/100) flat health on top of that. This does not count effects that mitigate true damage, such as shields.",
+					"The target will die if they're at least under 20 / 23.08 / 25.93% maximum health + 100 / 153.85 / 203.7 flat health on top of that. This does not count effects that mitigate true damage, such as shields.",
 					"If Garen dies during Demacian Justice's cast time, it will visually appear as on cooldown and he won't be able to cast it until the cooldown has elapsed.(bug)",
 					"This is fixed by clicking Demacian Justice's icon on the UI at the bottom of the screen.",
 					"If the target becomes untargetable, dies, or is too far away or no longer in sight during the cast time, this ability will cancel but does not go on cooldown nor pay its cost (if applicable)."
@@ -26660,6 +27053,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Garen/Demacian Justice",
 				"wikiRevId": 4042864,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -26670,7 +27064,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Leona",
 		"id": 89,
 		"name": "Leona",
-		"title": "the Radiant Dawn",
+		"title": "The Radiant Dawn",
 		"wikiPage": "Leona",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -26743,6 +27137,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Leona/Sunlight",
 				"wikiRevId": 4038401,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26783,6 +27178,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Leona/Shield of Daybreak",
 				"wikiRevId": 4001219,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26817,6 +27213,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Leona/Eclipse",
 				"wikiRevId": 4042253,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26854,6 +27251,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Leona/Zenith Blade",
 				"wikiRevId": 4007645,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -26887,6 +27285,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Leona/Solar Flare",
 				"wikiRevId": 4007649,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -26897,7 +27296,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Malzahar",
 		"id": 90,
 		"name": "Malzahar",
-		"title": "the Prophet of the Void",
+		"title": "The Prophet of the Void",
 		"wikiPage": "Malzahar",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -26970,12 +27369,13 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"However, if Malzahar has a spell shield and is hit by an effect that isn't negated by the spell shield, then if the shield fully mitigates the damage, Void Shift will not be consumed.",
 					"Spell shields take priority over Void Shift for abilities that contain a crowd control effect.",
 					"Void Shift will specifically not deactivate if Malzahar eats Honeyfruit or is within a hostile Frozen Heart passive aura.",
-					"Void Shift does not prevent Zoe's Sleepy Trouble Bubble's trap drowsy. [1] (unexpected)",
+					"Void Shift does not prevent Zoe's Sleepy Trouble Bubble's trap drowsy. (unexpected)",
 					"Void Shift is special cased to prevent Fizz's Chum the Waters, and Thresh's Death Sentence from attaching to Malzahar."
 				],
 				"wikiTitle": "Template:Data Malzahar/Void Shift",
 				"wikiRevId": 4035856,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27008,6 +27408,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Malzahar/Call of the Void",
 				"wikiRevId": 3906985,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27041,6 +27442,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Malzahar/Void Swarm",
 				"wikiRevId": 4041818,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27074,6 +27476,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Malzahar/Malefic Visions",
 				"wikiRevId": 4015185,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27102,7 +27505,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "special",
 				"notes": [
 					"Applies persistent damage for the tether, and persistent area damage additionally tagged as indirect to enemies within the Null Zone.",
-					"Spell shield prevents both the tether and the Null Zone from appearing, however Malzahar will continue to channel. [2]",
+					"Spell shield prevents both the tether and the Null Zone from appearing, however Malzahar will continue to channel.",
 					"The tether will not break if the target enters a zombie state or enters resurrection.",
 					"As long as the target is within the tether radius, they will take the full tether damage over 2.5 seconds even if they are not tethered due to the tether being broken early into the channel.(bug)",
 					"This occurs regardless of how the tether was broken.",
@@ -27158,6 +27561,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Malzahar/Nether Grasp",
 				"wikiRevId": 4015186,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -27168,7 +27572,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Talon",
 		"id": 91,
 		"name": "Talon",
-		"title": "the Blade's Shadow",
+		"title": "The Blade's Shadow",
 		"wikiPage": "Talon",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -27243,6 +27647,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Talon/Blade's End",
 				"wikiRevId": 4046483,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27283,6 +27688,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Talon/Noxian Diplomacy",
 				"wikiRevId": 4015970,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27321,6 +27727,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Talon/Rake",
 				"wikiRevId": 4008077,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27355,6 +27762,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Talon/Assassin's Path",
 				"wikiRevId": 3907201,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 2"
 				]
@@ -27395,6 +27803,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Talon/Shadow Assault",
 				"wikiRevId": 4008078,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -27405,7 +27814,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Riven",
 		"id": 92,
 		"name": "Riven",
-		"title": "the Exile",
+		"title": "The Exile",
 		"wikiPage": "Riven",
 		"resource": "None",
 		"rangeType": "Melee",
@@ -27481,6 +27890,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Riven/Runic Blade",
 				"wikiRevId": 3989876,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27518,6 +27928,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Riven/Broken Wings",
 				"wikiRevId": 4025373,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27551,6 +27962,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Riven/Ki Burst",
 				"wikiRevId": 4024218,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27583,6 +27995,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Riven/Valor",
 				"wikiRevId": 3959341,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27615,6 +28028,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Riven/Blade of the Exile",
 				"wikiRevId": 4046587,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27653,6 +28067,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Riven/Wind Slash",
 				"wikiRevId": 4046588,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -27663,7 +28078,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "KogMaw",
 		"id": 96,
 		"name": "Kog'Maw",
-		"title": "the Mouth of the Abyss",
+		"title": "The Mouth of the Abyss",
 		"wikiPage": "Kog'Maw",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -27765,6 +28180,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kog'Maw/Icathian Surprise",
 				"wikiRevId": 4038400,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27797,6 +28213,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kog'Maw/Caustic Spittle",
 				"wikiRevId": 3960434,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27828,6 +28245,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kog'Maw/Bio-Arcane Barrage",
 				"wikiRevId": 4052263,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27861,6 +28279,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kog'Maw/Void Ooze",
 				"wikiRevId": 3965135,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -27891,6 +28310,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kog'Maw/Living Artillery",
 				"wikiRevId": 4007636,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cost: ddragon 40 vs wiki 40/400"
 				]
@@ -27903,7 +28323,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Shen",
 		"id": 98,
 		"name": "Shen",
-		"title": "the Eye of Twilight",
+		"title": "The Eye of Twilight",
 		"wikiPage": "Shen",
 		"resource": "Energy",
 		"rangeType": "Melee",
@@ -27980,6 +28400,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shen/Ki Barrier",
 				"wikiRevId": 3985839,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28017,6 +28438,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shen/Twilight Assault",
 				"wikiRevId": 4008038,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28049,6 +28471,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shen/Spirit's Refuge",
 				"wikiRevId": 3977238,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28082,6 +28505,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shen/Shadow Dash",
 				"wikiRevId": 4007754,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28167,6 +28591,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shen/Stand United",
 				"wikiRevId": 4004939,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -28177,7 +28602,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Lux",
 		"id": 99,
 		"name": "Lux",
-		"title": "the Lady of Luminosity",
+		"title": "The Lady of Luminosity",
 		"wikiPage": "Lux",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -28256,6 +28681,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lux/Illumination",
 				"wikiRevId": 4059694,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28290,6 +28716,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lux/Light Binding",
 				"wikiRevId": 4007675,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28330,6 +28757,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lux/Prismatic Barrier",
 				"wikiRevId": 3992656,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28365,6 +28793,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lux/Lucent Singularity",
 				"wikiRevId": 4007677,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28438,6 +28867,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lux/Final Spark",
 				"wikiRevId": 3919833,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -28448,7 +28878,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Xerath",
 		"id": 101,
 		"name": "Xerath",
-		"title": "the Magus Ascendant",
+		"title": "The Magus Ascendant",
 		"wikiPage": "Xerath",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -28523,6 +28953,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xerath/Mana Surge",
 				"wikiRevId": 3986753,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28532,11 +28963,11 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "<charge>Begin Charging:</charge> Xerath begins charging an arcane beam, <status>Slowing</status> himself gradually up to 50%. <br /><br /><release>Release:</release> Xerath fires the beam, dealing <magicDamage>{{ tooltiptotaldamage }} magic damage</magicDamage>. The range increases with time charged.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Xerath charges while being slowed by 0% – 40% (based on channel time) for up to 3 seconds to increase Arcanopulse's range over the first 1.5 to 1.75 seconds of the channel.\n\nArcanopulse can be recast within the duration. If the charge is interrupted or completes without reactivation, Arcanopulse is cancelled and refunds half the mana cost.\n\nRecast: Xerath becomes unable to act for 0.528 seconds and afterwards fires a beam of energy in a line in the target direction that deals magic damage to enemies hit.",
 				"leveling": [
-					"Mana Refunded: /2 to /2",
+					"Mana Refunded: 40 / 45 / 50 / 55 / 60",
 					"Magic Damage: 70 / 110 / 150 / 190 / 230 (+ 90% AP)"
 				],
 				"cooldown": "9 / 8 / 7 / 6 / 5",
-				"cost": "to",
+				"cost": "80 / 90 / 100 / 110 / 120",
 				"costType": "mana",
 				"targetRange": "",
 				"castTime": "none",
@@ -28637,6 +29068,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xerath/Arcanopulse",
 				"wikiRevId": 4057478,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28671,6 +29103,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xerath/Eye of Destruction",
 				"wikiRevId": 4008622,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28702,6 +29135,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xerath/Shocking Orb",
 				"wikiRevId": 3881560,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28788,6 +29222,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xerath/Rite of the Arcane",
 				"wikiRevId": 4002918,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -28798,7 +29233,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Shyvana",
 		"id": 102,
 		"name": "Shyvana",
-		"title": "the Half-Dragon",
+		"title": "The Half-Dragon",
 		"wikiPage": "Shyvana",
 		"resource": "Fury",
 		"rangeType": "Melee",
@@ -28848,7 +29283,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Scalemail",
 				"riotSummary": "Takedowns on enemy champions, large minions, and large monsters grant Shyvana Scalemail stacks, improving her defenses.",
 				"riotTooltip": "",
-				"wikiDescription": "Innate: Shyvana generates Scalemail stacks from scoring takedowns against certain enemies. Large monsters and large minions grant 1 stack, while enemy champions and epic monsters grant 3.\n\nScalemail: For each stack, Shyvana gains nil bonus armor and nil bonus magic resistance.",
+				"wikiDescription": "Innate: Shyvana generates Scalemail stacks from scoring takedowns against certain enemies. Large monsters and large minions grant 1 stack, while enemy champions and epic monsters grant 3.\n\nScalemail: For each stack, Shyvana gains 0.3 bonus armor and 0.3 bonus magic resistance.",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -28864,14 +29299,13 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"damageType": "",
 				"projectile": "",
 				"spellShield": "",
-				"notes": [
-					"Each Scalemail stack is worth Expression error: Unexpected * operator..",
-					"armor is worth Expression error: Unexpected * operator..",
-					"magic resistance is worth Expression error: Unexpected * operator.."
-				],
+				"notes": [],
 				"wikiTitle": "Template:Data Shyvana/Scalemail",
 				"wikiRevId": 4001512,
 				"agreed": true,
+				"withheld": [
+					"notes: the wiki returned an expression or script error"
+				],
 				"conflicts": []
 			},
 			{
@@ -28910,6 +29344,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shyvana/Emberstrike",
 				"wikiRevId": 4049991,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28940,6 +29375,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shyvana/Inferno Aegis",
 				"wikiRevId": 4021912,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28947,10 +29383,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Molten Burst",
 				"riotSummary": "Shyvana launches a fireball that explodes upon striking a large target and slows them. In Dragon Form, it passes through and explodes upon striking large enemies, leaving behind a trail of fire.",
 				"riotTooltip": "Shyvana launches a fireball at the target location dealing <magicDamage>{{ damage }} + {{ calc_max_health_damage }} Max health magic damage</magicDamage> and <status>Slowing by {{ calc_slow }} for {{ slowduration }} seconds</status>. It explodes upon striking an enemy or reaching its terminus.<br /><br /><keywordMajor>Dragon Form:</keywordMajor> Shyvana's fireball is larger and pierces through enemies. Upon striking a champion, large monster, or reaching its terminus it triggers a pulse of fire that deals <magicDamage>{{ calc_dragon_damage }}  + {{ calc_max_health_dragon_damage }} Max Health magic damage</magicDamage> and <status>Slows by {{ calc_slow_dragon }} for {{ slowduration }} seconds</status>. The fireball leaves behind a trail for {{ groundlingerduration }} seconds that deals <magicDamage>{{ damagepersecond }} magic damage per second</magicDamage>. {{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Shyvana launches a fireball in the target direction that explodes upon colliding with the first enemy or reaching maximum range, dealing magic damage to enemies hit and slowing them by 30% for 2 seconds.\n\nDragon Form Bonus: The fireball is wider, can pass through enemies, and deals\n- 100-100% increased damage. Upon hitting an enemy champion or large monster, and after reaching maximum range, the fireball sets an explosion upon the targets struck and at the location that applies the same effects. Molten Burst will also scorch the ground it touches beneath for seconds. Enemies within a scorched field are dealt / / / / / (based on level) (+ /% AP) magic damage every 1/ seconds, for a total maximum damage of * / * / * (based on level) (+\n- % AP).\nEnemies may be damaged by only one scorched field at a time. Subsequent explosions against the same target deal\n- 100% damage.",
+				"wikiDescription": "Active: Shyvana launches a fireball in the target direction that explodes upon colliding with the first enemy or reaching maximum range, dealing magic damage to enemies hit and slowing them by 30% for 2 seconds.\n\nDragon Form Bonus: The fireball is wider, can pass through enemies, and deals 25% increased damage. Upon hitting an enemy champion or large monster, and after reaching maximum range, the fireball sets an explosion upon the targets struck and at the location that applies the same effects. Molten Burst will also scorch the ground it touches beneath for 2 seconds. Enemies within a scorched field are dealt 3.75 / 5 / 6.25 (based on level) (+ 1.25% AP) magic damage every 0.25 seconds, for a total maximum damage of 30 / 40 / 50 (based on level) (+ 10% AP).\nEnemies may be damaged by only one scorched field at a time. Subsequent explosions against the same target deal 40% damage.",
 				"leveling": [
-					"Magic Damage: to (+ to% AP) (+ % of target's maximum health)",
-					"Increased/Explosion Magic Damage: \n- to * (+\n- to *% AP) (+\n- % of target's maximum health)\nSubsequent Explosion Damage: \n- - to ** (+\n- to **% AP) (+\n- % of target's maximum health)"
+					"Magic Damage: 50 / 65 / 80 / 95 / 110 (+ 60 / 65 / 70 / 75 / 80% AP) (+ 5% of target's maximum health)",
+					"Increased/Explosion Magic Damage: 62.5 / 81.25 / 100 / 118.75 / 137.5 (+ 75 / 81.25 / 87.5 / 93.75 / 100% AP) (+ 6.25% of target's maximum health)\nSubsequent Explosion Damage: 25 / 32.5 / 40 / 47.5 / 55 (+ 30 / 32.5 / 35 / 37.5 / 40% AP) (+ 2.5% of target's maximum health)"
 				],
 				"cooldown": "12 / 11 / 10 / 9 / 8",
 				"cost": "",
@@ -28975,6 +29411,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shyvana/Molten Burst",
 				"wikiRevId": 4058111,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -28982,9 +29419,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Dragon's Descent",
 				"riotSummary": "Shyvana transforms into a Dragon and leaps forward causing enemies along her path to flee. While in Dragon form she becomes larger and her basic abilities are empowered.",
 				"riotTooltip": "<spellPassive>Passive</spellPassive>: Shyvana generates <keywordMajor>{{ fury_generation }} Dragon Fury</keywordMajor> by striking enemies with Attacks and Abilities, increased by {{ tt_fury_mult }} while in <keywordMajor>Dragon Form</keywordMajor>, and reduced {{ tt_fury_aoe_penalty }} by when striking in an area against non-champions.<br /><br /><spellActive>Active</spellActive>: Shyvana transforms into her <keywordMajor>Dragon Form</keywordMajor>, becoming <attention>Unstoppable</attention>, and flying to the target location breathing fire on enemies below dealing <magicDamage>{{ damage }} magic damage</magicDamage> and causing them <status>Flee for {{ fearduration }} seconds</status>.<br /><br />While transformed, Shyvana's basic Abilities are upgraded, she gains <scaleHealth>{{ calc_bonus_health }} bonus Health</scaleHealth>, size, and Attack Range. Shyvana loses <keywordMajor>Dragon Fury</keywordMajor> over time and her transformation ends when she has no <keywordMajor>Dragon Fury</keywordMajor> remaining.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Passive - Fury: Shyvana generates Dragon Fury every 0.5 seconds while in Human Form. Her basic attacks and abilities also generate nil Dragon Fury for each enemy damaged, up to once per enemy per cast instance and increased\n「 by -100% 」「 to\n- 」during Dragon Form. Against non-champions damaged by abilities, the generated amount is reduced to「 25%. 」「\n- and\n- Dragon Fury during Human Form and Dragon Form, respectively. 」Shyvana gains 1% bonus Dragon Fury generation from all sources per 1 ultimate haste. Shyvana gains 100 Dragon Fury upon learning Dragon's Descent.\n\nActive: Shyvana transforms into Dragon Form and flies with displacement immunity to the target location, breathing fire in a cone along the way that deals magic damage to enemies hit and fears them for 0.75 seconds, as well as slows them by 99% for the same duration.\n\nDragon Form: Shyvana gains bonus health, bonus attack range, and increased size. Her basic abilities are empowered to apply an additional effect. She maintains Dragon Form at a recurring cost of Dragon Fury, returning to Human Form once all Dragon Fury has been depleted.\n\n100 Dragon Fury is required to cast this ability.",
+				"wikiDescription": "Passive - Fury: Shyvana generates Dragon Fury every 0.5 seconds while in Human Form. Her basic attacks and abilities also generate 1.25 Dragon Fury for each enemy damaged, up to once per enemy per cast instance and increased「 by 200% 」「 to 3.75 」during Dragon Form. Against non-champions damaged by abilities, the generated amount is reduced to「 25%. 」「 0.3125 and 0.9375 Dragon Fury during Human Form and Dragon Form, respectively. 」Shyvana gains 1% bonus Dragon Fury generation from all sources per 1 ultimate haste. Shyvana gains 100 Dragon Fury upon learning Dragon's Descent.\n\nActive: Shyvana transforms into Dragon Form and flies with displacement immunity to the target location, breathing fire in a cone along the way that deals magic damage to enemies hit and fears them for 0.75 seconds, as well as slows them by 99% for the same duration.\n\nDragon Form: Shyvana gains bonus health, bonus attack range, and increased size. Her basic abilities are empowered to apply an additional effect. She maintains Dragon Form at a recurring cost of Dragon Fury, returning to Human Form once all Dragon Fury has been depleted.\n\n100 Dragon Fury is required to cast this ability.",
 				"leveling": [
-					"Dragon Fury Generation per 0.5 Seconds: /2 to /2\nDragon Fury Generation per Second: to",
+					"Dragon Fury Generation per 0.5 Seconds: 0.25 / 0.375 / 0.5\nDragon Fury Generation per Second: 0.5 / 0.75 / 1",
 					"Magic Damage: 150 / 250 / 350 (+ 100% AP)",
 					"Bonus Health: 150 / 250 / 350\nBonus Range: 25 / 50 / 75\nSize Increase: 5 / 12.5 / 20%"
 				],
@@ -29051,6 +29488,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Shyvana/Dragon's Descent",
 				"wikiRevId": 4049822,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -29337,7 +29775,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Ahri",
 		"id": 103,
 		"name": "Ahri",
-		"title": "the Nine-Tailed Fox",
+		"title": "The Nine-Tailed Fox",
 		"wikiPage": "Ahri",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -29409,6 +29847,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ahri/Essence Theft",
 				"wikiRevId": 4038191,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -29445,6 +29884,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ahri/Orb of Deception",
 				"wikiRevId": 4007396,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -29479,6 +29919,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ahri/Fox-Fire",
 				"wikiRevId": 4007399,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -29512,6 +29953,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ahri/Charm",
 				"wikiRevId": 3909373,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -29548,6 +29990,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ahri/Spirit Rush",
 				"wikiRevId": 4007764,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -29558,7 +30001,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Graves",
 		"id": 104,
 		"name": "Graves",
-		"title": "the Outlaw",
+		"title": "The Outlaw",
 		"wikiPage": "Graves",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -29628,7 +30071,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Values of bonus attack speed between 150% and 200% have a negative effect on Graves' reload speed.",
 					"Attack speed growth will always have a positive effect on Graves' reload speed and is not counted toward the 150% and 200% attack speed thresholds. For example, Graves gains 58.995% bonus attack speed from attack speed growth at level 20; meaning the thresholds at level 20 are at 208.995% and 258.995% respectively.",
 					"Maximum reload speed is 0.651 – 0.891 (based on level), which equates to a reload timer of 1.54 – 1.12 (based on level) seconds, which is the shortest reload time at the 150% threshold.",
-					"Precise formula is unknown, but it is confirmed to be confusing. [1]",
+					"Precise formula is unknown, but it is confirmed to be confusing.",
 					"The in-game HUD for the champion's stat panel incorrectly displays Graves \"reload speed\" for reloading 2 shells as his attack speed, instead of displaying his actual attack speed which behaves normally like any other champion. This displayed value more accurately represents his reloads per second, and not attacks per second as the attack speed tooltip in the HUD would suggest.",
 					"Graves can hit multiple individual enemies with a single shot from his basic attack. The first pellet hitting an enemy:",
 					"Deals the highest damage out of all other pellets.",
@@ -29662,6 +30105,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Graves/New Destiny",
 				"wikiRevId": 4038342,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -29697,6 +30141,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Graves/End of the Line",
 				"wikiRevId": 4057465,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -29733,6 +30178,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Graves/Smoke Screen",
 				"wikiRevId": 4049973,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -29769,6 +30215,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Graves/Quickdraw",
 				"wikiRevId": 4049953,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -29807,6 +30254,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Graves/Collateral Damage",
 				"wikiRevId": 4007499,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -30093,7 +30541,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Fizz",
 		"id": 105,
 		"name": "Fizz",
-		"title": "the Tidal Trickster",
+		"title": "The Tidal Trickster",
 		"wikiPage": "Fizz",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -30165,6 +30613,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fizz/Nimble Fighter",
 				"wikiRevId": 4042251,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30200,6 +30649,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fizz/Urchin Strike",
 				"wikiRevId": 3948968,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30239,6 +30689,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fizz/Seastone Trident",
 				"wikiRevId": 4015181,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30273,7 +30724,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Flash can be used while hopping off the trident, but not while balanced on it.",
 					"Fizz can receive aggro while hopping off the trident, but not while balanced on it",
 					"If the first dash is interrupted, Fizz initiates the hop immediately, and if the second one is, the splash will not occur.",
-					"In either cases, Fizz loses the untargetability. [1] (unexpected)",
+					"In either cases, Fizz loses the untargetability. (unexpected)",
 					"If Playful is cast while under the effect of a move block, Fizz will not become untargetable and will initiate the hop instantly.(bug)",
 					"If Trickster is cast, the splash will not occur.(bug)",
 					"If Fizz casts Playful on top of himself after blinking and not moving from the blinked-to spot, the minimum dash distance of 25 units will not apply (casts at 0 range).(bug)",
@@ -30282,6 +30733,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fizz/Playful",
 				"wikiRevId": 4008451,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30317,6 +30769,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fizz/Trickster",
 				"wikiRevId": 4007741,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30324,11 +30777,11 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Chum the Waters",
 				"riotSummary": "Fizz tosses a fish in a direction that attaches to any champion that touches it, slowing the target. After a short delay, a shark erupts from the ground, knocking up the target and knocking any nearby enemies aside. All enemies hit are dealt magic damage and slowed.",
 				"riotTooltip": "Fizz launches a fish that attaches to the first champion hit. The victim is afflicted with <keywordStealth>True Sight</keywordStealth> and <status>Slowed</status> by between 40% to 80% based on how far the fish travelled before attaching. <br /><br />After {{ detonationtime }} seconds a shark erupts on the target, <status>Knocking Up</status> the target with the fish for 1 second, <status>Knocking Back</status> everything else, and dealing between <magicDamage>{{ smallsharkdamage }} to {{ bigsharkdamage }} magic damage</magicDamage> based on how far the fish travelled before attaching.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Fizz throws down a lure at the target location that attracts a shark, granting sight of the area before it emerges to chomp at the lure after 2 seconds, dealing magic damage to nearby enemies, knocking them back, though not through terrain, and slowing them for 2 seconds. The further the lure travels in its initial flight, the larger the shark that is attracted; increasing Chum the Waters' damage, slow, eruption radius and knock back distance.\n\nGuppy (<455): 40% slow, 200 eruption radius and 150 unit knock back distance.\n\nChomper (455-910): 50% damage, 60% slow, 325 eruption radius and 250 unit knock back distance.\n\nGigalodon (>910):\n- 100% damage, 80% slow, 450 eruption radius and 350 unit knock back distance.",
+				"wikiDescription": "Active: Fizz throws down a lure at the target location that attracts a shark, granting sight of the area before it emerges to chomp at the lure after 2 seconds, dealing magic damage to nearby enemies, knocking them back, though not through terrain, and slowing them for 2 seconds. The further the lure travels in its initial flight, the larger the shark that is attracted; increasing Chum the Waters' damage, slow, eruption radius and knock back distance.\n\nGuppy (<455): 40% slow, 200 eruption radius and 150 unit knock back distance.\n\nChomper (455-910): 125% damage, 60% slow, 325 eruption radius and 250 unit knock back distance.\n\nGigalodon (>910): 150% damage, 80% slow, 450 eruption radius and 350 unit knock back distance.",
 				"leveling": [
-					"Guppy Damage: to (+ % AP)",
-					"Chomper Damage: \n- (1+(-1)*(1/2)) to *(1+(-1)*(1/2)) (+\n- (1+(-1)*(1/2))% AP)",
-					"Gigalodon Damage: \n- to * (+\n- % AP)"
+					"Guppy Damage: 180 / 300 / 420 (+ 60% AP)",
+					"Chomper Damage: 225 / 375 / 525 (+ 75% AP)",
+					"Gigalodon Damage: 270 / 450 / 630 (+ 90% AP)"
 				],
 				"cooldown": "120 / 100 / 80",
 				"cost": "100",
@@ -30355,6 +30808,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fizz/Chum the Waters",
 				"wikiRevId": 4010638,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -30365,7 +30819,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Volibear",
 		"id": 106,
 		"name": "Volibear",
-		"title": "the Relentless Storm",
+		"title": "The Relentless Storm",
 		"wikiPage": "Volibear",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -30442,6 +30896,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Volibear/The Relentless Storm",
 				"wikiRevId": 4046481,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30483,6 +30938,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Volibear/Thundering Smash",
 				"wikiRevId": 4046590,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30521,6 +30977,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Volibear/Frenzied Maul",
 				"wikiRevId": 4008612,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30554,6 +31011,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Volibear/Sky Splitter",
 				"wikiRevId": 4008614,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30633,6 +31091,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Volibear/Stormbringer",
 				"wikiRevId": 4007765,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -30643,7 +31102,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Rengar",
 		"id": 107,
 		"name": "Rengar",
-		"title": "the Pridestalker",
+		"title": "The Pridestalker",
 		"wikiPage": "Rengar",
 		"resource": "Ferocity",
 		"rangeType": "Melee",
@@ -30714,8 +31173,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Rengar has a secondary resource bar that indicates how much Ferocity he currently has as pips.",
 					"Ferocity generated by Unseen Predator has a purple color.",
 					"Ferocity generated by his other abilities has a white color.",
-					"While out of combat, if abilities are used one after the other, only the first will count towards the 1 second Ferocity timer, without refreshing from the second cast. [1] (unexpected)",
-					"Reaching 4 Ferocity with an ability immediatelly grants access to empowered abilities, however reaching it with a brush attack will grant the access after a short delay - causing Rengar to still be able to cast normal abilities while at 4 Ferocity. [2] [3] (unexpected)",
+					"While out of combat, if abilities are used one after the other, only the first will count towards the 1 second Ferocity timer, without refreshing from the second cast. (unexpected)",
+					"Reaching 4 Ferocity with an ability immediatelly grants access to empowered abilities, however reaching it with a brush attack will grant the access after a short delay - causing Rengar to still be able to cast normal abilities while at 4 Ferocity. (unexpected)",
 					"Only Flash and Hexflash instantly end Unseen Predator. Other blink effects will still cause the buff to linger upon exiting the brush area.",
 					"The attack deals basic damage but is considered ability damage for Spear of Shojin.",
 					"While grounded or rooted, Rengar loses the enhanced attack range from Unseen Predator.",
@@ -30724,7 +31183,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Rengar will only leap to a target if his basic attack timer has been refreshed (if not so he will not automatically attempt to path towards his target, despite them being within leap range).",
 					"The leap will consume energized on-attack but only expend it once the leap hits.",
 					"If the leap is interrupted, the energized will be indefinitely stored in the background until expended by a successive leap. Only 1 energized may be stored, but another can continue to recharge on the buffbar.",
-					"While the energized is stored, normal basic attacks are prevented from expending any energized, however abilities may still expend the one from the buffbar. [4] (unexpected)",
+					"While the energized is stored, normal basic attacks are prevented from expending any energized, however abilities may still expend the one from the buffbar. (unexpected)",
 					"Rengar can freely use any abilities, summoner spells, or item actives while leaping.",
 					"Using a dash or blink ability will interrupt the leap.",
 					"The attack from the leap will:",
@@ -30745,6 +31204,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rengar/Unseen Predator",
 				"wikiRevId": 4059878,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -30771,19 +31231,20 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"notes": [
 					"Casting Savagery does not break stealth.",
 					"The bonus attack speed from the unempowered and empowered casts can stack with each other, if both are cast shortly one after another.",
-					"The empowered attack windup may still be manually cancelled when targeting jungle plants or structures. [13] (unexpected)",
-					"Different attack speeds may desync the animation from the hit. [14] (unexpected)",
-					"Interrupting Unseen Predator's leap will shortly after replace Savagery's own animation with a normal basic attack animation. [15] (unexpected)",
-					"If energized kills the target before the attack hits, Savagery won't be consumed but it will still grant free Ferocity. [16] (unexpected)",
+					"The empowered attack windup may still be manually cancelled when targeting jungle plants or structures. (unexpected)",
+					"Different attack speeds may desync the animation from the hit. (unexpected)",
+					"Interrupting Unseen Predator's leap will shortly after replace Savagery's own animation with a normal basic attack animation. (unexpected)",
+					"If energized kills the target before the attack hits, Savagery won't be consumed but it will still grant free Ferocity. (unexpected)",
 					"Savagery's empowered attack is consumed against jungle plants.",
-					"While the Ferocity timer is not running, if the attack misses or is dodged it will grant a permanent Ferocity stack until the timer is triggered and refreshed. [17] (unexpected)",
+					"While the Ferocity timer is not running, if the attack misses or is dodged it will grant a permanent Ferocity stack until the timer is triggered and refreshed. (unexpected)",
 					"The additional damage is tagged as proc damage, basic damage, and spell damage, and applies other on-hit effects as well as life steal as normal.",
-					"It is also part of a separate cast instance - potentially allowing an extra stack of Eclipse and Electrocute (e.g while using Black Cleaver). [18] (unexpected)",
-					"The in-game extended tooltip incorrectly states that the additional damage is reduced against structures. [19] (unexpected)"
+					"It is also part of a separate cast instance - potentially allowing an extra stack of Eclipse and Electrocute (e.g while using Black Cleaver). (unexpected)",
+					"The in-game extended tooltip incorrectly states that the additional damage is reduced against structures. (unexpected)"
 				],
 				"wikiTitle": "Template:Data Rengar/Savagery",
 				"wikiRevId": 4052789,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0.25 vs wiki 6/5.5/5/4.5/4"
 				]
@@ -30811,11 +31272,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "True",
 				"notes": [
 					"Grey health will not be consumed upon casting Battle Roar despite visually appearing so. It will only ever expire after its duration ends.",
-					"The ability will visibly attempt to but fail to buffer if cast during a non-ability cast time. [20] (unexpected)"
+					"The ability will visibly attempt to but fail to buffer if cast during a non-ability cast time. (unexpected)"
 				],
 				"wikiTitle": "Template:Data Rengar/Battle Roar",
 				"wikiRevId": 4009100,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0.25 vs wiki 16/14.5/13/11.5/10"
 				]
@@ -30849,6 +31311,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rengar/Bola Strike",
 				"wikiRevId": 4009137,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0.25 vs wiki 10"
 				]
@@ -30878,19 +31341,19 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "false",
 				"notes": [
 					"Thrill of the Hunt's duration starts on-cast.",
-					"It is not expected for the camouflage duration to be lower than the total effect duration. [21] (unexpected)",
-					"If a revealed enemy stealths, their true sight debuff will be removed, dropping aggro. [22] [23] (unexpected)",
+					"It is not expected for the camouflage duration to be lower than the total effect duration. (unexpected)",
+					"If a revealed enemy stealths, their true sight debuff will be removed, dropping aggro. (unexpected)",
 					"The debuff will be reapplied after 0.033s if they get back in range.",
 					"Using a basic attack breaks the stealth at the start of the attack windup.",
-					"Unlike other champions that break the stealth at the start of attack windup, Rengar may automatically start attacking a nearby target if the player's \"Auto Attack\" setting is turned on. [24] (unexpected)",
+					"Unlike other champions that break the stealth at the start of attack windup, Rengar may automatically start attacking a nearby target if the player's \"Auto Attack\" setting is turned on. (unexpected)",
 					"The ability applies a mark on the target at the start of attack windup that is successively consumed when the basic attack hits to apply the effect.",
 					"If the attack is prevented or blocked (e.g. by knocking down Rengar when leaping) then the effect will not be applied.",
-					"The mark will however still linger for a very short period after that, allowing Rengar to consume it with a quick basic attack. [25]",
+					"The mark will however still linger for a very short period after that, allowing Rengar to consume it with a quick basic attack.",
 					"The ability deals basic damage.",
-					"Unlike other ability empowered attacks (i.e Kled's Violent Tendencies, Malphite's Thunderclap), the additional damage is also tagged as proc damage - preventing triggering certain effects (e.g Malignance). [26] (unexpected)",
-					"It is also part of a separate cast instance - potentially allowing an extra stack of Eclipse and Electrocute (e.g while using Black Cleaver). [27] (unexpected)",
-					"The Unseen Predator buff may randomly end before a melee attack hits, causing the ability's effects to go through but without generating Ferocity. [28] (unexpected)",
-					"Rengar may sometimes be able to still leap away after consuming the ability with a melee basic attack. [29] (unexpected)",
+					"Unlike other ability empowered attacks (i.e Kled's Violent Tendencies, Malphite's Thunderclap), the additional damage is also tagged as proc damage - preventing triggering certain effects (e.g Malignance). (unexpected)",
+					"It is also part of a separate cast instance - potentially allowing an extra stack of Eclipse and Electrocute (e.g while using Black Cleaver). (unexpected)",
+					"The Unseen Predator buff may randomly end before a melee attack hits, causing the ability's effects to go through but without generating Ferocity. (unexpected)",
+					"Rengar may sometimes be able to still leap away after consuming the ability with a melee basic attack. (unexpected)",
 					"Rengar discerns a distinct heart beat instead of the usual true sight indicator. This indicator will be removed when out of range, but the target will remain revealed.",
 					"Thrill of the Hunt has an indicator that appears above the target(s) when Rengar is nearby. Some skins have a unique indicator.",
 					"Headhunter",
@@ -30905,6 +31368,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rengar/Thrill of the Hunt",
 				"wikiRevId": 4052301,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -31191,7 +31655,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Varus",
 		"id": 110,
 		"name": "Varus",
-		"title": "the Arrow of Retribution",
+		"title": "The Arrow of Retribution",
 		"wikiPage": "Varus",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -31265,6 +31729,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Varus/Living Vengeance",
 				"wikiRevId": 4026465,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31341,6 +31806,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Varus/Piercing Arrow",
 				"wikiRevId": 4026469,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31348,11 +31814,11 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Blighted Quiver",
 				"riotSummary": "Passive: Varus' basic attacks deal bonus magic damage and apply Blight. Varus' other abilities detonate Blight, dealing magic damage based on the target's maximum Health. Active: Varus empowers his next Piercing Arrow.",
 				"riotTooltip": "<spellPassive>Passive: </spellPassive>Varus' Attacks deal an additional <magicDamage>{{ onhitdamage }} magic damage</magicDamage> and apply a <keywordMajor>Blight</keywordMajor> stack for {{ debuffduration }} seconds (max {{ maxstacks }} stacks).<br /><br />Varus' other Abilities detonate <keywordMajor>Blight</keywordMajor> stacks dealing <magicDamage>{{ percenthpperstack }} max Health magic damage</magicDamage> per stack (max <magicDamage>{{ maxpercenthpperstack }} max Health damage</magicDamage>). Detonating <keywordMajor>Blight</keywordMajor> on champions and epic monsters also reduces his basic Abilities' Cooldowns by {{ cdrperblightstack*100 }}% of their Maximum per stack.<br /><br /><spellActive>Active:</spellActive> Varus' next <spellName>Piercing Arrow</spellName> deals an additional <magicDamage>{{ qempowerpercenthp }} missing Health magic damage</magicDamage>, increased up to <magicDamage>{{ maxqempowerpercenthp }} missing Health damage</magicDamage> based on charge time.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Passive: Varus' basic attacks on-hit deal bonus magic damage and apply a stack of Blight for 6 seconds, refreshing on subsequent applications and stacking up to 3 times. Varus' abilities detonate all Blight stacks on affected enemies hit.\n\nBlight: For each stack consumed, the target is dealt bonus magic damage. If the stacks were consumed with Piercing Arrow, this damage is increased by. This damage is capped at 120 per stack against monsters, for a total cap of 360 at maximum stacks.\nAdditionally, each stack consumed against a champion or epic monster reduces the remaining cooldowns of Varus' basic abilities by % of each of their total cooldowns, up to a\n- 3% cooldown reduction per target. If the stacks were consumed with Piercing Arrow, the cooldown reduction is increased by, up to a Error: Variables are unmatched. cooldown reduction per target from consuming maximum stacks against them.\n\nActive: Varus' next Piercing Arrow within 5.5 seconds is empowered to deal additional bonus magic damage, increased by. This damage is capped at 360 against monsters.\n\nIf Varus does not cast Piercing Arrow, Blighted Quiver can be recast after 1 second within the duration, and does so automatically afterwards or when he dies. Blighted Quiver can be cast during the first 0.85 seconds of Piercing Arrow's charge, and will be placed on full cooldown after the charge ends even if Piercing Arrow is not recast.",
+				"wikiDescription": "Passive: Varus' basic attacks on-hit deal bonus magic damage and apply a stack of Blight for 6 seconds, refreshing on subsequent applications and stacking up to 3 times. Varus' abilities detonate all Blight stacks on affected enemies hit.\n\nBlight: For each stack consumed, the target is dealt bonus magic damage. If the stacks were consumed with Piercing Arrow, this damage is increased by 0% – 50% (based on Piercing Arrow's charge time). This damage is capped at 120 per stack against monsters, for a total cap of 360 at maximum stacks.\nAdditionally, each stack consumed against a champion or epic monster reduces the remaining cooldowns of Varus' basic abilities by 13% of each of their total cooldowns, up to a 39% cooldown reduction per target. If the stacks were consumed with Piercing Arrow, the cooldown reduction is increased by 0% – 50% (based on Piercing Arrow's charge time), up to a 39% – 58.5% cooldown reduction per target from consuming maximum stacks against them.\n\nActive: Varus' next Piercing Arrow within 5.5 seconds is empowered to deal additional bonus magic damage, increased by 0% – 50% (based on Piercing Arrow's charge time). This damage is capped at 360 against monsters.\n\nIf Varus does not cast Piercing Arrow, Blighted Quiver can be recast after 1 second within the duration, and does so automatically afterwards or when he dies. Blighted Quiver can be cast during the first 0.85 seconds of Piercing Arrow's charge, and will be placed on full cooldown after the charge ends even if Piercing Arrow is not recast.",
 				"leveling": [
-					"Bonus Magic Damage: to (+ % bonus AD) (+ % AP)",
-					"Bonus Magic Damage per Stack: to% (+ nil% per 100 AP) of the target's maximum health\nBonus Magic Damage at Max Stacks: \n- 3 to *3% (+\n- 3% per 100 AP) of the target's maximum health\nMaximum Bonus Magic Damage per Stack: \n- 1.5 to *1.5% (+\n- 1.5% per 100 AP) of the target's maximum health\nMaximum Bonus Magic Damage at Max Stacks: \n- 3*1.5 to *3*1.5% (+\n- 3*1.5% per 100 AP) of the target's maximum health",
-					"Active Minimum Magic Damage: to% of target's missing health\nActive Maximum Magic Damage: \n- 1.5 to *1.5% of target's missing health"
+					"Bonus Magic Damage: 4 / 13 / 22 / 31 / 40 (+ 15% bonus AD) (+ 25% AP)",
+					"Bonus Magic Damage per Stack: 3 / 3.5 / 4 / 4.5 / 5% (+ 1.3% per 100 AP) of the target's maximum health\nBonus Magic Damage at Max Stacks: 9 / 10.5 / 12 / 13.5 / 15% (+ 3.9% per 100 AP) of the target's maximum health\nMaximum Bonus Magic Damage per Stack: 4.5 / 5.25 / 6 / 6.75 / 7.5% (+ 1.95% per 100 AP) of the target's maximum health\nMaximum Bonus Magic Damage at Max Stacks: 13.5 / 15.75 / 18 / 20.25 / 22.5% (+ 5.85% per 100 AP) of the target's maximum health",
+					"Active Minimum Magic Damage: 6 / 8 / 10 / 12 / 14% of target's missing health\nActive Maximum Magic Damage: 9 / 12 / 15 / 18 / 21% of target's missing health"
 				],
 				"cooldown": "40",
 				"cost": "",
@@ -31369,7 +31835,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"projectile": "",
 				"spellShield": "Special",
 				"notes": [
-					"The monster damage cap is also increased by if the stacks were consumed with Piercing Arrow.",
+					"The monster damage cap is also increased by 0% – 50% (based on Piercing Arrow's charge time) if the stacks were consumed with Piercing Arrow.",
 					"Spell shield will not block the on-hit damage but will block the consumption damage if the target is hit by his abilities.",
 					"Blighted Quiver will not apply stacks nor deal on-hit damage if blocked by blind, block or dodge effects.",
 					"The consumption damage will not be blocked.",
@@ -31380,6 +31846,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Varus/Blighted Quiver",
 				"wikiRevId": 4062256,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31413,6 +31880,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Varus/Hail of Arrows",
 				"wikiRevId": 3969402,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31457,6 +31925,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Varus/Chain of Corruption",
 				"wikiRevId": 4008213,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -31467,7 +31936,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Nautilus",
 		"id": 111,
 		"name": "Nautilus",
-		"title": "the Titan of the Depths",
+		"title": "The Titan of the Depths",
 		"wikiPage": "Nautilus",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -31542,6 +32011,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nautilus/Staggering Blow",
 				"wikiRevId": 3985615,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31622,6 +32092,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nautilus/Dredge Line",
 				"wikiRevId": 4060365,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31660,6 +32131,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nautilus/Titan's Wrath",
 				"wikiRevId": 3981480,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31697,6 +32169,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nautilus/Riptide",
 				"wikiRevId": 4007701,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31736,6 +32209,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nautilus/Depth Charge",
 				"wikiRevId": 4007702,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -31746,7 +32220,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Viktor",
 		"id": 112,
 		"name": "Viktor",
-		"title": "the Herald of the Arcane",
+		"title": "The Herald of the Arcane",
 		"wikiPage": "Viktor",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -31815,6 +32289,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viktor/Glorious Evolution",
 				"wikiRevId": 3954293,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31852,6 +32327,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viktor/Siphon Power",
 				"wikiRevId": 3971354,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31889,6 +32365,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viktor/Gravity Field",
 				"wikiRevId": 3980978,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31927,6 +32404,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viktor/Hextech Ray",
 				"wikiRevId": 4008553,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -31971,6 +32449,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viktor/Arcane Storm",
 				"wikiRevId": 4011945,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -32055,6 +32534,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sejuani/Fury of the North",
 				"wikiRevId": 3985822,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32089,6 +32569,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sejuani/Arctic Assault",
 				"wikiRevId": 4007753,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32123,6 +32604,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sejuani/Winter's Wrath",
 				"wikiRevId": 3971350,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32158,6 +32640,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sejuani/Permafrost",
 				"wikiRevId": 4061739,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32193,6 +32676,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sejuani/Glacial Prison",
 				"wikiRevId": 4008031,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -32479,7 +32963,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Fiora",
 		"id": 114,
 		"name": "Fiora",
-		"title": "the Grand Duelist",
+		"title": "The Grand Duelist",
 		"wikiPage": "Fiora",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -32561,6 +33045,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiora/Duelist's Dance",
 				"wikiRevId": 4038335,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32616,6 +33101,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiora/Lunge",
 				"wikiRevId": 4007770,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32649,10 +33135,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Riposte prevents Azir's Shurima's Legacy's Sun Disc damage. (unexpected)",
 					"The debuff immunity encompasses:",
 					"Crowd control.",
-					"Note that this is not crowd control immunity, and effects that look specifically for that will not consider Riposte (e.g., Yasuo's Last Breath may not be cast on cc-immune targets but it can be cast while Fiora is in Riposte). [1]",
+					"Note that this is not crowd control immunity, and effects that look specifically for that will not consider Riposte (e.g., Yasuo's Last Breath may not be cast on cc-immune targets but it can be cast while Fiora is in Riposte).",
 					"Debuffs from summoner spells such as Exhaust's damage reduction and all of Ignite's effects.",
 					"Persistent damage application.",
-					"Tether application (e.g., Camille's The Hextech Ultimatum and Illaoi's Test of Spirit), with the exception of Malzahar's Nether Grasp. [2]",
+					"Tether application (e.g., Camille's The Hextech Ultimatum and Illaoi's Test of Spirit), with the exception of Malzahar's Nether Grasp.",
 					"Some mark applications (e.g., Duelist's Dance and Zilean's Time Bomb), but not some other (e.g., Grand Challenge, Braum's Concussive Blows and Winter's Bite, Caitlyn's Ace in the Hole, Kennen's Electrical Surge's passive effect, Tahm Kench's Tongue Lash, and Vi's Cease and Desist).",
 					"If Fiora negates an immobilizing effect when the shock missile has struck an enemy champion already, the afflicted slow and cripple on the target will be removed and they will become stunned for a duration equal to the slow and cripple's remaining duration (effectively converting the slow/cripple into the stun).",
 					"This event may only occur in the last 0.25 seconds of Riposte's duration, during which Fiora retains her stance even while the missile is in-flight (timing of her stance and the missile's travel time overlap).",
@@ -32712,6 +33198,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiora/Riposte",
 				"wikiRevId": 4007365,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32748,6 +33235,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiora/Bladework",
 				"wikiRevId": 3906658,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32787,6 +33275,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Fiora/Grand Challenge",
 				"wikiRevId": 4007516,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -32797,7 +33286,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Ziggs",
 		"id": 115,
 		"name": "Ziggs",
-		"title": "the Hexplosives Expert",
+		"title": "The Hexplosives Expert",
 		"wikiPage": "Ziggs",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -32871,6 +33360,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ziggs/Short Fuse",
 				"wikiRevId": 4005222,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32904,6 +33394,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ziggs/Bouncing Bomb",
 				"wikiRevId": 4008669,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32940,6 +33431,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ziggs/Satchel Charge",
 				"wikiRevId": 4008672,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -32975,6 +33467,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ziggs/Hexplosive Minefield",
 				"wikiRevId": 4008673,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33009,6 +33502,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ziggs/Mega Inferno Bomb",
 				"wikiRevId": 4008677,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -33019,7 +33513,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Lulu",
 		"id": 117,
 		"name": "Lulu",
-		"title": "the Fae Sorceress",
+		"title": "The Fae Sorceress",
 		"wikiPage": "Lulu",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -33096,6 +33590,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lulu/Pix, Faerie Companion",
 				"wikiRevId": 4046485,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33130,6 +33625,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lulu/Glitterlance",
 				"wikiRevId": 3881438,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33166,6 +33662,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lulu/Whimsy",
 				"wikiRevId": 4007673,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33206,6 +33703,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lulu/Help, Pix!",
 				"wikiRevId": 3945270,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33238,6 +33736,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lulu/Wild Growth",
 				"wikiRevId": 4007674,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -33248,7 +33747,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Draven",
 		"id": 119,
 		"name": "Draven",
-		"title": "the Glorious Executioner",
+		"title": "The Glorious Executioner",
 		"wikiPage": "Draven",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -33319,7 +33818,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"League of Draven grants over 300 gold.",
 					"League of Draven gets reduced.",
 					"None of the parts of League of Draven require actually using a Spinning Axe for a kill to get Adoration stacks, as well as to cash Adoration stacks.",
-					"League of Draven will trigger upon receiving an assist on an enemy executed by Pyke's Death from Below.[1]",
+					"League of Draven will trigger upon receiving an assist on an enemy executed by Pyke's Death from Below.",
 					"When receiving gold from an ally executing a minion through Shared Riches ( World Atlas, Runic Compass), Draven is also awarded a Strike stack.(bug)",
 					"A Strike stack lasts up to 10 seconds or until Draven fails to catch an axe or a nearby minion dies without him killing it. Upon reacing 6 stacks, Draven consumes the stacks to gain 2 stacks of Adoration.",
 					"Other sources of gaining Strike stacks were removed in patch V25.06."
@@ -33327,6 +33826,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Draven/League of Draven",
 				"wikiRevId": 4040578,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33384,6 +33884,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Draven/Spinning Axe",
 				"wikiRevId": 3997560,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33415,6 +33916,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Draven/Blood Rush",
 				"wikiRevId": 3982566,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33446,6 +33948,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Draven/Stand Aside",
 				"wikiRevId": 4034694,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33480,6 +33983,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Draven/Whirling Death",
 				"wikiRevId": 4040576,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -33490,7 +33994,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Hecarim",
 		"id": 120,
 		"name": "Hecarim",
-		"title": "the Shadow of War",
+		"title": "The Shadow of War",
 		"wikiPage": "Hecarim",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -33564,6 +34068,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hecarim/Warpath",
 				"wikiRevId": 3985372,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33591,6 +34096,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hecarim/Rampage",
 				"wikiRevId": 3989863,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 4 vs wiki 4/3.25/2.5/1.75"
 				]
@@ -33625,6 +34131,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hecarim/Spirit of Dread",
 				"wikiRevId": 4061151,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33669,6 +34176,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hecarim/Devastating Charge",
 				"wikiRevId": 3959924,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -33704,6 +34212,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hecarim/Onslaught of Shadows",
 				"wikiRevId": 4007604,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -33990,7 +34499,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Khazix",
 		"id": 121,
 		"name": "Kha'Zix",
-		"title": "the Voidreaver",
+		"title": "The Voidreaver",
 		"wikiPage": "Kha'Zix",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -34065,6 +34574,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kha'Zix/Unseen Threat",
 				"wikiRevId": 4038395,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34114,6 +34624,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kha'Zix/Taste Their Fear",
 				"wikiRevId": 4006997,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34161,6 +34672,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kha'Zix/Evolved Reaper Claws",
 				"wikiRevId": 3994647,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34194,6 +34706,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kha'Zix/Void Spike",
 				"wikiRevId": 3971345,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34226,6 +34739,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kha'Zix/Evolved Spike Racks",
 				"wikiRevId": 4024927,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34261,6 +34775,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kha'Zix/Leap",
 				"wikiRevId": 4007747,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34294,6 +34809,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kha'Zix/Evolved Wings",
 				"wikiRevId": 4007748,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34327,6 +34843,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kha'Zix/Void Assault",
 				"wikiRevId": 3969560,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34356,6 +34873,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kha'Zix/Evolved Adaptive Cloaking",
 				"wikiRevId": 3906950,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -34641,7 +35159,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Darius",
 		"id": 122,
 		"name": "Darius",
-		"title": "the Hand of Noxus",
+		"title": "The Hand of Noxus",
 		"wikiPage": "Darius",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -34719,6 +35237,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Darius/Hemorrhage",
 				"wikiRevId": 4063939,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34751,6 +35270,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Darius/Decimate",
 				"wikiRevId": 4007591,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34786,6 +35306,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Darius/Crippling Strike",
 				"wikiRevId": 4013692,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34864,6 +35385,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Darius/Apprehend",
 				"wikiRevId": 3906616,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -34893,7 +35415,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Noxian Guillotine's cooldown after the recast or recast window is calculated by taking the values at the end, and using this formula: (Noxian Guillotine's Cooldown - time since first cast) × 100 ÷ (100 + AH).",
 					"Noxian Guillotine applies Hemorrhage after the damage.",
 					"Darius will only leap towards the target if it is at range, or leap backwards if it is very close.",
-					"This leap can pass very thin terrain and will otherwise not be able to. In any case, Darius will still hit the target.[1]",
+					"This leap can pass very thin terrain and will otherwise not be able to. In any case, Darius will still hit the target.",
 					"The ability is disabled while grounded or rooted even if Darius is in the range in which he does not leap.",
 					"Noxian Guillotine will not reset nor trigger Noxian Might if used to kill a clone or a target protected by resurrection.",
 					"Noxian Guillotine will reset but not trigger Noxian Might if it finishes off a target that is in a zombie state.",
@@ -34902,6 +35424,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Darius/Noxian Guillotine",
 				"wikiRevId": 4004898,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -34912,7 +35435,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Jayce",
 		"id": 126,
 		"name": "Jayce",
-		"title": "the Defender of Tomorrow",
+		"title": "The Defender of Tomorrow",
 		"wikiPage": "Jayce",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -34984,6 +35507,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/Hextech Capacitor",
 				"wikiRevId": 4042868,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35013,6 +35537,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/Hextech Capacitor 2",
 				"wikiRevId": 3347927,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35044,6 +35569,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/To the Skies!",
 				"wikiRevId": 3989865,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35083,6 +35609,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/Shock Blast",
 				"wikiRevId": 4058059,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35115,6 +35642,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/Lightning Field",
 				"wikiRevId": 3948933,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35147,6 +35675,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/Hyper Charge",
 				"wikiRevId": 3965005,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35178,6 +35707,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/Thundering Blow",
 				"wikiRevId": 3965179,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35207,6 +35737,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/Acceleration Gate",
 				"wikiRevId": 4005101,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35240,6 +35771,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/Transform Mercury Cannon",
 				"wikiRevId": 3989867,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"name: ddragon \"Mercury Cannon / Mercury Hammer\" vs wiki \"Transform Mercury Cannon\""
 				]
@@ -35275,6 +35807,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jayce/Transform Mercury Hammer",
 				"wikiRevId": 4049966,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -35285,7 +35818,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Lissandra",
 		"id": 127,
 		"name": "Lissandra",
-		"title": "the Ice Witch",
+		"title": "The Ice Witch",
 		"wikiPage": "Lissandra",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -35362,6 +35895,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lissandra/Iceborn Subjugation",
 				"wikiRevId": 4038403,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35397,6 +35931,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lissandra/Ice Shard",
 				"wikiRevId": 4007664,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35428,6 +35963,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lissandra/Ring of Frost",
 				"wikiRevId": 3936419,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35464,6 +36000,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lissandra/Glacial Path",
 				"wikiRevId": 4050877,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35503,6 +36040,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lissandra/Frozen Tomb",
 				"wikiRevId": 4017996,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -35584,13 +36122,14 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"notes": [
 					"Moonsilver Blade will affect structures.",
 					"Each attack has a distinct animation and she will glow when the empowered attack is ready.",
-					"When the stacks are consumed on-hit (e.g Guinsoo's Rageblade, Dusk and Dawn), additional damage is only applied to the on-hit target, without triggering the cleave on nearby enemies. [1]",
+					"When the stacks are consumed on-hit (e.g Guinsoo's Rageblade, Dusk and Dawn), additional damage is only applied to the on-hit target, without triggering the cleave on nearby enemies.",
 					"Sometimes, the empowered basic attack will not consume the stacks.(bug)",
 					"In this case, the attack will also not deal its damage."
 				],
 				"wikiTitle": "Template:Data Diana/Moonsilver Blade",
 				"wikiRevId": 4047026,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35624,6 +36163,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Diana/Crescent Strike",
 				"wikiRevId": 4007592,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35659,6 +36199,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Diana/Pale Cascade",
 				"wikiRevId": 4022977,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35694,6 +36235,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Diana/Lunar Rush",
 				"wikiRevId": 3937024,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -35738,6 +36280,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Diana/Moonfall",
 				"wikiRevId": 4007593,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -36103,6 +36646,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Quinn/Harrier",
 				"wikiRevId": 4024765,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36135,6 +36679,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Quinn/Blinding Assault",
 				"wikiRevId": 4056272,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36166,6 +36711,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Quinn/Heightened Senses",
 				"wikiRevId": 4024767,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36204,6 +36750,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Quinn/Vault",
 				"wikiRevId": 4024768,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36287,6 +36834,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Quinn/Behind Enemy Lines",
 				"wikiRevId": 4021953,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36319,6 +36867,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Quinn/Skystrike",
 				"wikiRevId": 4024769,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -36329,7 +36878,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Syndra",
 		"id": 134,
 		"name": "Syndra",
-		"title": "the Dark Sovereign",
+		"title": "The Dark Sovereign",
 		"wikiPage": "Syndra",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -36401,6 +36950,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Syndra/Transcendent",
 				"wikiRevId": 4060367,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36434,6 +36984,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Syndra/Dark Sphere",
 				"wikiRevId": 4026460,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36479,6 +37030,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Syndra/Force of Will",
 				"wikiRevId": 4060368,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36516,6 +37068,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Syndra/Scatter the Weak",
 				"wikiRevId": 4008068,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36556,6 +37109,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Syndra/Unleashed Power",
 				"wikiRevId": 4024661,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -36637,6 +37191,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurelion Sol/Cosmic Creator",
 				"wikiRevId": 3963005,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36719,6 +37274,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurelion Sol/Breath of Light",
 				"wikiRevId": 4057543,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36790,6 +37346,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurelion Sol/Astral Flight",
 				"wikiRevId": 4057545,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36824,6 +37381,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurelion Sol/Singularity",
 				"wikiRevId": 4038217,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36856,6 +37414,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurelion Sol/Falling Star",
 				"wikiRevId": 3978297,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -36890,6 +37449,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurelion Sol/The Skies Descend",
 				"wikiRevId": 3936269,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -36900,7 +37460,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Kayn",
 		"id": 141,
 		"name": "Kayn",
-		"title": "the Shadow Reaper",
+		"title": "The Shadow Reaper",
 		"wikiPage": "Kayn",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -37026,6 +37586,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayn/The Darkin Scythe",
 				"wikiRevId": 4053172,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -37067,6 +37628,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayn/Reaping Slash",
 				"wikiRevId": 4051323,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -37140,6 +37702,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayn/Blade's Reach",
 				"wikiRevId": 4007629,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -37181,6 +37744,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayn/Shadow Step",
 				"wikiRevId": 3907115,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -37286,6 +37850,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kayn/Umbral Trespass",
 				"wikiRevId": 4007627,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -37572,7 +38137,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Zoe",
 		"id": 142,
 		"name": "Zoe",
-		"title": "the Aspect of Twilight",
+		"title": "The Aspect of Twilight",
 		"wikiPage": "Zoe",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -37643,6 +38208,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zoe/More Sparkles!",
 				"wikiRevId": 3986875,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -37677,6 +38243,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zoe/Paddle Star!",
 				"wikiRevId": 4024422,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -37771,6 +38338,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zoe/Spell Thief",
 				"wikiRevId": 4013273,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -37861,6 +38429,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zoe/Sleepy Trouble Bubble",
 				"wikiRevId": 4053170,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -37935,6 +38504,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zoe/Portal Jump",
 				"wikiRevId": 4005248,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -38031,6 +38601,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zyra/Garden of Thorns",
 				"wikiRevId": 3986877,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38062,6 +38633,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zyra/Deadly Spines",
 				"wikiRevId": 4013461,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38094,6 +38666,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zyra/Rampant Growth",
 				"wikiRevId": 4044057,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 18/16/14/12/10"
 				]
@@ -38129,6 +38702,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zyra/Grasping Roots",
 				"wikiRevId": 4013460,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38162,6 +38736,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zyra/Stranglethorns",
 				"wikiRevId": 3945317,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -38251,6 +38826,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kai'Sa/Second Skin",
 				"wikiRevId": 4053367,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38258,11 +38834,11 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Icathian Rain",
 				"riotSummary": "Kai'Sa shoots a swarm of missiles that seek out nearby targets.<br><br>Living Weapon: Icathian Rain is upgraded to shoot more missiles.",
 				"riotTooltip": "Kai'Sa launches {{ e2 }} missiles that split among nearby enemies, each dealing <physicalDamage>{{ totalindividualmissiledamage }} physical damage</physicalDamage>, up to a maximum of {{ maxdamagedisplay }}. Additional missile hits on champions or monsters deal {{ extrahitreduction*100 }}% damage.<br /><br /><keywordMajor>Evolved</keywordMajor>: Kai'Sa instead fires {{ e7 }} missiles.<br />Current: <physicalDamage>{{ f11.1 }}/{{ e6 }} Bonus Attack Damage</physicalDamage>{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Kai'Sa releases a swarm of 6 missiles that evenly distributes among nearby visible enemies, each one hitting their target after 0.4 seconds to deal physical damage. Minions below 35% health take double damage.\n\nNon-minions take\n- 100% damage from missiles beyond their first.\n\nEvolution: Requires「 100 – 56 (based on level) attack damage from items 」「 100 attack damage from items and stat growth 」to upgrade – Icathian Rain instead fires 12 missiles.\n\nA nearby enemy is required to cast this ability.",
+				"wikiDescription": "Active: Kai'Sa releases a swarm of 6 missiles that evenly distributes among nearby visible enemies, each one hitting their target after 0.4 seconds to deal physical damage. Minions below 35% health take double damage.\n\nNon-minions take 25% damage from missiles beyond their first.\n\nEvolution: Requires「 100 – 56 (based on level) attack damage from items 」「 100 attack damage from items and stat growth 」to upgrade – Icathian Rain instead fires 12 missiles.\n\nA nearby enemy is required to cast this ability.",
 				"leveling": [
-					"Physical Damage Per Missile: to (+ % bonus AD) (+ % AP)",
-					"Reduced Damage Per Missile: \n- to * (+\n- % bonus AD) (+\n- % AP)\nTotal Single-Target Damage: \n- (1+*5) to *(1+*5) (+\n- (1+*5)% bonus AD) (+\n- (1+*5)% AP)",
-					"Total Evolved Single-Target Damage: \n- (1+*11) to *(1+*11) (+\n- (1+*11)% bonus AD) (+\n- (1+*11)% AP)"
+					"Physical Damage Per Missile: 40 / 55 / 70 / 85 / 100 (+ 55% bonus AD) (+ 20% AP)",
+					"Reduced Damage Per Missile: 10 / 13.75 / 17.5 / 21.25 / 25 (+ 13.75% bonus AD) (+ 5% AP)\nTotal Single-Target Damage: 90 / 123.75 / 157.5 / 191.25 / 225 (+ 123.75% bonus AD) (+ 45% AP)",
+					"Total Evolved Single-Target Damage: 150 / 206.25 / 262.5 / 318.75 / 375 (+ 206.25% bonus AD) (+ 75% AP)"
 				],
 				"cooldown": "10 / 9 / 8 / 7 / 6",
 				"cost": "55",
@@ -38288,6 +38864,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kai'Sa/Icathian Rain",
 				"wikiRevId": 4038389,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38320,6 +38897,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kai'Sa/Void Seeker",
 				"wikiRevId": 4034696,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38353,6 +38931,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kai'Sa/Supercharge",
 				"wikiRevId": 4038391,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38386,6 +38965,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kai'Sa/Killer Instinct",
 				"wikiRevId": 4034697,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -38396,7 +38976,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Seraphine",
 		"id": 147,
 		"name": "Seraphine",
-		"title": "the Starry-Eyed Songstress",
+		"title": "The Starry-Eyed Songstress",
 		"wikiPage": "Seraphine",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -38491,6 +39071,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Seraphine/Stage Presence",
 				"wikiRevId": 4019648,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38528,6 +39109,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Seraphine/High Note",
 				"wikiRevId": 4042889,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38568,6 +39150,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Seraphine/Surround Sound",
 				"wikiRevId": 3990364,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38608,6 +39191,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Seraphine/Beat Drop",
 				"wikiRevId": 4060366,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38648,6 +39232,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Seraphine/Encore",
 				"wikiRevId": 4008035,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -38658,7 +39243,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Gnar",
 		"id": 150,
 		"name": "Gnar",
-		"title": "the Missing Link",
+		"title": "The Missing Link",
 		"wikiPage": "Gnar",
 		"resource": "Rage",
 		"rangeType": "Ranged",
@@ -38736,6 +39321,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gnar/Rage Gene",
 				"wikiRevId": 4062252,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38769,6 +39355,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gnar/Boomerang Throw",
 				"wikiRevId": 4007601,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38802,6 +39389,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gnar/Boulder Toss",
 				"wikiRevId": 3589588,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38833,6 +39421,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gnar/Hyper",
 				"wikiRevId": 3932657,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38905,6 +39494,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gnar/Wallop",
 				"wikiRevId": 4022698,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38944,6 +39534,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gnar/Hop",
 				"wikiRevId": 4007742,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -38976,6 +39567,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gnar/Crunch",
 				"wikiRevId": 4007743,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -39051,6 +39643,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gnar/GNAR!",
 				"wikiRevId": 3936277,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -39061,7 +39654,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Zac",
 		"id": 154,
 		"name": "Zac",
-		"title": "the Secret Weapon",
+		"title": "The Secret Weapon",
 		"wikiPage": "Zac",
 		"resource": "Health",
 		"rangeType": "Melee",
@@ -39184,6 +39777,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zac/Cell Division",
 				"wikiRevId": 4061399,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -39272,6 +39866,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zac/Stretching Strikes",
 				"wikiRevId": 4008654,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -39304,6 +39899,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zac/Unstable Matter",
 				"wikiRevId": 4022472,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -39386,6 +39982,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zac/Elastic Slingshot",
 				"wikiRevId": 4046591,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -39459,6 +40056,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zac/Let's Bounce!",
 				"wikiRevId": 4013080,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -39745,7 +40343,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Yasuo",
 		"id": 157,
 		"name": "Yasuo",
-		"title": "the Unforgiven",
+		"title": "The Unforgiven",
 		"wikiPage": "Yasuo",
 		"resource": "Flow",
 		"rangeType": "Melee",
@@ -39797,7 +40395,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Way of the Wanderer",
 				"riotSummary": "Yasuo's Critical Strike Chance is increased. Additionally, Yasuo builds toward a shield whenever he is moving. The shield triggers when he takes damage from a champion or monster.",
 				"riotTooltip": "",
-				"wikiDescription": "Innate - Intent: Yasuo's total critical strike chance is doubled from all other sources. Additionally,「 every 1% critical strike chance in excess of 100% is converted into 0.5 bonus attack damage. 」「 every 50% critical strike chance in excess of 100% is converted into 25 bonus attack damage. 」\n\nYasuo's critical strikes deal only「 (190% + 28.5%) AD physical damage. 」「 95% of the critical damage champions usually have. 」\n\nInnate - Resolve: Yasuo generates a stack of Flow for every to for 3 (based on level) units he travels by any means. At「 100 stacks 」「 *100 to *100 for 3 (based on level) units traveled 」and upon taking damage from an enemy champion or monster, Yasuo consumes all Flow to grant himself a shield for +((-)/17*(x-1)*(0.7025+0.0175*(x-1))) for 20 (based on level) that lasts for 1 second.",
+				"wikiDescription": "Innate - Intent: Yasuo's total critical strike chance is doubled from all other sources. Additionally,「 every 1% critical strike chance in excess of 100% is converted into 0.5 bonus attack damage. 」「 every 50% critical strike chance in excess of 100% is converted into 25 bonus attack damage. 」\n\nYasuo's critical strikes deal only「 (190% + 28.5%) AD physical damage. 」「 95% of the critical damage champions usually have. 」\n\nInnate - Resolve: Yasuo generates a stack of Flow for every 59 / 52.5 / 46 (based on level) units he travels by any means. At「 100 stacks 」「 5900 / 5250 / 4600 (based on level) units traveled 」and upon taking damage from an enemy champion or monster, Yasuo consumes all Flow to grant himself a shield for 125 – 674.46 (based on level) that lasts for 1 second.",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -39816,12 +40414,13 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"notes": [
 					"Yasuo gains the shield before the damage instance; the shield will mitigate the damage that triggered it.",
 					"Yasuo is able to reach 100% critical strike chance with Way of the Wanderer's multiplier after obtaining a total of 50% critical strike chance.",
-					"Yasuo's secondary resource bar will display the amount of shield stored as an equivalent percentage to his Flow stacks. (Each Flow stack will add /100+((-)/100/17*(x-1)*(0.7025+0.0175*(x-1))) for 20 (based on level) to the bar)",
+					"Yasuo's secondary resource bar will display the amount of shield stored as an equivalent percentage to his Flow stacks. (Each Flow stack will add 1.25 – 6.74 (based on level) to the bar)",
 					"Upon taking damage, the bar will display his current shield strength."
 				],
 				"wikiTitle": "Template:Data Yasuo/Way of the Wanderer",
 				"wikiRevId": 4051866,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -39872,6 +40471,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yasuo/Steel Tempest",
 				"wikiRevId": 4058549,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 4 vs wiki 4/1.33"
 				]
@@ -39908,6 +40508,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yasuo/Wind Wall",
 				"wikiRevId": 4008635,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -39944,6 +40545,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yasuo/Sweeping Blade",
 				"wikiRevId": 4008638,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -39971,7 +40573,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "special",
 				"notes": [
 					"Last Breath can be cast on targets suspended in mid-air by Nami's Aqua Prison's stun.",
-					"The wiki has adopted the term suspension for this unique property due to a statement by Yasuo's designer.[1]",
+					"The wiki has adopted the term suspension for this unique property due to a statement by Yasuo's designer.",
 					"The percentage bonus armor ignorance stacks additively with sources of percentage armor penetration.(unexpected)",
 					"Yasuo gains the bonus armor ignorance on-cast.",
 					"Last Breath requires the target to be affected by airborne from an enemy source, and simultaneously that the target is not considered cc-immune, displacement immune, or untargetable during it.",
@@ -40036,12 +40638,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"N/A",
 					"Interrupted by",
 					":",
-					"N/A",
-					"↑ Yasuo Reddit AMA"
+					"N/A"
 				],
 				"wikiTitle": "Template:Data Yasuo/Last Breath",
 				"wikiRevId": 4027670,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -40052,7 +40654,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Velkoz",
 		"id": 161,
 		"name": "Vel'Koz",
-		"title": "the Eye of the Void",
+		"title": "The Eye of the Void",
 		"wikiPage": "Vel'Koz",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -40125,6 +40727,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vel'Koz/Organic Deconstruction",
 				"wikiRevId": 3986690,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -40164,6 +40767,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vel'Koz/Plasma Fission",
 				"wikiRevId": 4008544,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -40197,6 +40801,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vel'Koz/Void Rift",
 				"wikiRevId": 4008545,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -40233,6 +40838,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vel'Koz/Tectonic Disruption",
 				"wikiRevId": 3952590,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -40309,6 +40915,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vel'Koz/Life Form Disintegration Ray",
 				"wikiRevId": 4012050,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -40319,7 +40926,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Taliyah",
 		"id": 163,
 		"name": "Taliyah",
-		"title": "the Stoneweaver",
+		"title": "The Stoneweaver",
 		"wikiPage": "Taliyah",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -40394,6 +41001,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taliyah/Rock Surfing",
 				"wikiRevId": 3986175,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -40430,6 +41038,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taliyah/Threaded Volley",
 				"wikiRevId": 4013247,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -40459,6 +41068,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taliyah/Seismic Shove",
 				"wikiRevId": 4028078,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -40496,6 +41106,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taliyah/Unraveled Earth",
 				"wikiRevId": 3985881,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -40667,6 +41278,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Taliyah/Weaver's Wall",
 				"wikiRevId": 4008075,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -40929,7 +41541,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Camille",
 		"id": 164,
 		"name": "Camille",
-		"title": "the Steel Shadow",
+		"title": "The Steel Shadow",
 		"wikiPage": "Camille",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -41006,6 +41618,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Camille/Adaptive Defenses",
 				"wikiRevId": 4051341,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41050,6 +41663,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Camille/Precision Protocol",
 				"wikiRevId": 3972807,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41087,6 +41701,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Camille/Tactical Sweep",
 				"wikiRevId": 4051342,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41120,6 +41735,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Camille/Hookshot",
 				"wikiRevId": 3922084,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41199,6 +41815,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Camille/Wall Dive",
 				"wikiRevId": 4007586,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41289,6 +41906,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Camille/The Hextech Ultimatum",
 				"wikiRevId": 4037519,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -41299,7 +41917,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Akshan",
 		"id": 166,
 		"name": "Akshan",
-		"title": "the Rogue Sentinel",
+		"title": "The Rogue Sentinel",
 		"wikiPage": "Akshan",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -41384,6 +42002,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akshan/Dirty Fighting",
 				"wikiRevId": 4038197,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41419,6 +42038,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akshan/Avengerang",
 				"wikiRevId": 4007510,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41456,6 +42076,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akshan/Going Rogue",
 				"wikiRevId": 3989407,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41591,6 +42212,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akshan/Heroic Swing",
 				"wikiRevId": 4007412,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41673,6 +42295,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Akshan/Comeuppance",
 				"wikiRevId": 3982549,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -41683,7 +42306,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Belveth",
 		"id": 200,
 		"name": "Bel'Veth",
-		"title": "the Empress of the Void",
+		"title": "The Empress of the Void",
 		"wikiPage": "Bel'Veth",
 		"resource": "None",
 		"rangeType": "Melee",
@@ -41755,6 +42378,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Bel'Veth/Death in Lavender",
 				"wikiRevId": 4050294,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41792,6 +42416,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Bel'Veth/Void Surge",
 				"wikiRevId": 4050295,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41828,6 +42453,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Bel'Veth/Above and Below",
 				"wikiRevId": 4046855,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41909,6 +42535,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Bel'Veth/Royal Maelstrom",
 				"wikiRevId": 4046605,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -41996,6 +42623,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Bel'Veth/Endless Banquet",
 				"wikiRevId": 4053392,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -42282,7 +42910,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Braum",
 		"id": 201,
 		"name": "Braum",
-		"title": "the Heart of the Freljord",
+		"title": "The Heart of the Freljord",
 		"wikiPage": "Braum",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -42354,6 +42982,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Braum/Concussive Blows",
 				"wikiRevId": 4038222,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -42385,6 +43014,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Braum/Winter's Bite",
 				"wikiRevId": 4007579,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -42422,6 +43052,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Braum/Stand Behind Me",
 				"wikiRevId": 3906582,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -42457,7 +43088,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Champion summoned units are not classified as units until they hit the ground (e.g. Sapling Toss) and thus will interact with Unbreakable whilst en route.",
 					"Projectiles whose effects trigger on collision will still trigger - dealing damage, applying debuffs, creating area of effects and marking the target as 'hit'.",
 					"Projectiles that create an area of effect upon their collision will still affect other units and not only Braum.",
-					"Projectiles that cannot hit Braum or his allies (such as an enemy Prismatic Barrier) will not be intercepted.[1]",
+					"Projectiles that cannot hit Braum or his allies (such as an enemy Prismatic Barrier) will not be intercepted.",
 					"Soraka's Starcall's Rejuvenation projectile is however blocked.",
 					"The damage reduction will affect any source of damage whose origin is in front of the shield. This includes:",
 					"All intercepted projectiles.",
@@ -42478,6 +43109,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Braum/Unbreakable",
 				"wikiRevId": 4012056,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -42546,12 +43178,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"N/A",
 					"Interrupted by",
 					":",
-					"Death, unless protected by Resurrection",
-					"↑ Unbreakable's interaction with Lux's Prismatic Barrier"
+					"Death, unless protected by Resurrection"
 				],
 				"wikiTitle": "Template:Data Braum/Glacial Fissure",
 				"wikiRevId": 4007580,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -42562,7 +43194,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Jhin",
 		"id": 202,
 		"name": "Jhin",
-		"title": "the Virtuoso",
+		"title": "The Virtuoso",
 		"wikiPage": "Jhin",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -42644,6 +43276,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jhin/Whisper",
 				"wikiRevId": 3998238,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -42677,6 +43310,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jhin/Dancing Grenade",
 				"wikiRevId": 4007611,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -42714,6 +43348,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jhin/Deadly Flourish",
 				"wikiRevId": 4021795,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -42749,6 +43384,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jhin/Captive Audience",
 				"wikiRevId": 4007613,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -42872,6 +43508,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jhin/Curtain Call",
 				"wikiRevId": 4007615,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -42962,6 +43599,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kindred/Mark of the Kindred",
 				"wikiRevId": 3994253,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -42996,6 +43634,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kindred/Dance of Arrows",
 				"wikiRevId": 4007746,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43035,6 +43674,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kindred/Wolf's Frenzy",
 				"wikiRevId": 4063949,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43071,6 +43711,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kindred/Mounting Dread",
 				"wikiRevId": 4022506,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43109,6 +43750,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kindred/Lamb's Respite",
 				"wikiRevId": 4024177,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -43473,6 +44115,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zeri/Living Battery",
 				"wikiRevId": 4051663,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43480,7 +44123,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Burst Fire",
 				"riotSummary": "Burst Fire shoots a burst of 7 rounds that deal attack damage to the first enemy hit. This Ability is treated as an Attack.",
 				"riotTooltip": "Zeri fires a burst of {{ numberofmissiles }} rounds that deals <physicalDamage>{{ activedamagethatcancrit }} physical damage</physicalDamage> to the first enemy hit. This Ability is treated as an Attack. {{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Zeri fires a burst of rounds in the target direction over the cast time, each dealing physical damage to the first enemy hit.\n\nBurst Fire's projectile is treated as a basic attack: it hits any enemy unit a typical basic attack can; deals basic damage; can critically strike for (200% + 30%) damage; and applies on-hit and on-attack effects to the first enemy hit. Burst Fire's cooldown and cast time are reduced with attack speed, with the maximum of nil attacks per second. Expression error: Unexpected * operator.% of attack speed in excess of the cap is converted into bonus attack damage.\n\nZeri can cast Burst Fire even while silenced.",
+				"wikiDescription": "Active: Zeri fires a burst of 7 rounds in the target direction over the cast time, each dealing physical damage to the first enemy hit.\n\nBurst Fire's projectile is treated as a basic attack: it hits any enemy unit a typical basic attack can; deals basic damage; can critically strike for (200% + 30%) damage; and applies on-hit and on-attack effects to the first enemy hit. Burst Fire's cooldown and cast time are reduced with attack speed, with the maximum of 1.5 attacks per second. 60% of attack speed in excess of the cap is converted into bonus attack damage.\n\nZeri can cast Burst Fire even while silenced.",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -43534,13 +44177,14 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Destroying a ward that is targetable but not visible to Zeri's team (e.g. a Control Ward in Fog of War) via Burst Fire uniquely allows her to remove its accompanying ward timer (if it exists) without seeing the ward being destroyed.",
 					"If Zeri is affected by an ally Bard's Tempered Fate during Burst Fire's cast time, she will be able to cast it during the effect.(bug)",
 					"The bonus AD calculates off of excess bonus attack speed percent - not the raw excess attack speed.",
-					"For example, if she has 150% bonus attack speed percent, but needs only 135% to reach the attack speed cap, she will gain × (150 − 135) = × 15 = Expression error: Unexpected * operator. AD",
+					"For example, if she has 150% bonus attack speed percent, but needs only 135% to reach the 1.5 attack speed cap, she will gain 0.6 × (150 − 135) = 0.6 × 15 = 9 AD",
 					"The excess attack speed is calculated after any cripple effects (like Frozen Heart's Winter's Caress), meaning they can reduce both her attack speed and attack damage.",
 					"The excess attack speed is calculated before Zeri's Lightning Crash applies its effects. Using it won't change the attack damage, despite her gaining additional attack speed and the cap changing."
 				],
 				"wikiTitle": "Template:Data Zeri/Burst Fire",
 				"wikiRevId": 4062236,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 1"
 				]
@@ -43550,9 +44194,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Ultrashock Laser",
 				"riotSummary": "Zeri fires an electric pulse that slows and damages the first enemy hit. If the pulse hits a wall it expands into a long range laser.",
 				"riotTooltip": "Zeri fires an electric pulse that deals <physicalDamage>{{ totaldamage }} physical damage</physicalDamage> and <status>Slows</status> the first enemy hit by {{ slowpercent*100 }}% for {{ slowduration }} seconds.<br /><br />If the pulse hits terrain, it expands into a laser that applies the effects in an area and Critically Strikes champions and monsters for <physicalDamage>{{ walldamage }} physical damage</physicalDamage>.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Zeri fires an electric pulse in the target direction that deals physical damage to the first enemy hit and slows them for 2 seconds.\nIf the pulse hits terrain, it transforms into a laser in a line that grants sight of the area for 1.75 seconds and fires after 0.85 seconds, applying the same effects to enemies hit and critically striking for Expression error: Unexpected < operator.Expression error: Unexpected < operator.Expression error: Unexpected < operator.Expression error: Unexpected < operator. damage against champions and monsters.",
+				"wikiDescription": "Active: Zeri fires an electric pulse in the target direction that deals physical damage to the first enemy hit and slows them for 2 seconds.\nIf the pulse hits terrain, it transforms into a laser in a line that grants sight of the area for 1.75 seconds and fires after 0.85 seconds, applying the same effects to enemies hit and critically striking for (150% + 15%) damage against champions and monsters.",
 				"leveling": [
-					"Physical Damage: to (+ % AD) (+ % AP)\nCritical Strike Damage: \n- /100 to */100 (+\n- /100% AD) (+\n- /100% AP)\nInfinity Edge Damage: \n- (/100+) to *(/100+) (+\n- (/100+)% AD) (+\n- (/100+)% AP)\nSlow: 30 / 35 / 40 / 45 / 50%"
+					"Physical Damage: 30 / 70 / 110 / 150 / 190 (+ 100% AD) (+ 50% AP)\nCritical Strike Damage: 45 / 105 / 165 / 225 / 285 (+ 150% AD) (+ 75% AP)\nInfinity Edge Damage: 49.5 / 115.5 / 181.5 / 247.5 / 313.5 (+ 165% AD) (+ 82.5% AP)\nSlow: 30 / 35 / 40 / 45 / 50%"
 				],
 				"cooldown": "12 / 11 / 10 / 9 / 8",
 				"cost": "50 / 60 / 70 / 80 / 90",
@@ -43577,6 +44221,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zeri/Ultrashock Laser",
 				"wikiRevId": 4060386,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43646,6 +44291,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zeri/Spark Surge",
 				"wikiRevId": 4015351,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43679,7 +44325,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"It does not block Burst Fire electricity chain.",
 					"Clones count for granting Overcharge.",
 					"Lightning Crash's and Spark Surge's empowerments to Burst Fire can combine together.",
-					"Burst Fire electricity chain will not trigger if the first target hit is a ward or trap, even if it is stealthed. [1] (bug)",
+					"Burst Fire electricity chain will not trigger if the first target hit is a ward or trap, even if it is stealthed. (bug)",
 					"Burst Fire electricity chain will not chain across structures.",
 					"Entering resurrection causes Zeri to lose all stacks of Hypercharged.",
 					"Overcharged is not removed, however.(unexpected)",
@@ -43689,6 +44335,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zeri/Lightning Crash",
 				"wikiRevId": 4016978,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -43699,7 +44346,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Jinx",
 		"id": 222,
 		"name": "Jinx",
-		"title": "the Loose Cannon",
+		"title": "The Loose Cannon",
 		"wikiPage": "Jinx",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -43772,6 +44419,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jinx/Get Excited!",
 				"wikiRevId": 3973632,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43821,6 +44469,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jinx/Switcheroo!",
 				"wikiRevId": 4062629,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43852,6 +44501,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jinx/Zap!",
 				"wikiRevId": 3907092,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43885,6 +44535,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jinx/Flame Chompers!",
 				"wikiRevId": 3993368,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -43923,6 +44574,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Jinx/Super Mega Death Rocket!",
 				"wikiRevId": 4007616,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -44007,6 +44659,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tahm Kench/An Acquired Taste",
 				"wikiRevId": 4008458,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -44083,6 +44736,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tahm Kench/Tongue Lash",
 				"wikiRevId": 4040842,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -44199,6 +44853,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tahm Kench/Abyssal Dive",
 				"wikiRevId": 4020963,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -44233,6 +44888,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tahm Kench/Thick Skin",
 				"wikiRevId": 4021898,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -44359,6 +45015,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tahm Kench/Devour",
 				"wikiRevId": 4063964,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 120/100/80"
 				]
@@ -44395,6 +45052,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Tahm Kench/Regurgitate",
 				"wikiRevId": 4013502,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -44405,7 +45063,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Briar",
 		"id": 233,
 		"name": "Briar",
-		"title": "the Restrained Hunger",
+		"title": "The Restrained Hunger",
 		"wikiPage": "Briar",
 		"resource": "Frenzy",
 		"rangeType": "Melee",
@@ -44455,7 +45113,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Crimson Curse",
 				"riotSummary": "Briar's attacks and abilities apply a stacking bleed that heals her for a portion of the damage it deals. Perpetually hungry, she gains increased healing based on her missing Health, but lacks innate Health Regeneration.",
 				"riotTooltip": "",
-				"wikiDescription": "Innate: Briar's basic attacks on-hit and abilities inflict a bleed against enemies for seconds, refreshing on subsequent applications, stacking up to times and dealing\n- 100% damage for stacks beyond the first. The bleed deals「 Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+ % bonus AD) total physical damage and heals Briar for Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+\n- % bonus AD) over the duration, increased by Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+\n- % bonus AD) and Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+\n- % bonus AD) for each subsequent stack respectively and up to a maximum of Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+\n- % bonus AD) total physical damage and Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+\n- % bonus AD) over the duration. 」「 Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+ /(/)% bonus AD) physical damage and heals Briar for Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+ (/(/)*)% bonus AD) every nil seconds, increased by Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+\n- /(/)% bonus AD) and Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+ (*/(/))*% bonus AD) for each subsequent stack respectively and up to a maximum of Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+\n- /(/)% bonus AD) physical damage and Error: \"defaultDisplayMaxLevel (true)\" cannot be set when no level is higher than default. (+ (*/(/))*% bonus AD) per tick. 」If a target dies while bleeding, she will heal herself equal to 125% of the remaining bleed damage.\n\nBriar has no base health regeneration, but she increases healing from all sources by 0% – 40% (based on missing health) (+ 0% – 2.5% (based on missing health) per 100 bonus health).",
+				"wikiDescription": "Innate: Briar's basic attacks on-hit and abilities inflict a bleed against enemies for 5 seconds, refreshing on subsequent applications, stacking up to 5 times and dealing 25% damage for stacks beyond the first. The bleed deals「 10 – 50 (based on level) (+ 50% bonus AD) total physical damage and heals Briar for 2.5 – 12.5 (based on level) (+ 12.5% bonus AD) over the duration, increased by 2.5 – 12.5 (based on level) (+ 12.5% bonus AD) and 0.63 – 3.13 (based on level) (+ 3.125% bonus AD) for each subsequent stack respectively and up to a maximum of 20 – 100 (based on level) (+ 100% bonus AD) total physical damage and 5 – 25 (based on level) (+ 25% bonus AD) over the duration. 」「 1 – 5 (based on level) (+ 5% bonus AD) physical damage and heals Briar for 0.25 – 1.25 (based on level) (+ 1.25% bonus AD) every 0.5 seconds, increased by 0.25 – 1.25 (based on level) (+ 1.25% bonus AD) and 0.06 – 0.31 (based on level) (+ 0.3125% bonus AD) for each subsequent stack respectively and up to a maximum of 2 – 10 (based on level) (+ 10% bonus AD) physical damage and 0.5 – 2.5 (based on level) (+ 2.5% bonus AD) per tick. 」If a target dies while bleeding, she will heal herself equal to 125% of the remaining bleed damage.\n\nBriar has no base health regeneration, but she increases healing from all sources by 0% – 40% (based on missing health) (+ 0% – 2.5% (based on missing health) per 100 bonus health).",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -44472,14 +45130,14 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"projectile": "",
 				"spellShield": "true",
 				"notes": [
-					"The bleed always heals Briar for",
-					"100% of the pre-mitigation damage dealt.",
+					"The bleed always heals Briar for 25% of the pre-mitigation damage dealt.",
 					"Because of this, Briar will not heal on invulnerable targets.",
 					"Blood Frenzy's area of effect damage around the target does not apply bleed stacks."
 				],
 				"wikiTitle": "Template:Data Briar/Crimson Curse",
 				"wikiRevId": 4038287,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -44517,6 +45175,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Briar/Head Rush",
 				"wikiRevId": 3989856,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -44593,6 +45252,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Briar/Blood Frenzy",
 				"wikiRevId": 4052441,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -44626,6 +45286,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Briar/Snack Attack",
 				"wikiRevId": 4015000,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -44701,6 +45362,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Briar/Chilling Scream",
 				"wikiRevId": 4007450,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -44869,6 +45531,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Briar/Certain Death",
 				"wikiRevId": 4051322,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -45311,6 +45974,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viego/Sovereign's Domination",
 				"wikiRevId": 4063480,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -45318,16 +45982,16 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Blade of the Ruined King",
 				"riotSummary": "Viego's spectral blade passively deals bonus percent current Health damage <OnHit>On-Hit</OnHit> and strikes twice vs. enemies he recently hit with an Ability, stealing Health.<br><br>Viego can activate this Ability to thrust his zweihander forward, impaling enemies in front of him.",
 				"riotTooltip": " <spellPassive>Passive:</spellPassive> Viego's Attacks deal an additional <physicalDamage>{{ totalpercenthealthonhit }} current Health physical damage</physicalDamage>. His first Attack against an enemy he has recently damaged with an Ability hits a second time, dealing <physicalDamage>{{ secondattackdamage }} physical damage</physicalDamage> and restoring <healing>{{ healmodvschamps*100 }}% of damage dealt as Health</healing>. These bonuses are kept during <keywordMajor>Possession</keywordMajor>.<br /><br /><spellActive>Active: </spellActive>Viego stabs forward, dealing <physicalDamage>{{ totaldamage }} physical damage</physicalDamage>.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Passive: Viego's basic attacks deal bonus physical damage on-hit. This damage can critically strike for (170% + 15%) damage, has a minimum threshold and is capped at against monsters.\n\nAdditionally, his damaging abilities apply a mark to enemies hit for seconds. Viego's next basic attack against a marked target is empowered to consume the mark on-hit to strike a second time, dealing % AD (+ % AP) physical damage. He also heals himself for a portion of the post-mitigation damage dealt by the second strike: % against minions, % against monsters, and % against other targets.\n\nThe second strike applies on-hit effects and can critically strike for (200% + 30%) damage.\n\nActive: Viego stabs in a line in the target direction that deals physical damage to enemies hit, increased by 0% – 60% (+ 0% – 18%) (based on critical strike chance).",
+				"wikiDescription": "Passive: Viego's basic attacks deal bonus physical damage on-hit. This damage can critically strike for (170% + 15%) damage, has a minimum threshold and is capped at 80 against monsters.\n\nAdditionally, his damaging abilities apply a mark to enemies hit for 4 seconds. Viego's next basic attack against a marked target is empowered to consume the mark on-hit to strike a second time, dealing 20% AD (+ 15% AP) physical damage. He also heals himself for a portion of the post-mitigation damage dealt by the second strike: 100% against minions, 125% against monsters, and 150% against other targets.\n\nThe second strike applies on-hit effects and can critically strike for (200% + 30%) damage.\n\nActive: Viego stabs in a line in the target direction that deals physical damage to enemies hit, increased by 0% – 60% (+ 0% – 18%) (based on critical strike chance).",
 				"leveling": [
-					"Bonus Physical Damage: to% of target's current health\nCritical Bonus Physical Damage: \n- 1.7 to *1.7% of target's current health\nMinimum Bonus Damage: to",
-					"Physical Damage: to (+ % AD)"
+					"Bonus Physical Damage: 2 / 3 / 4 / 5 / 6% of target's current health\nCritical Bonus Physical Damage: 3.4 / 5.1 / 6.8 / 8.5 / 10.2% of target's current health\nMinimum Bonus Damage: 10 / 15 / 20 / 25 / 30",
+					"Physical Damage: 25 / 40 / 55 / 70 / 85 (+ 70% AD)"
 				],
 				"cooldown": "5 / 4.5 / 4 / 3.5 / 3",
 				"cost": "",
 				"costType": "",
 				"targetRange": "",
-				"castTime": "- 100% of Viego's windup time (\n- (1/0.658)*0.16447 at base attack speed)",
+				"castTime": "140% of Viego's windup time (0.35 at base attack speed)",
 				"effectRadius": "",
 				"width": "125",
 				"speed": "",
@@ -45354,6 +46018,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viego/Blade of the Ruined King",
 				"wikiRevId": 4063652,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -45429,6 +46094,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viego/Spectral Maw",
 				"wikiRevId": 4008551,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -45473,6 +46139,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viego/Harrowed Path",
 				"wikiRevId": 4057854,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -45512,6 +46179,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Viego/Heartbreaker",
 				"wikiRevId": 4001566,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -45797,7 +46465,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Senna",
 		"id": 235,
 		"name": "Senna",
-		"title": "the Redeemer",
+		"title": "The Redeemer",
 		"wikiPage": "Senna",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -45849,7 +46517,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Absolution",
 				"riotSummary": "When units die near Senna, their souls are periodically trapped by the Black Mist. Senna can attack these souls to free them, absorbing the Mist that held them in death. Mist fuels her Relic Cannon's power with increased Attack Damage, Attack Range, and Critical Strike Chance. <br><br>Attacks from Senna's Relic Cannon take longer to fire, deal bonus damage, and briefly grant her a portion of her target's Move Speed.",
 				"riotTooltip": "",
-				"wikiDescription": "Innate - Weakened Soul: Senna's basic attacks on-hit and abilities mark enemy champions hit for 4 seconds. Subsequent attacks or ability hits against marked targets will consume the mark to grant Senna a stack of Mist and deal bonus physical damage equal to 1% – 10% (based on level) of the target's current health, rendering the target immune to being marked again for a few seconds. This damage applies life steal at 100% effectiveness.\n\nInnate: Enemies that die near Senna may spawn a Mist Wraith from their corpse. A Mist Wraith lasts 8 seconds and Senna can basic attack or hit it with Piercing Darkness or Dawning Shadow to kill it instantly, granting her nil and a stack of Mist.\n- Enemy champions and large monsters will spawn a Mist Wraith.\n- Epic monsters will spawn 2 Mist Wraiths.\n- Minions and lesser monsters that Senna kills have a 5% chance to spawn a Mist Wraith.\n- Large minions that Senna does not kill will always spawn a Mist Wraith, while lesser minions and lesser monsters that Senna does not kill have a 32% chance to spawn one.\n- Lesser minions executed by an allied champion's Support Quest item have a 8.4% chance to spawn a Mist Wraith.\n\nMist: For each stack of Mist, Senna gains nil bonus attack damage. For every stacks, she also gains 20 bonus attack range and % critical strike chance. Additionally, every 1% critical strike chance in excess of 100% is converted into nil% life steal.\n\nInnate - Relic Cannon: Senna's basic attacks on-hit deal 20% AD bonus physical damage and grant her 10% / 15% / 20% (based on level) of the target's movement speed as bonus movement speed for 0.5 seconds. The damage applies life steal at 100% effectiveness.",
+				"wikiDescription": "Innate - Weakened Soul: Senna's basic attacks on-hit and abilities mark enemy champions hit for 4 seconds. Subsequent attacks or ability hits against marked targets will consume the mark to grant Senna a stack of Mist and deal bonus physical damage equal to 1% – 10% (based on level) of the target's current health, rendering the target immune to being marked again for a few seconds. This damage applies life steal at 100% effectiveness.\n\nInnate: Enemies that die near Senna may spawn a Mist Wraith from their corpse. A Mist Wraith lasts 8 seconds and Senna can basic attack or hit it with Piercing Darkness or Dawning Shadow to kill it instantly, granting her 8 and a stack of Mist.\n- Enemy champions and large monsters will spawn a Mist Wraith.\n- Epic monsters will spawn 2 Mist Wraiths.\n- Minions and lesser monsters that Senna kills have a 5% chance to spawn a Mist Wraith.\n- Large minions that Senna does not kill will always spawn a Mist Wraith, while lesser minions and lesser monsters that Senna does not kill have a 32% chance to spawn one.\n- Lesser minions executed by an allied champion's Support Quest item have a 8.4% chance to spawn a Mist Wraith.\n\nMist: For each stack of Mist, Senna gains 0.75 bonus attack damage. For every 20 stacks, she also gains 20 bonus attack range and 10% critical strike chance. Additionally, every 1% critical strike chance in excess of 100% is converted into 0.35% life steal.\n\nInnate - Relic Cannon: Senna's basic attacks on-hit deal 20% AD bonus physical damage and grant her 10% / 15% / 20% (based on level) of the target's movement speed as bonus movement speed for 0.5 seconds. The damage applies life steal at 100% effectiveness.",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -45865,37 +46533,13 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"damageType": "",
 				"projectile": "true",
 				"spellShield": "False",
-				"notes": [
-					"If a target's mark has a remaining duration less than 0.25 seconds, and Senna starts her basic attack windup on the target during this time, the mark's duration will be modified to 0.75 seconds. Subsequent windups on the marked target will refresh this modified duration if the previous attack windup did not complete.",
-					"Despite Senna dealing 1 damage to Mist Wraiths, attacking them will calculate the attack's damage (including critical strike modifiers) and any on-hit effects for the purposes of life steal and drain effects.",
-					"Relic Cannon is only applied if the attack deals more than 0 damage.",
-					"Hence, it is not applied if the target is invulnerable or Senna's basic attack's attack damage is reduced to 0 or below.",
-					"The bonus damage is also not applied against structures (regardless of their vulnerability).",
-					"Dealing 0 damage is valid for marking and collecting Mist from champions, but dealing no damage at all is not.",
-					"Hence, Senna can mark and collect from invulnerable enemies.",
-					"Dodge prevents marking and collecting a Mist via Senna's basic attacks and Piercing Darkness.",
-					"PENDING FOR TEST: Mist interaction with block and blind.",
-					"Mist traveling to Senna can be destroyed as a projectile.",
-					"Nunu & Willump spawn a wraith each.",
-					"Enemies will not see newly spawned wraiths while Senna is not visible.",
-					"A wraith can be hit by Bard's Cosmic Binding and it will interact with it the same way minions or monsters interact with Cosmic Binding but it will not take damage.",
-					"Mist Wraith has a spawn animation, but is targetable immediately.",
-					"Mist Wraith grants a small amount of sight around itself.",
-					"Runaan's Hurricane secondary bolts will ignore Mist Wraiths.",
-					"Attacking a Mist Wraith will not consume Energized.",
-					"Excluding the range increase and the bonus shielding on Dawning Shadow, one stack of Mist is worth Expression error: Unexpected * operator. ( + from Mist Wraith pickup ( Expression error: Unexpected * operator. total)), Expression error: Unexpected * operator. if the critical chance is converted to life steal.",
-					"AD is worth Expression error: Unexpected * operator..",
-					"Expression error: Unexpected / operator.% critical strike chance is worth Expression error: Unexpected * operator..",
-					"Expression error: Unexpected * operator.% life steal is worth Expression error: Unexpected * operator..",
-					"The bonus on-hit damage applies an additional stack of Black Cleaver's Carve.",
-					"Critical strike chance gained from Yun Tal Wildarrows' Practice Makes Lethal, Augments and Stat bonuses do not interact with the life steal conversion.(bug)",
-					"The buff will be granted even when hitting units that have zero movement speed (from which Senna cannot gain any movement speed).",
-					"Attacking structures is special-cased to not grant it at all, however.",
-					"Pinging Absolution in the HUD will send a chat message to the team that displays its stack count and her total attack range accumulated."
-				],
+				"notes": [],
 				"wikiTitle": "Template:Data Senna/Absolution",
 				"wikiRevId": 4063473,
 				"agreed": true,
+				"withheld": [
+					"notes: the wiki returned an expression or script error"
+				],
 				"conflicts": []
 			},
 			{
@@ -45942,6 +46586,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Senna/Piercing Darkness",
 				"wikiRevId": 4042887,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -45975,6 +46620,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Senna/Last Embrace",
 				"wikiRevId": 4009139,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46018,6 +46664,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Senna/Curse of the Black Mist",
 				"wikiRevId": 3994514,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46053,6 +46700,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Senna/Dawning Shadow",
 				"wikiRevId": 4008033,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -46063,7 +46711,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Lucian",
 		"id": 236,
 		"name": "Lucian",
-		"title": "the Purifier",
+		"title": "The Purifier",
 		"wikiPage": "Lucian",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -46142,6 +46790,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lucian/Lightslinger",
 				"wikiRevId": 4041164,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46176,6 +46825,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lucian/Piercing Light",
 				"wikiRevId": 3982579,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46213,6 +46863,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lucian/Ardent Blaze",
 				"wikiRevId": 3594941,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46247,6 +46898,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lucian/Relentless Pursuit",
 				"wikiRevId": 4008455,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46256,7 +46908,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Lucian rapidly fires <keywordMajor>{{ totalnumshots }}</keywordMajor> shots in a direction for {{ duration }} seconds or until he <recast>Recasts</recast>. Each shot deals <physicalDamage>{{ damageperbullet }} physical damage</physicalDamage> to the first enemy hit.<br /><br />While firing, Lucian may use <spellName>Relentless Pursuit</spellName>.<br /><br />Total Damage: <physicalDamage>{{ totaldamage }} physical damage</physicalDamage><br />{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Lucian channels for up to 3 seconds, rapidly firing up to 22 (+ 0 – 22 (+ 0 – 6) (based on critical strike chance)) shots in the target direction over the duration. Each shot deals physical damage to the first enemy hit, doubled against minions. The Culling can be recast after 0.75 seconds during the channel, and does so automatically when the channel ends.\n\nWhile channeling, Lucian is ghosted and may still move.\n\nRecast: Lucian ends The Culling.",
 				"leveling": [
-					"Physical Damage Per Shot: to (+ % AD) (+ % AP)\nMinion Damage Per Shot: ( to )* (+\n- % AD) (+\n- % AP)"
+					"Physical Damage Per Shot: 15 / 30 / 45 (+ 25% AD) (+ 15% AP)\nMinion Damage Per Shot: 30 / 60 / 90 (+ 50% AD) (+ 30% AP)"
 				],
 				"cooldown": "110 / 100 / 90",
 				"cost": "100",
@@ -46325,6 +46977,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lucian/The Culling",
 				"wikiRevId": 4007670,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -46335,7 +46988,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Zed",
 		"id": 238,
 		"name": "Zed",
-		"title": "the Master of Shadows",
+		"title": "The Master of Shadows",
 		"wikiPage": "Zed",
 		"resource": "Energy",
 		"rangeType": "Melee",
@@ -46411,6 +47064,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zed/Contempt for the Weak",
 				"wikiRevId": 4052367,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46447,6 +47101,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zed/Razor Shuriken",
 				"wikiRevId": 4006897,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46496,6 +47151,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zed/Living Shadow",
 				"wikiRevId": 4053262,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46536,6 +47192,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zed/Shadow Slash",
 				"wikiRevId": 4016889,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -46571,7 +47228,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"The mark will not be applied to the target if they are untargetable by the time Zed's dash ends.",
 					"Zed will be ordered to basic attack his target after reappearing.",
 					"Death Mark's stored damage derives from all basic attacks, abilities, items, runes and buffs.",
-					"While not being a damage mitigation, Death Mark does not store true damage. [1] (unexpected).",
+					"While not being a damage mitigation, Death Mark does not store true damage. (unexpected).",
 					"Death Mark's Shadow is functionally the same as a regular one, but it lasts longer and can be swapped to regardless of range.",
 					"The range at which it mimics Zed's abilities does not change.",
 					"Spell shield will only block the mark's application. They will not prevent Zed from initiating Death Mark against the target nor block the detonation from a mark that is already applied.",
@@ -46625,6 +47282,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zed/Death Mark",
 				"wikiRevId": 4050166,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -46911,7 +47569,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Kled",
 		"id": 240,
 		"name": "Kled",
-		"title": "the Cantankerous Cavalier",
+		"title": "The Cantankerous Cavalier",
 		"wikiPage": "Kled",
 		"resource": "Courage",
 		"rangeType": "Melee",
@@ -46982,7 +47640,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"While Dismounted, Kled's health is visually rounded down while Skaarl's health is rounded up.",
 					"Excess damage dealt to Skaarl counts for the purposes of effects based on damage dealt (eg. Death's Dance's Ignore Pain, Stormsurge's Stormraider, item damage trackers).(unexpected)",
 					"The dismount threshold does not interact with the threshold of Lifeline effects, meaning both can be triggered from the same damage instance even if triggering one should prevent triggering the other.(bug)",
-					"If Kled dismounts and triggers a Lifeline shield effect from the same damage instance, excess damage dealt to Skaarl will be dealt to the shield when it exceeds the lifeline threshold.(unexpected)[1]",
+					"If Kled dismounts and triggers a Lifeline shield effect from the same damage instance, excess damage dealt to Skaarl will be dealt to the shield when it exceeds the lifeline threshold.(unexpected)",
 					"If Skaarl's health is reduced below 0 by an attack or ability with multiple damage instances, subsequent damage instances from the same cast instance are reduced to 0 damage.",
 					"The Collector's Death is special cased to not affect Kled while he is Mounted, regardless of the duo's combined current health.",
 					"If Skaarl's health is reduced below 0 by Eclipse's Ever Rising Moon, Kled will take the triggering attack's damage.(unexpected)",
@@ -46991,7 +47649,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Kled does not receive damage from Illaoi's Test of Spirit, Kayn's Umbral Trespass, or being Regurgitated by Tahm Kench while dismounting.(bug)",
 					"The lunge can pass through player-generated terrain.(unexpected)",
 					"Buying items while Kled and Skaarl's combined current health is lower than Kled's maximum health will cause Kled to dismount upon undoing the purchase and potentially lose health.(bug)",
-					"PENDING FOR TEST: Dismounting with a spell shield sometimes consumes the spell shield and negates the effects of dismounting.(bug)[1]",
+					"PENDING FOR TEST: Dismounting with a spell shield sometimes consumes the spell shield and negates the effects of dismounting.(bug)",
 					"If Kled would be executed while Mounted, he is instead only Dismounted.",
 					"The following table refers for interactions while Kled is lunging:",
 					"Attacking",
@@ -47035,6 +47693,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kled/Skaarl the Cowardly Lizard",
 				"wikiRevId": 4058479,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47076,6 +47735,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kled/Dismounted Skaarl the Cowardly Lizard",
 				"wikiRevId": 4038397,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47085,8 +47745,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "<keywordMajor>Mounted:</keywordMajor> Kled throws a bear trap that deals <physicalDamage>{{ totaldamage }} physical damage</physicalDamage> and hooks onto the first enemy champion or large jungle monster hit.<br /><br />If Kled stays near a hooked enemy for {{ tetherpoptime }} seconds, he yanks out the trap, dealing <physicalDamage>{{ totalyankdamage }} physical damage</physicalDamage>, <status>Pulling</status> them, and <status>Slowing</status> by {{ slowamount*-100 }}% for {{ slowduration }} seconds.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Kled throws a bear trap in the target direction that deals physical damage to enemies hit, increased to 150% against minions, small pets, and small and medium monsters. The bear trap collides with the first enemy champion, large pet, or large monster hit, revealing them for 2.5 seconds, and forming a tether between Kled and the target for 1.75 seconds.\n\nThe tether's radius shrinks over its duration, and if it is not broken before then, Kled pulls the target 150 units toward him, deals physical damage and slows them for 2.5 seconds.\n\nBear Trap on a Rope can be cast while Jousting.",
 				"leveling": [
-					"Physical Damage: to (+ % bonus AD)\nMinion and Small Monster Damage: \n- 1.5 to *1.5 (+ Expression error: Unexpected * operator.% bonus AD)",
-					"Physical Damage: \n- 2 to *2 (+ Expression error: Unexpected * operator.% bonus AD)\nTotal Physical Damage: \n- 3 to *3 (+ Expression error: Unexpected * operator.% bonus AD)\nSlow: 30 / 35 / 40 / 45 / 50%"
+					"Physical Damage: 30 / 55 / 80 / 105 / 130 (+ 60% bonus AD)\nMinion and Small Monster Damage: 45 / 82.5 / 120 / 157.5 / 195 (+ 90% bonus AD)",
+					"Physical Damage: 60 / 110 / 160 / 210 / 260 (+ 120% bonus AD)\nTotal Physical Damage: 90 / 165 / 240 / 315 / 390 (+ 180% bonus AD)\nSlow: 30 / 35 / 40 / 45 / 50%"
 				],
 				"cooldown": "11 / 10 / 9 / 8 / 7",
 				"cost": "",
@@ -47122,6 +47782,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kled/Bear Trap on a Rope",
 				"wikiRevId": 4059774,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47131,8 +47792,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "",
 				"wikiDescription": "Active: Kled sprays a cone of five pellets in the target direction while recoiling 300 units in the opposite direction, dealing physical damage to enemies hit.\n\nKled periodically stocks a Pocket Pistol charge, up to a maximum of 2. He will restore both charges after dismounting.\n\nEach pellet beyond the first to hit a target will only deal 20% damage. Pellets collide with the first enemy champion they hit. Each pellet that hits an enemy champion or epic monster restores Courage, by 5 and 2.5 respectively, for up to a total restore of 25 against champions and 12.5 versus epic monsters.",
 				"leveling": [
-					"Physical Damage: to (+ % bonus AD)",
-					"Reduced Damage: \n- to * (+\n- % bonus AD)\nMaximum Damage: \n- (1+*4) to *(1+*4) (+\n- (1+*4)% bonus AD)"
+					"Physical Damage: 35 / 50 / 65 / 80 / 95 (+ 65% bonus AD)",
+					"Reduced Damage: 7 / 10 / 13 / 16 / 19 (+ 13% bonus AD)\nMaximum Damage: 63 / 90 / 117 / 144 / 171 (+ 117% bonus AD)"
 				],
 				"cooldown": "3",
 				"cost": "1",
@@ -47205,6 +47866,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kled/Pocket Pistol",
 				"wikiRevId": 4059773,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47248,6 +47910,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kled/Violent Tendencies",
 				"wikiRevId": 4059722,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47334,6 +47997,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kled/Jousting",
 				"wikiRevId": 4059782,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47363,6 +48027,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kled/Dismounted Jousting",
 				"wikiRevId": 3942228,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47372,8 +48037,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Kled charges toward an area, leaving a trail that grants allies increasing <speed>Move Speed</speed>. While charging and for 2 seconds after Kled gains up to <shield>{{ maximumshield }} Shield</shield>. Skaarl rams the first enemy champion encountered, dealing <magicDamage>{{ minimumdamagetooltip }}</magicDamage> to <magicDamage>{{ maximumchargedamage }} max Health magic damage</magicDamage> (based on distance travelled) and briefly <status>Knocking Back</status>.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Kled & Skaarl charge toward the target location, automatically navigating terrain along the way, during which they are ghosted, immune to crowd control and revealed to enemy champions in a 1250 radius. If the charge does not complete within 15 seconds, it will end prematurely. The charge is interrupted instantly if Kled dismounts during it.\n\nWhile charging, the duo gain an initial shield, plus an additional amount for every 0.25 seconds of traveling, up to a cap at 2 seconds. The shield lasts for 2 seconds upon finishing the charge. Additionally, the duo trails a directional draft in their wake, lasting 9 seconds. Allied units other than lane minions following the draft gain Mr. Kled's Wild Ride. After 0.5 seconds of charging, the duo gain bonus movement speed every 0.25 seconds, up to 950 total movement speed over 3 seconds.\n\nMr. Kled's Wild Ride: While in champion combat, gain 40% bonus movement speed. After not being in champion combat for 3 seconds, if Kled is charging, gain bonus movement speed up to Kled's current movement speed; otherwise gain up to 650 total movement speed.\n\nKled & Skaarl will dash toward the first visible enemy champion in range of the charge, revealing the target during the dash and colliding with the first visible enemy champion in their path to deal magic damage, increased by 0% – 200% (based on charge time), knock them back 150 units, though not through terrain, and end the charge.",
 				"leveling": [
-					"Total Shield: \n- 10 to *10 (+ Expression error: Unexpected * operator.% bonus AD)\nInitial Shield: \n- 2 to *2 (+ Expression error: Unexpected * operator.% bonus AD)\nShield Per Instance: to (+ % bonus AD)",
-					"Minimum Magic Damage: to% (+ % per 100 bonus AD) of target's maximum health\nMaximum Magic Damage: \n- 3 to *3% (+\n- 3% per 100 bonus AD) of target's maximum health"
+					"Total Shield: 200 / 300 / 400 (+ 300% bonus AD)\nInitial Shield: 40 / 60 / 80 (+ 60% bonus AD)\nShield Per Instance: 20 / 30 / 40 (+ 30% bonus AD)",
+					"Minimum Magic Damage: 4 / 6 / 8% (+ 3% per 100 bonus AD) of target's maximum health\nMaximum Magic Damage: 12 / 18 / 24% (+ 9% per 100 bonus AD) of target's maximum health"
 				],
 				"cooldown": "140 / 125 / 110",
 				"cost": "",
@@ -47402,7 +48067,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"The charge will continue towards the target location even if Kled's location changes drastically.",
 					"Kled will mark his path with an indicator visible to him and his allies.",
 					"Kled's pathing indicator will not account for changes in Kled's pathing.",
-					"Kled's pathing indicator will sometimes display a path different from his real path.(bug) [2]",
+					"Kled's pathing indicator will sometimes display a path different from his real path.(bug)",
 					"Kled's shield generation is based upon a global 0.25 second timer, not based on when the ability is cast or when it ends.(unexpected)",
 					"For example, this means that Kled will take an additional 0.25 seconds to generate the maximum shield amount if the ability was cast immediately after the last tick of the global timer.",
 					"For example, this means that Kled's shield will expire 0.25 seconds sooner if his charge ends immediately before the next tick of the global timer.",
@@ -47413,7 +48078,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Generate a shield;",
 					"Trail a directional draft, applying Mr. Kled's Wild Ride;",
 					"Disable summoner spells and items.",
-					"Kled sometimes fails to lock on to valid targets in range.(bug) [3]",
+					"Kled sometimes fails to lock on to valid targets in range.(bug)",
 					"Experimental Hexplate's Overdrive, Fiendhunter Bolts' Opening Barrage, and Zeke's Convergence's Frostfire Tempest trigger at the end of the charge or at the end of the dash, whichever comes last, even if the charge ends before or during the dash.",
 					"Kled and Skaarl will track the target if they change locations.",
 					"They will dash to the target's previous location if the target moves beyond 2500 units of the dash's beginning location.",
@@ -47421,7 +48086,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"If the dash does not complete within 9 seconds, Kled and Skaarl will continue to track their target, but will be able to cast spells, and will not be able to collide with enemy champions.",
 					"While dashing, Kled will mark his target with an indicator visible to both teams.",
 					"The damage dealt is based on time spent traveling before the beginning of the dash.",
-					"It is possible for Kled to briefly lose his crowd control immunity while colliding with an enemy champion, which can allow the dash, and its subsequent damage and displacement to get interrupted.(bug) [4]",
+					"It is possible for Kled to briefly lose his crowd control immunity while colliding with an enemy champion, which can allow the dash, and its subsequent damage and displacement to get interrupted.(bug)",
 					"Units knocked back by Chaaaaaaaarge!!! knockback can pass through terrain if it is player-generated, or if they are already inside it.(unexpected)",
 					"The airborne debuff is removed early when the forced movement stops.",
 					"Buffering Interactions",
@@ -47511,6 +48176,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kled/Chaaaaaaaarge!!!",
 				"wikiRevId": 4059781,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47535,12 +48201,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"projectile": "",
 				"spellShield": "",
 				"notes": [
-					"No additional details.",
-					"↑ Edge of Night bug"
+					"No additional details."
 				],
 				"wikiTitle": "Template:Data Kled/Dismounted Chaaaaaaaarge!!!",
 				"wikiRevId": 3942225,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -47551,7 +48217,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Ekko",
 		"id": 245,
 		"name": "Ekko",
-		"title": "the Boy Who Shattered Time",
+		"title": "The Boy Who Shattered Time",
 		"wikiPage": "Ekko",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -47627,6 +48293,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ekko/Z-Drive Resonance",
 				"wikiRevId": 4022978,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47661,6 +48328,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ekko/Timewinder",
 				"wikiRevId": 4060361,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47694,6 +48362,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ekko/Parallel Convergence",
 				"wikiRevId": 3956502,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47730,6 +48399,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ekko/Phase Dive",
 				"wikiRevId": 4025604,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -47768,6 +48438,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ekko/Chronobreak",
 				"wikiRevId": 4012189,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -48132,6 +48803,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Qiyana/Royal Privilege",
 				"wikiRevId": 3985639,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48164,6 +48836,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Qiyana/Edge of Ixtal",
 				"wikiRevId": 4057472,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48196,6 +48869,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Qiyana/Elemental Wrath",
 				"wikiRevId": 4057473,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48232,6 +48906,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Qiyana/Terrashape",
 				"wikiRevId": 4007752,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48264,6 +48939,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Qiyana/Audacity",
 				"wikiRevId": 4052493,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48299,6 +48975,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Qiyana/Supreme Display of Talent",
 				"wikiRevId": 4007999,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -48309,7 +48986,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Vi",
 		"id": 254,
 		"name": "Vi",
-		"title": "the Piltover Enforcer",
+		"title": "The Piltover Enforcer",
 		"wikiPage": "Vi",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -48383,6 +49060,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vi/Blast Shield",
 				"wikiRevId": 3986701,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48466,6 +49144,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vi/Vault Breaker",
 				"wikiRevId": 3921391,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48501,6 +49180,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vi/Denting Blows",
 				"wikiRevId": 3932548,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48510,7 +49190,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Vi's next Attack deals <physicalDamage>{{ totaldamagetooltip }} physical damage</physicalDamage> to the target and enemies behind them.<br /><br />This Ability has 2 charges ({{ ammorechargetime }} second refresh).{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Vi empowers her next basic attack within 6 seconds to have an uncancellable windup, gain 50 bonus range and trigger a blast in the target's direction that deals modified physical damage to enemies hit in a cone.\nRelentless Force can critically strike for (100% + 30%) AD bonus physical damage against the primary target. Secondary targets take the same damage but do not count as being critically struck.\n\nVi periodically stocks a Relentless Force charge, up to a maximum of 2.\n\nRelentless Force resets Vi's basic attack timer.",
 				"leveling": [
-					"Physical Damage: 10 / 30 / 50 / 70 / 90 (+ Expression error: Unexpected * operator.% AD) (+ 100% AP)"
+					"Physical Damage: 10 / 30 / 50 / 70 / 90 (+ 110% AD) (+ 100% AP)"
 				],
 				"cooldown": "",
 				"cost": "26 / 32 / 38 / 44 / 50",
@@ -48536,6 +49216,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vi/Relentless Force",
 				"wikiRevId": 3986710,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48622,6 +49303,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vi/Cease and Desist",
 				"wikiRevId": 4004943,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -48908,7 +49590,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Aatrox",
 		"id": 266,
 		"name": "Aatrox",
-		"title": "the Darkin Blade",
+		"title": "The Darkin Blade",
 		"wikiPage": "Aatrox",
 		"resource": "Blood Well",
 		"rangeType": "Melee",
@@ -48957,7 +49639,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Deathbringer Stance",
 				"riotSummary": "Periodically, Aatrox's next basic attack deals bonus <magicDamage>magic damage</magicDamage> and heals him, based on the target's max health. ",
 				"riotTooltip": "",
-				"wikiDescription": "Innate: Periodically, Aatrox empowers his next basic attack to gain 50 bonus range and deal bonus magic damage equal to 4% – 10% (based on level) of the target's maximum health, capped at 100 – 320 (based on level) against monsters. Deathbringer Stance's damage applies life steal.\nAatrox heals for the post-mitigation bonus damage dealt, reduced to\n- - 100% against minions.\n\nWhenever Aatrox hits at least one enemy champion or large monster with a basic attack on-hit or an ability, Deathbringer Stance's current cooldown is reduced by 2 seconds, doubled to 4 if he hits with the Sweetspot of The Darkin Blade.",
+				"wikiDescription": "Innate: Periodically, Aatrox empowers his next basic attack to gain 50 bonus range and deal bonus magic damage equal to 4% – 10% (based on level) of the target's maximum health, capped at 100 – 320 (based on level) against monsters. Deathbringer Stance's damage applies life steal.\nAatrox heals for the post-mitigation bonus damage dealt, reduced to 25% against minions.\n\nWhenever Aatrox hits at least one enemy champion or large monster with a basic attack on-hit or an ability, Deathbringer Stance's current cooldown is reduced by 2 seconds, doubled to 4 if he hits with the Sweetspot of The Darkin Blade.",
 				"leveling": [],
 				"cooldown": "",
 				"cost": "",
@@ -48984,6 +49666,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aatrox/Deathbringer Stance",
 				"wikiRevId": 4062881,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -48991,10 +49674,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "The Darkin Blade",
 				"riotSummary": "Aatrox slams his greatsword down, dealing physical damage. He can swing three times, each with a different area of effect.",
 				"riotTooltip": "Aatrox slams his greatsword, dealing <physicalDamage>{{ qdamage }} physical damage</physicalDamage>. If they are hit on the edge, they are briefly <status>Knocked Up</status> and they take <physicalDamage>{{ qedgedamage }}</physicalDamage> instead. This Ability can be <recast>Recast</recast> twice, each one changing shape and dealing 25% more damage than the previous one.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Aatrox can activate The Darkin Blade three times before the ability goes on cooldown, with a 1-second static cooldown between casts. If Aatrox does not recast the ability within 4 seconds of the previous cast, it goes on cooldown.\n\nActive: Aatrox performs a strike with his greatsword for each of the three casts, dealing physical damage to enemies hit within an area. Enemies hit within a Sweetspot of the area take -100% bonus damage and are also knocked up for 0.25 seconds. Each subsequent cast gains\n- 100% more damage.\n\nFirst Cast: Aatrox's first strike affects a 625 × 180-unit rectangular area in the target direction, with him centered on the back line and the Sweetspot at the farthest edge.\n\nSecond Cast: Aatrox's second strike affects a trapezoidal area in the target direction, with the Sweetspot at the farthest edge. The hitbox begins 100-units behind Aatrox and extends 475-units in front of him, measuring between 300 and 500-units wide from behind to in front.",
+				"wikiDescription": "Aatrox can activate The Darkin Blade three times before the ability goes on cooldown, with a 1-second static cooldown between casts. If Aatrox does not recast the ability within 4 seconds of the previous cast, it goes on cooldown.\n\nActive: Aatrox performs a strike with his greatsword for each of the three casts, dealing physical damage to enemies hit within an area. Enemies hit within a Sweetspot of the area take 75% bonus damage and are also knocked up for 0.25 seconds. Each subsequent cast gains 25% more damage.\n\nFirst Cast: Aatrox's first strike affects a 625 × 180-unit rectangular area in the target direction, with him centered on the back line and the Sweetspot at the farthest edge.\n\nSecond Cast: Aatrox's second strike affects a trapezoidal area in the target direction, with the Sweetspot at the farthest edge. The hitbox begins 100-units behind Aatrox and extends 475-units in front of him, measuring between 300 and 500-units wide from behind to in front.",
 				"leveling": [
-					"First Cast Damage: to (+ to% AD)\nFirst Sweetspot Damage: \n- to * (+\n- to *% AD)",
-					"Second Cast Damage: \n- (1+) to *(1+) (+\n- (1+) to *(1+)% AD)\nSecond Sweetspot Damage: \n- (1+)* to *(1+)* (+\n- (1+)* to *(1+)*% AD)"
+					"First Cast Damage: 10 / 25 / 40 / 55 / 70 (+ 60 / 67.5 / 75 / 82.5 / 90% AD)\nFirst Sweetspot Damage: 17.5 / 43.75 / 70 / 96.25 / 122.5 (+ 105 / 118.125 / 131.25 / 144.375 / 157.5% AD)",
+					"Second Cast Damage: 12.5 / 31.25 / 50 / 68.75 / 87.5 (+ 75 / 84.375 / 93.75 / 103.125 / 112.5% AD)\nSecond Sweetspot Damage: 21.875 / 54.6875 / 87.5 / 120.3125 / 153.125 (+ 131.25 / 147.65625 / 164.0625 / 180.46875 / 196.875% AD)"
 				],
 				"cooldown": "14 / 12 / 10 / 8 / 6",
 				"cost": "",
@@ -49068,6 +49751,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aatrox/The Darkin Blade",
 				"wikiRevId": 4027082,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49105,6 +49789,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aatrox/Infernal Chains",
 				"wikiRevId": 4009173,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49138,6 +49823,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aatrox/Umbral Dash",
 				"wikiRevId": 4007771,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49176,6 +49862,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aatrox/World Ender",
 				"wikiRevId": 3959270,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -49186,7 +49873,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Nami",
 		"id": 267,
 		"name": "Nami",
-		"title": "the Tidecaller",
+		"title": "The Tidecaller",
 		"wikiPage": "Nami",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -49259,6 +49946,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nami/Surging Tides",
 				"wikiRevId": 3985614,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49286,11 +49974,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "True",
 				"notes": [
 					"The combined time from the start of the cast time to the bubble landing is 0.264 seconds + 0.726 seconds = 0.99 seconds.",
-					"Aqua Prison provides the status effect that allows Last Breath to be cast.[1]"
+					"Aqua Prison provides the status effect that allows Last Breath to be cast."
 				],
 				"wikiTitle": "Template:Data Nami/Aqua Prison",
 				"wikiRevId": 4007696,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49323,6 +50012,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nami/Ebb and Flow",
 				"wikiRevId": 4007697,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49357,6 +50047,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nami/Tidecaller's Blessing",
 				"wikiRevId": 4042884,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49425,12 +50116,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"N/A",
 					"Interrupted by",
 					":",
-					"Death, unless protected by Resurrection",
-					"↑ Yasuo Reddit AMA"
+					"Death, unless protected by Resurrection"
 				],
 				"wikiTitle": "Template:Data Nami/Tidal Wave",
 				"wikiRevId": 3712330,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -49441,7 +50132,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Azir",
 		"id": 268,
 		"name": "Azir",
-		"title": "the Emperor of the Sands",
+		"title": "The Emperor of the Sands",
 		"wikiPage": "Azir",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -49513,6 +50204,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Azir/Shurima's Legacy",
 				"wikiRevId": 3962342,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49552,6 +50244,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Azir/Conquering Sands",
 				"wikiRevId": 4051339,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49599,6 +50292,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Azir/Arise!",
 				"wikiRevId": 4044339,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49631,6 +50325,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Azir/Shifting Sands",
 				"wikiRevId": 4022609,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49673,6 +50368,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Azir/Emperor's Divide",
 				"wikiRevId": 4042859,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -49683,7 +50379,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Yuumi",
 		"id": 350,
 		"name": "Yuumi",
-		"title": "the Magical Cat",
+		"title": "The Magical Cat",
 		"wikiPage": "Yuumi",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -49762,6 +50458,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yuumi/Feline Friendship",
 				"wikiRevId": 4026485,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49839,6 +50536,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yuumi/Prowling Projectile",
 				"wikiRevId": 4008652,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -49983,6 +50681,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yuumi/You and Me!",
 				"wikiRevId": 4011487,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 10/5/0"
 				]
@@ -50017,6 +50716,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yuumi/Zoomies",
 				"wikiRevId": 4026487,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50097,6 +50797,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yuumi/Final Chapter",
 				"wikiRevId": 4047717,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -50107,7 +50808,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Samira",
 		"id": 360,
 		"name": "Samira",
-		"title": "the Desert Rose",
+		"title": "The Desert Rose",
 		"wikiPage": "Samira",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -50209,6 +50910,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Samira/Daredevil Impulse",
 				"wikiRevId": 4051977,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50252,6 +50954,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Samira/Flair",
 				"wikiRevId": 4008027,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50289,6 +50992,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Samira/Blade Whirl",
 				"wikiRevId": 3936240,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50326,6 +51030,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Samira/Wild Rush",
 				"wikiRevId": 4008028,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50364,6 +51069,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Samira/Inferno Trigger",
 				"wikiRevId": 3992663,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -50374,7 +51080,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Thresh",
 		"id": 412,
 		"name": "Thresh",
-		"title": "the Chain Warden",
+		"title": "The Chain Warden",
 		"wikiPage": "Thresh",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -50449,6 +51155,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Thresh/Damnation",
 				"wikiRevId": 4025498,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50542,6 +51249,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Thresh/Death Sentence",
 				"wikiRevId": 4008201,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50581,6 +51289,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Thresh/Dark Passage",
 				"wikiRevId": 4017821,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50665,6 +51374,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Thresh/Flay",
 				"wikiRevId": 4057474,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50705,6 +51415,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Thresh/The Box",
 				"wikiRevId": 4024674,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -50715,7 +51426,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Illaoi",
 		"id": 420,
 		"name": "Illaoi",
-		"title": "the Kraken Priestess",
+		"title": "The Kraken Priestess",
 		"wikiPage": "Illaoi",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -50782,17 +51493,18 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"projectile": "False",
 				"spellShield": "True",
 				"notes": [
-					"Illaoi cannot spawn Tentacles on ally invulnerable structures [1] (note), in addition to neither her nor the Vessel being able to spawn them in Nexus Obelisk's attack range.",
-					"When the inhibitor is down, Nexus turrets will only have a single hardcoded valid space on each of their external sides to spawn Tentacles on. [2] (note)",
+					"Illaoi cannot spawn Tentacles on ally invulnerable structures (note), in addition to neither her nor the Vessel being able to spawn them in Nexus Obelisk's attack range.",
+					"When the inhibitor is down, Nexus turrets will only have a single hardcoded valid space on each of their external sides to spawn Tentacles on. (note)",
 					"Tentacles are prevented from spawning on base gates.",
 					"If multiple Tentacles hit simultaneously, the received healing is calculated iteratively based on the new amount of missing health, as per this formula: (maximum health − current health) × (1 − 0.95n), with 'n' the number of Tentacle hits.",
-					"A slam that extends the damage reduction window to reduce the damage of a successive slam that would otherwise not have been reduced, can have its contribution of damage effectivelly negated or even outweighted by the window extension. For example, a slam reduced to 25% damage may be the cause of a successive slam being reduced from 100% to 50% damage - reducing the damage by 50% with only a contribution of 25%. [3] [4] (unexpected)",
+					"A slam that extends the damage reduction window to reduce the damage of a successive slam that would otherwise not have been reduced, can have its contribution of damage effectivelly negated or even outweighted by the window extension. For example, a slam reduced to 25% damage may be the cause of a successive slam being reduced from 100% to 50% damage - reducing the damage by 50% with only a contribution of 25%. (unexpected)",
 					"The expectation would instead be for slam damage to follow the formula (200% − damage% of slams in the last 0.66s) ÷ 2, which would result in the successive slam from the above example to be reduced from 100% to 87.5% damage - reducing the damage by 12.5% with a contribution of 25%.",
 					"The healing applies after omnivamp."
 				],
 				"wikiTitle": "Template:Data Illaoi/Prophet of an Elder God",
 				"wikiRevId": 4062254,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50821,8 +51533,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"notes": [
 					"This ability will cast from wherever the caster is at the end of the cast time.",
 					"Tentacle Smash's hitbox is fixed in front of Illaoi, while the indicator on the ground is fixed to the targeted direction.",
-					"For allied Original Illaoi and Void Bringer Illaoi skin, Tentacle Smash's indicator is further in front of Illaoi compared to an enemy Illaoi's and other skins (with the hitbox unchanged). [5] (unexpected)",
-					"PENDING FOR TEST: The self-reveal has not been fully tested for complete confirmation. Is the ability invisible when hitting minions and there is no enemy champion nearby? Is the tip of the ability enough to reveal her? Whether it can hit a minion or not? Just if she's around the exit of the fog of war, and even if she points towards the inside of the fog of war? [6]",
+					"For allied Original Illaoi and Void Bringer Illaoi skin, Tentacle Smash's indicator is further in front of Illaoi compared to an enemy Illaoi's and other skins (with the hitbox unchanged). (unexpected)",
+					"PENDING FOR TEST: The self-reveal has not been fully tested for complete confirmation. Is the ability invisible when hitting minions and there is no enemy champion nearby? Is the tip of the ability enough to reveal her? Whether it can hit a minion or not? Just if she's around the exit of the fog of war, and even if she points towards the inside of the fog of war?",
 					"Type",
 					":",
 					"Cast time",
@@ -50867,6 +51579,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Illaoi/Tentacle Smash",
 				"wikiRevId": 4016298,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50894,48 +51607,49 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "Special",
 				"notes": [
 					"The damage of Harsh Lesson's attack portion is tagged as basic damage and spell damage, while the additional damage is only tagged as spell damage.",
-					"This causes it to potentially trigger spell effects twice, as seen by pre-V26.09 Arcane Comet double cooldown reduction. [7] (unexpected)",
+					"This causes it to potentially trigger spell effects twice, as seen by pre-V26.09 Arcane Comet double cooldown reduction. (unexpected)",
 					"The additional damage doesn't apply life steal but it does apply spell vamp and Omnivamp.",
 					"Harsh Lesson cannot be cast while pulling a Spirit.",
 					"Harsh Lesson is made of two different abilities which are decided by Illaoi's range to the target, being either melee or within dash range, causing interactions to act differently.",
 					"Interrupt:",
 					"The melee attack has an uncancellable windup.",
-					"Starting the attack before triggering Guardian Angel's passive and hitting while she's in it will not cause the Tentacles to slam. [8]",
+					"Starting the attack before triggering Guardian Angel's passive and hitting while she's in it will not cause the Tentacles to slam.",
 					"The dash attack does not have an uncancellable windup, meaning effects that can interrupt the dash will cancel the attack.",
-					"Unlike other empowered basic attacks, an interrupt on the dash attack will still cause the buff to be consumed and the ability to be put on cooldown. [9]",
-					"That includes self effects, such as Flash. [10] (unexpected)",
+					"Unlike other empowered basic attacks, an interrupt on the dash attack will still cause the buff to be consumed and the ability to be put on cooldown.",
+					"That includes self effects, such as Flash. (unexpected)",
 					"Based on other effects, the expectation would be to either have: flash interrupts the dash but does not negate the effect (i.e Udyr's Blazing Stampede, Hecarim's Devastating Charge); flash is disabled (i.e Volibear's Thundering Smash, Rell's Ferromancy: Mount Up); flash interrupts the dash and the effect, but the effect remains castable in melee range (i.e Rengar's Unseen Predator Savagery).",
 					"Ground:",
 					"The ability can be cast, but only the melee attack can be used.",
-					"Exiting grounding after having already cast the ability, will cause the dash to hit at extremely high speed. [11] [12] (unexpected)",
+					"Exiting grounding after having already cast the ability, will cause the dash to hit at extremely high speed. (unexpected)",
 					"Root:",
 					"The ability can be cast, but only the melee attack can be used.",
-					"If Illaoi attack commands and then casts Harsh Lesson while rooted, or if she issues at any point an \"Attack Move\" command near the target, she is able to use the close range version within its dash range. [13] (unexpected)",
+					"If Illaoi attack commands and then casts Harsh Lesson while rooted, or if she issues at any point an \"Attack Move\" command near the target, she is able to use the close range version within its dash range. (unexpected)",
 					"Spell shield:",
 					"The melee attack does not pop the spell shield. (unexpected)",
-					"The dash attack pops the spell shield, preventing Tentacle commands but not preventing the additional damage. [14]",
+					"The dash attack pops the spell shield, preventing Tentacle commands but not preventing the additional damage.",
 					"Block, dodge and blind:",
-					"Tentacles will slam if the melee attack is blocked [15], but will not if it's dodged [16] or if it misses [17]. (unexpected)",
+					"Tentacles will slam if the melee attack is blocked, but will not if it's dodged or if it misses. (unexpected)",
 					"In all cases the empowered attack additional damage is prevented. (unexpected)",
 					"Tentacles will slam if the dash attack is blocked, dodged or if it misses.",
 					"The empowered attack additional damage is dealt when the attack is blocked or dodged, but is not if it misses.",
-					"The melee attack will still hit if the target becomes untargetable [18], while the dash attack will not. [19] (unexpected)",
-					"Tentacles will slam whether the melee or dash attack kills the target. However, for the melee attack the slam will be offset from the target. [20] [21] (unexpected)",
-					"The melee attack will not hit if the target has already died, while the dash attack will hit. [22]",
-					"In a frame perfect situation, the melee attack will also hit, however it will not make the Tentacles slam. [23] [24] (unexpected)",
-					"The melee attack triggers Tentacle slams when hitting a structure, while the dash attack does not. [25] (unexpected)",
-					"If Illaoi has an active spell shield, the melee attack will not trigger Tentacle slams, while the dash attack will do. [26] (unexpected)",
-					"The melee attack triggers Hail of Blades, while the dash attack does not. [27] (unexpected)",
-					"If the empowered attack duration ends during the melee animation, the attack won't be empowered (unexpected), but if it ends during the dash - then the buff will linger until the attack has finished. [28]",
-					"Illaoi can quickly cast other abilities after melee hitting the target, but after dash hitting there is a short delay. [29] (unexpected)",
+					"The melee attack will still hit if the target becomes untargetable, while the dash attack will not. (unexpected)",
+					"Tentacles will slam whether the melee or dash attack kills the target. However, for the melee attack the slam will be offset from the target. (unexpected)",
+					"The melee attack will not hit if the target has already died, while the dash attack will hit.",
+					"In a frame perfect situation, the melee attack will also hit, however it will not make the Tentacles slam. (unexpected)",
+					"The melee attack triggers Tentacle slams when hitting a structure, while the dash attack does not. (unexpected)",
+					"If Illaoi has an active spell shield, the melee attack will not trigger Tentacle slams, while the dash attack will do. (unexpected)",
+					"The melee attack triggers Hail of Blades, while the dash attack does not. (unexpected)",
+					"If the empowered attack duration ends during the melee animation, the attack won't be empowered (unexpected), but if it ends during the dash - then the buff will linger until the attack has finished.",
+					"Illaoi can quickly cast other abilities after melee hitting the target, but after dash hitting there is a short delay. (unexpected)",
 					"Abilities cannot be buffered during the melee windup but they can be buffered during the dash windup. (unexpected)",
 					"The dash is formed of two parts: one, the attack animation which upon completion triggers on-attack effects; two, the dash itself which upon completion deals the attack's damage and triggers on-hit effects.",
-					"Gaining attack speed will improve the first, but will not improve the second, causing a desync with the animation ending sooner and on-attack effects triggering sooner. [30] [31] [32] (unexpected)",
+					"Gaining attack speed will improve the first, but will not improve the second, causing a desync with the animation ending sooner and on-attack effects triggering sooner. (unexpected)",
 					"The Tentacle attacking because of Harsh Lesson is considered to be of the same cast instance, and thus will not grant additional stacks of Conqueror, Electrocute and Tribute."
 				],
 				"wikiTitle": "Template:Data Illaoi/Harsh Lesson",
 				"wikiRevId": 4063660,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -50962,23 +51676,23 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"projectile": "special",
 				"spellShield": "Special",
 				"notes": [
-					"PENDING FOR TEST: The self-reveal has not been fully tested for complete confirmation. Is the ability invisible when passing nearby minions and there is no enemy champion nearby? Is the tip of the ability enough to reveal her? Whether it can collide with a minion or not? Just if she's around the exit of the fog of war, and even if she points towards the inside of the fog of war? [33]",
+					"PENDING FOR TEST: The self-reveal has not been fully tested for complete confirmation. Is the ability invisible when passing nearby minions and there is no enemy champion nearby? Is the tip of the ability enough to reveal her? Whether it can collide with a minion or not? Just if she's around the exit of the fog of war, and even if she points towards the inside of the fog of war?",
 					"Spirits are classified as clones:",
 					"Spirits can only be fully targeted by Illaoi's team and neutral monsters. The Spirit's allies cannot manually select it as a valid target for spells and abilities, but they can still do so with automatically targeted effects.",
-					"Spirits take 50% damage from turrets. [34] (unexpected)",
+					"Spirits take 50% damage from turrets. (unexpected)",
 					"Effects, like runes, may consider the Spirit as a champion for their stat-tracking. (unexpected)",
 					"Spirits cannot be healed nor shielded ( Summon Aery excluded).",
-					"Effects that are copied from the clone's caster to the clone, will also be copied from Illaoi to the Spirit (e.g Celestial Opposition). [35] (unexpected)",
-					"The Spirit levels up when the Vessel does, gaining the target's stats per level. If the target has a resource that also increases per level (i.e mana), the Spirit's lifetime will increase instead. [36] (unexpected)",
+					"Effects that are copied from the clone's caster to the clone, will also be copied from Illaoi to the Spirit (e.g Celestial Opposition). (unexpected)",
+					"The Spirit levels up when the Vessel does, gaining the target's stats per level. If the target has a resource that also increases per level (i.e mana), the Spirit's lifetime will increase instead. (unexpected)",
 					"Like other clones, killing the Spirit awards 25, but unlike other clones it doesn't award Experience. (note)",
 					"The Spirit's destination is decided based on Illaoi's position and facing direction when the target is hit.",
-					"If the Spirit has no valid space to move to, it will get stuck and stay untargetable until its lifetime runs out. [37] [38] [39] [40] (unexpected)",
-					"The Spirit is untargetable while it is being pulled, and spawns with the tethered champion's default model and size. [41]",
-					"The Spirit's lifetime is sometimes 0.25 seconds longer, while its untargetability is sometimes shorter, potentially causing Tentacles to hit an inconsistent amount of times, as was easily the case pre V25.15. [42] (unexpected)",
+					"If the Spirit has no valid space to move to, it will get stuck and stay untargetable until its lifetime runs out. (unexpected)",
+					"The Spirit is untargetable while it is being pulled, and spawns with the tethered champion's default model and size.",
+					"The Spirit's lifetime is sometimes 0.25 seconds longer, while its untargetability is sometimes shorter, potentially causing Tentacles to hit an inconsistent amount of times, as was easily the case pre V25.15. (unexpected)",
 					"Echoed damage is calculated by taking the pre-mitigation damage against the Spirit, applying Test of Spirit's damage modifier, and then capping it to the Spirit's current health. This damage will then be affected by damage modifiers (resistances and other effects) of the Vessel.",
 					"This order of operations allows Test of Spirit to deal more or less percentage of the Vessel's health than would be expected:",
 					"Because the Spirit's modifiers can be different from the Vessel's, allowing the Spirit to have higher or lower effective health, respectively increasing or decreasing the maximum pre-mitigated damage from killing it.",
-					"Because, while it would be expected to block excess pre-mitigated damage over what kills the Spirit, since the cap does not consider the Spirit's damage modifier, it may cause it to block damage before the Spirit is killed [43], or in corner cases not block excess damage even if it is killed. On the other hand, Test of Spirit's damage modifier is unexpectedly applied before the cap instead of after, with the same effect of potentially causing the cap to not block excess damage even if the Spirit is killed, or in corner cases block damage before it is killed.",
+					"Because, while it would be expected to block excess pre-mitigated damage over what kills the Spirit, since the cap does not consider the Spirit's damage modifier, it may cause it to block damage before the Spirit is killed, or in corner cases not block excess damage even if it is killed. On the other hand, Test of Spirit's damage modifier is unexpectedly applied before the cap instead of after, with the same effect of potentially causing the cap to not block excess damage even if the Spirit is killed, or in corner cases block damage before it is killed.",
 					"The addition of the two, causes an increasing difference of expected damage when the pre-mitigated damage is between Spirit current health ÷ Spiritmod and Spirit current health ÷ Emod. (unexpected)",
 					"Illaoi needs 937.5 / 875 / 812.5 / 750 / 687.5 total AD to reach 100% echoed damage. As per above, the damage is still dependent on the Spirit's and Vessel's damage modifiers and may not always be able to deal 100% of the target's current health as total echoed damage.",
 					"Spell shields may only prevent the initial spirit grab and the slow upon becoming a Vessel. Spell shields will not prevent becoming a Vessel or Tentacles from attacking.",
@@ -50987,31 +51701,31 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"The application of the slowing missile cannot be blocked by projectile- destroying effects (e.g. Yasuo's Wind Wall).",
 					"Effects that destroy homing missiles (i.e certain untargetabilities) will prevent the application of the slowing missile.",
 					"The slowing missile will not be fired if the target is already untargetable when the Spirit dies.",
-					"The spirit pull is not considered a crowd control effect and will not be blocked by crowd control immunity, with the exception of Morgana's Black Shield. [44] (unexpected)",
-					"The projectile tentacle model is linked to Illaoi's model animation and size. However gameplay wise it is not, thus the actual hitbox being different than the position, width and length of the visible model. [45] (unexpected)",
-					"The model will stop mid-air / vanish if Illaoi goes into stasis, sleep or airborne, however the actual hitbox will continue its trajectory unseen. [46]",
+					"The spirit pull is not considered a crowd control effect and will not be blocked by crowd control immunity, with the exception of Morgana's Black Shield. (unexpected)",
+					"The projectile tentacle model is linked to Illaoi's model animation and size. However gameplay wise it is not, thus the actual hitbox being different than the position, width and length of the visible model. (unexpected)",
+					"The model will stop mid-air / vanish if Illaoi goes into stasis, sleep or airborne, however the actual hitbox will continue its trajectory unseen.",
 					"This ability will cast from wherever the caster is at the end of the cast time.",
 					"And will fire towards the same pointed location.",
-					"If the target's health is reduced to 0 while their Spirit is being pulled out, and they do not die (i.e because of resurrection), then the Spirit will still spawn with 0 health, making it invulnerable. The target will successively become a Vessel when the Spirit's lifetime expires. [47] (unexpected)",
-					"If some effect regenerates the champion's health while they are resurrecting, and before the Spirit spawns, then the same will not apply. [48] [49]",
-					"Grabbing the Spirit of Viego will make the Spirit's lifetime (the white bar below the lifebar) disappear, similar to other cases in the past. [50] (unexpected)",
-					"PENDING FOR TEST: Post V12.8, does grabbing the Spirit of an Oathsworn make the Spirit invisible? [51]",
-					"Since the actual tether range uses a different calculation from the indicator, it may often appear that the tether breaks before reaching the indicator. [52] [53] (unexpected)",
+					"If the target's health is reduced to 0 while their Spirit is being pulled out, and they do not die (i.e because of resurrection), then the Spirit will still spawn with 0 health, making it invulnerable. The target will successively become a Vessel when the Spirit's lifetime expires. (unexpected)",
+					"If some effect regenerates the champion's health while they are resurrecting, and before the Spirit spawns, then the same will not apply.",
+					"Grabbing the Spirit of Viego will make the Spirit's lifetime (the white bar below the lifebar) disappear, similar to other cases in the past. (unexpected)",
+					"PENDING FOR TEST: Post V12.8, does grabbing the Spirit of an Oathsworn make the Spirit invisible?",
+					"Since the actual tether range uses a different calculation from the indicator, it may often appear that the tether breaks before reaching the indicator. (unexpected)",
 					"Illaoi can better see than her allies who's been Vesseled, by adding a layer of watery effects on their model. The Vessel will also be let known it's debuffed, by having a layer of watery effects on its screen instead.",
-					"If the target becomes a Vessel while vanished, the layer on their model will fail to be added. [54] (unexpected)",
+					"If the target becomes a Vessel while vanished, the layer on their model will fail to be added. (unexpected)",
 					"The Vessel status effect is a debuff that doesn't persist through death.",
-					"If the target is made a Vessel while resurrecting, some resurrections may cleanse the Vessel debuff, while others will not. [55] [56] (unexpected)",
+					"If the target is made a Vessel while resurrecting, some resurrections may cleanse the Vessel debuff, while others will not. (unexpected)",
 					"Transferred damage will apply on-damage effects, such as damage amplifiers (e.g Last Stand), Black Cleaver, Morellonomicon, Executioner's Calling, Elixir of Sorcery, Shadowflame, The Collector, First Strike, Aspect of the Dragon burn damage, and The Darkin Scythe.",
 					"Echoed damage always counts as single target for the purpose of Omnivamp.",
 					"Transferred damage will not doubly apply on-hit or on-spell effects versus the target (e.g. Liandry's Torment). These effects are only applied versus the Spirit.",
 					"Attacking the Vessel and its Spirit simultaneously will only apply one stack of Black Cleaver to the Vessel.",
-					"While First Strike is active, damage instances that do not trigger the First Strike projectile, will echo close to 0 damage [57], similar to past cases [58]. (unexpected)",
+					"While First Strike is active, damage instances that do not trigger the First Strike projectile, will echo close to 0 damage, similar to past cases. (unexpected)",
 					"PENDING FOR TEST: Yone's Soul Unbound?",
 					"When the tether is broken (whether the Spirit's lifetime ran out or the target moved out of range), the Spirit will vanish and move to Illaoi's location.",
-					"An uncancellable windup attack may still kill the Spirit after it vanished to grant the gold, but without making the target a Vessel. [59]",
-					"When the Spirit is killed, it will remain in the same position for less than a second before moving to an unknown location. This will cancel any remaining Tentacle queued attacks, for the target being out of range. [60] [61] [62] (unexpected)",
+					"An uncancellable windup attack may still kill the Spirit after it vanished to grant the gold, but without making the target a Vessel.",
+					"When the Spirit is killed, it will remain in the same position for less than a second before moving to an unknown location. This will cancel any remaining Tentacle queued attacks, for the target being out of range. (unexpected)",
 					"The Spirit is immune to stasis (i.e. Bard's Tempered Fate).",
-					"Fiora's Riposte can be used to prevent becoming a Vessel if used before the Spirit is killed [63], or while leaving the tether's range. [64]",
+					"Fiora's Riposte can be used to prevent becoming a Vessel if used before the Spirit is killed, or while leaving the tether's range.",
 					"Sion's Spirit cannot be spawned during Glory in Death. Spirits created before Sion's zombie state will remain active.",
 					"If the target that had its Spirit pulled from them is taken into the Realm of Death, the tether will break, but they will not be made into a Vessel.",
 					"The following table refers for interactions while Illaoi is firing the projectile and while the target's Spirit is being pulled:",
@@ -51056,6 +51770,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Illaoi/Test of Spirit",
 				"wikiRevId": 4061209,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -51090,20 +51805,21 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"4+ champions: one Tentacle at 120 degrees.",
 					"5+ champions: one Tentacle at 240 degrees.",
 					"6+ champions: one Tentacle at 180 degrees.",
-					"Tentacles may spawn on base barriers. If Illaoi is in the center of a base barrier, all Tentacles will spawn in the same position and stack over each other, making it appear as if there was only one Tentacle. [97] (unexpected)",
-					"Illaoi's facing direction is decided by the position of the cursor on cast, but can also be changed mid-cast through other effects, such as Flash. [98]",
+					"Tentacles may spawn on base barriers. If Illaoi is in the center of a base barrier, all Tentacles will spawn in the same position and stack over each other, making it appear as if there was only one Tentacle. (unexpected)",
+					"Illaoi's facing direction is decided by the position of the cursor on cast, but can also be changed mid-cast through other effects, such as Flash.",
 					"If there are no walls nearby, spawning the last Tentacle will form a perfect hexagon.",
 					"Spell shields will block the ability's damage but will not prevent Tentacles from spawning.",
-					"If Illaoi dies within 0.25 seconds of dropping down, she will spawn buffed Tentacles, but she won't manage in time to buff the already spawned ones. [99] (unexpected)",
+					"If Illaoi dies within 0.25 seconds of dropping down, she will spawn buffed Tentacles, but she won't manage in time to buff the already spawned ones. (unexpected)",
 					"If Illaoi is near a Tentacle that is about to spawn, it will spawn buffed by Leap of Faith even if Illaoi is no longer nearby.",
-					"Using Harsh Lesson after Illaoi drops down will command Tentacles to immmediatelly start attacking, regardless if they were already mid animation. Any previous attack will continue to hit without an animation during the same time the second attack performs its animation. [100] (unexpected)",
-					"This makes it possible for the same tentacle to reduce its own damage by having the second attack hit too fast, which is not otherwise possible. [101]",
-					"Unlike other ultimate pet summoning effects, Tentacles spawned by this ability are still considered being spawned from Prophet of an Elder God and do not benefit from Axiom Arcanist's damage amp nor can they stack Spear of Shojin. [102] (unexpected)",
-					"After the buff expires, Tentacles will linger for an extra 0.25 seconds, allowing them to continue receiving commands and queuing up non-empowered attacks, while remaining not dormant. [103]"
+					"Using Harsh Lesson after Illaoi drops down will command Tentacles to immmediatelly start attacking, regardless if they were already mid animation. Any previous attack will continue to hit without an animation during the same time the second attack performs its animation. (unexpected)",
+					"This makes it possible for the same tentacle to reduce its own damage by having the second attack hit too fast, which is not otherwise possible.",
+					"Unlike other ultimate pet summoning effects, Tentacles spawned by this ability are still considered being spawned from Prophet of an Elder God and do not benefit from Axiom Arcanist's damage amp nor can they stack Spear of Shojin. (unexpected)",
+					"After the buff expires, Tentacles will linger for an extra 0.25 seconds, allowing them to continue receiving commands and queuing up non-empowered attacks, while remaining not dormant."
 				],
 				"wikiTitle": "Template:Data Illaoi/Leap of Faith",
 				"wikiRevId": 4050880,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -51114,7 +51830,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "RekSai",
 		"id": 421,
 		"name": "Rek'Sai",
-		"title": "the Void Burrower",
+		"title": "The Void Burrower",
 		"wikiPage": "Rek'Sai",
 		"resource": "Fury",
 		"rangeType": "Melee",
@@ -51188,6 +51904,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rek'Sai/Fury of the Xer'Sai",
 				"wikiRevId": 4007776,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -51221,6 +51938,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rek'Sai/Queen's Wrath",
 				"wikiRevId": 3983369,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -51253,6 +51971,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rek'Sai/Prey Seeker",
 				"wikiRevId": 3961898,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -51285,6 +52004,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rek'Sai/Burrow",
 				"wikiRevId": 3980688,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -51319,6 +52039,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rek'Sai/Unburrow",
 				"wikiRevId": 4008007,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -51326,10 +52047,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Furious Bite",
 				"riotSummary": "Rek'Sai bites her target, dealing physical damage, or bonus true damage if she has max Fury.<br><br>While Burrowed, Rek'Sai creates a re-usable, long lasting tunnel. Enemies can destroy it by standing on top of either entrance.",
 				"riotTooltip": "<keywordMajor>Unburrowed:</keywordMajor> Rek'Sai bites a target, dealing <physicalDamage>{{ spell.reksaie:basedamagecalculation }} physical damage</physicalDamage>. At max <keywordMajor>Fury</keywordMajor>, the bite deals <trueDamage>{{ spell.reksaie:empowereddamagecalculation }} true damage</trueDamage> instead.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Rek'Sai bites the target enemy, dealing physical damage.\n\nAt maximum Fury, Furious Bite deals\n- 100% damage and is converted to true damage.",
+				"wikiDescription": "Active: Rek'Sai bites the target enemy, dealing physical damage.\n\nAt maximum Fury, Furious Bite deals 120% damage and is converted to true damage.",
 				"leveling": [
-					"Physical Damage: to (+ % bonus AD)",
-					"True Damage: \n- to * (+\n- % bonus AD)"
+					"Physical Damage: 70 / 95 / 120 / 145 / 170 (+ 60% bonus AD)",
+					"True Damage: 84 / 114 / 144 / 174 / 204 (+ 72% bonus AD)"
 				],
 				"cooldown": "6",
 				"cost": "",
@@ -51351,6 +52072,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rek'Sai/Furious Bite",
 				"wikiRevId": 4034704,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -51388,6 +52110,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rek'Sai/Tunnel",
 				"wikiRevId": 4007778,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -51516,6 +52239,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rek'Sai/Void Rush",
 				"wikiRevId": 4004938,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -51794,7 +52518,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Ivern",
 		"id": 427,
 		"name": "Ivern",
-		"title": "the Green Father",
+		"title": "The Green Father",
 		"wikiPage": "Ivern",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -51919,6 +52643,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ivern/Friend of the Forest",
 				"wikiRevId": 4038386,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -51962,6 +52687,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ivern/Rootcaller",
 				"wikiRevId": 4009163,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -52000,6 +52726,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ivern/Brushmaker",
 				"wikiRevId": 4025374,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -52042,6 +52769,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ivern/Triggerseed",
 				"wikiRevId": 3994759,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -52075,6 +52803,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ivern/Daisy!",
 				"wikiRevId": 3976509,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -52362,7 +53091,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Kalista",
 		"id": 429,
 		"name": "Kalista",
-		"title": "the Spear of Vengeance",
+		"title": "The Spear of Vengeance",
 		"wikiPage": "Kalista",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -52458,6 +53187,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kalista/Martial Poise",
 				"wikiRevId": 4024157,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -52491,6 +53221,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kalista/Pierce",
 				"wikiRevId": 3997075,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -52529,6 +53260,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kalista/Sentinel",
 				"wikiRevId": 4007621,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -52564,11 +53296,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Kalista will be unable to cast Rend if there are no stacks on an enemy in range.",
 					"Rend cannot cast on allies, even if a valid enemy target exists. As such, any spears on allied units are purely cosmetic.",
 					"Rend has a lower cast range than effect range.",
-					"Rend at maximum stacks will deal a total of ( to )+( to )*253 (+ +( to )*253% AD) (+ Expression error: Unexpected * operator.% AP) physical damage."
+					"Rend at maximum stacks will deal a total of 1776 / 3557 / 5338 / 7119 / 8900 (+ 5130 / 7027.5 / 8925 / 10822.5 / 12720% AD) (+ 12715% AP) physical damage."
 				],
 				"wikiTitle": "Template:Data Kalista/Rend",
 				"wikiRevId": 4004071,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 10/9.5/9/8.5/8"
 				]
@@ -52621,6 +53354,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Kalista/Fate's Call",
 				"wikiRevId": 4015001,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -52631,7 +53365,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Bard",
 		"id": 432,
 		"name": "Bard",
-		"title": "the Wandering Caretaker",
+		"title": "The Wandering Caretaker",
 		"wikiPage": "Bard",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -52806,6 +53540,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Bard/Traveler's Call",
 				"wikiRevId": 4034690,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -52848,6 +53583,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Bard/Cosmic Binding",
 				"wikiRevId": 4037681,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -52880,6 +53616,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Bard/Caretaker's Shrine",
 				"wikiRevId": 3960421,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 18"
 				]
@@ -52908,11 +53645,11 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"notes": [
 					"Clones are counted as champions for this ability's effects and can access the portal, but other pets cannot.",
 					"Terrain also includes structures.",
-					"Magical Journey's tunnel has a max range of 2600 units (about two screens long)[1].",
+					"Magical Journey's tunnel has a max range of 2600 units (about two screens long).",
 					"Magical Journey will score assists for Bard if an ally that uses it scores a kill or assist shortly after.",
 					"Bard can cast Magical Journey while grounded or rooted.",
 					"There is no limit to how many times a given instance of Magical Journey may be used.",
-					"Magical Journey cannot interact with player-created terrain due to its short lifespan.[2]",
+					"Magical Journey cannot interact with player-created terrain due to its short lifespan.",
 					"Any abilities that continue during normal movement, such as point blank area of effects and various forms of stealth, will continue during the travel within Magical Journey.",
 					"If a champion's dash is interrupted while inside terrain using Magical Journey, they will be immediately displaced out to the nearest open space, but are not rendered airborne.",
 					"Taking Magical Journey is considered a dash, and so will interact with effects such as Sudden Impact and knockdown."
@@ -52920,6 +53657,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Bard/Magical Journey",
 				"wikiRevId": 4007574,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -52955,13 +53693,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"Elixir of Sorcery deals damage before the target is put into stasis.",
 					"If Tempered Fate affects an allied turret and that turret deals damage to an enemy champion, the champion is marked by Bard for kill/assist credit.",
 					"Tempered Fate's travel time varies between ~0.65 at point blank and ~1.8 at max range, resulting in an overall delay of ~1.15-2.3 seconds including the cast time depending on distance covered.",
-					"Stasis is applied to allies as a buff.",
-					"↑ Bard Q&A comment by Rabid Llama",
-					"↑ Bard Q&A comment by Rabid Llama"
+					"Stasis is applied to allies as a buff."
 				],
 				"wikiTitle": "Template:Data Bard/Tempered Fate",
 				"wikiRevId": 4008478,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -53045,6 +53782,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rakan/Fey Feathers",
 				"wikiRevId": 4016025,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53080,6 +53818,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rakan/Gleaming Quill",
 				"wikiRevId": 3996425,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53112,6 +53851,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rakan/Grand Entrance",
 				"wikiRevId": 4007760,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53144,6 +53884,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rakan/Battle Dance",
 				"wikiRevId": 4008001,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 0 vs wiki 20/18/16/14/12"
 				]
@@ -53217,6 +53958,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rakan/The Quickness",
 				"wikiRevId": 3971183,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -53227,7 +53969,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Xayah",
 		"id": 498,
 		"name": "Xayah",
-		"title": "the Rebel",
+		"title": "The Rebel",
 		"wikiPage": "Xayah",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -53307,6 +54049,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xayah/Clean Cuts",
 				"wikiRevId": 4059261,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53346,6 +54089,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xayah/Double Daggers",
 				"wikiRevId": 4008615,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53385,6 +54129,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xayah/Deadly Plumage",
 				"wikiRevId": 4062257,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53424,6 +54169,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xayah/Bladecaller",
 				"wikiRevId": 4002073,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53493,6 +54239,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Xayah/Featherstorm",
 				"wikiRevId": 4008617,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -53503,7 +54250,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Ornn",
 		"id": 516,
 		"name": "Ornn",
-		"title": "The Fire below the Mountain",
+		"title": "The Fire Below the Mountain",
 		"wikiPage": "Ornn",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -53585,7 +54332,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"If the item has health and only one other upgradeable stat, it receives +185 health and health is valued at 2.702 per point.",
 					"If the item has health and two other upgradeable stats, it receives +125 health and health is valued at 2.6 per point.",
 					"If the item has health and three other upgradeable stats, it receives +90 health and health is valued at 2.7 per point.",
-					"While not currently possible, if an item has no upgradeable stats, 1000 worth of health (valued at 2.6 per point) is added to the item.[1]",
+					"While not currently possible, if an item has no upgradeable stats, 1000 worth of health (valued at 2.6 per point) is added to the item.",
 					"The Masterwork stat increases are rounded down (any decimal values are lost).",
 					"Living Forge's bonus armor and magic resist increase stacks additively with Jak'Sho, The Protean's Voidborn Resilience and multiplicatively with Mountainous Vigor.",
 					"Health and mana items built on the field will retain Ornn's previous health and mana percentage. Returning to base still brings health and mana back to full.",
@@ -53642,6 +54389,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ornn/Living Forge",
 				"wikiRevId": 4063954,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53676,6 +54424,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ornn/Volcanic Rupture",
 				"wikiRevId": 3998234,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53753,6 +54502,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ornn/Bellows Breath",
 				"wikiRevId": 4011962,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53832,6 +54582,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ornn/Searing Charge",
 				"wikiRevId": 4007982,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -53906,13 +54657,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"N/A",
 					"Interrupted by",
 					":",
-					"Death, unless protected by Resurrection",
-					"↑ GalaxySmash on if an item has no upgradeable stats",
-					"↑ GalaxySmash on if an item has no upgradeable stats"
+					"Death, unless protected by Resurrection"
 				],
 				"wikiTitle": "Template:Data Ornn/Call of the Forge God",
 				"wikiRevId": 4007985,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -53923,7 +54673,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Sylas",
 		"id": 517,
 		"name": "Sylas",
-		"title": "the Unshackled",
+		"title": "The Unshackled",
 		"wikiPage": "Sylas",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -54004,6 +54754,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sylas/Petricite Burst",
 				"wikiRevId": 4061737,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54036,6 +54787,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sylas/Chain Lash",
 				"wikiRevId": 4046589,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54071,6 +54823,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sylas/Kingslayer",
 				"wikiRevId": 4026459,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54100,6 +54853,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sylas/Abscond",
 				"wikiRevId": 4007757,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54139,6 +54893,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sylas/Abduct",
 				"wikiRevId": 4008064,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54269,6 +55024,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sylas/Hijack",
 				"wikiRevId": 4050139,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -54279,7 +55035,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Neeko",
 		"id": 518,
 		"name": "Neeko",
-		"title": "the Curious Chameleon",
+		"title": "The Curious Chameleon",
 		"wikiPage": "Neeko",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -54509,6 +55265,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Neeko/Inherent Glamour",
 				"wikiRevId": 4049951,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54543,6 +55300,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Neeko/Blooming Burst",
 				"wikiRevId": 3961205,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54600,6 +55358,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Neeko/Shapesplitter",
 				"wikiRevId": 4022848,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54633,6 +55392,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Neeko/Tangle-Barbs",
 				"wikiRevId": 4058450,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54712,6 +55472,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Neeko/Pop Blossom",
 				"wikiRevId": 4058467,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -54722,7 +55483,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Aphelios",
 		"id": 523,
 		"name": "Aphelios",
-		"title": "the Weapon of the Faithful",
+		"title": "The Weapon of the Faithful",
 		"wikiPage": "Aphelios",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -54801,6 +55562,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/The Hitman and the Seer",
 				"wikiRevId": 4022691,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54836,6 +55598,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Calibrum",
 				"wikiRevId": 4034686,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54865,6 +55628,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Severum",
 				"wikiRevId": 4023347,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54897,6 +55661,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Gravitum",
 				"wikiRevId": 3999163,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54930,6 +55695,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Infernum",
 				"wikiRevId": 4046493,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54961,6 +55727,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Crescendum",
 				"wikiRevId": 4022137,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -54988,6 +55755,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Weapons of the Faithful",
 				"wikiRevId": 3963883,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"name: ddragon \"Weapon Abilites\" vs wiki \"Weapons of the Faithful\""
 				]
@@ -55019,6 +55787,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Moonshot",
 				"wikiRevId": 3993664,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55057,6 +55826,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Onslaught",
 				"wikiRevId": 4034687,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55087,6 +55857,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Binding Eclipse",
 				"wikiRevId": 3983351,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55122,6 +55893,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Duskwave",
 				"wikiRevId": 4034688,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55153,6 +55925,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Sentry",
 				"wikiRevId": 4034689,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55183,6 +55956,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Phase",
 				"wikiRevId": 3970739,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55212,6 +55986,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Weapon Queue System",
 				"wikiRevId": 3998993,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55264,6 +56039,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aphelios/Moonlight Vigil",
 				"wikiRevId": 4052070,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -55274,7 +56050,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Rell",
 		"id": 526,
 		"name": "Rell",
-		"title": "the Iron Maiden",
+		"title": "The Iron Maiden",
 		"wikiPage": "Rell",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -55350,6 +56126,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rell/Break the Mold",
 				"wikiRevId": 4050368,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55381,6 +56158,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rell/Shattering Strike",
 				"wikiRevId": 4008008,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55454,6 +56232,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rell/Ferromancy: Crash Down",
 				"wikiRevId": 4007762,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55490,6 +56269,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rell/Ferromancy: Mount Up",
 				"wikiRevId": 3976244,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55522,6 +56302,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rell/Full Tilt",
 				"wikiRevId": 4008009,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55561,6 +56342,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Rell/Magnet Storm",
 				"wikiRevId": 4008010,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -55571,7 +56353,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Pyke",
 		"id": 555,
 		"name": "Pyke",
-		"title": "the Bloodharbor Ripper",
+		"title": "The Bloodharbor Ripper",
 		"wikiPage": "Pyke",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -55757,6 +56539,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pyke/Gift of the Drowned Ones",
 				"wikiRevId": 4007005,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55872,6 +56655,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pyke/Bone Skewer",
 				"wikiRevId": 4007993,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55903,6 +56687,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pyke/Ghostwater Dive",
 				"wikiRevId": 4050339,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55935,6 +56720,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pyke/Phantom Undertow",
 				"wikiRevId": 4044071,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -55974,6 +56760,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Pyke/Death from Below",
 				"wikiRevId": 4007995,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -55984,7 +56771,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Vex",
 		"id": 711,
 		"name": "Vex",
-		"title": "the Gloomist",
+		"title": "The Gloomist",
 		"wikiPage": "Vex",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -56070,6 +56857,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vex/Doom 'n Gloom",
 				"wikiRevId": 3986733,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -56102,6 +56890,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vex/Mistral Bolt",
 				"wikiRevId": 4053302,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -56131,6 +56920,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vex/Personal Space",
 				"wikiRevId": 4008547,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -56162,6 +56952,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vex/Looming Darkness",
 				"wikiRevId": 4034711,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -56238,6 +57029,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Vex/Shadow Surge",
 				"wikiRevId": 4057925,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -56248,7 +57040,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Yone",
 		"id": 777,
 		"name": "Yone",
-		"title": "the Unforgotten",
+		"title": "The Unforgotten",
 		"wikiPage": "Yone",
 		"resource": "Flow",
 		"rangeType": "Melee",
@@ -56331,6 +57123,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yone/Way of the Hunter",
 				"wikiRevId": 4058456,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -56379,6 +57172,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yone/Mortal Steel",
 				"wikiRevId": 4058550,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 4 vs wiki 4/1.33"
 				]
@@ -56422,6 +57216,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yone/Spirit Cleave",
 				"wikiRevId": 4032641,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 14 vs wiki 14/6"
 				]
@@ -56525,6 +57320,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yone/Soul Unbound",
 				"wikiRevId": 4050165,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -56609,6 +57405,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yone/Fate Sealed",
 				"wikiRevId": 4009198,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -56744,6 +57541,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ambessa/Drakehound's Step",
 				"wikiRevId": 4038211,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -56814,6 +57612,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ambessa/Cunning Sweep",
 				"wikiRevId": 4038210,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -56884,6 +57683,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ambessa/Sundering Slam",
 				"wikiRevId": 4038213,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -56960,6 +57760,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ambessa/Repudiation",
 				"wikiRevId": 4038212,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -57030,6 +57831,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ambessa/Lacerate",
 				"wikiRevId": 3976866,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -57118,6 +57920,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Ambessa/Public Execution",
 				"wikiRevId": 4042088,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -57404,7 +58207,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Mel",
 		"id": 800,
 		"name": "Mel",
-		"title": "the Soul's Reflection",
+		"title": "The Soul's Reflection",
 		"wikiPage": "Mel",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -57485,6 +58288,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Mel/Searing Brilliance",
 				"wikiRevId": 4062268,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -57523,6 +58327,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Mel/Radiant Volley",
 				"wikiRevId": 4042677,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -57580,6 +58385,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Mel/Rebuttal",
 				"wikiRevId": 4050141,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 38/35/33/29/26 vs wiki 38/35/32/29/26"
 				]
@@ -57589,11 +58395,11 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Solar Snare",
 				"riotSummary": "Mel fires a radiant orb forward, rooting those at its center while the area around it slows enemies and deals damage over time.",
 				"riotTooltip": "Mel fires a radiating orb, <status>Rooting</status> enemies at its center for {{ rootduration }} seconds and dealing <magicDamage>{{ damage }} magic damage</magicDamage>.<br /><br />The orb builds up a hostile area around it that <status>Slows</status> enemies by {{ areaslowamount*100 }}% and deals <magicDamage>{{ areadamagepersecond }} magic damage per second</magicDamage>.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Mel fires an orb in the target direction that grants sight of its surroundings every 0.25 seconds as it travels. Enemies hit by the orb are dealt magic damage and rooted for 1.5 seconds.\n\nThe orb emanates a field of solar radiation that additionally expands after a 0.5-second delay. Enemies within the field are dealt magic damage and slowed by 30% every 0.125 seconds, lingering for 0.25 seconds after exiting.\n\nBoth the orb and the field of Solar Snare deal Expression error: Unexpected * operator.% damage against minions.",
+				"wikiDescription": "Active: Mel fires an orb in the target direction that grants sight of its surroundings every 0.25 seconds as it travels. Enemies hit by the orb are dealt magic damage and rooted for 1.5 seconds.\n\nThe orb emanates a field of solar radiation that additionally expands after a 0.5-second delay. Enemies within the field are dealt magic damage and slowed by 30% every 0.125 seconds, lingering for 0.25 seconds after exiting.\n\nBoth the orb and the field of Solar Snare deal 50% damage against minions.",
 				"leveling": [
-					"Orb Magic Damage: to (+ % AP)",
-					"Field Magic Damage per Tick: to (+ % AP)\nField Magic Damage per Second: \n- 8 to *8 (+\n- 8% AP)",
-					"Orb Minion Magic Damage: \n- to * (+\n- % AP)\nField Minion Magic Damage per Tick: \n- to * (+\n- % AP)\nField Magic Damage per Second: \n- 8 to **8 (+\n- 8% AP)"
+					"Orb Magic Damage: 60 / 105 / 150 / 195 / 240 (+ 70% AP)",
+					"Field Magic Damage per Tick: 2 / 3.5 / 5 / 6.5 / 8 (+ 1% AP)\nField Magic Damage per Second: 16 / 28 / 40 / 52 / 64 (+ 8% AP)",
+					"Orb Minion Magic Damage: 30 / 52.5 / 75 / 97.5 / 120 (+ 35% AP)\nField Minion Magic Damage per Tick: 1 / 1.75 / 2.5 / 3.25 / 4 (+ 0.5% AP)\nField Magic Damage per Second: 8 / 14 / 20 / 26 / 32 (+ 4% AP)"
 				],
 				"cooldown": "11 / 10.5 / 10 / 9.5 / 9",
 				"cost": "50 / 60 / 70 / 80 / 90",
@@ -57619,6 +58425,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Mel/Solar Snare",
 				"wikiRevId": 4007692,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -57655,6 +58462,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Mel/Golden Eclipse",
 				"wikiRevId": 4036107,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -57665,7 +58473,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Yunara",
 		"id": 804,
 		"name": "Yunara",
-		"title": "the Unbroken Faith",
+		"title": "The Unbroken Faith",
 		"wikiPage": "Yunara",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -57739,6 +58547,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yunara/Vow of the First Lands",
 				"wikiRevId": 4058999,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -57748,8 +58557,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "<spellPassive>Passive</spellPassive>: Yunara deal <magicDamage>{{ calc_passive_damage }} magic damage</magicDamage> <OnHit>%i:OnHit% On-Hit</OnHit> and attacking grants <evolve>{{ resource_nonchampion }} Unleash</evolve> (<evolve>{{ resource_champion }} Unleash</evolve> for champions).<br /><br /><spellPassive>Active</spellPassive>: Yunara consumes <evolve>{{ resource_max }} Unleash</evolve> and for {{ buff_duration }} seconds gains <attackSpeed>{{ calc_attack_speed }} Attack Speed</attackSpeed> and deals an additional <magicDamage>{{ calc_damage }} magic damage</magicDamage> <OnHit>%i:OnHit% On-Hit</OnHit>. During this time, her Attacks spread to nearby enemies dealing them <physicalDamage>{{ calc_damage_spread }} physical damage</physicalDamage>.<br /><br /><keywordMajor>Transcendent State</keywordMajor>: This Ability is instantly activated for {{ spell.yunarar:buff_duration }} seconds.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Passive: Yunara's basic attacks deal bonus magic damage on-hit. While this ability is inactive, her basic attacks on-attack generate a stack of Unleash for 6 seconds, increased to 2 stacks against champions. The stacks refresh on subsequent attacks, stack up to 8 times, and expire one by one every 0.5 seconds after the duration.\n\nActive: Yunara unleashes for 5 seconds: gaining bonus attack speed, dealing additional bonus magic damage on-hit, and augmenting her basic attacks to have increased missile speed, a 40% lower windup time, and an uncancellable windup. Her basic attacks are also empowered to spread to each enemy near the target, dealing 30% AD physical damage.\nEach spread attack applies life steal and on-hit effects, with on-hit damage reduced to 30% effectiveness, and will critically strike if the triggering attack does. Spread attacks deal 250% damage against minions below 30% maximum health.\n\nCultivation of Spirit resets Yunara's basic attack timer. Targets do not have to be visible to be hit by the spread attacks.",
 				"leveling": [
-					"Passive Bonus Magic Damage: to (+ % AP)",
-					"Bonus Attack Speed: 20 / 30 / 40 / 50 / 60%\nActive Bonus Magic Damage: to (+ % AP)\nCombined Bonus Magic Damage: + to + (+ Expression error: Missing operand for +.% AP)\nActive Increased Minion Damage: \n- 2.5 to *2.5 (+ 50% AP)\nCombined Increased Minion Damage: (+)*2.5 to (+)*2.5 (+ Expression error: Missing operand for +.% AP)"
+					"Passive Bonus Magic Damage: 5 / 10 / 15 / 20 / 25 (+ 20% AP)",
+					"Bonus Attack Speed: 20 / 30 / 40 / 50 / 60%\nActive Bonus Magic Damage: 5 / 10 / 15 / 20 / 25 (+ 20% AP)\nCombined Bonus Magic Damage: 10 / 20 / 30 / 40 / 50 (+ 40% AP)\nActive Increased Minion Damage: 12.5 / 25 / 37.5 / 50 / 62.5 (+ 50% AP)\nCombined Increased Minion Damage: 25 / 50 / 75 / 100 / 125 (+ 100% AP)"
 				],
 				"cooldown": "",
 				"cost": "30",
@@ -57784,6 +58593,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yunara/Cultivation of Spirit",
 				"wikiRevId": 4059008,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -57791,16 +58601,18 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Arc of Judgment",
 				"riotSummary": "Yunara fires a spinning prayer bead that deals damage and slows enemies. While in her Transcendent State she instead fires off a laser that deals damage and slows enemies.",
 				"riotTooltip": "Yunara lets rip a prayer bead that deals <magicDamage>{{ calc_damage_initial }} magic damage</magicDamage> and <status>Slows by {{ calc_slow }} decaying over {{ slow_duration }} seconds</status>. It deals an additional <magicDamage>{{ calc_damage_per_second }} magic damage</magicDamage> per second.<br /><br /><keywordMajor>Transcendent State - Arc of Ruin</keywordMajor>: Yunara fires a laser that deals <magicDamage>{{ spell.yunarar:calc_rw_damage }} magic damage</magicDamage> and <status>Slows by {{ spell.yunarar:calc_rw_slow_amount }} decaying over {{ spell.yunarar:rw_slow_duration }} second</status>.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Yunara launches a spinning prayer bead in the target direction that briefly grants sight of its surroundings as it travels. The bead slows down significantly while colliding with an enemy, lingering as it travels and resetting its remaining duration; upon reaching maximum range, it will expand and linger in place for 1 second regardless of enemies hit.\nThe initial hit against each enemy before the bead's expansion deals magic damage and slows them by 99% decaying over 1.5 seconds. While lingering, the bead deals Expression error: Unexpected * operator.% of the impact damage as magic damage to nearby enemies every 0.25 seconds.\n\nArc of Judgment deals 50% / 75% / 100% (based on level) damage against minions and executes them if they would be killed by 6 more damage instances from the linger effect.",
-				"leveling": [],
-				"cooldown": "",
-				"cost": "",
+				"wikiDescription": "Active: Yunara launches a spinning prayer bead in the target direction that briefly grants sight of its surroundings as it travels. The bead slows down significantly while colliding with an enemy, lingering as it travels and resetting its remaining duration; upon reaching maximum range, it will expand and linger in place for 1 second regardless of enemies hit.\nThe initial hit against each enemy before the bead's expansion deals magic damage and slows them by 99% decaying over 1.5 seconds. While lingering, the bead deals 15% of the impact damage as magic damage to nearby enemies every 0.25 seconds.\n\nArc of Judgment deals 50% / 75% / 100% (based on level) damage against minions and executes them if they would be killed by 6 more damage instances from the linger effect.",
+				"leveling": [
+					"Initial Magic Damage: 55 / 95 / 135 / 175 / 215 (+ 85% bonus AD) (+ 50% AP)\nLinger Magic Damage per Tick: 8.25 / 14.25 / 20.25 / 26.25 / 32.25 (+ 12.75% bonus AD) (+ 7.5% AP)\nTotal Expanded Damage: 33 / 57 / 81 / 105 / 129 (+ 51% bonus AD) (+ 30% AP)"
+				],
+				"cooldown": "10",
+				"cost": "60",
 				"costType": "mana",
 				"targetRange": "",
-				"castTime": "",
-				"effectRadius": "",
-				"width": "",
-				"speed": "",
+				"castTime": "0.45 – 0.225 (based on bonus attack speed)",
+				"effectRadius": "150",
+				"width": "120",
+				"speed": "2150 • 150",
 				"queueThreshold": "",
 				"targeting": "Direction",
 				"affects": "Enemies",
@@ -57816,10 +58628,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				],
 				"wikiTitle": "Template:Data Yunara/Arc of Judgment",
 				"wikiRevId": 4008650,
-				"agreed": false,
-				"conflicts": [
-					"name: ddragon \"Arc of Judgment | Arc of Ruin\" vs wiki \"Arc of Judgment\""
-				]
+				"agreed": true,
+				"withheld": [],
+				"conflicts": []
 			},
 			{
 				"slot": "W",
@@ -57853,6 +58664,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yunara/Arc of Ruin",
 				"wikiRevId": 4039441,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -57861,16 +58673,18 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotSummary": "Yunara gains Move Speed and becomes Ghosted. While in her Transcendent State she instead dashes in a direction.",
 				"riotTooltip": "Yunara gains <speed>{{ calc_move_speed }} Move Speed</speed>, increased to <speed>{{ calc_move_speed_enhanced }} Move Speed</speed> when moving toward an enemy champion, for {{ buff_duration }} seconds.<br /><br /><keywordMajor>Transcendent State - Untouchable Shadow</keywordMajor>: Yunara dashes in a direction.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Yunara becomes ghosted and gains bonus movement speed for 1.5 seconds. The movement speed is 50% more effective while facing a nearby visible enemy champion.",
-				"leveling": [],
-				"cooldown": "",
-				"cost": "",
+				"leveling": [
+					"Bonus Move Speed: 30 / 35 / 40 / 45 / 50%\nIncreased Bonus Move Speed: 45 / 52.5 / 60 / 67.5 / 75%"
+				],
+				"cooldown": "9",
+				"cost": "40",
 				"costType": "Mana",
 				"targetRange": "",
-				"castTime": "",
-				"effectRadius": "",
+				"castTime": "none",
+				"effectRadius": "2000",
 				"width": "",
 				"speed": "",
-				"queueThreshold": "",
+				"queueThreshold": "0.05",
 				"targeting": "auto",
 				"affects": "Self",
 				"damageType": "",
@@ -57879,10 +58693,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"notes": [],
 				"wikiTitle": "Template:Data Yunara/Kanmei's Steps",
 				"wikiRevId": 3960443,
-				"agreed": false,
-				"conflicts": [
-					"name: ddragon \"Kanmei's Steps | Untouchable Shadow\" vs wiki \"Kanmei's Steps\""
-				]
+				"agreed": true,
+				"withheld": [],
+				"conflicts": []
 			},
 			{
 				"slot": "E",
@@ -57911,6 +58724,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yunara/Untouchable Shadow",
 				"wikiRevId": 4010459,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -57945,6 +58759,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Yunara/Transcend One's Self",
 				"wikiRevId": 4038856,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -57955,7 +58770,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Locke",
 		"id": 805,
 		"name": "Locke",
-		"title": "the Ashen Exorcist",
+		"title": "The Ashen Exorcist",
 		"wikiPage": "Locke",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -58025,6 +58840,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Locke/Silver Stake",
 				"wikiRevId": 4038404,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58034,8 +58850,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Locke readies a set of <keywordMajor>Soul Nails</keywordMajor> to throw, dealing <magicDamage>{{ missiledamage }} magic damage</magicDamage> and marking enemies hit. Nails apply a {{ slowamount1*100 }}/{{ slowamount2*100 }}/{{ slowamount3*100 }}% <status>Slow</status> for {{ slowduration1 }}/{{ slowduration2 }}/{{ slowduration3 }} seconds, stacking with the amount of nails hit.<br /><br />Attacking the enemy consumes the <keywordMajor>Soul Nails</keywordMajor>, dealing <magicDamage>{{ naildamage }} magic damage</magicDamage> per stack, increased by {{ twomarkbonuspercent }}% and {{ threemarkbonuspercent }}% for two and three nails respectively.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Locke hurls a nail in the target direction that deals magic damage to enemies hit, slows them by 25% for 1 second, and applies a stack of Soul Nails for 4 seconds, refreshing on subsequent applications and stacking up to 3 times. Against targets with at least 2 stacks, the slow is increased to 60% and lasts for 2 seconds.\nRitual Nails can be recast twice more within 4 seconds of the activation at no additional cost, with a 0.5-second static cooldown between casts.\n\nRecast: Locke mimics the first cast's effects. For each recast not used when Ritual Nails ends, 20% – 35% (based on level) of the ability's cooldown and mana cost is refunded, up to a 40% – 70% (based on level) refund for two remaining recasts.\n\nLocke's next damaging basic attack or Ashen Pursuit against an enemy with Soul Nails stacks consumes them all to deal bonus magic damage based on the amount of stacks.",
 				"leveling": [
-					"Magic Damage per Nail: to (+ % AP)\nMaximum Nail Damage: \n- 3 to *3 (+\n- 3% AP)",
-					"One Stack Bonus Damage: to (+ to% AP)\nTwo Stacks Bonus Damage: \n- 2*1.2 to *2*1.2 (+\n- 2*1.2 to *2*1.2% AP)\nThree Stacks Bonus Damage: \n- 3*1.4 to *3*1.4 (+\n- 3*1.4 to *3*1.4% AP)\nMaximum Total Magic Damage: (+*1.4)*3 to (+*1.4)*3 (+ (+*1.4)*3 to (+*1.4)*3% AP)"
+					"Magic Damage per Nail: 40 / 48 / 56 / 64 / 72 (+ 20% AP)\nMaximum Nail Damage: 120 / 144 / 168 / 192 / 216 (+ 60% AP)",
+					"One Stack Bonus Damage: 18 / 26 / 34 / 42 / 50 (+ 25 / 27.5 / 30 / 32.5 / 35% AP)\nTwo Stacks Bonus Damage: 43.2 / 62.4 / 81.6 / 100.8 / 120 (+ 60 / 66 / 72 / 78 / 84% AP)\nThree Stacks Bonus Damage: 75.6 / 109.2 / 142.8 / 176.4 / 210 (+ 105 / 115.5 / 126 / 136.5 / 147% AP)\nMaximum Total Magic Damage: 195.6 / 253.2 / 310.8 / 368.4 / 426 (+ 165 / 175.5 / 186 / 196.5 / 207% AP)"
 				],
 				"cooldown": "10 / 9 / 8 / 7 / 6",
 				"cost": "70",
@@ -58060,6 +58876,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Locke/Ritual Nails",
 				"wikiRevId": 4046580,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58095,6 +58912,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Locke/Soul Ignition",
 				"wikiRevId": 4062633,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58145,6 +58963,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Locke/Ashen Pursuit",
 				"wikiRevId": 4052832,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58192,6 +59011,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Locke/Purgatory",
 				"wikiRevId": 4051476,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -58202,7 +59022,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Sett",
 		"id": 875,
 		"name": "Sett",
-		"title": "the Boss",
+		"title": "The Boss",
 		"wikiPage": "Sett",
 		"resource": "Grit",
 		"rangeType": "Melee",
@@ -58277,6 +59097,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sett/Pit Grit",
 				"wikiRevId": 4018819,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58309,6 +59130,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sett/Knuckle Down",
 				"wikiRevId": 4024545,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58347,6 +59169,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sett/Haymaker",
 				"wikiRevId": 4008036,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58425,6 +59248,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sett/Facebreaker",
 				"wikiRevId": 4013095,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58474,6 +59298,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Sett/The Show Stopper",
 				"wikiRevId": 3936244,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -58484,7 +59309,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Lillia",
 		"id": 876,
 		"name": "Lillia",
-		"title": "the Bashful Bloom",
+		"title": "The Bashful Bloom",
 		"wikiPage": "Lillia",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -58558,6 +59383,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lillia/Dream-Laden Bough",
 				"wikiRevId": 4038402,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58591,6 +59417,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lillia/Blooming Blows",
 				"wikiRevId": 4007646,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58624,6 +59451,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lillia/Watch Out! Eep!",
 				"wikiRevId": 4007660,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58659,6 +59487,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lillia/Swirlseed",
 				"wikiRevId": 4007662,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -58696,6 +59525,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Lillia/Lilting Lullaby",
 				"wikiRevId": 3996458,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -59054,6 +59884,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gwen/A Thousand Cuts",
 				"wikiRevId": 4051343,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59063,8 +59894,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "<spellPassive>Passive</spellPassive>: Gwen gains 1 stack when she hits an enemy with an attack (max 4, lasts {{ buffduration }} seconds).<br /><br /><spellActive>Active</spellActive>: Consumes stacks. Gwen snips once for <magicDamage>{{ miniswipedamage }} magic damage</magicDamage>, snips again for each ammo consumed, and then snips a final time for <magicDamage>{{ finalswipedamage }} magic damage</magicDamage>. <br /><br />The center of each strikes converts {{ truedamageconversion*100 }}% of the damage into <trueDamage>true damage</trueDamage> instead and applies <spellName>A Thousand Cuts</spellName> to enemies hit.<br /><rules><br />Deals {{ minionmod*100 }}% damage to minions.<br />Minions below {{ executethreshold*100 }}% health take {{ executebonus }}% bonus damage instead of reduced damage.</rules>{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Passive: Gwen's basic attacks generate a stack of Snippy on-hit for 6 seconds, stacking up to 4 times and refreshing on subsequent attacks.\n\nActive: Gwen snips at least twice with her scissors in a cone in the target direction over the cast time, dealing magic damage per snip to all enemies within the area, with the final snip dealing increased damage. The center of each snip converts 50% of the damage to true damage, then applies A Thousand Cuts. Snip Snip! deals 80% damage against minions, and executes them on the first damage instance if they are below 20% health.\n\nIf Gwen has any Snippy stacks, she consumes them to snip an additional time for each.",
 				"leveling": [
-					"Damage per Snip: to (+ % AP)\nCenter Damage per Snip: to (+ % AP)\n(+ % (+ nil% per 100 AP) of the target's maximum health)\nFinal Snip Damage: to (+ % AP)\nFinal Snip Center Damage: to (+ % AP)\n(+ % (+\n*1% per 100 AP) of the target's maximum health)",
-					"Minimum Damage: +* to +* (+ +*% AP)\nMinimum Center Damage: +* to +* (+ +*% AP)\n(+ +*% (+ +*% per 100 AP) of the target's maximum health)\nMaximum Damage: +* to +* (+ +*% AP)\nMaximum Center Damage: +* to +* (+ +*% AP)\n(+ +*% (+ +*% per 100 AP) of the target's maximum health)"
+					"Damage per Snip: 10 / 14 / 18 / 22 / 26 (+ 5% AP)\nCenter Damage per Snip: 10 / 14 / 18 / 22 / 26 (+ 5% AP)\n(+ 1% (+ 0.6% per 100 AP) of the target's maximum health)\nFinal Snip Damage: 60 / 85 / 110 / 135 / 160 (+ 35% AP)\nFinal Snip Center Damage: 60 / 85 / 110 / 135 / 160 (+ 35% AP)\n(+ 1% (+ 0.6% per 100 AP) of the target's maximum health)",
+					"Minimum Damage: 70 / 99 / 128 / 157 / 186 (+ 40% AP)\nMinimum Center Damage: 70 / 99 / 128 / 157 / 186 (+ 40% AP)\n(+ 2% (+ 1.2% per 100 AP) of the target's maximum health)\nMaximum Damage: 110 / 155 / 200 / 245 / 290 (+ 60% AP)\nMaximum Center Damage: 110 / 155 / 200 / 245 / 290 (+ 60% AP)\n(+ 6% (+ 3.6% per 100 AP) of the target's maximum health)"
 				],
 				"cooldown": "6.5 / 5.75 / 5 / 4.25 / 3.5",
 				"cost": "40",
@@ -59092,6 +59923,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gwen/Snip Snip!",
 				"wikiRevId": 4026398,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59134,6 +59966,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gwen/Hallowed Mist",
 				"wikiRevId": 3973613,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59166,6 +59999,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gwen/Skip 'n Slash",
 				"wikiRevId": 4026400,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59175,9 +60009,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "<spellActive>First Cast:</spellActive> Hurl a needle that deals <magicDamage>{{ totaldamage }} magic damage</magicDamage>, <status>Slows</status> by {{ initialslow*-100 }}% for {{ debuffduration }} seconds, and applies <spellName>A Thousand Cuts</spellName> to all enemies hit. Gwen can <recast>Recast</recast> this ability up to 2 additional times within 6 seconds ({{ lockouttime }}s cooldown between casts).<br /><br /><recast>Second Cast:</recast> Fire three needles to deal <magicDamage>{{ totaldamage3 }} magic damage</magicDamage><br /><recast>Third Cast:</recast> Fire five needles to deal <magicDamage>{{ totaldamage5 }} magic damage</magicDamage>{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Gwen launches a needle in the target direction that deals magic damage to enemies hit and slows them for 1.5 seconds.\n\nNeedlework can be recast twice more within 8 seconds of the activation at no additional cost, with a 1-second static cooldown between casts. Each subsequent cast refreshes the duration and increases the number of needles launched by 2. Needle hits beyond the first apply a slow against each individual target.\n\nRecast: Gwen mimics the first cast's effects, while barraging three needles on the second cast and five on the third cast.\n\nGwen can move during Needlework's cast times.",
 				"leveling": [
-					"Magic Damage per Needle: to (+ % AP)\nDamage with A Thousand Cuts: to (+ % AP) (+ % (+\n- 1% per 100 AP) of the target's maximum health)\nSlow: 30 / 45 / 60%",
+					"Magic Damage per Needle: 30 / 50 / 70 (+ 10% AP)\nDamage with A Thousand Cuts: 30 / 50 / 70 (+ 10% AP) (+ 1% (+ 0.6% per 100 AP) of the target's maximum health)\nSlow: 30 / 45 / 60%",
 					"Subsequent Slow: 15 / 20 / 25%",
-					"Second Cast Total Damage: \n- 3 to *3 (+\n- 3% AP)\n(+\n*3% (+\n*3% per 100 AP) of the target's maximum health)\nThird Cast Total Damage: \n- 5 to *5 (+\n- 5% AP)\n(+\n*5% (+\n*5% per 100 AP) of the target's maximum health)\nMaximum Total Damage: \n- 9 to *9 (+\n- 9% AP)\n(+\n*9% (+\n*9% per 100 AP) of the target's maximum health)"
+					"Second Cast Total Damage: 90 / 150 / 210 (+ 30% AP)\n(+ 3% (+ 1.8% per 100 AP) of the target's maximum health)\nThird Cast Total Damage: 150 / 250 / 350 (+ 50% AP)\n(+ 5% (+ 3% per 100 AP) of the target's maximum health)\nMaximum Total Damage: 270 / 450 / 630 (+ 90% AP)\n(+ 9% (+ 5.4% per 100 AP) of the target's maximum health)"
 				],
 				"cooldown": "120 / 100 / 80",
 				"cost": "100",
@@ -59207,6 +60041,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Gwen/Needlework",
 				"wikiRevId": 4007603,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -59217,7 +60052,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Renata",
 		"id": 888,
 		"name": "Renata Glasc",
-		"title": "the Chem-Baroness",
+		"title": "The Chem-Baroness",
 		"wikiPage": "Renata Glasc",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -59293,6 +60128,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renata Glasc/Leverage",
 				"wikiRevId": 3997432,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59336,6 +60172,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renata Glasc/Handshake",
 				"wikiRevId": 4053296,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59375,6 +60212,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renata Glasc/Bailout",
 				"wikiRevId": 3908415,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59407,6 +60245,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renata Glasc/Loyalty Program",
 				"wikiRevId": 4053301,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59440,6 +60279,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Renata Glasc/Hostile Takeover",
 				"wikiRevId": 4050286,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -59450,7 +60290,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Aurora",
 		"id": 893,
 		"name": "Aurora",
-		"title": "the Witch Between Worlds",
+		"title": "The Witch Between Worlds",
 		"wikiPage": "Aurora",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -59525,6 +60365,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurora/Spirit Abjuration",
 				"wikiRevId": 4062250,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59532,10 +60373,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Twofold Hex",
 				"riotSummary": "Aurora sends out a missile that curses any enemies it hits. She can then recast the ability to draw active curses back toward herself, damaging foes who are hit along the way.",
 				"riotTooltip": "Fire cursed energy in a direction, dealing <magicDamage>{{ damage }} magic damage</magicDamage> to enemies and cursing them for {{ markduration }} seconds.<br /><br /><recast>Recast:</recast> End the curse, drawing back part of the enemy's spirit to Aurora, dealing up to <magicDamage>{{ q2damagemax }} magic damage</magicDamage> to enemies passed through based on their missing Health. Damage beyond the first hit is reduced to 20%.<br /><br />If the duration runs out, Aurora will automatically <recast>Recast</recast> the Ability.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Aurora fires a bolt of energy in the target direction that deals magic damage to enemies hit and marks them with a curse for 3.5 seconds.\n\nTwofold Hex can be recast after 0.1 seconds while at least one target is marked, and does so automatically at the end of the mark's duration.\n\nRecast: Aurora expunges the curse from all marked targets, drawing the spiritual energy back to her as bolts that each deal magic damage to all enemies they pass through, reduced to 40% against minions and 50% against monsters and increased by 0% – -100% (based on target's missing health). Subsequent bolts against an enemy deal\n- 100% damage.",
+				"wikiDescription": "Active: Aurora fires a bolt of energy in the target direction that deals magic damage to enemies hit and marks them with a curse for 3.5 seconds.\n\nTwofold Hex can be recast after 0.1 seconds while at least one target is marked, and does so automatically at the end of the mark's duration.\n\nRecast: Aurora expunges the curse from all marked targets, drawing the spiritual energy back to her as bolts that each deal magic damage to all enemies they pass through, reduced to 40% against minions and 50% against monsters and increased by 0% – 50% (based on target's missing health). Subsequent bolts against an enemy deal 20% damage.",
 				"leveling": [
-					"Magic Damage: to (+ % AP)",
-					"Minimum Magic Damage: to (+ % AP)\nMaximum Magic Damage: \n- to * (+\n- % AP)\nSubsequent Bolt Minimum Magic Damage: \n- to * (+\n- % AP)\nSubsequent Bolt Maximum Magic Damage: \n- to ** (+\n- % AP)"
+					"Magic Damage: 45 / 70 / 95 / 120 / 145 (+ 40% AP)",
+					"Minimum Magic Damage: 45 / 70 / 95 / 120 / 145 (+ 40% AP)\nMaximum Magic Damage: 67.5 / 105 / 142.5 / 180 / 217.5 (+ 60% AP)\nSubsequent Bolt Minimum Magic Damage: 9 / 14 / 19 / 24 / 29 (+ 8% AP)\nSubsequent Bolt Maximum Magic Damage: 13.5 / 21 / 28.5 / 36 / 43.5 (+ 12% AP)"
 				],
 				"cooldown": "9 / 8.5 / 8 / 7.5 / 7",
 				"cost": "60",
@@ -59563,6 +60404,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurora/Twofold Hex",
 				"wikiRevId": 4021922,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59605,6 +60447,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurora/Across the Veil",
 				"wikiRevId": 4007570,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59640,6 +60483,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurora/The Weirding",
 				"wikiRevId": 3936382,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59726,6 +60570,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Aurora/Between Worlds",
 				"wikiRevId": 4063510,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -59736,7 +60581,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Nilah",
 		"id": 895,
 		"name": "Nilah",
-		"title": "the Joy Unbound",
+		"title": "The Joy Unbound",
 		"wikiPage": "Nilah",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -59813,6 +60658,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nilah/Joy Unending",
 				"wikiRevId": 3960984,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59850,6 +60696,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nilah/Formless Blade",
 				"wikiRevId": 4007708,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59882,6 +60729,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nilah/Jubilant Veil",
 				"wikiRevId": 3845922,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -59913,6 +60761,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nilah/Slipstream",
 				"wikiRevId": 3927625,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cost: ddragon 40 vs wiki 30"
 				]
@@ -59985,6 +60834,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Nilah/Apotheosis",
 				"wikiRevId": 4007709,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -59995,7 +60845,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "KSante",
 		"id": 897,
 		"name": "K'Sante",
-		"title": "the Pride of Nazumah",
+		"title": "The Pride of Nazumah",
 		"wikiPage": "K'Sante",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -60076,6 +60926,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data K'Sante/Dauntless Instinct",
 				"wikiRevId": 4038388,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60150,6 +61001,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data K'Sante/Ntofo Strikes",
 				"wikiRevId": 4007617,
 				"agreed": false,
+				"withheld": [],
 				"conflicts": [
 					"cooldown: ddragon 3.5 vs wiki 3.5/2/2.33/1.33"
 				]
@@ -60232,6 +61084,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data K'Sante/Path Maker",
 				"wikiRevId": 4007618,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60266,6 +61119,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data K'Sante/Footwork",
 				"wikiRevId": 4034698,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60399,6 +61253,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data K'Sante/All Out",
 				"wikiRevId": 4051537,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -60409,7 +61264,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Smolder",
 		"id": 901,
 		"name": "Smolder",
-		"title": "the Fiery Fledgling",
+		"title": "The Fiery Fledgling",
 		"wikiPage": "Smolder",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -60484,6 +61339,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Smolder/Dragon Practice",
 				"wikiRevId": 4025344,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60491,10 +61347,10 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Super Scorcher Breath",
 				"riotSummary": "Smolder breathes fire on an enemy. As he gains more stacks, this ability becomes more powerful.",
 				"riotTooltip": "Smolder belches flame, dealing <physicalDamage>{{ totaldamage }} physical damage</physicalDamage> + <magicDamage>{{ spell.smolderp:passive_qdamageincrease }} magic damage</magicDamage>. If the target dies, Smolder refunds <scaleMana>{{ manarestore }} Mana</scaleMana>, once per cast.<br /><br />Based on stacks of <spellName>Dragon Practice</spellName>, this Ability evolves to gain the following effects:<li><keywordMajor>{{ stacktier1 }} Stacks</keywordMajor>: Damages all enemies surrounding the target.<li><keywordMajor>{{ stacktier2 }} Stacks</keywordMajor>: Sends <spellName>{{ tier2_numberofblowback }}</spellName> explosions beyond the target that deal {{ tier2_blowbackpercentagedamage }}% of this Ability's damage.<li><keywordMajor>{{ stacktier3 }} Stacks</keywordMajor>: Burns the target, dealing <trueDamage>{{ tier3_burn }} max Health true damage</trueDamage> over {{ tier3_dotlength }} seconds. Enemy champions that drop below <trueDamage>{{ tier3_executethreshold }}</trueDamage> total health while burning are killed instantly.{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Smolder spits a fireball at the target enemy that deals physical damage, increased by 0% – 75% (+ 0% – 22.5%) (based on critical strike chance); applies on-hit effects; applies life steal at 50% effectiveness; and triggers on-attack effects. If Super Scorcher Breath kills at least one target, Smolder restores 15 mana.\n\nSuper Scorcher Breath becomes empowered with new effects based on the number of Dragon Practice stacks:\n\nTier 1 - 25 stacks: The fireball explodes upon collision to deal the same physical damage to nearby enemies. The explosion benefits from life steal at 50% effectiveness and applies on-hit effects.\n\nTier 2 - 125 stacks: The fireball sends forth 2 (+ 0.8 per 100 Dragon Practice stacks) bolts of fire in an arc upon collision that explode at maximum range, dealing\n- 100% of the same damage to enemies hit. The bolts benefit from life steal at 50% effectiveness and apply on-hit effects.",
+				"wikiDescription": "Active: Smolder spits a fireball at the target enemy that deals physical damage, increased by 0% – 75% (+ 0% – 22.5%) (based on critical strike chance); applies on-hit effects; applies life steal at 50% effectiveness; and triggers on-attack effects. If Super Scorcher Breath kills at least one target, Smolder restores 15 mana.\n\nSuper Scorcher Breath becomes empowered with new effects based on the number of Dragon Practice stacks:\n\nTier 1 - 25 stacks: The fireball explodes upon collision to deal the same physical damage to nearby enemies. The explosion benefits from life steal at 50% effectiveness and applies on-hit effects.\n\nTier 2 - 125 stacks: The fireball sends forth 2 (+ 0.8 per 100 Dragon Practice stacks) bolts of fire in an arc upon collision that explode at maximum range, dealing 50% of the same damage to enemies hit. The bolts benefit from life steal at 50% effectiveness and apply on-hit effects.",
 				"leveling": [
-					"Physical Damage: to (+ % bonus AD)",
-					"Physical Damage: \n- to * (+\n- % bonus AD)"
+					"Physical Damage: 60 / 70 / 80 / 90 / 100 (+ 130% bonus AD)",
+					"Physical Damage: 30 / 35 / 40 / 45 / 50 (+ 65% bonus AD)"
 				],
 				"cooldown": "5.5 / 5 / 4.5 / 4 / 3.5",
 				"cost": "25",
@@ -60521,7 +61377,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 					"If Super Scorcher Breath would damage the target to below the execution threshold, they are executed on the same damage instance.",
 					"The number of additional bolts launched based on Dragon Practice stacks is rounded up.(unexpected)",
 					"At 125 Dragon Practice stacks, the fireball will launch 3 bolts.",
-					"At 225 Dragon Practice stacks, the burn's damage based on the target's health ratio will increase by at least Expression error: Unexpected * operator.%.",
+					"At 225 Dragon Practice stacks, the burn's damage based on the target's health ratio will increase by at least 1.125%.",
 					"Super Scorcher Breath can only hit enemies once per cast.",
 					"The minion and monster damage modifier applies only to the physical damage.",
 					"Super Scorcher Breath's initial fireball, explosion and extra bolts can all be blocked and dodged.",
@@ -60530,6 +61386,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Smolder/Super Scorcher Breath",
 				"wikiRevId": 4030432,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60562,6 +61419,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Smolder/Achooo!",
 				"wikiRevId": 4025346,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60637,6 +61495,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Smolder/Flap, Flap, Flap",
 				"wikiRevId": 4025347,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60708,6 +61567,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Smolder/MMOOOMMMM!",
 				"wikiRevId": 4025343,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -60794,6 +61654,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Milio/Fired Up!",
 				"wikiRevId": 4046868,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60823,6 +61684,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Milio/Ultra Mega Fire Kick",
 				"wikiRevId": 4007693,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60856,6 +61718,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Milio/Cozy Campfire",
 				"wikiRevId": 4007694,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60887,6 +61750,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Milio/Warm Hugs",
 				"wikiRevId": 3908079,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -60918,6 +61782,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Milio/Breath of Life",
 				"wikiRevId": 3908080,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -61056,6 +61921,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zaahen/Cultivation of War",
 				"wikiRevId": 4060321,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61065,8 +61931,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "Zaahen slashes twice on his next Attack, dealing <physicalDamage>{{ initialdamage }} bonus physical damage</physicalDamage> and restoring <healing>{{ healpercent*100 }}% of his max Health</healing>.<br /><br /><recast>Recast:</recast> Zaahen's next Attack deals <physicalDamage>{{ secondhitdamage }} bonus physical damage</physicalDamage> and <status>Knocks</status> the target Up for {{ knockupduration }} seconds.{{ spellmodifierdescriptionappend }}",
 				"wikiDescription": "Active: Zaahen empowers his next basic attack within 4 seconds to have an uncancellable windup and gain 25 bonus range. On-attack, he strikes the target twice. If the target was a champion, minion, or monster, he also heals himself. The strikes deal modified physical damage and the heal is reduced to 50% against minions and monsters.\nEach strike applies on-hit effects and can critically strike for「 (50% + 15%) 」「 50% bonus critical damage 」AD bonus physical damage.\n\nAfter 1.5 seconds of using the empowered attack, The Darkin Glaive can be recast within the next 4 seconds at no additional cost, modifying it with a new effect.\n\nRecast: Zaahen empowers his next basic attack within 4 seconds to have an uncancellable windup, gain 25 bonus range, deal bonus physical damage and knock up the target for 0.75 seconds.\n\nThe Darkin Glaive deals 200% damage against monsters.",
 				"leveling": [
-					"Total Physical Damage: 15 / 30 / 45 / 60 / 75 (+ 100% AD) (+ to% bonus AD)\nPhysical Damage per Hit: 7.5 / 15 / 22.5 / 30 / 37.5 (+ 50% AD) (+ /2 to /2% bonus AD)\nChampion Healing: 5 / 6 / 7 / 8 / 9% of his maximum health\nNon-Champion Healing: 2.5 / 3 / 3.5 / 4 / 4.5% of his maximum health",
-					"Bonus Physical Damage: 30 / 60 / 90 / 120 / 150 (+ to% bonus AD)"
+					"Total Physical Damage: 15 / 30 / 45 / 60 / 75 (+ 100% AD) (+ 20 / 25 / 30 / 35 / 40% bonus AD)\nPhysical Damage per Hit: 7.5 / 15 / 22.5 / 30 / 37.5 (+ 50% AD) (+ 10 / 12.5 / 15 / 17.5 / 20% bonus AD)\nChampion Healing: 5 / 6 / 7 / 8 / 9% of his maximum health\nNon-Champion Healing: 2.5 / 3 / 3.5 / 4 / 4.5% of his maximum health",
+					"Bonus Physical Damage: 30 / 60 / 90 / 120 / 150 (+ 20 / 25 / 30 / 35 / 40% bonus AD)"
 				],
 				"cooldown": "10 / 9 / 8 / 7 / 6",
 				"cost": "25",
@@ -61100,6 +61966,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zaahen/The Darkin Glaive",
 				"wikiRevId": 4060370,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61139,6 +62006,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zaahen/Dreaded Return",
 				"wikiRevId": 4050171,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61168,7 +62036,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"notes": [
 					"Aureate Rush has no minimum dash range.",
 					"If the dash is interrupted, Zaahen will fail to deal damage.",
-					"Zaahen will, however, deal damage if the dash is interrupted at the very end, shortly before the damage would occur. [1] (bug)",
+					"Zaahen will, however, deal damage if the dash is interrupted at the very end, shortly before the damage would occur. (bug)",
 					"The mixed damage is applied in two instances, and the physical damage will be dealt first within the same game tick.",
 					"If the physical damage finishes off the unit, the magic damage will not be dealt against it.(bug)",
 					"The following table refers for interactions while Zaahen is dashing:",
@@ -61213,6 +62081,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zaahen/Aureate Rush",
 				"wikiRevId": 4022487,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61288,6 +62157,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Zaahen/Grim Deliverance",
 				"wikiRevId": 4007768,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -61533,7 +62403,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Hwei",
 		"id": 910,
 		"name": "Hwei",
-		"title": "the Visionary",
+		"title": "The Visionary",
 		"wikiPage": "Hwei",
 		"resource": "Mana",
 		"rangeType": "Ranged",
@@ -61613,6 +62483,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Signature of the Visionary",
 				"wikiRevId": 4038347,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61643,6 +62514,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Subject: Disaster",
 				"wikiRevId": 3970734,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61674,6 +62546,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Devastating Fire",
 				"wikiRevId": 4026403,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61683,8 +62556,8 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"riotTooltip": "",
 				"wikiDescription": "Active - QW: Hwei calls upon a lightning bolt to strike at the target location after 1 second, dealing magic damage to enemies within the area.\n\nIf Severing Bolt hits only one enemy or immobilized enemies, it deals increased damage based on the target's missing health. This bonus damage is capped at 300 against monsters.\n\nSevering Bolt deals 50% damage to minions and non-epic monsters.",
 				"leveling": [
-					"Magic Damage: to (+ % AP)",
-					"Maximum Damage Increase: \n- 100 to *100%\nMaximum Damage: \n- / (+(-)*(1/4))*(+(-)*(1/4)) / (+(-)*(2/4))*(+(-)*(2/4)) / (+(-)*(3/4))*(+(-)*(3/4)) /\n- (+\n- to *% AP)"
+					"Magic Damage: 60 / 85 / 110 / 135 / 160 (+ 30% AP)",
+					"Maximum Damage Increase: 200 / 237.5 / 275 / 312.5 / 350%\nMaximum Damage: 120 / 201.875 / 302.5 / 421.875 / 560 (+ 60 / 71.25 / 82.5 / 93.75 / 105% AP)"
 				],
 				"cooldown": "",
 				"cost": "",
@@ -61702,15 +62575,16 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "true",
 				"notes": [
 					"Severing Bolt's damage against immobilized or isolated enemies is increased based on both its rank and a target's missing health. The list below shows the total damage multiplier at various thresholds as a percentage of the base/non-increased damage.",
-					"Rank 1: 1*100 to *100 for 11%",
-					"Rank 2: 1*100 to (+(-)*(1/4))*100 for 11%",
-					"Rank 3: 1*100 to (+(-)*(2/4))*100 for 11%",
-					"Rank 4: 1*100 to (+(-)*(3/4))*100 for 11%",
-					"Rank 5: 1*100 to *100 for 11%"
+					"Rank 1: 100% – 200%",
+					"Rank 2: 100% – 237.5%",
+					"Rank 3: 100% – 275%",
+					"Rank 4: 100% – 312.5%",
+					"Rank 5: 100% – 350%"
 				],
 				"wikiTitle": "Template:Data Hwei/Severing Bolt",
 				"wikiRevId": 4026406,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61746,6 +62620,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Molten Fissure",
 				"wikiRevId": 4026407,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61776,6 +62651,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Subject: Serenity",
 				"wikiRevId": 3970735,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61807,6 +62683,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Fleeting Current",
 				"wikiRevId": 3959274,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61843,6 +62720,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Pool of Reflection",
 				"wikiRevId": 3992645,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61876,6 +62754,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Stirring Lights",
 				"wikiRevId": 3927605,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61906,6 +62785,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Subject: Torment",
 				"wikiRevId": 4026410,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61937,6 +62817,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Grim Visage",
 				"wikiRevId": 4021906,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -61971,6 +62852,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Gaze of the Abyss",
 				"wikiRevId": 4010562,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -62003,6 +62885,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Crushing Maw",
 				"wikiRevId": 4008532,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -62037,6 +62920,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Spiraling Despair",
 				"wikiRevId": 4008531,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -62066,6 +62950,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Hwei/Wash Brush",
 				"wikiRevId": 3970738,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],
@@ -62076,7 +62961,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 		"apiname": "Naafiri",
 		"id": 950,
 		"name": "Naafiri",
-		"title": "the Hound of a Hundred Bites",
+		"title": "The Hound of a Hundred Bites",
 		"wikiPage": "Naafiri",
 		"resource": "Mana",
 		"rangeType": "Melee",
@@ -62150,6 +63035,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Naafiri/We Are More",
 				"wikiRevId": 4025780,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -62184,6 +63070,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Naafiri/Darkin Daggers",
 				"wikiRevId": 4025704,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -62217,6 +63104,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Naafiri/The Call of the Pack",
 				"wikiRevId": 4058060,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -62248,6 +63136,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Naafiri/Eviscerate",
 				"wikiRevId": 4007772,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			},
 			{
@@ -62255,9 +63144,9 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"name": "Hounds' Pursuit",
 				"riotSummary": "Naafiri and her packmates dash at a champion, dealing damage. Naafiri reveals nearby enemies if she scores a takedown and can recast this Ability once. The second cast grants a shield.",
 				"riotTooltip": "Naafiri dashes at an enemy champion, dealing <physicalDamage>{{ totaldamage }} physical damage</physicalDamage> and briefly <status>Slowing</status> them. <keywordMajor>Packmates</keywordMajor> become Untargetable and dash alongside Naafiri, dealing <physicalDamage>{{ packmatedamage }} physical damage</physicalDamage> per <keywordMajor>Packmate</keywordMajor>.<br /><br />If Naafiri scores a Takedown within {{ takedownwindow }} seconds she reveals nearby enemies and can recast this Ability once. The second cast grants <shield>{{ shieldtotal }} Shield</shield> for {{ shieldduration }} seconds.<br /><br /><br />{{ spellmodifierdescriptionappend }}",
-				"wikiDescription": "Active: Naafiri and her Packmates channel for 0.75 seconds to single out the target enemy champion, revealing them in the duration. Upon completion of the channel, they dash to the target; upon arrival Naafiri deals physical damage and slows the target by 99% for 0.25 seconds, whereas each Packmate deals\n- 100% of that damage. Packmates become untargetable during their channel and dash.\n\nIf Naafiri scores a champion takedown within 7 seconds of cast, she triggers a pulse that grants sight of the surrounding area for 1 second and reveals enemy champions within for 4 seconds. She can also recast Hounds' Pursuit once from triggering this effect within 12 seconds at no cost.\n\nRecast: Naafiri immediately grants herself a shield for 3 seconds before mimicking the first cast's effects.",
+				"wikiDescription": "Active: Naafiri and her Packmates channel for 0.75 seconds to single out the target enemy champion, revealing them in the duration. Upon completion of the channel, they dash to the target; upon arrival Naafiri deals physical damage and slows the target by 99% for 0.25 seconds, whereas each Packmate deals 10% of that damage. Packmates become untargetable during their channel and dash.\n\nIf Naafiri scores a champion takedown within 7 seconds of cast, she triggers a pulse that grants sight of the surrounding area for 1 second and reveals enemy champions within for 4 seconds. She can also recast Hounds' Pursuit once from triggering this effect within 12 seconds at no cost.\n\nRecast: Naafiri immediately grants herself a shield for 3 seconds before mimicking the first cast's effects.",
 				"leveling": [
-					"Physical Damage: to (+ % bonus AD)\nPhysical Damage per Packmate: to (+ % bonus AD)",
+					"Physical Damage: 125 / 200 / 275 (+ 100% bonus AD)\nPhysical Damage per Packmate: 12.5 / 20 / 27.5 (+ 10% bonus AD)",
 					"Shield: 100 / 150 / 200 (+ 150% bonus AD)"
 				],
 				"cooldown": "110 / 95 / 80",
@@ -62276,30 +63165,12 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"spellShield": "special",
 				"notes": [
 					"Hounds' Pursuit's theoretical total physical damage from Packmates only, assuming Naafiri has the maximum number of them active and Hounds' Pursuit is always ranked at the earliest levels permitted (ranks 1 / 2 / 3 at levels 6 / 11 / 16):",
-					"Levels 6–8:",
-					"2 (+",
-					"2% bonus AD) /",
-					"4 (+",
-					"4% bonus AD).",
-					"Levels 9–10:",
-					"3 (+",
-					"3% bonus AD) /",
-					"5 (+",
-					"5% bonus AD).",
-					"Level 11: (+(-)*(1/2))*3 (+",
-					"3% bonus AD) /  (+(-)*(1/2))*5 (+",
-					"5% bonus AD).",
-					"Levels 12–14: (+(-)*(1/2))*4 (+",
-					"4% bonus AD) /  (+(-)*(1/2))*6 (+",
-					"6% bonus AD).",
-					"Level 15: (+(-)*(1/2))*5 (+",
-					"5% bonus AD) /  (+(-)*(1/2))*7 (+",
-					"7% bonus AD).",
-					"Levels 16–18:",
-					"5 (+",
-					"5% bonus AD) /",
-					"7 (+",
-					"7% bonus AD).",
+					"Levels 6–8: 25 (+ 20% bonus AD) /  50 (+ 40% bonus AD).",
+					"Levels 9–10: 37.5 (+ 30% bonus AD) /  62.5 (+ 50% bonus AD).",
+					"Level 11: 60 (+ 30% bonus AD) /  100 (+ 50% bonus AD).",
+					"Levels 12–14: 80 (+ 40% bonus AD) /  120 (+ 60% bonus AD).",
+					"Level 15: 100 (+ 50% bonus AD) /  140 (+ 70% bonus AD).",
+					"Levels 16–18: 137.5 (+ 50% bonus AD) /  192.5 (+ 70% bonus AD).",
 					"Naafiri marks the enemy champion targeted by Hounds' Pursuit in order to gain assist credit on them, lasting for the standard credit timer.",
 					"Hound's Pursuit's cast and dash do not break stealth.(unexpected)",
 					"Spell shield will block Naafiri's collision damage but cannot prevent collision damage from Packmates.",
@@ -62360,6 +63231,7 @@ export const CHAMPION_ROWS: readonly ChampionRow[] = [
 				"wikiTitle": "Template:Data Naafiri/Hounds' Pursuit",
 				"wikiRevId": 4046586,
 				"agreed": true,
+				"withheld": [],
 				"conflicts": []
 			}
 		],

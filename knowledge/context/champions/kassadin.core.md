@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Void Walker [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Void Walker [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V0.9.22.7 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V0.9.22.7 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 646, hp_lvl 113, mp_base 400, mp_lvl 87, arm_base 21, arm_lvl 4, mr_base 30, mr_lvl 1.3, hp5_base 6, hp5_lvl 0.5, mp5_base 6, mp5_lvl 0.8, dam_base 59, dam_lvl 3.9, as_base 0.64, as_lvl 3.7, range 150, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -59,6 +59,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Location [wiki-r rev-4060363, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4060363, fetched 2026-09-18]
 - spell shield: True [wiki-r rev-4060363, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

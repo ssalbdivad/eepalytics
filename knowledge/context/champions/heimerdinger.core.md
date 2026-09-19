@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Revered Inventor [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Revered Inventor [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V0.9.25.34 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.11 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V0.9.25.34 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.11 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 558, hp_lvl 105, mp_base 385, mp_lvl 20, arm_base 19, arm_lvl 4.2, mr_base 30, mr_lvl 1.3, hp5_base 7, hp5_lvl 0.55, mp5_base 8, mp5_lvl 0.8, dam_base 56, dam_lvl 2.7, as_base 0.658, as_lvl 1.36, range 550, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -42,8 +42,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Hextech Micro-Rockets [wiki-w rev-3989864, fetched 2026-09-18]
 - cooldown: 11 / 10 / 9 / 8 / 7 [wiki-w rev-3989864, fetched 2026-09-18]
 - cost: 50 / 60 / 70 / 80 / 90 [wiki-w rev-3989864, fetched 2026-09-18]
-- what it does: Active: Heimerdinger launches a wave of 5 rockets that converge upon the target location and fan beyond it up to a maximum range, with each one dealing magic damage to the first enemy it hits. Every rocket hitting an enemy champion grants 20% beam charge to all turrets within 1000 range, up to a maximum of 100% beam charge when hitting 5 rockets on an enemy champion. Enemies can be hit by multiple rockets, but receive less damage from ones beyond the first. Against minions, this lesser damage is increased by -100%. [wiki-w rev-3989864, fetched 2026-09-18]
-- damage by rank: Initial Rocket Magic Damage: to (+ % AP) · Subsequent Rocket Magic Damage: to (+ % AP) Total Subsequent Non-Minion Damage: 4* to 4* (+ 4*% AP) Combined Total Non-Minion Damage: +4* to +4* (+ +4*% AP) Subsequent Rocket Minion Damage: - to * (+ - % AP) Total Subsequent Minion Damage: 4** to 4** (+ 4**% AP) Combined Total Minion Damage: +4** to +4** (+ +4**% AP) [wiki-w rev-3989864, fetched 2026-09-18]
+- what it does: Active: Heimerdinger launches a wave of 5 rockets that converge upon the target location and fan beyond it up to a maximum range, with each one dealing magic damage to the first enemy it hits. Every rocket hitting an enemy champion grants 20% beam charge to all turrets within 1000 range, up to a maximum of 100% beam charge when hitting 5 rockets on an enemy champion. Enemies can be hit by multiple rockets, but receive less damage from ones beyond the first. Against minions, this lesser damage is increased by 200%. [wiki-w rev-3989864, fetched 2026-09-18]
+- damage by rank: Initial Rocket Magic Damage: 50 / 75 / 100 / 125 / 150 (+ 55% AP) · Subsequent Rocket Magic Damage: 10 / 15 / 20 / 25 / 30 (+ 12% AP) Total Subsequent Non-Minion Damage: 40 / 60 / 80 / 100 / 120 (+ 48% AP) Combined Total Non-Minion Damage: 90 / 135 / 180 / 225 / 270 (+ 103% AP) Subsequent Rocket Minion Damage: 30 / 45 / 60 / 75 / 90 (+ 36% AP) Total Subsequent Minion Damage: 120 / 180 / 240 / 300 / 360 (+ 144% AP) Combined Total Minion Damage: 170 / 255 / 340 / 425 / 510 (+ 199% AP) [wiki-w rev-3989864, fetched 2026-09-18]
 - target range: 1150 [wiki-w rev-3989864, fetched 2026-09-18]
 - cast time: 0.25 [wiki-w rev-3989864, fetched 2026-09-18]
 - targeting: Location [wiki-w rev-3989864, fetched 2026-09-18]
@@ -51,8 +51,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: True [wiki-w rev-3989864, fetched 2026-09-18]
 - name: Hextech Rocket Swarm [wiki-w2 rev-3965590, fetched 2026-09-18]
 - cooldown: 11 / 10 / 9 / 8 / 7 [wiki-w2 rev-3965590, fetched 2026-09-18]
-- what it does: UPGRADE!!! - Active: Heimerdinger unleashes 4 waves of 5 rockets in quick succession that converge upon the target location. Each rocket deals magic damage to the first enemy hit. Enemies can be hit by multiple rockets. Champions and monsters receive less damage from the second to fifth rockets that hit them, which is reduced by - 100% for rockets beyond the fifth. Minions instead always receive 100% of the initial damage from every single rocket. [wiki-w2 rev-3965590, fetched 2026-09-18]
-- damage by rank: Hextech Rocket Swarm scales with UPGRADE!!!'s rank Initial Rocket Damage: to 3 (+ % AP) · Rockets 2–5 Magic Damage: to 3 (+ % AP) Rockets 6–20 Magic Damage: - 0.5 to *0.5 3 (+ - 0.5% AP) Combined Total Non-Minion Damage: +4*+15**0.5 to +4*+15**0.5 3 (+ +4*+15**0.5% AP) Minion Damage per Rocket: to 3 (+ % AP) Combined Total Minion Damage: 20* to 20* 3 (+ 20*% AP) [wiki-w2 rev-3965590, fetched 2026-09-18]
+- what it does: UPGRADE!!! - Active: Heimerdinger unleashes 4 waves of 5 rockets in quick succession that converge upon the target location. Each rocket deals magic damage to the first enemy hit. Enemies can be hit by multiple rockets. Champions and monsters receive less damage from the second to fifth rockets that hit them, which is reduced by 50% for rockets beyond the fifth. Minions instead always receive 100% of the initial damage from every single rocket. [wiki-w2 rev-3965590, fetched 2026-09-18]
+- damage by rank: Hextech Rocket Swarm scales with UPGRADE!!!'s rank Initial Rocket Damage: 135 / 180 / 225 (+ 45% AP) · Rockets 2–5 Magic Damage: 32 / 45 / 58 (+ 12% AP) Rockets 6–20 Magic Damage: 16 / 22.5 / 29 (+ 6% AP) Combined Total Non-Minion Damage: 503 / 697.5 / 892 (+ 183% AP) Minion Damage per Rocket: 135 / 180 / 225 (+ 45% AP) Combined Total Minion Damage: 2700 / 3600 / 4500 (+ 900% AP) [wiki-w2 rev-3965590, fetched 2026-09-18]
 - target range: 1150 [wiki-w2 rev-3965590, fetched 2026-09-18]
 - cast time: 0.25 [wiki-w2 rev-3965590, fetched 2026-09-18]
 - targeting: Location [wiki-w2 rev-3965590, fetched 2026-09-18]

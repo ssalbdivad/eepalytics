@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Radiant Dawn [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Radiant Dawn [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.121 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.20 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.121 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.20 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 646, hp_lvl 101, mp_base 302, mp_lvl 40, arm_base 43, arm_lvl 4.8, mr_base 32, mr_lvl 2.05, hp5_base 8.5, hp5_lvl 0.85, mp5_base 6, mp5_lvl 0.8, dam_base 60, dam_lvl 3, as_base 0.625, as_lvl 2.9, range 125, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]

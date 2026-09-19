@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Pridestalker [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Pridestalker [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Ferocity [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.145 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.05 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.145 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.05 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 590, hp_lvl 104, mp_base 4, mp_lvl 0, arm_base 34, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 6, hp5_lvl 0.5, mp5_base 0, mp5_lvl 0, dam_base 68, dam_lvl 3, as_base 0.667, as_lvl 3, range 125, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -25,18 +25,21 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-q rev-4052789, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4052789, fetched 2026-09-18]
 - spell shield: false [wiki-q rev-4052789, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - what it does: Passive: Rengar stores 50% of the post-mitigation damage he has taken in the last 1.5 seconds as grey health on his health bar, increased to 100% of damage taken from monsters. Active: Rengar roars, dealing magic damage to nearby enemies and 65 – 137.65 (based on level) bonus magic damage to monsters, and consuming his grey health to heal for the same amount. Ferocity Bonus: Battle Roar's damage is modified to deal 50 – 240 (based on level) (+ 80% AP) magic damage. Rengar cleanses himself from all crowd control. [wiki-w rev-4009100, fetched 2026-09-18]
 - targeting: Auto [wiki-w rev-4009100, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-4009100, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4009100, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - what it does: Active: Rengar throws a bola in the target direction that deals physical damage to the first enemy hit and slows them for 1.75 seconds, as well as revealing them for 2 seconds and granting sight of a 150-unit radius around them for the same duration. Ferocity Bonus: Bola Strike's damage is modified to deal 50 – 335 (based on level) (+ 80% bonus AD) physical damage. The target is rooted instead of slowed. [wiki-e rev-4009137, fetched 2026-09-18]
 - targeting: Direction [wiki-e rev-4009137, fetched 2026-09-18]
 - damage type: Physical [wiki-e rev-4009137, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-4009137, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
 - name: Thrill of the Hunt [wiki-r rev-4052301, fetched 2026-09-18]

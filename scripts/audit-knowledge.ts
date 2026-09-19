@@ -38,6 +38,7 @@ import { liveChampionKnowledge } from "../src/review/live-coach-knowledge.ts"
 import { fullKnowledge } from "../src/review/live-knowledge-full.ts"
 import { auditAssembled } from "../src/knowledge/provenance.ts"
 import { RETRACTIONS } from "../src/knowledge/legacy-clauses.ts"
+import { championKey } from "../src/knowledge/index.ts"
 
 /**
  * The sentences the 2026-09-18 audit adjudicated WRONG against a fetched source, as patterns.
@@ -46,43 +47,125 @@ import { RETRACTIONS } from "../src/knowledge/legacy-clauses.ts"
  * patterns rather than exact strings because the failure worth catching is the CLAIM coming back in
  * new words, which is how "the seed reveals what it rolls past" survived four rewrites of one file.
  */
-const REFUTED: { pattern: RegExp; was: string; source: string }[] = [
+/*
+ * `subject` is the champion the claim is ABOUT, and it is load-bearing rather than documentation.
+ * These patterns were written against Lillia's file and probed only Lillia; run over the whole
+ * roster they catch other champions saying true things in the same words — Riven's passive really
+ * does deal "bonus damage to monsters" and the wiki really does say so, so probing her file with
+ * Lillia's W pattern reports a fabrication that is a fetched fact. A probe is only meaningful about
+ * the champion whose sentence it was written from.
+ */
+const REFUTED: { subject: string; pattern: RegExp; was: string; source: string }[] = [
 	{
+		subject: "Lillia",
 		pattern: /rolls? over terrain|vision of what it rolls past|scouting ward|throw (?:it )?over a wall/i,
 		was: "Lillia E rolls over terrain and grants vision of what it rolls past",
 		source: "wiki Swirlseed: \"detonates upon hitting an enemy or terrain while on the ground\"; ddragon: \"rolls until it hits an enemy or collides with terrain\""
 	},
 	{
+		subject: "Lillia",
 		pattern: /reveals whoever it rolls into/i,
 		was: "the two live clauses that taught the seed as a corridor scout",
 		source: "retracted 2026-09-18; against terrain it detonates and reveals nobody"
 	},
 	{
+		subject: "Lillia",
 		pattern: /bonus damage to monsters/i,
 		was: "Lillia W deals bonus damage to monsters",
 		source: "wiki: W deals 50% damage to MINIONS; no monster modifier exists on W at all"
 	},
 	{
+		subject: "Lillia",
 		pattern: /every enemy hit grants a stack|each enemy hit grants a stack/i,
 		was: "Lillia Q grants a Prance stack per enemy hit",
 		source: "wiki: one stack per ability that hits AT LEAST ONE enemy, capped at 4"
 	},
 	{
+		subject: "Lillia",
 		pattern: /two-minute cooldown|two minute cooldown/i,
 		was: "Lillia R has a two-minute cooldown",
 		source: "wiki + ddragon: 150 / 130 / 110 seconds"
 	},
 	{
+		subject: "Belveth",
 		pattern: /stacks? (?:die|are lost|reset) with you/i,
 		was: "Bel'Veth's stacks die with her",
 		source: "wiki: Lavender stacks are permanent"
 	},
 	{
+		subject: "Viego",
 		pattern: /every enemy who dies near him leaves a wraith|including his own dead teammate/i,
 		was: "every death near Viego leaves a possessable wraith",
 		source: "wiki: only enemy champions Viego's team kills"
 	}
 ]
+
+/**
+ * `--all`: the same three checks over EVERY champion in the table, as a roster summary.
+ *
+ * The single-champion report below is the one to read when something is wrong. This is the one that
+ * says nothing is: the claim "no unsourced sentence reaches any prompt" is about 173 champions and
+ * was only ever exercised on two, so it was a claim about Lillia wearing a claim about the corpus.
+ * Counterparts are paired round-robin rather than fixed, so the live instruction under test is a
+ * different pair every time and no champion is only ever checked as the subject.
+ */
+const auditRoster = (): never => {
+	const load = championTableSync()
+	const names = [...load.facts.values()].map(f => f.displayName).sort()
+	let bad = 0
+	let cited = 0
+	let untraced = 0
+	let missing = 0
+	const failures: string[] = []
+	for (const [i, name] of names.entries()) {
+		const other = names[(i + 1) % names.length]!
+		const ledger = championBriefSync(name)
+		const text = championContext(name)
+		if (!ledger || text === null) {
+			missing += 1
+			failures.push(`${name}: table row and committed file disagree about whether he exists`)
+			continue
+		}
+		const report = auditAssembled(text, ledger)
+		untraced += report.untraced.length
+		cited += report.claimLines
+		if (report.untraced.length > 0 || report.unsourcedClaims > 0) {
+			bad += 1
+			failures.push(`${name}: ${report.untraced.length} untraced, ${report.unsourcedClaims} unsourced — ${report.untraced[0] ?? ""}`)
+		}
+		const instruction = fullKnowledge({ champion: name, counterpart: other })
+		const half = instruction.indexOf("\n# THE ROLE")
+		const championHalf = half === -1 ? instruction : instruction.slice(0, half)
+		const loose = championHalf
+			.split("\n")
+			.filter(l => l.trim().startsWith("- "))
+			.filter(l => !/\[[^\]]+, fetched \d{4}-\d{2}-\d{2}\]$/.test(l.trim()))
+			.filter(l => !/^- \w[\w-]*: .*https?:\/\//.test(l.trim()))
+			// The WITHHELD notices cite nothing because they assert nothing — see `provenance.ts`.
+			.filter(l => !l.trim().startsWith("- WITHHELD ("))
+		if (loose.length > 0) {
+			bad += 1
+			failures.push(`${name}: ${loose.length} uncited lines in the live instruction — ${loose[0]!.slice(0, 80)}`)
+		}
+		for (const r of REFUTED.filter(r => championKey(r.subject) === championKey(name) || championKey(r.subject) === championKey(other)))
+			if (r.pattern.test(text) || r.pattern.test(instruction)) {
+				bad += 1
+				failures.push(`${name}: a refuted claim is back — ${r.was}`)
+			}
+	}
+	console.log(`# Champion knowledge audit — the whole roster\n`)
+	console.log(`${names.length} champions · ${cited} cited lines in the committed files · ${untraced} untraced · ${missing} missing`)
+	console.log(
+		`${REFUTED.length} refuted sentences probed wherever their SUBJECT appears — as the champion of a ` +
+			`file, or as the counterpart in a live instruction — which is ${new Set(REFUTED.map(r => r.subject)).size} champions ` +
+			`across ${names.length * 2} blocks`
+	)
+	if (failures.length === 0) console.log(`\nOK — every line of every champion's prompt traces to a claim with a URL on it.`)
+	else for (const f of failures.slice(0, 40)) console.log(`  FAIL ${f}`)
+	process.exit(failures.length === 0 ? 0 : 1)
+}
+
+if (process.argv.includes("--all")) auditRoster()
 
 const champion = process.argv[2] ?? "Lillia"
 const counterpart = process.argv[3] ?? "Kayn"
@@ -114,7 +197,9 @@ let failures = 0
 console.log(`# Champion knowledge audit — ${champion} vs ${counterpart}\n`)
 
 console.log("## 1. Refuted sentences, probed against every path that reaches the model\n")
-for (const r of REFUTED) {
+for (const r of REFUTED.filter(
+	r => championKey(r.subject) === championKey(champion) || championKey(r.subject) === championKey(counterpart)
+)) {
 	const hits = [
 		r.pattern.test(live) ? "LIVE" : null,
 		delivered !== null && r.pattern.test(delivered) ? "POST-GAME" : null,
@@ -174,9 +259,19 @@ const refused = load.diagnostics.filter(d => d.includes("REFUSED"))
 const withheld = load.diagnostics.filter(d => d.startsWith("WITHHELD"))
 console.log(`REFUSED by checkClaim: ${refused.length}`)
 for (const d of refused) console.log(`  ${d}`)
-console.log(`WITHHELD because Data Dragon and the wiki disagreed: ${withheld.length} abilities`)
-for (const d of withheld.slice(0, 5)) console.log(`  ${d}`)
-if (withheld.length > 5) console.log(`  … and ${withheld.length - 5} more`)
+/*
+ * Two reasons, counted apart, because they want different fixes. A DISAGREEMENT is the two sources
+ * saying different things and is a fact about the patch. A BROKEN EXPANSION is the wiki failing to
+ * fill in a field this pipeline asked for on its own, which is a fact about this pipeline — and it
+ * is the one that was invisible until `scripts/verify-fetched.ts` went back to the URL.
+ */
+const disagreed = withheld.filter(d => d.includes("sources disagreed"))
+const brokeRendering = withheld.filter(d => d.includes("expansion broke"))
+console.log(`WITHHELD because Data Dragon and the wiki disagreed: ${disagreed.length} abilities`)
+for (const d of disagreed.slice(0, 5)) console.log(`  ${d}`)
+if (disagreed.length > 5) console.log(`  … and ${disagreed.length - 5} more`)
+console.log(`WITHHELD because the wiki's own expansion came back broken: ${brokeRendering.length} abilities`)
+for (const d of brokeRendering) console.log(`  ${d}`)
 
 console.log(`\n## Retractions currently in force: ${RETRACTIONS.length}`)
 for (const r of RETRACTIONS) console.log(`  ${r.key}: "${r.clause}"`)

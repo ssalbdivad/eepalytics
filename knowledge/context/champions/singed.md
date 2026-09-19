@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Mad Chemist [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Mad Chemist [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: April 18, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: April 18, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 650, hp_lvl 96, mp_base 330, mp_lvl 45, arm_base 34, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 9.5, hp5_lvl 0.55, mp5_base 7.5, mp5_lvl 0.55, dam_base 63, dam_lvl 3.4, as_base 0.7, as_lvl 1.9, range 125, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -30,6 +30,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Valid targets already afflicted with the poison will have their debuff's duration refreshed every 0.25 seconds if applicable. [wiki-q rev-4006737, fetched 2026-09-18]
 - edge case: If Singed has moved fewer than 90 units since spawning the last poison cloud, it will spawn 35 units in front of him. They also only spawn every 1 second in this case. [wiki-q rev-4006737, fetched 2026-09-18]
 - edge case: When Singed is moving faster than that, the poison clouds spawn more frequently and on top of himself. [wiki-q rev-4006737, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Mega Adhesive [wiki-w rev-4001677, fetched 2026-09-18]

@@ -3,23 +3,23 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Unforgiven [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Unforgiven [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Flow [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top, Middle, Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V3.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V3.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 590, hp_lvl 110, mp_base 100, mp_lvl 0, arm_base 32, arm_lvl 4.6, mr_base 32, mr_lvl 2.05, hp5_base 6.5, hp5_lvl 0.9, mp5_base 0, mp5_lvl 0, dam_base 60, dam_lvl 2.5, as_base 0.697, as_lvl 3.5, range 175, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Passive
 - name: Way of the Wanderer [wiki-p rev-4051866, fetched 2026-09-18]
-- what it does: Innate - Intent: Yasuo's total critical strike chance is doubled from all other sources. Additionally,「 every 1% critical strike chance in excess of 100% is converted into 0.5 bonus attack damage. 」「 every 50% critical strike chance in excess of 100% is converted into 25 bonus attack damage. 」 Yasuo's critical strikes deal only「 (190% + 28.5%) AD physical damage. 」「 95% of the critical damage champions usually have. 」 Innate - Resolve: Yasuo generates a stack of Flow for every to for 3 (based on level) units he travels by any means. At「 100 stacks 」「 *100 to *100 for 3 (based on level) units traveled 」and upon taking damage from an enemy champion or monster, Yasuo consumes all Flow to grant himself a shield for +((-)/17*(x-1)*(0.7025+0.0175*(x-1))) for 20 (based on level) that lasts for 1 second. [wiki-p rev-4051866, fetched 2026-09-18]
+- what it does: Innate - Intent: Yasuo's total critical strike chance is doubled from all other sources. Additionally,「 every 1% critical strike chance in excess of 100% is converted into 0.5 bonus attack damage. 」「 every 50% critical strike chance in excess of 100% is converted into 25 bonus attack damage. 」 Yasuo's critical strikes deal only「 (190% + 28.5%) AD physical damage. 」「 95% of the critical damage champions usually have. 」 Innate - Resolve: Yasuo generates a stack of Flow for every 59 / 52.5 / 46 (based on level) units he travels by any means. At「 100 stacks 」「 5900 / 5250 / 4600 (based on level) units traveled 」and upon taking damage from an enemy champion or monster, Yasuo consumes all Flow to grant himself a shield for 125 – 674.46 (based on level) that lasts for 1 second. [wiki-p rev-4051866, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4051866, fetched 2026-09-18]
 - edge case: Yasuo gains the shield before the damage instance; the shield will mitigate the damage that triggered it. [wiki-p rev-4051866, fetched 2026-09-18]
 - edge case: Yasuo is able to reach 100% critical strike chance with Way of the Wanderer's multiplier after obtaining a total of 50% critical strike chance. [wiki-p rev-4051866, fetched 2026-09-18]
-- edge case: Yasuo's secondary resource bar will display the amount of shield stored as an equivalent percentage to his Flow stacks. (Each Flow stack will add /100+((-)/100/17*(x-1)*(0.7025+0.0175*(x-1))) for 20 (based on level) to the bar) [wiki-p rev-4051866, fetched 2026-09-18]
+- edge case: Yasuo's secondary resource bar will display the amount of shield stored as an equivalent percentage to his Flow stacks. (Each Flow stack will add 1.25 – 6.74 (based on level) to the bar) [wiki-p rev-4051866, fetched 2026-09-18]
 - edge case: Upon taking damage, the bar will display his current shield strength. [wiki-p rev-4051866, fetched 2026-09-18]
 
 ### Q
@@ -49,6 +49,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: However, if Last Breath is used on a target affected by an airborne source that is not Yasuo, it is cast immediately due to Steel Tempest's cast time ending prematurely. Steel Tempest will still cast in this case. [wiki-q rev-4058549, fetched 2026-09-18]
 - edge case: Spell shield does not prevent a stack of Gathering Storm from being gained. [wiki-q rev-4058549, fetched 2026-09-18]
 - edge case: While at two stacks, a range indicator will be shown for the effective range of the whirlwind. [wiki-q rev-4058549, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Wind Wall [wiki-w rev-4008635, fetched 2026-09-18]
@@ -92,7 +93,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Physical [wiki-r rev-4027670, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4027670, fetched 2026-09-18]
 - edge case: Last Breath can be cast on targets suspended in mid-air by Nami's Aqua Prison's stun. [wiki-r rev-4027670, fetched 2026-09-18]
-- edge case: The wiki has adopted the term suspension for this unique property due to a statement by Yasuo's designer.[1] [wiki-r rev-4027670, fetched 2026-09-18]
+- edge case: The wiki has adopted the term suspension for this unique property due to a statement by Yasuo's designer. [wiki-r rev-4027670, fetched 2026-09-18]
 - edge case: The percentage bonus armor ignorance stacks additively with sources of percentage armor penetration.(unexpected) [wiki-r rev-4027670, fetched 2026-09-18]
 - edge case: Yasuo gains the bonus armor ignorance on-cast. [wiki-r rev-4027670, fetched 2026-09-18]
 - edge case: Last Breath requires the target to be affected by airborne from an enemy source, and simultaneously that the target is not considered cc-immune, displacement immune, or untargetable during it. [wiki-r rev-4027670, fetched 2026-09-18]
@@ -158,7 +159,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Interrupted by [wiki-r rev-4027670, fetched 2026-09-18]
 - edge case: : [wiki-r rev-4027670, fetched 2026-09-18]
 - edge case: N/A [wiki-r rev-4027670, fetched 2026-09-18]
-- edge case: ↑ Yasuo Reddit AMA [wiki-r rev-4027670, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -166,4 +166,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4058549, fetched 2026-09-18 — 26 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yasuo%2FSteel%20Tempest&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008635, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yasuo%2FWind%20Wall&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008638, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yasuo%2FSweeping%20Blade&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4027670, fetched 2026-09-18 — 78 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yasuo%2FLast%20Breath&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4027670, fetched 2026-09-18 — 77 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yasuo%2FLast%20Breath&prop=text

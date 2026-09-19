@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Unforgotten [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Unforgotten [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Flow [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top, Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V10.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V10.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 620, hp_lvl 105, mp_base 500, mp_lvl 0, arm_base 33, arm_lvl 4.6, mr_base 32, mr_lvl 2.05, hp5_base 7.5, hp5_lvl 0.75, mp5_base 0, mp5_lvl 0, dam_base 62, dam_lvl 2, as_base 0.625, as_lvl 3.5, range 175, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -54,6 +54,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If Yone gets knocked back during the 3rd cast, the dash will only damage and knockup around Yone's current position then will stop colliding, making Yone play Mortal Steel's dash winddown animation while still visually dashing.(bug) [wiki-q rev-4058550, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-q rev-4058550, fetched 2026-09-18]
 - edge case: Mortal Steel cast without the Gathering Storm bonus maintains its casting angle direction in relation to Yone if he moves during the cast time. [wiki-q rev-4058550, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - what it does: Active: Yone cleaves with his Azakana Sword in a cone in the target direction, dealing equal parts physical and magic damage to enemies hit. The total mixed damage has a minimum threshold of 40 – 490 (based on level) against minions and a maximum threshold of 150 – 340 (based on level) against monsters. If this hits an enemy, Yone grants himself a shield for 40 – 95.88 (based on level) (+ 65% bonus AD) for 1.5 seconds, increased by 100% if it hits a champion and by 50% for each subsequent champion hit. [wiki-w rev-4032641, fetched 2026-09-18]
@@ -73,6 +74,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: While casting Spirit Cleave, Yone's facing direction cannot be shifted by displacements (eg. Vault, Last Breath). [wiki-w rev-4032641, fetched 2026-09-18]
 - edge case: The mixed damage is applied in two instances, and the physical damage will be dealt first within the same game tick. [wiki-w rev-4032641, fetched 2026-09-18]
 - edge case: If the physical damage finishes off the unit, the magic damage will not be dealt against it.(bug) [wiki-w rev-4032641, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Soul Unbound [wiki-e rev-4050165, fetched 2026-09-18]

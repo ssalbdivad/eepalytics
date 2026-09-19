@@ -3,19 +3,19 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Rune Mage [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Rune Mage [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.12 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 620, hp_lvl 124, mp_base 300, mp_lvl 70, arm_base 22, arm_lvl 4.2, mr_base 32, mr_lvl 1.3, hp5_base 8, hp5_lvl 0.8, mp5_base 8, mp5_lvl 1, dam_base 55, dam_lvl 3, as_base 0.658, as_lvl 2.11, range 550, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Passive
 - name: Arcane Mastery [wiki-p rev-4059875, fetched 2026-09-18]
-- what it does: Innate: Ryze increases his maximum mana by (% per 100 AP). [wiki-p rev-4059875, fetched 2026-09-18]
+- what it does: Innate: Ryze increases his maximum mana by (10% per 100 AP). [wiki-p rev-4059875, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4059875, fetched 2026-09-18]
 
 ### Q

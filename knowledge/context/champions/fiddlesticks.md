@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Ancient Fear [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Ancient Fear [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.03 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.03 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 650, hp_lvl 106, mp_base 500, mp_lvl 28, arm_base 34, arm_lvl 4.7, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.6, mp5_base 8, mp5_lvl 0.8, dam_base 55, dam_lvl 2.65, as_base 0.625, as_lvl 2.11, range 480, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -85,8 +85,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Bountiful Harvest [wiki-w rev-3936351, fetched 2026-09-18]
 - cooldown: 10 / 9.5 / 9 / 8.5 / 8 [wiki-w rev-3936351, fetched 2026-09-18]
 - cost: 60 / 65 / 70 / 75 / 80 [wiki-w rev-3936351, fetched 2026-09-18]
-- what it does: Active: Fiddlesticks forms a tether between itself and each nearby enemy over the cast time, then channels for up to seconds to harvest their souls, revealing them in the process. While Fiddlesticks is channeling, the tethered enemies are dealt magic damage every nil seconds. The final tick at the end of the channel deals additional magic damage, capped at 400 against monsters. Bountiful Harvest deals - 100% damage against monsters and - 100% damage against minions. Fiddlesticks heals itself for a portion of the pre-mitigation damage dealt, modified to - 100% against monsters and - 100% against minions. Bountiful Harvest ends if all targets have died or broken their tethers. If the channel was not interrupted, 60% of the current cooldown is refunded. [wiki-w rev-3936351, fetched 2026-09-18]
-- damage by rank: Damage per second: / to / (+ Expression error: Unexpected / operator.% AP) Damage per Instance: / to / (+ Expression error: Unexpected / operator.% AP) Last Tick of Damage: / to / (+ Expression error: Unexpected / operator.% AP) (+ to% of target's missing health) Total Magic Damage: to (+ % AP) (+ to% of target's missing health) · Champion Heal Portion: to% Total Heal per Champion: ( to )*( to )/100 (+ /100*( to )% AP) (+ ( to )*( to )/100% of target's missing health) Total Heal per Monster: - - to ** (+ - % AP) (+ - to **% of target's missing health) Total Heal per Minion: - to ** (+ - % AP) (+ - to **% of target's missing health) [wiki-w rev-3936351, fetched 2026-09-18]
+- what it does: Active: Fiddlesticks forms a tether between itself and each nearby enemy over the cast time, then channels for up to 2 seconds to harvest their souls, revealing them in the process. While Fiddlesticks is channeling, the tethered enemies are dealt magic damage every 0.25 seconds. The final tick at the end of the channel deals additional magic damage, capped at 400 against monsters. Bountiful Harvest deals 135% damage against monsters and 50% damage against minions. Fiddlesticks heals itself for a portion of the pre-mitigation damage dealt, modified to 45% against monsters and 15% against minions. Bountiful Harvest ends if all targets have died or broken their tethers. If the channel was not interrupted, 60% of the current cooldown is refunded. [wiki-w rev-3936351, fetched 2026-09-18]
+- damage by rank: Damage per second: 60 / 90 / 120 / 150 / 180 (+ 45% AP) Damage per Instance: 15 / 22.5 / 30 / 37.5 / 45 (+ 11.25% AP) Last Tick of Damage: 15 / 22.5 / 30 / 37.5 / 45 (+ 11.25% AP) (+ 12 / 14.5 / 17 / 19.5 / 22% of target's missing health) Total Magic Damage: 120 / 180 / 240 / 300 / 360 (+ 90% AP) (+ 12 / 14.5 / 17 / 19.5 / 22% of target's missing health) · Champion Heal Portion: 25 / 32.5 / 40 / 47.5 / 55% Total Heal per Champion: 30 / 58.5 / 96 / 142.5 / 198 (+ 22.5 / 29.25 / 36 / 42.75 / 49.5% AP) (+ 3 / 4.7125 / 6.8 / 9.2625 / 12.1% of target's missing health) Total Heal per Monster: 72.9 / 109.35 / 145.8 / 182.25 / 218.7 (+ 54.675% AP) (+ 7.29 / 8.80875 / 10.3275 / 11.84625 / 13.365% of target's missing health) Total Heal per Minion: 9 / 13.5 / 18 / 22.5 / 27 (+ 6.75% AP) (+ 0.9 / 1.0875 / 1.275 / 1.4625 / 1.65% of target's missing health) [wiki-w rev-3936351, fetched 2026-09-18]
 - cast time: 0.25 [wiki-w rev-3936351, fetched 2026-09-18]
 - effect radius: 650 [wiki-w rev-3936351, fetched 2026-09-18]
 - targeting: Proximity [wiki-w rev-3936351, fetched 2026-09-18]

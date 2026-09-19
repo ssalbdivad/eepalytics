@@ -91,7 +91,14 @@ describe("the committed context tree", () => {
 				// The owner's block is unsourced by construction; the trailing list IS the sources.
 				if (line.startsWith("### UNVERIFIED") || line.startsWith("### Where this section came from"))
 					unsourced = true
-				if (!line.startsWith("- ") || unsourced) continue
+				/*
+				 * A WITHHELD notice is the one line that says something about a champion and cites
+				 * nothing, and that is correct rather than an oversight: it says a value the sources
+				 * hold did not survive the fence, so there is nothing to cite. It is minted from a
+				 * frozen structure template like every other unsourced word here, it carries no
+				 * number, and `provenance.test.ts` pins its wording.
+				 */
+				if (!line.startsWith("- ") || unsourced || line.startsWith("- WITHHELD (")) continue
 				if (!/\[[^\]]+, fetched \d{4}-\d{2}-\d{2}\]$/.test(line.trimEnd())) bad.push(`${rel}: ${line.slice(0, 90)}`)
 			}
 		}

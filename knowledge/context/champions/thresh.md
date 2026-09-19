@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Chain Warden [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Chain Warden [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.154 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.154 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 620, hp_lvl 120, mp_base 274, mp_lvl 44, arm_base 33, arm_lvl 0, mr_base 30, mr_lvl 1.55, hp5_base 7, hp5_lvl 0.55, mp5_base 6, mp5_lvl 0.8, dam_base 56, dam_lvl 2.2, as_base 0.625, as_lvl 3.5, range 450, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]

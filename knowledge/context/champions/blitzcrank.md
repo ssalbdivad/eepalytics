@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Great Steam Golem [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Great Steam Golem [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V0.9.22.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V0.9.22.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 600, hp_lvl 109, mp_base 267, mp_lvl 40, arm_base 37, arm_lvl 4.7, mr_base 32, mr_lvl 2.05, hp5_base 7.5, hp5_lvl 0.75, mp5_base 8.5, mp5_lvl 0.8, dam_base 62, dam_lvl 3.5, as_base 0.625, as_lvl 1.13, range 125, ms 325 [wikiModule raw@2026-09-18, fetched 2026-09-18]

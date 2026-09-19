@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Ice Witch [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Ice Witch [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V3.6 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V3.6 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 620, hp_lvl 110, mp_base 475, mp_lvl 30, arm_base 22, arm_lvl 4.2, mr_base 30, mr_lvl 1.3, hp5_base 7, hp5_lvl 0.55, mp5_base 8, mp5_lvl 0.4, dam_base 55, dam_lvl 2.7, as_base 0.656, as_lvl 1.5, range 550, ms 325 [wikiModule raw@2026-09-18, fetched 2026-09-18]

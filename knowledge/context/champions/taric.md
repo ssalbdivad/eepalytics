@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Shield of Valoran [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Shield of Valoran [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V0.9.22.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V0.9.22.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 645, hp_lvl 99, mp_base 300, mp_lvl 60, arm_base 40, arm_lvl 4.3, mr_base 28, mr_lvl 2.05, hp5_base 6, hp5_lvl 0.5, mp5_base 8.5, mp5_lvl 0.8, dam_base 55, dam_lvl 3.5, as_base 0.625, as_lvl 2, range 150, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]

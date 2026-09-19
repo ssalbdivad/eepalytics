@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Uncaged Wrath of Zaun [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Uncaged Wrath of Zaun [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.09 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.09 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 620, hp_lvl 99, mp_base 280, mp_lvl 35, arm_base 33, arm_lvl 4.4, mr_base 32, mr_lvl 2.05, hp5_base 4, hp5_lvl 0.75, mp5_base 7.45, mp5_lvl 0.6, dam_base 65, dam_lvl 2.5, as_base 0.638, as_lvl 2, range 125, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]

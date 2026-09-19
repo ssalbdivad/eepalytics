@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Twisted Treant [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Twisted Treant [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.111 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.111 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 665, hp_lvl 109, mp_base 375, mp_lvl 43, arm_base 35, arm_lvl 5.2, mr_base 32, mr_lvl 2.05, hp5_base 5, hp5_lvl 0.75, mp5_base 6, mp5_lvl 0.6, dam_base 64, dam_lvl 3.3, as_base 0.8, as_lvl 2.125, range 125, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]

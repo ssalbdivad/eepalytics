@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Righteous [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Righteous [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 670, hp_lvl 92, mp_base 330, mp_lvl 50, arm_base 26, arm_lvl 4.2, mr_base 22, mr_lvl 1.3, hp5_base 5, hp5_lvl 0.5, mp5_base 8, mp5_lvl 0.8, dam_base 50, dam_lvl 2.5, as_base 0.625, as_lvl 1.5, range 175, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]

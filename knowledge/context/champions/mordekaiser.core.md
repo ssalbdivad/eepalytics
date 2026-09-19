@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Iron Revenant [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Iron Revenant [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Shield [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.75 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.75 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 645, hp_lvl 104, mp_base 0, mp_lvl 0, arm_base 37, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 5, hp5_lvl 0.75, mp5_base 0, mp5_lvl 0, dam_base 61, dam_lvl 4, as_base 0.625, as_lvl 1, range 175, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -25,7 +25,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Obliterate [wiki-q rev-4059697, fetched 2026-09-18]
 - cooldown: 8 / 7 / 6 / 5 / 4 [wiki-q rev-4059697, fetched 2026-09-18]
 - what it does: Active: Mordekaiser strikes his mace down in a line in the target direction, dealing magic damage to enemies within, increased if only one enemy is hit. [wiki-q rev-4059697, fetched 2026-09-18]
-- damage by rank: Magic Damage: Error: Variables are unmatched. (+ to) (+ % bonus AD) (+ % AP) Isolated Damage Increase: -100 / -100 / -100 / -100 / -100% [wiki-q rev-4059697, fetched 2026-09-18]
+- damage by rank: Magic Damage: 0 – 55 (based on level) (+ 80 / 115 / 150 / 185 / 220) (+ 120% bonus AD) (+ 70% AP) Isolated Damage Increase: 30 / 35 / 40 / 45 / 50% [wiki-q rev-4059697, fetched 2026-09-18]
 - cast time: 0.5 [wiki-q rev-4059697, fetched 2026-09-18]
 - width: 90 - 150 [wiki-q rev-4059697, fetched 2026-09-18]
 - targeting: Direction [wiki-q rev-4059697, fetched 2026-09-18]
@@ -35,8 +35,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### W
 - name: Indestructible [wiki-w rev-4016354, fetched 2026-09-18]
 - cooldown: 12 / 11 / 10 / 9 / 8 [wiki-w rev-4016354, fetched 2026-09-18]
-- what it does: Passive: Mordekaiser stores nil% of the post-mitigation damage he deals and nil% of the pre-mitigation damage he takes,「 reduced by (1-)*100% for non-champion sources, 」「 reduced to - % of damage dealt and - % of damage taken for non-champion sources, 」as Potential Shield on his secondary resource bar, up to nil% of his maximum health. The Potential Shield decays by 8 – 25 (based on level) every second after not dealing or taking damage for 1 second. While Indestructible is not on cooldown, the Potential Shield will not decay below a minimum of nil% of his maximum health, and it will be set to that amount when it comes off cooldown if it was previously below it. Active: Mordekaiser consumes his Potential Shield to grant himself a shield for the same amount for 4 seconds. The shield decays exponentially over the duration. Indestructible can be recast after 0.5 seconds while the shield is active. Recast: Mordekaiser consumes the remaining shield, healing for a portion of the amount. [wiki-w rev-4016354, fetched 2026-09-18]
-- damage by rank: Shield to Healing: - 100 to *100% [wiki-w rev-4016354, fetched 2026-09-18]
+- what it does: Passive: Mordekaiser stores 45% of the post-mitigation damage he deals and 7.5% of the pre-mitigation damage he takes,「 reduced by 75% for non-champion sources, 」「 reduced to 11.25% of damage dealt and 1.875% of damage taken for non-champion sources, 」as Potential Shield on his secondary resource bar, up to 30% of his maximum health. The Potential Shield decays by 8 – 25 (based on level) every second after not dealing or taking damage for 1 second. While Indestructible is not on cooldown, the Potential Shield will not decay below a minimum of 5% of his maximum health, and it will be set to that amount when it comes off cooldown if it was previously below it. Active: Mordekaiser consumes his Potential Shield to grant himself a shield for the same amount for 4 seconds. The shield decays exponentially over the duration. Indestructible can be recast after 0.5 seconds while the shield is active. Recast: Mordekaiser consumes the remaining shield, healing for a portion of the amount. [wiki-w rev-4016354, fetched 2026-09-18]
+- damage by rank: Shield to Healing: 35 / 37.5 / 40 / 42.5 / 45% [wiki-w rev-4016354, fetched 2026-09-18]
 - cast time: none [wiki-w rev-4016354, fetched 2026-09-18]
 - targeting: Auto [wiki-w rev-4016354, fetched 2026-09-18]
 

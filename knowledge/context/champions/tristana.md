@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Yordle Gunner [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Yordle Gunner [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 640, hp_lvl 102, mp_base 300, mp_lvl 32, arm_base 30, arm_lvl 4, mr_base 33, mr_lvl 1.1, hp5_base 4, hp5_lvl 0.5, mp5_base 7.2, mp5_lvl 0.45, dam_base 60, dam_lvl 3.4, as_base 0.656, as_lvl 1.5, range 550, ms 325 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -52,8 +52,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Explosive Charge [wiki-e rev-4008204, fetched 2026-09-18]
 - cooldown: 16 / 15.5 / 15 / 14.5 / 14 [wiki-e rev-4008204, fetched 2026-09-18]
 - cost: 50 / 55 / 60 / 65 / 70 [wiki-e rev-4008204, fetched 2026-09-18]
-- what it does: Passive: Tristana's basic attacks are empowered to trigger an explosion when they kill the target, dealing magic damage to nearby enemies. Active: Tristana tosses an explosive charge at the target enemy that attaches to them for 4 seconds. The charge then detonates, dealing physical damage to nearby enemies. Explosive Charge can target and damage turrets, and explodes in a larger radius on a turret. Tristana's basic attacks on-hit and abilities against the target increase Explosive Charge's damage by - 100%, stacking up to 4 times for a maximum - 400% increase, upon which the charge also detonates instantly. The charge's total damage is additionally increased by 0% – 40% (+ 0% – 12%) (based on critical strike chance). If Buster Shot is used to apply the last stack, the detonation will instead be delayed until the end of the knock back or the 4 seconds expire. [wiki-e rev-4008204, fetched 2026-09-18]
-- damage by rank: Magic Damage: to (+ % AP) · Minimum Physical Damage: to (+ % bonus AD) (+ % AP) · Bonus Damage Per Stack: ( to )* (+ - % bonus AD) (+ - % AP) Full Stack Bonus Damage: ( to )*(*4) (+ - (*4)% bonus AD) (+ - (*4)% AP) Full Stack Physical Damage: ( to )*(1+*4) (+ - (1+*4)% bonus AD) (+ - (1+*4)% AP) [wiki-e rev-4008204, fetched 2026-09-18]
+- what it does: Passive: Tristana's basic attacks are empowered to trigger an explosion when they kill the target, dealing magic damage to nearby enemies. Active: Tristana tosses an explosive charge at the target enemy that attaches to them for 4 seconds. The charge then detonates, dealing physical damage to nearby enemies. Explosive Charge can target and damage turrets, and explodes in a larger radius on a turret. Tristana's basic attacks on-hit and abilities against the target increase Explosive Charge's damage by 25%, stacking up to 4 times for a maximum 100% increase, upon which the charge also detonates instantly. The charge's total damage is additionally increased by 0% – 40% (+ 0% – 12%) (based on critical strike chance). If Buster Shot is used to apply the last stack, the detonation will instead be delayed until the end of the knock back or the 4 seconds expire. [wiki-e rev-4008204, fetched 2026-09-18]
+- damage by rank: Magic Damage: 45 / 60 / 75 / 90 / 105 (+ 25% AP) · Minimum Physical Damage: 60 / 85 / 110 / 135 / 160 (+ 80% bonus AD) (+ 50% AP) · Bonus Damage Per Stack: 15 / 21.25 / 27.5 / 33.75 / 40 (+ 20% bonus AD) (+ 12.5% AP) Full Stack Bonus Damage: 60 / 85 / 110 / 135 / 160 (+ 80% bonus AD) (+ 50% AP) Full Stack Physical Damage: 120 / 170 / 220 / 270 / 320 (+ 160% bonus AD) (+ 100% AP) [wiki-e rev-4008204, fetched 2026-09-18]
 - target range: 550 – 700 (based on level) [wiki-e rev-4008204, fetched 2026-09-18]
 - cast time: 100% of Tristana's windup time (0.23 at base attack speed) [wiki-e rev-4008204, fetched 2026-09-18]
 - effect radius: 300 • 300 • 600 [wiki-e rev-4008204, fetched 2026-09-18]

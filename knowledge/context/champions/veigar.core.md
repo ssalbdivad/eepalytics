@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Tiny Master of Evil [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Tiny Master of Evil [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V0.8.22.115 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V0.8.22.115 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.07 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 580, hp_lvl 108, mp_base 490, mp_lvl 26, arm_base 18, arm_lvl 5.2, mr_base 32, mr_lvl 1.3, hp5_base 6.5, hp5_lvl 0.6, mp5_base 8, mp5_lvl 0.8, dam_base 52, dam_lvl 2.7, as_base 0.625, as_lvl 2.24, range 550, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -37,6 +37,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Location [wiki-w rev-3991312, fetched 2026-09-18]
 - damage type: Magic [wiki-w rev-3991312, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-3991312, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Event Horizon [wiki-e rev-4016714, fetched 2026-09-18]

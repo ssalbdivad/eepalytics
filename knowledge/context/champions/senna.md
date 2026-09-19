@@ -3,48 +3,23 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Redeemer [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Redeemer [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom, Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V9.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V9.22 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 530, hp_lvl 89, mp_base 350, mp_lvl 45, arm_base 25, arm_lvl 4, mr_base 33, mr_lvl 1.1, hp5_base 3.5, hp5_lvl 0.55, mp5_base 11.5, mp5_lvl 0.7, dam_base 50, dam_lvl 0, as_base 0.625, as_lvl 2.6, range 600, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Passive
 - name: Absolution [wiki-p rev-4063473, fetched 2026-09-18]
-- what it does: Innate - Weakened Soul: Senna's basic attacks on-hit and abilities mark enemy champions hit for 4 seconds. Subsequent attacks or ability hits against marked targets will consume the mark to grant Senna a stack of Mist and deal bonus physical damage equal to 1% – 10% (based on level) of the target's current health, rendering the target immune to being marked again for a few seconds. This damage applies life steal at 100% effectiveness. Innate: Enemies that die near Senna may spawn a Mist Wraith from their corpse. A Mist Wraith lasts 8 seconds and Senna can basic attack or hit it with Piercing Darkness or Dawning Shadow to kill it instantly, granting her nil and a stack of Mist. - Enemy champions and large monsters will spawn a Mist Wraith. - Epic monsters will spawn 2 Mist Wraiths. - Minions and lesser monsters that Senna kills have a 5% chance to spawn a Mist Wraith. - Large minions that Senna does not kill will always spawn a Mist Wraith, while lesser minions and lesser monsters that Senna does not kill have a 32% chance to spawn one. - Lesser minions executed by an allied champion's Support Quest item have a 8.4% chance to spawn a Mist Wraith. Mist: For each stack of Mist, Senna gains nil bonus attack damage. For every stacks, she also gains 20 bonus attack range and % critical strike chance. Additionally, every 1% critical strike chance in excess of 100% is converted into nil% life steal. Innate - Relic Cannon: Senna's basic attacks on-hit deal 20% AD bonus physical damage and grant her 10% / 15% / 20% (based on level) of the target's movement speed as bonus movement speed for 0.5 seconds. The damage applies life steal at 100% effectiveness. [wiki-p rev-4063473, fetched 2026-09-18]
+- what it does: Innate - Weakened Soul: Senna's basic attacks on-hit and abilities mark enemy champions hit for 4 seconds. Subsequent attacks or ability hits against marked targets will consume the mark to grant Senna a stack of Mist and deal bonus physical damage equal to 1% – 10% (based on level) of the target's current health, rendering the target immune to being marked again for a few seconds. This damage applies life steal at 100% effectiveness. Innate: Enemies that die near Senna may spawn a Mist Wraith from their corpse. A Mist Wraith lasts 8 seconds and Senna can basic attack or hit it with Piercing Darkness or Dawning Shadow to kill it instantly, granting her 8 and a stack of Mist. - Enemy champions and large monsters will spawn a Mist Wraith. - Epic monsters will spawn 2 Mist Wraiths. - Minions and lesser monsters that Senna kills have a 5% chance to spawn a Mist Wraith. - Large minions that Senna does not kill will always spawn a Mist Wraith, while lesser minions and lesser monsters that Senna does not kill have a 32% chance to spawn one. - Lesser minions executed by an allied champion's Support Quest item have a 8.4% chance to spawn a Mist Wraith. Mist: For each stack of Mist, Senna gains 0.75 bonus attack damage. For every 20 stacks, she also gains 20 bonus attack range and 10% critical strike chance. Additionally, every 1% critical strike chance in excess of 100% is converted into 0.35% life steal. Innate - Relic Cannon: Senna's basic attacks on-hit deal 20% AD bonus physical damage and grant her 10% / 15% / 20% (based on level) of the target's movement speed as bonus movement speed for 0.5 seconds. The damage applies life steal at 100% effectiveness. [wiki-p rev-4063473, fetched 2026-09-18]
 - effect radius: 2000 [wiki-p rev-4063473, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4063473, fetched 2026-09-18]
 - spell shield: False [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: If a target's mark has a remaining duration less than 0.25 seconds, and Senna starts her basic attack windup on the target during this time, the mark's duration will be modified to 0.75 seconds. Subsequent windups on the marked target will refresh this modified duration if the previous attack windup did not complete. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Despite Senna dealing 1 damage to Mist Wraiths, attacking them will calculate the attack's damage (including critical strike modifiers) and any on-hit effects for the purposes of life steal and drain effects. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Relic Cannon is only applied if the attack deals more than 0 damage. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Hence, it is not applied if the target is invulnerable or Senna's basic attack's attack damage is reduced to 0 or below. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: The bonus damage is also not applied against structures (regardless of their vulnerability). [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Dealing 0 damage is valid for marking and collecting Mist from champions, but dealing no damage at all is not. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Hence, Senna can mark and collect from invulnerable enemies. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Dodge prevents marking and collecting a Mist via Senna's basic attacks and Piercing Darkness. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Mist interaction with block and blind. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Mist traveling to Senna can be destroyed as a projectile. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Nunu & Willump spawn a wraith each. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Enemies will not see newly spawned wraiths while Senna is not visible. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: A wraith can be hit by Bard's Cosmic Binding and it will interact with it the same way minions or monsters interact with Cosmic Binding but it will not take damage. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Mist Wraith has a spawn animation, but is targetable immediately. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Mist Wraith grants a small amount of sight around itself. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Runaan's Hurricane secondary bolts will ignore Mist Wraiths. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Attacking a Mist Wraith will not consume Energized. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Excluding the range increase and the bonus shielding on Dawning Shadow, one stack of Mist is worth Expression error: Unexpected * operator. ( + from Mist Wraith pickup ( Expression error: Unexpected * operator. total)), Expression error: Unexpected * operator. if the critical chance is converted to life steal. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: AD is worth Expression error: Unexpected * operator.. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Expression error: Unexpected / operator.% critical strike chance is worth Expression error: Unexpected * operator.. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Expression error: Unexpected * operator.% life steal is worth Expression error: Unexpected * operator.. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: The bonus on-hit damage applies an additional stack of Black Cleaver's Carve. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Critical strike chance gained from Yun Tal Wildarrows' Practice Makes Lethal, Augments and Stat bonuses do not interact with the life steal conversion.(bug) [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: The buff will be granted even when hitting units that have zero movement speed (from which Senna cannot gain any movement speed). [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Attacking structures is special-cased to not grant it at all, however. [wiki-p rev-4063473, fetched 2026-09-18]
-- edge case: Pinging Absolution in the HUD will send a chat message to the team that displays its stack count and her total attack range accumulated. [wiki-p rev-4063473, fetched 2026-09-18]
+- WITHHELD (notes): the wiki's own expansion of the field came back broken, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Piercing Darkness [wiki-q rev-4042887, fetched 2026-09-18]
@@ -134,7 +109,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4063473, fetched 2026-09-18 — 31 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FAbsolution&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4063473, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FAbsolution&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4042887, fetched 2026-09-18 — 26 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FPiercing%20Darkness&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4009139, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FLast%20Embrace&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3994514, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FCurse%20of%20the%20Black%20Mist&prop=text

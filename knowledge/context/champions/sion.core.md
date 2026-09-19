@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.13 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 655, hp_lvl 87, mp_base 400, mp_lvl 52, arm_base 36, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 9, hp5_lvl 0.8, mp5_base 8, mp5_lvl 0.6, dam_base 68, dam_lvl 4, as_base 0.679, as_lvl 1.3, range 175, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -28,7 +28,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 10 / 9 / 8 / 7 / 6 [wiki-q rev-4034709, fetched 2026-09-18]
 - cost: 45 [wiki-q rev-4034709, fetched 2026-09-18]
 - what it does: Active: Sion prepares a strike in the target direction, charging for up to 2 seconds to increase Decimating Smash's range over an area, knock up duration, stun duration, and damage every 0.25 seconds, which has up to a maximum bonus for the base damage and up to a 200% bonus for the scaling damage. Decimating Smash can be recast within the duration, and does so automatically afterwards. If the charge is interrupted, Decimating Smash is placed on a 2-second cooldown. Recast: Sion flails his axe in the direction he targeted at the time of cast, dealing physical damage to enemies hit and slowing them by 50% for 0.25 seconds. Decimating Smash deals 165% damage against monsters and 60% damage against minions. If Decimating Smash was charged for at least 1 second, Sion instead slams his axe down, dealing physical damage to enemies hit, knocking them up for 0.5 – 1 (based on channel time) seconds, and stunning them for 1.25 – 2.25 (based on channel time) seconds. [wiki-q rev-4034709, fetched 2026-09-18]
-- damage by rank: Maximum Base Damage Increase: /*100-100 / (+1/3*)/(+1/3*)*100-100 / (+)/(+)*100-100 / (+3*)/(+3*)*100-100 / /*100-100% Minimum Physical Damage: to (+ to% AD) Maximum Physical Damage: to (+ - 3 to *3% AD) · Minimum Monster Damage: - 1.65 to *1.65 (+ - 1.65 to *1.65% AD) Maximum Monster Damage: - 1.65 to *1.65 (+ - 1.65*3 to *1.65*3% AD) Minimum Minion Damage: - 0.6 to *0.6 (+ - 0.6 to *0.6% AD) Maximum Minion Damage: - 0.6 to *0.6 (+ - 0.6*3 to *0.6*3% AD) [wiki-q rev-4034709, fetched 2026-09-18]
+- damage by rank: Maximum Base Damage Increase: 200 / 244.44 / 266.67 / 280 / 288.89% Minimum Physical Damage: 30 / 45 / 60 / 75 / 90 (+ 40 / 50 / 60 / 70 / 80% AD) Maximum Physical Damage: 90 / 155 / 220 / 285 / 350 (+ 120 / 150 / 180 / 210 / 240% AD) · Minimum Monster Damage: 49.5 / 74.25 / 99 / 123.75 / 148.5 (+ 66 / 82.5 / 99 / 115.5 / 132% AD) Maximum Monster Damage: 148.5 / 255.75 / 363 / 470.25 / 577.5 (+ 198 / 247.5 / 297 / 346.5 / 396% AD) Minimum Minion Damage: 18 / 27 / 36 / 45 / 54 (+ 24 / 30 / 36 / 42 / 48% AD) Maximum Minion Damage: 54 / 93 / 132 / 171 / 210 (+ 72 / 90 / 108 / 126 / 144% AD) [wiki-q rev-4034709, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4034709, fetched 2026-09-18]
 - width: See notes [wiki-q rev-4034709, fetched 2026-09-18]
 - targeting: Direction / Auto [wiki-q rev-4034709, fetched 2026-09-18]

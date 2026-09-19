@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Hound of a Hundred Bites [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Hound of a Hundred Bites [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V13.14 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V13.14 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.15 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 610, hp_lvl 105, mp_base 400, mp_lvl 55, arm_base 28, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 6.25, hp5_lvl 0.6, mp5_base 7.5, mp5_lvl 1, dam_base 55, dam_lvl 2, as_base 0.663, as_lvl 2.1, range 125, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -69,8 +69,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Hounds' Pursuit [wiki-r rev-4046586, fetched 2026-09-18]
 - cooldown: 110 / 95 / 80 [wiki-r rev-4046586, fetched 2026-09-18]
 - cost: 100 [wiki-r rev-4046586, fetched 2026-09-18]
-- what it does: Active: Naafiri and her Packmates channel for 0.75 seconds to single out the target enemy champion, revealing them in the duration. Upon completion of the channel, they dash to the target; upon arrival Naafiri deals physical damage and slows the target by 99% for 0.25 seconds, whereas each Packmate deals - 100% of that damage. Packmates become untargetable during their channel and dash. If Naafiri scores a champion takedown within 7 seconds of cast, she triggers a pulse that grants sight of the surrounding area for 1 second and reveals enemy champions within for 4 seconds. She can also recast Hounds' Pursuit once from triggering this effect within 12 seconds at no cost. Recast: Naafiri immediately grants herself a shield for 3 seconds before mimicking the first cast's effects. [wiki-r rev-4046586, fetched 2026-09-18]
-- damage by rank: Physical Damage: to (+ % bonus AD) Physical Damage per Packmate: to (+ % bonus AD) · Shield: 100 / 150 / 200 (+ 150% bonus AD) [wiki-r rev-4046586, fetched 2026-09-18]
+- what it does: Active: Naafiri and her Packmates channel for 0.75 seconds to single out the target enemy champion, revealing them in the duration. Upon completion of the channel, they dash to the target; upon arrival Naafiri deals physical damage and slows the target by 99% for 0.25 seconds, whereas each Packmate deals 10% of that damage. Packmates become untargetable during their channel and dash. If Naafiri scores a champion takedown within 7 seconds of cast, she triggers a pulse that grants sight of the surrounding area for 1 second and reveals enemy champions within for 4 seconds. She can also recast Hounds' Pursuit once from triggering this effect within 12 seconds at no cost. Recast: Naafiri immediately grants herself a shield for 3 seconds before mimicking the first cast's effects. [wiki-r rev-4046586, fetched 2026-09-18]
+- damage by rank: Physical Damage: 125 / 200 / 275 (+ 100% bonus AD) Physical Damage per Packmate: 12.5 / 20 / 27.5 (+ 10% bonus AD) · Shield: 100 / 150 / 200 (+ 150% bonus AD) [wiki-r rev-4046586, fetched 2026-09-18]
 - target range: 900 [wiki-r rev-4046586, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4046586, fetched 2026-09-18]
 - effect radius: 2100 [wiki-r rev-4046586, fetched 2026-09-18]
@@ -79,30 +79,12 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Physical [wiki-r rev-4046586, fetched 2026-09-18]
 - spell shield: special [wiki-r rev-4046586, fetched 2026-09-18]
 - edge case: Hounds' Pursuit's theoretical total physical damage from Packmates only, assuming Naafiri has the maximum number of them active and Hounds' Pursuit is always ranked at the earliest levels permitted (ranks 1 / 2 / 3 at levels 6 / 11 / 16): [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: Levels 6–8: [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 2 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 2% bonus AD) / [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 4 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 4% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: Levels 9–10: [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 3 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 3% bonus AD) / [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 5 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 5% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: Level 11: (+(-)*(1/2))*3 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 3% bonus AD) /  (+(-)*(1/2))*5 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 5% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: Levels 12–14: (+(-)*(1/2))*4 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 4% bonus AD) /  (+(-)*(1/2))*6 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 6% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: Level 15: (+(-)*(1/2))*5 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 5% bonus AD) /  (+(-)*(1/2))*7 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 7% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: Levels 16–18: [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 5 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 5% bonus AD) / [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 7 (+ [wiki-r rev-4046586, fetched 2026-09-18]
-- edge case: 7% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
+- edge case: Levels 6–8: 25 (+ 20% bonus AD) /  50 (+ 40% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
+- edge case: Levels 9–10: 37.5 (+ 30% bonus AD) /  62.5 (+ 50% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
+- edge case: Level 11: 60 (+ 30% bonus AD) /  100 (+ 50% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
+- edge case: Levels 12–14: 80 (+ 40% bonus AD) /  120 (+ 60% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
+- edge case: Level 15: 100 (+ 50% bonus AD) /  140 (+ 70% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
+- edge case: Levels 16–18: 137.5 (+ 50% bonus AD) /  192.5 (+ 70% bonus AD). [wiki-r rev-4046586, fetched 2026-09-18]
 - edge case: Naafiri marks the enemy champion targeted by Hounds' Pursuit in order to gain assist credit on them, lasting for the standard credit timer. [wiki-r rev-4046586, fetched 2026-09-18]
 - edge case: Hound's Pursuit's cast and dash do not break stealth.(unexpected) [wiki-r rev-4046586, fetched 2026-09-18]
 - edge case: Spell shield will block Naafiri's collision damage but cannot prevent collision damage from Packmates. [wiki-r rev-4046586, fetched 2026-09-18]
@@ -166,4 +148,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4025704, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FDarkin%20Daggers&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4058060, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FThe%20Call%20of%20the%20Pack&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007772, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FEviscerate&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4046586, fetched 2026-09-18 — 93 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FHounds'%20Pursuit&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4046586, fetched 2026-09-18 — 75 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Naafiri%2FHounds'%20Pursuit&prop=text

@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Mouth of the Abyss [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Mouth of the Abyss [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.94 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.94 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 635, hp_lvl 99, mp_base 325, mp_lvl 40, arm_base 24, arm_lvl 4.45, mr_base 33, mr_lvl 1.1, hp5_base 3.75, hp5_lvl 0.55, mp5_base 8.75, mp5_lvl 0.7, dam_base 61, dam_lvl 3.1, as_base 0.665, as_lvl 2.65, range 500, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -100,6 +100,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: True [wiki-r rev-4007636, fetched 2026-09-18]
 - edge case: Living Artillery will not reveal stealthed champions. [wiki-r rev-4007636, fetched 2026-09-18]
 - edge case: Pinging Living Artillery will additionally display the remaining time duration of its stacks. [wiki-r rev-4007636, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw

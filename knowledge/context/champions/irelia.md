@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Blade Dancer [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Blade Dancer [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top, Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.105 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.105 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 115, mp_base 350, mp_lvl 50, arm_base 36, arm_lvl 4.7, mr_base 30, mr_lvl 2.05, hp5_base 3.5, hp5_lvl 0.85, mp5_base 8, mp5_lvl 0.8, dam_base 65, dam_lvl 3.5, as_base 0.656, as_lvl 2.5, range 200, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]

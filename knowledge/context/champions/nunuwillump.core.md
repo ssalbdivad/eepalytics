@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Boy and His Yeti [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Boy and His Yeti [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.03 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.03 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 610, hp_lvl 90, mp_base 280, mp_lvl 42, arm_base 29, arm_lvl 4.2, mr_base 32, mr_lvl 2.05, hp5_base 5, hp5_lvl 0.8, mp5_base 7, mp5_lvl 0.5, dam_base 61, dam_lvl 3, as_base 0.625, as_lvl 2.25, range 125, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -24,8 +24,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Consume [wiki-q rev-3985877, fetched 2026-09-18]
 - cooldown: 13 / 12 / 11 / 10 / 9 [wiki-q rev-3985877, fetched 2026-09-18]
 - cost: 60 [wiki-q rev-3985877, fetched 2026-09-18]
-- what it does: Active: Willump takes a bite out of the target enemy, dealing damage and healing himself. The heal is increased by -100% while he is below 50% maximum health. Against minions and monsters, he deals true damage. Additionally, if Consume would kill the target minion or small or medium monster, Willump devours the target, stunning and pulling them towards him over the cast time. Against champions, he deals magic damage and the heal is reduced to - 100%. [wiki-q rev-3985877, fetched 2026-09-18]
-- damage by rank: Non-Champion True Damage: 400 / 600 / 800 / 1000 / 1200 Base Non-Champion Heal: 65 / 95 / 125 / 155 / 185 (+ 90% AP) (+ 10% bonus health) Empowered Non-Champion Heal: 65* to 185* (+ 90*% AP) (+ 10*% bonus health) · Champion Magic Damage: 60 / 100 / 140 / 180 / 220 (+ 65% AP) (+ 5% bonus health) Base Champion Heal: 65* to 185* (+ 90*% AP) (+ 10*% bonus health) Empowered Champion Heal: 65** to 185** (+ 90**% AP) (+ 10**% bonus health) [wiki-q rev-3985877, fetched 2026-09-18]
+- what it does: Active: Willump takes a bite out of the target enemy, dealing damage and healing himself. The heal is increased by 50% while he is below 50% maximum health. Against minions and monsters, he deals true damage. Additionally, if Consume would kill the target minion or small or medium monster, Willump devours the target, stunning and pulling them towards him over the cast time. Against champions, he deals magic damage and the heal is reduced to 60%. [wiki-q rev-3985877, fetched 2026-09-18]
+- damage by rank: Non-Champion True Damage: 400 / 600 / 800 / 1000 / 1200 Base Non-Champion Heal: 65 / 95 / 125 / 155 / 185 (+ 90% AP) (+ 10% bonus health) Empowered Non-Champion Heal: 97.5 / 142.5 / 187.5 / 232.5 / 277.5 (+ 135% AP) (+ 15% bonus health) · Champion Magic Damage: 60 / 100 / 140 / 180 / 220 (+ 65% AP) (+ 5% bonus health) Base Champion Heal: 39 / 57 / 75 / 93 / 111 (+ 54% AP) (+ 6% bonus health) Empowered Champion Heal: 58.5 / 85.5 / 112.5 / 139.5 / 166.5 (+ 81% AP) (+ 9% bonus health) [wiki-q rev-3985877, fetched 2026-09-18]
 - target range: 125 [wiki-q rev-3985877, fetched 2026-09-18]
 - cast time: 0.3 [wiki-q rev-3985877, fetched 2026-09-18]
 - targeting: Unit [wiki-q rev-3985877, fetched 2026-09-18]

@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Sad Mummy [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Sad Mummy [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: June 26, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: June 26, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 685, hp_lvl 94, mp_base 285, mp_lvl 40, arm_base 33, arm_lvl 4, mr_base 32, mr_lvl 2.05, hp5_base 9, hp5_lvl 0.85, mp5_base 7.4, mp5_lvl 0.55, dam_base 57, dam_lvl 3.8, as_base 0.736, as_lvl 2.18, range 125, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]

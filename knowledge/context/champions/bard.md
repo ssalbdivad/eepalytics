@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Wandering Caretaker [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Wandering Caretaker [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V5.5 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V5.5 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 103, mp_base 350, mp_lvl 50, arm_base 32, arm_lvl 4.7, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.55, mp5_base 6, mp5_lvl 0.45, dam_base 52, dam_lvl 3, as_base 0.658, as_lvl 2, range 500, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -157,6 +157,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If Bard has 3 shrines on the map and creates a new one that is cast directly on himself or an ally, the oldest shrine will not be destroyed. This is because the shrine is used as an actual targeted heal on himself or someone else, and not a permanent shrine, so the other 3 may stay. [wiki-w rev-3960421, fetched 2026-09-18]
 - edge case: The spell indicator of Caretaker's Shrine shows the area in which it can be used as a targeted heal. After a shrine has been placed on the ground its activation area becomes smaller: allies or enemies have to step directly on the shrine to use it or destroy it. [wiki-w rev-3960421, fetched 2026-09-18]
 - edge case: Leveling up Caretaker's Shrine will update the healing of existing shrines. [wiki-w rev-3960421, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Magical Journey [wiki-e rev-4007574, fetched 2026-09-18]
@@ -169,11 +170,11 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-e rev-4007574, fetched 2026-09-18]
 - edge case: Clones are counted as champions for this ability's effects and can access the portal, but other pets cannot. [wiki-e rev-4007574, fetched 2026-09-18]
 - edge case: Terrain also includes structures. [wiki-e rev-4007574, fetched 2026-09-18]
-- edge case: Magical Journey's tunnel has a max range of 2600 units (about two screens long)[1]. [wiki-e rev-4007574, fetched 2026-09-18]
+- edge case: Magical Journey's tunnel has a max range of 2600 units (about two screens long). [wiki-e rev-4007574, fetched 2026-09-18]
 - edge case: Magical Journey will score assists for Bard if an ally that uses it scores a kill or assist shortly after. [wiki-e rev-4007574, fetched 2026-09-18]
 - edge case: Bard can cast Magical Journey while grounded or rooted. [wiki-e rev-4007574, fetched 2026-09-18]
 - edge case: There is no limit to how many times a given instance of Magical Journey may be used. [wiki-e rev-4007574, fetched 2026-09-18]
-- edge case: Magical Journey cannot interact with player-created terrain due to its short lifespan.[2] [wiki-e rev-4007574, fetched 2026-09-18]
+- edge case: Magical Journey cannot interact with player-created terrain due to its short lifespan. [wiki-e rev-4007574, fetched 2026-09-18]
 - edge case: Any abilities that continue during normal movement, such as point blank area of effects and various forms of stealth, will continue during the travel within Magical Journey. [wiki-e rev-4007574, fetched 2026-09-18]
 - edge case: If a champion's dash is interrupted while inside terrain using Magical Journey, they will be immediately displaced out to the nearest open space, but are not rendered airborne. [wiki-e rev-4007574, fetched 2026-09-18]
 - edge case: Taking Magical Journey is considered a dash, and so will interact with effects such as Sudden Impact and knockdown. [wiki-e rev-4007574, fetched 2026-09-18]
@@ -200,8 +201,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If Tempered Fate affects an allied turret and that turret deals damage to an enemy champion, the champion is marked by Bard for kill/assist credit. [wiki-r rev-4008478, fetched 2026-09-18]
 - edge case: Tempered Fate's travel time varies between ~0.65 at point blank and ~1.8 at max range, resulting in an overall delay of ~1.15-2.3 seconds including the cast time depending on distance covered. [wiki-r rev-4008478, fetched 2026-09-18]
 - edge case: Stasis is applied to allies as a buff. [wiki-r rev-4008478, fetched 2026-09-18]
-- edge case: ↑ Bard Q&A comment by Rabid Llama [wiki-r rev-4008478, fetched 2026-09-18]
-- edge case: ↑ Bard Q&A comment by Rabid Llama [wiki-r rev-4008478, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -209,4 +208,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4037681, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FCosmic%20Binding&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3960421, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FCaretaker's%20Shrine&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007574, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FMagical%20Journey&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4008478, fetched 2026-09-18 — 23 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FTempered%20Fate&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4008478, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Bard%2FTempered%20Fate&prop=text

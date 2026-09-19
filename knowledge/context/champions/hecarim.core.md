@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Shadow of War [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Shadow of War [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.138 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.03 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.138 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.03 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 625, hp_lvl 106, mp_base 280, mp_lvl 40, arm_base 32, arm_lvl 5.45, mr_base 32, mr_lvl 2.05, hp5_base 7, hp5_lvl 0.75, mp5_base 7, mp5_lvl 0.8, dam_base 66, dam_lvl 3.7, as_base 0.67, as_lvl 2.5, range 175, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -23,6 +23,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-q rev-3989863, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-3989863, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-3989863, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
 - name: Spirit of Dread [wiki-w rev-4061151, fetched 2026-09-18]

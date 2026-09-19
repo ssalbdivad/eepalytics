@@ -400,8 +400,21 @@ describe("rendering", () => {
 			"Nothing here. No source this app fetches publishes anything about the support role, and nothing was written to stand in for one. If the coach wants to say something about this role, it is saying it out of its own head and should say less instead."
 		)
 		strictEqual(
-			STRUCTURE_TEMPLATES["general.patch"]({ patch: "16.18.1", champions: 173, claims: 9, withheld: 1 }),
-			"Patch 16.18.1. 173 champions, 9 checked lines, 1 ability slot withheld because two sources disagreed about the name, the cooldown or the cost."
+			STRUCTURE_TEMPLATES["general.patch"]({ patch: "16.18.1", champions: 173, claims: 9, withheld: 1, broken: 2 }),
+			"Patch 16.18.1. 173 champions, 9 checked lines, 1 ability slot withheld because two sources disagreed about the name, the cooldown or the cost, and 2 fields withheld because the wiki's own expansion of it came back broken."
+		)
+		/*
+		 * The two WITHHELD notices are pinned like the rest. They are the only lines in a champion
+		 * file that carry no citation, and they may carry none because they assert nothing about
+		 * League — they say a value the sources hold did not reach the page, and which one.
+		 */
+		strictEqual(
+			STRUCTURE_TEMPLATES["group.withheld.disagreed"]({ fields: "name, cooldown, cost" }),
+			"- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it."
+		)
+		strictEqual(
+			STRUCTURE_TEMPLATES["group.withheld.render"]({ fields: "notes" }),
+			"- WITHHELD (notes): the wiki's own expansion of the field came back broken, so no value is shown. This app does not know what it is — say nothing about it."
 		)
 		deepStrictEqual(Object.keys(STRUCTURE_TEMPLATES).sort(), [
 			"blank",
@@ -409,6 +422,8 @@ describe("rendering", () => {
 			"general.patch",
 			"general.silent",
 			"group.heading",
+			"group.withheld.disagreed",
+			"group.withheld.render",
 			"owner.heading",
 			"owner.warning",
 			"role.none",

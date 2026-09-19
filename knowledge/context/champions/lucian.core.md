@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Purifier [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Purifier [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V3.10a [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V3.10a [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 641, hp_lvl 100, mp_base 320, mp_lvl 43, arm_base 28, arm_lvl 4.2, mr_base 33, mr_lvl 1.1, hp5_base 3.75, hp5_lvl 0.65, mp5_base 7, mp5_lvl 0.8, dam_base 60, dam_lvl 2.5, as_base 0.638, as_lvl 2.5, range 500, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -60,7 +60,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 110 / 100 / 90 [wiki-r rev-4007670, fetched 2026-09-18]
 - cost: 100 [wiki-r rev-4007670, fetched 2026-09-18]
 - what it does: Active: Lucian channels for up to 3 seconds, rapidly firing up to 22 (+ 0 – 22 (+ 0 – 6) (based on critical strike chance)) shots in the target direction over the duration. Each shot deals physical damage to the first enemy hit, doubled against minions. The Culling can be recast after 0.75 seconds during the channel, and does so automatically when the channel ends. While channeling, Lucian is ghosted and may still move. Recast: Lucian ends The Culling. [wiki-r rev-4007670, fetched 2026-09-18]
-- damage by rank: Physical Damage Per Shot: to (+ % AD) (+ % AP) Minion Damage Per Shot: ( to )* (+ - % AD) (+ - % AP) [wiki-r rev-4007670, fetched 2026-09-18]
+- damage by rank: Physical Damage Per Shot: 15 / 30 / 45 (+ 25% AD) (+ 15% AP) Minion Damage Per Shot: 30 / 60 / 90 (+ 50% AD) (+ 30% AP) [wiki-r rev-4007670, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4007670, fetched 2026-09-18]
 - width: 220 + offset [wiki-r rev-4007670, fetched 2026-09-18]
 - missile speed: 2800 [wiki-r rev-4007670, fetched 2026-09-18]

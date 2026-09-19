@@ -3,44 +3,42 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Barbarian King [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Barbarian King [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Fury [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: May 1, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.06 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: May 1, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.06 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 696, hp_lvl 108, mp_base 100, mp_lvl 0, arm_base 33, arm_lvl 4.8, mr_base 32, mr_lvl 2.05, hp5_base 8.5, hp5_lvl 0.9, mp5_base 0, mp5_lvl 0, dam_base 66, dam_lvl 4.5, as_base 0.67, as_lvl 3.4, range 175, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Passive
 - name: Battle Fury [wiki-p rev-4041166, fetched 2026-09-18]
-- what it does: Innate: Tryndamere generates Fury on his basic attacks on-hit, and Fury on critical strikes and each time he kills an enemy. After 8 seconds without dealing or taking damage, Tryndamere loses 5 Fury per second. Tryndamere gains Error: Variables are unmatched. critical strike chance. [wiki-p rev-4041166, fetched 2026-09-18]
+- what it does: Innate: Tryndamere generates 5 Fury on his basic attacks on-hit, and 10 Fury on critical strikes and each time he kills an enemy. After 8 seconds without dealing or taking damage, Tryndamere loses 5 Fury per second. Tryndamere gains 0% – 50% (based on Fury) critical strike chance. [wiki-p rev-4041166, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: Fury generation stacks additively: if the given action triggers multiple ways of generating Fury, all of them apply. [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: Killing an enemy with a basic attack basic attack generates + Fury ( Fury from the basic attack + Fury from the kill). [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: Killing an enemy with a critical strike generates + Fury ( Fury from the critical strike + Fury from the kill). [wiki-p rev-4041166, fetched 2026-09-18]
+- edge case: Killing an enemy with a basic attack basic attack generates 15 Fury (5 Fury from the basic attack + 10 Fury from the kill). [wiki-p rev-4041166, fetched 2026-09-18]
+- edge case: Killing an enemy with a critical strike generates 20 Fury (10 Fury from the critical strike + 10 Fury from the kill). [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: The Fury gain for killing an enemy also stacks with Spinning Slash's Fury generation per enemy hit. [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: Attacks against structures will not grant bonus Fury, but will still reset the timer on Fury decay. [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: Attacks against wards behave like attacks on normal enemies, generating Fury and resetting the decay timer. Attacks against wards can critically strike, generating Fury. [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: Attacks against jungle plants will generate Fury and reset the decay timer. Attacks can also critically strike, generating Fury. Additionally, Honeyfruit drops restore Fury for each pod collected and reset the decay timer. [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: Attacking an Honeyfruit and collecting the pods generates [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: 5+ Fury, or [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: 5+ Fury if the plant was hit by a critical strike. [wiki-p rev-4041166, fetched 2026-09-18]
+- edge case: Attacks against wards behave like attacks on normal enemies, generating 5 Fury and resetting the decay timer. Attacks against wards can critically strike, generating 10 Fury. [wiki-p rev-4041166, fetched 2026-09-18]
+- edge case: Attacks against jungle plants will generate 5 Fury and reset the decay timer. Attacks can also critically strike, generating 10 Fury. Additionally, Honeyfruit drops restore 5 Fury for each pod collected and reset the decay timer. [wiki-p rev-4041166, fetched 2026-09-18]
+- edge case: Attacking an Honeyfruit and collecting the pods generates 30 Fury, or 35 Fury if the plant was hit by a critical strike. [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: Fury is only granted if the basic attack hits and will not be granted if Tryndamere cancels his attack windup. [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: Tryndamere will not generate Fury if the attack is dodged or misses due to blind. [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: PENDING FOR TEST: Fury generation with parrying effects ( block) [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: Sundered Sky's Lightshield Strike will generate Fury. [wiki-p rev-4041166, fetched 2026-09-18]
+- edge case: Sundered Sky's Lightshield Strike will generate 10 Fury. [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: Effects that apply on-hit effects twice (e.g. Dusk and Dawn's Spellblade and Guinsoo's Rageblade's Phantom Hit) will always generate the same amount of Fury as their triggering attack. [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: If the triggering attack critically strikes, then the additional on-hit will also generate Fury, if it doesn't, then the additional on-hit will generate Fury. [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: Battle Fury's bonus is worth Error: Variables are unmatched.. [wiki-p rev-4041166, fetched 2026-09-18]
+- edge case: If the triggering attack critically strikes, then the additional on-hit will also generate 10 Fury, if it doesn't, then the additional on-hit will generate 5 Fury. [wiki-p rev-4041166, fetched 2026-09-18]
+- edge case: Battle Fury's bonus is worth 0 – 2000 (based on Fury). [wiki-p rev-4041166, fetched 2026-09-18]
 
 ### Q
 - name: Bloodlust [wiki-q rev-4058457, fetched 2026-09-18]
 - cooldown: 12 [wiki-q rev-4058457, fetched 2026-09-18]
 - cost: 100% [wiki-q rev-4058457, fetched 2026-09-18]
-- what it does: Passive: Tryndamere gains bonus attack damage based on his missing health, up to a maximum amount at % missing health. Active: Tryndamere consumes all of his Fury to heal himself, increased for every point of Fury consumed. [wiki-q rev-4058457, fetched 2026-09-18]
-- damage by rank: Maximum Bonus Attack Damage: to Bonus Attack Damage per 1% missing health: Expression error: Unexpected round operator. to Expression error: Unexpected round operator. · Minimum Heal: 30 / 40 / 50 / 60 / 70 (+ 30% AP) Heal Per 1 Fury: 0.5 / 0.95 / 1.4 / 1.85 / 2.3 (+ 1.2% AP) Maximum Heal: 80 / 135 / 190 / 245 / 300 (+ 150% AP) [wiki-q rev-4058457, fetched 2026-09-18]
+- what it does: Passive: Tryndamere gains bonus attack damage based on his missing health, up to a maximum amount at 90% missing health. Active: Tryndamere consumes all of his Fury to heal himself, increased for every point of Fury consumed. [wiki-q rev-4058457, fetched 2026-09-18]
+- damage by rank: Maximum Bonus Attack Damage: 20 / 35 / 50 / 65 / 80 Bonus Attack Damage per 1% missing health: 0.22 / 0.3875 / 0.555 / 0.7225 / 0.89 · Minimum Heal: 30 / 40 / 50 / 60 / 70 (+ 30% AP) Heal Per 1 Fury: 0.5 / 0.95 / 1.4 / 1.85 / 2.3 (+ 1.2% AP) Maximum Heal: 80 / 135 / 190 / 245 / 300 (+ 150% AP) [wiki-q rev-4058457, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4058457, fetched 2026-09-18]
 - targeting: Auto [wiki-q rev-4058457, fetched 2026-09-18]
 - edge case: Bloodlust can still be activated even if Tryndamere does not have any Fury. [wiki-q rev-4058457, fetched 2026-09-18]
@@ -49,8 +47,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: This means that if Bloodlust is cast during Tryndamere's attack windup, the attack will use the critical strike chance given by the Fury before the Bloodlust cast. [wiki-q rev-4058457, fetched 2026-09-18]
 - edge case: Furthermore, the Fury for that basic attack will be given once the windup completes. This lets Tryndamere start building Fury immediately. [wiki-q rev-4058457, fetched 2026-09-18]
 - edge case: Bloodlust's attack damage gold value: [wiki-q rev-4058457, fetched 2026-09-18]
-- edge case: At % missing health, it is worth Expression error: Unexpected round operator. to Expression error: Unexpected round operator.. [wiki-q rev-4058457, fetched 2026-09-18]
-- edge case: The bonus is worth Expression error: Unexpected * operator. to Expression error: Unexpected * operator. more per 1% missing health. [wiki-q rev-4058457, fetched 2026-09-18]
+- edge case: At 90% missing health, it is worth 700 / 1225 / 1750 / 2275 / 2800. [wiki-q rev-4058457, fetched 2026-09-18]
+- edge case: The bonus is worth 7.78 / 13.6125 / 19.445 / 25.2775 / 31.11 more per 1% missing health. [wiki-q rev-4058457, fetched 2026-09-18]
 
 ### W
 - name: Mocking Shout [wiki-w rev-4052438, fetched 2026-09-18]
@@ -102,7 +100,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4041166, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FBattle%20Fury&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4041166, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FBattle%20Fury&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4058457, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FBloodlust&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4052438, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FMocking%20Shout&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007759, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FSpinning%20Slash&prop=text

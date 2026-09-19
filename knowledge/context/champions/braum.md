@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Heart of the Freljord [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Heart of the Freljord [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V4.7 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V4.7 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.04 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 610, hp_lvl 112, mp_base 311, mp_lvl 45, arm_base 35, arm_lvl 5, mr_base 32, mr_lvl 2.05, hp5_base 8.5, hp5_lvl 1, mp5_base 7, mp5_lvl 0.8, dam_base 55, dam_lvl 3.2, as_base 0.644, as_lvl 3.5, range 125, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -68,7 +68,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Champion summoned units are not classified as units until they hit the ground (e.g. Sapling Toss) and thus will interact with Unbreakable whilst en route. [wiki-e rev-4012056, fetched 2026-09-18]
 - edge case: Projectiles whose effects trigger on collision will still trigger - dealing damage, applying debuffs, creating area of effects and marking the target as 'hit'. [wiki-e rev-4012056, fetched 2026-09-18]
 - edge case: Projectiles that create an area of effect upon their collision will still affect other units and not only Braum. [wiki-e rev-4012056, fetched 2026-09-18]
-- edge case: Projectiles that cannot hit Braum or his allies (such as an enemy Prismatic Barrier) will not be intercepted.[1] [wiki-e rev-4012056, fetched 2026-09-18]
+- edge case: Projectiles that cannot hit Braum or his allies (such as an enemy Prismatic Barrier) will not be intercepted. [wiki-e rev-4012056, fetched 2026-09-18]
 - edge case: Soraka's Starcall's Rejuvenation projectile is however blocked. [wiki-e rev-4012056, fetched 2026-09-18]
 - edge case: The damage reduction will affect any source of damage whose origin is in front of the shield. This includes: [wiki-e rev-4012056, fetched 2026-09-18]
 - edge case: All intercepted projectiles. [wiki-e rev-4012056, fetched 2026-09-18]
@@ -140,7 +140,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Interrupted by [wiki-r rev-4007580, fetched 2026-09-18]
 - edge case: : [wiki-r rev-4007580, fetched 2026-09-18]
 - edge case: Death, unless protected by Resurrection [wiki-r rev-4007580, fetched 2026-09-18]
-- edge case: ↑ Unbreakable's interaction with Lux's Prismatic Barrier [wiki-r rev-4007580, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -148,4 +147,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007579, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Braum%2FWinter's%20Bite&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3906582, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Braum%2FStand%20Behind%20Me&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4012056, fetched 2026-09-18 — 33 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Braum%2FUnbreakable&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4007580, fetched 2026-09-18 — 54 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Braum%2FGlacial%20Fissure&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4007580, fetched 2026-09-18 — 53 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Braum%2FGlacial%20Fissure&prop=text

@@ -7,8 +7,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V8.5 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V8.5 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 640, hp_lvl 102, mp_base 345, mp_lvl 40, arm_base 25, arm_lvl 4.2, mr_base 33, mr_lvl 1.1, hp5_base 4, hp5_lvl 0.55, mp5_base 8.2, mp5_lvl 0.7, dam_base 59, dam_lvl 2.6, as_base 0.644, as_lvl 1.8, range 525, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -25,8 +25,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Icathian Rain [wiki-q rev-4038389, fetched 2026-09-18]
 - cooldown: 10 / 9 / 8 / 7 / 6 [wiki-q rev-4038389, fetched 2026-09-18]
 - cost: 55 [wiki-q rev-4038389, fetched 2026-09-18]
-- what it does: Active: Kai'Sa releases a swarm of 6 missiles that evenly distributes among nearby visible enemies, each one hitting their target after 0.4 seconds to deal physical damage. Minions below 35% health take double damage. Non-minions take - 100% damage from missiles beyond their first. Evolution: Requires「 100 – 56 (based on level) attack damage from items 」「 100 attack damage from items and stat growth 」to upgrade – Icathian Rain instead fires 12 missiles. A nearby enemy is required to cast this ability. [wiki-q rev-4038389, fetched 2026-09-18]
-- damage by rank: Physical Damage Per Missile: to (+ % bonus AD) (+ % AP) · Reduced Damage Per Missile: - to * (+ - % bonus AD) (+ - % AP) Total Single-Target Damage: - (1+*5) to *(1+*5) (+ - (1+*5)% bonus AD) (+ - (1+*5)% AP) · Total Evolved Single-Target Damage: - (1+*11) to *(1+*11) (+ - (1+*11)% bonus AD) (+ - (1+*11)% AP) [wiki-q rev-4038389, fetched 2026-09-18]
+- what it does: Active: Kai'Sa releases a swarm of 6 missiles that evenly distributes among nearby visible enemies, each one hitting their target after 0.4 seconds to deal physical damage. Minions below 35% health take double damage. Non-minions take 25% damage from missiles beyond their first. Evolution: Requires「 100 – 56 (based on level) attack damage from items 」「 100 attack damage from items and stat growth 」to upgrade – Icathian Rain instead fires 12 missiles. A nearby enemy is required to cast this ability. [wiki-q rev-4038389, fetched 2026-09-18]
+- damage by rank: Physical Damage Per Missile: 40 / 55 / 70 / 85 / 100 (+ 55% bonus AD) (+ 20% AP) · Reduced Damage Per Missile: 10 / 13.75 / 17.5 / 21.25 / 25 (+ 13.75% bonus AD) (+ 5% AP) Total Single-Target Damage: 90 / 123.75 / 157.5 / 191.25 / 225 (+ 123.75% bonus AD) (+ 45% AP) · Total Evolved Single-Target Damage: 150 / 206.25 / 262.5 / 318.75 / 375 (+ 206.25% bonus AD) (+ 75% AP) [wiki-q rev-4038389, fetched 2026-09-18]
 - target range: 600 [wiki-q rev-4038389, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4038389, fetched 2026-09-18]
 - targeting: Proximity [wiki-q rev-4038389, fetched 2026-09-18]

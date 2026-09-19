@@ -27,7 +27,18 @@ import {
 	championTableStaleness,
 	renderChampionKnowledge
 } from "./champion-data.ts"
-import { fetchWikitextBatch, parseTemplateFields, renderWikitext, stripFileLinks } from "../../scripts/fetch-champions.ts"
+import { type } from "arktype"
+import {
+	OpggResponse,
+	toTier2,
+	fetchWikitextBatch,
+	htmlToText,
+	pageVariablePreamble,
+	parseTemplateFields,
+	renderFault,
+	renderWikitext,
+	stripFileLinks
+} from "../../scripts/fetch-champions.ts"
 
 const lillia = championRow("Lillia")
 
@@ -212,5 +223,168 @@ describe("the table against a fresh fetch", () => {
 		}
 		assert.equal(tooltip, lillia!.abilities.find(a => a.name === "Swirlseed")!.riotTooltip)
 		assert.match(tooltip, /collides with terrain/i)
+	})
+})
+
+/**
+ * The three ways the wiki's own answer arrives BROKEN, and what the fetcher does about each.
+ *
+ * All three were shipping on 2026-09-18 and none of them could be seen from inside the pipeline:
+ * every one produces a grammatical line with a citation on the end of it, which is the exact shape
+ * a correct line has. They were found by going back to the URL — `scripts/verify-fetched.ts` — and
+ * they are pinned here so that a change to the renderer has to argue with a test rather than with
+ * a reader six weeks later.
+ */
+describe("what the wiki returns when a field is rendered on its own", () => {
+	it("keeps the page's own variable definitions, in order, and nothing else from the head", () => {
+		const page =
+			"<!-- comment -->{{#vardefine:r_d1|15}}{{#vardefine:r_ap|15}}" +
+			"{{#vardefine:total|{{#expr:{{#var:r_d1}}*3}}}}\n" +
+			"{{{{{1|Ability data}}}|The Culling\n|champion = Lucian\n|leveling = {{#var:r_d1}}\n}}"
+		assert.equal(
+			pageVariablePreamble(page),
+			"{{#vardefine:r_d1|15}}{{#vardefine:r_ap|15}}{{#vardefine:total|{{#expr:{{#var:r_d1}}*3}}}}"
+		)
+		// Nothing below the first field line is preamble, however many braces it carries.
+		assert.equal(pageVariablePreamble("|leveling = {{#vardefine:x|1}}"), "")
+	})
+
+	/*
+	 * The fault detector is deliberately aggressive: the cost of a false positive is a withheld
+	 * line, and the cost of a false negative is a coach reading "(+ % AP)" out loud. Every string
+	 * in the first list is one that really shipped.
+	 */
+	it("refuses a field whose numbers did not survive the render", () => {
+		for (const broken of [
+			"Physical Damage Per Shot: to (+ % AD) (+ % AP)",
+			"Primary Physical Damage: to (+ nil% AD)",
+			"Each Scalemail stack is worth Expression error: Unexpected * operator.",
+			"Damage per second: / to / (+ Expression error: Unexpected / operator.% AP)",
+			"Shield Strength: to (+ % AP) (+ % of maximum health)",
+			"a field with {{ap|60 to 160}} still in it"
+		])
+			assert.notEqual(renderFault(broken), null, `passed: ${broken}`)
+
+		for (const fine of [
+			"Physical Damage Per Shot: 15 / 30 / 45 (+ 25% AD) (+ 15% AP)",
+			"Magic Damage: 60 / 85 / 110 / 135 / 160 (+ 50% AP)",
+			"6 / 5.5 / 5 / 4.5 / 4",
+			"Active: Lillia lobs a seed at the target location that rolls forward indefinitely.",
+			"Critical strike damage with Infinity Edge: 253% AD"
+		])
+			assert.equal(renderFault(fine), null, `refused: ${fine}`)
+	})
+
+	/*
+	 * A footnote marker is a bracketed integer pointing at a list that is nowhere in the delivered
+	 * file, and the integer is assigned PER PARSE REQUEST — the same note came back `[17]` inside
+	 * the fetcher's batch and `[5]` rendered alone. So it is both noise in a prompt and a value
+	 * that depends on what it was batched with, which the cache's byte-reproducibility rests on.
+	 */
+	it("drops the wiki's footnote markers and the footnote list itself", () => {
+		const html =
+			'<ul><li>a note<sup id="cite_ref-1" class="reference"><a href="#cite_note-1">' +
+			'<span class="cite-bracket">[</span>1<span class="cite-bracket">]</span></a></sup> end</li></ul>' +
+			'<div class="mw-references-wrap"><ol class="references">' +
+			'<li id="cite_note-1"><span class="mw-cite-backlink"><a href="#cite_ref-1">↑</a></span> ' +
+			'<span class="reference-text">Bard Q&amp;A comment by Rabid Llama</span></li></ol></div>'
+		assert.equal(htmlToText(html), "- a note end")
+	})
+
+	/** And none of the three survives anywhere in the table that shipped. */
+	it("leaves no broken field, no footnote and no backlink in the generated table", () => {
+		const bad: string[] = []
+		for (const row of CHAMPION_ROWS)
+			for (const ability of row.abilities)
+				for (const [field, value] of [
+					["wikiDescription", ability.wikiDescription],
+					["cooldown", ability.cooldown],
+					["cost", ability.cost],
+					["castTime", ability.castTime],
+					["targetRange", ability.targetRange],
+					...ability.leveling.map((l, i) => [`leveling.${i}`, l]),
+					...ability.notes.map((n, i) => [`notes.${i}`, n])
+				] as [string, string][]) {
+					if (value === "") continue
+					const fault = renderFault(value)
+					if (fault !== null) bad.push(`${row.name} ${ability.slot} ${field}: ${fault}`)
+					if (/\[\d+\]|↑/.test(value)) bad.push(`${row.name} ${ability.slot} ${field}: a footnote survived`)
+				}
+		assert.deepEqual(bad.slice(0, 5), [])
+	})
+})
+
+/**
+ * Tier 2 fails closed, per champion, and the two ways it can fail are different answers.
+ *
+ * op.gg is one undocumented endpoint with no terms grant, so the rule is that a payload which
+ * changed SHAPE yields no tier-2 section rather than a degraded one — a stale build recommendation
+ * reads exactly like a fresh one. The check is exercised here rather than trusted, because the
+ * first draft of this schema said `skills` was an object, every jungle champion was withheld for a
+ * "shape change" that was this repo's own mistake, and fail-closed is only honest when the closed
+ * state means the SOURCE moved.
+ */
+describe("the op.gg fence", () => {
+	const payload = (over: Record<string, unknown> = {}) => ({
+		meta: { version: "16.18", cached_at: "2026-09-18T00:00:00Z" },
+		data: {
+			summary: {
+				id: 876,
+				positions: [
+					{
+						name: "JUNGLE",
+						stats: { play: 5186, win_rate: 0.4967, pick_rate: 0.05, ban_rate: 0.01, kda: 3.1 }
+					}
+				]
+			},
+			skills: [{ play: 2596, win: 1488, order: ["Q", "W", "E"] }],
+			...over
+		}
+	})
+
+	it("accepts the shape the endpoint actually serves", () => {
+		const checked = OpggResponse(payload())
+		assert.ok(!(checked instanceof type.errors))
+		const row = toTier2(checked as never, {
+			sourceUrl: "https://example.invalid",
+			fetchedAt: "2026-09-18T00:00:00Z",
+			role: "jungle",
+			tier: "emerald_plus"
+		})
+		assert.equal(row?.play, 5186)
+		assert.deepEqual(row?.skillOrder?.order, ["Q", "W", "E"])
+	})
+
+	it("refuses a payload whose shape moved, rather than shipping part of it", () => {
+		// `skills` as an object is the exact shape mistake that withheld all 45 junglers once.
+		assert.ok(OpggResponse(payload({ skills: { order: ["Q"] } })) instanceof type.errors)
+		// A win rate that arrived as a string is the shape change that would otherwise be rendered.
+		const bad = payload()
+		;(bad.data.summary.positions[0]!.stats as Record<string, unknown>).win_rate = "49.67%"
+		assert.ok(OpggResponse(bad) instanceof type.errors)
+	})
+
+	it("returns nothing for a champion op.gg does not list in this role", () => {
+		const checked = OpggResponse(payload())
+		assert.ok(!(checked instanceof type.errors))
+		assert.equal(
+			toTier2(checked as never, {
+				sourceUrl: "https://example.invalid",
+				fetchedAt: "2026-09-18T00:00:00Z",
+				role: "support",
+				tier: "emerald_plus"
+			}),
+			null
+		)
+	})
+
+	/** And the shipped table shows the same fence working on real payloads. */
+	it("leaves a champion without a tier-2 section rather than half of one", () => {
+		for (const row of CHAMPION_ROWS) {
+			if (row.tier2 === null) continue
+			assert.ok(row.tier2.play > 0, `${row.name} carries a tier-2 section with no sample`)
+			assert.equal(row.tier2.role, "jungle")
+			assert.notEqual(row.tier2.sourceUrl, "")
+		}
 	})
 })

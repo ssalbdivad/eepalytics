@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Colossus [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Colossus [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.98 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.98 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 600, hp_lvl 126, mp_base 410, mp_lvl 40, arm_base 24, arm_lvl 4.7, mr_base 32, mr_lvl 2.05, hp5_base 8, hp5_lvl 0.8, mp5_base 9.5, mp5_lvl 0.7, dam_base 59, dam_lvl 3.5, as_base 0.625, as_lvl 1.5, range 150, ms 340 [wikiModule raw@2026-09-18, fetched 2026-09-18]

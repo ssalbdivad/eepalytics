@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Cantankerous Cavalier [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Cantankerous Cavalier [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Courage [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V6.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V25.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V6.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V25.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 410, hp_lvl 84, mp_base 100, mp_lvl 0, arm_base 35, arm_lvl 5.2, mr_base 28, mr_lvl 2.05, hp5_base 6, hp5_lvl 0.75, mp5_base 0, mp5_lvl 0, dam_base 65, dam_lvl 3.5, as_base 0.625, as_lvl 3.5, range 250, ms 305 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -23,7 +23,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: While Dismounted, Kled's health is visually rounded down while Skaarl's health is rounded up. [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: Excess damage dealt to Skaarl counts for the purposes of effects based on damage dealt (eg. Death's Dance's Ignore Pain, Stormsurge's Stormraider, item damage trackers).(unexpected) [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: The dismount threshold does not interact with the threshold of Lifeline effects, meaning both can be triggered from the same damage instance even if triggering one should prevent triggering the other.(bug) [wiki-p rev-4058479, fetched 2026-09-18]
-- edge case: If Kled dismounts and triggers a Lifeline shield effect from the same damage instance, excess damage dealt to Skaarl will be dealt to the shield when it exceeds the lifeline threshold.(unexpected)[1] [wiki-p rev-4058479, fetched 2026-09-18]
+- edge case: If Kled dismounts and triggers a Lifeline shield effect from the same damage instance, excess damage dealt to Skaarl will be dealt to the shield when it exceeds the lifeline threshold.(unexpected) [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: If Skaarl's health is reduced below 0 by an attack or ability with multiple damage instances, subsequent damage instances from the same cast instance are reduced to 0 damage. [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: The Collector's Death is special cased to not affect Kled while he is Mounted, regardless of the duo's combined current health. [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: If Skaarl's health is reduced below 0 by Eclipse's Ever Rising Moon, Kled will take the triggering attack's damage.(unexpected) [wiki-p rev-4058479, fetched 2026-09-18]
@@ -32,7 +32,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Kled does not receive damage from Illaoi's Test of Spirit, Kayn's Umbral Trespass, or being Regurgitated by Tahm Kench while dismounting.(bug) [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: The lunge can pass through player-generated terrain.(unexpected) [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: Buying items while Kled and Skaarl's combined current health is lower than Kled's maximum health will cause Kled to dismount upon undoing the purchase and potentially lose health.(bug) [wiki-p rev-4058479, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Dismounting with a spell shield sometimes consumes the spell shield and negates the effects of dismounting.(bug)[1] [wiki-p rev-4058479, fetched 2026-09-18]
+- edge case: PENDING FOR TEST: Dismounting with a spell shield sometimes consumes the spell shield and negates the effects of dismounting.(bug) [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: If Kled would be executed while Mounted, he is instead only Dismounted. [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Kled is lunging: [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: Attacking [wiki-p rev-4058479, fetched 2026-09-18]
@@ -94,7 +94,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Bear Trap on a Rope [wiki-q rev-4059774, fetched 2026-09-18]
 - cooldown: 11 / 10 / 9 / 8 / 7 [wiki-q rev-4059774, fetched 2026-09-18]
 - what it does: Active: Kled throws a bear trap in the target direction that deals physical damage to enemies hit, increased to 150% against minions, small pets, and small and medium monsters. The bear trap collides with the first enemy champion, large pet, or large monster hit, revealing them for 2.5 seconds, and forming a tether between Kled and the target for 1.75 seconds. The tether's radius shrinks over its duration, and if it is not broken before then, Kled pulls the target 150 units toward him, deals physical damage and slows them for 2.5 seconds. Bear Trap on a Rope can be cast while Jousting. [wiki-q rev-4059774, fetched 2026-09-18]
-- damage by rank: Physical Damage: to (+ % bonus AD) Minion and Small Monster Damage: - 1.5 to *1.5 (+ Expression error: Unexpected * operator.% bonus AD) · Physical Damage: - 2 to *2 (+ Expression error: Unexpected * operator.% bonus AD) Total Physical Damage: - 3 to *3 (+ Expression error: Unexpected * operator.% bonus AD) Slow: 30 / 35 / 40 / 45 / 50% [wiki-q rev-4059774, fetched 2026-09-18]
+- damage by rank: Physical Damage: 30 / 55 / 80 / 105 / 130 (+ 60% bonus AD) Minion and Small Monster Damage: 45 / 82.5 / 120 / 157.5 / 195 (+ 90% bonus AD) · Physical Damage: 60 / 110 / 160 / 210 / 260 (+ 120% bonus AD) Total Physical Damage: 90 / 165 / 240 / 315 / 390 (+ 180% bonus AD) Slow: 30 / 35 / 40 / 45 / 50% [wiki-q rev-4059774, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q rev-4059774, fetched 2026-09-18]
 - width: 90 [wiki-q rev-4059774, fetched 2026-09-18]
 - missile speed: 1600 [wiki-q rev-4059774, fetched 2026-09-18]
@@ -119,7 +119,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - cooldown: 3 [wiki-q2 rev-4059773, fetched 2026-09-18]
 - cost: 1 [wiki-q2 rev-4059773, fetched 2026-09-18]
 - what it does: Active: Kled sprays a cone of five pellets in the target direction while recoiling 300 units in the opposite direction, dealing physical damage to enemies hit. Kled periodically stocks a Pocket Pistol charge, up to a maximum of 2. He will restore both charges after dismounting. Each pellet beyond the first to hit a target will only deal 20% damage. Pellets collide with the first enemy champion they hit. Each pellet that hits an enemy champion or epic monster restores Courage, by 5 and 2.5 respectively, for up to a total restore of 25 against champions and 12.5 versus epic monsters. [wiki-q2 rev-4059773, fetched 2026-09-18]
-- damage by rank: Physical Damage: to (+ % bonus AD) · Reduced Damage: - to * (+ - % bonus AD) Maximum Damage: - (1+*4) to *(1+*4) (+ - (1+*4)% bonus AD) [wiki-q2 rev-4059773, fetched 2026-09-18]
+- damage by rank: Physical Damage: 35 / 50 / 65 / 80 / 95 (+ 65% bonus AD) · Reduced Damage: 7 / 10 / 13 / 16 / 19 (+ 13% bonus AD) Maximum Damage: 63 / 90 / 117 / 144 / 171 (+ 117% bonus AD) [wiki-q2 rev-4059773, fetched 2026-09-18]
 - cast time: 0.25 [wiki-q2 rev-4059773, fetched 2026-09-18]
 - width: 80 [wiki-q2 rev-4059773, fetched 2026-09-18]
 - missile speed: 3000 • 1025 [wiki-q2 rev-4059773, fetched 2026-09-18]
@@ -273,7 +273,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Chaaaaaaaarge!!! [wiki-r rev-4059781, fetched 2026-09-18]
 - cooldown: 140 / 125 / 110 [wiki-r rev-4059781, fetched 2026-09-18]
 - what it does: Active: Kled & Skaarl charge toward the target location, automatically navigating terrain along the way, during which they are ghosted, immune to crowd control and revealed to enemy champions in a 1250 radius. If the charge does not complete within 15 seconds, it will end prematurely. The charge is interrupted instantly if Kled dismounts during it. While charging, the duo gain an initial shield, plus an additional amount for every 0.25 seconds of traveling, up to a cap at 2 seconds. The shield lasts for 2 seconds upon finishing the charge. Additionally, the duo trails a directional draft in their wake, lasting 9 seconds. Allied units other than lane minions following the draft gain Mr. Kled's Wild Ride. After 0.5 seconds of charging, the duo gain bonus movement speed every 0.25 seconds, up to 950 total movement speed over 3 seconds. Mr. Kled's Wild Ride: While in champion combat, gain 40% bonus movement speed. After not being in champion combat for 3 seconds, if Kled is charging, gain bonus movement speed up to Kled's current movement speed; otherwise gain up to 650 total movement speed. Kled & Skaarl will dash toward the first visible enemy champion in range of the charge, revealing the target during the dash and colliding with the first visible enemy champion in their path to deal magic damage, increased by 0% – 200% (based on charge time), knock them back 150 units, though not through terrain, and end the charge. [wiki-r rev-4059781, fetched 2026-09-18]
-- damage by rank: Total Shield: - 10 to *10 (+ Expression error: Unexpected * operator.% bonus AD) Initial Shield: - 2 to *2 (+ Expression error: Unexpected * operator.% bonus AD) Shield Per Instance: to (+ % bonus AD) · Minimum Magic Damage: to% (+ % per 100 bonus AD) of target's maximum health Maximum Magic Damage: - 3 to *3% (+ - 3% per 100 bonus AD) of target's maximum health [wiki-r rev-4059781, fetched 2026-09-18]
+- damage by rank: Total Shield: 200 / 300 / 400 (+ 300% bonus AD) Initial Shield: 40 / 60 / 80 (+ 60% bonus AD) Shield Per Instance: 20 / 30 / 40 (+ 30% bonus AD) · Minimum Magic Damage: 4 / 6 / 8% (+ 3% per 100 bonus AD) of target's maximum health Maximum Magic Damage: 12 / 18 / 24% (+ 9% per 100 bonus AD) of target's maximum health [wiki-r rev-4059781, fetched 2026-09-18]
 - target range: 500 - (3500 / 4000 / 4500) [wiki-r rev-4059781, fetched 2026-09-18]
 - cast time: none [wiki-r rev-4059781, fetched 2026-09-18]
 - missile speed: 1000 • 600 [wiki-r rev-4059781, fetched 2026-09-18]
@@ -291,7 +291,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The charge will continue towards the target location even if Kled's location changes drastically. [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: Kled will mark his path with an indicator visible to him and his allies. [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: Kled's pathing indicator will not account for changes in Kled's pathing. [wiki-r rev-4059781, fetched 2026-09-18]
-- edge case: Kled's pathing indicator will sometimes display a path different from his real path.(bug) [2] [wiki-r rev-4059781, fetched 2026-09-18]
+- edge case: Kled's pathing indicator will sometimes display a path different from his real path.(bug) [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: Kled's shield generation is based upon a global 0.25 second timer, not based on when the ability is cast or when it ends.(unexpected) [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: For example, this means that Kled will take an additional 0.25 seconds to generate the maximum shield amount if the ability was cast immediately after the last tick of the global timer. [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: For example, this means that Kled's shield will expire 0.25 seconds sooner if his charge ends immediately before the next tick of the global timer. [wiki-r rev-4059781, fetched 2026-09-18]
@@ -302,7 +302,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Generate a shield; [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: Trail a directional draft, applying Mr. Kled's Wild Ride; [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: Disable summoner spells and items. [wiki-r rev-4059781, fetched 2026-09-18]
-- edge case: Kled sometimes fails to lock on to valid targets in range.(bug) [3] [wiki-r rev-4059781, fetched 2026-09-18]
+- edge case: Kled sometimes fails to lock on to valid targets in range.(bug) [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: Experimental Hexplate's Overdrive, Fiendhunter Bolts' Opening Barrage, and Zeke's Convergence's Frostfire Tempest trigger at the end of the charge or at the end of the dash, whichever comes last, even if the charge ends before or during the dash. [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: Kled and Skaarl will track the target if they change locations. [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: They will dash to the target's previous location if the target moves beyond 2500 units of the dash's beginning location. [wiki-r rev-4059781, fetched 2026-09-18]
@@ -310,7 +310,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If the dash does not complete within 9 seconds, Kled and Skaarl will continue to track their target, but will be able to cast spells, and will not be able to collide with enemy champions. [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: While dashing, Kled will mark his target with an indicator visible to both teams. [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: The damage dealt is based on time spent traveling before the beginning of the dash. [wiki-r rev-4059781, fetched 2026-09-18]
-- edge case: It is possible for Kled to briefly lose his crowd control immunity while colliding with an enemy champion, which can allow the dash, and its subsequent damage and displacement to get interrupted.(bug) [4] [wiki-r rev-4059781, fetched 2026-09-18]
+- edge case: It is possible for Kled to briefly lose his crowd control immunity while colliding with an enemy champion, which can allow the dash, and its subsequent damage and displacement to get interrupted.(bug) [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: Units knocked back by Chaaaaaaaarge!!! knockback can pass through terrain if it is player-generated, or if they are already inside it.(unexpected) [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: The airborne debuff is removed early when the forced movement stops. [wiki-r rev-4059781, fetched 2026-09-18]
 - edge case: Buffering Interactions [wiki-r rev-4059781, fetched 2026-09-18]
@@ -400,7 +400,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: This ability is unusable while dismounted. [wiki-r2 rev-3942225, fetched 2026-09-18]
 - targeting: N/A [wiki-r2 rev-3942225, fetched 2026-09-18]
 - edge case: No additional details. [wiki-r2 rev-3942225, fetched 2026-09-18]
-- edge case: ↑ Edge of Night bug [wiki-r2 rev-3942225, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -412,4 +411,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4059782, fetched 2026-09-18 — 64 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FJousting&prop=text
 - wiki-e2: League of Legends Wiki, ability data template, revision rev-3942228, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FDismounted%20Jousting&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4059781, fetched 2026-09-18 — 126 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FChaaaaaaaarge!!!&prop=text
-- wiki-r2: League of Legends Wiki, ability data template, revision rev-3942225, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FDismounted%20Chaaaaaaaarge!!!&prop=text
+- wiki-r2: League of Legends Wiki, ability data template, revision rev-3942225, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FDismounted%20Chaaaaaaaarge!!!&prop=text

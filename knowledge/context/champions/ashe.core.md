@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Frost Archer [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Frost Archer [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Bottom, Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: Alpha Week 2 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.16 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 610, hp_lvl 101, mp_base 280, mp_lvl 35, arm_base 26, arm_lvl 4.6, mr_base 33, mr_lvl 1.1, hp5_base 3.5, hp5_lvl 0.55, mp5_base 7, mp5_lvl 0.65, dam_base 59, dam_lvl 3.5, as_base 0.658, as_lvl 3, range 600, ms 325 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -24,7 +24,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - name: Ranger's Focus [wiki-q rev-4053426, fetched 2026-09-18]
 - cost: 30 [wiki-q rev-4053426, fetched 2026-09-18]
 - what it does: Passive: While Ranger's Focus is inactive, Ashe's basic attacks on-attack generate a stack of Focus for 4 seconds, refreshing on subsequent attacks and stacking up to 4 times. Stacks expire one by one every second when the duration ends. Active: For 6 seconds, Ashe gains bonus attack speed and empowers her basic attacks to fire a flurry of five arrows that deal modified physical damage. The flurries apply life steal and Frost Shot per arrow, but apply on-hit effects only once. Ranger's Focus resets Ashe's basic attack timer. [wiki-q rev-4053426, fetched 2026-09-18]
-- damage by rank: Bonus Attack Speed: 20 / 30 / 40 / 50 / 60% Physical Damage Per Arrow: /5 to /5% AD Total Damage Per Flurry: to% AD [wiki-q rev-4053426, fetched 2026-09-18]
+- damage by rank: Bonus Attack Speed: 20 / 30 / 40 / 50 / 60% Physical Damage Per Arrow: 22 / 23 / 24 / 25 / 26% AD Total Damage Per Flurry: 110 / 115 / 120 / 125 / 130% AD [wiki-q rev-4053426, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4053426, fetched 2026-09-18]
 - targeting: Auto [wiki-q rev-4053426, fetched 2026-09-18]
 - damage type: Physical [wiki-q rev-4053426, fetched 2026-09-18]

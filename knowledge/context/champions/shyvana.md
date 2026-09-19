@@ -3,23 +3,21 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Half-Dragon [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Half-Dragon [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Fury [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Jungle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.128 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.128 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.10 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 625, hp_lvl 95, mp_base 100, mp_lvl 0, arm_base 35, arm_lvl 4, mr_base 32, mr_lvl 2.05, hp5_base 7, hp5_lvl 0.65, mp5_base 0, mp5_lvl 0, dam_base 62, dam_lvl 4, as_base 0.638, as_lvl 2, range 150, ms 350 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Passive
 - name: Scalemail [wiki-p rev-4001512, fetched 2026-09-18]
-- what it does: Innate: Shyvana generates Scalemail stacks from scoring takedowns against certain enemies. Large monsters and large minions grant 1 stack, while enemy champions and epic monsters grant 3. Scalemail: For each stack, Shyvana gains nil bonus armor and nil bonus magic resistance. [wiki-p rev-4001512, fetched 2026-09-18]
+- what it does: Innate: Shyvana generates Scalemail stacks from scoring takedowns against certain enemies. Large monsters and large minions grant 1 stack, while enemy champions and epic monsters grant 3. Scalemail: For each stack, Shyvana gains 0.3 bonus armor and 0.3 bonus magic resistance. [wiki-p rev-4001512, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4001512, fetched 2026-09-18]
-- edge case: Each Scalemail stack is worth Expression error: Unexpected * operator.. [wiki-p rev-4001512, fetched 2026-09-18]
-- edge case: armor is worth Expression error: Unexpected * operator.. [wiki-p rev-4001512, fetched 2026-09-18]
-- edge case: magic resistance is worth Expression error: Unexpected * operator.. [wiki-p rev-4001512, fetched 2026-09-18]
+- WITHHELD (notes): the wiki's own expansion of the field came back broken, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### Q
 - name: Emberstrike [wiki-q rev-4049991, fetched 2026-09-18]
@@ -54,8 +52,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### E
 - name: Molten Burst [wiki-e rev-4058111, fetched 2026-09-18]
 - cooldown: 12 / 11 / 10 / 9 / 8 [wiki-e rev-4058111, fetched 2026-09-18]
-- what it does: Active: Shyvana launches a fireball in the target direction that explodes upon colliding with the first enemy or reaching maximum range, dealing magic damage to enemies hit and slowing them by 30% for 2 seconds. Dragon Form Bonus: The fireball is wider, can pass through enemies, and deals - 100-100% increased damage. Upon hitting an enemy champion or large monster, and after reaching maximum range, the fireball sets an explosion upon the targets struck and at the location that applies the same effects. Molten Burst will also scorch the ground it touches beneath for seconds. Enemies within a scorched field are dealt / / / / / (based on level) (+ /% AP) magic damage every 1/ seconds, for a total maximum damage of * / * / * (based on level) (+ - % AP). Enemies may be damaged by only one scorched field at a time. Subsequent explosions against the same target deal - 100% damage. [wiki-e rev-4058111, fetched 2026-09-18]
-- damage by rank: Magic Damage: to (+ to% AP) (+ % of target's maximum health) · Increased/Explosion Magic Damage: - to * (+ - to *% AP) (+ - % of target's maximum health) Subsequent Explosion Damage: - - to ** (+ - to **% AP) (+ - % of target's maximum health) [wiki-e rev-4058111, fetched 2026-09-18]
+- what it does: Active: Shyvana launches a fireball in the target direction that explodes upon colliding with the first enemy or reaching maximum range, dealing magic damage to enemies hit and slowing them by 30% for 2 seconds. Dragon Form Bonus: The fireball is wider, can pass through enemies, and deals 25% increased damage. Upon hitting an enemy champion or large monster, and after reaching maximum range, the fireball sets an explosion upon the targets struck and at the location that applies the same effects. Molten Burst will also scorch the ground it touches beneath for 2 seconds. Enemies within a scorched field are dealt 3.75 / 5 / 6.25 (based on level) (+ 1.25% AP) magic damage every 0.25 seconds, for a total maximum damage of 30 / 40 / 50 (based on level) (+ 10% AP). Enemies may be damaged by only one scorched field at a time. Subsequent explosions against the same target deal 40% damage. [wiki-e rev-4058111, fetched 2026-09-18]
+- damage by rank: Magic Damage: 50 / 65 / 80 / 95 / 110 (+ 60 / 65 / 70 / 75 / 80% AP) (+ 5% of target's maximum health) · Increased/Explosion Magic Damage: 62.5 / 81.25 / 100 / 118.75 / 137.5 (+ 75 / 81.25 / 87.5 / 93.75 / 100% AP) (+ 6.25% of target's maximum health) Subsequent Explosion Damage: 25 / 32.5 / 40 / 47.5 / 55 (+ 30 / 32.5 / 35 / 37.5 / 40% AP) (+ 2.5% of target's maximum health) [wiki-e rev-4058111, fetched 2026-09-18]
 - cast time: 0.25 • 0.3333 [wiki-e rev-4058111, fetched 2026-09-18]
 - effect radius: 150 • 300 [wiki-e rev-4058111, fetched 2026-09-18]
 - width: 120 • 100 [wiki-e rev-4058111, fetched 2026-09-18]
@@ -71,8 +69,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### R
 - name: Dragon's Descent [wiki-r rev-4049822, fetched 2026-09-18]
 - cost: 3.3 [wiki-r rev-4049822, fetched 2026-09-18]
-- what it does: Passive - Fury: Shyvana generates Dragon Fury every 0.5 seconds while in Human Form. Her basic attacks and abilities also generate nil Dragon Fury for each enemy damaged, up to once per enemy per cast instance and increased 「 by -100% 」「 to - 」during Dragon Form. Against non-champions damaged by abilities, the generated amount is reduced to「 25%. 」「 - and - Dragon Fury during Human Form and Dragon Form, respectively. 」Shyvana gains 1% bonus Dragon Fury generation from all sources per 1 ultimate haste. Shyvana gains 100 Dragon Fury upon learning Dragon's Descent. Active: Shyvana transforms into Dragon Form and flies with displacement immunity to the target location, breathing fire in a cone along the way that deals magic damage to enemies hit and fears them for 0.75 seconds, as well as slows them by 99% for the same duration. Dragon Form: Shyvana gains bonus health, bonus attack range, and increased size. Her basic abilities are empowered to apply an additional effect. She maintains Dragon Form at a recurring cost of Dragon Fury, returning to Human Form once all Dragon Fury has been depleted. 100 Dragon Fury is required to cast this ability. [wiki-r rev-4049822, fetched 2026-09-18]
-- damage by rank: Dragon Fury Generation per 0.5 Seconds: /2 to /2 Dragon Fury Generation per Second: to · Magic Damage: 150 / 250 / 350 (+ 100% AP) · Bonus Health: 150 / 250 / 350 Bonus Range: 25 / 50 / 75 Size Increase: 5 / 12.5 / 20% [wiki-r rev-4049822, fetched 2026-09-18]
+- what it does: Passive - Fury: Shyvana generates Dragon Fury every 0.5 seconds while in Human Form. Her basic attacks and abilities also generate 1.25 Dragon Fury for each enemy damaged, up to once per enemy per cast instance and increased「 by 200% 」「 to 3.75 」during Dragon Form. Against non-champions damaged by abilities, the generated amount is reduced to「 25%. 」「 0.3125 and 0.9375 Dragon Fury during Human Form and Dragon Form, respectively. 」Shyvana gains 1% bonus Dragon Fury generation from all sources per 1 ultimate haste. Shyvana gains 100 Dragon Fury upon learning Dragon's Descent. Active: Shyvana transforms into Dragon Form and flies with displacement immunity to the target location, breathing fire in a cone along the way that deals magic damage to enemies hit and fears them for 0.75 seconds, as well as slows them by 99% for the same duration. Dragon Form: Shyvana gains bonus health, bonus attack range, and increased size. Her basic abilities are empowered to apply an additional effect. She maintains Dragon Form at a recurring cost of Dragon Fury, returning to Human Form once all Dragon Fury has been depleted. 100 Dragon Fury is required to cast this ability. [wiki-r rev-4049822, fetched 2026-09-18]
+- damage by rank: Dragon Fury Generation per 0.5 Seconds: 0.25 / 0.375 / 0.5 Dragon Fury Generation per Second: 0.5 / 0.75 / 1 · Magic Damage: 150 / 250 / 350 (+ 100% AP) · Bonus Health: 150 / 250 / 350 Bonus Range: 25 / 50 / 75 Size Increase: 5 / 12.5 / 20% [wiki-r rev-4049822, fetched 2026-09-18]
 - target range: 400 - 1050 [wiki-r rev-4049822, fetched 2026-09-18]
 - cast time: 0.25 [wiki-r rev-4049822, fetched 2026-09-18]
 - targeting: Location [wiki-r rev-4049822, fetched 2026-09-18]
@@ -129,7 +127,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4001512, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FScalemail&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4001512, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FScalemail&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4049991, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FEmberstrike&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4021912, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FInferno%20Aegis&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4058111, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FMolten%20Burst&prop=text

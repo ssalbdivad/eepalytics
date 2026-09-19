@@ -38,7 +38,7 @@
  */
 
 import { type } from "arktype"
-import type { ChampionFacts, ClaimGroup, ClaimRecord, SourceRecord } from "./provenance.ts"
+import type { ChampionFacts, ClaimGroup, ClaimRecord, SourceRecord, WithheldNotice } from "./provenance.ts"
 
 /**
  * What this module needs from a row, validated at the boundary because the fetcher is a separate
@@ -64,7 +64,8 @@ export const AbilityRowShape = type({
 	"notes?": "string[]",
 	"wikiTitle?": "string",
 	"wikiRevId?": "number",
-	"agreed?": "boolean"
+	"agreed?": "boolean",
+	"withheld?": "string[]"
 })
 
 export const ChampionRowShape = type({
@@ -126,6 +127,7 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 	const skipped: string[] = []
 	const sources: SourceRecord[] = []
 	const claims: ClaimRecord[] = []
+	const withheld: WithheldNotice[] = []
 
 	/* ------------------------------------------------------------------ identity and stats */
 
@@ -184,7 +186,13 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 		sep: ", "
 	})
 	idClaim("release", "identity.release", identity.releasePatch, { kind: "json", path: "releasePatch" })
-	idClaim("lastchanged", "identity.release", identity.lastChangedPatch, {
+	/*
+	 * Its OWN field, not a second `identity.release`. Both lines used to carry the label
+	 * "released / last changed", so Lillia's file said that twice — once with V10.15 and once with
+	 * V26.08 — and nothing in the text said which was which. A reader who takes the second line is
+	 * told she was released two years from now.
+	 */
+	idClaim("lastchanged", "identity.last-changed", identity.lastChangedPatch, {
 		kind: "json",
 		path: "lastChangedPatch"
 	})
@@ -270,10 +278,22 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 			push("cost", "ability.cost", ability.cost, { kind: "json", path: "cost" }, {
 				agreesWith: ["ddragon"]
 			})
-		} else
+		} else {
 			skipped.push(
 				`${row.key}.${slotId}: sources disagreed, so name/cooldown/cost withheld`
 			)
+			withheld.push({ group, fields: "name, cooldown, cost", kind: "disagreed" })
+		}
+		/*
+		 * A field the wiki could not expand. The fetcher records WHICH ones rather than leaving the
+		 * table's empty string to mean two different things, and this is where that reaches the page
+		 * the model reads.
+		 */
+		const broken = (ability.withheld ?? []).map(w => w.split(":")[0]!.trim()).filter(w => w !== "")
+		if (broken.length > 0) {
+			skipped.push(`${row.key}.${slotId}: the wiki's expansion broke, so ${broken.join(", ")} withheld`)
+			withheld.push({ group, fields: broken.join(", "), kind: "render" })
+		}
 
 		push("effect", "ability.effect", ability.wikiDescription, {
 			kind: "json",
@@ -348,7 +368,8 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 			apiname: row.apiname ?? row.name,
 			displayName: row.name,
 			sources,
-			claims
+			claims,
+			withheld
 		},
 		skipped
 	}

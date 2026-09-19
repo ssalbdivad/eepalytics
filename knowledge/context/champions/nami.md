@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Tidecaller [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Tidecaller [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.152 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.14 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.152 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.14 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 560, hp_lvl 88, mp_base 365, mp_lvl 43, arm_base 29, arm_lvl 5.2, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.55, mp5_base 11.5, mp5_lvl 0.4, dam_base 54, dam_lvl 3.1, as_base 0.644, as_lvl 2.61, range 550, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -33,7 +33,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Magic [wiki-q rev-4007696, fetched 2026-09-18]
 - spell shield: True [wiki-q rev-4007696, fetched 2026-09-18]
 - edge case: The combined time from the start of the cast time to the bubble landing is 0.264 seconds + 0.726 seconds = 0.99 seconds. [wiki-q rev-4007696, fetched 2026-09-18]
-- edge case: Aqua Prison provides the status effect that allows Last Breath to be cast.[1] [wiki-q rev-4007696, fetched 2026-09-18]
+- edge case: Aqua Prison provides the status effect that allows Last Breath to be cast. [wiki-q rev-4007696, fetched 2026-09-18]
 
 ### W
 - name: Ebb and Flow [wiki-w rev-4007697, fetched 2026-09-18]
@@ -124,7 +124,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Interrupted by [wiki-r rev-3712330, fetched 2026-09-18]
 - edge case: : [wiki-r rev-3712330, fetched 2026-09-18]
 - edge case: Death, unless protected by Resurrection [wiki-r rev-3712330, fetched 2026-09-18]
-- edge case: ↑ Yasuo Reddit AMA [wiki-r rev-3712330, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -132,4 +131,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007696, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FAqua%20Prison&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007697, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FEbb%20and%20Flow&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4042884, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FTidecaller's%20Blessing&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-3712330, fetched 2026-09-18 — 57 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FTidal%20Wave&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-3712330, fetched 2026-09-18 — 56 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nami%2FTidal%20Wave&prop=text

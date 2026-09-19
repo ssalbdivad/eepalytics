@@ -3,27 +3,27 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Barbarian King [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Barbarian King [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Fury [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Melee [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Top [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: May 1, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.06 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: May 1, 2009 Patch [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.06 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 696, hp_lvl 108, mp_base 100, mp_lvl 0, arm_base 33, arm_lvl 4.8, mr_base 32, mr_lvl 2.05, hp5_base 8.5, hp5_lvl 0.9, mp5_base 0, mp5_lvl 0, dam_base 66, dam_lvl 4.5, as_base 0.67, as_lvl 3.4, range 175, ms 345 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Passive
 - name: Battle Fury [wiki-p rev-4041166, fetched 2026-09-18]
-- what it does: Innate: Tryndamere generates Fury on his basic attacks on-hit, and Fury on critical strikes and each time he kills an enemy. After 8 seconds without dealing or taking damage, Tryndamere loses 5 Fury per second. Tryndamere gains Error: Variables are unmatched. critical strike chance. [wiki-p rev-4041166, fetched 2026-09-18]
+- what it does: Innate: Tryndamere generates 5 Fury on his basic attacks on-hit, and 10 Fury on critical strikes and each time he kills an enemy. After 8 seconds without dealing or taking damage, Tryndamere loses 5 Fury per second. Tryndamere gains 0% – 50% (based on Fury) critical strike chance. [wiki-p rev-4041166, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4041166, fetched 2026-09-18]
 
 ### Q
 - name: Bloodlust [wiki-q rev-4058457, fetched 2026-09-18]
 - cooldown: 12 [wiki-q rev-4058457, fetched 2026-09-18]
 - cost: 100% [wiki-q rev-4058457, fetched 2026-09-18]
-- what it does: Passive: Tryndamere gains bonus attack damage based on his missing health, up to a maximum amount at % missing health. Active: Tryndamere consumes all of his Fury to heal himself, increased for every point of Fury consumed. [wiki-q rev-4058457, fetched 2026-09-18]
-- damage by rank: Maximum Bonus Attack Damage: to Bonus Attack Damage per 1% missing health: Expression error: Unexpected round operator. to Expression error: Unexpected round operator. · Minimum Heal: 30 / 40 / 50 / 60 / 70 (+ 30% AP) Heal Per 1 Fury: 0.5 / 0.95 / 1.4 / 1.85 / 2.3 (+ 1.2% AP) Maximum Heal: 80 / 135 / 190 / 245 / 300 (+ 150% AP) [wiki-q rev-4058457, fetched 2026-09-18]
+- what it does: Passive: Tryndamere gains bonus attack damage based on his missing health, up to a maximum amount at 90% missing health. Active: Tryndamere consumes all of his Fury to heal himself, increased for every point of Fury consumed. [wiki-q rev-4058457, fetched 2026-09-18]
+- damage by rank: Maximum Bonus Attack Damage: 20 / 35 / 50 / 65 / 80 Bonus Attack Damage per 1% missing health: 0.22 / 0.3875 / 0.555 / 0.7225 / 0.89 · Minimum Heal: 30 / 40 / 50 / 60 / 70 (+ 30% AP) Heal Per 1 Fury: 0.5 / 0.95 / 1.4 / 1.85 / 2.3 (+ 1.2% AP) Maximum Heal: 80 / 135 / 190 / 245 / 300 (+ 150% AP) [wiki-q rev-4058457, fetched 2026-09-18]
 - cast time: none [wiki-q rev-4058457, fetched 2026-09-18]
 - targeting: Auto [wiki-q rev-4058457, fetched 2026-09-18]
 

@@ -3,12 +3,12 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Wandering Caretaker [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Wandering Caretaker [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Mana [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Support [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V5.5 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V5.5 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.18 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 630, hp_lvl 103, mp_base 350, mp_lvl 50, arm_base 32, arm_lvl 4.7, mr_base 30, mr_lvl 1.3, hp5_base 5.5, hp5_lvl 0.55, mp5_base 6, mp5_lvl 0.45, dam_base 52, dam_lvl 3, as_base 0.658, as_lvl 2, range 500, ms 335 [wikiModule raw@2026-09-18, fetched 2026-09-18]
@@ -37,6 +37,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### W
 - what it does: Active: Bard conjures a shrine at the target location that grants sight of its surroundings for 1 second and gathers power over 5 seconds. Up to 3 shrines may be active at a time. Shrines may last indefinitely until being consumed by a champion moving over them. If the champion is an ally or Bard himself, they are healed for an amount based on the shrine's power and gain bonus movement speed decaying over 1.5 seconds. The bonus movement speed can stack with subsequent shrines triggered. If the champion is an enemy, the shrine is destroyed. Bard periodically stocks a Caretaker's Shrine charge, up to a maximum of 2. [wiki-w rev-3960421, fetched 2026-09-18]
 - targeting: Location / Unit [wiki-w rev-3960421, fetched 2026-09-18]
+- WITHHELD (name, cooldown, cost): Data Dragon and the wiki disagree about it on this patch, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### E
 - name: Magical Journey [wiki-e rev-4007574, fetched 2026-09-18]

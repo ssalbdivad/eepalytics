@@ -3,27 +3,24 @@
 Every line below was copied from the source in brackets at the end of it, on the date shown. Nothing here was written from memory. If something you want to say is not on a line here, no source published it — say less rather than filling the gap.
 
 ### Identity
-- title: the Crimson Reaper [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- title: The Crimson Reaper [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - resource: Crimson Rush [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - melee or ranged: Ranged [wikiModule raw@2026-09-18, fetched 2026-09-18]
 - positions Riot's client lists: Middle [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V1.0.0.97 [wikiModule raw@2026-09-18, fetched 2026-09-18]
-- released / last changed: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- released in patch: V1.0.0.97 [wikiModule raw@2026-09-18, fetched 2026-09-18]
+- last changed in patch: V26.17 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Base stats
 - base stat: hp_base 600, hp_lvl 110, mp_base 2, mp_lvl 0, arm_base 24, arm_lvl 4.5, mr_base 30, mr_lvl 1.3, hp5_base 7, hp5_lvl 0.6, mp5_base 0, mp5_lvl 0, dam_base 55, dam_lvl 3, as_base 0.658, as_lvl 2, range 450, ms 330 [wikiModule raw@2026-09-18, fetched 2026-09-18]
 
 ### Passive
 - name: Crimson Pact [wiki-p rev-4053179, fetched 2026-09-18]
-- what it does: Innate: Vladimir gains (nil% bonus health) as ability power and (% AP) as bonus health. These two bonuses do not stack with each other. [wiki-p rev-4053179, fetched 2026-09-18]
+- what it does: Innate: Vladimir gains (3.333% bonus health) as ability power and (160% AP) as bonus health. These two bonuses do not stack with each other. [wiki-p rev-4053179, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4053179, fetched 2026-09-18]
 - edge case: Crimson Pact only affects Vladimir's maximum health and will not increase Vladimir's current health to prevent Vladimir from restoring health whenever his ability power fluctuates. [wiki-p rev-4053179, fetched 2026-09-18]
 - edge case: The only exception is purchasing applicable items while inside the fountain, which will restore health equal to the bonus gained. [wiki-p rev-4053179, fetched 2026-09-18]
 - edge case: Vladimir's current health can decrease to match his maximum health if Crimson Pact's bonus health is lost. [wiki-p rev-4053179, fetched 2026-09-18]
-- edge case: Crimson Pact's bonus ability power stacks multiplicatively with other sources of % ability power but its bonus health stacks additively with other sources of bonus health. With Rabadon's Deathcap's Magical Opus, the total is (% AP + [wiki-p rev-4053179, fetched 2026-09-18]
-- edge case: (1+/100)% bonus health) bonus ability power and ( [wiki-p rev-4053179, fetched 2026-09-18]
-- edge case: (1+/100)% AP + [wiki-p rev-4053179, fetched 2026-09-18]
-- edge case: /10000% bonus health) bonus health. [wiki-p rev-4053179, fetched 2026-09-18]
+- edge case: Crimson Pact's bonus ability power stacks multiplicatively with other sources of % ability power but its bonus health stacks additively with other sources of bonus health. With Rabadon's Deathcap's Magical Opus, the total is (30% AP + 4.3329% bonus health) bonus ability power and (208% AP + 1.59984% bonus health) bonus health. [wiki-p rev-4053179, fetched 2026-09-18]
 
 ### Q
 - name: Transfusion [wiki-q rev-3997094, fetched 2026-09-18]
@@ -142,7 +139,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4053179, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FCrimson%20Pact&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4053179, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FCrimson%20Pact&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3997094, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FTransfusion&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4034923, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FSanguine%20Pool&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3853799, fetched 2026-09-18 — 56 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vladimir%2FTides%20of%20Blood&prop=text
