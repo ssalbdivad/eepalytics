@@ -192,6 +192,23 @@ describe("the committed context tree", () => {
 		ok(warning !== null && warning.includes(contextPatch()) && warning.includes("99.1.1"))
 	})
 
+	/*
+	 * THE FOUR-PART PATCH STRING, and it is here because it was nearly lost with a dead file.
+	 *
+	 * The client answers `16.18.712.9876` where the table records `16.18.1`, and those are the SAME
+	 * patch. If `patchPair` ever stopped truncating, every game would carry a spurious "these facts
+	 * are from another patch" paragraph into the prompt — a false statement about the data rather
+	 * than a cosmetic one. The only coverage of it lived on `championTableStaleness`, the dead twin
+	 * in `champion-data.ts`, and when that facade was retired on 2026-09-19 the case was re-pointed
+	 * at the function that ships and parked in that file's own test, which said in a comment that it
+	 * was squatting. This is the move it asked for.
+	 */
+	it("treats the client's four-part patch string as the same patch", () => {
+		const patch = contextPatch()
+		ok(patch !== "", "the committed context tree has no manifest to be stale against")
+		strictEqual(contextStaleness(`${patch.split(".").slice(0, 2).join(".")}.712.9876`), null)
+	})
+
 	/**
 	 * The architectural assertion, not a style one. The runtime loader must not be able to reach the
 	 * generated table, the claim checker or the renderer — if it can, a future edit can quietly put

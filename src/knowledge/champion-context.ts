@@ -149,7 +149,8 @@ const patchPair = (patch: string): string => patch.split(".").slice(0, 2).join("
  *
  * Moved off `champion-data.ts` so the running app no longer imports `champion-table.ts` — 2.8 MB of
  * generated module that was being parsed to answer one string comparison. The wording is unchanged
- * from `championTableStaleness`, which still exists for the fetcher and the audit scripts.
+ * from `championTableStaleness`, which had no caller even then and was deleted with the rest of
+ * that facade on 2026-09-19. This is the only staleness sentence in the app.
  *
  * Not a silent pass and not a refusal. A champion's kit is usually the same across two patches and
  * occasionally is not, and the only honest thing to do with that is say which patch the numbers

@@ -43,7 +43,6 @@ import {
 	CHAMPION_TABLE_SOURCES
 } from "./champion-table.ts"
 import type { ChampionRow } from "./champion-table.ts"
-import { contextPatch, contextStaleness } from "./champion-context.ts"
 import { championKey } from "../shared/champion-key.ts"
 import { type } from "arktype"
 import {
@@ -176,32 +175,13 @@ describe("the two claims this repo invented", () => {
  * `championTableStaleness` and `championProvenance` are deleted too, 2026-09-19, and the two cases
  * below are what their tests were actually asserting once the dead function is taken out of the
  * middle. The provenance case reads the table's own source record instead of a sentence assembled
- * from it. The staleness case is pointed at `contextStaleness`, the LIVE twin — see the note on it.
+ * from it. The staleness case went to `champion-context.test.ts`, onto the function that ships.
  */
 describe("what the table says about itself", () => {
 	/*
-	 * THIS CASE IS SQUATTING and should move to `champion-context.test.ts`.
-	 *
-	 * `championTableStaleness` and `contextStaleness` were the same sentence to the character over
-	 * two different patch strings, and only the dead one was tested on the case that matters: a
-	 * four-part patch string. The client answers `16.18.712.9876` where the table records
-	 * `16.18.1`, and those are the SAME patch — if `patchPair` ever stopped truncating, every game
-	 * would carry a spurious "these facts are from another patch" paragraph into the prompt, which
-	 * is a false statement about the data rather than a cosmetic one. Deleting the facade would
-	 * have deleted the only coverage of it, so the case is re-pointed at the function that ships.
-	 * `champion-context.test.ts` was outside the files this change could touch; moving it there is
-	 * the right end state and is NOT DONE.
+	 * The four-part patch case that used to squat here MOVED to `champion-context.test.ts` on
+	 * 2026-09-19, onto `contextStaleness` itself, which is where it always belonged.
 	 */
-	it("says which patch it is speaking for when that is not the game's", () => {
-		const patch = contextPatch()
-		assert.notEqual(patch, "", "the committed context tree has no manifest to be stale against")
-		assert.equal(contextStaleness(patch), null)
-		assert.equal(contextStaleness(`${patch.split(".").slice(0, 2).join(".")}.712.9876`), null)
-		const stale = contextStaleness("16.24.1")
-		assert.ok(stale !== null)
-		assert.match(stale, /16\.24\.1/)
-	})
-
 	it("names every source a champion's numbers rest on, with the revisions that make them checkable", () => {
 		// One source record for the whole table — all 173 rows are cut from the same two fetches —
 		// so the per-champion half of provenance is the revision on each ability and the tier-2
