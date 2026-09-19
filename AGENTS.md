@@ -826,7 +826,13 @@ difference there would say nothing about the renderer
 (`data/eval/verify-fetched-all-20260919-c.json`). On the independent instrument: every per-rank run
 this app delivers appears verbatim in the wiki article a human reads
 (`verify-articles-20260919.json`). A third check, delivered text against the cached fetched bytes,
-is clean on every line of all 173 files.
+is clean on every line of all 173 files. And the Riot half is checked the same way rather than
+trusted: a live `championFull.json` fetch is byte-identical to the cached copy the table was cut
+from, and **all 643 delivered cooldowns agree with Riot's own numbers**.
+
+Coverage is measured rather than assumed, because an audit that reads nothing passes: all 173
+champions have all five slot sections, and every name and every cooldown the table holds reaches
+the delivered file — 0 missing of either.
 
 **`pnpm audit:knowledge --all` now asks the same question of every champion rather than of Lillia.**
 173 champions, 22,634 cited lines in the committed files, **0 untraced**, 0 uncited lines in any
