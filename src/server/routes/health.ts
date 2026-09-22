@@ -29,6 +29,8 @@ import { APP_VERSION, OFFLINE_STATUS } from "../deps.ts"
 import type { DaemonStatus, ServerDeps } from "../deps.ts"
 import { subscriberCount } from "../events.ts"
 import { bundleFreshnessCached, describeFreshness } from "../bundle-freshness.ts"
+import { describeCoverage, readCoverage } from "../../daemon/coach-coverage.ts"
+import type { CoverageSummary } from "../../daemon/coach-coverage.ts"
 import type { BundleFreshness } from "../bundle-freshness.ts"
 import { send } from "../respond.ts"
 
@@ -56,6 +58,32 @@ interface HealthExtras {
 	pid: number
 	sseClients: number
 	bundle: BundleFreshness
+	coachCoverage: CoverageSummary | null
+}
+
+/**
+ * The coverage sentence, at most once a minute.
+ *
+ * The banner polls health every few seconds and the record only changes when a game ends, so the
+ * file read is cached on the same argument the Vanguard probe and the bundle walk are cached on.
+ * A failure returns null and the health payload simply does not carry the field: this route
+ * answers 200 with a truthful shape in every state and never 500s, and a missing record is a
+ * state — it is what a fresh install looks like.
+ */
+const COVERAGE_TTL_MS = 60_000
+let coverageCache: { atMs: number; value: CoverageSummary | null } | null = null
+
+const coverageSummary = (): CoverageSummary | null => {
+	const now = Date.now()
+	if (coverageCache && now - coverageCache.atMs < COVERAGE_TTL_MS) return coverageCache.value
+	let value: CoverageSummary | null = null
+	try {
+		value = describeCoverage(readCoverage(20))
+	} catch {
+		value = null
+	}
+	coverageCache = { atMs: now, value }
+	return value
 }
 
 /**
@@ -111,6 +139,21 @@ export const createHealthRoute = (deps: ServerDeps): Hono => {
 		const bundle = bundleFreshnessCached(deps.repoRoot ?? REPO_ROOT, deps.distDir ?? DIST_DIR)
 		if (bundle.verdict === "stale") warnings.push(describeFreshness(bundle))
 
+		/*
+		 * DID THE COACH RUN IN THE GAMES HE ACTUALLY PLAYED?
+		 *
+		 * 43 of his last 44 were `absent` — no frames, no lines, the page closed — and the machine
+		 * has never been able to say so anywhere he looks. It rides in `warnings` for the same
+		 * reason the staleness sentence does: that field is rendered by every version of the
+		 * status banner, including one built before this line existed.
+		 *
+		 * TWO GAMES, not one. A single quiet game is him closing the tab, and a warning about it
+		 * would be noise on the first poll after any ordinary evening. A streak is a habit or a
+		 * fault, and both are worth a sentence.
+		 */
+		const coachCoverage = coverageSummary()
+		if (coachCoverage?.sentence && coachCoverage.quietStreak >= 2) warnings.push(coachCoverage.sentence)
+
 		// The daemon records this after each reconcile; falling back to kv means a standalone
 		// server still reports the real last sync instead of null.
 		let lastSyncMs: number | null = status.lastSyncMs ?? null
@@ -137,6 +180,7 @@ export const createHealthRoute = (deps: ServerDeps): Hono => {
 			warnings,
 			uptimeMs: status.startedMs === undefined ? null : Date.now() - status.startedMs,
 			bundle,
+			coachCoverage,
 			pid: process.pid,
 			sseClients: subscriberCount(),
 			// Only when the client is unreachable. "The League client is not running" is true

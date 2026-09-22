@@ -101,6 +101,7 @@ import {
 	renderSaidWithin
 } from "../../analysis/coach-memory.ts"
 import type { MemoryState } from "../../analysis/coach-memory.ts"
+import { describeCoverage, readCoverage } from "../../daemon/coach-coverage.ts"
 import { openSessionStatus, writeFrame } from "../../daemon/journal.ts"
 import {
 	latestMinimapRead,
@@ -1949,6 +1950,28 @@ export const createLiveRoute = (): Hono => {
 
 	/** `GET /api/live/journal` — is the journal actually recording? A number, not a claim. */
 	app.get("/live/journal", c => c.json(openSessionStatus()))
+
+	/**
+	 * `GET /api/live/coverage` — did the coach run in the games he actually played?
+	 *
+	 * The daemon has written one line per game since `coach-coverage.ts` was fixed, and until this
+	 * route existed the answer lived in `data/logs/coach-coverage.jsonl` and in journald, i.e.
+	 * nowhere he looks. Measured on this machine when it was added: 43 of his last 44 games were
+	 * `absent`, meaning no frames and no lines — he plays with the page closed, and nothing has
+	 * ever told him so.
+	 *
+	 * The SENTENCE is computed in the daemon rather than assembled here, because
+	 * `describeCoverage` splits `absent` (not ours) from `heard-nothing` (ours by construction) and
+	 * that distinction is the whole value of the record. It states our plumbing's own history, makes
+	 * no claim about any game he played, and never reaches a prompt.
+	 *
+	 * `limit` is bounded so a page cannot ask for the whole history by accident.
+	 */
+	app.get("/live/coverage", c => {
+		const limit = Math.min(Math.max(Number(c.req.query("limit") ?? 20) || 20, 1), 200)
+		const rows = readCoverage(limit)
+		return c.json({ ...describeCoverage(rows), rows })
+	})
 
 	/**
 	 * `GET /api/live/minimap-watch` — the position track, and what it cost to get.
