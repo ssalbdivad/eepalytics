@@ -3,7 +3,7 @@
  * rate-limits itself, it survives being killed mid-append, and it never throws.
  */
 
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, utimesSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { ok, strictEqual } from "node:assert/strict"
@@ -15,6 +15,7 @@ process.env.EEPALYTICS_DATA_DIR = dir
 const {
 	SAMPLE_DIR,
 	SAMPLE_EVERY_SEC,
+	citedSampleFiles,
 	pruneSamples,
 	readSamples,
 	sampleCount,
@@ -135,6 +136,59 @@ describe("pruneSamples", () => {
 		ok(gone > 0, "a ceiling under the directory size must evict something")
 		const left = readdirSync(SAMPLE_DIR).filter(f => /-t\d+\.ndjson$/.test(f))
 		strictEqual(left.length, 0, "every recorder file is fair game under a one-byte ceiling")
+	})
+
+	/*
+	 * THE THIRD LOSS, and the first one this file could have prevented. On 2026-09-22 the corpus
+	 * stood at 628 MB against a 600 MB ceiling and a routine daemon restart had already evicted
+	 * `js-mtvxb5f4-f81a-t29817812` and `…-t29817845` — the two games EVERY frame measurement in
+	 * this repo was taken on. Measured the same day: 44 window ids are named by stored runs in
+	 * `data/eval/` and 21 of them were already gone.
+	 */
+	it("will not evict a window a stored measurement names, even as the oldest file", () => {
+		const cited = "js-cited-t111"
+		const doomed = "js-doomed-t222"
+		writeFileSync(join(SAMPLE_DIR, `${cited}.ndjson`), `${JSON.stringify({ atMs: 1, gameTime: 1, data: {} })}\n`)
+		writeFileSync(join(SAMPLE_DIR, `${doomed}.ndjson`), `${JSON.stringify({ atMs: 2, gameTime: 2, data: {} })}\n`)
+		// Oldest-first ordering would take the cited one first; citation outranks age.
+		utimesSync(join(SAMPLE_DIR, `${cited}.ndjson`), 1_000_000, 1_000_000)
+		utimesSync(join(SAMPLE_DIR, `${doomed}.ndjson`), 2_000_000, 2_000_000)
+
+		const gone = pruneSamples(1, new Set([cited]))
+		ok(gone > 0, "an uncited file under a one-byte ceiling still goes")
+		ok(existsSync(join(SAMPLE_DIR, `${cited}.ndjson`)), "a cited window is not evictable at any ceiling")
+		ok(!existsSync(join(SAMPLE_DIR, `${doomed}.ndjson`)), "an uncited window is")
+	})
+
+	it("takes NOTHING rather than a cited window when the ceiling cannot be met", () => {
+		for (const id of ["js-a-t1", "js-b-t2"])
+			writeFileSync(join(SAMPLE_DIR, `${id}.ndjson`), `${JSON.stringify({ atMs: 1, gameTime: 1, data: {} })}\n`)
+		// Everything the recorder wrote is cited here, leftovers from earlier cases included: the
+		// claim is about a directory with nothing evictable in it, not about these two names.
+		const all = new Set(
+			readdirSync(SAMPLE_DIR)
+				.filter(f => /-t\d+\.ndjson$/.test(f))
+				.map(f => f.replace(/\.ndjson$/, ""))
+		)
+		const gone = pruneSamples(1, all)
+		strictEqual(gone, 0, "a full disk is a problem a person can fix; a destroyed measurement is not")
+		ok(existsSync(join(SAMPLE_DIR, "js-a-t1.ndjson")))
+		ok(existsSync(join(SAMPLE_DIR, "js-b-t2.ndjson")))
+	})
+
+	it("reads the window ids a stored run names, out of the evidence itself", () => {
+		const dir = mkdtempSync(join(tmpdir(), "eep-eval-"))
+		writeFileSync(
+			join(dir, "run.json"),
+			JSON.stringify({ windows: [{ id: "js-mtvxb5f4-f81a-t29817812" }], note: "and g-29832428-t29832428 too" })
+		)
+		writeFileSync(join(dir, "notes.md"), "the paired window js-muain099-d6d9-t29832517 is the only one left")
+		const { ids, scanned } = citedSampleFiles(dir)
+		strictEqual(scanned, 2)
+		ok(ids.has("js-mtvxb5f4-f81a-t29817812"), "an id inside a nested object still counts")
+		ok(ids.has("g-29832428-t29832428"), "so does one written in prose")
+		ok(ids.has("js-muain099-d6d9-t29832517"), "and one in a markdown note beside the run")
+		rmSync(dir, { recursive: true, force: true })
 	})
 
 	it("never deletes a file the recorder did not write, at any size", () => {

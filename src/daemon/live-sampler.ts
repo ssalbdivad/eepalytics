@@ -26,7 +26,7 @@
  * NODE ONLY.
  */
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync } from "node:fs"
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs"
 import { DATA_DIR } from "../shared/constants.ts"
 import { makeLogger } from "./log.ts"
 
@@ -63,10 +63,24 @@ export const SAMPLE_EVERY_SEC = 5
  * inside thirteen hours would have taken all six, for the second time in one day.
  *
  * `SAMPLE_MAX_BYTES` is kept and is now the only bound, because disk was the only thing age was
- * ever protecting and the ceiling protects it directly: measured, the whole corpus is 275 MB of
- * 600. The failure mode is therefore "the directory grows until someone looks at it" rather than
- * "it silently destroys evidence", which is the right way round — the same trade the comment on
- * `isRecorderFile` argued for and then only half applied.
+ * ever protecting and the ceiling protects it directly. That paragraph used to end "measured, the
+ * whole corpus is 275 MB of 600. The failure mode is therefore the directory grows until someone
+ * looks at it rather than it silently destroys evidence, which is the right way round."
+ *
+ * **IT CROSSED THE CEILING AND DESTROYED EVIDENCE.** Measured 2026-09-22: 628 MB of 600, and the
+ * two windows that every frame measurement in this repo was taken on —
+ * `js-mtvxb5f4-f81a-t29817812` (game 5639406342, Lillia vs Kayn) and `…-t29817845` (5639409343,
+ * Lillia vs Fiddlesticks) — were already gone, evicted oldest-first by a routine daemon restart.
+ * `discoverBenchable()` no longer returns them in ANY category, not even `rejected`. The stored
+ * outputs in `data/eval/` survive, so the numbers stay quotable; the INPUTS do not, so
+ * `frame-power`, `frame-value`, `frame-cadence` and `model-race` can never be re-run or extended
+ * on the corpus they were measured on. That is the third time this directory has eaten its own
+ * evidence and the first two are recorded above.
+ *
+ * So the ceiling now yields to the evidence rather than the other way round: `citedSampleFiles()`
+ * reads `data/eval/` for the window ids stored runs name, and `pruneSamples` will not evict one.
+ * If the ceiling cannot be met without taking a cited window, NOTHING IS TAKEN and the daemon says
+ * so — a full disk is a problem a person can fix, and a destroyed measurement is not.
  */
 
 /**
@@ -124,6 +138,77 @@ const pathFor = (gameId: string): string => `${SAMPLE_DIR}/${gameId}.ndjson`
  * the right way round for a directory whose whole purpose is keeping measurements re-derivable.
  */
 const isRecorderFile = (name: string): boolean => /-t\d+\.ndjson$/.test(name)
+
+/** Where the cited-window index is cached, so a 1 GB scan does not run on every daemon start. */
+const CITED_INDEX = `${SAMPLE_DIR}/.cited.json`
+
+/**
+ * Window ids look like `js-<session>-t<stamp>` or `g-<stamp>-t<stamp>`, and a stored run names them
+ * verbatim — in `windows`, in an arm's `window` field, in a prose note. One pattern finds all of
+ * them wherever they sit in the JSON, which is the point: the index does not have to know the
+ * shape of every run file ever written, only what a window id looks like.
+ */
+const WINDOW_ID = /\b(?:js-[a-z0-9]+-[a-z0-9]+|g-\d+)-t\d+\b/g
+
+/**
+ * Every sample file that a stored measurement in `data/eval/` names.
+ *
+ * ## Why it is cached, and what the cache key is
+ *
+ * `data/eval/` is 989 MB across 441 files, so scanning it is a real cost to pay on a daemon start
+ * that usually has nothing to do. The cache is keyed on the directory's file COUNT and its newest
+ * mtime: a new run lands as a new file with a new mtime, so the scan re-runs exactly when a
+ * measurement is added and never otherwise. 441 stats is microseconds.
+ *
+ * ## Why it fails OPEN
+ *
+ * If the scan cannot be done — unreadable directory, malformed cache, anything — this returns a
+ * set that protects EVERYTHING it managed to read, and `pruneSamples` treats a failed scan as "do
+ * not evict". The asymmetry is deliberate and it is the whole lesson of this file: an unpruned
+ * directory costs disk, and a wrongly pruned one costs a measurement that cannot be taken again.
+ */
+export const citedSampleFiles = (evalDir = `${DATA_DIR}/eval`): { ids: Set<string>; scanned: number; cached: boolean } => {
+	let names: string[] = []
+	try {
+		names = readdirSync(evalDir).filter(n => n.endsWith(".json") || n.endsWith(".md") || n.endsWith(".txt"))
+	} catch {
+		return { ids: new Set(), scanned: 0, cached: false }
+	}
+
+	let newest = 0
+	for (const n of names) {
+		try {
+			newest = Math.max(newest, statSync(`${evalDir}/${n}`).mtimeMs)
+		} catch {
+			/* a file that vanished cannot be cited */
+		}
+	}
+	const key = `${names.length}:${newest}`
+
+	try {
+		const cached = JSON.parse(readFileSync(CITED_INDEX, "utf8")) as { key?: string; ids?: string[] }
+		if (cached.key === key && Array.isArray(cached.ids))
+			return { ids: new Set(cached.ids), scanned: names.length, cached: true }
+	} catch {
+		/* no usable cache; scan */
+	}
+
+	const ids = new Set<string>()
+	for (const n of names) {
+		try {
+			for (const m of readFileSync(`${evalDir}/${n}`, "utf8").matchAll(WINDOW_ID)) ids.add(m[0])
+		} catch {
+			/* unreadable evidence protects nothing, and must not stop the rest */
+		}
+	}
+	try {
+		mkdirSync(SAMPLE_DIR, { recursive: true })
+		writeFileSync(CITED_INDEX, `${JSON.stringify({ key, ids: [...ids] })}\n`)
+	} catch {
+		/* a cache we cannot write is a scan we repeat, which is only slow */
+	}
+	return { ids, scanned: names.length, cached: false }
+}
 
 /**
  * Record one sample, if enough game time has passed.
@@ -274,7 +359,7 @@ export const readSamples = (gameId: string): { atMs: number; gameTime: number; d
  * writing 600 MB to prove the ordering. The parameter it replaces was `now`, which existed only
  * for the age bound that is gone.
  */
-export const pruneSamples = (maxBytes = SAMPLE_MAX_BYTES): number => {
+export const pruneSamples = (maxBytes = SAMPLE_MAX_BYTES, citedIds?: Set<string>): number => {
 	if (!existsSync(SAMPLE_DIR)) return 0
 	let gone = 0
 	const drop = (p: string): void => {
@@ -300,14 +385,33 @@ export const pruneSamples = (maxBytes = SAMPLE_MAX_BYTES): number => {
 	}
 
 	let total = live.reduce((n, f) => n + f.size, 0)
+	/*
+	 * WHAT A STORED MEASUREMENT NAMES IS NOT EVICTABLE. See `citedSampleFiles` for why this is the
+	 * bound that yields last, and the header for the three corpora this directory has already eaten.
+	 */
+	const cited = citedIds ?? citedSampleFiles().ids
+	const isCited = (path: string): boolean =>
+		cited.has(path.slice(path.lastIndexOf("/") + 1).replace(/\.ndjson$/, ""))
+
 	// Oldest first, so the game he just played is the last thing to go.
 	live.sort((a, b) => a.mtime - b.mtime)
+	let protectedBytes = 0
 	for (const f of live) {
 		if (total <= maxBytes) break
+		if (isCited(f.path)) {
+			protectedBytes += f.size
+			continue
+		}
 		drop(f.path)
 		total -= f.size
 	}
 
 	if (gone > 0) log.info(`pruned ${gone} live-sample file${gone === 1 ? "" : "s"}`)
+	if (total > maxBytes)
+		log.warn(
+			`live-samples is ${(total / 1024 / 1024).toFixed(0)} MB over a ${(maxBytes / 1024 / 1024).toFixed(0)} MB ceiling ` +
+				`and ${(protectedBytes / 1024 / 1024).toFixed(0)} MB of it is cited by a stored measurement in data/eval/. ` +
+				`Nothing cited was deleted. Raise SAMPLE_MAX_BYTES or archive the corpus by hand.`
+		)
 	return gone
 }
