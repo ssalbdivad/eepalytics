@@ -30,6 +30,7 @@ import type { DaemonStatus, ServerDeps } from "../deps.ts"
 import { subscriberCount } from "../events.ts"
 import { bundleFreshnessCached, describeFreshness } from "../bundle-freshness.ts"
 import { describeCoverage, readCoverage } from "../../daemon/coach-coverage.ts"
+import { faultCounts, recentFaults } from "../../daemon/log.ts"
 import type { CoverageSummary } from "../../daemon/coach-coverage.ts"
 import type { BundleFreshness } from "../bundle-freshness.ts"
 import { send } from "../respond.ts"
@@ -59,7 +60,15 @@ interface HealthExtras {
 	sseClients: number
 	bundle: BundleFreshness
 	coachCoverage: CoverageSummary | null
+	faults: { windowMs: number; warn: number; error: number; latest: { atMs: number; level: string; scope: string; msg: string }[] }
 }
+
+/**
+ * How far back the fault counter looks. An hour is long enough to catch the burst that a
+ * crash-loop or a schema surprise produces and short enough that yesterday's fixed problem is not
+ * still being reported as news.
+ */
+const FAULT_WINDOW_MS = 60 * 60 * 1000
 
 /**
  * The coverage sentence, at most once a minute.
@@ -154,6 +163,26 @@ export const createHealthRoute = (deps: ServerDeps): Hono => {
 		const coachCoverage = coverageSummary()
 		if (coachCoverage?.sentence && coachCoverage.quietStreak >= 2) warnings.push(coachCoverage.sentence)
 
+		/*
+		 * WHAT THE DAEMON HAS BEEN SAYING TO ITSELF.
+		 *
+		 * Every defect found on 2026-09-22 was a line the daemon had already written and nobody had
+		 * read: 363 discarded polls, a corpus eviction, a crash on shutdown. The counts come from
+		 * an in-memory ring in `daemon/log.ts` — journald is still the log, and this is only enough
+		 * for a page to say that something is wrong.
+		 *
+		 * ONLY ERRORS ARE PROMOTED TO A WARNING, and the reason is the same 363 polls: warnings are
+		 * routinely dozens deep on a machine talking to a game client that comes and goes, so a
+		 * banner driven by them would be permanently lit and therefore ignored. The warn count is
+		 * still in the payload for anything that wants to show it.
+		 */
+		const faults = { windowMs: FAULT_WINDOW_MS, ...faultCounts(Date.now() - FAULT_WINDOW_MS), latest: recentFaults(5) }
+		if (faults.error > 0)
+			warnings.push(
+				`the daemon logged ${faults.error} error${faults.error === 1 ? "" : "s"} in the last hour ` +
+					`(latest: ${faults.latest.find(f => f.level === "error")?.msg ?? "see journalctl --user -u eepalytics"})`
+			)
+
 		// The daemon records this after each reconcile; falling back to kv means a standalone
 		// server still reports the real last sync instead of null.
 		let lastSyncMs: number | null = status.lastSyncMs ?? null
@@ -181,6 +210,7 @@ export const createHealthRoute = (deps: ServerDeps): Hono => {
 			uptimeMs: status.startedMs === undefined ? null : Date.now() - status.startedMs,
 			bundle,
 			coachCoverage,
+			faults,
 			pid: process.pid,
 			sseClients: subscriberCount(),
 			// Only when the client is unreachable. "The League client is not running" is true
