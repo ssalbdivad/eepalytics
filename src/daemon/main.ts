@@ -22,6 +22,7 @@ import {
 	SERVER_HOST,
 	SERVER_PORT
 } from "../shared/constants.ts"
+import { backupDatabase, describeBackup } from "../db/backup.ts"
 import { closeDb, ensureDataDirs, getDb } from "../db/index.ts"
 import { getSettings, kvGet, kvSet } from "../db/queries.ts"
 import { startServer } from "../server/app.ts"
@@ -57,6 +58,14 @@ const SWEEP_MS = 15_000
 /** Full reconciliation cadence. The WebSocket/poll is a latency optimisation on top of this. */
 const RECONCILE_MS = 5 * 60_000
 const RETENTION_MS = 6 * 60 * 60_000
+
+/**
+ * How often to CONSIDER a database snapshot. The snapshot itself decides whether to take one:
+ * `backupDatabase` skips when nothing has been written since the last copy, so this is the rate at
+ * which the question is asked rather than the rate at which 25 MB is written. Six hours matches the
+ * retention sweep, which is the other piece of housekeeping on this clock.
+ */
+const BACKUP_MS = 6 * 60 * 60_000
 const KV_LAST_SYNC = "lastSyncMs"
 
 /**
@@ -332,6 +341,23 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 	// Not a queued job: `JobKind` has no `retention-prune` member, and a plain timer is the
 	// honest way to say "this is housekeeping, not user-visible work".
 	every(RETENTION_MS, () => runRetentionPrune())
+	/*
+	 * THE LIBRARY, COPIED. `csk.db` is the one file here that cannot be rebuilt — Riot's match
+	 * history answers with a server-chosen window of about twenty games, so most of the 223 in it
+	 * no longer exist upstream. See `db/backup.ts` for why it is VACUUM INTO rather than a file
+	 * copy, and why the copy is opened and read back before it counts as one.
+	 *
+	 * Once at startup as well as on the clock, because a restart is the moment a machine is most
+	 * likely to have just done something frightening, and because a laptop that is only ever up for
+	 * four hours at a time would otherwise never reach the six-hour mark.
+	 */
+	const snapshot = (): void => {
+		const report = backupDatabase()
+		if (!report.ok) log.warn(describeBackup(report))
+		else if (report.outcome === "written") log.info(describeBackup(report))
+	}
+	snapshot()
+	every(BACKUP_MS, snapshot)
 
 	/* ---------------------------------------------------------------- http */
 
