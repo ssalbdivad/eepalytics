@@ -13,6 +13,15 @@
  *  - an item that cites nothing and contains no digit at all is **kept but flagged**
  *    (`no-number-cited`), so the UI can render it as opinion rather than as coaching.
  *
+ * Two checks below reach past the ids into the PROSE, because the ids were never where the
+ * measured defect lived: across 293 stored A/B items the id fence caught one bad metric key and
+ * zero bad moment ids, while three judge models put the share of items whose every FIGURE checks
+ * out at ~65%. `baseline-mismatch` catches a real number attributed to the wrong metric;
+ * `invented-trigger-clock` catches a fix that hangs off a spawn time nothing here measures. Both
+ * WARN and carry their message onto the item rather than dropping it — each one's own comment
+ * carries the precision measurement that decided that, and the generalisation to "every prose
+ * figure" is refuted with its number at `invented-trigger-clock`.
+ *
  * Nothing in here throws. The daemon gets a discriminated result and decides whether to fail
  * the job, and `failedReview()` gives it a persistable row either way — a review that failed
  * should be visible in the UI with its error, not silently missing.
@@ -50,6 +59,7 @@ export type ParseWarningCode =
 	| "empty-item"
 	| "no-number-cited"
 	| "baseline-mismatch"
+	| "invented-trigger-clock"
 	| "no-fix"
 	| "over-budget"
 	| "demoted-low-confidence"
@@ -321,14 +331,27 @@ const stripClocks = (text: string): string => text.replace(/\b\d{1,3}:\d{2}\b/g,
  * The coach is allowed to drop precision — the digest prints "2692.1gold" and writing "2692g" in
  * prose is a faithful quote, not the rounding hard rule 4 bans. What the rule is aimed at is
  * changing the VALUE ("2874" becoming "about 2900"), so the test is whether the figure survives
- * rounding `actual` to however many decimals the coach chose to print.
+ * re-deriving `actual` at however many decimals the coach chose to print.
+ *
+ * TRUNCATION counts as dropping precision, and until 2026-09-22 only ROUNDING did — which meant
+ * the comment above was true of half the decimals and the check disagreed with its own stated
+ * intent on the other half. Replaying the existing fence over the 293 recorded items of
+ * `persona-ab-20260919-{flash,sonnet}.json` (see `data/eval/parse-prose-fence-20260922.json`) it
+ * fired 5 times, 4 of them on items a majority of the three judges also called unsupported and
+ * ONCE on this: the digest printed a 3441.7g baseline and the coach wrote "way under your 3,441g
+ * average", which all three judges passed. `Math.round` turns 3441.7 into 3442, so a faithful
+ * quote with the decimal chopped off was reported to him as a figure matching no baseline in the
+ * digest. Accepting the truncation as well takes the fence to 4 flags, 4 true, ZERO false
+ * positives on that corpus, and it cannot launder a wrong baseline: a quote at d decimals is now
+ * accepted only for an actual inside [quoted, quoted + 10^-d), so "2874" still refuses 2900 and
+ * "8.2" still refuses 9.4 — the two shipped defects hard rule 4 was written for.
  */
 const quotes = (raw: string, actual: number): boolean => {
 	const quoted = Number(raw.replace(/,/g, ""))
 	if (!Number.isFinite(quoted) || !Number.isFinite(actual)) return false
 	const dp = (raw.split(".")[1] ?? "").length
 	const f = 10 ** dp
-	return Math.round(actual * f) / f === quoted
+	return Math.round(actual * f) / f === quoted || Math.trunc(actual * f) / f === quoted
 }
 
 const quotesAny = (raw: string, actuals: readonly number[]): boolean =>
@@ -392,6 +415,145 @@ const baselineWarnings = (
 					:	`"${raw}" is presented as a baseline but matches no metric's baseline in this digest`
 			})
 		}
+	return out
+}
+
+/* ------------------------------------------------- the fix's own trigger */
+
+/**
+ * `invented-trigger-clock` — a clock in the FIX that the digest cannot source.
+ *
+ * ## The defect
+ *
+ * The citation fence above this one only ever policed IDS, and it is very good at that: over the
+ * 293 stored items of the persona A/B it caught one unknown metric key and zero fabricated moment
+ * ids. But three judge models from two vendors agree the share of items whose every FIGURE checks
+ * out against the digest fell from ~82% to ~65% when Part 2 was re-aimed onto the objective
+ * ledger, and the figures they name are in PROSE. AGENTS.md carries "policing prose figures the
+ * way ids are policed" as NOT DONE. This is the part of it the numbers support.
+ *
+ * The class caught here is the one AGENTS.md names by example: *"a fix that invents its own
+ * trigger ('position around grubs by 5:30' where 5:30 is in no file)"*. The item's title and body
+ * are usually fine — the judges say so in as many words ("grubs and 0% elite control check out,
+ * but the 5:30 move-out timestamp is not in the digest") — and then the one sentence he is
+ * actually supposed to ACT on hangs off a spawn timer nothing in this app has ever measured. The
+ * LCU timeline has no spawn table; `dataGaps` says so; the coach wrote one anyway.
+ *
+ * ## Why only the `fix`, and why only a clock
+ *
+ * Both restrictions are measured, not tasteful. Scanning the whole item against the moment clocks
+ * flags 33 items at 52% precision, because `body` legitimately narrates objective times out of the
+ * `## OBJECTIVES` block, and those are not moments. The `fix` is an instruction for the NEXT game,
+ * so a clock in it cannot be a citation of THIS one — with exactly one exception, "keep doing what
+ * you did at 17:57", which the ±5s match below absorbs.
+ *
+ * Generalising from clocks to all prose figures is REFUTED, with its number: "every number in the
+ * item that does not appear anywhere in the rendered digest" flags 57 of the 293 items at 26%
+ * precision (15 true, 42 false), and tightening it to figures over 100 makes it worse, 16%. It
+ * would delete three correct coaching items for every defect it caught. Do not re-draft it; the
+ * arithmetic the coach does legitimately (gold summed across deaths, a share restated as a
+ * percentage, a count of anything) produces figures the digest never printed.
+ *
+ * ## What it costs to get zero false positives
+ *
+ * Whole minutes are EXEMPT and that is the whole difference between a fence and a nuisance. 45 of
+ * the 293 fixes carry a whole-minute clock and almost every one is the persona's own constant —
+ * "from 10:00 to 15:00, don't cross the river" is quoting the window Part 2 defines, not inventing
+ * a timestamp. Dropping the exemption takes the flag count from 6 to 45 at 47% precision (21 true,
+ * 24 false).
+ *
+ * The exemption is not free and the price is stated rather than hidden: it lets through the two
+ * fixes in the corpus that invent a whole-minute spawn ("anchor to top river before 8:00", "the
+ * first Voidgrub spawn ~6:00"). Recall is bought back only by a source for real spawn times, which
+ * no file here has.
+ *
+ * ±5s, not exact. At tolerance 0 the check fires twice more and both are the coach quoting a real
+ * moment one second off — "Herald at 17:57" against moment `…-1078`, "like at 18:56" against
+ * `…-1137` — because the digest prints a moment's clock beside an id that carries its second.
+ * Punishing a one-second rounding is how a check gets ignored.
+ *
+ * ## Measured, on recorded data, before choosing the enforcement
+ *
+ * `data/eval/parse-prose-fence-20260922.json`, which is this rule replayed over all 293 stored
+ * items of `persona-ab-20260919-{flash,sonnet}.json` joined to the three judged files beside them
+ * (claude-opus-5, claude-sonnet-5, gemini-3.6-flash), no model consulted:
+ *
+ * | | |
+ * |---|---|
+ * | items | 293 (152 old arm, 141 new arm), 44 game/arm prompts |
+ * | items a MAJORITY of judges called unsupported | 54 |
+ * | flagged by this rule | **6** |
+ * | of those, majority-unsupported | **6 — precision 100%, Wilson 95% [61%, 100%]** |
+ * | of those, UNANIMOUSLY unsupported | 5 |
+ * | flagged where a judge quotes the clock back as its reason | 5 of 6 |
+ * | flagged in the OLD arm | **0 of 152** |
+ * | recall of majority-unsupported | 6 of 54 (11%) |
+ *
+ * Every flag is in the new arm, so the rule fires exactly on the regression the re-aim introduced
+ * and never once on the 152 items that predate it.
+ *
+ * ## Why this WARNS and does not drop
+ *
+ * Because n is 6. 6-for-6 is a Wilson lower bound of 61%, so up to two in five future flags could
+ * be a correct item, and a false positive here deletes coaching that the judges liked apart from
+ * one clause. The rest of the drop is not reachable from this file anyway: of the 48 unsupported
+ * items this rule does NOT flag, 13 misattribute an objective to the wrong champion (the digest
+ * names ally/enemy, never a player — not decidable from a `CitationAllowlist`) and 12 recite the
+ * persona's OWN population statistics (the 70%/38% window split, "138 games"), which are true
+ * measurements from `what-wins.ts` that the judge simply could not see. Those 12 are a PROMPT
+ * problem, not a parser one, and flagging them here would be the parser calling a true sentence a
+ * fabrication.
+ *
+ * Raise this to a drop when a later corpus puts 20+ flags behind it without a false positive.
+ */
+const FIX_CLOCK_TOLERANCE_SEC = 5
+
+const CLOCK_IN_TEXT = /\b(\d{1,3}):([0-5]\d)\b/g
+
+/**
+ * Seconds carried by the digest's own moment ids.
+ *
+ * `makeMomentId` is `g<gameId>-<kind>-<tSec>[-<suffix>]`, so the clock is the third segment — but
+ * every numeric segment after the leading `g<gameId>` is accepted rather than only the third. A
+ * suffix is a small ordinal (0, 1, 2), which as a "clock" is 0:00–0:02 and can never match
+ * anything a coach writes, so reading one by mistake WIDENS the allowlist instead of narrowing it.
+ * That is the safe direction for a fence whose failure mode is deleting a true sentence, and it
+ * means a change to the id format degrades this check to quiet rather than to wrong.
+ */
+const momentClocksOf = (ids: Iterable<string>): number[] => {
+	const out: number[] = []
+	for (const id of ids)
+		for (const seg of id.split("-").slice(1)) {
+			const n = Number(seg)
+			if (Number.isInteger(n) && n >= 0) out.push(n)
+		}
+	return out
+}
+
+const fixClockWarnings = (item: CoachItem, allowed: CitationAllowlist, itemIndex: number): ParseWarning[] => {
+	const fix = (item.fix ?? "").trim()
+	if (fix === "") return []
+	// A trend review has no moments at all, and a game digest can legitimately have none. With an
+	// empty allowlist every clock is "unsourced", which would fire on every item in the review —
+	// the failure mode of a fence that cannot tell "no evidence" from "contradicted".
+	if (allowed.momentIds.size === 0) return []
+
+	const clocks = momentClocksOf(allowed.momentIds)
+	const out: ParseWarning[] = []
+	const seen = new Set<string>()
+	for (const m of fix.matchAll(CLOCK_IN_TEXT)) {
+		const sec = Number(m[1]) * 60 + Number(m[2])
+		// The persona's own checkpoints — 10:00, 15:00, 20:00 — are quoted, not invented.
+		if (sec % 60 === 0) continue
+		if (clocks.some(c => Math.abs(c - sec) <= FIX_CLOCK_TOLERANCE_SEC)) continue
+		if (seen.has(m[0])) continue
+		seen.add(m[0])
+		out.push({
+			code: "invented-trigger-clock",
+			itemIndex,
+			message: `the fix triggers on ${m[0]}, which is not within ${FIX_CLOCK_TOLERANCE_SEC}s of any moment in this digest — this app has no spawn table, so that clock has no source`
+		})
+	}
 	return out
 }
 
@@ -484,8 +646,10 @@ export const buildReview = (args: BuildReviewArgs): ParseResult<Review> => {
 				message: `"${k}" is not a metric in this digest; citation dropped`
 			})
 
-		const baselineIssues = baselineWarnings(item, metricKeys, args.allowed, i)
-		for (const w of baselineIssues) warnings.push(w)
+		// Both prose checks produce the same kind of thing — a figure the reader will believe and
+		// the app cannot source — so they ride onto the item together and are surfaced together.
+		const proseIssues = [...baselineWarnings(item, metricKeys, args.allowed, i), ...fixClockWarnings(item, args.allowed, i)]
+		for (const w of proseIssues) warnings.push(w)
 
 		const citedSomething = item.momentIds.length + item.metricKeys.length > 0
 		if (citedSomething && momentIds.length + metricKeys.length === 0) {
@@ -542,8 +706,8 @@ export const buildReview = (args: BuildReviewArgs): ParseResult<Review> => {
 			tSec,
 			// Carried onto the item, not just into the parse log: the reader is the one who
 			// needs to know which figure could not be checked.
-			...(baselineIssues.length > 0 ?
-				{ warnings: baselineIssues.map(w => w.message) }
+			...(proseIssues.length > 0 ?
+				{ warnings: proseIssues.map(w => w.message) }
 			:	{})
 		})
 	})
@@ -659,7 +823,12 @@ export const seriousWarnings = (warnings: ParseWarning[]): ParseWarning[] =>
 			w.code === "unknown-metric-key" ||
 			// A misattributed baseline is not a dropped citation, it is a wrong number in prose
 			// the user will read and believe. It belongs in the same tier.
-			w.code === "baseline-mismatch"
+			w.code === "baseline-mismatch" ||
+			// Same tier for the same reason, and for one more: this one sits in the single
+			// sentence he is meant to act on. It is also how the defect becomes VISIBLE — the
+			// daemon logs `seriousWarnings` per review, which is the only reason anyone knew
+			// `baseline-mismatch` was still happening on real games (5645454050, 5645783799).
+			w.code === "invented-trigger-clock"
 	)
 
 const dedupe = (xs: string[]): string[] => [...new Set(xs)]

@@ -176,6 +176,57 @@ describe("baseline-mismatch — false positives from real reviews", () => {
 		const w = withMetrics("versus your usual 52%.", ["eliteControlPct"])
 		strictEqual(w.length, 1, w.join(" | "))
 	})
+
+	/**
+	 * The same intent, on the OTHER half of the decimals — recorded, not invented.
+	 *
+	 * Replaying this fence over the 293 stored items of `persona-ab-20260919-{flash,sonnet}.json`
+	 * it fired 5 times and 4 were items a majority of the three judges also called unsupported.
+	 * The fifth was sonnet/new/5643993063 item 2, judged SUPPORTED by all three: the digest
+	 * printed a 3441.7g baseline and the coach wrote "way under your 3,441g average". `quotes()`
+	 * ROUNDED, so 3441.7 became 3442 and a faithful quote with the decimal chopped off was
+	 * reported to him as a figure matching no baseline. Accepting truncation as well takes the
+	 * fence to 4 flags and zero false positives on that corpus.
+	 */
+	it("accepts a faithful quote that TRUNCATES a decimal, not only one that rounds", () => {
+		const r = buildReview({
+			raw: {
+				headline: "h",
+				encouragement: "e",
+				items: [
+					{
+						title: "Only 3 deaths, 900g handed over — way under your 3,441g average",
+						body: "against your usual 3,441.7g",
+						severity: "info",
+						category: "praise",
+						tSec: 1,
+						momentIds: [],
+						metricKeys: ["goldLostToDeaths"]
+					}
+				],
+				goals: ["g"]
+			},
+			kind: "game",
+			gameId: 1,
+			model: "m",
+			promptHash: "p",
+			allowed: {
+				momentIds: new Set<string>(),
+				metricKeys: new Set(["goldLostToDeaths"]),
+				baselineByMetric: new Map([["goldLostToDeaths", new Set(["3441.7"])]]),
+				baselineFigures: new Set(["3441.7"])
+			}
+		})
+		strictEqual(r.warnings.filter(w => w.code === "baseline-mismatch").length, 0)
+	})
+
+	it("truncation does not launder a baseline that was actually changed", () => {
+		// The two defects hard rule 4 was written for. A quote at d decimals is accepted only for
+		// an actual inside [quoted, quoted + 10^-d), so neither of these gets in through the door
+		// the case above opens.
+		strictEqual(withMetrics("your usual 3150g", ["eliteControlPct"]).length, 1)
+		strictEqual(withMetrics("your usual 47%", ["eliteControlPct"]).length, 1)
+	})
 })
 
 describe("baseline-mismatch — the gap between cue and figure", () => {
