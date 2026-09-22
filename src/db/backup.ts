@@ -71,6 +71,22 @@ export const KEEP_BACKUPS = 7
 /** Do not re-snapshot an unchanged database more often than this. */
 export const MIN_INTERVAL_MS = 6 * 60 * 60 * 1000
 
+/**
+ * A FLOOR THAT HOLDS EVEN WHEN THE DATABASE HAS CHANGED, and it exists because of what running
+ * this feature looked like.
+ *
+ * The daemon snapshots at startup. The WAL is touched by almost anything, so the "nothing has
+ * changed" test is nearly always false on a machine that is up — which meant three restarts inside
+ * two minutes on 2026-09-22 wrote three 25 MB copies (192833, 193008, 193019). Rotation bounds the
+ * disk at seven, so this was never dangerous; it was pointless, and a crash-looping daemon under
+ * `Restart=always` would have spent 150 MB of writes saying the same thing six times.
+ *
+ * Ten minutes is chosen against what a snapshot is FOR: it protects a library that changes when a
+ * game ends, and no two games end ten minutes apart. Nothing a person could lose in that window
+ * exists yet. `force` still overrides it, which is what `pnpm db:backup` passes.
+ */
+export const MIN_AGE_MS = 10 * 60 * 1000
+
 export interface BackupReport {
 	ok: boolean
 	/** `written` | `skipped-unchanged` | `failed` — a state, never an exception. */
@@ -133,6 +149,8 @@ export interface BackupOptions {
 	dir?: string
 	keep?: number
 	minIntervalMs?: number
+	/** Never re-snapshot below this age, changed or not. See `MIN_AGE_MS`. */
+	minAgeMs?: number
 	/** Skip the "has anything changed" test. The CLI passes this; the timer never does. */
 	force?: boolean
 	nowMs?: number
@@ -171,11 +189,12 @@ export const backupDatabase = (opts: BackupOptions = {}): BackupReport => {
 		mkdirSync(dir, { recursive: true })
 		const existing = listBackups(dir)
 		const newest = existing[0]
+		const age = newest ? nowMs - newest.atMs : Number.POSITIVE_INFINITY
 		if (
 			!opts.force &&
 			newest &&
-			nowMs - newest.atMs < (opts.minIntervalMs ?? MIN_INTERVAL_MS) &&
-			dbTouchedMs(dbPath) <= newest.atMs
+			(age < (opts.minAgeMs ?? MIN_AGE_MS) ||
+				(age < (opts.minIntervalMs ?? MIN_INTERVAL_MS) && dbTouchedMs(dbPath) <= newest.atMs))
 		)
 			return {
 				...base,

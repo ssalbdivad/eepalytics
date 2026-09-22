@@ -121,3 +121,40 @@ describe("backupDatabase", () => {
 		database.close()
 	})
 })
+
+describe("the age floor", () => {
+	it("does not re-snapshot a database that changed a minute ago", () => {
+		const { dir, dbPath, database } = makeDb(2)
+		const backups = join(dir, "backups")
+		const first = backupDatabase({ dbPath, dir: backups, database, force: true })
+		assert.equal(first.outcome, "written")
+		// The WAL is touched by almost anything, so "changed" is nearly always true on a live
+		// machine — which is how three daemon restarts wrote three 25 MB copies in two minutes.
+		database.prepare("insert into game (gameId, championName) values (?, ?)").run(77, "Lillia")
+		const second = backupDatabase({ dbPath, dir: backups, database })
+		assert.equal(second.outcome, "skipped-unchanged")
+		assert.equal(listBackups(backups).length, 1)
+		database.close()
+	})
+
+	it("still yields to force, which is what the CLI passes", () => {
+		const { dir, dbPath, database } = makeDb(2)
+		const backups = join(dir, "backups")
+		backupDatabase({ dbPath, dir: backups, database, force: true })
+		const forced = backupDatabase({ dbPath, dir: backups, database, force: true })
+		assert.equal(forced.outcome, "written")
+		database.close()
+	})
+
+	it("snapshots once the floor has passed and something did change", () => {
+		const { dir, dbPath, database } = makeDb(2)
+		const backups = join(dir, "backups")
+		const first = backupDatabase({ dbPath, dir: backups, database, force: true })
+		utimesSync(first.path!, 1_000_000, 1_000_000)
+		database.prepare("insert into game (gameId, championName) values (?, ?)").run(78, "Kayn")
+		const second = backupDatabase({ dbPath, dir: backups, database, minAgeMs: 1 })
+		assert.equal(second.outcome, "written")
+		assert.equal(second.games, 3)
+		database.close()
+	})
+})

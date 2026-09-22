@@ -362,6 +362,42 @@ export class LcuBridge extends EventEmitter implements LcuTransport {
 		})
 
 		child.on("error", err => this.#log(`[lcu-bridge] spawn error: ${err.message}`))
+
+		/*
+		 * A WRITE TO A DEAD BRIDGE ARRIVES AS AN EVENT, NOT AS A THROW, AND IT CRASHED THE DAEMON.
+		 *
+		 * Both `child.stdin.write` call sites in this file are wrapped in try/catch, which reads
+		 * like the case is handled and is not: a stream write to a closed pipe fails
+		 * ASYNCHRONOUSLY, emitting `error` on the stream. With no listener, Node turns that into an
+		 * uncaught exception — and `daemon/main.ts` answers an uncaught exception by shutting down
+		 * and exiting 1.
+		 *
+		 * Measured on this machine 2026-09-22T19:28:29: `systemctl --user restart eepalytics` made
+		 * the outgoing process log `uncaught exception err=Error: write EPIPE` and exit
+		 * 1/FAILURE — one occurrence in seven days of journal, and it happened on the shutdown path
+		 * where the `stop` command is written to a bridge that may already have gone. `Restart=always`
+		 * hid it: the unit came straight back, so the only trace was a FAILURE line nobody reads,
+		 * and the claim in the unit file that the daemon "shuts down cleanly on SIGTERM, lets
+		 * in-flight jobs unwind and hands their leases straight back" was not true of that path.
+		 *
+		 * EPIPE here means the child is gone, which `#onExit` and `#rejectAllPending` already
+		 * handle. So it is logged and dropped. Anything else on these streams is logged too rather
+		 * than swallowed silently, because a bridge that starts failing for a NEW reason should
+		 * leave a line behind.
+		 */
+		for (const [name, stream] of [
+			["stdin", child.stdin],
+			["stdout", child.stdout],
+			["stderr", child.stderr]
+		] as const)
+			stream?.on("error", (err: NodeJS.ErrnoException) =>
+				this.#log(
+					err.code === "EPIPE" ?
+						`[lcu-bridge] ${name} closed under a write; the child is gone`
+					:	`[lcu-bridge] ${name} error: ${err.message}`
+				)
+			)
+
 		child.on("exit", (code, signal) => this.#onExit(child, code, signal))
 
 		await ready
