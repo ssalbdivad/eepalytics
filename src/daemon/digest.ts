@@ -154,52 +154,141 @@ const digestTimeline = (
 }
 
 /**
- * Objectives, with where the user was when each fell.
+ * THE LCU FILLS EVERY FIELD OF EVERY TIMELINE EVENT, so an ABSENT field arrives as `""`, not as
+ * `undefined`. `??` therefore does not fall through it, and that one detail shipped two defects
+ * for as long as this file has existed (both measured below, in `digestObjectives`).
+ *
+ * Verified on the stored blobs: a real `BUILDING_KILL` carries `monsterType: ""`,
+ * `monsterSubType: ""`, `laneType: "BOT_LANE"`, `buildingType: "TOWER_BUILDING"`,
+ * `towerType: "OUTER_TURRET"`, and a real `ELITE_MONSTER_KILL` carries `buildingType: ""`,
+ * `towerType: ""`, `laneType: ""`, `teamId: 0`.
+ */
+const present = (s: string | null | undefined): string | null =>
+	typeof s === "string" && s !== "" ? s : null
+
+/**
+ * Objectives: WHAT fell, WHICH SIDE took it, WHO landed the last hit where the timeline seats a
+ * killer, and where the user was.
  *
  * `userZone` is ALWAYS interpolated — objectives happen at an exact millisecond and frames are
  * a minute apart — so every row carries `confidence: "low"` and the prompt is told why.
+ *
+ * THREE THINGS THIS FUNCTION GOT WRONG UNTIL 2026-09-22, all three measured over the 198 stored
+ * games that have a timeline (1,849 elite kills and 2,945 building kills) and pinned by
+ * `digest.objectives.test.ts` over the 20 committed fixtures:
+ *
+ *  1. **Every building row said nothing about what fell.** `e.monsterType ?? e.buildingType` took
+ *     the empty string, so all 2,945 stored building rows rendered as `- 21:01 —  taken by your
+ *     team`: no building type, and no `towerType` either, since `monsterSubType: ""` swallowed
+ *     that the same way. Rebuilding the 20 most recent ranked jungle games, 299 of their 479
+ *     objective rows (62.4%) were nameless — and Part 2 tells him to "count the monsters and skip
+ *     the towers in that same list", which is not possible when a tower is indistinguishable from
+ *     a grub. `present()` above is the fix.
+ *
+ *     What this did NOT damage, checked rather than assumed: the EARLY ledger. Of the 55 rows at
+ *     or before 10:00 in those 20 games, 55 are elite monsters and 0 are buildings — no turret
+ *     falls that early in his games — so the first ten minutes were always readable and the
+ *     damage was to every row after them.
+ *  2. **An objective nobody took was credited to team 100.** `typeof e.teamId === "number"` is
+ *     TRUE for an elite kill, whose `teamId` is `0`, so the `=== 100 ? 200 : 100` fallback handed
+ *     every killer-less monster to blue side. Measured: 27 of 1,849 elite kills carry
+ *     `killerId: 0`, and they are not scattered — 24 are RIFTHERALD at EXACTLY 19:45 in 24
+ *     different games and 3 are HORDE at EXACTLY 14:45 in one. Nobody took them; the scoreboard
+ *     does not count them either (the fixture test checks the killer-attributed rows against
+ *     `match.teams[].dragonKills|baronKills|riftHeraldKills|hordeKills|towerKills|inhibitorKills`
+ *     and they agree exactly, 20 of 20 games, with these rows excluded). So 24 of the 198 stored
+ *     games (12.1%) carried a `RIFTHERALD ... at 19:45` row credited to a side with nothing
+ *     behind it — to HIS team or to the enemy depending only on which side he happened to be on
+ *     that game. They now carry `takenBy: "unattributed"`: the row stays, because the event
+ *     happened, and it is credited to no one.
+ *  3. **The side came from an assumption rather than from the data.** `killerId <= 5 ? 100 : 200`
+ *     is an ordinal convention, not a lookup. It happens to be right — checked against the
+ *     participant rows on all 4,625 seated kills in the library, 0 mismatches — but seating the
+ *     killer is what yields his CHAMPION, which is the fact the digest was missing. The ordinal
+ *     survives as the fallback for a killerId with no participant row (0 of 4,625 today), because
+ *     losing the NAME is cheaper than losing the SIDE.
+ *
+ * `takenByChampion` is the LAST HIT and cannot be anything else: `assistingParticipantIds` names
+ * players on the opposing team in 23% of assisted takes and is not read here or anywhere. A seat
+ * whose `championName` is empty yields a row with its SIDE and no name rather than a row naming
+ * the empty string — 0 of the 1,988 stored participant rows are in that state, so it is a guard
+ * and not a case.
+ *
+ * `laneType` is available on a building row (`BOT_LANE`) and is deliberately NOT rendered: Part 2
+ * tells him to skip the towers when he counts the ledger, and a lane on a row he is told to skip
+ * is tokens. It is one field away if that changes.
  */
-const digestObjectives = (
+export const digestObjectives = (
 	timeline: LcuTimeline | null,
 	userId: number,
-	teamId: TeamId
+	teamId: TeamId,
+	participants: readonly { participantId: number; teamId: number; championName: string }[]
 ): DigestObjective[] => {
 	if (!timeline) return []
 	const out: DigestObjective[] = []
 	const frames = timeline.frames
+	const seats = new Map(participants.map(p => [p.participantId, p]))
 
-	const nearestZone = (tMs: number): string | null => {
+	/**
+	 * The nearest per-minute position sample, AND HOW FAR IT IS FROM THE OBJECTIVE, signed.
+	 *
+	 * "you were around the dragon pit" on a row is not a statement about the second the drake
+	 * died. Measured over the 463 objective rows of the 20 committed fixtures: the nearest frame
+	 * is AFTER the event on 231 of them (49.9%), median distance 13.8s, p90 26.2s, max 29.8s. Half
+	 * of these positions are therefore where he walked to NEXT, and a coach reading the bare zone
+	 * cannot tell that from where he was standing when it fell — with the median frame-to-frame
+	 * displacement at 4,082 units (~28% of the map), half a minute is most of the way anywhere.
+	 *
+	 * `confidence: "low"` was the whole of the hedge before and it does not carry the direction.
+	 * The gap ships, positive for a sample taken after the objective, and the prompt renders it in
+	 * the row, so the hedge is proportional to the actual staleness instead of a constant.
+	 */
+	const nearestSample = (tMs: number): { zone: string; gapSec: number } | null => {
 		let best: { d: number; zone: string } | null = null
 		for (const frame of frames) {
 			const pf = frame.participantFrames[String(userId)]
 			if (!pf) continue
-			const d = Math.abs(frame.timestamp - tMs)
-			if (!best || d < best.d) best = { d, zone: zoneOf(pf.position, teamId) }
+			const d = frame.timestamp - tMs
+			if (!best || Math.abs(d) < Math.abs(best.d)) best = { d, zone: zoneOf(pf.position, teamId) }
 		}
-		return best?.zone ?? null
+		return best === null ? null : { zone: best.zone, gapSec: Math.round(best.d / 1000) }
 	}
 
 	for (const frame of frames)
 		for (const event of frame.events ?? []) {
 			const e = event as LcuEvent
 			if (e.type !== "ELITE_MONSTER_KILL" && e.type !== "BUILDING_KILL") continue
-			// `killerId` is reliable; the assist list is not. Ownership comes from the killer,
-			// except BUILDING_KILL where `teamId` is the team that LOST the building.
+
+			const sample = nearestSample(e.timestamp)
+			const killerId = typeof e.killerId === "number" && e.killerId > 0 ? e.killerId : null
+			const seat = killerId === null ? null : (seats.get(killerId) ?? null)
+			/*
+			 * Side, in order of how much it rests on: the killer's own participant row, then the
+			 * ordinal convention for a killer we cannot seat, then — buildings only — the team
+			 * that LOST it, since `BUILDING_KILL.teamId` is the loser and a turret can fall to a
+			 * minion wave (142 of 2,945 stored building kills carry `killerId: 0`).
+			 *
+			 * An elite monster with no killer reaches none of those and is credited to NOBODY.
+			 */
 			const killerTeam =
-				typeof e.killerId === "number" && e.killerId > 0 ?
-					e.killerId <= 5 ? 100
-					:	200
-				: typeof e.teamId === "number" ?
+				seat ? seat.teamId
+				: killerId !== null ? (killerId <= 5 ? 100 : 200)
+				: e.type === "BUILDING_KILL" && (e.teamId === 100 || e.teamId === 200) ?
 					e.teamId === 100 ? 200
 					:	100
 				:	null
-			if (killerTeam === null) continue
+
 			out.push({
 				tSec: Math.round(e.timestamp / 1000),
-				kind: e.monsterType ?? e.buildingType ?? e.type,
-				subType: e.monsterSubType ?? e.towerType ?? null,
-				takenBy: killerTeam === teamId ? "ally" : "enemy",
-				userZone: nearestZone(e.timestamp),
+				kind: present(e.monsterType) ?? present(e.buildingType) ?? e.type,
+				subType: present(e.monsterSubType) ?? present(e.towerType),
+				takenBy:
+					killerTeam === null ? "unattributed"
+					: killerTeam === teamId ? "ally"
+					: "enemy",
+				takenByChampion: seat === null ? null : present(seat.championName),
+				userZone: sample?.zone ?? null,
+				userZoneGapSec: sample?.gapSec ?? null,
 				confidence: "low"
 			})
 		}
@@ -256,7 +345,24 @@ const restateBaselines = (
 		}
 	})
 
-/** The user's own rolling history, as sentences the coach can quote verbatim. */
+/**
+ * The user's own rolling history, as sentences the coach can quote verbatim.
+ *
+ * EACH LINE NAMES ITS METRIC KEY, and that is a fabrication fence rather than a label. The two
+ * `baseline-mismatch` warnings on real reviews this month are both the same shape — game
+ * 5645783799, `"86.9" is cs@14's baseline, but this item cites csDelta@14, goldDelta@14`, and
+ * game 5645454050, `"130.7" is cs@20's baseline, but this item cites csDelta@20, csPerMin` — a
+ * REAL average quoted under the wrong metric's citation. Both figures appear in this section as
+ * well as on their metric's own line, and until 2026-09-22 this section identified a line only by
+ * its human LABEL ("CS @14"), which is one guess away from `csDelta@14`'s label ("CS diff vs
+ * opponent @14") and carries no key at all. The key now travels with the figure. Whether that
+ * changes the warning rate is NOT measured — it would take an A/B on the model — so this is a
+ * mechanical repair to a join the coach was being asked to make by eye, and nothing more.
+ *
+ * The key goes at the END. `digest.baseline.test.ts` joins a prose line to its metric by
+ * `startsWith(label + ":")`, and a check that proves the three renderings of one average agree is
+ * worth more than a tidier line.
+ */
 export const baselineProse = (baseline: Baseline, metrics: readonly Metric[]): string[] => {
 	const out: string[] = []
 	for (const metric of metrics) {
@@ -265,7 +371,7 @@ export const baselineProse = (baseline: Baseline, metrics: readonly Metric[]): s
 		out.push(
 			`${metric.label}: this game ${round(metric.value)}${metric.unit}, ` +
 				`your ${stat.n}-game median ${round(stat.median)}${metric.unit} ` +
-				`(mean ${round(stat.mean)}, sd ${round(stat.sd)}).`
+				`(mean ${round(stat.mean)}, sd ${round(stat.sd)}). [key: ${metric.key}]`
 		)
 	}
 	return out
@@ -362,7 +468,7 @@ export const buildGameDigest = (input: BuildDigestInput): GameDigest => {
 			:	["No baseline yet — this is one of the first games stored, so nothing is banded."],
 		championContext,
 		hasFrames: input.hasFrames ?? false,
-		objectives: digestObjectives(timeline, game.participantId, teamId),
+		objectives: digestObjectives(timeline, game.participantId, teamId, participants),
 		timeline: digestTimeline(timeline, game.participantId, opponent?.participantId ?? null, teamId),
 		notes
 	}

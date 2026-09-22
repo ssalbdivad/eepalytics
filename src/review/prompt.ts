@@ -605,39 +605,121 @@ ${
 }`)
 
 	/*
-	 * NO ROW HERE NAMES A PLAYER, and saying so is the difference between a gap and a fabrication.
+	 * THE ROWS NAME THE LAST HIT NOW, and the header is what stops that becoming a claim about who
+	 * was standing there.
 	 *
-	 * Measured: `scripts/persona-ab.ts` over 30 of his own games found the re-aimed prompt's
-	 * on-target items 53% [40-65] unsupported against 19% [12-29] for its own off-target ones, and
-	 * the judge's reasons name this list. On game 5644514466 a review said "Zero early objectives by
-	 * 10:00 while Cho'Gath took drake and 3 grubs" where the row says `8:17 — HORDE taken by the
-	 * enemy` and names nobody at all. Part 2 already says objective credit is KILLER-ONLY and to
-	 * phrase it as his TEAM; what it never said is that the enemy row carries no name, so the model
-	 * filled the gap with the counterpart it did know about — which is a claim about who was
-	 * standing there, invented.
+	 * The history, because the fence below is the SECOND attempt and the first one is the reason
+	 * the second has to be exact. `scripts/persona-ab.ts` over 30 of his own games found the
+	 * re-aimed prompt's on-target items 53% [40-65] unsupported against 19% [12-29] for its own
+	 * off-target ones, and the judge's reasons named this list. On game 5644514466 a review said
+	 * "Zero early objectives by 10:00 while Cho'Gath took drake and 3 grubs" where the row read
+	 * `8:17 — HORDE taken by the enemy` and named nobody at all. The cheap fix, shipped 2026-09-19,
+	 * was a line saying no row names a player. That closed the fabrication by removing the fact.
 	 *
-	 * This is a statement about the FEED'S OWN PROPERTIES, which is the only editorial content any
-	 * payload in this app is allowed to carry. It does not tell the model what to say about an
-	 * objective.
+	 * The fact is now HERE, from the same source `review/pack.ts` uses on the frame path:
+	 * `ELITE_MONSTER_KILL.killerId` resolved through the scoreboard. THE VALUE OF THE CHANGE IS
+	 * THAT RATIO, so it is measured twice and both counts are re-derivable.
 	 *
-	 * The better fix is to CARRY the killer where the timeline knows it — `killerId` is the reliable
-	 * half of `ELITE_MONSTER_KILL` (its `assistingParticipantIds` name the other team 23% of the
-	 * time) and `review/pack.ts` already prints `takenByChampion` on the frame path. That is a
-	 * change to the digest's own shape and its schema, and it is NOT DONE.
+	 *   the 20 committed fixtures, by `src/daemon/digest.objectives.test.ts`: 446 of 463 rows name
+	 *   a champion — 180 of 182 elite (98.9%) and 266 of 281 buildings (94.7%);
+	 *
+	 *   the 20 most recent ranked jungle games rebuilt out of the live library: 177 of 180 elite
+	 *   (98.3%) and 280 of 299 buildings (93.6%), 457 of 479 rows overall.
+	 *
+	 * Library-wide, 1,822 of 1,849 stored elite kills carry a seated killer (98.5%). Before this
+	 * change the number was ZERO in all three columns — the digest simply did not carry the field.
+	 *
+	 * WHAT THE HEADER HAS TO SAY, and why each clause is in it:
+	 *
+	 *  - a champion on a row is the LAST HIT. Credit is killer-only — Part 2 already says so and
+	 *    tells him to phrase it as his TEAM — and the failure this whole section exists to prevent
+	 *    is "you let Kayn take it", which is a claim about who was at the pit. The assist list that
+	 *    would say who else showed up names the other team in 23% of assisted takes and is not read
+	 *    by anything in this app, so the honest statement is that the row knows one player and the
+	 *    data cannot produce a second.
+	 *  - a row with NO name is not a row about a shy player: either no killer was recorded, or the
+	 *    building fell to a minion wave. Saying which is the difference between a gap and a hole.
+	 *
+	 * This is a statement about the DATA'S OWN PROPERTIES, which is the only editorial content any
+	 * payload in this app is allowed to carry. It does not tell the model what to conclude from an
+	 * objective, who to blame for one, or which ones matter.
 	 */
-	if (d.objectives && d.objectives.length > 0)
-		sections.push(`## OBJECTIVES
-No row below names a player. The timeline says WHICH TEAM took each one and this digest carries no
-killer, so "the enemy took it" is the whole of what is known — naming a champion is inventing one.
+	if (d.objectives && d.objectives.length > 0) {
+		/*
+		 * EACH PARAGRAPH SHIPS ONLY IF THE ROWS BELOW IT CONTAIN THE THING IT DESCRIBES.
+		 *
+		 * That is not tidiness, it is the fence keeping itself honest. The line this block
+		 * replaced — "no row below names a player" — was true on the day it was written and became
+		 * false the moment the rows gained a name; a fence describing rows that are not there reads
+		 * as licence to ignore the ones that are. The case is not hypothetical: every digest
+		 * archived before 2026-09-22 (`BLOB_REVIEW_DIGEST`, the bytes an audit of an old review
+		 * reads) is `schemaVersion: 2` and carries no `takenByChampion` on any row, so anything
+		 * that renders one must not hand it a paragraph about champion names it never prints.
+		 * `prompt.objectives.test.ts` asserts both directions.
+		 */
+		const anyZone = d.objectives.some(o => o.userZone)
+		const anyNamed = d.objectives.some(o => o.takenByChampion)
+		const anyUnattributed = d.objectives.some(o => o.takenBy === "unattributed")
+		const anyUncredited = d.objectives.some(o => o.takenBy !== "unattributed" && !o.takenByChampion)
+		sections.push(
+			[
+				`## OBJECTIVES`,
+				`Every row is one \`ELITE_MONSTER_KILL\` or \`BUILDING_KILL\` the timeline recorded, in order.
+\`taken by your team\` / \`taken by the enemy\` is the side the KILLER was on: it says which team got
+the credit, never that he personally was or was not standing there.${
+					anyZone ?
+						`
 
-${d.objectives
-	.map(
-		o =>
-			`- ${fmtClock(o.tSec)} — ${o.kind}${o.subType ? ` (${o.subType})` : ""} taken by ${
-				o.takenBy === "ally" ? "your team" : "the enemy"
-			}${o.userZone ? `; you were around ${o.userZone}` : ""}${o.confidence ? ` [confidence ${o.confidence}]` : ""}`
-	)
-	.join("\n")}`)
+**\`you were around X\` is the nearest per-minute position sample, and the row says how far away
+that sample is and on which side.** \`sampled 21s later\` is where he walked to NEXT — it is not
+where he was standing when the objective fell, and about half of these samples land after the
+event. Hedge in proportion to the number in the row: a few seconds is nearly the moment, twenty is
+a different place.`
+					:	""
+				}`,
+				anyNamed ?
+					`**A champion on a row is the LAST HIT and nothing else.** It is the killer the timeline
+recorded, resolved through the scoreboard. It does not say he was the only one there, that he set
+it up, or that anyone else was absent — the assist list that would name who else showed up puts
+players from the OTHER team in 23% of assisted takes, so it is not read at all and no row here can
+ever tell you who else was at the pit. "Their jungler last-hit the drake at 8:17" is supported.
+"Their jungler took the drake uncontested" is not, and neither is "you let him have it".`
+				:	null,
+				anyUnattributed ?
+					`A row reading \`NO KILLER RECORDED\` had none: the timeline logged the objective with
+\`killerId: 0\`, and the end-of-game scoreboard does not credit it to either side either. It counts
+for nobody.`
+				:	null,
+				anyUncredited ?
+					`\`no champion credited\` means the timeline recorded which side it fell to and no player —
+a turret taken by a minion wave looks exactly like this.`
+				:	null,
+				d.objectives
+					.map(
+						o =>
+							`- ${fmtClock(o.tSec)} — ${o.kind}${o.subType ? ` (${o.subType})` : ""} ${
+								o.takenBy === "unattributed" ?
+									"— NO KILLER RECORDED"
+								:	`taken by ${o.takenBy === "ally" ? "your team" : "the enemy"}${
+										o.takenByChampion ? `, last hit by ${o.takenByChampion}` : ", no champion credited"
+									}`
+							}${
+								o.userZone ?
+									`; you were around ${o.userZone}${
+										typeof o.userZoneGapSec !== "number" || o.userZoneGapSec === 0 ?
+											""
+										: o.userZoneGapSec > 0 ? ` (sampled ${o.userZoneGapSec}s later)`
+										: ` (sampled ${-o.userZoneGapSec}s earlier)`
+									}`
+								:	""
+							}${o.confidence ? ` [confidence ${o.confidence}]` : ""}`
+					)
+					.join("\n")
+			]
+				.filter(s => s !== null)
+				.join("\n\n")
+		)
+	}
 
 	if (d.timeline && d.timeline.length > 0)
 		sections.push(`## PER-MINUTE (differences are against the enemy in the same role; blank means not computable)
@@ -651,11 +733,29 @@ ${d.timeline
 	)
 	.join("\n")}`)
 
+	/*
+	 * THE KEY AT THE END OF EACH LINE IS LOAD-BEARING, and the instruction under the heading is
+	 * what makes it useful.
+	 *
+	 * Both `baseline-mismatch` warnings on real reviews this month (games 5645783799 and
+	 * 5645454050) are a REAL average quoted under the WRONG metric's citation — `cs@14`'s 86.9
+	 * cited as `csDelta@14`, `cs@20`'s 130.7 cited as `csDelta@20`. The figure is in this section
+	 * as well as on its metric's line, and this section used to identify a line by its human label
+	 * alone: on game 5645783799's own digest, "CS @14" and "CS diff vs opponent @14" are the third
+	 * and sixth lines of this list. `digest.ts` appends `[key: <metric key>]`; this says what to do
+	 * with it.
+	 *
+	 * NOT MEASURED against the warning rate — that needs an A/B on the model, and the fence that
+	 * counts the warnings lives in `parse.ts`, which is another agent's this week.
+	 */
 	if (d.baseline && d.baseline.length > 0)
 		sections.push(`## YOUR OWN BASELINE (this is what "behind" means — never a rank average, never an invented number)
 
 These restate the SAME averages printed on the metric lines above, and add the median. Each line
-names its own metric — an average belongs to the metric on its line and to no other.
+ends in the metric key it belongs to — an average belongs to the metric on its line and to no
+other, so **if you quote a figure from a line here, put that line's key in the item's
+\`metricKeys\`**. Quoting one metric's average in an item that cites a neighbouring metric is the
+error this section is laid out to prevent.
 
 ${bullets(d.baseline)}`)
 

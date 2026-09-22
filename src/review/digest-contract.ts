@@ -24,8 +24,15 @@
 import { type } from "arktype"
 import { Confidence, Metric, Moment, Role, TrendSeries } from "../shared/schema/domain.ts"
 
-/** Bumped when the digest's shape changes in a way the prompt renders differently. */
-export const DIGEST_SCHEMA_VERSION = 2
+/**
+ * Bumped when the digest's shape changes in a way the prompt renders differently.
+ *
+ * 3 (2026-09-22): objective rows carry `takenByChampion` and a third `takenBy` state, and a
+ * building row finally says which building it was. Nothing compares this number — it is stamped
+ * onto the sent digest and archived beside the review — so it is a record of which shape a stored
+ * review was written against, which is exactly what an audit of an old review needs.
+ */
+export const DIGEST_SCHEMA_VERSION = 3
 
 /**
  * One player in the game, stripped of identity. `team` is relative to the user, so the
@@ -60,14 +67,39 @@ export const DigestTimelineRow = type({
 })
 export type DigestTimelineRow = typeof DigestTimelineRow.infer
 
-/** An objective the game recorded, with who took it and where the user was. */
+/**
+ * An objective the game recorded, with who took it and where the user was.
+ *
+ * `takenBy` has a THIRD state and it is not decoration. An `ELITE_MONSTER_KILL` can arrive with
+ * `killerId: 0` — 27 of the 1,849 in the stored library, 24 of them RIFTHERALD at exactly 19:45
+ * and 3 HORDE at exactly 14:45 — and until 2026-09-22 those were silently credited to team 100.
+ * A row nobody took is a fact about the game and belongs in the list; crediting it to a side is
+ * an invention, so it is `"unattributed"` and the prompt says so in the row. See
+ * `digestObjectives` in `src/daemon/digest.ts` for the measurement.
+ */
 export const DigestObjective = type({
 	tSec: "number",
 	kind: "string",
 	"subType?": "string|null",
-	takenBy: "'ally'|'enemy'",
+	takenBy: "'ally'|'enemy'|'unattributed'",
+	/**
+	 * The champion that landed the LAST HIT, where the timeline seated a killer — `null` where it
+	 * did not, and never anything else. This is NOT "who was there": the assist list that would
+	 * say who else showed up names players on the OTHER team in 23% of assisted takes and is not
+	 * read anywhere in this app. A name here is one participant id resolved through the
+	 * scoreboard, nothing more, and the prompt spells that out where it renders it.
+	 */
+	"takenByChampion?": "string|null",
 	/** Prose zone the user occupied at the nearest frame. Interpolated — hedge it. */
 	"userZone?": "string|null",
+	/**
+	 * How far that frame is from the objective, in seconds, SIGNED: positive means the position
+	 * was sampled AFTER the objective fell. It is after it on 49.9% of the 463 objective rows in
+	 * the committed fixtures (median 13.8s, max 29.8s), so on half the rows `userZone` is where he
+	 * went next. The row renders the gap rather than leaving `confidence: "low"` to stand for
+	 * every staleness from one second to thirty.
+	 */
+	"userZoneGapSec?": "number|null",
 	"confidence?": Confidence
 })
 export type DigestObjective = typeof DigestObjective.infer
