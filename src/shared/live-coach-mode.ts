@@ -337,6 +337,114 @@ block disagree, the block wins.
  * same 58 socket lines score 67% useful to a judge holding the block and 34% to the same judge
  * also holding the screenshot, so any single figure for this prompt is a figure about a judge as
  * much as about the prompt.
+ *
+ * ## The re-aim, 2026-09-22: what his own 138 games say, in the persona
+ *
+ * ### The fault, from his own machine
+ *
+ * The POST-GAME persona (Part 2 of AGENTS.md) was re-aimed in 2026-09-19 at the two things
+ * `scripts/what-wins.ts` measured to separate his wins from his losses, and the re-aim was SCORED:
+ * on-target items 6% [3-13] to 38% [29-48], paired 25 of 30 games against 6, discordant 19-0,
+ * McNemar p 0.0000038 — re-derived this session with `scripts/persona-ab.ts --read
+ * data/eval/persona-ab-20260919-flash.json`, which consults no model. The same reprint shows items
+ * mentioning unspent gold falling 13% [7-21] to 3% [1-9] on that path, and those two intervals
+ * OVERLAP, so it is directional and is not a result. This prompt — the LIVE persona, the flagship —
+ * got none of it, and the cost is visible in the one recent game the coach actually ran through.
+ *
+ * Game 5645995390, 2026-09-20, nine spoken lines, re-read this session out of
+ * `data/logs/live-transcript.jsonl`. TWO of the nine are the gold in his pocket: *"You have nearly
+ * two thousand gold in your pocket, so take a quick recall…"* at 12:31 and *"You have over two
+ * thousand gold, so recall now, spend it…"* at 19:18. That is 22% of everything it said to him that
+ * game spent on a figure his own library measures as pointing the OTHER WAY — re-derived here from
+ * `data/eval/what-wins-20260918.json`, he carries a mean 1023 gold unspent in the 69 games he WINS
+ * against 778 in the 69 he loses, AUC 0.825 [0.749-0.894], one of the largest effects in the table
+ * and with the sign of a thing that HAPPENS TO WINNERS rather than of a defect. Telling him to go
+ * spend it costs him ten to thirty seconds of a jungler's tempo for a symptom that is not one.
+ *
+ * ### What was added, and the line it had to stay on the right side of
+ *
+ * Nothing here may tell the model WHAT to say or WHEN. The empty ranked list is the gag this whole
+ * architecture exists to remove, and re-introducing it as prose would be strictly worse than the
+ * fence, because prose fails no test. So the section is written in the register of the FIELD AUDIT
+ * fifteen paragraphs above it — graded properties with their sample sizes attached — except that it
+ * grades the PLAYER instead of the feed, and it says in the prompt itself that it is neither a
+ * subject to cover nor a cadence to keep. The three things it states: the two separators as split
+ * win rates (no death in 10:00-15:00, 37 won of 53 against 32 of 85; ahead on the early objective
+ * ledger at 10:00, 41 of 64 against 28 of 74), the early null (twelve of his own first-ten-minute
+ * numbers, all between AUC 0.44 and 0.58, none clearing the correction), and the gold reversal.
+ *
+ * Every one of those figures is RE-DERIVED from the stored run by `live-coach-mode.test.ts` and
+ * asserted to appear verbatim in the text. That test caught two figures this section was about to
+ * copy out of prose: AGENTS.md says "136 of them Lillia" where the stored features hold 134 (134
+ * Lillia, 3 Gwen, 1 Brand), and "78 candidate features" where the run holds 77 rows. Both would have
+ * shipped to a coach that is told to absorb this section and never attribute it.
+ *
+ * The win rates are spelled out as WORDS — "seventy percent", not "70%" — and the test asserts the
+ * digit forms are absent. Every digit put in front of this model is a digit it can say back, and a
+ * live coach reciting his own career win rate at him mid-fight is the purest form of the thing he
+ * switched the old coach off for. The counts stay as digits because they are what makes the claim
+ * checkable in the file.
+ *
+ * ### What was REFUTED before it was written, and must not be re-drafted
+ *
+ * Four shapes were considered and three are the fence wearing a new coat:
+ *
+ *   1. **A ranked list of subjects** ("first the death window, then the objective ledger, then…").
+ *      This is `LIST_HINT` with the ranker replaced by an author, and it is the measured failure:
+ *      fourteen lines in 576 turns.
+ *   2. **A prohibition on the gold subject** ("never tell him to recall because of his gold").
+ *      Measured elsewhere in this repo and refused on principle here: FENCED+SEE showed that adding
+ *      a paragraph of permission or prohibition to a prompt moves nothing while the structure is
+ *      unchanged, and a ban would also suppress the honest version of the line — a Rabadon's he can
+ *      afford before a fight that is about to happen is a real thing to say.
+ *   3. **Putting the same sentences in the PAYLOAD**, so they arrive on every turn. That is the
+ *      harness deciding what the turn is about, it re-bills the bytes on every turn instead of once
+ *      per cached system block, and `live-coach-mode.test.ts` asserts the block never carries them.
+ *   4. **What shipped:** the same facts as a property of the player, once, in the system
+ *      instruction, with the decision left where it was.
+ *
+ * ### AND IT IS A MEASURED NULL. Nobody may call it an improvement.
+ *
+ * A/B'd the same day over **30 of his own recorded games**, `level: "commentary"`, `--stride 2`,
+ * one `buildStream` per game replayed by BOTH arms so the ranked list, the schedule and the raw
+ * samples are the same objects, each arm with its own memory, and the system prompt the ONLY
+ * difference — the control is built by deleting this section back out of the candidate, and its
+ * `TRUSTED_PROMPT` is byte-identical to `git show HEAD:` (20,565 chars, checked). Coach
+ * `claude-sonnet-5`, 886 lines, 0 errors, 0 PASSes. Fabrication scored mechanically by `scoreLine`;
+ * `useful` and the line's subject graded blind by `claude-opus-5` with the labels stripped. Working
+ * and commands in `data/eval/live-persona-ab-20260922.md`; rows in `…-20260922.json`, `…-b.json`
+ * and `…-judged.json`.
+ *
+ *     axis                                  shipped            aimed
+ *     on target (ledger <10:00, or 10-15)   23% [19-27] 102    23% [19-27] 101
+ *     unspent gold, blind judge             2% [1-3] 7         1% [0-3] 5
+ *     gold AND go-spend-it, mechanical      1% [0-3] 5         1% [0-2] 4
+ *     useful, blind                         37% [33-42] 163    38% [34-43] 169
+ *     fabricated, mechanical                2% [1-4] 10        3% [2-5] 13
+ *
+ * Every interval overlaps almost entirely, and paired over the 30 games the sign tests are 9-10,
+ * 1-2, 13-12 and 9-5 (all p >= 0.42). The one column that leans is fabrication and it leans AGAINST
+ * the change; it is inside noise and is written here because a direction that disfavours the change
+ * is the one a later reader would accuse this comment of hiding.
+ *
+ * **The instrument could not have seen what it was pointed at, and that is the finding.** On the
+ * turn path with Sonnet the SHIPPED prompt already leads on an early objective on 92% [85-95]
+ * (119/130) of its lines before 10:00 and names gold at all on 3% [2-5] — a ceiling on one axis and
+ * a floor on the other. The failure this section was written against ran at 22% of a real socket
+ * game and runs at 2% here. The shipped coach is a Gemini Live SOCKET at `big-calls` behind a
+ * 45-second floor, which AGENTS.md is explicit must not be scored in the same column as a turn; the
+ * Gemini key has answered 429 since 2026-09-18, so that arm could not be run at all.
+ *
+ * It did reproduce ONCE, on the game it came from, and that is an anecdote rather than a result:
+ * on 5645995390 the control arm said at 12:39 *"Kayn's dead and you've got two thousand gold
+ * sitting there — recall now, shop…"*, eight seconds of game clock from what the real socket coach
+ * said at 12:31, from a different vendor's model, on the same payload. The candidate said nothing
+ * of the kind on that game.
+ *
+ * So this is kept on exactly the grounds `TRUSTED_CLOSE` is kept on: every sentence in it is true,
+ * the prompt without it was silent about something its own owner's 138 games measure, and the run
+ * says it costs nothing measurable. If someone can run the socket again, that is the arm that would
+ * settle it.
  */
 export const TRUSTED_PROMPT = `You are Coach Lillia, sitting next to a friend while he plays League of Legends. Not reviewing a
 replay — watching it happen, talking to him out loud, while his hands are busy.
@@ -608,6 +716,56 @@ When the payload carries what he usually has at this minute, that is a mean over
 games — an average, never a median. It encodes his own mistakes, so at its best it tells him he is
 being unusually himself. The CS checkpoints arrive as the game passes them, because an average for
 10:00 means nothing at 4:00.
+
+## What his own 138 games say about which of these numbers moved the result
+
+The averages above are what is NORMAL for him. This is a different measurement answering a different
+question: across every ranked game in his library with a full post-game timeline and at least fifteen
+minutes on the clock — 138 games, 69 won and 69 lost, 134 of them on Lillia — which of the things
+the timeline records actually told the two piles apart. Effect sizes carry bootstrap intervals,
+seventy-seven candidates were tested so the p-values are corrected for that, and the thirty-four
+rows that are knowable at a checkpoint were re-run inside a control for his team's gold at 10:00,
+which is what tells a thing he DOES apart from a thing that HAPPENS to him while he is already
+winning.
+
+These are graded properties of the PLAYER, with their sample sizes attached, exactly as the section
+further up grades the fields of the feed. None of it is a fact about the game in front of you — it
+is a fact about a pile of games that are already over — and none of it is a subject to cover or a
+cadence to keep. What is worth one sentence at this instant is yours to decide, the same as it was
+before you read this.
+
+**Two things he controls survive that control.**
+
+- **A death between 10:00 and 15:00.** Games where he took none: 37 won of 53, seventy percent.
+  Games where he took one or more: 32 won of 85, thirty-eight percent. Those two intervals do not
+  overlap, and of the fifteen figures HE owns that went through the scoreboard control it is the
+  only one that survives it.
+- **The early objective ledger — drakes, grubs and heralds by 10:00.** Ahead on it: 41 won of 64,
+  sixty-four percent. Level or behind: 28 won of 74, thirty-eight percent. Credit there belongs to
+  whoever landed the killing blow, so it says his TEAM took them and never that he was the one
+  standing in the pit.
+
+Both of those are still open while you are watching and both are settled by the time anyone reads a
+review of the game. A reviewer can say a drake fell at 9:22; the same three facts forty seconds
+earlier, with where he is standing already joined to them, is the thing only this channel can say.
+
+**Nothing he personally does before 10:00 separates his wins from his losses.** Not his farm at
+10:00, not his gold at 10:00, not his farm rate or his experience rate over those ten minutes, not
+his deaths by 10:00, not his first back, not his gap on the enemy jungler in farm, gold, experience
+or level, and neither how much of those ten minutes he spent in the enemy half nor how many of his
+camps came out of it: all twelve land between 0.44 and 0.58 on a scale where 0.50 is a coin flip,
+and not one of them clears the correction. He is CONSISTENT early — there is not enough spread in
+his own first ten minutes for it to correlate with anything at all. His TEAM's gold at 10:00
+does separate, at 0.74, and his own contribution to that number is nil.
+
+**One figure in this payload means close to the opposite of what its name suggests, and it is the
+gold sitting in his pocket.** He carries MORE of it in the games he WINS — 1023 gold on average
+against 778 — which is one of the largest effects in the entire table and points the wrong way for a
+defect. Read it as a consequence: a winning game earns faster, so whatever instant you sample finds
+more in hand. For THIS player a full wallet is not evidence that something has gone wrong, and a
+sentence that treats it as one is making a claim his own hundred and thirty-eight games contradict.
+The gold is real, it is his, and what he can buy with it is a fair thing to think about; what it is
+not is a symptom.
 
 ## Your read is yours, and it should sound like one
 

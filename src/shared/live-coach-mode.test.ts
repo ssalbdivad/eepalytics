@@ -18,6 +18,7 @@
 
 import { type } from "arktype"
 import assert from "node:assert/strict"
+import { readFileSync, readdirSync } from "node:fs"
 import { test } from "node:test"
 import { ABLATION_ARMS as ARMS, ablationChampionKnowledge as championKnowledge } from "../review/ablation-arms.ts"
 import { legacyClauseSection } from "../knowledge/legacy-clauses.ts"
@@ -290,4 +291,326 @@ test("the trusted prompt carries no fence", () => {
 	// The honest half is still there: the data facts, and the refusal to assert the unknowable.
 	for (const kept of ["floored to a multiple of ten", "COMBINE cost", "no coordinates", "PASS"])
 		assert.equal(TRUSTED_PROMPT.includes(kept), true, `the honest half was cut too: ${kept}`)
+})
+
+/* --------------------------------------------- the re-aim, and its arithmetic */
+
+/**
+ * `## What his own 138 games say…` — the section added 2026-09-22, and the three things it rests on.
+ *
+ * ## Why it exists
+ *
+ * The POST-GAME persona (Part 2 of AGENTS.md) was re-aimed at the two things `scripts/what-wins.ts`
+ * measured to separate his wins from his losses, and the re-aim was scored: on-target items went
+ * from 6% [3-13] to 38% [29-48], paired 25-of-30 games against 6, McNemar p 0.0000038
+ * (`data/eval/persona-ab-20260919-flash.json`). The LIVE persona never got any of it, and his own
+ * machine shows the cost. Of the nine lines the shipped coach spoke in game 5645995390 on
+ * 2026-09-20 — re-read this session out of `data/logs/live-transcript.jsonl` — TWO were
+ * "you have nearly two thousand gold in your pocket, so take a quick recall" and "you have over two
+ * thousand gold, so recall now, spend it". That is 22% of everything it said to him that game spent
+ * on a figure his own 138 ranked games measure as pointing the OTHER WAY: he carries 1023 gold
+ * unspent on average in the games he WINS against 778 in the ones he loses.
+ *
+ * ## The line this section may not cross, and how these tests hold it
+ *
+ * Nothing may tell the live model WHAT to say or WHEN — the empty ranked list is the gag this whole
+ * architecture was built to remove, and re-introducing it through prose would be worse than the
+ * fence, because prose fails no test. So the section is written in the register of the FIELD AUDIT
+ * further up the same prompt: graded properties with their sample sizes attached, about the player
+ * instead of about the feed. `the re-aim is knowledge and not a fence` below pins that register
+ * mechanically, the way the `TRUSTED_CLOSE` test pins its own.
+ *
+ * ## And every figure in it recomputes
+ *
+ * The other failure mode is quieter and it is the one this repo keeps catching: a figure copied
+ * from a prose summary rather than from the run. Writing this section caught two — AGENTS.md says
+ * "136 of them Lillia" where the stored features say 134 (134 Lillia, 3 Gwen, 1 Brand), and "78
+ * candidate features" where the run holds 77 rows. Both were about to be copied into the prompt. So
+ * every count and every rate in the section is RE-DERIVED here from the NEWEST `what-wins-*.json`
+ * on disk — today `what-wins-20260918.json` — and asserted to appear in the text. A future edit
+ * that rounds a number, and a future re-run of `what-wins.ts` that moves one, both fail loudly here
+ * instead of shipping a wrong statistic to a coach that is told to absorb this section and never
+ * attribute it.
+ */
+const REAIM_HEADING = "## What his own 138 games say about which of these numbers moved the result"
+const REAIM_NEXT = "## Your read is yours, and it should sound like one"
+
+const reaimSection = (): string => {
+	const a = TRUSTED_PROMPT.indexOf(REAIM_HEADING)
+	const b = TRUSTED_PROMPT.indexOf(REAIM_NEXT)
+	assert.equal(a >= 0, true, "the re-aim section is gone from TRUSTED_PROMPT")
+	assert.equal(b > a, true, "the re-aim section no longer sits before the read section")
+	return TRUSTED_PROMPT.slice(a, b)
+}
+
+interface WhatWinsGame {
+	win: boolean
+	championName: string
+	meanGoldInHand: number
+	"deaths@10-15": number
+	earlyObjectiveDiffBy10: number
+}
+interface WhatWinsRun {
+	nGames: number
+	nWon: number
+	nLost: number
+	rows: {
+		key: string
+		auc: { point: number }
+		q: number
+		separates: boolean
+		control: string
+		controlled: { metricP: number } | null
+	}[]
+	features: WhatWinsGame[]
+}
+
+/**
+ * The NEWEST `what-wins` run on disk, not a pinned filename.
+ *
+ * Deliberate, and it is the difference between a test that notices and a test that reassures. If
+ * `scripts/what-wins.ts` is ever re-run — he keeps playing, so it will be — it writes a new dated
+ * file beside the old one. A test pinned to `what-wins-20260918.json` would keep passing forever
+ * against a measurement nobody uses any more, while the prompt quoted its figures at the coach as
+ * current. Reading the latest means a re-measurement fails HERE, in one place, with the two files
+ * named, instead of shipping silently.
+ */
+const whatWins = (): { run: WhatWinsRun; file: string } => {
+	const dir = new URL("../../data/eval/", import.meta.url)
+	const files = readdirSync(dir)
+		.filter(f => /^what-wins-\d{8}\.json$/.test(f))
+		.sort()
+	assert.equal(
+		files.length > 0,
+		true,
+		"no what-wins run in data/eval — the trusted prompt quotes figures that nothing here can now " +
+			"re-derive. Regenerate with `node --experimental-strip-types scripts/what-wins.ts`, then " +
+			"reconcile every figure in the re-aim section against the new file before shipping it again."
+	)
+	const file = files[files.length - 1]!
+	return { run: JSON.parse(readFileSync(new URL(file, dir), "utf8")) as WhatWinsRun, file }
+}
+
+/** Whole-percent point estimate, the way the section writes its rates out. */
+const pct = (k: number, n: number): number => Math.round((k / n) * 100)
+
+test("every figure the re-aim quotes about his own games recomputes from the stored run", () => {
+	// `file` is named in the failure messages below, because "the prompt says 134" is only half of
+	// a bug report — which run disagrees with it is the other half.
+	const { run, file } = whatWins()
+	const s = reaimSection()
+	const f = run.features
+	assert.equal(f.length, run.nGames)
+
+	/* -- the corpus -- */
+	const lillia = f.filter(g => g.championName === "Lillia").length
+	for (const fact of [`${run.nGames} games`, `${run.nWon} won and ${run.nLost} lost`, `${lillia} of them on Lillia`])
+		assert.equal(s.includes(fact), true, `the section no longer states, or misstates: ${fact}`)
+	// 77, not the 78 that AGENTS.md's prose says. Spelled out, because the prompt spells it out.
+	assert.equal(run.rows.length, 77, `${file} holds ${run.rows.length} rows — the section says seventy-seven`)
+	assert.equal(s.includes("seventy-seven candidates"), true)
+
+	/* -- the two separators, as the split win rates the section prints -- */
+	const clean = f.filter(g => g["deaths@10-15"] === 0)
+	const died = f.filter(g => g["deaths@10-15"] > 0)
+	assert.equal(s.includes(`${clean.filter(g => g.win).length} won of ${clean.length}`), true)
+	assert.equal(s.includes(`${died.filter(g => g.win).length} won of ${died.length}`), true)
+	assert.equal(pct(clean.filter(g => g.win).length, clean.length), 70)
+	assert.equal(pct(died.filter(g => g.win).length, died.length), 38)
+
+	const ahead = f.filter(g => g.earlyObjectiveDiffBy10 > 0)
+	const notAhead = f.filter(g => g.earlyObjectiveDiffBy10 <= 0)
+	assert.equal(s.includes(`${ahead.filter(g => g.win).length} won of ${ahead.length}`), true)
+	assert.equal(s.includes(`${notAhead.filter(g => g.win).length} won of ${notAhead.length}`), true)
+	assert.equal(pct(ahead.filter(g => g.win).length, ahead.length), 64)
+	assert.equal(pct(notAhead.filter(g => g.win).length, notAhead.length), 38)
+	// Both rates are written as words, so the model has nothing quotable to read back at him.
+	for (const word of ["seventy percent", "thirty-eight percent", "sixty-four percent"])
+		assert.equal(s.includes(word), true, `a rate stopped being spelled out: ${word}`)
+	for (const digits of ["70%", "38%", "64%", "70 percent", "64 percent"])
+		assert.equal(s.includes(digits), false, `a win rate became a quotable figure: ${digits}`)
+
+	/* -- unspent gold: the defect signal that points the other way -- */
+	const mean = (xs: WhatWinsGame[]): number =>
+		Math.round(xs.reduce((a, g) => a + g.meanGoldInHand, 0) / xs.length)
+	assert.equal(s.includes(`${mean(f.filter(g => g.win))} gold on average`), true)
+	assert.equal(s.includes(`against ${mean(f.filter(g => !g.win))}`), true)
+	assert.equal(mean(f.filter(g => g.win)) > mean(f.filter(g => !g.win)), true, "the direction flipped")
+
+	/*
+	 * -- the early null, and the exact twelve rows the sentence is a claim about --
+	 *
+	 * Written out rather than derived from a filter, because the sentence names them in prose and a
+	 * filter that silently gained a row would keep passing while the prompt described eleven.
+	 */
+	const early = [
+		"cs@10",
+		"gold@10",
+		"csPerMin@0-10",
+		"xpPerMin@0-10",
+		"deathsBy@10",
+		"firstBackMin",
+		"csDiffVsJgl@10",
+		"goldDiffVsJgl@10",
+		"xpDiffVsJgl@10",
+		"levelDiffVsJgl@10",
+		"enemyHalfShare@0-10",
+		"enemyCampShare@0-10"
+	]
+	assert.equal(early.length, 12, "the sentence says all twelve")
+	assert.equal(s.includes("all twelve"), true)
+	const aucs = early.map(k => {
+		const row = run.rows.find(r => r.key === k)
+		assert.ok(row, `what-wins no longer has the row the prompt describes: ${k}`)
+		assert.equal(row.separates, false, `${k} now separates — the prompt's early-null claim is stale`)
+		return row.auc.point
+	})
+	// The prompt writes the band to two places, so the pin is the ROUNDED band and not the raw one.
+	assert.equal((Math.round(Math.min(...aucs) * 100) / 100).toFixed(2), "0.44", `floor moved: ${Math.min(...aucs)}`)
+	assert.equal((Math.round(Math.max(...aucs) * 100) / 100).toFixed(2), "0.58", `ceiling moved: ${Math.max(...aucs)}`)
+	assert.equal(s.includes("between 0.44 and 0.58"), true)
+
+	/*
+	 * "the only personal figure at any checkpoint in the whole table that survives the scoreboard
+	 * control" — the strongest sentence in the section, so it is the one most worth pinning. The
+	 * control is the two-term logistic against his team's gold at 10:00; `control: "his"` is the
+	 * run's own flag for a metric HE owns, as opposed to one his team shares or one that is the
+	 * scoreboard. Exactly one of them clears p 0.05, and it is the death window.
+	 */
+	const controlled = run.rows.filter(r => r.controlled !== null)
+	const personal = controlled.filter(r => r.control === "his")
+	assert.equal(controlled.length, 34, `${file}: the section says thirty-four rows went through the control`)
+	assert.equal(s.includes("thirty-four\nrows that are knowable at a checkpoint"), true)
+	assert.equal(personal.length, 15, `${file}: the section says fifteen of them are figures HE owns`)
+	assert.equal(s.includes("the fifteen figures HE owns"), true)
+	assert.deepEqual(
+		personal.filter(r => r.controlled!.metricP < 0.05).map(r => r.key),
+		["deaths@10-15"],
+		`${file}: the set of personal metrics surviving the scoreboard control moved — the section says it is exactly one`
+	)
+
+	const team = run.rows.find(r => r.key === "teamGoldDiff@10")
+	assert.ok(team)
+	assert.equal(team.auc.point.toFixed(2), "0.74")
+	assert.equal(s.includes("does separate, at 0.74"), true)
+})
+
+/**
+ * The register test: this is a PROPERTY OF THE PLAYER, stated the way the feed audit states a
+ * property of a field. It is not a subject list, a ban or a menu.
+ *
+ * Every banned string below is the shape the fence takes when it comes back as prose — a second
+ * person told what to do or what not to mention. The section is allowed to say a CLAIM would be
+ * false (that is what the enemy-CS section does, and it is the only kind of correction that has
+ * ever worked here); it is not allowed to say a SUBJECT is closed. If a later edit cannot make its
+ * point without one of these, that edit is the change this repo refuses and it belongs in a report
+ * rather than in the prompt.
+ */
+test("the re-aim is knowledge and not a fence", () => {
+	const s = reaimSection().toLowerCase()
+	for (const banned of [
+		"do not ",
+		"don't ",
+		"never say",
+		"never mention",
+		"never talk",
+		"always say",
+		"always mention",
+		"you may not",
+		"you must",
+		"instead of",
+		"avoid ",
+		"prefer ",
+		"should ",
+		"only when",
+		"only if",
+		"make sure",
+		"focus on",
+		"talk about",
+		"stick to",
+		"priority",
+		"prioritise",
+		"prioritize"
+	])
+		assert.equal(s.includes(banned), false, `the re-aim became a rule about what to say: ${banned}`)
+	// And it says out loud that it is none of those things, in the prompt rather than only here.
+	for (const kept of ["a subject to cover", "yours to decide"])
+		assert.equal(reaimSection().includes(kept), true, `the section stopped disclaiming itself: ${kept}`)
+})
+
+/**
+ * WHERE it sits, which is the difference between knowledge and a nag.
+ *
+ * It is inside `TRUSTED_PROMPT`, so it rides ONCE in the system instruction for a whole game and is
+ * cached with it — the cache breakpoint on that block is measured in `data/eval/ttft-2026091818*.json`
+ * and AGENTS.md quotes it at about 15,500 of 20,000 prompt tokens read back; this run did not
+ * re-measure it. Putting the same sentences in the per-turn payload would re-bill them every turn
+ * AND would be the harness deciding what the turn is about, which is the one thing the payload may
+ * not do. The measured arms must not see it at all.
+ */
+test("the re-aim rides in the trusted system instruction and nowhere else", () => {
+	const trusted = liveCoachSystemPrompt({ mode: "trusted" })
+	assert.equal(trusted.includes(REAIM_HEADING), true)
+	// ONCE. A duplicated paste is silent otherwise, and the model would be handed the same
+	// measurement twice with nothing saying which copy is current.
+	assert.equal(trusted.split(REAIM_HEADING).length - 1, 1, "the re-aim heading appears more than once")
+	assert.equal(liveCoachSystemPrompt({ mode: "fenced" }).includes(REAIM_HEADING), false)
+	assert.equal(liveCoachSystemPrompt({ mode: "cite-or-quiet" }).includes(REAIM_HEADING), false)
+	// It is a section of the persona, not a section of a turn's facts.
+	assert.equal(renderBlockForMode(FULL, "trusted").includes("138 games"), false)
+})
+
+/**
+ * The A/B that judged the re-aim was a NULL, and this test exists so the null cannot rot.
+ *
+ * `TRUSTED_PROMPT`'s own doc comment prints a five-row table off
+ * `data/eval/live-persona-ab-20260922-judged.json` — 30 of his own games, 886 lines, coach
+ * `claude-sonnet-5`, fabrication scored mechanically and `useful` graded blind by `claude-opus-5`
+ * with the arm labels stripped. A table in a comment is exactly the kind of claim this repo has
+ * had to retract before, so the counts are recomputed here from the stored grades.
+ *
+ * It is UNCONDITIONAL on purpose. A version that skipped when the file was missing would turn
+ * "somebody pruned the evidence" into a green suite with an unbacked table still sitting in the
+ * prompt's comment, which is the failure mode the whole file is written against.
+ *
+ * What it does NOT assert is that the arms differ, because they do not: on-target 102 against 101,
+ * useful 163 against 169, fabricated 10 against 13, every interval overlapping. If a later run
+ * finds an effect, the right move is a NEW file beside this one and a new row here — never an edit
+ * to these counts.
+ */
+test("the re-aim's A/B is still on disk and is still the null the comment prints", () => {
+	const dir = new URL("../../data/eval/", import.meta.url)
+	/*
+	 * `data/` is gitignored, so this file is a local artefact exactly like every other run AGENTS.md
+	 * cites. If it is gone, the table in `TRUSTED_PROMPT`'s comment is standing on nothing — which is
+	 * a real defect and is why this throws rather than skipping. The three scripts that produce it
+	 * and the commands that drive them are in `data/eval/live-persona-ab-20260922.md`.
+	 */
+	const judged = JSON.parse(readFileSync(new URL("live-persona-ab-20260922-judged.json", dir), "utf8")) as {
+		coachModel: string
+		judgeModel: string
+		lines: { arm: string; gameId: string; atSec: number; subject: string | null; useful: boolean | null; fabricated: boolean }[]
+	}
+	assert.equal(judged.coachModel, "claude-sonnet-5")
+	// The judge is NOT the coach's model. See the self-preference measurement in AGENTS.md.
+	assert.equal(judged.judgeModel, "claude-opus-5")
+	assert.notEqual(judged.judgeModel, judged.coachModel)
+	assert.equal(judged.lines.length, 886)
+	assert.equal(new Set(judged.lines.map(l => l.gameId)).size, 30)
+
+	const onTarget = (l: (typeof judged.lines)[number]): boolean =>
+		(l.subject === "early-objective" && l.atSec < 600) ||
+		(l.subject === "survival" && l.atSec >= 600 && l.atSec < 900)
+	const count = (arm: string) => {
+		const a = judged.lines.filter(l => l.arm === arm)
+		return {
+			lines: a.length,
+			onTarget: a.filter(onTarget).length,
+			gold: a.filter(l => l.subject === "unspent-gold").length,
+			useful: a.filter(l => l.useful === true).length,
+			fabricated: a.filter(l => l.fabricated).length
+		}
+	}
+	assert.deepEqual(count("shipped"), { lines: 443, onTarget: 102, gold: 7, useful: 163, fabricated: 10 })
+	assert.deepEqual(count("aimed"), { lines: 443, onTarget: 101, gold: 5, useful: 169, fabricated: 13 })
 })
