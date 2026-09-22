@@ -630,13 +630,55 @@ Two defects were real and both are fixed.
   champion check does not either when he plays Lillia twice — meaning the first frames of a brand
   new game joined the eight-day-old session and inherited its `gameId`. `endOpenSession` is now
   called when the client leaves `InProgress` and once at daemon startup.
-- **Nothing counted what a game produced.** `src/daemon/coach-coverage.ts` writes one line per game
-  — frames stored and transcript lines recorded — and `judgeCoverage` keeps the four outcomes apart,
-  because they want different fixes. `absent` (neither) is him not sharing. `heard-nothing` (frames
-  and no lines) is the only one that is ours by construction: the share was up, every frame landed,
-  and he still heard nothing — which is what a refused socket, a depleted key or a coach that PASSed
-  all game look like from outside. Transcript rows now carry the `gameId` of the open session, so
-  "what did it say in the game he is complaining about" stops being a wall-clock puzzle.
+- **Nothing counted what a game produced.** `src/daemon/coach-coverage.ts` measures one record per
+  game — frames stored and transcript lines recorded — and `judgeCoverage` keeps the four outcomes
+  apart, because they want different fixes. `absent` (neither) is him not sharing. `heard-nothing`
+  (frames and no lines) is the only one that is ours by construction: the share was up, every frame
+  landed, and he still heard nothing — which is what a refused socket, a depleted key or a coach
+  that PASSed all game look like from outside. Transcript rows now carry the `gameId` of the open
+  session, so "what did it say in the game he is complaining about" stops being a wall-clock puzzle.
+- **THE INSTRUMENT BUILT SO SILENT FAILURE COULD NOT HAPPEN WAS ITSELF SILENT, and this bullet said
+  so wrongly for four days.** It read "writes one line per game". It wrote nothing: the module
+  computed a verdict, `main.ts` logged it and published it over SSE, and that was all, so
+  `data/logs/coach-coverage.jsonl` did not exist on the machine after a week of play (`ls -la
+  data/logs/`) and the only copy of forty-four games of it was journald — 43 `absent` and 1
+  `coached` over seven days (`journalctl --user -u eepalytics --since "7 days ago" | grep -o "live
+  coach [a-z-]*" | sort | uniq -c`), one rotation from gone. `appendCoverage` writes it now, flat
+  JSONL beside the transcript and for the same reason: a person with `grep` and the next round of
+  plumbing work both want a file, and neither wants a migration. `readCoverage` returns it newest
+  first and de-duplicates by `gameId` on READ, because `onGameEnded` fires on every departure from
+  `InProgress` and the phase log shows that is not always once per game.
+- **The window is no longer lost when the daemon restarts mid-game, and the old comment had the
+  failure backwards.** `main.ts` said a daemon started mid-game would leave `gameStartedMs` null
+  and skip the record. It does not — `setPhase` fires `onPhase` on the FIRST read too, so a daemon
+  restarted at minute 25 stamped the restart as the game's start and measured a `coached` game over
+  a window that began after its frames, which is the silent lie this module exists to prevent,
+  inside the module. The stamp is now taken only when `previous !== null`, i.e. only when the
+  daemon watched the game begin; otherwise the start is RECOVERED from the live sampler's own
+  filenames, which outlive the process and are written whether or not a browser tab exists (66 of
+  the 95 files in `data/live-samples/` are `g-`keyed, the key used when there is no journal
+  session at all). `live-sampler.ts` keys a file on `round((now − gameTime × 1000) / 60_000)` — the
+  minute the game clock read zero — so the filename IS a start time. Joined to the phase log over
+  every game this machine has samples for, the recovered stamp lands at 18, 8, 36, −19, 16, −5, 12
+  and 3 seconds from the `to=InProgress` line, 8 of 8 inside −19..+36s; the two-minute slack it is
+  widened by covers the positive side with 84 seconds to spare. Widening is the safe direction and
+  the asymmetry is the argument: too narrow hides frames that exist, too wide can only reach into
+  the same game's champion select, because one game's two rolled stamps are exactly 1 minute apart
+  (19 of 19 on this machine) while the smallest gap between two different games is 3. When neither
+  source can date the game there is NO record and the log says which game had none and why —
+  a game with no record is a game with no record, and nothing is back-filled.
+  `coach-coverage.test.ts` pins all eight offsets against the real directory listing, and it is
+  what caught this paragraph's first draft claiming "8 to 78 seconds, never before".
+- **`describeCoverage` is the sentence, and a page is the only place it may appear.** Five of his
+  six most recent games are `absent` — he plays with the page closed — and until now that was a
+  WARN line in a journal he never reads. Replayed over the real transcript and journal tables, the
+  five absent games and the one coached one produce exactly: *"The coach did not run in your last 5
+  games — the page was not open or not sharing your screen."* It is a pure function of the history
+  so the wording lives in one place, it separates `absent` from `heard-nothing` in the sentence
+  because they want different fixes, and it never reaches a prompt. It may NOT become a
+  notification: read the capture post-mortem below first — "wait until the user is idle" resolves
+  to "fire the moment he sits down to play", which is why `src/capture/` is deleted. NOT DONE: no
+  route serves it and no page renders it, so today it is a function with no caller.
 
 #### More than one model, and how to tell them apart
 
@@ -1558,7 +1600,8 @@ src/review/live-providers.ts   every non-socket model, through one AI SDK path  
 src/review/gemini-live.ts      holds the API key, mints ephemeral tokens              (NODE ONLY)
 src/daemon/minimap-watch.ts    reads the minimap on the JOURNAL beat, off the turn's critical path
 src/daemon/live-sampler.ts     records raw allgamedata during a game, so evals replay reality
-src/daemon/coach-coverage.ts   one line per game: did the coach run, and did he hear anything
+src/daemon/coach-coverage.ts   one STORED line per game: did the coach run, did he hear anything,
+                               and the sentence that says so on a page he already opens
 src/server/routes/live.ts      buildLiveState + buildBrief — the client's JSON into the payload
 src/web/lib/useScreenShare     the shared screen + frame grabber
 src/web/lib/gameflow.ts        the phase gate: whether anything may be sent at all

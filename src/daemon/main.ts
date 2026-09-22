@@ -32,7 +32,13 @@ import { ensureBoundToCurrentClient, fetchLcuAsset } from "./lcu.ts"
 import runRetentionPrune from "./jobs/retention-prune.ts"
 import { log, setLogLevel } from "./log.ts"
 import { noteGameEnded } from "./postgame.ts"
-import { measureCoverage } from "./coach-coverage.ts"
+import {
+	appendCoverage,
+	describeCoverage,
+	measureCoverage,
+	readCoverage,
+	recoverGameStartMs
+} from "./coach-coverage.ts"
 import { endOpenSession } from "./journal.ts"
 import { adoptOrphanedLeases, sweep } from "./queue.ts"
 import * as queue from "./queue.ts"
@@ -164,14 +170,30 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 	 *
 	 * The supervisor already owns the gameId and the phase; it does not own a start time, and a
 	 * game that produced NOTHING has no other timestamp anywhere on the machine to look it up by.
-	 * Set on the transition INTO `InProgress` so a daemon that started mid-game leaves it null and
-	 * the coverage line is skipped rather than measured over a window it does not know.
+	 *
+	 * ## IT IS SET ONLY WHEN WE WATCHED THE GAME BEGIN, and that condition is the fix
+	 *
+	 * This used to be `if (next === "InProgress") gameStartedMs = Date.now()`, and the comment
+	 * above it claimed a daemon that started mid-game would leave it null. It does not.
+	 * `setPhase` in `supervisor.ts` fires `onPhase` on EVERY change including the first read, so a
+	 * daemon restarted at minute 25 of a game sees `null -> InProgress` and stamps the RESTART as
+	 * the game's start. The coverage record was then written over a window that began minutes after
+	 * the frames and lines it is counting, so a `coached` game could be filed as `absent` — the
+	 * silent lie this whole module exists to prevent, inside the module itself. Verified by reading
+	 * `setPhase`; there is no instance of it in the last 14 days of this machine's phase log (every
+	 * entry into `InProgress` reads `from=ChampSelect`), which is why nobody had seen it.
+	 *
+	 * `previous === null` is exactly "we did not watch this game begin": it is the daemon's first
+	 * phase read, or the client restarted and `onLockfileChanged` pushed the phase to null. Both
+	 * mean the start time is not ours to state, so it stays null and the record is rebuilt at the
+	 * end of the game from the live sampler's own filenames, which outlive the process and are
+	 * written whether or not a browser tab exists. See `recoverGameStartMs`.
 	 */
 	let gameStartedMs: number | null = null
 
 	const supervisor = startSupervisor({
-		onPhase: next => {
-			if (next === "InProgress") gameStartedMs = Date.now()
+		onPhase: (next, previous) => {
+			if (next === "InProgress") gameStartedMs = previous === null ? null : Date.now()
 		},
 		onConnected: () => {
 			void (async () => {
@@ -207,19 +229,57 @@ export const startDaemon = async (): Promise<DaemonContext> => {
 			 * the machine notices rather than something he has to report. It is a measurement of
 			 * our plumbing and touches nothing the coach does. See `coach-coverage.ts` for the four
 			 * verdicts and why the middle one is the one worth chasing.
+			 *
+			 * It is now also WRITTEN TO A FILE. For a week it was logged and published and never
+			 * stored, so `data/logs/coach-coverage.jsonl` did not exist and forty-four games of
+			 * this evidence lived only in journald. `appendCoverage` never throws and reports
+			 * whether the row landed, because a coverage record must not be able to take the
+			 * replay download — which has thirty minutes to live — down with it.
 			 */
-			if (gameStartedMs !== null) {
+			const endedMs = Date.now()
+			/*
+			 * A start we watched beats one we reconstructed; a reconstructed one beats none.
+			 * Nothing is invented: when neither exists there is no record and the log says which
+			 * game had none and why, because a game with no record must not be able to read as a
+			 * game the coach skipped.
+			 */
+			const startedMs = gameStartedMs ?? recoverGameStartMs(endedMs)
+			if (startedMs !== null) {
 				const coverage = measureCoverage({
 					gameId,
-					startedMs: gameStartedMs,
-					endedMs: Date.now()
+					startedMs,
+					endedMs,
+					startSource: gameStartedMs !== null ? "phase" : "samples"
 				})
-				const line = `live coach ${coverage.verdict}: ${coverage.note}`
+				const from = coverage.startSource === "phase" ? "" : " [start recovered from samples]"
+				const line = `live coach ${coverage.verdict}: ${coverage.note}${from}`
 				if (coverage.verdict === "coached") log.info(line, { gameId })
 				else log.warn(line, { gameId })
-				publish("daemon", { coachCoverage: coverage })
-				gameStartedMs = null
-			}
+				if (!appendCoverage(coverage)) log.warn("coverage record not stored", { gameId })
+				/*
+				 * The RUN of games goes out beside the one game, because the run is the thing worth
+				 * saying. Five of his six most recent games are `absent` and today that fact exists
+				 * only as a WARN in a journal he never reads. `describeCoverage` is a pure function
+				 * over the stored history and returns one plain sentence; the daemon publishes it
+				 * and never acts on it. Nothing here may pop a window, steal focus or fire while he
+				 * is playing — see the capture post-mortem in AGENTS.md, where "wait until the user
+				 * is idle" resolved to "fire the moment he sits down to play".
+				 *
+				 * INCOMPLETE ON PURPOSE, and the missing half is a route. An SSE event only reaches
+				 * a page that is already open at the moment a game ends, and the whole population
+				 * this is about is games he played with no page open. A `GET` that answers
+				 * `readCoverage` + `describeCoverage` is what would put it in front of him, and it
+				 * belongs in `src/server/routes/`.
+				 */
+				const history = describeCoverage(readCoverage())
+				if (history.quietStreak > 0 && history.sentence) log.warn(history.sentence)
+				publish("daemon", { coachCoverage: coverage, coachHistory: history })
+			} else
+				log.warn(
+					"live coach coverage skipped: joined this game already in progress and no live sample file marks its start",
+					{ gameId }
+				)
+			gameStartedMs = null
 			// The 30-minute replay clock just started. Do not wait for the next sweep.
 			void (async () => {
 				const report = await reconcileFinishedGame(gameId)
