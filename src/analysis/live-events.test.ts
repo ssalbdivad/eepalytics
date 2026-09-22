@@ -2114,3 +2114,124 @@ describe("speak levels", () => {
 		}
 	})
 })
+
+/**
+ * THE PIN THE EVICTION TOOK AWAY, REBUILT ON THE GAME THAT SURVIVED.
+ *
+ * Eight cases in this file replay `js-mtvxb5f4-f81a-t29817812` and they all SKIP now, because the
+ * sampler's size ceiling evicted that window (see `live-sampler.ts`). AGENTS.md says this file
+ * "pins every level's set, both clocks and the real per-game turn counts, so a well-meaning edit
+ * fails the suite rather than quietly making her chatty again" — and for as long as those eight
+ * skip, that is false: the schedule could be rewritten and the suite would stay green.
+ *
+ * This is the same guarantee on a window that exists. Game 5645995390 (2026-09-20, Lillia, 29
+ * minutes) is the one game the browser coached live with the shipped schedule, so its nine asks are
+ * not a simulation — `data/eval/replay-fidelity-20260922.json` joins each of them to the line he
+ * actually heard, all nine in order, maximum divergence 2.96 seconds, which is the five-second
+ * sample grain rather than a disagreement.
+ *
+ * THE EXPECTED CLOCKS ARE COMMITTED HERE, not merely recomputed, because the lesson of the
+ * eviction is that a pin whose only copy is an uncommitted input is not a pin. If the window is
+ * lost too, this FAILS rather than skipping — and it names the reason — so the suite says out loud
+ * that a guard has gone rather than going quietly green. The window is also protected from the
+ * sampler by `citedSampleFiles()`, which reads exactly the run file named above.
+ */
+describe("the shipped schedule against the game it actually coached", () => {
+	const WINDOW = "data/live-samples/js-muain099-d6d9-t29832517.ndjson"
+
+	/** Every ask the browser made in that game, as its clock and the kinds that summoned it. */
+	const EXPECTED: Array<{ atSec: number; kinds: string[] }> = [
+		{ atSec: 216, kinds: ["fight.resolved", "respawn.self", "window.open"] },
+		{ atSec: 308, kinds: ["shop.trip", "window.changed", "window.changed", "window.standing"] },
+		{ atSec: 448, kinds: ["fight.resolved", "level.spike", "respawn.self", "window.changed", "window.open"] },
+		{ atSec: 753, kinds: ["hinge.silence"] },
+		{ atSec: 814, kinds: ["death.counterpart", "shop.trip", "window.open"] },
+		{
+			atSec: 881,
+			kinds: ["fight.resolved", "shop.trip", "fight.resolved", "respawn.self", "window.changed", "window.open"]
+		},
+		{ atSec: 1156, kinds: ["window.open"] },
+		{ atSec: 1180, kinds: ["shop.trip", "fight.resolved", "window.changed", "window.open"] },
+		{ atSec: 1498, kinds: ["objective.taken", "level.spike", "shop.trip", "window.open"] }
+	]
+
+	const replayAt = (level: SpeakLevel): Array<{ atSec: number; kinds: string[] }> => {
+		const raw = readFileSync(WINDOW, "utf8")
+		const watch = newEventWatch()
+		const turns: Array<{ atSec: number; kinds: string[] }> = []
+		for (const line of raw.split("\n")) {
+			if (line.trim() === "") continue
+			let parsed: { data?: unknown }
+			try {
+				parsed = JSON.parse(line) as { data?: unknown }
+			} catch {
+				continue
+			}
+			const tick = projectTick(parsed.data as never)
+			if (!tick) continue
+			watch.pending.push(...observeTickAtLevel(watch, tick, { level }))
+			const reason = dueTurnAtLevel(watch, tick.gameTimeSec, {
+				level,
+				heartbeatSec: askPolicy(level).heartbeatSec
+			})
+			if (!reason) continue
+			commitTurn(watch, reason, tick.gameTimeSec)
+			// FLOOR, which is what a game clock displays and what the stored run file records, so
+			// these numbers and `data/eval/replay-fidelity-20260922.json` are the same numbers.
+			turns.push({ atSec: Math.floor(tick.gameTimeSec), kinds: reason.events.map(e => e.kind) })
+		}
+		return turns
+	}
+
+	it("has the window it needs, or says a guard has been lost", () => {
+		ok(
+			(() => {
+				try {
+					readFileSync(WINDOW, "utf8")
+					return true
+				} catch {
+					return false
+				}
+			})(),
+			`${WINDOW} is gone, so the only live-coached game left cannot pin the schedule. ` +
+				`Eight cases in this file already skip for the same reason — see live-sampler.ts and ` +
+				`\`pnpm doctor\`'s eval-corpus check. This is a FAILURE rather than a skip on purpose: ` +
+				`a schedule with no regression pin is a schedule anything can change.`
+		)
+	})
+
+	it("asks nine times, at the nine clocks he was actually spoken to at", () => {
+		const turns = replayAt("big-calls")
+		deepStrictEqual(
+			turns.map(t => t.atSec),
+			EXPECTED.map(t => t.atSec),
+			"the shipped schedule no longer reproduces the turns the browser took in a real game"
+		)
+	})
+
+	it("summons each of those turns with the kinds that summoned it live", () => {
+		const turns = replayAt("big-calls")
+		deepStrictEqual(
+			turns.map(t => t.kinds),
+			EXPECTED.map(t => t.kinds)
+		)
+	})
+
+	/*
+	 * The two asks added on 2026-09-19 both fired in this game, and they are the reason the pin is
+	 * worth having: `window.standing` produced the best line he heard ("your two-level advantage
+	 * and Fated Ashes ... secure the first drake"), and `hinge.silence` produced one of the two
+	 * about unspent gold. The ask landing is this file's business; what is said with it is not.
+	 */
+	it("still fires the standing question once and the hinge floor once", () => {
+		const kinds = replayAt("big-calls").flatMap(t => t.kinds)
+		strictEqual(kinds.filter(k => k === "window.standing").length, 1)
+		strictEqual(kinds.filter(k => k === "hinge.silence").length, 1)
+	})
+
+	it("keeps the quiet level quiet and the chatty one chatty on the same bytes", () => {
+		strictEqual(replayAt("big-calls").length, 9)
+		strictEqual(replayAt("key-moments").length, 11)
+		strictEqual(replayAt("commentary").length, 33)
+	})
+})
