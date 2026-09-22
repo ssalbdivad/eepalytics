@@ -17,15 +17,8 @@
 
 import { spawnSync } from "node:child_process"
 import { bundleFreshness, describeFreshness } from "../src/server/bundle-freshness.ts"
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	rmSync,
-	statfsSync,
-	statSync,
-	writeFileSync
-} from "node:fs"
+import { SAMPLE_DIR, citedSampleFiles } from "../src/daemon/live-sampler.ts"
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, statfsSync, writeFileSync } from "node:fs"
 import { connect } from "node:net"
 import { join, resolve } from "node:path"
 import {
@@ -719,6 +712,46 @@ const checkDaemon = async (): Promise<void> => {
 				]
 			:	[],
 		fix: freshness.verdict === "fresh" || freshness.verdict === "unknown" ? undefined : "pnpm build"
+	})
+
+	/*
+	 * IS THE EVIDENCE STILL THERE? — the check that would have caught the loss of 2026-09-22.
+	 *
+	 * The sampler bounds `data/live-samples/` by total size and evicts oldest-first, and on that
+	 * day it had already taken `js-mtvxb5f4-f81a-t29817812` and `…-t29817845`, the two games every
+	 * frame measurement in this repo was taken on. Nothing noticed, because nothing counted. The
+	 * numbers here are cheap — a readdir and the cached citation index — and the one that matters
+	 * is `missing`, which is a stored measurement whose INPUT no longer exists.
+	 */
+	const cited = citedSampleFiles()
+	let present: string[] = []
+	try {
+		present = readdirSync(SAMPLE_DIR)
+			.filter(n => /-t\d+\.ndjson$/.test(n))
+			.map(n => n.replace(/\.ndjson$/, ""))
+	} catch {
+		/* no corpus is a state, reported below as 0 windows */
+	}
+	const missing = [...cited.ids].filter(id => !present.includes(id))
+	add({
+		section,
+		label: "eval corpus",
+		level: missing.length > 0 ? "warn" : present.length === 0 ? "info" : "ok",
+		detail:
+			present.length === 0 ? "no recorded games yet"
+			: missing.length > 0 ? `${present.length} windows · ${missing.length} CITED WINDOWS ARE GONE`
+			: `${present.length} windows · all ${cited.ids.size} cited ones present`,
+		notes:
+			missing.length > 0 ?
+				[
+					"a stored run in data/eval/ names these and their input no longer exists,",
+					"so those numbers can never be re-derived or extended:",
+					...missing.slice(0, 6).map(id => `  ${id}`),
+					...(missing.length > 6 ? [`  … and ${missing.length - 6} more`] : []),
+					"live-sampler.ts will not evict a cited window any more; these went before that landed"
+				]
+			:	[],
+		fix: missing.length > 0 ? "nothing to run — the bytes are gone. The pin stops further loss." : undefined
 	})
 
 	const user = process.env.USER ?? ""
