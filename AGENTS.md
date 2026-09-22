@@ -803,8 +803,11 @@ module-scoped memory and a replay that starts in the middle is a different coach
 **A game that cannot be replayed is DATA.** `discoverWindows()` returns only the windows with paired
 journal frames, and for a month that made a seventeen-game corpus look like a two-game one.
 `discoverBenchable()` returns those, PLUS a text-only window for every game with no paired one, PLUS
-every file that was refused with the reason. A multi-game bench calls the second one. Fifteen games
-are benchable, 4,748 raw samples, thirteen distinct enemy junglers, 23:53 to 42:55.
+every file that was refused with the reason. A multi-game bench calls the second one. **67 windows
+are benchable as of 2026-09-22 — 1 paired and 66 text-only** — against the fifteen this line
+reported when it was written; the sampler has been recording every game since. The paired count
+fell from three to ONE in the same period and that is not growth, it is the eviction recorded
+below.
 
 **THE REPLAY REPRODUCES THE BROWSER, TURN FOR TURN — measured 2026-09-22 against a real game he
 played.** Every bench in this repo rests on the claim that a replayed payload is the payload the
@@ -1371,10 +1374,11 @@ Every other measurement in this file grades a LINE. This one grades the TARGET: 
 app pushes him toward, which ones actually distinguish the games he wins from the games he loses?
 `scripts/what-wins.ts` answers it with no model in the loop, on every ranked solo game in the
 library with a full post-game timeline and at least 15 minutes on the clock — **138 games, 69 won
-and 69 lost**, 136 of them Lillia, all of them jungle, counterpart identified in 138 of 138. Effect
+and 69 lost**, 134 of them Lillia (3 Gwen, 1 Brand), all of them jungle, counterpart identified in
+138 of 138. Effect
 size is an AUC with a seeded bootstrap interval (0.50 is a coin flip; 0.70 means seven times in ten
 the won game is the higher one), the test is Mann-Whitney, and q is Benjamini-Hochberg across all
-78 rows. Table and per-game features in `data/eval/what-wins-20260918.json`.
+77 rows. Table and per-game features in `data/eval/what-wins-20260918.json`.
 
 **NOTHING HE PERSONALLY DOES BEFORE TEN MINUTES SEPARATES HIS WINS FROM HIS LOSSES.** Not CS at
 10:00 (69.5 won against 67.2 lost, AUC 0.56 [0.46-0.66], q 0.34), not his clear rate over 0-10
@@ -1435,7 +1439,7 @@ lever. Not one of them survives the scoreboard control except the ones that are 
 
 **What this measurement cannot do.** It is observational on one player; he cannot be randomised
 into taking grubs. Nothing here is a causal estimate and every row in the JSON carries a
-`causalCaveat` saying which way it is likely to be wrong. Seventy-eight rows were tested, so BH is
+`causalCaveat` saying which way it is likely to be wrong. Seventy-seven rows were tested, so BH is
 applied and the raw p is kept beside the q. The even-at-ten stratum — 40 games inside ±800g of
 level at 10:00 — is reported and is **underpowered**: at n=40 it can only see an AUC around 0.70 or
 larger, so it neither confirms nor refutes any of the early findings, and the two early survivors
@@ -1931,8 +1935,8 @@ Rules for the bit:
 ### What you are actually grading
 
 **This ranking is MEASURED, not assumed.** 138 of his own ranked solo games — 69 won,
-69 lost — across 78 candidate features, with bootstrap intervals on every AUC,
-Mann-Whitney, Benjamini-Hochberg across all 78 rows, and a two-term logistic against
+69 lost — across 77 candidate features, with bootstrap intervals on every AUC,
+Mann-Whitney, Benjamini-Hochberg across all 77 rows, and a two-term logistic against
 team gold at 10:00 that separates "do this" from "this happens when you are winning".
 Rank your items by this list, and by what the digest can actually support.
 
