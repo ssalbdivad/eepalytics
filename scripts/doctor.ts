@@ -16,6 +16,7 @@
  */
 
 import { spawnSync } from "node:child_process"
+import { bundleFreshness, describeFreshness } from "../src/server/bundle-freshness.ts"
 import {
 	existsSync,
 	mkdirSync,
@@ -26,7 +27,7 @@ import {
 	writeFileSync
 } from "node:fs"
 import { connect } from "node:net"
-import { join } from "node:path"
+import { join, resolve } from "node:path"
 import {
 	ANALYSIS_VERSION,
 	DATA_DIR,
@@ -685,6 +686,39 @@ const checkDaemon = async (): Promise<void> => {
 			!installed ? "`pnpm service:install` — optional; `pnpm dev` runs it in the foreground."
 			: active !== "active" ? "systemctl --user start eepalytics && pnpm service:logs"
 			: undefined
+	})
+
+	/*
+	 * IS THE BUILT PAGE OLDER THAN THE CODE? — the check doctor did not have on 2026-09-20.
+	 *
+	 * That morning every line above was green and the bundle was four days old, so the live
+	 * coach ran a schedule two commits behind the tree. `doctor` is what you run when something
+	 * feels wrong, and it was the one place that could have said so and did not. The verdict
+	 * comes from the same module the server uses, so this cannot drift from what the daemon
+	 * reports. See `src/server/bundle-freshness.ts`.
+	 */
+	const freshness = bundleFreshness(resolve(import.meta.dirname, ".."), resolve(import.meta.dirname, "../dist"))
+	add({
+		section,
+		label: "built page",
+		level:
+			freshness.verdict === "fresh" ? "ok"
+			: freshness.verdict === "stale" ? "warn"
+			: "info",
+		detail:
+			freshness.verdict === "fresh" ? `current — newer than all ${freshness.scanned} source files`
+			: freshness.verdict === "stale" ? `STALE — ${freshness.newerThanBuild.length} source file(s) are newer`
+			: freshness.verdict === "unbuilt" ? "no dist/ — nothing built yet"
+			: "no source tree beside this process",
+		notes:
+			freshness.verdict === "stale" ?
+				[
+					describeFreshness(freshness),
+					...freshness.newerThanBuild.map(f => `  ${f.path}`),
+					"the daemon serves dist/ on :7700, so this is the code he is actually running"
+				]
+			:	[],
+		fix: freshness.verdict === "fresh" || freshness.verdict === "unknown" ? undefined : "pnpm build"
 	})
 
 	const user = process.env.USER ?? ""
