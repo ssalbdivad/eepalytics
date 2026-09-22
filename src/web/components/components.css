@@ -1257,6 +1257,22 @@ button.csk-chip:focus-visible {
 }
 .csk-screen__blocked strong { color: var(--warn); font-size: var(--fs-3); }
 .csk-screen__blocked p { margin: 0; font-size: var(--fs-2); line-height: 1.55; color: var(--text-2); }
+/*
+ * The coverage nudge: what happened in the games he already played, on the panel where he decides
+ * whether to share. Toned as a note rather than an error — it is usually a habit rather than a
+ * fault, and the sentence itself says which. See `ScreenCoach.tsx`.
+ */
+.csk-screen__coverage {
+	margin: 0;
+	padding: 8px 10px;
+	border-left: 2px solid var(--warn);
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--warn) 8%, transparent);
+	color: var(--text-1);
+	font-size: var(--fs-2);
+	line-height: 1.5;
+}
+
 .csk-screen__ask {
 	display: flex;
 	gap: 6px;

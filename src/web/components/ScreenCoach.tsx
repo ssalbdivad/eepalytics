@@ -186,6 +186,35 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 	 */
 	const gate = useGameflow()
 	const [opening, setOpening] = useState(false)
+
+	/*
+	 * WHAT HAPPENED IN THE GAMES HE ALREADY PLAYED, said where he decides whether to share.
+	 *
+	 * Measured on this machine on 2026-09-22: 43 of his last 44 games were `absent` — no frames,
+	 * no lines, because the page was not open — and the app had no way to tell him. The record has
+	 * existed since `coach-coverage.ts` started writing it; this is the first thing that reads it
+	 * to his face.
+	 *
+	 * Asked ONCE, on mount, deliberately. It is a statement about games that are over, so polling
+	 * it would be a request every few seconds for an answer that changes when a game ends. A
+	 * failure leaves it null and the panel renders exactly as it did before — this is a nudge, and
+	 * a nudge that can break the share button is worse than no nudge.
+	 */
+	const [coverage, setCoverage] = useState<{ sentence: string | null; quietStreak: number } | null>(null)
+	useEffect(() => {
+		let alive = true
+		void fetch("/api/live/coverage?limit=20")
+			.then(r => (r.ok ? r.json() : null))
+			.then(j => {
+				if (alive && j && typeof j.quietStreak === "number") setCoverage(j)
+			})
+			.catch(() => {
+				/* an older daemon has no such route; the panel is the same without it */
+			})
+		return () => {
+			alive = false
+		}
+	}, [])
 	/** Why the hand-off to the Windows browser failed. See `openInWindows`. */
 	const [openError, setOpenError] = useState<string | null>(null)
 	const wsl = isWslElectron()
@@ -951,6 +980,16 @@ export const ScreenCoach = ({ compact = false }: ScreenCoachProps) => {
 						Share once and leave it. Nothing is sent between games — she wakes up when you
 						hit champion select and goes quiet again when the game ends.
 					</p>
+					{/*
+					 * Only when it is TRUE and only when it is his to act on. One quiet game is an
+					 * evening, not a habit; the daemon's own sentence already separates "the page
+					 * was not open" from "your screen reached her and she said nothing", which is
+					 * ours rather than his, and it is worth showing either way — but the second one
+					 * is not a reason to press this button.
+					 */}
+					{coverage?.sentence && coverage.quietStreak >= 2 ?
+						<p className="csk-screen__coverage">{coverage.sentence}</p>
+					:	null}
 				</div>
 				{share.sharing ?
 					<button className="btn" onClick={share.stop}>
