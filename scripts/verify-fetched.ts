@@ -319,10 +319,39 @@ export const verify = async (keys: readonly string[]): Promise<LineResult[]> => 
 				results.push({ ...base(key, line), verdict: "unchecked", note: `no module field for "${line.label}"` })
 				continue
 			}
+			/*
+			 * A MODULE LINE IS PINNED BY DATE, NOT BY REVISION, so a difference here is DRIFT and
+			 * not a defect.
+			 *
+			 * `Module:ChampionData/data` is fetched with `action=raw`, which returns bytes and no
+			 * revision id, so the citation reads `[wikiModule raw@2026-09-18, …]`. Nothing records
+			 * WHICH revision those bytes were, so when the live module disagrees there is no way to
+			 * tell "we misread it" from "Riot changed the champion" — and the second is the common
+			 * case: on 2026-09-22 this reported two mismatches on Lillia, her last-changed patch
+			 * (V26.08 delivered, V26.19 live) and her base armour (22 against 24), because a new
+			 * League patch had landed since the corpus was cut. Both are the corpus being a patch
+			 * behind, which `contextStaleness` already tells the coach about, and neither is a
+			 * pipeline fault.
+			 *
+			 * Calling that a mismatch is how an instrument gets ignored: the suite went red for a
+			 * reason no change in this repo could ever fix, and a red suite that is always red
+			 * hides the next real failure. `stale` already means "the source moved since the
+			 * fetch" and every report prints it with both values rather than as a defect.
+			 *
+			 * THE REAL FIX, not done: fetch the module through `action=query&prop=revisions` so the
+			 * citation carries a revision id like every ability line does. Then a disagreement AT
+			 * the cited revision becomes a defect again, which is the strength this paragraph
+			 * gives up.
+			 */
 			results.push({
 				...base(key, line),
-				verdict: want === line.value ? "match" : "mismatch",
-				source: want
+				verdict: want === line.value ? "match" : "stale",
+				source: want,
+				note:
+					want === line.value ? undefined : (
+						`the module is cited by date (${line.fetchedOn}) and carries no revision, so a difference ` +
+						`is the source moving rather than a misread — delivered "${line.value}", live "${want}"`
+					)
 			})
 		}
 

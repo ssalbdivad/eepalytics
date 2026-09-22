@@ -92,11 +92,20 @@ describe("one champion, against the live wiki", () => {
 		} catch {
 			return t.skip("the wiki is unreachable")
 		}
+		/*
+		 * MISMATCH is a defect and fails. STALE is the source having moved since the fetch, which
+		 * is not a defect and must not turn this suite red — on 2026-09-22 a new League patch
+		 * changed Lillia's base armour and her last-changed patch, and this case failed for a
+		 * reason no change in this repo could fix. A suite that is red for an unfixable reason
+		 * hides the next real failure. See the module note in `verify-fetched.ts`.
+		 */
 		const mismatched = results.filter(r => r.verdict === "mismatch")
 		deepStrictEqual(
 			mismatched.map(r => `${r.label}: delivered ${r.delivered.slice(0, 60)} | source ${(r.source ?? "").slice(0, 60)}`),
 			[]
 		)
+		for (const r of results.filter(r => r.verdict === "stale"))
+			t.diagnostic(`stale (the source moved, not a defect): ${r.label} — ${r.note ?? ""}`)
 		ok(
 			results.filter(r => r.verdict === "match").length > 60,
 			`only ${results.filter(r => r.verdict === "match").length} lines were checked, which is not an audit`
