@@ -806,10 +806,51 @@ journal frames, and for a month that made a seventeen-game corpus look like a tw
 every file that was refused with the reason. A multi-game bench calls the second one. Fifteen games
 are benchable, 4,748 raw samples, thirteen distinct enemy junglers, 23:53 to 42:55.
 
+**THE REPLAY REPRODUCES THE BROWSER, TURN FOR TURN — measured 2026-09-22 against a real game he
+played.** Every bench in this repo rests on the claim that a replayed payload is the payload the
+coach held, and until now that was an argument about code paths rather than a measurement. Game
+5645995390 (2026-09-20, Lillia, 29 minutes, 353 journal frames) was coached live by the browser at
+`big-calls`; replaying its recorded samples through the shipped detector afterwards gives **nine
+asks against the nine lines he actually heard, in the same order, with a maximum divergence of 2.96
+seconds** — which is the five-second sample grain, not a disagreement
+(`data/eval/replay-fidelity-20260922.json`, reproduced by stepping `observeTick`/`dueTurn`/
+`commitTurn` over `data/live-samples/js-muain099-d6d9-t29832517.ndjson`). The same game replays to
+11 asks at `key-moments` and 33 at `commentary`.
+
+**And the pairing says which ask produced which line**, which is worth more than the fidelity
+number. The capped `window.standing` question shipped on 2026-09-19 fired at 5:08 and produced the
+best line of the game — *"take advantage of your two-level advantage and Fated Ashes to secure the
+first drake"*. The `hinge.silence` floor fired at 12:33, inside the five minutes his own 138 games
+say decide them, and the coach spent it on *"you have nearly two thousand gold in your pocket, so
+take a quick recall"* — the signal `what-wins.ts` measured pointing the OTHER way, 1023g mean in
+wins against 778g in losses. A second gold line followed at 19:16. **Two of the nine lines he heard
+were about a false defect signal, and no ask kind in the schedule is about gold**: the asks are
+landing where they were designed to land and the priorities inside the sentence are what is
+missing.
+
 `scripts/bench-stream.ts` always runs a **`mock`** arm, and it is the control that decides whether
 anything else earned its bill: it calls nothing and speaks the payload's first `- ` line verbatim,
 i.e. exactly what the coach would say if the model contributed zero. An arm that does not beat
 `mock` is paying latency for nothing.
+
+**THE CORPUS EATS ITSELF, and on 2026-09-22 it had already eaten the two games every frame
+measurement here was taken on.** `live-sampler.ts` bounds `data/live-samples/` by total size and
+evicts oldest-first on daemon start. Measured that day: 628 MB against a 600 MB ceiling, and
+`js-mtvxb5f4-f81a-t29817812` (5639406342) and `…-t29817845` (5639409343) were gone —
+`discoverBenchable()` no longer returned them in ANY category, not even `rejected`. Counted against
+the evidence itself, 44 window ids are named by stored runs in `data/eval/` and **21 of them no
+longer exist**, the Gwen paired window among them. The stored OUTPUTS survive, so `frame-power`'s
+360 trials and `frame-cadence`'s cost table stay quotable; the INPUTS do not, so neither can be
+re-run, extended, or checked by a second reader. This is the third corpus this directory has
+destroyed and the first two are already written into its header.
+
+The fix is that the ceiling now yields to the evidence rather than the other way round:
+`citedSampleFiles()` reads `data/eval/` for the window ids stored runs name — cached on the
+directory's file count and newest mtime, because it is 989 MB across 441 files — and `pruneSamples`
+will not evict one at any ceiling. If the ceiling cannot be met without taking a cited window,
+NOTHING is taken and the daemon says so with both numbers. The ceiling itself went to 4 GB, which
+is about three hundred more games. `pnpm doctor` counts the corpus now, so the next loss is
+something the machine notices rather than something an unrelated replay trips over.
 
 `pnpm smoke:live` walks the shipped path end to end — key, token, ground truth, socket, one real
 turn — and names the step that failed. Every one of those steps has broken at least once for a
@@ -1779,6 +1820,25 @@ in hand-written SVG, which took three attempts and at one point put them on her 
     banned, and is NOT the post-game `timeline.role`: exactly one JUNGLE per team in
     36 of 36 recorded games, and 72 of 72 Smite carriers labelled JUNGLE. The
     counterpart lookup may use it.
+- **The page he is looking at can be older than the code, and nothing used to say so.** On
+  2026-09-20 the daemon was up, every endpoint answered, `doctor` would have said 21 ok, and
+  `dist/assets/index-*.js` was four days and three commits old — so the live coach ran a schedule
+  two commits behind the tree, because `observeTick` lives in that bundle. `src/server/bundle-
+  freshness.ts` compares `dist/index.html` against `src/web`, `src/shared`, `src/analysis`,
+  `vite.config.ts` and `package.json`, and reports fresh / stale / unbuilt / unknown. It reaches him
+  two ways that both work on a bundle too old to render a warning about itself: `/api/health`'s
+  `warnings`, which every version of the status banner renders, and a plain inline banner injected
+  into the served shell with no script in it. `pnpm doctor` asks the same module. **If you change
+  anything under those three directories, the running app does not have it until `pnpm build`.**
+- **`data/csk.db` cannot be rebuilt, and it is backed up now.** Riot's match history ignores
+  `begIndex`/`endIndex` and answers with a server-chosen window of about twenty games, so most of
+  the 223 games in that file no longer exist upstream — and every review, moment and baseline is
+  derived from it. `src/db/backup.ts` takes a `VACUUM INTO` snapshot (never a file copy: the WAL
+  holds the newest commits and a copy can tear), OPENS THE COPY and checks it with
+  `PRAGMA integrity_check` plus a count off `game`, deletes a copy that fails rather than keeping
+  it, and rotates to seven only after a good one exists. The daemon runs it at startup and every
+  six hours, skipping when nothing has been written since the last copy. `pnpm db:backup` forces
+  one — run it before anything frightening. First real run: 25.4 MB, 223 games, integrity ok, 229ms.
 - Prefer shared config over tool-specific config (see the imports at the top).
 - `nub` is the user's own TypeScript runner and is not installed everywhere. If a
   script shelling out to `nub` fails, fall back to `node --experimental-strip-types`.
