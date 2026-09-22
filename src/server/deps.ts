@@ -80,6 +80,13 @@ export interface ServerDeps {
 	/** Serve the built SPA from `distDir`. Defaults to on whenever `dist/index.html` exists. */
 	serveSpa?: boolean
 	distDir?: string
+	/**
+	 * Where the SOURCE tree is, for the "is the page older than the code" check in
+	 * `bundle-freshness.ts`. A parameter for the same reason `distDir` is one: a test serves a
+	 * temp tree, and a packaged install may have no source tree at all, which that module reports
+	 * as `unknown` rather than guessing. Defaults to the repo this file was loaded from.
+	 */
+	repoRoot?: string
 
 	version?: string
 }

@@ -14,6 +14,7 @@
  */
 
 import { Hono } from "hono"
+import { resolve } from "node:path"
 import { countGames, kvGet, queueDepth } from "../../db/queries.ts"
 import { dbExists } from "../../db/index.ts"
 import {
@@ -27,6 +28,8 @@ import { probeVanguard } from "../../lcu/vanguard.ts"
 import { APP_VERSION, OFFLINE_STATUS } from "../deps.ts"
 import type { DaemonStatus, ServerDeps } from "../deps.ts"
 import { subscriberCount } from "../events.ts"
+import { bundleFreshnessCached, describeFreshness } from "../bundle-freshness.ts"
+import type { BundleFreshness } from "../bundle-freshness.ts"
 import { send } from "../respond.ts"
 
 /**
@@ -52,7 +55,17 @@ interface HealthExtras {
 	uptimeMs: number | null
 	pid: number
 	sseClients: number
+	bundle: BundleFreshness
 }
+
+/**
+ * WHERE THE REPO IS, from where this file is.
+ *
+ * `src/server/routes/health.ts` -> two levels to `src/`, three to the root. Resolved once because
+ * it cannot change while the process runs, and it is only ever used to ask about mtimes.
+ */
+const REPO_ROOT = resolve(import.meta.dirname, "../../..")
+const DIST_DIR = resolve(REPO_ROOT, "dist")
 
 const readStatus = async (deps: ServerDeps): Promise<DaemonStatus> => {
 	if (!deps.status) return OFFLINE_STATUS
@@ -86,6 +99,18 @@ export const createHealthRoute = (deps: ServerDeps): Hono => {
 		}
 		if (dbReachable && !dbExists()) warnings.push("database file has not been created yet")
 
+		/*
+		 * IS THE PAGE ASKING THIS QUESTION BUILT FROM THE CODE IN THE TREE?
+		 *
+		 * It rides in `warnings` rather than only in its own field on purpose: the status banner
+		 * has rendered `warnings` for as long as there has been a status banner, so this reaches a
+		 * client built BEFORE this line existed — which is exactly the client it is about. A new
+		 * field would only be read by a bundle new enough not to need it. See `bundle-freshness.ts`
+		 * for the September 20th case that produced it.
+		 */
+		const bundle = bundleFreshnessCached(deps.repoRoot ?? REPO_ROOT, deps.distDir ?? DIST_DIR)
+		if (bundle.verdict === "stale") warnings.push(describeFreshness(bundle))
+
 		// The daemon records this after each reconcile; falling back to kv means a standalone
 		// server still reports the real last sync instead of null.
 		let lastSyncMs: number | null = status.lastSyncMs ?? null
@@ -111,6 +136,7 @@ export const createHealthRoute = (deps: ServerDeps): Hono => {
 			lastSyncMs,
 			warnings,
 			uptimeMs: status.startedMs === undefined ? null : Date.now() - status.startedMs,
+			bundle,
 			pid: process.pid,
 			sseClients: subscriberCount(),
 			// Only when the client is unreachable. "The League client is not running" is true

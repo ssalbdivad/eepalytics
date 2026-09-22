@@ -20,7 +20,7 @@
 
 import { Hono } from "hono"
 import type { Context } from "hono"
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { serve } from "@hono/node-server"
 import type { ServerType } from "@hono/node-server"
@@ -30,6 +30,7 @@ import { APP_VERSION } from "./deps.ts"
 import type { ServerDeps } from "./deps.ts"
 import { createEventsRoute } from "./events.ts"
 import { ContractError, fail } from "./respond.ts"
+import { bundleFreshnessCached, describeFreshness } from "./bundle-freshness.ts"
 import { createAssetRoutes } from "./routes/assets.ts"
 import { createChatRoutes } from "./routes/chat.ts"
 import { createFormRoute } from "./routes/form.ts"
@@ -54,6 +55,28 @@ import { createSettingsRoutes } from "./routes/settings.ts"
 import { createTrendsRoute } from "./routes/trends.ts"
 
 const DEFAULT_DIST = resolve(import.meta.dirname, "../../dist")
+
+/** `src/server/app.ts` -> the repo root, for the mtime comparison below. */
+const REPO_ROOT = resolve(import.meta.dirname, "../..")
+
+/**
+ * THE ONE MESSAGE THAT HAS TO REACH A PAGE TOO OLD TO RENDER IT.
+ *
+ * A stale bundle cannot be relied on to display a warning ABOUT stale bundles — the code that
+ * would draw it is exactly the code that did not ship. So this is injected into the shell by the
+ * SERVER, which is always current, and it is plain inline HTML with no script, no class name and
+ * no dependency on anything the bundle defines.
+ *
+ * It self-erases: when the build is newer than every source, nothing is inserted at all and the
+ * bytes are the file on disk. See `bundle-freshness.ts` for the 2026-09-20 case that produced it.
+ */
+const stalenessBanner = (sentence: string): string =>
+	`<div role="status" style="position:fixed;left:12px;bottom:12px;z-index:2147483647;max-width:46ch;` +
+	`padding:10px 12px;border:1px solid #b45309;border-radius:8px;background:#1c1917;color:#fcd34d;` +
+	`font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 4px 16px rgba(0,0,0,.45)">` +
+	`<strong style="color:#fbbf24">This page is older than the code it came from.</strong><br>` +
+	`${sentence.replace(/[&<>]/g, ch => (ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : "&gt;"))}` +
+	`</div>`
 
 export const createApp = (deps: ServerDeps = {}): Hono => {
 	// One connection shared with the daemon, rather than two racing over the same file.
@@ -95,7 +118,20 @@ export const createApp = (deps: ServerDeps = {}): Hono => {
 	/* ------------------------------------------------------------------ spa */
 
 	const distDir = resolve(deps.distDir ?? DEFAULT_DIST)
+	const repoRoot = resolve(deps.repoRoot ?? REPO_ROOT)
 	const indexHtml = `${distDir}/index.html`
+
+	/*
+	 * ONCE PER BUILD, not once per request. The shell is re-fetched on every hard navigation and
+	 * the health route asks the same question every few seconds; a line per request would bury the
+	 * journal in the one situation where the journal is what someone is reading.
+	 */
+	let loggedStaleFor: number | null = null
+	const noteStaleOnce = (newestSourceMs: number | null): void => {
+		if (newestSourceMs === null || loggedStaleFor === newestSourceMs) return
+		loggedStaleFor = newestSourceMs
+		console.warn(`[server] ${describeFreshness(bundleFreshnessCached(repoRoot, distDir))}`)
+	}
 
 	const notBuiltYet = (c: Context): Response =>
 		c.text(
@@ -139,7 +175,29 @@ export const createApp = (deps: ServerDeps = {}): Hono => {
 				if (/\.[a-z0-9]{2,5}$/i.test(rel) && !rel.endsWith(".html"))
 					return fail(c, 404, `no such file: ${rel}`, "not-found")
 			}
-			// Client-side routing: every other unknown path is the shell.
+			/*
+			 * Client-side routing: every other unknown path is the shell — and the shell is where
+			 * the one thing a stale bundle cannot tell him gets told. The fresh path is untouched
+			 * (`sendFile`, streamed, byte-for-byte the file on disk); only the stale path pays for
+			 * a read and a string concat, and only until someone runs a build.
+			 */
+			const freshness = bundleFreshnessCached(repoRoot, distDir)
+			if (freshness.verdict === "stale") {
+				noteStaleOnce(freshness.newestSourceMs)
+				try {
+					const html = readFileSync(indexHtml, "utf8")
+					const banner = stalenessBanner(describeFreshness(freshness))
+					return c.html(
+						html.includes("</body>") ?
+							html.replace("</body>", `${banner}</body>`)
+						:	html + banner,
+						200,
+						{ "cache-control": "no-cache" }
+					)
+				} catch {
+					/* fall through to the untouched file: a banner is never worth a blank page */
+				}
+			}
 			return sendFile(c, indexHtml, {
 				contentType: "text/html; charset=utf-8",
 				cacheControl: "no-cache"
