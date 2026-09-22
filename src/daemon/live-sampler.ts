@@ -86,11 +86,20 @@ export const SAMPLE_EVERY_SEC = 5
 /**
  * A ceiling on the whole directory, because age alone does not bound disk.
  *
- * Measured on a real game: 16 samples took 516 KB, so a thirty-minute game is about 11 MB. A
- * heavy day inside the retention window is a gigabyte, on a machine whose SQLite database — the
- * thing that actually matters — is seven. Oldest games go first once the ceiling is crossed.
+ * Measured on a real game: 16 samples took 516 KB, so a thirty-minute game is about 11 MB. Oldest
+ * uncited games go first once the ceiling is crossed.
+ *
+ * RAISED FROM 600 MB TO 4 GB ON 2026-09-22, and the reason is the eviction recorded in the header:
+ * 600 MB was picked when the corpus was 275 MB and it was reached, at which point the daemon began
+ * deleting games. The numbers that set this one: the corpus is 628 MB across 95 windows today, a
+ * game costs about 10 MB, `data/eval/` — the OUTPUTS of the runs these are the inputs to — is
+ * already 989 MB, and the volume has 51 GB free. 4 GB is roughly three hundred more games before
+ * anything is evicted at all, and by then the citation pin below decides what may go.
+ *
+ * This is a knob about DISK, not about evidence. The pin is what protects the evidence, and it
+ * holds at any ceiling.
  */
-export const SAMPLE_MAX_BYTES = 600 * 1024 * 1024
+export const SAMPLE_MAX_BYTES = 4 * 1024 * 1024 * 1024
 
 export interface SamplerState {
 	gameId: string
