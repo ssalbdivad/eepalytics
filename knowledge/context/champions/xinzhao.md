@@ -27,14 +27,12 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The stack counter displays 1–3 rather than the usual 0–2, meaning that a count of 1 does not translate to having 1 stack. [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: Stacks reset when Xin Zhao dies. [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: Stacks of Determination will be gained even if the attack is blocked. [wiki-p rev-4051470, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Determination's interaction with parrying effects ( dodge, blind). [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: Determination deals proc damage. [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: Since it is a separate instance of damage when applied by basic attack or either of Wind Becomes Lightning's strikes, flat damage reduction that applies to both the main and bonus damage such as Amumu's Tantrum's passive will reduce each, for twice the reduction. [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: The bonus damage cannot critically strike. [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: When applied by a basic attack: [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: The attack uses a unique animation. [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: The bonus damage benefits from life steal. [wiki-p rev-4051470, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: It applies life steal specifically. [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: Neither the bonus damage or heal will be blocked by spell shield. [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: When applied by Wind Becomes Lightning: [wiki-p rev-4051470, fetched 2026-09-18]
 - edge case: Triggers against the closest target struck by the first slash/thrust (equals first target to receive spell effects). [wiki-p rev-4051470, fetched 2026-09-18]
@@ -71,7 +69,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-w rev-4026481, fetched 2026-09-18]
 - damage type: Physical [wiki-w rev-4026481, fetched 2026-09-18]
 - spell shield: true [wiki-w rev-4026481, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The self-reveal has not been fully tested for complete confirmation. Is the ability invisible when hitting minions and there is no enemy champion nearby? Is the tip of the ability enough to reveal him? Whether it can hit a minion or not? Just if he's around the exit of the fog of war, and even if he points towards the inside of the fog of war? [wiki-w rev-4026481, fetched 2026-09-18]
 - edge case: Spell shield will block both the slashes and the thrust. [wiki-w rev-4026481, fetched 2026-09-18]
 - edge case: If the spell shield blocks the first, or sometimes the second slash, it will block the rest of the ability, including the thrust. If it is activated after the first slash, it will only block up to 2 slashes and will not block the trust.(bug) [wiki-w rev-4026481, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-w rev-4026481, fetched 2026-09-18]
@@ -124,9 +121,9 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4051470, fetched 2026-09-18 — 29 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xin%20Zhao%2FDetermination&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4051470, fetched 2026-09-18 — 27 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xin%20Zhao%2FDetermination&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3986754, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xin%20Zhao%2FThree%20Talon%20Strike&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4026481, fetched 2026-09-18 — 26 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xin%20Zhao%2FWind%20Becomes%20Lightning&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4026481, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xin%20Zhao%2FWind%20Becomes%20Lightning&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4026484, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xin%20Zhao%2FAudacious%20Charge&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4008632, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xin%20Zhao%2FCrescent%20Guard&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/xinzhao/jungle?tier=emerald_plus

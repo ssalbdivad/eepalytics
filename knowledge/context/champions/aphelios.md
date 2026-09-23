@@ -71,7 +71,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Physical [wiki-p6 rev-4022137, fetched 2026-09-18]
 - edge case: All Chakram stacks are lost if the Crescendum projectile is destroyed (i.e Wind Wall, Unbreakable). [wiki-p6 rev-4022137, fetched 2026-09-18]
 - edge case: Due to the return time, at high attack speeds Crescendum will increase Aphelios' effective time to cast attacks, even when right next to his target. [wiki-p6 rev-4022137, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Crescendum attack cannot exceed attack speed limit [wiki-p6 rev-4022137, fetched 2026-09-18]
 
 ### Q
 - what it does: The active effect of Aphelios' varies based on his current main weapon. The individual actives do not share a cooldown. [wiki-q rev-3963883, fetched 2026-09-18]
@@ -175,7 +174,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: special [wiki-r rev-4052070, fetched 2026-09-18]
 - edge case: When critically striking, the attacks on locked-on targets when using Severum and Crescendum deal slightly more than 120% damage.(bug) It is currently unknown where this damage originates from. [wiki-r rev-4052070, fetched 2026-09-18]
 - edge case: For example, at level 6 with no attack damage bonuses, Aphelios will deal 80.7471 damage (approximated) from those attacks, whereas they are normally expected to deal 76.902. This discrepancy increases with higher attack damage. [wiki-r rev-4052070, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: It is also unknown whether this is just a Practice Tool bug. [wiki-r rev-4052070, fetched 2026-09-18]
 - edge case: Note: Values are outdated due to patch V26.01. [wiki-r rev-4052070, fetched 2026-09-18]
 - edge case: Attacks do not apply on-attack effects. [wiki-r rev-4052070, fetched 2026-09-18]
 - edge case: The attacks always count as projectiles unless Severum is being used. The lunar spotlight, however, may always be intercepted regardless of which weapon is in play as the main weapon. [wiki-r rev-4052070, fetched 2026-09-18]
@@ -205,7 +203,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p3: League of Legends Wiki, ability data template, revision rev-4023347, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FSeverum&prop=text
 - wiki-p4: League of Legends Wiki, ability data template, revision rev-3999163, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FGravitum&prop=text
 - wiki-p5: League of Legends Wiki, ability data template, revision rev-4046493, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FInfernum&prop=text
-- wiki-p6: League of Legends Wiki, ability data template, revision rev-4022137, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FCrescendum&prop=text
+- wiki-p6: League of Legends Wiki, ability data template, revision rev-4022137, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FCrescendum&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3963883, fetched 2026-09-18 — 2 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FWeapons%20of%20the%20Faithful&prop=text
 - wiki-q2: League of Legends Wiki, ability data template, revision rev-3993664, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FMoonshot&prop=text
 - wiki-q3: League of Legends Wiki, ability data template, revision rev-4034687, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FOnslaught&prop=text
@@ -214,4 +212,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q6: League of Legends Wiki, ability data template, revision rev-4034689, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FSentry&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3970739, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FPhase&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3998993, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FWeapon%20Queue%20System&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4052070, fetched 2026-09-18 — 35 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FMoonlight%20Vigil&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4052070, fetched 2026-09-18 — 34 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Aphelios%2FMoonlight%20Vigil&prop=text

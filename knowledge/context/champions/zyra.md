@@ -19,18 +19,13 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Innate: Periodically, Zyra spawns one or two Seeds nearby that last for 30 seconds, granting sight over the surrounding area for 1 second. After 1 second, enemy champions can destroy Seeds by moving on top of them. Zyra can only have a total of 8 Seeds planted at a time, preserving Seeds spawned by Rampant Growth over Seeds spawned by Garden of Thorns. [wiki-p rev-3986877, fetched 2026-09-18]
 - effect radius: 900 [wiki-p rev-3986877, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-3986877, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The pattern/probability of Garden of Thorns spawning one seed or two. [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: Zyra tries to plant Seeds in brush and not on top of walls. [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: Zyra tries not to plant Seeds too close together and at different angles. [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: Zyra does not plant any Seeds if she is concealed within a brush (unless there is an enemy ward in it, in which case it takes her a little longer to plant the Seed) or when there is no room for additional ones. [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: Zyra does not plant any Seeds if she is within 1400 units of the coordinate points (400, 400) or (14000, 14000), which are roughly at the center of the fountains on Summoner's Rift. [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: These same coordinates may not hold as fountain positions on other maps (e.g. on the Arena map, the Magma Chamber area overlaps with the second exclusion radius) and may prompt the implementation of this behaviour to be changed in the future.(bug) [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: Zyra tries to plant Seeds close to an enemy near her. [wiki-p rev-3986877, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Zyra tries to plant Seeds under enemy structures only if she is in basic attack range of them. [wiki-p rev-3986877, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Zyra tries to plant Seeds on the other side of the wall she is facing and/or standing right next to. [wiki-p rev-3986877, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Zyra tries to plant Seeds in the direction she is facing and/or moving. [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: Zyra tries to plant Seeds near jungle path entrances. [wiki-p rev-3986877, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Zyra tries to plant Seeds behind herself when she is walking through the river and there are no jungle path entrances near her. [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: Zyra tries to plant Seeds between herself and the enemy champion she has vision of (or is heading towards her) in a 45º angle to the left or to the right depending on where on lane she is standing. [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: Zyra tries to plant Seeds against the inner walls of epic monster pits ( Dragon, Rift Herald, Baron Nashor) [wiki-p rev-3986877, fetched 2026-09-18]
 - edge case: Zyra has a hidden passive that grants her 10% increased size for 33 seconds after having Leona's Sunlight applied to her. [wiki-p rev-3986877, fetched 2026-09-18]
@@ -93,7 +88,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3986877, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FGarden%20of%20Thorns&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3986877, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FGarden%20of%20Thorns&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4013461, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FDeadly%20Spines&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4044057, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FRampant%20Growth&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4013460, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zyra%2FGrasping%20Roots&prop=text

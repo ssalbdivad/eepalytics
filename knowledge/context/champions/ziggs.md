@@ -24,7 +24,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The empowered attack will not trigger against wards. [wiki-p rev-4005222, fetched 2026-09-18]
 - edge case: The cooldown reduction is granted at the start of the abilities' cast time. [wiki-p rev-4005222, fetched 2026-09-18]
 - edge case: Short Fuse will go on cooldown but not deal any damage if the attack misses due to blind. [wiki-p rev-4005222, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Short Fuse's interactions with dodging and blocking effects. [wiki-p rev-4005222, fetched 2026-09-18]
 
 ### Q
 - name: Bouncing Bomb [wiki-q rev-4008669, fetched 2026-09-18]
@@ -101,7 +100,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4005222, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FShort%20Fuse&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4005222, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FShort%20Fuse&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008669, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FBouncing%20Bomb&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008672, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FSatchel%20Charge&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008673, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ziggs%2FHexplosive%20Minefield&prop=text

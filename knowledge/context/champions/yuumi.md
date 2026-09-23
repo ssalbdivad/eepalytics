@@ -23,9 +23,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Ability hit against enemy champions while detached can only heal Yuumi.(unexpected) [wiki-p rev-4026485, fetched 2026-09-18]
 - edge case: Feline Friendship will apply to a basic attack already in flight. [wiki-p rev-4026485, fetched 2026-09-18]
 - edge case: If there are multiple allies who have equal Friendship stacks, the one Yuumi is currently attached to becomes her Best Friend. [wiki-p rev-4026485, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Empowered attack interaction with parrying effects ( dodge, block). [wiki-p rev-4026485, fetched 2026-09-18]
 - edge case: If Yuumi is blinded, Feline Friendship won't be consumed. [wiki-p rev-4026485, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: does Yuumi generate more friendship stacks from champion kills? [wiki-p rev-4026485, fetched 2026-09-18]
 
 ### Q
 - name: Prowling Projectile [wiki-q rev-4008652, fetched 2026-09-18]
@@ -128,7 +126,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4026485, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FFeline%20Friendship&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4026485, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FFeline%20Friendship&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008652, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FProwling%20Projectile&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4011487, fetched 2026-09-18 — 41 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FYou%20and%20Me!&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4026487, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yuumi%2FZoomies&prop=text

@@ -69,7 +69,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: True [wiki-e rev-4008024, fetched 2026-09-18]
 - edge case: Spell Flux's second cast on a target will apply a new Flux debuff as well as triggering the previous one (effectively refreshing the duration). [wiki-e rev-4008024, fetched 2026-09-18]
 - edge case: The "main" missile of Spell Flux is blocked by projectile-intercepting effects, while the spreading bounce missiles are not. [wiki-e rev-4008024, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: bounce range to-edge or to-center? [wiki-e rev-4008024, fetched 2026-09-18]
 - edge case: Game data notes additional range checks of 400 (bounce range) and 500 (Q damage bounce range) against 'large' enemies. [wiki-e rev-4008024, fetched 2026-09-18]
 - edge case: If the target becomes untargetable, dies, or is too far away or no longer in sight during the cast time, this ability will cancel but does not go on cooldown nor pay its cost (if applicable). [wiki-e rev-4008024, fetched 2026-09-18]
 
@@ -110,5 +109,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4059875, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ryze%2FArcane%20Mastery&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3936361, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ryze%2FOverload&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3989878, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ryze%2FRune%20Prison&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4008024, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ryze%2FSpell%20Flux&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4008024, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ryze%2FSpell%20Flux&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4008025, fetched 2026-09-18 — 29 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ryze%2FRealm%20Warp&prop=text

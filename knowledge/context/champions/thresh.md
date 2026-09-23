@@ -106,7 +106,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The enhanced attack applies other on-hit effects and can critically strike as normal (the bonus damage cannot). [wiki-e rev-4057474, fetched 2026-09-18]
 - edge case: Flay's passive enhanced attack can be dodged (the enhanced attack is not consumed and the charge is not reset) and blocked (the enhanced attack is consumed and the charge is reset). [wiki-e rev-4057474, fetched 2026-09-18]
 - edge case: The empowered attack will not trigger against structures nor wards. [wiki-e rev-4057474, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Enhanced attack's interactions with blinding effects (regarding both bonus damage and charge reset). [wiki-e rev-4057474, fetched 2026-09-18]
 - WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### R
@@ -136,5 +135,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4025498, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Thresh%2FDamnation&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008201, fetched 2026-09-18 — 35 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Thresh%2FDeath%20Sentence&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4017821, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Thresh%2FDark%20Passage&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4057474, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Thresh%2FFlay&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4057474, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Thresh%2FFlay&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4024674, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Thresh%2FThe%20Box&prop=text

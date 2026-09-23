@@ -20,7 +20,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Passive [wiki-p rev-3986753, fetched 2026-09-18]
 - edge case: Mana Surge will trigger even if the attack is blocked, but not if it misses due to blind. [wiki-p rev-3986753, fetched 2026-09-18]
 - edge case: The empowered attack will trigger against structures. [wiki-p rev-3986753, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Mana Surge's interactions with dodging effects. [wiki-p rev-3986753, fetched 2026-09-18]
 
 ### Q
 - name: Arcanopulse [wiki-q rev-4057478, fetched 2026-09-18]
@@ -100,7 +99,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3986753, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FMana%20Surge&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3986753, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FMana%20Surge&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4057478, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FArcanopulse&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008622, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FEye%20of%20Destruction&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3881560, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xerath%2FShocking%20Orb&prop=text

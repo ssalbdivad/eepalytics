@@ -57,7 +57,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The empowered attack rolls a critical strike once for all strikes; either all will critically strike, or none will. If Sundered Sky's Lightshield Strike is ready, all three strikes will critically strike. [wiki-w rev-4026707, fetched 2026-09-18]
 - edge case: Despite the multi-hit attack only having a hidden cast time, Pantheon will remain unable to act until the last strike has been dealt. [wiki-w rev-4026707, fetched 2026-09-18]
 - edge case: The empowered attack's total time is affected by Pantheon's attack speed. [wiki-w rev-4026707, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The attack's total time is the cast time plus Pantheon's attack windup time. [wiki-w rev-4026707, fetched 2026-09-18]
 - edge case: The 3 strikes that occur after Empowered Shield Vault each count as a separate cast instance for effects such as Electrocute and Eclipse's Ever Rising Moon. [wiki-w rev-4026707, fetched 2026-09-18]
 - edge case: The 3 strikes that occur after Empowered Shield Vault each apply a stack of Mortal Will, even if the attacks are dodged, blocked, or missed while Pantheon is blinded. [wiki-w rev-4026707, fetched 2026-09-18]
 - edge case: The empowered attack will not trigger against structures. [wiki-w rev-4026707, fetched 2026-09-18]
@@ -118,6 +117,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3963570, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pantheon%2FMortal%20Will&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4016044, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pantheon%2FComet%20Spear&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4026707, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pantheon%2FShield%20Vault&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4026707, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pantheon%2FShield%20Vault&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4049965, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pantheon%2FAegis%20Assault&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4046502, fetched 2026-09-18 — 27 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pantheon%2FGrand%20Starfall&prop=text

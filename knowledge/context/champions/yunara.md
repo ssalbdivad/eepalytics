@@ -39,7 +39,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Basic damage for the spread attack damage. [wiki-q rev-4059008, fetched 2026-09-18]
 - edge case: The on-hit will critically strike for 0% bonus damage when the triggering attack does, causing it to be reduced by Randuin's Omen but not be amped by Vow of the First Lands. (unexpected) [wiki-q rev-4059008, fetched 2026-09-18]
 - edge case: Spread attacks will still deal damage even if Yunara misses her basic attack due to blind. [wiki-q rev-4059008, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Spread attack interaction with parrying effects ( dodge, block) [wiki-q rev-4059008, fetched 2026-09-18]
 - edge case: There is no limit to the number of enemies the empowered attacks can spread to. [wiki-q rev-4059008, fetched 2026-09-18]
 - edge case: Yunara's secondary resource bar gives various context for Cultivation of Spirit. It is visible to the player only. [wiki-q rev-4059008, fetched 2026-09-18]
 - edge case: While Cultivation of Spirit is not active, the bar shows her current Unleash stacks. It is colored white while below maximum stacks and yellow while at maximum stacks. [wiki-q rev-4059008, fetched 2026-09-18]
@@ -116,7 +115,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4058999, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yunara%2FVow%20of%20the%20First%20Lands&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4059008, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yunara%2FCultivation%20of%20Spirit&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4059008, fetched 2026-09-18 — 23 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yunara%2FCultivation%20of%20Spirit&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008650, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yunara%2FArc%20of%20Judgment&prop=text
 - wiki-w2: League of Legends Wiki, ability data template, revision rev-4039441, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yunara%2FArc%20of%20Ruin&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3960443, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yunara%2FKanmei's%20Steps&prop=text

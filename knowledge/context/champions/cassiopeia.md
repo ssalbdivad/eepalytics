@@ -38,7 +38,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Occasionally, Noxious Blast may not deal the displayed damage. This discrepancy occurs when the calculated damage falls between 0.5 and 1. In such cases, rounding to the nearest integer, specifically rounding up, creates a 1-point difference. It's important to note that the damage is rounded down to the nearest integer. [wiki-q rev-4060358, fetched 2026-09-18]
 - edge case: For example: with a Blasting Wand's, Noxious Blast shows so rounded to the nearest integer 116 magic damage, but really deals using the formula above 115 magic damage. [wiki-q rev-4060358, fetched 2026-09-18]
 - edge case: (bug) When Cassiopeia has precisely 20 bonus AP or 40 bonus AP. In this scenario, Noxious Blast may inflict 1 less damage than intended. Importantly, this bug occurs independently of rounding considerations. [wiki-q rev-4060358, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Enemies within the blast of Noxious Blast are poisoned for something between 3.2 and 3.3 seconds. [wiki-q rev-4060358, fetched 2026-09-18]
 
 ### W
 - name: Miasma [wiki-w rev-3936292, fetched 2026-09-18]
@@ -103,7 +102,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4060357, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Cassiopeia%2FSerpentine%20Grace&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4060358, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Cassiopeia%2FNoxious%20Blast&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4060358, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Cassiopeia%2FNoxious%20Blast&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3936292, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Cassiopeia%2FMiasma&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4060419, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Cassiopeia%2FTwin%20Fang&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4060360, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Cassiopeia%2FPetrifying%20Gaze&prop=text

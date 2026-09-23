@@ -20,10 +20,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: magic [wiki-p rev-3997432, fetched 2026-09-18]
 - spell shield: special [wiki-p rev-3997432, fetched 2026-09-18]
 - edge case: Spell shield will not block the mark's application. [wiki-p rev-3997432, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Interaction with mark consumption [wiki-p rev-3997432, fetched 2026-09-18]
 - edge case: The mark's consumption by an ally respects enchantment redirection. [wiki-p rev-3997432, fetched 2026-09-18]
 - edge case: Leverage's mark will be applied even if the attack misses due to blind. [wiki-p rev-3997432, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Interaction between mark application and consumption and parry effects ( block, dodge, blind*). [wiki-p rev-3997432, fetched 2026-09-18]
 
 ### Q
 - name: Handshake [wiki-q rev-4053296, fetched 2026-09-18]
@@ -106,7 +104,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3997432, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renata%20Glasc%2FLeverage&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3997432, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renata%20Glasc%2FLeverage&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4053296, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renata%20Glasc%2FHandshake&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3908415, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renata%20Glasc%2FBailout&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4053301, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renata%20Glasc%2FLoyalty%20Program&prop=text

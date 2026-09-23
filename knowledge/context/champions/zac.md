@@ -121,7 +121,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Spell shield only blocks a single instance of damage. [wiki-r rev-4013080, fetched 2026-09-18]
 - edge case: Entering stasis will end Let's Bounce! prematurely. [wiki-r rev-4013080, fetched 2026-09-18]
 - edge case: Casting Let's Bounce may cause chunks that are further away to disappear.(bug) [wiki-r rev-4013080, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: how much farther exactly? [wiki-r rev-4013080, fetched 2026-09-18]
 - edge case: Casting Let's Bounce just before dying may put it on cooldown while not displaying it as on cooldown.(bug) [wiki-r rev-4013080, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Zac is performing Let's Bounce!: [wiki-r rev-4013080, fetched 2026-09-18]
 - WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
@@ -136,5 +135,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008654, fetched 2026-09-18 — 30 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FStretching%20Strikes&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4022472, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FUnstable%20Matter&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4046591, fetched 2026-09-18 — 23 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FElastic%20Slingshot&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4013080, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FLet's%20Bounce!&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4013080, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zac%2FLet's%20Bounce!&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/zac/jungle?tier=emerald_plus

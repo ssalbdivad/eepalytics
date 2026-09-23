@@ -34,7 +34,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: True [wiki-q rev-4001219, fetched 2026-09-18]
 - edge case: The enhanced attack will apply other on-hit effects and can critically strike as normal. [wiki-q rev-4001219, fetched 2026-09-18]
 - edge case: Critical strikes do not interact with Shield of Daybreak's bonus damage. [wiki-q rev-4001219, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Shield of Daybreak's interactions with dodging, blocking. [wiki-q rev-4001219, fetched 2026-09-18]
 - edge case: Shield of Daybreak's attack can miss, nullifying its effects entirely. [wiki-q rev-4001219, fetched 2026-09-18]
 - edge case: Shield of Daybreak's attack does not put Leona's basic attack on cooldown. [wiki-q rev-4001219, fetched 2026-09-18]
 - edge case: This effectively performs a second attack reset. [wiki-q rev-4001219, fetched 2026-09-18]
@@ -98,7 +97,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4038401, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Leona%2FSunlight&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4001219, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Leona%2FShield%20of%20Daybreak&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4001219, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Leona%2FShield%20of%20Daybreak&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4042253, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Leona%2FEclipse&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007645, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Leona%2FZenith%20Blade&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007649, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Leona%2FSolar%20Flare&prop=text

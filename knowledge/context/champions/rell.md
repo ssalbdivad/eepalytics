@@ -53,7 +53,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Mounted Alacrity grants 15 bonus movement speed if the ability has not been learned (rank 0). [wiki-w rev-4007762, fetched 2026-09-18]
 - edge case: Rell slides between 250 and 350 units in testing, depending on how far the spell was targeted. It is not known where this is intended. [wiki-w rev-4007762, fetched 2026-09-18]
 - edge case: If Rell dashes before a wall on the map, the slide will cover a shorter distance to the terrain over the same time, moving slower. [wiki-w rev-4007762, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Interaction with player-made walls. [wiki-w rev-4007762, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Rell is dashing/in cast time: [wiki-w rev-4007762, fetched 2026-09-18]
 - WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Ferromancy: Mount Up [wiki-w2 rev-3976244, fetched 2026-09-18]
@@ -112,7 +111,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4050368, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rell%2FBreak%20the%20Mold&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008008, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rell%2FShattering%20Strike&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4007762, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rell%2FFerromancy%3A%20Crash%20Down&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4007762, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rell%2FFerromancy%3A%20Crash%20Down&prop=text
 - wiki-w2: League of Legends Wiki, ability data template, revision rev-3976244, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rell%2FFerromancy%3A%20Mount%20Up&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008009, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rell%2FFull%20Tilt&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4008010, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rell%2FMagnet%20Storm&prop=text

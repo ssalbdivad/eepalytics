@@ -43,7 +43,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-q rev-4016298, fetched 2026-09-18]
 - edge case: Tentacle Smash's hitbox is fixed in front of Illaoi, while the indicator on the ground is fixed to the targeted direction. [wiki-q rev-4016298, fetched 2026-09-18]
 - edge case: For allied Original Illaoi and Void Bringer Illaoi skin, Tentacle Smash's indicator is further in front of Illaoi compared to an enemy Illaoi's and other skins (with the hitbox unchanged). (unexpected) [wiki-q rev-4016298, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The self-reveal has not been fully tested for complete confirmation. Is the ability invisible when hitting minions and there is no enemy champion nearby? Is the tip of the ability enough to reveal her? Whether it can hit a minion or not? Just if she's around the exit of the fog of war, and even if she points towards the inside of the fog of war? [wiki-q rev-4016298, fetched 2026-09-18]
 - WITHHELD (40 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 
 ### W
@@ -108,7 +107,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Location [wiki-e rev-4061209, fetched 2026-09-18]
 - damage type: Physical • Magic • True (Echoed damage) [wiki-e rev-4061209, fetched 2026-09-18]
 - spell shield: Special [wiki-e rev-4061209, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The self-reveal has not been fully tested for complete confirmation. Is the ability invisible when passing nearby minions and there is no enemy champion nearby? Is the tip of the ability enough to reveal her? Whether it can collide with a minion or not? Just if she's around the exit of the fog of war, and even if she points towards the inside of the fog of war? [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: Spirits are classified as clones: [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: Spirits can only be fully targeted by Illaoi's team and neutral monsters. The Spirit's allies cannot manually select it as a valid target for spells and abilities, but they can still do so with automatically targeted effects. [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: Spirits take 50% damage from turrets. (unexpected) [wiki-e rev-4061209, fetched 2026-09-18]
@@ -141,7 +139,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If the target's health is reduced to 0 while their Spirit is being pulled out, and they do not die (i.e because of resurrection), then the Spirit will still spawn with 0 health, making it invulnerable. The target will successively become a Vessel when the Spirit's lifetime expires. (unexpected) [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: If some effect regenerates the champion's health while they are resurrecting, and before the Spirit spawns, then the same will not apply. [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: Grabbing the Spirit of Viego will make the Spirit's lifetime (the white bar below the lifebar) disappear, similar to other cases in the past. (unexpected) [wiki-e rev-4061209, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Post V12.8, does grabbing the Spirit of an Oathsworn make the Spirit invisible? [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: Since the actual tether range uses a different calculation from the indicator, it may often appear that the tether breaks before reaching the indicator. (unexpected) [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: Illaoi can better see than her allies who's been Vesseled, by adding a layer of watery effects on their model. The Vessel will also be let known it's debuffed, by having a layer of watery effects on its screen instead. [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: If the target becomes a Vessel while vanished, the layer on their model will fail to be added. (unexpected) [wiki-e rev-4061209, fetched 2026-09-18]
@@ -152,7 +149,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Transferred damage will not doubly apply on-hit or on-spell effects versus the target (e.g. Liandry's Torment). These effects are only applied versus the Spirit. [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: Attacking the Vessel and its Spirit simultaneously will only apply one stack of Black Cleaver to the Vessel. [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: While First Strike is active, damage instances that do not trigger the First Strike projectile, will echo close to 0 damage, similar to past cases. (unexpected) [wiki-e rev-4061209, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Yone's Soul Unbound? [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: When the tether is broken (whether the Spirit's lifetime ran out or the target moved out of range), the Spirit will vanish and move to Illaoi's location. [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: An uncancellable windup attack may still kill the Spirit after it vanished to grant the gold, but without making the target a Vessel. [wiki-e rev-4061209, fetched 2026-09-18]
 - edge case: When the Spirit is killed, it will remain in the same position for less than a second before moving to an unknown location. This will cancel any remaining Tentacle queued attacks, for the target being out of range. (unexpected) [wiki-e rev-4061209, fetched 2026-09-18]
@@ -196,7 +192,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4062254, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FProphet%20of%20an%20Elder%20God&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4016298, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FTentacle%20Smash&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4016298, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FTentacle%20Smash&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4063660, fetched 2026-09-18 — 48 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FHarsh%20Lesson&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4061209, fetched 2026-09-18 — 64 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FTest%20of%20Spirit&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4061209, fetched 2026-09-18 — 61 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FTest%20of%20Spirit&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4050880, fetched 2026-09-18 — 28 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Illaoi%2FLeap%20of%20Faith&prop=text

@@ -165,7 +165,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Auto [wiki-w rev-4050339, fetched 2026-09-18]
 - edge case: When an enemy is alerted, sharks will circle underneath their feet while a sound will be played to them that changes based on health threshold. [wiki-w rev-4050339, fetched 2026-09-18]
 - edge case: Using a basic attack breaks the stealth at the end of the attack windup. [wiki-w rev-4050339, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: While submerged, a unique visual indicator will appear above Pyke if there are enemy champions closer than 700 units but farther than 600 units. [wiki-w rev-4050339, fetched 2026-09-18]
 
 ### E
 - name: Phantom Undertow [wiki-e rev-4044071, fetched 2026-09-18]
@@ -211,6 +210,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4007005, fetched 2026-09-18 — 118 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pyke%2FGift%20of%20the%20Drowned%20Ones&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007993, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pyke%2FBone%20Skewer&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4050339, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pyke%2FGhostwater%20Dive&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4050339, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pyke%2FGhostwater%20Dive&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4044071, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pyke%2FPhantom%20Undertow&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007995, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Pyke%2FDeath%20from%20Below&prop=text

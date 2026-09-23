@@ -51,7 +51,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Recasting the ability does not. [wiki-w rev-4004668, fetched 2026-09-18]
 - edge case: The first card shown is random but the order always remains the same ( Blue Card, Red Card, Gold Card, repeat). [wiki-w rev-4004668, fetched 2026-09-18]
 - edge case: Upon activation, an indicator visible to allies and enemies appears above Twisted Fate to show him shuffling his deck of cards while remaining in the same order, the card he can choose at every moment glows over the others. The selected card is specified for the duration of the enhanced attack. [wiki-w rev-4004668, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The interval until the next card is hovered is 0.528 seconds every time, instead of some times 0.528 and other times 0.495. [wiki-w rev-4004668, fetched 2026-09-18]
 - edge case: If the target becomes untargetable, dies, or is too far away during the empowered attack's cast time, it is cancelled but not consumed. [wiki-w rev-4004668, fetched 2026-09-18]
 - edge case: The empowered attack will trigger against structures and buildings but not wards and plants. [wiki-w rev-4004668, fetched 2026-09-18]
 - edge case: The empowered attack is special cased to not trigger a stack of Fiendhunter Bolts' Opening Barrage. [wiki-w rev-4004668, fetched 2026-09-18]
@@ -95,6 +94,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4005221, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FLoaded%20Dice&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3950864, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FWild%20Cards&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4004668, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FPick%20a%20Card&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4004668, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FPick%20a%20Card&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3963571, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FStacked%20Deck&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4017975, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Twisted%20Fate%2FDestiny&prop=text

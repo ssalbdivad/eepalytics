@@ -27,7 +27,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Attacking an Honeyfruit and collecting the pods generates 30 Fury, or 35 Fury if the plant was hit by a critical strike. [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: Fury is only granted if the basic attack hits and will not be granted if Tryndamere cancels his attack windup. [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: Tryndamere will not generate Fury if the attack is dodged or misses due to blind. [wiki-p rev-4041166, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Fury generation with parrying effects ( block) [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: Sundered Sky's Lightshield Strike will generate 10 Fury. [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: Effects that apply on-hit effects twice (e.g. Dusk and Dawn's Spellblade and Guinsoo's Rageblade's Phantom Hit) will always generate the same amount of Fury as their triggering attack. [wiki-p rev-4041166, fetched 2026-09-18]
 - edge case: If the triggering attack critically strikes, then the additional on-hit will also generate 10 Fury, if it doesn't, then the additional on-hit will generate 5 Fury. [wiki-p rev-4041166, fetched 2026-09-18]
@@ -87,7 +86,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Enemies already hit by Spinning Slash cannot be damaged more than once. [wiki-e rev-4007759, fetched 2026-09-18]
 - edge case: To ensure Spinning Slash deals damage when dashing away from an enemy champion, Tryndamere needs to move r-35 units towards the enemy beyond the distance he can basic attack at, where r represents the enemy's radius and 35 is the distance in units beyond Tryndamere's basic attack range that Spinning Slash can reach. [wiki-e rev-4007759, fetched 2026-09-18]
 - edge case: The cooldown reduction upon critically striking triggers on wards and jungle plants and even if the attack is blocked, but not if it misses due to blind. [wiki-e rev-4007759, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Cooldown reduction on critical strike interaction with parrying effects ( dodge). [wiki-e rev-4007759, fetched 2026-09-18]
 
 ### R
 - name: Undying Rage [wiki-r rev-4018945, fetched 2026-09-18]
@@ -100,8 +98,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4041166, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FBattle%20Fury&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4041166, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FBattle%20Fury&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4058457, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FBloodlust&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4052438, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FMocking%20Shout&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4007759, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FSpinning%20Slash&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4007759, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FSpinning%20Slash&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4018945, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Tryndamere%2FUndying%20Rage&prop=text

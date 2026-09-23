@@ -47,7 +47,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Physical True [wiki-w rev-4008036, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4008036, fetched 2026-09-18]
 - edge case: Haymaker's total hitbox uses the intersection of a trapezoid and a circle. Enemies are hit by Haymaker only when their hitbox overlaps with both of those areas. [wiki-w rev-4008036, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Where is the center of the circle? [wiki-w rev-4008036, fetched 2026-09-18]
 - edge case: The trapezoid and the rectangle both register the edge of enemies' hitbox. [wiki-w rev-4008036, fetched 2026-09-18]
 - edge case: The shield is granted at the start of the cast time and will decay afterwards. [wiki-w rev-4008036, fetched 2026-09-18]
 - edge case: Sett does not store Grit from damage that was mitigated by shields. [wiki-w rev-4008036, fetched 2026-09-18]
@@ -110,6 +109,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4018819, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sett%2FPit%20Grit&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4024545, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sett%2FKnuckle%20Down&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4008036, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sett%2FHaymaker&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4008036, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sett%2FHaymaker&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4013095, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sett%2FFacebreaker&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3936244, fetched 2026-09-18 — 29 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sett%2FThe%20Show%20Stopper&prop=text

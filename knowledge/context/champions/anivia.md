@@ -56,7 +56,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Crystallize's displacement triggers in-combat effects by dealing 0 proc true damage, such as drawing turret aggro, Sudden Impact and applying Elixir of Sorcery. [wiki-w rev-4007565, fetched 2026-09-18]
 - edge case: Individual ice chunks have both 100 units pathing radius and gameplay radius. [wiki-w rev-4007565, fetched 2026-09-18]
 - edge case: Champions are knocked 120 units to either side of a wall segment, non-champions 250 units. [wiki-w rev-4007565, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Knockback speed? [wiki-w rev-4007565, fetched 2026-09-18]
 - edge case: Player-generated terrain such as Crystallize does not block sight. [wiki-w rev-4007565, fetched 2026-09-18]
 
 ### E
@@ -98,6 +97,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3906517, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FRebirth&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4026612, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FFlash%20Frost&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4007565, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FCrystallize&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4007565, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FCrystallize&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4057862, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FFrostbite&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4006729, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Anivia%2FGlacial%20Storm&prop=text

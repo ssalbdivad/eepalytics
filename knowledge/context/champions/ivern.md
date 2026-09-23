@@ -115,7 +115,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: physical [wiki-r rev-3976509, fetched 2026-09-18]
 - edge case: Only the initial cast counts as an ability activation for the purposes of on-cast effects such as Spellblade. [wiki-r rev-3976509, fetched 2026-09-18]
 - edge case: Recasting the ability does, however, count as casting an ultimate ability for the purposes of Experimental Hexplate's Overdrive and similar effects.(bug) [wiki-r rev-3976509, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: What about Force Pulse's? [wiki-r rev-3976509, fetched 2026-09-18]
 - edge case: Daisy, when the ability is initially cast, is untargetable until she lands. [wiki-r rev-3976509, fetched 2026-09-18]
 - edge case: Recasting Daisy! does not interrupt Recall's channel. [wiki-r rev-3976509, fetched 2026-09-18]
 
@@ -129,5 +128,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4009163, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FRootcaller&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4025374, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FBrushmaker&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3994759, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FTriggerseed&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-3976509, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FDaisy!&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-3976509, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Ivern%2FDaisy!&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/ivern/jungle?tier=emerald_plus

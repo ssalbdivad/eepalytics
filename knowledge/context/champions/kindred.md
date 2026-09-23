@@ -66,7 +66,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Wolf's Frenzy applies ability haste to its cooldown post-effect. [wiki-w rev-4063949, fetched 2026-09-18]
 - edge case: Given a base cooldown of 14 seconds at rank 5 with 100 ability haste, casting the ability and then ending it after 4 seconds will result in a remaining cooldown of (14−4)×0.5=5 seconds, where 0.5 is derived from ability haste. [wiki-w rev-4063949, fetched 2026-09-18]
 - edge case: Because of this, there will always be some cooldown time remaining post-effect regardless of the amount of ability haste, unlike certain other abilities with cooldowns that start on-cast. [wiki-w rev-4063949, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Interaction with enemy vision and spectator mode. [wiki-w rev-4063949, fetched 2026-09-18]
 
 ### E
 - name: Mounting Dread [wiki-e rev-4022506, fetched 2026-09-18]
@@ -84,7 +83,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Mounting Dread will prioritize casting on the closest champion within 100 radius of the cursor, even if other eligible targets are closer. [wiki-e rev-4022506, fetched 2026-09-18]
 - edge case: As a consequence of this mechanic, Mounting Dread can still be cast on champions with Mounting Dread stacks.(bug) [wiki-e rev-4022506, fetched 2026-09-18]
 - edge case: Reapplying Mounting Dread through this method will apply the slow, but will not reset the stack count. [wiki-e rev-4022506, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Reapplying Mounting Dread against disguised Neeko will reset the stack count.(bug) [wiki-e rev-4022506, fetched 2026-09-18]
 
 ### R
 - name: Lamb's Respite [wiki-r rev-4024177, fetched 2026-09-18]
@@ -102,7 +100,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Health costs will ignore Lamb's Respite's threshold. [wiki-r rev-4024177, fetched 2026-09-18]
 - edge case: The cost will not be paid if the caster is below the threshold. [wiki-r rev-4024177, fetched 2026-09-18]
 - edge case: Lamb's Respite has no effect on zombie state or clone units. [wiki-r rev-4024177, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Lamb's Respite will have no effect if cast while Kindred is untargetable. [wiki-r rev-4024177, fetched 2026-09-18]
 
 ### What real games did this patch — counts, not advice
 - win rate this patch: 48.29% (n=3,446 games, emerald_plus) [opgg 16.18, fetched 2026-09-18]
@@ -112,7 +109,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3994253, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kindred%2FMark%20of%20the%20Kindred&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007746, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kindred%2FDance%20of%20Arrows&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4063949, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kindred%2FWolf's%20Frenzy&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4022506, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kindred%2FMounting%20Dread&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4024177, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kindred%2FLamb's%20Respite&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4063949, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kindred%2FWolf's%20Frenzy&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4022506, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kindred%2FMounting%20Dread&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4024177, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kindred%2FLamb's%20Respite&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/kindred/jungle?tier=emerald_plus

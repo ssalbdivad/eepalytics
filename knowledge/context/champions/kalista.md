@@ -77,8 +77,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The Sentinel's sight reveal on enemy champions is accredited for assists and potentially kills (if they die shortly after being spotted). [wiki-w rev-4007621, fetched 2026-09-18]
 - edge case: It does not reveal stealthed targets. [wiki-w rev-4007621, fetched 2026-09-18]
 - edge case: Sentinel will cast from wherever Kalista is at the end of the cast time. [wiki-w rev-4007621, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Soul Mark's interaction with parrying effects ( dodge, block, blind). [wiki-w rev-4007621, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: If Pierce kills the target by Soul-Mark's additional damage, it will/will not continue. [wiki-w rev-4007621, fetched 2026-09-18]
 
 ### E
 - what it does: Passive: Kalista's basic attacks on-hit and Pierce apply a stack of Rend to enemies for 4 seconds, refreshing on subsequent hits and stacking up to 254 times per enemy. Active: Kalista rips out the lodged spears from all nearby enemies afflicted with Rend stacks, consuming the stacks on each target to deal physical damage and slow them for 2 seconds. For each stack beyond the first, the target is dealt additional physical damage. Rend deals 50% damage against epic monsters. Rend's cast also empowers the in-flight missiles of Kalista's basic attacks and Pierce to apply Rend's effects to their targets immediately upon hitting them. If Rend kills at least one target, its cooldown is reset and Kalista restores mana. A nearby enemy with a Rend stack is required to cast this ability. [wiki-e rev-4004071, fetched 2026-09-18]
@@ -134,6 +132,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4024157, fetched 2026-09-18 — 29 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FMartial%20Poise&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3997075, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FPierce&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4007621, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FSentinel&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4007621, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FSentinel&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4004071, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FRend&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4015001, fetched 2026-09-18 — 29 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kalista%2FFate's%20Call&prop=text

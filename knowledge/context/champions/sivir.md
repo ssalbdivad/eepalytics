@@ -52,7 +52,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Physical [wiki-w rev-4062258, fetched 2026-09-18]
 - spell shield: False [wiki-w rev-4062258, fetched 2026-09-18]
 - edge case: Ricochet-enhanced basic attacks can bounce from structures onto secondary targets but not from nearby units onto structures. [wiki-w rev-4062258, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Ricochet's interactions with dodging, blocking, and blinding effects. [wiki-w rev-4062258, fetched 2026-09-18]
 - edge case: Ricochet do not apply to additional targets with Runaan's Hurricane. [wiki-w rev-4062258, fetched 2026-09-18]
 - edge case: Sivir's attack timer will only reset from casting Ricochet if the ability's buff was not already active on her. Refreshing the buff will not grant an attack reset.(bug) [wiki-w rev-4062258, fetched 2026-09-18]
 
@@ -81,6 +80,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-3985850, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sivir%2FFleet%20of%20Foot&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4016378, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sivir%2FBoomerang%20Blade&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4062258, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sivir%2FRicochet&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4062258, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sivir%2FRicochet&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3788826, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sivir%2FSpell%20Shield&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3936364, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sivir%2FOn%20the%20Hunt&prop=text

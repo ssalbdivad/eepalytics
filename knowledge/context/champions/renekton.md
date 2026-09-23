@@ -19,7 +19,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Passive [wiki-p rev-3961774, fetched 2026-09-18]
 - edge case: Basic attacks against any enemy that is not a structure will generate the Fury. [wiki-p rev-3961774, fetched 2026-09-18]
 - edge case: Renekton can generate Fury by collecting Honeyfruit and Health Relics (interacts with Reign of Anger's bonus generation). [wiki-p rev-3961774, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Fury generation with parrying effects ( blind, dodge, block) [wiki-p rev-3961774, fetched 2026-09-18]
 
 ### Q
 - name: Cull the Meek [wiki-q rev-4008014, fetched 2026-09-18]
@@ -82,7 +81,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3961774, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renekton%2FReign%20of%20Anger&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3961774, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renekton%2FReign%20of%20Anger&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008014, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renekton%2FCull%20the%20Meek&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4015473, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renekton%2FRuthless%20Predator&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3943397, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Renekton%2FSlice%20and%20Dice&prop=text

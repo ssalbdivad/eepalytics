@@ -43,7 +43,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Orianna cannot use Command: Protect while The Ball is in transit with Command: Attack but she may buffer Command: Dissonance and Command: Shockwave to cast once it has reached the location. [wiki-q rev-3995779, fetched 2026-09-18]
 - edge case: The Ball will remain at the target location until Orianna retrieves it or if she goes beyond its leash range. [wiki-q rev-3995779, fetched 2026-09-18]
 - edge case: The Ball will also never exceed its leash range regardless of target direction. [wiki-q rev-3995779, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The Ball will drop to the ground upon colliding with Yasuo's Wind Wall but not with Braum's Unbreakable. [wiki-q rev-3995779, fetched 2026-09-18]
 - edge case: Samira's Blade Whirl? [wiki-q rev-3995779, fetched 2026-09-18]
 
 ### W
@@ -100,7 +99,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4026443, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Orianna%2FClockwork%20Windup&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-3995779, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Orianna%2FCommand%3A%20Attack&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-3995779, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Orianna%2FCommand%3A%20Attack&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3958109, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Orianna%2FCommand%3A%20Dissonance&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3804030, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Orianna%2FCommand%3A%20Protect&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4026444, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Orianna%2FCommand%3A%20Shockwave&prop=text

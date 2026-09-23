@@ -69,9 +69,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: True [wiki-e rev-3906616, fetched 2026-09-18]
 - edge case: Enemies hit by Apprehend will quickly be dragged to Darius before rebounding over a longer period. [wiki-e rev-3906616, fetched 2026-09-18]
 - edge case: The slow duration starts as soon as the target rebounds off of Darius. [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The rebound location is determined when the target reaches Darius' location. [wiki-e rev-3906616, fetched 2026-09-18]
 - edge case: The rebound's forced movement's duration is roughly 0.5 seconds, finishing before the airborne duration ends. [wiki-e rev-3906616, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: There is no stun applied for the same duration of the airborne, meaning brittle cannot extend the disable duration. It will not increase the slow duration in most situations because of the negative tenacity falling off before the slow is applied. [wiki-e rev-3906616, fetched 2026-09-18]
 - edge case: After the pull, Darius will attempt to basic attack the closest pulled target, prioritizing enemy champions. [wiki-e rev-3906616, fetched 2026-09-18]
 - edge case: The armor penetration stacks multiplicatively with other forms of percentage armor penetration. [wiki-e rev-3906616, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-e rev-3906616, fetched 2026-09-18]
@@ -102,5 +100,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4063939, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FHemorrhage&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007591, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FDecimate&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4013692, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FCrippling%20Strike&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-3906616, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FApprehend&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-3906616, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FApprehend&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4004898, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Darius%2FNoxian%20Guillotine&prop=text

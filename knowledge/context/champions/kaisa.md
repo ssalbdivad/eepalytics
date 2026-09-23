@@ -60,7 +60,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Magic [wiki-w rev-4034696, fetched 2026-09-18]
 - spell shield: True [wiki-w rev-4034696, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-w rev-4034696, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Size of area revealed around target [wiki-w rev-4034696, fetched 2026-09-18]
 
 ### E
 - name: Supercharge [wiki-e rev-4038391, fetched 2026-09-18]
@@ -92,6 +91,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4053367, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kai'Sa%2FSecond%20Skin&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4038389, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kai'Sa%2FIcathian%20Rain&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4034696, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kai'Sa%2FVoid%20Seeker&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4034696, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kai'Sa%2FVoid%20Seeker&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4038391, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kai'Sa%2FSupercharge&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4034697, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kai'Sa%2FKiller%20Instinct&prop=text

@@ -18,7 +18,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - what it does: Innate: Irelia generates a stack of Ionian Fervor for each enemy champion hit by her abilities, or if she hits at least one non-champion, lasting for 6 seconds, refreshing on basic attacks and ability hits against enemy champions, large monsters, and structures, and stacking up to 4 times. Ionian Fervor: For each stack, Irelia gains 10% – 25% (based on level) bonus attack speed, up to a maximum of 40% – 100% (based on level). At maximum stacks, Irelia's basic attacks are empowered to deal 10 – 61 (based on level) (+ 20% bonus AD) bonus magic damage on-hit, reduced to「 50% 」「 5 – 30.5 (based on level) (+ 10% bonus AD) 」against structures. Innate - Unsteady: Enemy champions and large monsters hit by Flawless Duet or Vanguard's Edge's initial barrage are marked as Unsteady for 5 seconds. The mark can be consumed by Bladesurge. [wiki-p rev-4045313, fetched 2026-09-18]
 - targeting: Passive [wiki-p rev-4045313, fetched 2026-09-18]
 - damage type: Magic [wiki-p rev-4045313, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Parry interactions ( block and dodge). [wiki-p rev-4045313, fetched 2026-09-18]
 - edge case: Ionian Fervor will not deal damage if the attack misses due to blind, but its duration will be refreshed. [wiki-p rev-4045313, fetched 2026-09-18]
 - edge case: Bladesurge cannot be missed while Irelia is blinded, applying Ionian Fervor from the ability will not be prevented from that parry effect. [wiki-p rev-4045313, fetched 2026-09-18]
 - edge case: Ionian Fervor stacks are represented by a counter under Irelia's health bar. It is highlighted while the ability is at its maximum effect. [wiki-p rev-4045313, fetched 2026-09-18]
@@ -118,7 +117,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4045313, fetched 2026-09-18 — 8 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FIonian%20Fervor&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4045313, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FIonian%20Fervor&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4057466, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FBladesurge&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4057467, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FDefiant%20Dance&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4021834, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Irelia%2FFlawless%20Duet&prop=text

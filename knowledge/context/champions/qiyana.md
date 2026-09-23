@@ -22,7 +22,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Royal Privilege will not apply a cooldown to targets that are hit with an Elemental Wrath that has a different Element than the Element Qiyana currently holds. [wiki-p rev-3985639, fetched 2026-09-18]
 - edge case: This does not occur if a new Elemental Wrath with a different Element is cast before the first one lands. [wiki-p rev-3985639, fetched 2026-09-18]
 - edge case: The effect will not trigger against structures nor wards. [wiki-p rev-3985639, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Royal Privilege's interaction with parrying effects ( dodge, blind). [wiki-p rev-3985639, fetched 2026-09-18]
 - edge case: Royal Privilege is applied in a separate damage instance from Qiyana's basic attacks and abilities. [wiki-p rev-3985639, fetched 2026-09-18]
 - edge case: This causes effects like Bone Plating and Black Cleaver's Carve to be applied twice.(unexpected) [wiki-p rev-3985639, fetched 2026-09-18]
 
@@ -67,7 +66,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The water puddles formed by the Ocean Rift on Summoner's Rift count as valid terrain for obtaining the River element. [wiki-w rev-4007752, fetched 2026-09-18]
 - edge case: The brushes grown by Ivern's Brushmaker count for gathering the Brush element. [wiki-w rev-4007752, fetched 2026-09-18]
 - edge case: Passive bonus damage from basic attacks can be blocked. [wiki-w rev-4007752, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Passive bonus damage interaction with parrying effects ( dodge, blind). [wiki-w rev-4007752, fetched 2026-09-18]
 
 ### E
 - name: Audacity [wiki-e rev-4052493, fetched 2026-09-18]
@@ -106,9 +104,9 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3985639, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Qiyana%2FRoyal%20Privilege&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3985639, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Qiyana%2FRoyal%20Privilege&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4057472, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Qiyana%2FEdge%20of%20Ixtal&prop=text
 - wiki-q2: League of Legends Wiki, ability data template, revision rev-4057473, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Qiyana%2FElemental%20Wrath&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4007752, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Qiyana%2FTerrashape&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4007752, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Qiyana%2FTerrashape&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4052493, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Qiyana%2FAudacity&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007999, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Qiyana%2FSupreme%20Display%20of%20Talent&prop=text

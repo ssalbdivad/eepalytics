@@ -23,7 +23,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Moves. [wiki-p rev-4058532, fetched 2026-09-18]
 - edge case: There is a brief grace period after moving where Fiddlesticks is still considered an effigy. [wiki-p rev-4058532, fetched 2026-09-18]
 - edge case: Is affected by a crowd control effect. [wiki-p rev-4058532, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Is hit by an ability. [wiki-p rev-4058532, fetched 2026-09-18]
 - edge case: Takes damage. [wiki-p rev-4058532, fetched 2026-09-18]
 - edge case: Fiddlesticks can still enter the effigy state while taking damage from non-champion units due to the preparation time being uninterrupted by non-champion damage. [wiki-p rev-4058532, fetched 2026-09-18]
 - edge case: Ocean Drake and Hextech Drake are exceptions, as their attacks apply crowd control effects which interfere with the impersonation. [wiki-p rev-4058532, fetched 2026-09-18]
@@ -137,7 +136,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4058532, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiddlesticks%2FA%20Harmless%20Scarecrow&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4058532, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiddlesticks%2FA%20Harmless%20Scarecrow&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4058043, fetched 2026-09-18 — 42 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiddlesticks%2FTerrify&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3936351, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiddlesticks%2FBountiful%20Harvest&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3906828, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiddlesticks%2FReap&prop=text

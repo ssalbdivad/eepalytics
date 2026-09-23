@@ -105,7 +105,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Direction [wiki-r rev-4051322, fetched 2026-09-18]
 - damage type: Magic [wiki-r rev-4051322, fetched 2026-09-18]
 - spell shield: true [wiki-r rev-4051322, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The dash is considered an ability activation for the purposes of Sheen and Kassadin's Force Pulse. [wiki-r rev-4051322, fetched 2026-09-18]
 - edge case: Briar will track the target with the dash if they change locations. [wiki-r rev-4051322, fetched 2026-09-18]
 - edge case: She will not stop tracking the target until she reaches them, as there is no maximum tracking distance. [wiki-r rev-4051322, fetched 2026-09-18]
 - edge case: Briar lands 100 units in front of her target at the end of the dash. [wiki-r rev-4051322, fetched 2026-09-18]
@@ -141,5 +140,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4052441, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Briar%2FBlood%20Frenzy&prop=text
 - wiki-w2: League of Legends Wiki, ability data template, revision rev-4015000, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Briar%2FSnack%20Attack&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007450, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Briar%2FChilling%20Scream&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4051322, fetched 2026-09-18 — 35 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Briar%2FCertain%20Death&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4051322, fetched 2026-09-18 — 34 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Briar%2FCertain%20Death&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/briar/jungle?tier=emerald_plus

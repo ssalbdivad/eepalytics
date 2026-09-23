@@ -19,7 +19,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Passive [wiki-p rev-4007776, fetched 2026-09-18]
 - edge case: Fury bar changes from Yellow to Red when full. [wiki-p rev-4007776, fetched 2026-09-18]
 - edge case: When Rek'Sai automatically consumes Fury while Burrowed (no transformation), the healing buff will refresh every second while she has/maintains over 25 Fury.(unexpected) This causes the healing to last 6 seconds at 100 Fury. [wiki-p rev-4007776, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Fury generation with parrying effects ( blind, dodge, block) [wiki-p rev-4007776, fetched 2026-09-18]
 
 ### Q
 - name: Queen's Wrath [wiki-q rev-3983369, fetched 2026-09-18]
@@ -141,7 +140,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4007776, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FFury%20of%20the%20Xer'Sai&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4007776, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FFury%20of%20the%20Xer'Sai&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3983369, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FQueen's%20Wrath&prop=text
 - wiki-q2: League of Legends Wiki, ability data template, revision rev-3961898, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FPrey%20Seeker&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3980688, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Rek'Sai%2FBurrow&prop=text

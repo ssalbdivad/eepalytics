@@ -28,7 +28,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Eternal Hunger does affect: [wiki-p rev-4051829, fetched 2026-09-18]
 - edge case: Illaoi's Tentacles [wiki-p rev-4051829, fetched 2026-09-18]
 - edge case: Yorick's Dark Procession [wiki-p rev-4051829, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Other units with modified health behaviour. [wiki-p rev-4051829, fetched 2026-09-18]
 
 ### Q
 - name: Jaws of the Beast [wiki-q rev-4007380, fetched 2026-09-18]
@@ -171,7 +170,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4051829, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Warwick%2FEternal%20Hunger&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4051829, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Warwick%2FEternal%20Hunger&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007380, fetched 2026-09-18 — 40 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Warwick%2FJaws%20of%20the%20Beast&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4052302, fetched 2026-09-18 — 38 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Warwick%2FBlood%20Hunt&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4047663, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Warwick%2FPrimal%20Howl&prop=text

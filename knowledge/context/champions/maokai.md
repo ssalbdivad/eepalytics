@@ -21,7 +21,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Sap Magic does not occur if Maokai begins his attack windup before its cooldown has elapsed.(unexpected) [wiki-p rev-4038409, fetched 2026-09-18]
 - edge case: Sap Magic does not occur if the attack is dodged and/or missed if Maokai is blinded. It will occur if it is blocked. [wiki-p rev-4038409, fetched 2026-09-18]
 - edge case: The striking ability has to trigger spell effects such as spell damage or area damage for the cooldown to be reduced. [wiki-p rev-4038409, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Does it trigger only from ability spell effects or any spell effects (such as Hextech Rocketbelt's Super Sonic or Redemption's Intervention)? [wiki-p rev-4038409, fetched 2026-09-18]
 - edge case: If Maokai possesses a spell shield and it consumes an enemy ability, he will still receive the cooldown reduction. [wiki-p rev-4038409, fetched 2026-09-18]
 - edge case: The empowered attack will not trigger against structures nor wards. [wiki-p rev-4038409, fetched 2026-09-18]
 
@@ -98,7 +97,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4038409, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FSap%20Magic&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4038409, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FSap%20Magic&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4046583, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FBramble%20Smash&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3946300, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FTwisted%20Advance&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007687, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Maokai%2FSapling%20Toss&prop=text

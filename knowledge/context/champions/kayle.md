@@ -123,7 +123,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Blind: The main target will never receive damage, but the secondary targets will receive the active's spell damage. [wiki-e rev-3982990, fetched 2026-09-18]
 - edge case: Block: Blocking will always negate all damage. Keep in mind that if a secondary target is outside of Spirit's Refuge's zone, they won't block damage. [wiki-e rev-3982990, fetched 2026-09-18]
 - edge case: Dodge: Dodging will always negate all damage. [wiki-e rev-3982990, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: All parry interactions are marked for retesting because of patch V11.1 changes. [wiki-e rev-3982990, fetched 2026-09-18]
 - edge case: Interactions & Other [wiki-e rev-3982990, fetched 2026-09-18]
 - edge case: While the active's effect is up, a circle is visible to Kayle, indicating her range, however, this circle only takes into account Divine Ascent's effect on her range, not other sources such as Rapid Firecannon. [wiki-e rev-3982990, fetched 2026-09-18]
 - edge case: The increased range (with the item's effect included) will be 675 prior to ascending to Transcendent, after which it's 725. [wiki-e rev-3982990, fetched 2026-09-18]
@@ -163,7 +162,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If the ability is cast while the effect is ready, the range goes from 400 to 385 over 4 stat updates (400 -> 390 -> 387 -> 385). When the cast completes, the proper range needs 2 updates to set in ( 660 - 675 while Arisen; 710 - 725 while Transcended). [wiki-r rev-3962015, fetched 2026-09-18]
 - edge case: Gaining the effect during the cast will cause the range to cycle between 525 and 550 until the cast finishes, then the proper range is set after 1 update. [wiki-r rev-3962015, fetched 2026-09-18]
 - edge case: Selling the item during the cast causes the range to be set to 250. [wiki-r rev-3962015, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Range values are outdated because of patch V11.18 changes to Kayle. [wiki-r rev-3962015, fetched 2026-09-18]
 - edge case: The invulnerability can be tracked on the HUD via a buff called Intervention. [wiki-r rev-3962015, fetched 2026-09-18]
 
 ### Where this section came from
@@ -171,5 +169,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4051190, fetched 2026-09-18 — 41 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kayle%2FDivine%20Ascent&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4005105, fetched 2026-09-18 — 30 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kayle%2FRadiant%20Blast&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3997873, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kayle%2FCelestial%20Blessing&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-3982990, fetched 2026-09-18 — 33 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kayle%2FStarfire%20Spellblade&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-3962015, fetched 2026-09-18 — 27 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kayle%2FDivine%20Judgment&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-3982990, fetched 2026-09-18 — 32 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kayle%2FStarfire%20Spellblade&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-3962015, fetched 2026-09-18 — 26 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kayle%2FDivine%20Judgment&prop=text

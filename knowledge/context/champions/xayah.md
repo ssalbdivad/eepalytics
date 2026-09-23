@@ -22,7 +22,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - targeting: Passive [wiki-p rev-4059261, fetched 2026-09-18]
 - spell shield: False [wiki-p rev-4059261, fetched 2026-09-18]
 - edge case: Feathers will stop upon being intercepted by projectile-blocking effects. [wiki-p rev-4059261, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Missile popping before and after striking the primary target. [wiki-p rev-4059261, fetched 2026-09-18]
 - edge case: After striking their target, the attack will proceed in a line in the same direction it was already flying. [wiki-p rev-4059261, fetched 2026-09-18]
 - edge case: If the target is more than 1000 units from Xayah when the empowered attack hits them, the attack will not keep flying in a line and drop the Feather at their location immediately. [wiki-p rev-4059261, fetched 2026-09-18]
 - edge case: Unlike similar effects, the homing and line trajectories use the same missile. [wiki-p rev-4059261, fetched 2026-09-18]
@@ -70,7 +69,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Deadly Plumage does not interact with Guinsoo's Rageblade's Phantom Hit. [wiki-w rev-4062257, fetched 2026-09-18]
 - edge case: The empowered attack will not trigger against wards. [wiki-w rev-4062257, fetched 2026-09-18]
 - edge case: The additional missile is not fired if the triggering basic attack misses while Xayah is blinded. [wiki-w rev-4062257, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Interactions with dodge and block. [wiki-w rev-4062257, fetched 2026-09-18]
 
 ### E
 - name: Bladecaller [wiki-e rev-4002073, fetched 2026-09-18]
@@ -112,8 +110,8 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4059261, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FClean%20Cuts&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4059261, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FClean%20Cuts&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008615, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FDouble%20Daggers&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4062257, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FDeadly%20Plumage&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4062257, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FDeadly%20Plumage&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4002073, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FBladecaller&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4008617, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Xayah%2FFeatherstorm&prop=text

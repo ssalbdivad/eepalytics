@@ -45,9 +45,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If Piercing Darkness struck an enemy champion and turret simultaneously, with Rapid Firecannon fully charged, the passive effect will most likely trigger on the turret since towers are often spawned before champions. [wiki-q rev-4042887, fetched 2026-09-18]
 - edge case: Similarly, on-attack effects are applied in order of struck champions' spawn IDs. However, there are some specific on-attack effects that will apply to both the target of Piercing Darkness and the target with the lowest Spawn ID if the two unit is not identical.(unexpected) Confirmed cases: [wiki-q rev-4042887, fetched 2026-09-18]
 - edge case: Energized effects are stacked twice the amount. [wiki-q rev-4042887, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: [wiki-q rev-4042887, fetched 2026-09-18]
 - edge case: Spell shield will not prevent on-hit effects from being applied. [wiki-q rev-4042887, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Piercing Darkness interaction with dodging, blocking, and blinding effects. [wiki-q rev-4042887, fetched 2026-09-18]
 
 ### W
 - name: Last Embrace [wiki-w rev-4009139, fetched 2026-09-18]
@@ -110,7 +108,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4063473, fetched 2026-09-18 — 5 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FAbsolution&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4042887, fetched 2026-09-18 — 26 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FPiercing%20Darkness&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4042887, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FPiercing%20Darkness&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4009139, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FLast%20Embrace&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3994514, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FCurse%20of%20the%20Black%20Mist&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4008033, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Senna%2FDawning%20Shadow&prop=text

@@ -71,7 +71,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Base movement speed if it is lower than Neeko's base [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While disguised as a non-champion, Neeko's total movement speed cannot be reduced below 200. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While disguised as a ward or plant, Neeko's total movement speed cannot be increased above 200, except via effects that set movement speed to a certain value ( Chaaaaaaaarge!!!). [wiki-p rev-4049951, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Is this true for traps? [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Classification of the unit (e.g. melee, siege minion; large, small monster; ward) [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Neeko is never considered a minion for the purposes of Reinforced Armor. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Base range type of the unit ( melee, ranged) [wiki-p rev-4049951, fetched 2026-09-18]
@@ -91,7 +90,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Damage dealt to champions (physical, magical) ratio for the purposes of Camille's Adaptive Defenses. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Size (including size modifiers and base unit size) at the time of disguising [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Pathing radius when disguising as a non-champion [wiki-p rev-4049951, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Is the same true for champions? [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Voice lines [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Base unit model, not accounting for the unit's current except in special cases [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Default transformation toggle (non-innate) [wiki-p rev-4049951, fetched 2026-09-18]
@@ -105,18 +103,15 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: While disguised as a non-champion, for the purposes of combat status, Neeko is considered a champion when dealing damage, but not when taking damage. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Enemy turrets and minions still aggro Neeko while she is disguised as a neutral monster or jungle plant. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While disguised as a plant or ward, Neeko can be targeted by minions and affected by most effects that normally don't affect them. [wiki-p rev-4049951, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: which abilities, runes and items do / don't interact with wards, plants and wardlike entities? [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While disguised as a unit not targetable by turrets (e.g. wards, traps, Sentinel, Tentacle), Neeko cannot be targeted by turrets until she damages a champion. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Disguising as a unit not targetable by turrets does not drop ongoing turret aggro. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While disguised as a jungle plant or trap, Neeko's facing direction visually appears to not change while moving. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Neeko's real facing direction is, however, affected by movement for the purposes of direction-facing effects (e.g. Petrifying Gaze, Backstab). [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Disguising as a Blast Cone or Scryer's Bloom creates their respective roots at Neeko's location at the time of disguise. [wiki-p rev-4049951, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: when do they disappear? [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Disguising as a monster does not cause Neeko's attack windup to not be cancelled if the target moves out of range. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While disguised as a ward, Neeko can be disabled by control wards, but not by sweeper drones or Umbral Glaive's Blackout.(bug) [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While disguised as a ward, Neeko does not trigger Blackout. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While disguised as a ward, when attacked by champions using Umbral Glaive, Neeko takes damage from Extinguish, but the disguise's form does not.(bug) [wiki-p rev-4049951, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: did Umbral Glaive interactions change after V26.01? [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While disguised as a ward, when standing within a 225 radius of a faelight, 'Neeko will mimic superward VFX for 39 seconds, or until her disguise is broken or she leaves the faelight location. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: While stationary, and within 75-225 radius of a faelight, Neeko will blink into a 75 radius of the faelight's location. [wiki-p rev-4049951, fetched 2026-09-18]
 - edge case: Disguising as a non-champion interrupts the cast time of Darius' Noxian Guillotine if it is targeting Neeko. [wiki-p rev-4049951, fetched 2026-09-18]
@@ -264,7 +259,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4049951, fetched 2026-09-18 — 158 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FInherent%20Glamour&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4049951, fetched 2026-09-18 — 153 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FInherent%20Glamour&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3961205, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FBlooming%20Burst&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4022848, fetched 2026-09-18 — 34 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FShapesplitter&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4058450, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Neeko%2FTangle-Barbs&prop=text

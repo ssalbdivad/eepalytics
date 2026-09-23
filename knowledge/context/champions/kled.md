@@ -32,7 +32,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Kled does not receive damage from Illaoi's Test of Spirit, Kayn's Umbral Trespass, or being Regurgitated by Tahm Kench while dismounting.(bug) [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: The lunge can pass through player-generated terrain.(unexpected) [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: Buying items while Kled and Skaarl's combined current health is lower than Kled's maximum health will cause Kled to dismount upon undoing the purchase and potentially lose health.(bug) [wiki-p rev-4058479, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Dismounting with a spell shield sometimes consumes the spell shield and negates the effects of dismounting.(bug) [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: If Kled would be executed while Mounted, he is instead only Dismounted. [wiki-p rev-4058479, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Kled is lunging: [wiki-p rev-4058479, fetched 2026-09-18]
 - WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
@@ -66,14 +65,12 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: True [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: The visual effect of Bear Trap on a Rope will appear at Kled's height at the end of cast time and may not portray its projectile accurately if Kled is dismounting at the end of cast time. [wiki-q rev-4059774, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Is the same true if Kled is airborne? [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: The ability will cast to wherever the caster's cursor was at the start of the cast time. [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: In addition to its projectile, Bear Trap on a Rope will check for enemy champions, large monsters and large pets within a 60-unit center-to-edge radius area from the projectile's origin point. [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: The projectile interacts with projectile-blocking effects but the area check doesn't. [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: Tibbers, Daisy and The Maiden are considered large pets for this ability. [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: All other pets are considered small pets for the purposes of this ability. [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: Bear Trap on a Rope will not pull the target if they are in stasis. [wiki-q rev-4059774, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: certain sources of stasis are not affected [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: The tether cannot be broken within the first 0.25 seconds of its application. [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: Rek'Sai's Void Rush will break the tether upon the beginning of its cast time.(bug) [wiki-q rev-4059774, fetched 2026-09-18]
 - edge case: The pull damage is updated dynamically based on Kled's current attack damage. [wiki-q rev-4059774, fetched 2026-09-18]
@@ -101,8 +98,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Spell shield will negate multiple pellets if they hit at the same time. [wiki-q2 rev-4059773, fetched 2026-09-18]
 - edge case: Even if the first pellet is negated, subsequent non-negated pellets will still only deal 20% of the damage. [wiki-q2 rev-4059773, fetched 2026-09-18]
 - edge case: Pellets will restore Courage when colliding with units protected by spell shield, but will not restore Courage when colliding with Fiora's Riposte. [wiki-q2 rev-4059773, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Pocket Pistol will have no charges if Kled dismounts and triggers Transcendence at the same time.(bug) [wiki-q2 rev-4059773, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Pocket Pistol will falsely visually appear to have another charge ready if the end of its cast time coincides with a charge being stocked.(bug) [wiki-q2 rev-4059773, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Kled is dashing: [wiki-q2 rev-4059773, fetched 2026-09-18]
 - edge case: Buffering Interactions [wiki-q2 rev-4059773, fetched 2026-09-18]
 - edge case: Attempting to use any effect that would be buffered until the end of the cast time will instead delay it until the end of the dash, even if that effect is usable during the dash. [wiki-q2 rev-4059773, fetched 2026-09-18]
@@ -150,11 +145,9 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The first dash can pass through terrain if Kled is already inside that terrain. [wiki-e rev-4059782, fetched 2026-09-18]
 - edge case: The first dash can enter terrain within a short radius. [wiki-e rev-4059782, fetched 2026-09-18]
 - edge case: This allows Kled to sometimes pass through Yorick's Dark Procession with the first cast of Jousting.(bug) [wiki-e rev-4059782, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: the first dash's terrain forgiveness radius [wiki-e rev-4059782, fetched 2026-09-18]
 - edge case: Jousting can be recast even while the marked target is untargetable or dead. [wiki-e rev-4059782, fetched 2026-09-18]
 - edge case: If the marked target dies shortly after being marked, the mark will not be visible.(bug) [wiki-e rev-4059782, fetched 2026-09-18]
 - edge case: Jousting cannot affect Neeko disguised as a ward.(bug) [wiki-e rev-4059782, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Jousting's hitbox, minion pull direction, speed and range [wiki-e rev-4059782, fetched 2026-09-18]
 - edge case: The following table refers for interactions while Kled is dashing: [wiki-e rev-4059782, fetched 2026-09-18]
 - WITHHELD (37 cells of a table in the wiki's notes): the source publishes it and it did not survive being rendered into plain text, so no value is shown. This app does not know what it is — say nothing about it.
 - name: Dismounted Jousting [wiki-e2 rev-3942228, fetched 2026-09-18]
@@ -223,12 +216,12 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4058479, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FSkaarl%20the%20Cowardly%20Lizard&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4058479, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FSkaarl%20the%20Cowardly%20Lizard&prop=text
 - wiki-p2: League of Legends Wiki, ability data template, revision rev-4038397, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FDismounted%20Skaarl%20the%20Cowardly%20Lizard&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4059774, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FBear%20Trap%20on%20a%20Rope&prop=text
-- wiki-q2: League of Legends Wiki, ability data template, revision rev-4059773, fetched 2026-09-18 — 27 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FPocket%20Pistol&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4059774, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FBear%20Trap%20on%20a%20Rope&prop=text
+- wiki-q2: League of Legends Wiki, ability data template, revision rev-4059773, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FPocket%20Pistol&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4059722, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FViolent%20Tendencies&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4059782, fetched 2026-09-18 — 27 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FJousting&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4059782, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FJousting&prop=text
 - wiki-e2: League of Legends Wiki, ability data template, revision rev-3942228, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FDismounted%20Jousting&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4059781, fetched 2026-09-18 — 52 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FChaaaaaaaarge!!!&prop=text
 - wiki-r2: League of Legends Wiki, ability data template, revision rev-3942225, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kled%2FDismounted%20Chaaaaaaaarge!!!&prop=text

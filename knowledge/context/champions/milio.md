@@ -23,7 +23,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: When the damage is triggered by allies, it is additionally tagged as proc damage. [wiki-p rev-4046868, fetched 2026-09-18]
 - edge case: Subsequent applications of Fired Up! only refresh the duration. [wiki-p rev-4046868, fetched 2026-09-18]
 - edge case: Spell shield will not block the effect if applied by a basic attack. [wiki-p rev-4046868, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Fired Up's interaction with parry effects ( dodge, block and blind). [wiki-p rev-4046868, fetched 2026-09-18]
 
 ### Q
 - name: Ultra Mega Fire Kick [wiki-q rev-4007693, fetched 2026-09-18]
@@ -78,7 +77,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4046868, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FFired%20Up!&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4046868, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FFired%20Up!&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007693, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FUltra%20Mega%20Fire%20Kick&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007694, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FCozy%20Campfire&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3908079, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Milio%2FWarm%20Hugs&prop=text

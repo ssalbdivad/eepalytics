@@ -40,7 +40,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Spell vamp will only grant healing from the damage dealt to secondary targets, and healing is reduced to 33% effectiveness, accordingly. [wiki-q rev-4058550, fetched 2026-09-18]
 - edge case: Life steal will heal based on the damage dealt to the first target hit. [wiki-q rev-4058550, fetched 2026-09-18]
 - edge case: Mortal Steel will not benefit from the bonus attack speed gained by Hail of Blades.(bug) [wiki-q rev-4058550, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: has this been fixed? [wiki-q rev-4058550, fetched 2026-09-18]
 - edge case: All three of the thrust, whirlwind and dash roll for a critical strike on each individual target hit. [wiki-q rev-4058550, fetched 2026-09-18]
 - edge case: Blinking during Mortal Steel's cast with two stacks of Gathering Storm (after the cast time) will end the dash prematurely but enemies in range of Yone at the new location are affected. The whirlwind's trajectory cannot be changed once it has already been unleashed. [wiki-q rev-4058550, fetched 2026-09-18]
 - edge case: Only the whirlwind can be intercepted. [wiki-q rev-4058550, fetched 2026-09-18]
@@ -65,7 +64,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Despite Spirit Cleave generally hitting targets' edge range, it cannot hit targets whose center is behind him. [wiki-w rev-4032641, fetched 2026-09-18]
 - edge case: This behaviour is common with missiles, however some cone spells such as this one also do it. [wiki-w rev-4032641, fetched 2026-09-18]
 - edge case: Spirit Cleave will not benefit from the bonus attack speed gained by Hail of Blades.(bug) [wiki-w rev-4032641, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Has this been fixed? [wiki-w rev-4032641, fetched 2026-09-18]
 - edge case: Spell shield does not prevent Yone from receiving and/or increasing the shield. [wiki-w rev-4032641, fetched 2026-09-18]
 - edge case: The shield's amount will also increase for each clone hit. [wiki-w rev-4032641, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-w rev-4032641, fetched 2026-09-18]
@@ -155,7 +153,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4058456, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yone%2FWay%20of%20the%20Hunter&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4058550, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yone%2FMortal%20Steel&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4032641, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yone%2FSpirit%20Cleave&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4058550, fetched 2026-09-18 — 23 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yone%2FMortal%20Steel&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4032641, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yone%2FSpirit%20Cleave&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4050165, fetched 2026-09-18 — 44 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yone%2FSoul%20Unbound&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4009198, fetched 2026-09-18 — 26 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Yone%2FFate%20Sealed&prop=text

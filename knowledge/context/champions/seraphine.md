@@ -129,7 +129,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Encore fires from Seraphine's location at the end of the initial cast time. [wiki-r rev-4008035, fetched 2026-09-18]
 - edge case: There is no limit as to how many times the wave can extend. [wiki-r rev-4008035, fetched 2026-09-18]
 - edge case: Each Encore cast cannot extend from the same champion more than once. [wiki-r rev-4008035, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Champions that died, clearing marker buffs [wiki-r rev-4008035, fetched 2026-09-18]
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
@@ -137,4 +136,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4042889, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Seraphine%2FHigh%20Note&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3990364, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Seraphine%2FSurround%20Sound&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4060366, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Seraphine%2FBeat%20Drop&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4008035, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Seraphine%2FEncore&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4008035, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Seraphine%2FEncore&prop=text

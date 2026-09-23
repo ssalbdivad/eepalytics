@@ -73,7 +73,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: special [wiki-e rev-3945270, fetched 2026-09-18]
 - edge case: Help, Pix! can be self-cast. [wiki-e rev-3945270, fetched 2026-09-18]
 - edge case: If the player casts Help, Pix! on a non-champion target, the spell script will first search for a targetable allied or enemy champion within 75 radius around the target. If there is at least one, it'll apply the effects to the closest one instead of the initial target. [wiki-e rev-3945270, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Allies or enemies or proximity take priortity? [wiki-e rev-3945270, fetched 2026-09-18]
 - edge case: This effect does not respect that the champion may not be visible to Lulu and not a valid target for normal selection for this reason. Therefore it can for instance apply the effects to stealthed enemy champions this way.(bug) [wiki-e rev-3945270, fetched 2026-09-18]
 - edge case: Since the original cast did not target the champion, some effects (such as Guardian) may behave incorrectly.(bug) [wiki-e rev-3945270, fetched 2026-09-18]
 - edge case: It is not known in which patch this effect was added. [wiki-e rev-3945270, fetched 2026-09-18]
@@ -100,5 +99,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4046485, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lulu%2FPix%2C%20Faerie%20Companion&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3881438, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lulu%2FGlitterlance&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007673, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lulu%2FWhimsy&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-3945270, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lulu%2FHelp%2C%20Pix!&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-3945270, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lulu%2FHelp%2C%20Pix!&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007674, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lulu%2FWild%20Growth&prop=text

@@ -51,7 +51,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: If Samira is outside maximum initiation range for the dash when targeting an immobilized target, the player must input a new Attack order on the target upon entering initiation range in order to actually initiate the dash. [wiki-p rev-4051977, fetched 2026-09-18]
 - edge case: However if Samira enters the bolts' cast range via her movement while the target is still immobilized without issuing any other commands, the empowered attack will cast without requiring a new order (without the dash). [wiki-p rev-4051977, fetched 2026-09-18]
 - edge case: The empowered attack removes any forced movement affecting the target once its knock up ends.(unexpected) [wiki-p rev-4051977, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Does this also happen if it's cleansed. [wiki-p rev-4051977, fetched 2026-09-18]
 
 ### Q
 - name: Flair [wiki-q rev-4008027, fetched 2026-09-18]
@@ -142,7 +141,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4051977, fetched 2026-09-18 — 38 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FDaredevil%20Impulse&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4051977, fetched 2026-09-18 — 37 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FDaredevil%20Impulse&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008027, fetched 2026-09-18 — 25 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FFlair&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3936240, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FBlade%20Whirl&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4008028, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Samira%2FWild%20Rush&prop=text

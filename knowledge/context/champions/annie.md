@@ -81,7 +81,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: True [wiki-r rev-4012758, fetched 2026-09-18]
 - edge case: Only the initial cast counts as an ability activation for the purposes of on-cast effects such as Spellblade. [wiki-r rev-4012758, fetched 2026-09-18]
 - edge case: Recasting the ability does, however, count as casting an ultimate ability for the purposes of Experimental Hexplate's Overdrive and similar effects.(bug) [wiki-r rev-4012758, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: What about Force Pulse's? [wiki-r rev-4012758, fetched 2026-09-18]
 - edge case: The active deals area damage. [wiki-r rev-4012758, fetched 2026-09-18]
 - edge case: Tibbers will blink back next to Annie if he gets too far away. [wiki-r rev-4012758, fetched 2026-09-18]
 - edge case: Recasting Summon: Tibbers does not interrupt Recall's channel. [wiki-r rev-4012758, fetched 2026-09-18]
@@ -92,4 +91,4 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3992633, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Annie%2FDisintegrate&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3952555, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Annie%2FIncinerate&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4038214, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Annie%2FMolten%20Shield&prop=text
-- wiki-r: League of Legends Wiki, ability data template, revision rev-4012758, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Annie%2FSummon%3A%20Tibbers&prop=text
+- wiki-r: League of Legends Wiki, ability data template, revision rev-4012758, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Annie%2FSummon%3A%20Tibbers&prop=text

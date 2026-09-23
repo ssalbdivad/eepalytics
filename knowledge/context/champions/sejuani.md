@@ -21,8 +21,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: unknown [wiki-p rev-3985822, fetched 2026-09-18]
 - edge case: Gaining Frost Armor does not remove any pre-existing slows or cripples. [wiki-p rev-3985822, fetched 2026-09-18]
 - edge case: Icebreaker will not trigger if the basic attack is blocked or misses due to blind. [wiki-p rev-3985822, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Icebreaker's interactions with dodging effects via basic attack. [wiki-p rev-3985822, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Spell shield interaction with Icebreaker. [wiki-p rev-3985822, fetched 2026-09-18]
 
 ### Q
 - name: Arctic Assault [wiki-q rev-4007753, fetched 2026-09-18]
@@ -71,7 +69,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: True [wiki-e rev-4061739, fetched 2026-09-18]
 - edge case: Permafrost's targeting prioritizes champions within 50 units of the cursor's selection, then non-champions within 50 units of the cursor's selection, then champions within 350 units of the cursor's selection, then the closest unit to the cursor within 2500 units (the last case strictly applies if there is no target being selected). [wiki-e rev-4061739, fetched 2026-09-18]
 - edge case: Frost stacks will not be applied if the basic attack is blocked. [wiki-e rev-4061739, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Permafrost's stack application interaction with parrying effects ( dodge, blind). [wiki-e rev-4061739, fetched 2026-09-18]
 - edge case: Master Yi's Alpha Strike does not interact with Permafrost.(unexpected) [wiki-e rev-4061739, fetched 2026-09-18]
 - edge case: If the target becomes untargetable, dies, or is too far away or no longer in sight during the cast time, this ability will cancel but still go on cooldown and pay its cost.(bug) [wiki-e rev-4061739, fetched 2026-09-18]
 
@@ -100,9 +97,9 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3985822, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sejuani%2FFury%20of%20the%20North&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3985822, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sejuani%2FFury%20of%20the%20North&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007753, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sejuani%2FArctic%20Assault&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3971350, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sejuani%2FWinter's%20Wrath&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4061739, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sejuani%2FPermafrost&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4061739, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sejuani%2FPermafrost&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4008031, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Sejuani%2FGlacial%20Prison&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/sejuani/jungle?tier=emerald_plus

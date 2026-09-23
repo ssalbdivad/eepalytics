@@ -33,7 +33,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Spell shield will not block any damage nor be consumed by the strikes. [wiki-q rev-4049991, fetched 2026-09-18]
 - edge case: The true damage is always equal to 150% of the pre-mitigation physical damage. [wiki-q rev-4049991, fetched 2026-09-18]
 - edge case: Blind will negate the damage to the primary target, but not to any secondary targets. [wiki-q rev-4049991, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Interaction with parrying effects ( dodge, block). [wiki-q rev-4049991, fetched 2026-09-18]
 - edge case: Only the last cast of Emberstrike puts Shyvana's basic attack on cooldown. [wiki-q rev-4049991, fetched 2026-09-18]
 - edge case: In Human Form, only Q2 will put it on cooldown; in Dragon Form, only Q3 will. [wiki-q rev-4049991, fetched 2026-09-18]
 - edge case: This results in the same functionality as Leona's Shield of Daybreak and Volibear's Thundering Smash, effectively being a triple/quintuple attack reset. [wiki-q rev-4049991, fetched 2026-09-18]
@@ -89,7 +88,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4001512, fetched 2026-09-18 — 3 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FScalemail&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4049991, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FEmberstrike&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4049991, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FEmberstrike&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4021912, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FInferno%20Aegis&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4058111, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FMolten%20Burst&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4049822, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Shyvana%2FDragon's%20Descent&prop=text

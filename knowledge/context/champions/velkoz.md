@@ -20,7 +20,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: True [wiki-p rev-3986690, fetched 2026-09-18]
 - spell shield: True [wiki-p rev-3986690, fetched 2026-09-18]
 - edge case: The stack duration will not be refreshed if the attack misses due to blind. [wiki-p rev-3986690, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Interaction between duration refresh on basic attacks and parry effects ( dodge and block). [wiki-p rev-3986690, fetched 2026-09-18]
 
 ### Q
 - name: Plasma Fission [wiki-q rev-4008544, fetched 2026-09-18]
@@ -98,7 +97,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3986690, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FOrganic%20Deconstruction&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3986690, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FOrganic%20Deconstruction&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4008544, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FPlasma%20Fission&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008545, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FVoid%20Rift&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3952590, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Vel'Koz%2FTectonic%20Disruption&prop=text

@@ -462,13 +462,58 @@ export const factsFromRow = (rawRow: unknown, rawSources: unknown): AdaptResult 
 		 */
 		const notes = ability.notes ?? []
 		const isSeparator = (n: string | undefined): boolean => n !== undefined && n.trim() === ":"
+		/*
+		 * THE WIKI'S OWN TODO IS NOT A FACT ABOUT LEAGUE, and it was being delivered as one.
+		 *
+		 * `PENDING FOR TEST:` is how wiki editors mark a claim THEY have not verified. Counted over
+		 * the committed corpus on 2026-09-22: 96 delivered lines across 60 champions, e.g. Akshan's
+		 * `- edge case: PENDING FOR TEST: Hook range including lollipop against walls and final dash
+		 * distance and speed.` Every one of them passes `verify-fetched` as a `match`, because the
+		 * wiki really does say it — this is the other failure this repo names, TRUE AND USELESS, and
+		 * the fences were all behaving correctly while it shipped.
+		 *
+		 * `(bug)` (363 lines) and `(unexpected)` (208) are deliberately KEPT and are not the same
+		 * thing: they mark a real, documented interaction, and a jungler told that an interaction is
+		 * a bug has been told something true and useful. Four lines carry both markers; they go with
+		 * the PENDING group, because a TODO about a bug is still a TODO.
+		 *
+		 * ANCHORED AT THE START, AND THAT IS THE RULE RATHER THAN AN ACCIDENT. A note that BEGINS
+		 * with the marker is a TODO wearing the shape of a fact. A note that carries it MID-SENTENCE
+		 * is a real claim with one unverified quantity inside it, and there the marker is doing its
+		 * job: it travels with the number it qualifies, in front of the model, saying the wiki has
+		 * not measured that figure. 95 of the 96 delivered lines were the first kind. The one that
+		 * survives is Miss Fortune's — she reveals a 200-radius area around herself when she fires
+		 * from an unseen position, which is true and useful, and the two cone figures inside it are
+		 * each prefixed with the marker. Dropping it would delete a real interaction to remove a
+		 * label that is already telling the truth about itself.
+		 *
+		 * Dropped at MINT time rather than in the generator, for the same mechanical reason the
+		 * empty-value filter is: `auditAssembled` builds its ledger from the minted lines, so a line
+		 * the generator drops becomes `missing` and fails `pnpm audit:knowledge --all`.
+		 */
+		const isPending = (n: string | undefined): boolean => n !== undefined && /^\s*PENDING FOR TEST\b/i.test(n)
 		const droppedNotes = notes.filter(
 			(note, i) => isSeparator(note) || isSeparator(notes[i - 1]) || isSeparator(notes[i + 1])
 		).length
+		let droppedPending = 0
 		for (const [i, note] of notes.entries()) {
 			if (isSeparator(note) || isSeparator(notes[i - 1]) || isSeparator(notes[i + 1])) continue
+			if (isPending(note)) {
+				droppedPending++
+				continue
+			}
 			push(`note${i + 1}`, "ability.note", note, { kind: "json", path: `notes.${i}` })
 		}
+		if (droppedPending > 0)
+			/*
+			 * NO WITHHELD NOTICE for these, and the asymmetry is deliberate. A withheld notice says
+			 * "the source publishes something here and this app could not carry it", which is true of
+			 * a shredded table and false of a TODO: nothing was lost, because the source itself says
+			 * it does not know. A notice would be a claim that there is a fact behind it.
+			 */
+			skipped.push(
+				`${row.key}.${slotId}: ${droppedPending} wiki note${droppedPending === 1 ? "" : "s"} marked PENDING FOR TEST by its editors, not delivered`
+			)
 		if (droppedNotes > 0) {
 			/*
 			 * Phrased as a property of the SOURCE DOCUMENT — a table in the notes — and never as a

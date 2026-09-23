@@ -85,7 +85,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-w rev-4050171, fetched 2026-09-18]
 - edge case: Dreaded Return maintains its casting angle direction in relation to Zaahen if he moves during the cast time. [wiki-w rev-4050171, fetched 2026-09-18]
 - edge case: Dreaded Return briefly provides vision over an area. [wiki-w rev-4050171, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: How big is the vision bubble and how long does it last? [wiki-w rev-4050171, fetched 2026-09-18]
 
 ### E
 - name: Aureate Rush [wiki-e rev-4022487, fetched 2026-09-18]
@@ -138,7 +137,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4060321, fetched 2026-09-18 — 24 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zaahen%2FCultivation%20of%20War&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4060370, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zaahen%2FThe%20Darkin%20Glaive&prop=text
-- wiki-w: League of Legends Wiki, ability data template, revision rev-4050171, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zaahen%2FDreaded%20Return&prop=text
+- wiki-w: League of Legends Wiki, ability data template, revision rev-4050171, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zaahen%2FDreaded%20Return&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4022487, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zaahen%2FAureate%20Rush&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007768, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Zaahen%2FGrim%20Deliverance&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/zaahen/jungle?tier=emerald_plus

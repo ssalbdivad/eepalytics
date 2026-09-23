@@ -22,13 +22,11 @@ Every line below was copied from the source in brackets at the end of it, on the
 - spell shield: False [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: If Caitlyn's current target becomes trapped by Yordle Snap Trap or 90 Caliber Net while her attack is on cooldown, this ongoing cooldown will be refunded partially so that her next attack on them can begin earlier. [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: Swapping the target to an enemy trapped by Yordle Snap Trap or 90 Caliber Net also reduces her ongoing attack cooldown. [wiki-p rev-3982560, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The exact attack cooldown refund appears to be 50% of the attack cooldown at current attack speed, but at a minimum amount it lets Caitlyn start the attack against the trapped target within 0.5 seconds of her previous attack windup completing. [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: The bonus range from Rapid Firecannon will not have any effect during trap and net extended Headshot attacks. [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: Only the ordinary 100% attack damage portion of the attack can critically strike. The bonus from Headshot is added after the critical strike is rolled. [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: The full damage of Headshot applies life steal. [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: Headshot is a single instance of damage, thus does not trigger Amumu's Tantrum's or Warden's Mail passives twice. [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: Since Caitlyn's Art and Sustainability Update, Ability-granted Headshots are the same as the original Headshot override attack, though what lets them cast at high range is still relatively special. They trigger on-attack effects (including stacking Headshot). [wiki-p rev-3982560, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Runaan's Hurricane's Wind's Fury, is special cased to search targets with the increased range as well. [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: Because Headshot stacks are generated on-attack, Runaan's Hurricane's Wind's Fury's bolts will not generate any. [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: The empowered attack will not trigger against wards. [wiki-p rev-3982560, fetched 2026-09-18]
 - edge case: Stacks will still be generated towards Headshot when attacking them. [wiki-p rev-3982560, fetched 2026-09-18]
@@ -116,7 +114,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-3982560, fetched 2026-09-18 — 18 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FHeadshot&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-3982560, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FHeadshot&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007583, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FPiltover%20Peacemaker&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4023135, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2FYordle%20Snap%20Trap&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007584, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Caitlyn%2F90%20Caliber%20Net&prop=text

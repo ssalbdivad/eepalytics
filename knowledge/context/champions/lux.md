@@ -41,7 +41,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Targets immune to the root still count towards Light Binding's two-target limit. [wiki-q rev-4007675, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the end of the cast time. [wiki-q rev-4007675, fetched 2026-09-18]
 - edge case: Light Binding spawns an additional missile at the same location and vector as the main missile. This additional "Dummy" missile has the same visual effects as the main missile and gets destroyed when it hits a single enemy, thereby making the surviving VFX of the single missile weaker in intensity. [wiki-q rev-4007675, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: This hacky solution also causes Lux Q to count as two skillshots for things such as "skillshots dodged" Eternals. [wiki-q rev-4007675, fetched 2026-09-18]
 
 ### W
 - name: Prismatic Barrier [wiki-w rev-3992656, fetched 2026-09-18]
@@ -102,7 +101,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4059694, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FIllumination&prop=text
-- wiki-q: League of Legends Wiki, ability data template, revision rev-4007675, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FLight%20Binding&prop=text
+- wiki-q: League of Legends Wiki, ability data template, revision rev-4007675, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FLight%20Binding&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3992656, fetched 2026-09-18 — 20 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FPrismatic%20Barrier&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-4007677, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FLucent%20Singularity&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3919833, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Lux%2FFinal%20Spark&prop=text

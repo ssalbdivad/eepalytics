@@ -24,7 +24,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The Vitals are visible to all units. [wiki-p rev-4038335, fetched 2026-09-18]
 - edge case: A Vital's angle is fixed to the champion's model and doesn't interact with its orientation. [wiki-p rev-4038335, fetched 2026-09-18]
 - edge case: Vitals spawn directions alternate in a Northeast-Southwest pattern. Other than that, they have a 50% chance to spawn North or East, or South or West, respectively. [wiki-p rev-4038335, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The direction of the first Vital upon Fiora and her enemy encountering one another in the game for the first time is always Southward or Westward. This is true regardless of whether Fiora is in the Blue or Red team. [wiki-p rev-4038335, fetched 2026-09-18]
 - edge case: Vitals will not trigger if the attack is dodged or missed while Fiora is blinded. [wiki-p rev-4038335, fetched 2026-09-18]
 - edge case: Block will not prevent a trigger. [wiki-p rev-4038335, fetched 2026-09-18]
 - edge case: If the Vital is triggered by Lunge, it can be dodged, but it can't be blocked and will trigger even if Fiora is blinded. [wiki-p rev-4038335, fetched 2026-09-18]
@@ -152,7 +151,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 
 ### Where this section came from
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
-- wiki-p: League of Legends Wiki, ability data template, revision rev-4038335, fetched 2026-09-18 — 17 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FDuelist's%20Dance&prop=text
+- wiki-p: League of Legends Wiki, ability data template, revision rev-4038335, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FDuelist's%20Dance&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007770, fetched 2026-09-18 — 36 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FLunge&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4007365, fetched 2026-09-18 — 41 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FRiposte&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3906658, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Fiora%2FBladework&prop=text

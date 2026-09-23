@@ -106,7 +106,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Under certain circumstances, upon attaching the hook to terrain, Akshan will create a particle on the location permanently.(bug) [wiki-e rev-4007412, fetched 2026-09-18]
 - edge case: This particle can be attacked by minions. [wiki-e rev-4007412, fetched 2026-09-18]
 - edge case: This ability's damage is calculated based on the caster's current stats and changes dynamically. [wiki-e rev-4007412, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Hook range including lollipop against walls and final dash distance and speed. [wiki-e rev-4007412, fetched 2026-09-18]
 - edge case: The following table refers for interactions while the hook is attached or in flight: [wiki-e rev-4007412, fetched 2026-09-18]
 - edge case: Grounding effects [wiki-e rev-4007412, fetched 2026-09-18]
 - edge case: Immobilizing effects [wiki-e rev-4007412, fetched 2026-09-18]
@@ -148,5 +147,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4038197, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akshan%2FDirty%20Fighting&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4007510, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akshan%2FAvengerang&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-3989407, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akshan%2FGoing%20Rogue&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4007412, fetched 2026-09-18 — 44 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akshan%2FHeroic%20Swing&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4007412, fetched 2026-09-18 — 43 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akshan%2FHeroic%20Swing&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-3982549, fetched 2026-09-18 — 26 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Akshan%2FComeuppance&prop=text

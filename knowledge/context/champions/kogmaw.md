@@ -91,7 +91,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - damage type: Magic [wiki-e rev-3965135, fetched 2026-09-18]
 - spell shield: True [wiki-e rev-3965135, fetched 2026-09-18]
 - edge case: This ability will cast from wherever the caster is at the start of the cast time. [wiki-e rev-3965135, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: The missile leaves a blob of ooze on the ground every 125 units traveled. [wiki-e rev-3965135, fetched 2026-09-18]
 
 ### R
 - what it does: Active: Kog'Maw spits a globule of acid into the air that drops to the target location after 0.6 seconds, granting sight of the area before dealing magic damage to enemies hit and revealing them for 2 seconds. Living Artillery's damage is increased by 0% – 50% (based on target's missing health), or instead by 100% if the target is below 40% maximum health. Kog'Maw then generates a stack of Living Artillery for 8 seconds, refreshing on subsequent casts and stacking up to 9 times. Living Artillery: For each stack, Living Artillery's mana cost is increased by 40. [wiki-r rev-4007636, fetched 2026-09-18]
@@ -107,5 +106,5 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4038400, fetched 2026-09-18 — 37 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kog'Maw%2FIcathian%20Surprise&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3960434, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kog'Maw%2FCaustic%20Spittle&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4052263, fetched 2026-09-18 — 10 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kog'Maw%2FBio-Arcane%20Barrage&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-3965135, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kog'Maw%2FVoid%20Ooze&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-3965135, fetched 2026-09-18 — 12 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kog'Maw%2FVoid%20Ooze&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4007636, fetched 2026-09-18 — 6 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Kog'Maw%2FLiving%20Artillery&prop=text

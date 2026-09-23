@@ -50,7 +50,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: Takedown converts the bonus damage dealt by Spellblade to magic damage from physical, but does not apply its damage modifier to the effect. [wiki-q2 rev-3948934, fetched 2026-09-18]
 - edge case: Takedown's damage will apply life steal. [wiki-q2 rev-3948934, fetched 2026-09-18]
 - edge case: Takedown's damage modifier does not apply against structures; the minimum damage is always applied. [wiki-q2 rev-3948934, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: - Parry interactions ( dodge, block and blind). [wiki-q2 rev-3948934, fetched 2026-09-18]
 
 ### W
 - name: Bushwhack [wiki-w rev-4015217, fetched 2026-09-18]
@@ -117,7 +116,7 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wikiModule: League of Legends Wiki, Module:ChampionData/data, revision raw@2026-09-18, fetched 2026-09-18 — 7 lines — https://wiki.leagueoflegends.com/en-us/Module:ChampionData/data?action=raw
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4007706, fetched 2026-09-18 — 4 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nidalee%2FProwl&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-3971597, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nidalee%2FJavelin%20Toss&prop=text
-- wiki-q2: League of Legends Wiki, ability data template, revision rev-3948934, fetched 2026-09-18 — 15 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nidalee%2FTakedown&prop=text
+- wiki-q2: League of Legends Wiki, ability data template, revision rev-3948934, fetched 2026-09-18 — 14 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nidalee%2FTakedown&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4015217, fetched 2026-09-18 — 11 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nidalee%2FBushwhack&prop=text
 - wiki-w2: League of Legends Wiki, ability data template, revision rev-4007707, fetched 2026-09-18 — 13 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nidalee%2FPounce&prop=text
 - wiki-e: League of Legends Wiki, ability data template, revision rev-3907033, fetched 2026-09-18 — 9 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Nidalee%2FPrimal%20Surge&prop=text

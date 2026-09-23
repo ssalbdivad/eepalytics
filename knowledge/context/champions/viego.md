@@ -129,7 +129,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - edge case: The initial missile can be destroyed by projectile-blocking effects, but the formed Black Mist trail will not disappear. The wall spread missiles cannot be destroyed. [wiki-e rev-4057854, fetched 2026-09-18]
 - edge case: Harrowed Path can interact with player-generated terrain. [wiki-e rev-4057854, fetched 2026-09-18]
 - edge case: The spread path around terrain is determined upon collision and does not change even if the terrain expires mid-spread. [wiki-e rev-4057854, fetched 2026-09-18]
-- edge case: PENDING FOR TEST: Terrain being created while Harrowed Path is spreading. [wiki-e rev-4057854, fetched 2026-09-18]
 - edge case: Using a basic attack breaks the stealth at the start of the attack windup. [wiki-e rev-4057854, fetched 2026-09-18]
 - edge case: The stealth regain timer is refreshed from basic attacks at the start of their attack windup. [wiki-e rev-4057854, fetched 2026-09-18]
 - edge case: Viego can benefit from an enemy's Harrowed Path, gaining the bonus stats corresponding to his own Harrowed Path. [wiki-e rev-4057854, fetched 2026-09-18]
@@ -164,6 +163,6 @@ Every line below was copied from the source in brackets at the end of it, on the
 - wiki-p: League of Legends Wiki, ability data template, revision rev-4063480, fetched 2026-09-18 — 52 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Viego%2FSovereign's%20Domination&prop=text
 - wiki-q: League of Legends Wiki, ability data template, revision rev-4063652, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Viego%2FBlade%20of%20the%20Ruined%20King&prop=text
 - wiki-w: League of Legends Wiki, ability data template, revision rev-4008551, fetched 2026-09-18 — 16 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Viego%2FSpectral%20Maw&prop=text
-- wiki-e: League of Legends Wiki, ability data template, revision rev-4057854, fetched 2026-09-18 — 22 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Viego%2FHarrowed%20Path&prop=text
+- wiki-e: League of Legends Wiki, ability data template, revision rev-4057854, fetched 2026-09-18 — 21 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Viego%2FHarrowed%20Path&prop=text
 - wiki-r: League of Legends Wiki, ability data template, revision rev-4001566, fetched 2026-09-18 — 19 lines — https://wiki.leagueoflegends.com/en-us/api.php?action=parse&page=Template%3AData%20Viego%2FHeartbreaker&prop=text
 - opgg: op.gg, revision 16.18, fetched 2026-09-18 — 2 lines — https://lol-api-champion.op.gg/api/na/champions/ranked/viego/jungle?tier=emerald_plus
