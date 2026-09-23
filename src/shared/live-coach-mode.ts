@@ -746,8 +746,7 @@ before you read this.
   standing in the pit.
 
 Both of those are still open while you are watching and both are settled by the time anyone reads a
-review of the game. A reviewer can say a drake fell at 9:22; the same three facts forty seconds
-earlier, with where he is standing already joined to them, is the thing only this channel can say.
+review of the game.
 
 **Nothing he personally does before 10:00 separates his wins from his losses.** Not his farm at
 10:00, not his gold at 10:00, not his farm rate or his experience rate over those ten minutes, not

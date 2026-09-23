@@ -374,7 +374,10 @@ export class LcuBridge extends EventEmitter implements LcuTransport {
 		 *
 		 * Measured on this machine 2026-09-22T19:28:29: `systemctl --user restart eepalytics` made
 		 * the outgoing process log `uncaught exception err=Error: write EPIPE` and exit
-		 * 1/FAILURE — one occurrence in seven days of journal, and it happened on the shutdown path
+		 * 1/FAILURE. TWICE, not once: the commit that fixed this said "one occurrence in seven days
+		 * of journal" and both halves were wrong — journald on this machine begins 2026-09-19T09:08
+		 * and holds 3.4 days, and it carries two `write EPIPE` crashes (19:28:29 and 19:30:07),
+		 * the second being the restart taken to confirm the first. It happened on the shutdown path
 		 * where the `stop` command is written to a bridge that may already have gone. `Restart=always`
 		 * hid it: the unit came straight back, so the only trace was a FAILURE line nobody reads,
 		 * and the claim in the unit file that the daemon "shuts down cleanly on SIGTERM, lets
