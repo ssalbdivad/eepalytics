@@ -194,7 +194,33 @@ export const LivePlayer = type({
 	"position?": "string",
 	"level?": "number",
 	"isBot?": "boolean",
-	"isDead?": "boolean",
+	/*
+	 * REQUIRED, AND IT IS THE ONLY PLAYER FIELD THAT IS — because its ABSENCE IS AN ASSERTION.
+	 *
+	 * `parseAllGameData` below keeps a payload whose field arrived with the wrong type by DELETING
+	 * that field, which is right for a field whose absence says "the feed did not tell us": the
+	 * brief then renders nothing about it. `isDead` is not such a field. Every reader spells the
+	 * test as `p.isDead === true` or `!p.isDead` — `routes/live.ts` counts `alliesAlive` and
+	 * `enemiesAlive` that way and `live-brief.ts` reads the death block off it — so a MISSING
+	 * `isDead` does not read as "unknown", it reads as ALIVE.
+	 *
+	 * Found by the adversarial pass over this same day's work, on a real payload: corrupt one
+	 * player's `isDead` and the tolerant path returns ok, drops the key, and builds both a state
+	 * and a brief in which a dead man is standing. Tolerance turned "the coach says nothing" into
+	 * "the coach says something false", which is the one trade this repo never takes.
+	 *
+	 * Required makes it TERMINAL by the mechanism already in the parser rather than by a special
+	 * case: a deleted required key fails the re-validation, so the payload is refused and the coach
+	 * goes quiet — the behaviour the whole file had before, kept exactly where it is still right.
+	 * The cost is real and bounded: a mode that omits `isDead` is now uncoachable rather than
+	 * miscoached. The corpus says that mode is not Summoner's Rift — `isDead` is a boolean on
+	 * 195,817 of 195,817 recorded player rows.
+	 *
+	 * `respawnTimer` was checked for the same asymmetry and does NOT have it: it is read as
+	 * `p.respawnTimer ?? 0` and `(p.respawnTimer ?? 0) > 0`, so an absent timer says "no timer
+	 * running", which is what an absent field should say.
+	 */
+	isDead: "boolean",
 	"respawnTimer?": "number",
 	"scores?": LiveScores,
 	"items?": LiveItem.array(),

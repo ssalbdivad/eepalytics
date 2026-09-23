@@ -352,6 +352,36 @@ describe("the faults that cost a game", () => {
 })
 
 describe("what the tolerant parse still refuses", () => {
+	/*
+	 * THE ASYMMETRY THAT MAKES TOLERANCE DANGEROUS FOR EXACTLY ONE FIELD.
+	 *
+	 * Dropping a field is right when its absence says "the feed did not tell us". `isDead` is read
+	 * as `p.isDead === true` and `!p.isDead` everywhere — alliesAlive, enemiesAlive, the brief's
+	 * death block — so an ABSENT `isDead` does not read as unknown, it reads as ALIVE. Found by
+	 * the adversarial pass over the tolerance commit itself: corrupting it returned ok, dropped
+	 * the key, and built a brief in which a dead man was standing. That is "say something false"
+	 * where the old behaviour was "say nothing", and this is the case that keeps it terminal.
+	 */
+	it("REJECTS a corrupted isDead rather than quietly calling a dead player alive", async () => {
+		const bad = structuredClone(await aRecordedPayload()) as unknown as { allPlayers: Record<string, unknown>[] }
+		ok(bad.allPlayers.length > 0)
+		bad.allPlayers[0]!.isDead = "yes"
+		const out = parseAllGameData(bad)
+		strictEqual(out.ok, false, "a payload that cannot say whether he is dead must not be used")
+	})
+
+	it("still tolerates a field whose absence claims nothing, on the same payload", async () => {
+		const bad = structuredClone(await aRecordedPayload()) as unknown as { allPlayers: Record<string, unknown>[] }
+		bad.allPlayers[0]!.items = {} as never
+		const out = parseAllGameData(bad)
+		strictEqual(out.ok, true)
+		strictEqual(
+			(out.ok ? out.dropped.map(d => d.path) : []).join(","),
+			"allPlayers[0].items",
+			"exactly the key that arrived wrong, and nothing else"
+		)
+	})
+
 	it("rejects a payload whose event rows lose a required key", async () => {
 		/*
 		 * `EventID` is required and is the dedupe key for the entire event feed. Removing it is
