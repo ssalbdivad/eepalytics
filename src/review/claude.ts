@@ -711,8 +711,14 @@ const firstLine = (s: string | undefined): string => (s ?? "").trim().split("\n"
  * Cost/latency log. One JSON object per line at `data/logs/coach.jsonl`, so a week of
  * "why did my coaching bill look like that" is answerable without instrumenting anything.
  * Best effort: a broken log must never fail a review.
+ *
+ * EXPORTED because the log stopped covering the path that ships. Reviews moved to
+ * `postgame-call.ts` — a multimodal call on the AI SDK, because the CLI cannot take a JPEG — and
+ * this file kept the only writer, so `coach.jsonl` went quiet while the app carried on reviewing
+ * games. Measured 2026-09-22: last written 2026-09-18, four days and six reviewed games earlier.
+ * One format, one reader, both paths.
  */
-const logRun = (label: string, r: CoachResult): void => {
+export const logRun = (label: string, r: CoachResult): void => {
 	const line = {
 		atMs: Date.now(),
 		label,

@@ -32,7 +32,7 @@
  */
 
 import { readFileSync, statSync } from "node:fs"
-import { extractJson } from "./claude.ts"
+import { extractJson, logRun } from "./claude.ts"
 import type { CoachMeta, CoachResult } from "./claude.ts"
 import { modelHandleFor, providerById, providerKey } from "./live-providers.ts"
 import type { GamePack, PackFrame } from "./pack.ts"
@@ -393,28 +393,52 @@ export const runPostgameCoach = async (req: PostgameCallRequest): Promise<CoachR
 			},
 			warnings: [...warnings, `${images.length} frame(s) attached`]
 		}
+		/*
+		 * THE SAME LINE THE CLI PATH WRITES, because this is the path that ships. `coach.jsonl` had
+		 * not been appended to since 2026-09-18 — four days and six reviewed games — for no reason
+		 * other than that the writer lived in `claude.ts` and reviews had moved here. A cost log
+		 * that stops covering the shipped path is the same defect as a coverage record that is
+		 * never written, and this evening found three of those.
+		 */
 		const text = result.text ?? ""
-		if (text.trim() === "")
-			return { ok: false, code: "empty-output", error: `${model} returned no text`, text: null, meta }
+		if (text.trim() === "") {
+			const failed: CoachResult = {
+				ok: false,
+				code: "empty-output",
+				error: `${model} returned no text`,
+				text: null,
+				meta
+			}
+			logRun("postgame", failed)
+			return failed
+		}
 		const data = extractJson(text)
-		if (data === undefined)
-			return {
+		if (data === undefined) {
+			const malformed: CoachResult = {
 				ok: false,
 				code: "malformed-json",
 				error: `no JSON object could be recovered from ${text.length} chars`,
 				text,
 				meta
 			}
-		return { ok: true, data, text, meta }
+			logRun("postgame", malformed)
+			return malformed
+		}
+		const done: CoachResult = { ok: true, data, text, meta }
+		logRun("postgame", done)
+		return done
 	} catch (err) {
 		const durationMs = Date.now() - started
 		const aborted = req.signal?.aborted === true
-		return {
+		const failed: CoachResult = {
 			ok: false,
 			code: aborted ? "aborted" : "api-error",
 			error: String(err instanceof Error ? err.message : err),
 			text: null,
 			meta: { ...emptyMeta(model, durationMs), warnings }
 		}
+		// The outage is the case the bill and the latency history most need to carry.
+		logRun("postgame", failed)
+		return failed
 	}
 }
