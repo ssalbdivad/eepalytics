@@ -216,9 +216,22 @@ same gate re-fires **7.46 times a game** — the estimate in this paragraph read
 days before anything replayed it, and it was right — which is the timer this file replaced coming
 back through the silence door. What the replay adds is that the gate was never the lever: a cap of
 one makes 90 seconds safe at a quiet level, and no gate without a cap is. `src/analysis/live-events.test.ts`
-pins every level's set, all three clocks and the real per-game turn counts (29/31 → 11/11 on the two
-paired games, with the standing ask at 5:52 and 5:47 and exactly one of it in each), so a
-well-meaning edit fails the suite rather than quietly making her chatty again.
+pins every level's set, all three clocks and the real per-game turn counts, so a well-meaning edit
+fails the suite rather than quietly making her chatty again.
+
+**That pin moved house on 2026-09-22, and the old address is worth keeping because of how it was
+lost.** This paragraph used to cite "29/31 → 11/11 on the two paired games, with the standing ask at
+5:52 and 5:47 and exactly one of it in each". Those eight cases replay
+`js-mtvxb5f4-f81a-t29817812` and they all SKIP now — the sampler's 600 MB ceiling evicted that
+window and its twin (see the sampler note below) — so for as long as they skip, that sentence was
+describing a guard that no longer ran. Counted this session, `pnpm test` reports **15 skipped, 14 of
+them data-dependent and 8 naming that one missing file**. The guarantee is rebuilt on the one window
+that survived, game 5645995390, and its expected clocks are COMMITTED in the test rather than merely
+recomputed: `big-calls` asks **9** times, `key-moments` **11** and `commentary` **33** on the same
+bytes, with `window.standing` and `hinge.silence` firing exactly once each. It FAILS rather than
+skips if that window goes too, and `citedSampleFiles()` now pins it — verified this session: the
+pin resolves 52 cited windows across 356 files in `data/eval/`, and it covers both evicted ids, so
+it would have prevented the loss it was written after.
 
 `commentary` is the schedule every stored measurement in this repo was taken on and it stays
 byte-identical: it replays the 28-game corpus at 30.39 asks, 28.89 spoken, 20.75 clean-useful and
@@ -393,12 +406,23 @@ nobody should claim it; what is certain is that there was credit at 14:37 and no
 statement is: **null with real power on a strong turn model, null-shaped and underpowered on the
 socket, and nothing anywhere that survives a second reader.**
 
-**The corpus has a hard ceiling of TWO GAMES and it is not going up by playing more.** A frame
-ablation needs paired journal frames, and `discoverWindows()` returns **3** paired windows against
-37 text-only ones. Two are whole games with frames throughout; the third (5635921368, Gwen) has
-four minutes of frames on a 37-minute game and therefore cannot produce a single decoy, because no
-frame in it is five minutes from any other. "Use more games" was never available here. The power
-had to come from the instrument, and it did.
+**The corpus had a hard ceiling of TWO GAMES and it is not going up by playing more.** A frame
+ablation needs paired journal frames, and when this was measured `discoverWindows()` returned **3**
+paired windows against 37 text-only ones. Two were whole games with frames throughout; the third
+(5635921368, Gwen) has four minutes of frames on a 37-minute game and therefore cannot produce a
+single decoy, because no frame in it is five minutes from any other. "Use more games" was never
+available here. The power had to come from the instrument, and it did.
+
+**The ceiling is now ONE, and every figure in this section is unre-runnable.** Re-derived
+2026-09-22: `discoverWindows()` returns **1** paired window and `discoverBenchable()` returns 1
+paired + 66 text-only + 28 rejected. The two whole paired games — `js-mtvxb5f4-f81a-t29817812`
+(5639406342) and `…-t29817845` (5639409343) — are the ones the sampler's size ceiling evicted, and
+they are the games `frame-power`, `frame-value`, `frame-cadence` and `model-race` were all measured
+on. The stored outputs in `data/eval/` survive, so every number above stays quotable; the INPUTS do
+not, so none of them can be re-run or extended. Do not read the surviving `js-mtvxb5f4-f81a-*`
+windows as those games: 28 later sessions of the same browser share that prefix and the two that
+carry the frame measurements are gone. The eviction is recorded at `SAMPLE_MAX_BYTES`, and the pin
+that now prevents it is `citedSampleFiles()`.
 
 **A smaller picture is NOT a cheaper picture.** Gemini pads a small image to the same tile budget —
 `frame-read.ts` measured 1,089 image tokens for the 288px crop, 1,089 for that crop upscaled to
@@ -1391,6 +1415,20 @@ not losing his games in the first ten minutes and the app has been coaching him 
 The reason is visible in the spread: he is CONSISTENT early. There is not enough variance in his
 first ten minutes for it to correlate with anything.
 
+**Two things about that paragraph were tightened on 2026-09-22, and one of them was SHIPPING
+wrong.** The list above names his gap on the enemy jungler in xp, level and gold and leaves out the
+widest of the four: **his CS gap at 10:00 is AUC 0.581 [0.483-0.679], q 0.167** — still nothing,
+still the largest of the twelve. That omission is why Part 2's version of this bullet read "every
+one of those lands between AUC 0.44 and 0.56 with q above 0.24", which was wrong on both halves and
+was being sent to the coach on every review. Re-derived this session over the twelve
+first-ten-minute rows HE owns in `data/eval/what-wins-20260918.json` — CS, gold, CS rate, xp rate,
+deaths, first back, the four jungler gaps, enemy-half share and enemy-camp share — the range is
+**0.436 to 0.581** and the smallest q is **0.167** (on the CS gap and on enemy-half share), not
+0.24. The BH floor for `separates` in that run is q <= 0.10, so "not one of them clears the
+correction" is the claim the data supports and is what Part 2 says now. The rule this breaks is the
+file's own: a tighter-sounding interval is a different measurement, and quoting one is the same
+defect as quoting a baseline that was never in the digest.
+
 **The first thing of his that separates arrives between 10:00 and 15:00, and it is deaths.** Deaths
 in that five-minute window: 0.68 won against 1.13 lost, AUC 0.35 [0.26-0.44], q 0.004. As a rule he
 could use: **no death between 10:00 and 15:00 → 70% [56-80] over 53 games; one or more → 38%
@@ -1883,7 +1921,8 @@ So the vocabulary is jungle vocabulary:
 - **Nothing he personally does before 10:00 separates his wins from his losses.**
   Not CS, not gold, not xp, not level, not his gap on the enemy jungler, not deaths,
   not his first back, not how much of it he spent in the enemy half — every one of
-  those lands between AUC 0.44 and 0.56 with q above 0.24. He is CONSISTENT early;
+  those lands between AUC 0.44 and 0.58, and not one of them clears the correction.
+  He is CONSISTENT early;
   there is not enough spread in his first ten minutes for it to correlate with
   anything. An item about the first ten minutes is rarely a `major`.
 - Deaths in the enemy jungle used to carry a standing order here: name it, with the
