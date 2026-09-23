@@ -1263,16 +1263,22 @@ not a fabrication one: all 96 of those lines carry `verdict: "match"` in the ful
 (`python3 -c` over `data/eval/verify-fetched-all-20260919-d.json`, replicated line for line in
 `-e.json`). So every fence in this repo is behaving correctly and the line is still worthless, which
 is the same shape as the 6,026 cells and the reason to write it down here rather than fix it
-quietly. The fix is NOT DONE and is a judgement rather than a filter: `PENDING FOR TEST` marks a
-claim the source itself has not verified and probably should be dropped at mint time the way an
-empty value now is, while `(bug)` and `(unexpected)` mark a real, documented interaction and
-probably should be KEPT — a jungler being told an interaction is a bug is being told something
-true and useful. Whoever takes it: dropping all three on the marker is the change that looks
-obvious and would cost 567 lines to save 96 — 567 rather than 363 + 208, because four lines carry
-a `(bug)` or `(unexpected)` marker AND a `PENDING FOR TEST` one, which is what happens when a
-figure is added up instead of counted
-(`grep -rhE "\(bug\)|\(unexpected\)" knowledge/context/champions/*.md | grep -vF "PENDING FOR
-TEST" | wc -l`).
+quietly. **FIXED 2026-09-22, as the judgement it was rather than the filter it looked like.**
+`PENDING FOR TEST` is dropped at mint time the way an empty value is, and `(bug)` and
+`(unexpected)` are KEPT — they mark a real, documented interaction, and a jungler told that an
+interaction is a bug has been told something true and useful. Dropping all three on the marker was
+the change that looked obvious and would have cost 567 lines to save 96.
+
+The anchor is the rule: a note that BEGINS with the marker is a TODO wearing the shape of a fact,
+and a note carrying it MID-SENTENCE is a real claim with one unverified quantity inside it, where
+the marker travels with the number it qualifies and is doing its job. 95 of the 96 were the first
+kind. The survivor is Miss Fortune revealing a 200-radius area around herself when she fires from
+an unseen position — true, useful, with two cone figures each prefixed by the marker — and deleting
+it would have cost a real interaction to remove a label that already tells the truth about itself.
+No WITHHELD notice, unlike the table cells: a notice says the source publishes something this app
+could not carry, and nothing was lost here, because the source itself says it does not know.
+61 files moved, 171 lines left the corpus, and `audit:knowledge --all` still traces every delivered
+line to a claim with a URL on it.
 
 **The residue is measured and written into `claims-from-row.ts` rather than left to be
 rediscovered.** 473 short values survive; most are the wiki being genuinely terse ("No additional
