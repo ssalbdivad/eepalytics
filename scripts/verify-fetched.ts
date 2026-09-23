@@ -442,6 +442,20 @@ export const verify = async (keys: readonly string[]): Promise<LineResult[]> => 
 				results.push({ ...base(key, line), verdict: "unchecked", note: `no source field for "${line.label}"` })
 				continue
 			}
+			/*
+			 * A TRANSCLUDED TEMPLATE CAN MOVE THE RENDER WITHOUT MOVING THIS REVISION.
+			 *
+			 * `stale` is decided by the ability page's own revision id, which is the right pin for
+			 * the page's own text and is blind to anything it transcludes. Measured 2026-09-22: two
+			 * Pyke notes came back as MISMATCH with the cited revision unchanged, and both are
+			 * flattened item tables ("Runic Compass Runic Compass400 7.1Classic Summoner's Rift
+			 * 5v5") whose content lives in another template that had been edited. The verdict
+			 * overstates: nothing here misread anything, the source under the source moved.
+			 *
+			 * Not repaired by loosening this test — a mismatch has to stay a defect or the check is
+			 * worth nothing. The class disappears when `htmlToText` stops shredding tables, which is
+			 * the fix recorded as NOT DONE in `claims-from-row.ts`.
+			 */
 			const ok = source === line.value
 			results.push({
 				...base(key, line),

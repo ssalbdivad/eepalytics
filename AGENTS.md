@@ -1041,7 +1041,25 @@ fetch (the wiki is edited continuously; those are reported as `stale` with both 
 defects — Wukong's `rev-4051479` is now `rev-4064066`) and 86 are op.gg lines, deliberately not
 re-fetched because tier 2 changes hourly and a difference there would say nothing about the
 renderer (`data/eval/verify-fetched-all-20260919-d.json`; the 22,544-line pass before the drop is
-`-c.json` beside it). **Replicated exactly, hours later and by a different agent, on an unchanged
+`-c.json` beside it). **RE-TAKEN 2026-09-22, after the corpus moved and after a League patch landed:
+16,513 delivered lines — 16,348 match, 77 moved since the fetch, 86 op.gg, and TWO MISMATCHES**
+(`data/eval/verify-fetched-all-20260922.json`). Both mismatches are Pyke, and both are the
+shredded-item-table class this file already records: the delivered line reads
+`Runic Compass Runic Compass400 7.1Classic Summoner's Rift 5v5`, which is what `htmlToText` makes
+of a table, and that exact flattened string is no longer anywhere in the live notes.
+
+**They are reported as MISMATCH rather than stale because the staleness test asks the wrong page.**
+It compares the ability page's own revision id, and that id has not moved — what moved is a
+TRANSCLUDED template inside it. So a wiki edit can change the rendered text while the revision this
+app cites stays identical, and the instrument calls it a defect. That is a real limit of the check
+and it is written at the comparison; the fix that removes the whole class is the `htmlToText` `<tr>`
+change already recorded as NOT DONE, which would stop shipping flattened tables in the first place.
+
+Of the 77 stale, 48 are revision-moved ability lines and 29 are module drift — the two halves
+behaving exactly as the verdicts say. Both counts are up from six because a patch landed and the
+wiki has had four days of edits, not because anything here changed.
+
+**Replicated exactly, hours later and by a different agent, on an unchanged
 tree: 16,516 / 0 / 6 / 86 again, and the SAME six stale rows** — Evelynn ×3, Ezreal ×1, Wukong ×2
 (`data/eval/verify-fetched-all-20260919-e.json`, `pnpm verify:fetched -- --all`). Not merely the
 same counts — the two files' `results` arrays are EQUAL row for row, 77 minutes apart, over
