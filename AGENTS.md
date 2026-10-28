@@ -288,8 +288,8 @@ in hand-written SVG, which took three attempts and at one point put them on her 
   ignored; you get a server-chosen ~20-game window, so harvest incrementally into
   SQLite and keep games forever.
 - Prefer shared config over tool-specific config (see the imports at the top).
-- `nub` is the user's own TypeScript runner and is not installed everywhere. If a
-  script shelling out to `nub` fails, fall back to `node --experimental-strip-types`.
+- Run scripts with `node <file>.ts` (Node runs TypeScript directly) and package
+  scripts with `pnpm run <script>`.
 
 ---
 
